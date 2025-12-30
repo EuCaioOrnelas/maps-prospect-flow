@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.verify-shared-report]
 verify_jwt = false
+
+[functions.evolution-webhook]
+verify_jwt = false
