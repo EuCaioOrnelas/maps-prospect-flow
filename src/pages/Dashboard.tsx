@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Search, 
   MapPin, 
@@ -22,7 +29,8 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  Trash2
+  Trash2,
+  Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -62,6 +70,7 @@ const Dashboard = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
@@ -137,11 +146,7 @@ const Dashboard = () => {
     }
 
     if (searchesRemaining <= 0) {
-      toast({
-        title: "Limite de buscas atingido",
-        description: "Faça upgrade do seu plano para continuar prospectando",
-        variant: "destructive",
-      });
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -698,6 +703,51 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Zap size={32} className="text-primary" />
+            </div>
+            <DialogTitle className="text-center text-2xl">Suas buscas acabaram!</DialogTitle>
+            <DialogDescription className="text-center text-base pt-2">
+              Você utilizou todas as suas buscas disponíveis. Faça upgrade para continuar prospectando novos clientes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-primary/10 rounded-xl p-4 my-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+              <Sparkles size={18} />
+              Promoção de Lançamento
+            </div>
+            <p className="text-2xl font-bold mt-2">Até 50% OFF</p>
+            <p className="text-sm text-muted-foreground mt-1">Em todos os planos por tempo limitado</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="w-full"
+              onClick={() => {
+                setShowUpgradeModal(false);
+                navigate("/upgrade");
+              }}
+            >
+              <Crown size={18} />
+              Ver Planos e Fazer Upgrade
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowUpgradeModal(false)}
+            >
+              Agora não
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

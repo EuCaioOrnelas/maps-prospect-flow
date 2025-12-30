@@ -4,22 +4,23 @@ import { Link } from "react-router-dom";
 import { Menu, X, Sparkles } from "lucide-react";
 import { useState } from "react";
 
+export const PromoBanner = () => (
+  <div className="bg-primary/10 border-b border-primary/20">
+    <div className="container mx-auto px-4 py-2">
+      <p className="text-center text-xs sm:text-sm text-muted-foreground">
+        <Sparkles size={14} className="inline-block mr-1.5 text-primary" />
+        <span className="text-primary font-medium">Promoção de Lançamento:</span> até 50% de desconto em todos os planos
+      </p>
+    </div>
+  </div>
+);
+
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
-      {/* Promo Banner */}
-      <div className="bg-primary/10 border-b border-primary/20">
-        <div className="container mx-auto px-4 py-2">
-          <p className="text-center text-xs sm:text-sm text-muted-foreground">
-            <Sparkles size={14} className="inline-block mr-1.5 text-primary" />
-            <span className="text-primary font-medium">Promoção de Lançamento:</span> até 50% de desconto em todos os planos
-          </p>
-        </div>
-      </div>
-
-      <nav className="fixed top-[37px] sm:top-[41px] left-0 right-0 z-50 glass">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/">
@@ -102,6 +103,10 @@ export const Navbar = () => {
           )}
         </div>
       </nav>
+
+      {/* Spacer for fixed navbar + promo banner */}
+      <div className="h-[72px] sm:h-[76px]" />
+      <PromoBanner />
     </>
   );
 };

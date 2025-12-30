@@ -80,6 +80,16 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Promo Banner */}
+      <div className="bg-primary/10 border-b border-primary/20">
+        <div className="container mx-auto px-4 py-2">
+          <p className="text-center text-xs sm:text-sm text-muted-foreground">
+            <Sparkles size={14} className="inline-block mr-1.5 text-primary" />
+            <span className="text-primary font-medium">Promoção de Lançamento:</span> até 50% de desconto em todos os planos
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
