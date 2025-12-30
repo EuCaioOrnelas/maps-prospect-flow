@@ -66,7 +66,7 @@ export const PricingSection = () => {
       className="py-24 relative"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-6xl">
         <div 
           className={`text-center mb-16 transition-all duration-700 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -81,7 +81,7 @@ export const PricingSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {plans.map((plan, index) => (
             <div
               key={index}

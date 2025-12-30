@@ -180,7 +180,7 @@ export const TestimonialsSection = () => {
         </div>
 
         {/* Tablet: 2 columns */}
-        <div className="hidden md:flex lg:hidden justify-center gap-6 max-w-3xl mx-auto h-[500px] mask-gradient">
+        <div className="hidden md:flex lg:hidden justify-center gap-6 max-w-4xl mx-auto h-[500px] mask-gradient">
           <TestimonialsColumn testimonials={firstColumn} duration={25} />
           <TestimonialsColumn
             testimonials={secondColumn}
