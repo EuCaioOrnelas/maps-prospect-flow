@@ -85,7 +85,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Dashboard preview */}
-        <div className="mt-20 mb-24 max-w-5xl mx-auto animate-slide-up" style={{ animationDelay: "0.5s" }}>
+        <div className="mt-20 max-w-5xl mx-auto animate-slide-up" style={{ animationDelay: "0.5s" }}>
           <div className="relative">
             <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl" />
             <div className="relative glass rounded-2xl p-6 shadow-card">

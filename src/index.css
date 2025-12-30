@@ -6,55 +6,54 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
+    --background: 220 20% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
-    --card-border: 220 14% 85%;
+    --card: 220 18% 7%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover: 220 18% 7%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 220 20% 4%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 10%;
+    --secondary: 220 16% 12%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 220 14% 15%;
+    --muted-foreground: 215 20% 55%;
 
     --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 220 20% 4%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
+    --border: 220 14% 16%;
+    --input: 220 14% 16%;
     --ring: 160 84% 39%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
     --gradient-primary: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(175 84% 32%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 96%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 97%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(160 84% 39% / 0.1) 0%, transparent 70%);
+    --gradient-hero: linear-gradient(180deg, hsl(220 20% 4%) 0%, hsl(220 18% 8%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 18% 6%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(160 84% 39% / 0.15) 0%, transparent 70%);
     
-    --shadow-glow: 0 0 60px hsl(160 84% 39% / 0.15);
-    --shadow-card: 0 8px 32px hsl(220 20% 10% / 0.12), 0 2px 8px hsl(220 20% 10% / 0.08);
-    --shadow-button: 0 4px 16px hsl(160 84% 39% / 0.25);
+    --shadow-glow: 0 0 60px hsl(160 84% 39% / 0.2);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-button: 0 4px 16px hsl(160 84% 39% / 0.3);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 20% 10%;
+    --sidebar-background: 220 18% 6%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 220 20% 10%;
-    --sidebar-border: 220 14% 90%;
+    --sidebar-primary-foreground: 220 20% 4%;
+    --sidebar-accent: 220 14% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 14% 16%;
     --sidebar-ring: 160 84% 39%;
 
     /* Status colors */
@@ -62,7 +61,7 @@
     --warning: 45 93% 47%;
     --info: 200 98% 39%;
 
-    /* Chart colors - vibrant colors for light theme */
+    /* Chart colors - vibrant colors for dark theme */
     --chart-1: 160 84% 39%;
     --chart-2: 173 80% 40%;
     --chart-3: 262 83% 58%;
