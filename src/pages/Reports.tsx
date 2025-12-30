@@ -784,6 +784,7 @@ const Reports = () => {
                         labelStyle={{ color: '#f9fafb' }}
                         itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
+                        cursor={{ fill: 'rgba(55, 65, 81, 0.5)' }}
                       />
                       <Bar dataKey="leads" fill="#22c55e" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -832,6 +833,7 @@ const Reports = () => {
                         labelStyle={{ color: '#f9fafb' }}
                         itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
+                        cursor={{ fill: 'rgba(55, 65, 81, 0.5)' }}
                       />
                       <Bar dataKey="leads" fill="#14b8a6" radius={[0, 4, 4, 0]} />
                     </BarChart>
