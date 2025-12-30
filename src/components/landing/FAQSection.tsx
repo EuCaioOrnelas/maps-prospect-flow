@@ -48,44 +48,44 @@ export const FAQSection = () => {
   return (
     <section 
       id="faq" 
-      className="py-24 relative"
+      className="py-16 md:py-24 relative"
       ref={ref as React.RefObject<HTMLElement>}
     >
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />
       
       <div className="container mx-auto px-4 relative z-10">
         <div 
-          className={`text-center mb-16 transition-all duration-700 ${
+          className={`text-center mb-10 sm:mb-16 transition-all duration-700 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-4 sm:mb-6">
             <HelpCircle size={16} className="text-primary" />
-            <span className="text-sm text-muted-foreground">Dúvidas Frequentes</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Dúvidas Frequentes</span>
           </div>
-          <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2">
             Perguntas <span className="text-gradient">Frequentes</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             Tudo que você precisa saber sobre o Prospex
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className={`glass rounded-xl px-6 border-none transition-all duration-500 ${
+                className={`glass rounded-lg sm:rounded-xl px-4 sm:px-6 border-none transition-all duration-500 ${
                   isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
                 style={{ transitionDelay: `${150 + index * 75}ms` }}
               >
-                <AccordionTrigger className="text-left font-display font-semibold hover:no-underline py-5">
+                <AccordionTrigger className="text-left font-display font-semibold hover:no-underline py-4 sm:py-5 text-sm sm:text-base">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
+                <AccordionContent className="text-muted-foreground pb-4 sm:pb-5 leading-relaxed text-sm sm:text-base">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
