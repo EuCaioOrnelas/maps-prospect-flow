@@ -380,37 +380,48 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
             <Logo size="md" />
             
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Credits indicator */}
-              <div className="flex items-center gap-2 bg-secondary rounded-lg px-2 sm:px-3 py-1.5">
-                <div className="text-xs sm:text-sm">
-                  <span className="font-semibold text-primary">
-                    {searchesRemaining}<span className="text-muted-foreground">/{profile?.searches_limit || 10}</span>
-                  </span>
+            <div className="flex items-center gap-3 sm:gap-5">
+              {/* Credits indicator - more detailed */}
+              <div className="flex items-center gap-3 bg-secondary/80 rounded-xl px-3 sm:px-4 py-2.5 border border-border/50">
+                <div className="flex flex-col">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Buscas restantes</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg sm:text-xl font-bold text-primary">
+                      {searchesRemaining}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      de {profile?.searches_limit || 10}
+                    </span>
+                  </div>
                 </div>
-                <div className="hidden sm:block w-12 lg:w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
-                  />
+                <div className="hidden sm:flex flex-col gap-1">
+                  <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground text-center">
+                    {getPlanName(profile?.plan || 'free')}
+                  </span>
                 </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-1">
+              {/* Action buttons with proper spacing */}
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Link to="/reports">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-8 sm:h-9 px-2 sm:px-3 gap-1.5 border-border"
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
                   >
                     <BarChart3 size={16} />
-                    <span className="hidden sm:inline text-sm">Relatórios</span>
+                    <span className="hidden sm:inline">Relatórios</span>
                   </Button>
                 </Link>
 
@@ -418,19 +429,21 @@ const Dashboard = () => {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className="h-8 sm:h-9 px-2 sm:px-3 gap-1.5"
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
                   >
                     <Crown size={16} />
-                    <span className="hidden sm:inline text-sm">Upgrade</span>
+                    <span className="hidden sm:inline">Upgrade</span>
                   </Button>
                 </Link>
+
+                <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
 
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={handleLogout} 
-                  className="h-8 w-8 sm:h-9 sm:w-9 ml-1"
-                  title="Sair"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  title="Sair da conta"
                 >
                   <LogOut size={18} />
                 </Button>
