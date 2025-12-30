@@ -17,7 +17,8 @@ import {
   History,
   Plus,
   BarChart3,
-  Crown
+  Crown,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,8 +30,10 @@ import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
 import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
+import { RealtimeMonitor } from "@/components/whatsapp/RealtimeMonitor";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 
 export interface Lead {
   name: string;
@@ -99,12 +102,19 @@ const WhatsAppCampaign = () => {
     campaignId: null
   });
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [isStartingCampaign, setIsStartingCampaign] = useState(false);
   
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  
+  // Use realtime hook for campaigns
+  const { 
+    campaigns, 
+    setCampaigns, 
+    loading: loadingCampaigns, 
+    fetchCampaigns 
+  } = useCampaignRealtime();
 
   const {
     numbers,
@@ -127,34 +137,6 @@ const WhatsAppCampaign = () => {
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
   const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && !!selectedNumberId;
 
-  // Fetch campaigns history
-  useEffect(() => {
-    fetchCampaigns();
-  }, [user]);
-
-  const fetchCampaigns = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('whatsapp_campaigns')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setCampaigns((data || []).map(campaign => ({
-        ...campaign,
-        messages: Array.isArray(campaign.messages) ? campaign.messages as string[] : [],
-        leads: Array.isArray(campaign.leads) ? campaign.leads as unknown as Lead[] : []
-      })));
-    } catch (err) {
-      console.error('Error fetching campaigns:', err);
-    } finally {
-      setLoadingCampaigns(false);
-    }
-  };
 
   const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
     if (!user || !selectedNumberId) return null;
@@ -246,8 +228,6 @@ const WhatsAppCampaign = () => {
       const campaignId = await createCampaign(true);
       if (!campaignId) return;
 
-      await fetchCampaigns();
-
       toast({
         title: "Campanha agendada!",
         description: `A campanha será iniciada no horário programado`,
@@ -277,16 +257,62 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    const campaignId = await createCampaign(false);
-    if (!campaignId) return;
+    setIsStartingCampaign(true);
 
-    setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
-    setStep('running');
-    
-    toast({
-      title: "Campanha iniciada!",
-      description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
-    });
+    try {
+      // Create campaign first
+      const campaignId = await createCampaign(false);
+      if (!campaignId) {
+        setIsStartingCampaign(false);
+        return;
+      }
+
+      setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
+
+      // Get the instance name for Evolution API
+      const instanceName = `whatsapp_${selectedNumberId.replace(/-/g, '_')}`;
+      const validMessages = messages.filter(m => m.trim());
+
+      // Call the edge function to start the campaign
+      const { data, error } = await supabase.functions.invoke('evolution-run-campaign', {
+        body: {
+          campaignId,
+          numberId: selectedNumberId,
+          instanceName,
+          leads: selectedLeads,
+          messages: validMessages,
+          delaySeconds
+        }
+      });
+
+      if (error) {
+        console.error('Error starting campaign:', error);
+        toast({
+          title: "Erro ao iniciar campanha",
+          description: error.message || "Ocorreu um erro ao iniciar a campanha",
+          variant: "destructive",
+        });
+        // Campaign was created but sending failed - it will show in active campaigns
+      } else {
+        toast({
+          title: "Campanha iniciada!",
+          description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
+        });
+      }
+
+      // Go back to leads step to show realtime monitor
+      handleNewCampaign();
+      
+    } catch (err) {
+      console.error('Error in handleStartCampaign:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a campanha",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStartingCampaign(false);
+    }
   };
 
   const handlePauseCampaign = async () => {
@@ -384,6 +410,29 @@ const WhatsAppCampaign = () => {
         description: "Não foi possível excluir a campanha",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleStopCampaignFromList = async (campaign: Campaign) => {
+    try {
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', campaign.id);
+
+      setCampaigns(prev => prev.map(c => 
+        c.id === campaign.id ? { ...c, status: 'completed', completed_at: new Date().toISOString() } : c
+      ));
+      
+      toast({
+        title: "Campanha encerrada",
+        description: `Campanha "${campaign.name}" foi encerrada`,
+      });
+    } catch (err) {
+      console.error('Error stopping campaign:', err);
     }
   };
 
@@ -581,15 +630,25 @@ const WhatsAppCampaign = () => {
             />
           ) : (
             <>
-              {/* Active Campaigns Section */}
+              {/* Real-time Monitor for Active Campaigns */}
               {step === 'leads' && (
-                <ActiveCampaigns
-                  campaigns={campaigns}
-                  usedToday={usedToday}
-                  dailyLimit={dailyLimit}
-                  onResume={handleResumeCampaignFromList}
-                  onPause={handlePauseCampaignFromList}
-                />
+                <>
+                  <RealtimeMonitor
+                    campaigns={campaigns}
+                    numbers={numbers}
+                    onPause={handlePauseCampaignFromList}
+                    onResume={handleResumeCampaignFromList}
+                    onStop={handleStopCampaignFromList}
+                  />
+                  
+                  <ActiveCampaigns
+                    campaigns={campaigns}
+                    usedToday={usedToday}
+                    dailyLimit={dailyLimit}
+                    onResume={handleResumeCampaignFromList}
+                    onPause={handlePauseCampaignFromList}
+                  />
+                </>
               )}
               
               {step !== 'running' && renderStepIndicator()}
