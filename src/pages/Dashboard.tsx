@@ -21,7 +21,8 @@ import {
   Target,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -287,9 +288,113 @@ const Dashboard = () => {
     });
   };
 
-  const handleHistoryClick = (item: SearchHistoryItem) => {
+  const handleHistoryClick = async (item: SearchHistoryItem) => {
     setKeyword(item.keyword);
     setLocation(item.location);
+    
+    // Execute the search automatically
+    setIsSearching(true);
+    setHasSearched(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const response = await supabase.functions.invoke('search-leads', {
+        body: { keyword: item.keyword, location: item.location },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao buscar leads');
+      }
+
+      const data = response.data;
+
+      if (data.error) {
+        if (data.limitReached) {
+          toast({
+            title: "Limite de buscas atingido",
+            description: data.message,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(data.error);
+        }
+        setIsSearching(false);
+        return;
+      }
+
+      setLeads(data.leads || []);
+      await refreshProfile();
+      
+      // Refresh history
+      if (user) {
+        const { data: historyData } = await supabase
+          .from('search_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        if (historyData) {
+          setSearchHistory(historyData);
+          setCurrentHistoryPage(1);
+        }
+      }
+      
+      toast({
+        title: "Busca concluída!",
+        description: `${data.leads?.length || 0} leads encontrados para "${item.keyword}" em ${item.location}`,
+      });
+    } catch (error: any) {
+      console.error('Search error:', error);
+      toast({
+        title: "Erro na busca",
+        description: error.message || "Erro ao buscar leads. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleDeleteHistoryItem = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    
+    try {
+      const { error } = await supabase
+        .from('search_history')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Remove from local state
+      setSearchHistory(prev => prev.filter(item => item.id !== itemId));
+      
+      toast({
+        title: "Removido",
+        description: "Item do histórico excluído",
+      });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o item",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -575,13 +680,23 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <div className="space-y-3">
-                      {paginatedHistory.map((item) => (
-                        <button
+                      {paginatedHistory.map((item, index) => (
+                        <div
                           key={item.id}
                           onClick={() => handleHistoryClick(item)}
-                          className="w-full text-left p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors border border-transparent hover:border-border"
+                          className="relative group w-full text-left p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 border border-transparent hover:border-border cursor-pointer animate-fade-in"
+                          style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
                         >
-                          <p className="font-semibold text-foreground truncate">{item.keyword}</p>
+                          {/* Delete button */}
+                          <button
+                            onClick={(e) => handleDeleteHistoryItem(e, item.id)}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                            title="Excluir"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          
+                          <p className="font-semibold text-foreground truncate pr-8">{item.keyword}</p>
                           <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1">
                             <MapPin size={12} className="flex-shrink-0" />
                             {item.location}
@@ -596,7 +711,7 @@ const Dashboard = () => {
                               {item.results_count} resultados
                             </span>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
 
