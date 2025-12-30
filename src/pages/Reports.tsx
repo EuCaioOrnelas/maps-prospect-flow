@@ -381,42 +381,45 @@ const Reports = () => {
               <CardContent>
                 {stats.searchesByDay.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={stats.searchesByDay}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <BarChart data={stats.searchesByDay} barGap={2} barCategoryGap="20%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis 
                         dataKey="date" 
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                         tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <YAxis 
                         tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
                       />
-                      <Line 
-                        type="monotone" 
+                      <Legend 
+                        wrapperStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Bar 
                         dataKey="searches" 
                         name="Buscas"
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
-                        dot={{ fill: 'hsl(var(--primary))' }}
+                        fill="hsl(var(--primary))" 
+                        radius={[4, 4, 0, 0]}
                       />
-                      <Line 
-                        type="monotone" 
+                      <Bar 
                         dataKey="leads" 
                         name="Leads"
-                        stroke="hsl(var(--chart-2))" 
-                        strokeWidth={2}
-                        dot={{ fill: 'hsl(var(--chart-2))' }}
+                        fill="#22c55e"
+                        radius={[4, 4, 0, 0]}
                       />
-                      <Legend />
-                    </LineChart>
+                    </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-[300px] flex items-center justify-center text-muted-foreground">
