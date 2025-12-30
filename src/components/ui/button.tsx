@@ -9,15 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_16px_hsl(160_84%_39%_/_0.3)] hover:shadow-lg hover:-translate-y-0.5",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-border bg-transparent hover:bg-secondary hover:text-secondary-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-secondary hover:text-secondary-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        hero: "bg-primary text-primary-foreground font-semibold shadow-[0_4px_16px_hsl(160_84%_39%_/_0.3)] hover:shadow-lg hover:-translate-y-1 hover:bg-primary/90 transition-all duration-300",
-        "hero-outline": "border-2 border-primary/50 bg-transparent text-foreground hover:bg-primary/10 hover:border-primary transition-all duration-300",
-        glass: "backdrop-blur-xl bg-card/80 border border-border/50 text-foreground hover:bg-card/90 transition-all duration-200",
+        default: "bg-primary text-primary-foreground hover:bg-primary/85 shadow-[0_4px_16px_hsl(160_84%_39%_/_0.35)] hover:shadow-[0_6px_24px_hsl(160_84%_39%_/_0.45)] hover:-translate-y-0.5",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/85 shadow-sm hover:shadow-md",
+        outline: "border-2 border-border bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors",
+        secondary: "bg-secondary text-secondary-foreground border border-border hover:bg-muted hover:border-muted-foreground/20",
+        ghost: "text-foreground hover:bg-muted hover:text-foreground",
+        link: "text-primary underline-offset-4 hover:underline hover:text-primary/80",
+        hero: "bg-primary text-primary-foreground font-semibold shadow-[0_4px_20px_hsl(160_84%_39%_/_0.4)] hover:shadow-[0_8px_30px_hsl(160_84%_39%_/_0.5)] hover:-translate-y-1 hover:bg-primary/85 transition-all duration-300",
+        "hero-outline": "border-2 border-primary bg-transparent text-foreground font-medium hover:bg-primary hover:text-primary-foreground transition-all duration-300",
+        glass: "backdrop-blur-xl bg-card/90 border border-border text-foreground shadow-sm hover:bg-card hover:shadow-md transition-all duration-200",
       },
       size: {
         default: "h-10 px-4 py-2",
