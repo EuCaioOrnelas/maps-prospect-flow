@@ -385,46 +385,56 @@ const Dashboard = () => {
           <div className="flex items-center justify-between gap-2">
             <Logo size="md" />
             
-            <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
-              {/* Usage indicator - now visible on all screens */}
-              <div className="flex items-center gap-2 sm:gap-3 bg-secondary rounded-lg px-2 sm:px-4 py-1.5 sm:py-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Credits indicator */}
+              <div className="flex items-center gap-2 bg-secondary rounded-lg px-2 sm:px-3 py-1.5">
                 <div className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline text-muted-foreground">Buscas: </span>
                   <span className="font-semibold text-primary">
                     {searchesRemaining}<span className="text-muted-foreground">/{profile?.searches_limit || 10}</span>
                   </span>
                 </div>
-                <div className="hidden sm:block w-16 lg:w-24 h-2 bg-muted rounded-full overflow-hidden">
+                <div className="hidden sm:block w-12 lg:w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
                   />
                 </div>
-                <Link to="/upgrade">
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1">
+                <Link to="/reports">
                   <Button 
-                    variant="ghost" 
+                    variant="outline" 
                     size="sm" 
-                    className="h-6 sm:h-7 px-2 text-xs text-primary hover:text-primary"
+                    className="h-8 sm:h-9 px-2 sm:px-3 gap-1.5 border-border"
                   >
-                    <Crown size={14} className="sm:mr-1" />
-                    <span className="hidden sm:inline">Upgrade</span>
+                    <BarChart3 size={16} />
+                    <span className="hidden sm:inline text-sm">Relatórios</span>
                   </Button>
                 </Link>
-              </div>
 
-              <Link to="/reports">
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" title="Relatórios">
-                  <BarChart3 size={18} className="sm:w-5 sm:h-5" />
+                <Link to="/upgrade">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="h-8 sm:h-9 px-2 sm:px-3 gap-1.5"
+                  >
+                    <Crown size={16} />
+                    <span className="hidden sm:inline text-sm">Upgrade</span>
+                  </Button>
+                </Link>
+
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleLogout} 
+                  className="h-8 w-8 sm:h-9 sm:w-9 ml-1"
+                  title="Sair"
+                >
+                  <LogOut size={18} />
                 </Button>
-              </Link>
-
-              <div className="hidden lg:block text-sm text-muted-foreground">
-                Plano: <span className="font-medium text-foreground">{getPlanName(profile?.plan || 'free')}</span>
               </div>
-
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 sm:h-10 sm:w-10">
-                <LogOut size={18} className="sm:w-5 sm:h-5" />
-              </Button>
             </div>
           </div>
         </div>
