@@ -10,7 +10,7 @@ const plans = [
     description: "Ideal para começar a prospectar novos clientes",
     features: [
       "Até 200 buscas estratégicas/mês",
-      "Até 30 leads por busca",
+      "Até 50 leads por busca",
       "Download em Excel",
       "Dados completos dos leads",
       "Suporte por email",
@@ -24,7 +24,7 @@ const plans = [
     description: "Para profissionais que querem escalar resultados",
     features: [
       "Até 600 buscas estratégicas/mês",
-      "Até 30 leads por busca",
+      "Até 50 leads por busca",
       "Download em Excel",
       "Dados completos dos leads",
       "Suporte prioritário",
@@ -39,7 +39,7 @@ const plans = [
     description: "Para equipes e agências com alta demanda",
     features: [
       "Até 1.200 buscas estratégicas/mês",
-      "Até 30 leads por busca",
+      "Até 50 leads por busca",
       "Download em Excel",
       "Dados completos dos leads",
       "Suporte VIP",
@@ -54,29 +54,30 @@ export const PricingSection = () => {
   return (
     <section id="pricing" className="py-24 relative">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
             Planos que <span className="text-gradient">cabem no bolso</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Um único cliente fechado já paga o plano inteiro.
             Invista em prospecção previsível.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2 ${
+              className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
                 plan.popular
                   ? "bg-gradient-card border-2 border-primary shadow-glow"
                   : "glass"
               }`}
+              style={{ animationDelay: `${index * 0.15}s` }}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                  <div className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap">
                     <Sparkles size={14} />
                     Mais Popular
                   </div>
@@ -84,14 +85,14 @@ export const PricingSection = () => {
               )}
 
               <div className="mb-6">
-                <h3 className="font-display text-2xl font-bold mb-2">{plan.name}</h3>
+                <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">{plan.name}</h3>
                 <p className="text-muted-foreground text-sm">{plan.description}</p>
               </div>
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-sm text-muted-foreground">R$</span>
-                  <span className="font-display text-5xl font-bold">{plan.price}</span>
+                  <span className="font-display text-4xl sm:text-5xl font-bold">{plan.price}</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
                 <p className="text-sm text-primary mt-2">
@@ -101,8 +102,8 @@ export const PricingSection = () => {
 
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm">
-                    <Check size={18} className="text-primary flex-shrink-0" />
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
                     <span className="text-muted-foreground">{feature}</span>
                   </li>
                 ))}
@@ -121,7 +122,7 @@ export const PricingSection = () => {
           ))}
         </div>
 
-        <p className="text-center text-muted-foreground mt-12">
+        <p className="text-center text-muted-foreground mt-12 text-sm sm:text-base animate-fade-in" style={{ animationDelay: '0.5s' }}>
           Todos os planos incluem 10 buscas grátis para testar.
           Cancele quando quiser.
         </p>

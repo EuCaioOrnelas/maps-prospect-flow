@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const CTASection = () => {
@@ -8,12 +8,16 @@ export const CTASection = () => {
       <div className="absolute inset-0 bg-gradient-glow" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-display text-4xl md:text-6xl font-bold mb-6">
+        <div className="max-w-4xl mx-auto text-center animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+            <Zap size={16} className="text-primary" />
+            <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
+          </div>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6">
             Comece a prospectar{" "}
             <span className="text-gradient">agora mesmo</span>
           </h2>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Não perca mais tempo buscando leads manualmente.
             Experimente grátis e veja os resultados.
           </p>
