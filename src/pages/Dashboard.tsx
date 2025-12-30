@@ -19,12 +19,15 @@ import {
   Clock,
   Brain,
   Target,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from "xlsx";
 
 interface Lead {
   name: string;
@@ -46,6 +49,9 @@ interface SearchHistoryItem {
   created_at: string;
 }
 
+const RESULTS_PER_PAGE = 10;
+const HISTORY_PER_PAGE = 5;
+
 const Dashboard = () => {
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
@@ -54,11 +60,30 @@ const Dashboard = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  
+  // Pagination states
+  const [currentResultPage, setCurrentResultPage] = useState(1);
+  const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile, user } = useAuth();
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
+
+  // Calculate pagination for results
+  const totalResultPages = Math.ceil(leads.length / RESULTS_PER_PAGE);
+  const paginatedLeads = leads.slice(
+    (currentResultPage - 1) * RESULTS_PER_PAGE,
+    currentResultPage * RESULTS_PER_PAGE
+  );
+
+  // Calculate pagination for history
+  const totalHistoryPages = Math.ceil(searchHistory.length / HISTORY_PER_PAGE);
+  const paginatedHistory = searchHistory.slice(
+    (currentHistoryPage - 1) * HISTORY_PER_PAGE,
+    currentHistoryPage * HISTORY_PER_PAGE
+  );
 
   // Fetch search history
   useEffect(() => {
@@ -71,7 +96,7 @@ const Dashboard = () => {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(50);
 
         if (error) {
           console.error('Error fetching history:', error);
@@ -88,6 +113,11 @@ const Dashboard = () => {
 
     fetchHistory();
   }, [user]);
+
+  // Reset result page when leads change
+  useEffect(() => {
+    setCurrentResultPage(1);
+  }, [leads]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,10 +190,11 @@ const Dashboard = () => {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(50);
         
         if (historyData) {
           setSearchHistory(historyData);
+          setCurrentHistoryPage(1);
         }
       }
       
@@ -186,33 +217,44 @@ const Dashboard = () => {
   const handleExport = () => {
     if (leads.length === 0) return;
 
-    const headers = ["Nome", "Categoria", "Endereço", "Cidade", "Telefone", "Site", "Avaliação", "Nº Avaliações", "Link Maps"];
-    const csvContent = [
-      headers.join(","),
-      ...leads.map(lead => 
-        [
-          `"${lead.name}"`,
-          `"${lead.category}"`,
-          `"${lead.address}"`,
-          `"${lead.city}"`,
-          `"${lead.phone}"`,
-          `"${lead.website}"`,
-          lead.rating,
-          lead.reviewCount,
-          `"${lead.mapsLink}"`,
-        ].join(",")
-      ),
-    ].join("\n");
+    // Create worksheet data
+    const worksheetData = leads.map(lead => ({
+      'Nome': lead.name,
+      'Categoria': lead.category,
+      'Endereço': lead.address,
+      'Cidade': lead.city,
+      'Telefone': lead.phone,
+      'Site': lead.website,
+      'Avaliação': lead.rating,
+      'Nº Avaliações': lead.reviewCount,
+      'Link Maps': lead.mapsLink,
+    }));
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `leads-${keyword}-${location}.csv`;
-    link.click();
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 30 }, // Nome
+      { wch: 20 }, // Categoria
+      { wch: 40 }, // Endereço
+      { wch: 20 }, // Cidade
+      { wch: 15 }, // Telefone
+      { wch: 30 }, // Site
+      { wch: 10 }, // Avaliação
+      { wch: 12 }, // Nº Avaliações
+      { wch: 50 }, // Link Maps
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
+
+    // Generate and download file
+    XLSX.writeFile(workbook, `leads-${keyword}-${location}.xlsx`);
 
     toast({
       title: "Download iniciado!",
-      description: "Sua planilha de leads está sendo baixada",
+      description: "Sua planilha Excel está sendo baixada",
     });
   };
 
@@ -405,64 +447,95 @@ const Dashboard = () => {
                   </div>
 
                   {leads.length > 0 && (
-                    <div className="space-y-4">
-                      {leads.map((lead, index) => (
-                        <div
-                          key={index}
-                          className="glass rounded-xl p-5 hover:bg-card/90 transition-colors"
-                        >
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Building2 size={20} className="text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-lg">{lead.name}</h3>
-                                  <p className="text-sm text-muted-foreground">{lead.category}</p>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {lead.address} • {lead.city}
-                                  </p>
+                    <>
+                      <div className="space-y-4">
+                        {paginatedLeads.map((lead, index) => (
+                          <div
+                            key={index}
+                            className="glass rounded-xl p-5 hover:bg-card/90 transition-colors"
+                          >
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <Building2 size={20} className="text-primary" />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold text-lg">{lead.name}</h3>
+                                    <p className="text-sm text-muted-foreground">{lead.category}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      {lead.address} • {lead.city}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex flex-wrap items-center gap-4 text-sm">
-                              {lead.phone !== '-' && (
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Phone size={16} />
-                                  <span>{lead.phone}</span>
-                                </div>
-                              )}
-                              {lead.website !== "-" && lead.website !== '-' && (
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Globe size={16} />
-                                  <span className="truncate max-w-[150px]">{lead.website}</span>
-                                </div>
-                              )}
-                              {lead.rating > 0 && (
-                                <div className="flex items-center gap-1 text-warning">
-                                  <Star size={16} fill="currentColor" />
-                                  <span className="font-medium">{lead.rating}</span>
-                                  <span className="text-muted-foreground">({lead.reviewCount})</span>
-                                </div>
-                              )}
-                              {lead.mapsLink !== '-' && (
-                                <a
-                                  href={lead.mapsLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-primary hover:underline"
-                                >
-                                  <ExternalLink size={16} />
-                                  Ver no Maps
-                                </a>
-                              )}
+                              <div className="flex flex-wrap items-center gap-4 text-sm">
+                                {lead.phone !== '-' && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Phone size={16} />
+                                    <span>{lead.phone}</span>
+                                  </div>
+                                )}
+                                {lead.website !== "-" && lead.website !== '-' && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Globe size={16} />
+                                    <span className="truncate max-w-[150px]">{lead.website}</span>
+                                  </div>
+                                )}
+                                {lead.rating > 0 && (
+                                  <div className="flex items-center gap-1 text-warning">
+                                    <Star size={16} fill="currentColor" />
+                                    <span className="font-medium">{lead.rating}</span>
+                                    <span className="text-muted-foreground">({lead.reviewCount})</span>
+                                  </div>
+                                )}
+                                {lead.mapsLink !== '-' && (
+                                  <a
+                                    href={lead.mapsLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-primary hover:underline"
+                                  >
+                                    <ExternalLink size={16} />
+                                    Ver no Maps
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </div>
+                        ))}
+                      </div>
+
+                      {/* Results Pagination */}
+                      {totalResultPages > 1 && (
+                        <div className="flex items-center justify-center gap-4 mt-6">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentResultPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentResultPage === 1}
+                            className="gap-2"
+                          >
+                            <ChevronLeft size={16} />
+                            Anterior
+                          </Button>
+                          <span className="text-sm text-muted-foreground">
+                            Página {currentResultPage} de {totalResultPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentResultPage(prev => Math.min(totalResultPages, prev + 1))}
+                            disabled={currentResultPage === totalResultPages}
+                            className="gap-2"
+                          >
+                            Próxima
+                            <ChevronRight size={16} />
+                          </Button>
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -487,47 +560,68 @@ const Dashboard = () => {
             <div className="lg:col-span-1">
               <div className="glass rounded-2xl p-5 sticky top-8">
                 <div className="flex items-center gap-2 mb-4">
-                  <History size={20} className="text-primary" />
-                  <h3 className="font-display font-semibold">Histórico de Buscas</h3>
+                  <History size={18} className="text-primary" />
+                  <h3 className="font-semibold">Histórico de Buscas</h3>
                 </div>
 
                 {loadingHistory ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 size={24} className="text-primary animate-spin" />
+                    <Loader2 size={24} className="animate-spin text-primary" />
                   </div>
                 ) : searchHistory.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Clock size={32} className="text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Nenhuma busca realizada ainda
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhuma busca realizada ainda
+                  </p>
                 ) : (
-                  <div className="space-y-3">
-                    {searchHistory.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleHistoryClick(item)}
-                        className="w-full text-left p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{item.keyword}</p>
-                            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                              <MapPin size={12} />
-                              {item.location}
-                            </p>
+                  <>
+                    <div className="space-y-3">
+                      {paginatedHistory.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleHistoryClick(item)}
+                          className="w-full text-left p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                        >
+                          <p className="font-medium text-sm truncate">{item.keyword}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {item.location}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <Clock size={12} />
+                            <span>{formatDate(item.created_at)}</span>
+                            <span>•</span>
+                            <span>{item.results_count} resultados</span>
                           </div>
-                          <span className="text-xs text-primary font-medium whitespace-nowrap">
-                            {item.results_count} leads
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatDate(item.created_at)}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* History Pagination */}
+                    {totalHistoryPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentHistoryPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentHistoryPage === 1}
+                          className="h-8 px-2"
+                        >
+                          <ChevronLeft size={14} />
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          {currentHistoryPage}/{totalHistoryPages}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
+                          disabled={currentHistoryPage === totalHistoryPages}
+                          className="h-8 px-2"
+                        >
+                          <ChevronRight size={14} />
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
