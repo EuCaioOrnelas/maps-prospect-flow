@@ -6,6 +6,7 @@ const plans = [
   {
     name: "Start",
     price: "69",
+    anchorPrice: "129",
     searches: "200",
     description: "Ideal para começar a prospectar novos clientes",
     features: [
@@ -20,6 +21,7 @@ const plans = [
   {
     name: "Growth",
     price: "197",
+    anchorPrice: "397",
     searches: "600",
     description: "Para profissionais que querem escalar resultados",
     features: [
@@ -35,6 +37,7 @@ const plans = [
   {
     name: "Scale",
     price: "397",
+    anchorPrice: "797",
     searches: "1.200",
     description: "Para equipes e agências com alta demanda",
     features: [
@@ -90,6 +93,9 @@ export const PricingSection = () => {
               </div>
 
               <div className="mb-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm text-muted-foreground line-through">R$ {plan.anchorPrice}</span>
+                </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-sm text-muted-foreground">R$</span>
                   <span className="font-display text-4xl sm:text-5xl font-bold">{plan.price}</span>
