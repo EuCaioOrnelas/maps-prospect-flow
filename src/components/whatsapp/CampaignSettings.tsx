@@ -14,9 +14,12 @@ import {
   FileText,
   Send,
   WifiOff,
-  CalendarClock
+  CalendarClock,
+  Smartphone
 } from "lucide-react";
 import { CampaignScheduler } from "./CampaignScheduler";
+import { NumberSelector } from "./NumberSelector";
+import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
 interface CampaignSettingsProps {
   campaignName: string;
@@ -40,6 +43,11 @@ interface CampaignSettingsProps {
   canProceed: boolean;
   isConnected: boolean;
   totalLeads: number;
+  // Number selection props
+  numbers?: WhatsAppNumber[];
+  selectedNumberId?: string | null;
+  onSelectNumber?: (numberId: string | null) => void;
+  dailyLimit?: number;
 }
 
 export const CampaignSettings = ({
@@ -63,7 +71,11 @@ export const CampaignSettings = ({
   onStartCampaign,
   canProceed,
   isConnected,
-  totalLeads
+  totalLeads,
+  numbers = [],
+  selectedNumberId = null,
+  onSelectNumber,
+  dailyLimit = 200
 }: CampaignSettingsProps) => {
   
   const formatTime = (seconds: number) => {
@@ -243,6 +255,16 @@ export const CampaignSettings = ({
               </p>
             </div>
           </div>
+        )}
+
+        {/* Number Selector */}
+        {onSelectNumber && (
+          <NumberSelector
+            numbers={numbers}
+            selectedNumberId={selectedNumberId}
+            onSelectNumber={onSelectNumber}
+            dailyLimit={dailyLimit}
+          />
         )}
 
         {/* Campaign Scheduler */}

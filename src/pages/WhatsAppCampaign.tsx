@@ -29,7 +29,7 @@ import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
 import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
-import { ConnectedNumbers } from "@/components/whatsapp/ConnectedNumbers";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
 export interface Lead {
@@ -125,7 +125,7 @@ const WhatsAppCampaign = () => {
 
   const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && selectedNumberId;
+  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && !!selectedNumberId;
 
   // Fetch campaigns history
   useEffect(() => {
@@ -541,12 +541,11 @@ const WhatsAppCampaign = () => {
                 </Button>
               </Link>
               
-              <ConnectedNumbers
-                selectedNumberId={selectedNumberId}
-                onSelectNumber={setSelectedNumberId}
+              <NumbersManager
                 numbers={numbers}
                 onNumbersChange={setNumbers}
                 maxNumbers={maxNumbers}
+                onConnect={setSelectedNumberId}
               />
             </div>
           </div>
@@ -642,6 +641,10 @@ const WhatsAppCampaign = () => {
                   canProceed={canStartCampaign}
                   isConnected={isConnected}
                   totalLeads={selectedLeads.length}
+                  numbers={numbers}
+                  selectedNumberId={selectedNumberId}
+                  onSelectNumber={setSelectedNumberId}
+                  dailyLimit={dailyLimit}
                 />
               )}
 
