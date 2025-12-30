@@ -301,98 +301,271 @@ const Reports = () => {
     const margin = 15;
     let yPos = margin;
 
-    // Background white (default)
+    // Colors
+    const primaryColor = { r: 34, g: 197, b: 94 }; // #22c55e
+    const darkGray = { r: 31, g: 41, b: 55 };
+    const lightGray = { r: 249, g: 250, b: 251 };
+    const mediumGray = { r: 107, g: 114, b: 128 };
+
+    // Background
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-    // Title
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(24);
+    // Header bar with gradient effect
+    pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    pdf.rect(0, 0, pageWidth, 25, 'F');
+
+    // Logo/Brand text
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Relatório de Prospecção', margin, yPos + 10);
-    
-    // Date and filter
+    pdf.text('LeadHunter Pro', margin, 16);
+
+    // Header right - date
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(100, 100, 100);
     const filterText = dateFilter === 'all' ? 'Todo período' : 
                        dateFilter === '7days' ? 'Últimos 7 dias' :
                        dateFilter === '30days' ? 'Últimos 30 dias' : 'Últimos 90 dias';
-    pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} | Período: ${filterText}`, margin, yPos + 18);
-    
-    yPos += 30;
+    pdf.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} • ${filterText}`, pageWidth - margin - 80, 16);
 
-    // Stats boxes
-    pdf.setFillColor(245, 245, 245);
-    const boxWidth = (pageWidth - margin * 2 - 15) / 4;
-    const boxHeight = 25;
+    yPos = 35;
+
+    // Title section
+    pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    pdf.setFontSize(28);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Relatório de Prospecção', margin, yPos + 5);
+    
+    yPos += 18;
+
+    // Stats cards with colored accents
+    const cardWidth = (pageWidth - margin * 2 - 15) / 4;
+    const cardHeight = 32;
     
     const statsData = [
-      { label: 'Total de Buscas', value: stats.totalSearches.toString() },
-      { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR') },
-      { label: 'Média por Busca', value: stats.avgLeadsPerSearch.toString() },
-      { label: 'Nichos Explorados', value: stats.topNiches.length.toString() },
+      { label: 'Total de Buscas', value: stats.totalSearches.toString(), icon: '🔍', color: { r: 34, g: 197, b: 94 } },
+      { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR'), icon: '👥', color: { r: 6, g: 182, b: 212 } },
+      { label: 'Média por Busca', value: stats.avgLeadsPerSearch.toString(), icon: '📈', color: { r: 139, g: 92, b: 246 } },
+      { label: 'Nichos Explorados', value: stats.topNiches.length.toString(), icon: '🎯', color: { r: 249, g: 115, b: 22 } },
     ];
 
     statsData.forEach((stat, i) => {
-      const xPos = margin + (boxWidth + 5) * i;
-      pdf.setFillColor(245, 245, 245);
-      pdf.roundedRect(xPos, yPos, boxWidth, boxHeight, 3, 3, 'F');
+      const xPos = margin + (cardWidth + 5) * i;
       
-      pdf.setTextColor(100, 100, 100);
+      // Card background
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(xPos, yPos, cardWidth, cardHeight, 4, 4, 'F');
+      
+      // Left accent bar
+      pdf.setFillColor(stat.color.r, stat.color.g, stat.color.b);
+      pdf.roundedRect(xPos, yPos, 4, cardHeight, 2, 2, 'F');
+      
+      // Label
+      pdf.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
       pdf.setFontSize(9);
-      pdf.text(stat.label, xPos + 5, yPos + 8);
-      
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(stat.value, xPos + 5, yPos + 19);
       pdf.setFont('helvetica', 'normal');
+      pdf.text(stat.label, xPos + 10, yPos + 10);
+      
+      // Value
+      pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(stat.value, xPos + 10, yPos + 25);
     });
 
-    yPos += boxHeight + 15;
+    yPos += cardHeight + 15;
 
-    // Two columns layout
-    const colWidth = (pageWidth - margin * 2 - 10) / 2;
+    // Two columns section
+    const colWidth = (pageWidth - margin * 2 - 20) / 2;
+    const leftCol = margin;
+    const rightCol = margin + colWidth + 20;
 
-    // Top Niches
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Nichos Mais Prospectados', margin, yPos);
-    pdf.setFont('helvetica', 'normal');
+    // Section: Nichos Mais Prospectados
+    pdf.setFillColor(248, 250, 252);
+    pdf.roundedRect(leftCol, yPos, colWidth, 85, 4, 4, 'F');
     
-    yPos += 8;
-    stats.topNiches.forEach((niche, i) => {
-      pdf.setFontSize(10);
-      pdf.setTextColor(60, 60, 60);
-      const text = `${i + 1}. ${niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 25)}`;
-      pdf.text(text, margin + 5, yPos + (i * 7));
-      pdf.text(`${niche.count} buscas`, margin + colWidth - 30, yPos + (i * 7));
+    // Section header
+    pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    pdf.roundedRect(leftCol, yPos, colWidth, 12, 4, 4, 'F');
+    pdf.rect(leftCol, yPos + 6, colWidth, 6, 'F'); // Square bottom corners
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('🎯 Nichos Mais Prospectados', leftCol + 8, yPos + 8);
+    
+    // Niches list
+    let nicheY = yPos + 20;
+    stats.topNiches.slice(0, 6).forEach((niche, i) => {
+      const barWidth = Math.max(20, (niche.count / (stats.topNiches[0]?.count || 1)) * (colWidth - 50));
+      
+      // Position number badge
+      pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.circle(leftCol + 12, nicheY, 4, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${i + 1}`, leftCol + 10.5, nicheY + 1.5);
+      
+      // Niche name
+      pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      const nicheName = niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 18);
+      pdf.text(nicheName, leftCol + 20, nicheY + 1);
+      
+      // Progress bar background
+      pdf.setFillColor(229, 231, 235);
+      pdf.roundedRect(leftCol + 60, nicheY - 3, colWidth - 85, 5, 2, 2, 'F');
+      
+      // Progress bar fill
+      pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.roundedRect(leftCol + 60, nicheY - 3, Math.min(barWidth, colWidth - 85), 5, 2, 2, 'F');
+      
+      // Count
+      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${niche.count}`, leftCol + colWidth - 15, nicheY + 1);
+      
+      nicheY += 11;
     });
 
-    // Top Regions
-    const col2X = margin + colWidth + 10;
-    let yPosCol2 = yPos - 8;
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Regiões Mais Prospectadas', col2X, yPosCol2);
-    pdf.setFont('helvetica', 'normal');
+    // Section: Regiões Mais Prospectadas
+    pdf.setFillColor(248, 250, 252);
+    pdf.roundedRect(rightCol, yPos, colWidth, 85, 4, 4, 'F');
     
-    yPosCol2 += 8;
-    stats.topRegions.forEach((region, i) => {
-      pdf.setFontSize(10);
-      pdf.setTextColor(60, 60, 60);
-      const text = `${i + 1}. ${region.name.charAt(0).toUpperCase() + region.name.slice(0, 25)}`;
-      pdf.text(text, col2X + 5, yPosCol2 + (i * 7));
-      pdf.text(`${region.count} buscas`, col2X + colWidth - 30, yPosCol2 + (i * 7));
+    // Section header
+    pdf.setFillColor(6, 182, 212);
+    pdf.roundedRect(rightCol, yPos, colWidth, 12, 4, 4, 'F');
+    pdf.rect(rightCol, yPos + 6, colWidth, 6, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('📍 Regiões Mais Prospectadas', rightCol + 8, yPos + 8);
+    
+    // Regions list
+    let regionY = yPos + 20;
+    stats.topRegions.slice(0, 6).forEach((region, i) => {
+      const barWidth = Math.max(20, (region.count / (stats.topRegions[0]?.count || 1)) * (colWidth - 50));
+      
+      // Position number badge
+      pdf.setFillColor(6, 182, 212);
+      pdf.circle(rightCol + 12, regionY, 4, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${i + 1}`, rightCol + 10.5, regionY + 1.5);
+      
+      // Region name
+      pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      const regionName = region.name.charAt(0).toUpperCase() + region.name.slice(0, 18);
+      pdf.text(regionName, rightCol + 20, regionY + 1);
+      
+      // Progress bar background
+      pdf.setFillColor(229, 231, 235);
+      pdf.roundedRect(rightCol + 60, regionY - 3, colWidth - 85, 5, 2, 2, 'F');
+      
+      // Progress bar fill
+      pdf.setFillColor(6, 182, 212);
+      pdf.roundedRect(rightCol + 60, regionY - 3, Math.min(barWidth, colWidth - 85), 5, 2, 2, 'F');
+      
+      // Count
+      pdf.setTextColor(6, 182, 212);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${region.count}`, rightCol + colWidth - 15, regionY + 1);
+      
+      regionY += 11;
     });
+
+    yPos += 95;
+
+    // Leads by Niche section (horizontal bar chart simulation)
+    if (stats.nichesByLeads.length > 0) {
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(leftCol, yPos, colWidth, 55, 4, 4, 'F');
+      
+      pdf.setFillColor(139, 92, 246);
+      pdf.roundedRect(leftCol, yPos, colWidth, 10, 4, 4, 'F');
+      pdf.rect(leftCol, yPos + 5, colWidth, 5, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('📊 Leads por Nicho', leftCol + 8, yPos + 7);
+
+      let leadY = yPos + 17;
+      stats.nichesByLeads.slice(0, 4).forEach((niche, i) => {
+        const barWidth = Math.max(30, (niche.leads / (stats.nichesByLeads[0]?.leads || 1)) * (colWidth - 45));
+        
+        pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(niche.name.slice(0, 15), leftCol + 5, leadY + 1);
+        
+        pdf.setFillColor(229, 231, 235);
+        pdf.roundedRect(leftCol + 40, leadY - 3, colWidth - 55, 5, 2, 2, 'F');
+        
+        pdf.setFillColor(139, 92, 246);
+        pdf.roundedRect(leftCol + 40, leadY - 3, Math.min(barWidth, colWidth - 55), 5, 2, 2, 'F');
+        
+        pdf.setTextColor(139, 92, 246);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${niche.leads}`, leftCol + colWidth - 12, leadY + 1);
+        
+        leadY += 9;
+      });
+    }
+
+    // Leads by Region section
+    if (stats.regionsByLeads.length > 0) {
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(rightCol, yPos, colWidth, 55, 4, 4, 'F');
+      
+      pdf.setFillColor(249, 115, 22);
+      pdf.roundedRect(rightCol, yPos, colWidth, 10, 4, 4, 'F');
+      pdf.rect(rightCol, yPos + 5, colWidth, 5, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('🌍 Leads por Região', rightCol + 8, yPos + 7);
+
+      let leadRegionY = yPos + 17;
+      stats.regionsByLeads.slice(0, 4).forEach((region, i) => {
+        const barWidth = Math.max(30, (region.leads / (stats.regionsByLeads[0]?.leads || 1)) * (colWidth - 45));
+        
+        pdf.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(region.name.slice(0, 15), rightCol + 5, leadRegionY + 1);
+        
+        pdf.setFillColor(229, 231, 235);
+        pdf.roundedRect(rightCol + 40, leadRegionY - 3, colWidth - 55, 5, 2, 2, 'F');
+        
+        pdf.setFillColor(249, 115, 22);
+        pdf.roundedRect(rightCol + 40, leadRegionY - 3, Math.min(barWidth, colWidth - 55), 5, 2, 2, 'F');
+        
+        pdf.setTextColor(249, 115, 22);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${region.leads}`, rightCol + colWidth - 12, leadRegionY + 1);
+        
+        leadRegionY += 9;
+      });
+    }
 
     // Footer
+    pdf.setFillColor(darkGray.r, darkGray.g, darkGray.b);
+    pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
-    pdf.text('Gerado por LeadHunter Pro', margin, pageHeight - 10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Relatório gerado automaticamente pelo LeadHunter Pro', margin, pageHeight - 5);
+    pdf.text(`© ${new Date().getFullYear()} LeadHunter Pro - Todos os direitos reservados`, pageWidth - margin - 75, pageHeight - 5);
 
     // Save
     pdf.save(`relatorio-prospeccao-${new Date().toISOString().split('T')[0]}.pdf`);
@@ -524,12 +697,13 @@ const Reports = () => {
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
+                          backgroundColor: '#1f2937', 
+                          border: '1px solid #374151',
                           borderRadius: '8px',
-                          color: 'hsl(var(--foreground))'
+                          color: '#f9fafb'
                         }}
-                        cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+                        labelStyle={{ color: '#f9fafb' }}
+                        cursor={{ fill: 'rgba(55, 65, 81, 0.5)' }}
                       />
                       <Legend />
                       <Bar dataKey="searches" name="Buscas" fill="#22c55e" radius={[4, 4, 0, 0]} />
@@ -574,11 +748,12 @@ const Reports = () => {
                       </Pie>
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
+                          backgroundColor: '#1f2937', 
+                          border: '1px solid #374151',
                           borderRadius: '8px',
-                          color: 'hsl(var(--foreground))'
+                          color: '#f9fafb'
                         }}
+                        itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} buscas`, 'Quantidade']}
                       />
                     </RechartsPie>
@@ -622,11 +797,12 @@ const Reports = () => {
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
+                          backgroundColor: '#1f2937', 
+                          border: '1px solid #374151',
                           borderRadius: '8px',
-                          color: 'hsl(var(--foreground))'
+                          color: '#f9fafb'
                         }}
+                        itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
                       <Bar dataKey="leads" fill="#22c55e" radius={[0, 4, 4, 0]} />
@@ -668,11 +844,12 @@ const Reports = () => {
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
+                          backgroundColor: '#1f2937', 
+                          border: '1px solid #374151',
                           borderRadius: '8px',
-                          color: 'hsl(var(--foreground))'
+                          color: '#f9fafb'
                         }}
+                        itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
                       <Bar dataKey="leads" fill="#14b8a6" radius={[0, 4, 4, 0]} />
