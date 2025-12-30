@@ -381,35 +381,27 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Logo size="md" />
             
-            <div className="flex items-center gap-3 sm:gap-5">
-              {/* Credits indicator - more detailed */}
-              <div className="flex items-center gap-3 bg-secondary/80 rounded-xl px-3 sm:px-4 py-2.5 border border-border/50">
-                <div className="flex flex-col">
-                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Buscas restantes</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg sm:text-xl font-bold text-primary">
-                      {searchesRemaining}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      de {profile?.searches_limit || 10}
-                    </span>
-                  </div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Credits indicator - clean and slim */}
+              <div className="flex items-center gap-2 text-sm">
+                <Search size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Buscas:</span>
+                <span className="font-semibold text-primary">{searchesRemaining}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
+                <div className="hidden sm:block w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
+                  />
                 </div>
-                <div className="hidden sm:flex flex-col gap-1">
-                  <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground text-center">
-                    {getPlanName(profile?.plan || 'free')}
-                  </span>
-                </div>
+                <span className="hidden md:inline text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
+                  {getPlanName(profile?.plan || 'free')}
+                </span>
               </div>
 
               {/* Action buttons with proper spacing */}
