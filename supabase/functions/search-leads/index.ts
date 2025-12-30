@@ -115,9 +115,9 @@ serve(async (req) => {
     const serpData = await serpResponse.json();
     console.log('SERP API response received, local_results:', serpData.local_results?.length || 0);
 
-    // Parse leads from SERP response (limit to 20-30 leads)
+    // Parse leads from SERP response (limit to 50 leads - curated results)
     const localResults = serpData.local_results || [];
-    const maxLeads = 25;
+    const maxLeads = 50;
     const leads: Lead[] = localResults.slice(0, maxLeads).map((result: any) => ({
       name: result.title || '-',
       category: result.type || result.types?.[0] || '-',

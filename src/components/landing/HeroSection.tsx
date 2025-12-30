@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap } from "lucide-react";
+import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const HeroSection = () => {
@@ -15,23 +15,42 @@ export const HeroSection = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-in">
-            <Zap size={16} className="text-primary" />
+            <Brain size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">
-              Encontre clientes no Google Maps em segundos
+              IA que identifica leads com maior potencial de conversão
             </span>
           </div>
 
           {/* Main heading */}
           <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            Prospecção de Leads{" "}
-            <span className="text-gradient">Estratégica</span>
+            Prospecção{" "}
+            <span className="text-gradient">Inteligente</span>
+            {" "}com IA
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            Transforme o Google Maps em sua maior fonte de novos clientes.
-            Buscas inteligentes, leads qualificados, resultados previsíveis.
+          <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
+            empresas ativas, com contatos verificados e alto potencial de conversão.
           </p>
+
+          {/* AI Value Proposition */}
+          <div className="glass rounded-xl px-6 py-4 mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-sm">
+              <div className="flex items-center gap-2">
+                <Target size={18} className="text-primary" />
+                <span>Leads pré-qualificados</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp size={18} className="text-primary" />
+                <span>Maior taxa de conversão</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap size={18} className="text-primary" />
+                <span>Até 50 leads por busca</span>
+              </div>
+            </div>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up" style={{ animationDelay: "0.3s" }}>
@@ -103,5 +122,3 @@ export const HeroSection = () => {
     </section>
   );
 };
-
-import { MapPin } from "lucide-react";

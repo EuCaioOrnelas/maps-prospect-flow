@@ -1,35 +1,35 @@
-import { Search, MapPin, Download, Zap, Shield, Clock } from "lucide-react";
+import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle } from "lucide-react";
 
 const features = [
   {
-    icon: Search,
-    title: "Busca Inteligente",
-    description: "Encontre empresas e profissionais usando palavras-chave estratégicas diretamente do Google Maps.",
+    icon: Brain,
+    title: "Curadoria com IA",
+    description: "Nossa inteligência artificial analisa e filtra resultados para entregar apenas empresas ativas com maior potencial de conversão.",
+  },
+  {
+    icon: Target,
+    title: "Leads Pré-Qualificados",
+    description: "Cada lead é estrategicamente selecionado: contatos verificados, avaliações reais e histórico de atividade recente.",
   },
   {
     icon: MapPin,
     title: "Segmentação Geográfica",
-    description: "Filtre por cidade, bairro ou região para encontrar leads exatamente onde você precisa.",
+    description: "Filtre por cidade, bairro ou região para encontrar leads exatamente onde você precisa atuar.",
   },
   {
     icon: Download,
-    title: "Exportação Instantânea",
-    description: "Baixe todos os leads em planilha Excel pronta para uso, com dados completos e organizados.",
-  },
-  {
-    icon: Zap,
-    title: "Resultados em Segundos",
-    description: "Economize horas de trabalho manual. Cada busca retorna até 30 leads qualificados.",
+    title: "Até 50 Leads por Busca",
+    description: "Cada busca estratégica retorna até 50 leads qualificados, prontos para download em planilha Excel.",
   },
   {
     icon: Shield,
     title: "Dados Verificados",
-    description: "Informações reais extraídas do Google Maps: telefone, site, avaliações e endereço.",
+    description: "Informações reais extraídas do Google Maps: telefone, site, avaliações e endereço atualizados.",
   },
   {
-    icon: Clock,
-    title: "Prospecção Previsível",
-    description: "Tenha um fluxo constante de novos leads todo mês com buscas estratégicas ilimitadas.",
+    icon: TrendingUp,
+    title: "Maior Taxa de Conversão",
+    description: "Leads curados significam menos tempo desperdiçado e mais oportunidades reais de negócio fechado.",
   },
 ];
 
@@ -39,14 +39,52 @@ export const FeaturesSection = () => {
       <div className="absolute inset-0 bg-gradient-glow opacity-30" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-16">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+            <Brain size={16} className="text-primary" />
+            <span className="text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
+          </div>
           <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-            Tudo que você precisa para{" "}
-            <span className="text-gradient">prospectar</span>
+            Por que leads{" "}
+            <span className="text-gradient">estratégicos</span>?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Ferramentas profissionais para encontrar e organizar leads de forma eficiente
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Quantidade não é qualidade. Nossa IA analisa milhares de empresas e entrega apenas as que têm 
+            maior probabilidade de se tornarem seus clientes.
           </p>
+        </div>
+
+        {/* AI Value Block */}
+        <div className="glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Zap size={24} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-display text-xl font-semibold mb-2">
+                Menos leads, mais resultados
+              </h3>
+              <p className="text-muted-foreground">
+                Em vez de entregar centenas de contatos desatualizados, o Prospex entrega até 50 leads 
+                estrategicamente selecionados por busca — empresas com atividade recente, 
+                avaliações positivas e informações de contato verificadas.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-4">
+              <CheckCircle size={20} className="text-primary" />
+              <span className="text-sm">Empresas com atividade recente</span>
+            </div>
+            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-4">
+              <CheckCircle size={20} className="text-primary" />
+              <span className="text-sm">Contatos ativos e verificados</span>
+            </div>
+            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-4">
+              <CheckCircle size={20} className="text-primary" />
+              <span className="text-sm">Alto potencial de conversão</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
