@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const plans = [
   {
@@ -54,10 +55,20 @@ const plans = [
 ];
 
 export const PricingSection = () => {
+  const { ref, isVisible } = useScrollAnimation();
+  
   return (
-    <section id="pricing" className="py-24 relative">
+    <section 
+      id="pricing" 
+      className="py-24 relative"
+      ref={ref as React.RefObject<HTMLElement>}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
+        <div 
+          className={`text-center mb-16 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
             Planos que <span className="text-gradient">cabem no bolso</span>
           </h2>
@@ -71,12 +82,12 @@ export const PricingSection = () => {
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
+              className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-500 hover:-translate-y-2 ${
                 plan.popular
                   ? "bg-gradient-card border-2 border-primary shadow-glow"
                   : "glass"
-              }`}
-              style={{ animationDelay: `${index * 0.15}s` }}
+              } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              style={{ transitionDelay: `${150 + index * 100}ms` }}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -131,7 +142,11 @@ export const PricingSection = () => {
           ))}
         </div>
 
-        <p className="text-center text-muted-foreground mt-12 text-sm sm:text-base animate-fade-in" style={{ animationDelay: '0.5s' }}>
+        <p 
+          className={`text-center text-muted-foreground mt-12 text-sm sm:text-base transition-all duration-700 delay-500 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           Todos os planos incluem 10 buscas grátis para testar.
           Cancele quando quiser.
         </p>
