@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const faqs = [
   {
@@ -42,12 +43,22 @@ const faqs = [
 ];
 
 export const FAQSection = () => {
+  const { ref, isVisible } = useScrollAnimation();
+  
   return (
-    <section id="faq" className="py-24 relative">
+    <section 
+      id="faq" 
+      className="py-24 relative"
+      ref={ref as React.RefObject<HTMLElement>}
+    >
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-16 animate-fade-in">
+        <div 
+          className={`text-center mb-16 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
             <HelpCircle size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">Dúvidas Frequentes</span>
@@ -66,8 +77,10 @@ export const FAQSection = () => {
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="glass rounded-xl px-6 border-none animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className={`glass rounded-xl px-6 border-none transition-all duration-500 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+                style={{ transitionDelay: `${150 + index * 75}ms` }}
               >
                 <AccordionTrigger className="text-left font-display font-semibold hover:no-underline py-5">
                   {faq.question}

@@ -1,4 +1,5 @@
 import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const features = [
   {
@@ -34,12 +35,22 @@ const features = [
 ];
 
 export const FeaturesSection = () => {
+  const { ref, isVisible } = useScrollAnimation();
+  
   return (
-    <section id="features" className="py-24 relative">
+    <section 
+      id="features" 
+      className="py-24 relative"
+      ref={ref as React.RefObject<HTMLElement>}
+    >
       <div className="absolute inset-0 bg-gradient-glow opacity-30" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-8">
+        <div 
+          className={`text-center mb-8 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
             <Brain size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
@@ -55,7 +66,11 @@ export const FeaturesSection = () => {
         </div>
 
         {/* AI Value Block */}
-        <div className="glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto">
+        <div 
+          className={`glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto transition-all duration-700 delay-150 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <div className="flex items-start gap-4 mb-6">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Zap size={24} className="text-primary" />
@@ -91,8 +106,10 @@ export const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group glass rounded-2xl p-8 hover:bg-card/90 transition-all duration-300 hover:-translate-y-1"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`group glass rounded-2xl p-8 hover:bg-card/90 transition-all duration-500 hover:-translate-y-1 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+              style={{ transitionDelay: `${200 + index * 100}ms` }}
             >
               <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
                 <feature.icon size={28} className="text-primary" />
