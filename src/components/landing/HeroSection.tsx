@@ -1,15 +1,55 @@
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const HeroSection = () => {
+  const [scrollY, setScrollY] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const parallaxOffset = scrollY * 0.3;
+  const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
+  const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-hero" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-glow opacity-50" />
-      <div className="absolute top-20 right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow" />
-      <div className="absolute bottom-40 left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow" style={{ animationDelay: "0.5s" }} />
+    <section 
+      ref={sectionRef}
+      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden"
+    >
+      {/* Parallax Background effects */}
+      <div 
+        className="absolute inset-0 bg-gradient-hero will-change-transform"
+        style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
+      />
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-glow opacity-50 will-change-transform"
+        style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
+      />
+      <div 
+        className="absolute top-20 right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
+        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
+      />
+      <div 
+        className="absolute bottom-40 left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
+        style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
+      />
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
@@ -84,11 +124,21 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Dashboard preview */}
-        <div className="mt-20 max-w-5xl mx-auto animate-slide-up" style={{ animationDelay: "0.5s" }}>
+        {/* Dashboard preview with parallax */}
+        <div 
+          className="mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform" 
+          style={{ 
+            animationDelay: "0.5s",
+            transform: `translateY(${-parallaxOffset * 0.1}px) scale(${imageScale})`,
+            opacity: imageOpacity
+          }}
+        >
           <div className="relative">
-            <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl" />
-            <div className="relative glass rounded-2xl p-6 shadow-card">
+            <div 
+              className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl will-change-transform"
+              style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
+            />
+            <div className="relative glass rounded-2xl p-6 shadow-card hover:shadow-glow transition-shadow duration-500">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-3 h-3 rounded-full bg-destructive/60" />
                 <div className="w-3 h-3 rounded-full bg-warning/60" />
