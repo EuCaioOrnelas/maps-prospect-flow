@@ -36,6 +36,9 @@ export const Navbar = () => {
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Recursos
               </a>
+              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
+                Depoimentos
+              </a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Planos
               </a>
@@ -76,6 +79,13 @@ export const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Recursos
+                </a>
+                <a 
+                  href="#testimonials" 
+                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Depoimentos
                 </a>
                 <a 
                   href="#pricing" 
