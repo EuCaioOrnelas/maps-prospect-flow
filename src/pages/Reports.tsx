@@ -313,7 +313,7 @@ const Reports = () => {
 
     // Title and date on same line
     pdf.setTextColor(dark.r, dark.g, dark.b);
-    pdf.setFontSize(22);
+    pdf.setFontSize(20);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Relatorio de Prospeccao', margin, yPos + 5);
     
@@ -325,12 +325,11 @@ const Reports = () => {
                        dateFilter === '30days' ? 'Ultimos 30 dias' : 'Ultimos 90 dias';
     pdf.text(`${new Date().toLocaleDateString('pt-BR')} | ${filterText}`, pageWidth - margin - 45, yPos + 5);
     
-    // Green line under title
-    pdf.setDrawColor(primary.r, primary.g, primary.b);
-    pdf.setLineWidth(0.8);
-    pdf.line(margin, yPos + 10, pageWidth - margin, yPos + 10);
+    // Green rounded line under title
+    pdf.setFillColor(primary.r, primary.g, primary.b);
+    pdf.roundedRect(margin, yPos + 9, pageWidth - margin * 2, 2, 1, 1, 'F');
 
-    yPos += 20;
+    yPos += 18;
 
     // Stats cards - 4 in a row
     const cardWidth = (pageWidth - margin * 2 - 9) / 4;
@@ -348,23 +347,23 @@ const Reports = () => {
       
       // Card background
       pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(xPos, yPos, cardWidth, cardHeight, 2, 2, 'F');
+      pdf.roundedRect(xPos, yPos, cardWidth, cardHeight, 3, 3, 'F');
       
-      // Left green bar
+      // Left green bar rounded
       pdf.setFillColor(primary.r, primary.g, primary.b);
-      pdf.rect(xPos, yPos + 2, 2.5, cardHeight - 4, 'F');
+      pdf.roundedRect(xPos, yPos, 3, cardHeight, 1.5, 1.5, 'F');
       
       // Label
       pdf.setTextColor(gray.r, gray.g, gray.b);
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(stat.label, xPos + 7, yPos + 7);
+      pdf.text(stat.label, xPos + 8, yPos + 7);
       
       // Value
       pdf.setTextColor(dark.r, dark.g, dark.b);
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(stat.value, xPos + 7, yPos + 17);
+      pdf.text(stat.value, xPos + 8, yPos + 17);
     });
 
     yPos += cardHeight + 10;
@@ -373,11 +372,13 @@ const Reports = () => {
     const colWidth = (pageWidth - margin * 2 - 8) / 2;
     const leftCol = margin;
     const rightCol = margin + colWidth + 8;
-    const sectionHeight = 55;
+    const sectionHeight = 52;
+    const barStartX = 50;
+    const barMaxWidth = colWidth - barStartX - 25;
 
     // Section 1: Nichos Mais Prospectados
     pdf.setFillColor(248, 250, 252);
-    pdf.roundedRect(leftCol, yPos, colWidth, sectionHeight, 2, 2, 'F');
+    pdf.roundedRect(leftCol, yPos, colWidth, sectionHeight, 3, 3, 'F');
     
     pdf.setTextColor(dark.r, dark.g, dark.b);
     pdf.setFontSize(10);
@@ -386,8 +387,7 @@ const Reports = () => {
     
     let itemY = yPos + 16;
     stats.topNiches.slice(0, 4).forEach((niche, i) => {
-      const maxBar = colWidth - 55;
-      const bar = Math.max(10, (niche.count / (stats.topNiches[0]?.count || 1)) * maxBar);
+      const bar = Math.max(8, (niche.count / (stats.topNiches[0]?.count || 1)) * barMaxWidth);
       
       pdf.setTextColor(gray.r, gray.g, gray.b);
       pdf.setFontSize(8);
@@ -395,25 +395,28 @@ const Reports = () => {
       pdf.text(`${i + 1}.`, leftCol + 6, itemY);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
-      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 12), leftCol + 12, itemY);
+      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 10), leftCol + 12, itemY);
       
+      // Bar background
       pdf.setFillColor(229, 231, 235);
-      pdf.roundedRect(leftCol + 45, itemY - 2.5, maxBar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(leftCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
       
+      // Bar fill
       pdf.setFillColor(primary.r, primary.g, primary.b);
-      pdf.roundedRect(leftCol + 45, itemY - 2.5, bar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(leftCol + barStartX, itemY - 2.5, bar, 3.5, 1.5, 1.5, 'F');
       
+      // Count AFTER bar
       pdf.setTextColor(primary.r, primary.g, primary.b);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(8);
-      pdf.text(`${niche.count}`, leftCol + colWidth - 10, itemY);
+      pdf.text(`${niche.count}`, leftCol + barStartX + barMaxWidth + 4, itemY);
       
-      itemY += 9;
+      itemY += 8;
     });
 
     // Section 2: Regioes Mais Prospectadas
     pdf.setFillColor(248, 250, 252);
-    pdf.roundedRect(rightCol, yPos, colWidth, sectionHeight, 2, 2, 'F');
+    pdf.roundedRect(rightCol, yPos, colWidth, sectionHeight, 3, 3, 'F');
     
     pdf.setTextColor(dark.r, dark.g, dark.b);
     pdf.setFontSize(10);
@@ -422,8 +425,7 @@ const Reports = () => {
     
     itemY = yPos + 16;
     stats.topRegions.slice(0, 4).forEach((region, i) => {
-      const maxBar = colWidth - 55;
-      const bar = Math.max(10, (region.count / (stats.topRegions[0]?.count || 1)) * maxBar);
+      const bar = Math.max(8, (region.count / (stats.topRegions[0]?.count || 1)) * barMaxWidth);
       
       pdf.setTextColor(gray.r, gray.g, gray.b);
       pdf.setFontSize(8);
@@ -431,27 +433,27 @@ const Reports = () => {
       pdf.text(`${i + 1}.`, rightCol + 6, itemY);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
-      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 12), rightCol + 12, itemY);
+      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 10), rightCol + 12, itemY);
       
       pdf.setFillColor(229, 231, 235);
-      pdf.roundedRect(rightCol + 45, itemY - 2.5, maxBar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(rightCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
       
       pdf.setFillColor(cyan.r, cyan.g, cyan.b);
-      pdf.roundedRect(rightCol + 45, itemY - 2.5, bar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(rightCol + barStartX, itemY - 2.5, bar, 3.5, 1.5, 1.5, 'F');
       
       pdf.setTextColor(cyan.r, cyan.g, cyan.b);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(8);
-      pdf.text(`${region.count}`, rightCol + colWidth - 10, itemY);
+      pdf.text(`${region.count}`, rightCol + barStartX + barMaxWidth + 4, itemY);
       
-      itemY += 9;
+      itemY += 8;
     });
 
     yPos += sectionHeight + 8;
 
     // Section 3: Leads por Nicho
     pdf.setFillColor(248, 250, 252);
-    pdf.roundedRect(leftCol, yPos, colWidth, sectionHeight, 2, 2, 'F');
+    pdf.roundedRect(leftCol, yPos, colWidth, sectionHeight, 3, 3, 'F');
     
     pdf.setTextColor(dark.r, dark.g, dark.b);
     pdf.setFontSize(10);
@@ -460,30 +462,29 @@ const Reports = () => {
     
     itemY = yPos + 16;
     stats.nichesByLeads.slice(0, 4).forEach((niche, i) => {
-      const maxBar = colWidth - 55;
-      const bar = Math.max(10, (niche.leads / (stats.nichesByLeads[0]?.leads || 1)) * maxBar);
+      const bar = Math.max(8, (niche.leads / (stats.nichesByLeads[0]?.leads || 1)) * barMaxWidth);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 12), leftCol + 6, itemY);
+      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 10), leftCol + 6, itemY);
       
       pdf.setFillColor(229, 231, 235);
-      pdf.roundedRect(leftCol + 45, itemY - 2.5, maxBar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(leftCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
       
       pdf.setFillColor(primary.r, primary.g, primary.b);
-      pdf.roundedRect(leftCol + 45, itemY - 2.5, bar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(leftCol + barStartX, itemY - 2.5, bar, 3.5, 1.5, 1.5, 'F');
       
       pdf.setTextColor(primary.r, primary.g, primary.b);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(`${niche.leads}`, leftCol + colWidth - 12, itemY);
+      pdf.text(`${niche.leads}`, leftCol + barStartX + barMaxWidth + 4, itemY);
       
-      itemY += 9;
+      itemY += 8;
     });
 
     // Section 4: Leads por Regiao
     pdf.setFillColor(248, 250, 252);
-    pdf.roundedRect(rightCol, yPos, colWidth, sectionHeight, 2, 2, 'F');
+    pdf.roundedRect(rightCol, yPos, colWidth, sectionHeight, 3, 3, 'F');
     
     pdf.setTextColor(dark.r, dark.g, dark.b);
     pdf.setFontSize(10);
@@ -492,28 +493,27 @@ const Reports = () => {
     
     itemY = yPos + 16;
     stats.regionsByLeads.slice(0, 4).forEach((region, i) => {
-      const maxBar = colWidth - 55;
-      const bar = Math.max(10, (region.leads / (stats.regionsByLeads[0]?.leads || 1)) * maxBar);
+      const bar = Math.max(8, (region.leads / (stats.regionsByLeads[0]?.leads || 1)) * barMaxWidth);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 12), rightCol + 6, itemY);
+      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 10), rightCol + 6, itemY);
       
       pdf.setFillColor(229, 231, 235);
-      pdf.roundedRect(rightCol + 45, itemY - 2.5, maxBar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(rightCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
       
       pdf.setFillColor(cyan.r, cyan.g, cyan.b);
-      pdf.roundedRect(rightCol + 45, itemY - 2.5, bar, 3.5, 1, 1, 'F');
+      pdf.roundedRect(rightCol + barStartX, itemY - 2.5, bar, 3.5, 1.5, 1.5, 'F');
       
       pdf.setTextColor(cyan.r, cyan.g, cyan.b);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(`${region.leads}`, rightCol + colWidth - 12, itemY);
+      pdf.text(`${region.leads}`, rightCol + barStartX + barMaxWidth + 4, itemY);
       
-      itemY += 9;
+      itemY += 8;
     });
 
-    // Footer - simple line with Prospex logo
+    // Footer
     const footerY = pageHeight - 12;
     pdf.setDrawColor(229, 231, 235);
     pdf.setLineWidth(0.3);
