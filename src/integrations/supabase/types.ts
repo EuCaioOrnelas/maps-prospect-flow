@@ -153,6 +153,9 @@ export type Database = {
           name: string
           pause_after_contacts: number | null
           pause_minutes: number | null
+          pause_reason: string | null
+          paused_at_limit: boolean | null
+          resume_at: string | null
           scheduled_at: string | null
           sent_count: number
           started_at: string | null
@@ -173,6 +176,9 @@ export type Database = {
           name: string
           pause_after_contacts?: number | null
           pause_minutes?: number | null
+          pause_reason?: string | null
+          paused_at_limit?: boolean | null
+          resume_at?: string | null
           scheduled_at?: string | null
           sent_count?: number
           started_at?: string | null
@@ -193,6 +199,9 @@ export type Database = {
           name?: string
           pause_after_contacts?: number | null
           pause_minutes?: number | null
+          pause_reason?: string | null
+          paused_at_limit?: boolean | null
+          resume_at?: string | null
           scheduled_at?: string | null
           sent_count?: number
           started_at?: string | null

@@ -27,6 +27,7 @@ import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
 import { WhatsAppConnectionStatus } from "@/components/whatsapp/WhatsAppConnectionStatus";
+import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
 
 export interface Lead {
   name: string;
@@ -56,6 +57,10 @@ export interface Campaign {
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
+  scheduled_at?: string | null;
+  paused_at_limit?: boolean;
+  pause_reason?: string;
+  resume_at?: string | null;
 }
 
 export interface CampaignState {
@@ -396,6 +401,60 @@ const WhatsAppCampaign = () => {
     }
   };
 
+  const handlePauseCampaignFromList = async (campaign: Campaign) => {
+    try {
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ status: 'paused' })
+        .eq('id', campaign.id);
+
+      setCampaigns(prev => prev.map(c => 
+        c.id === campaign.id ? { ...c, status: 'paused' } : c
+      ));
+      
+      toast({
+        title: "Campanha pausada",
+        description: "A campanha foi pausada com sucesso",
+      });
+    } catch (err) {
+      console.error('Error pausing campaign:', err);
+    }
+  };
+
+  const handleResumeCampaignFromList = async (campaign: Campaign) => {
+    // Check daily limit before resuming
+    if (usedToday >= DAILY_LIMIT) {
+      toast({
+        title: "Limite diário atingido",
+        description: "Aguarde até amanhã para retomar a campanha",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'running',
+          paused_at_limit: false,
+          pause_reason: null
+        })
+        .eq('id', campaign.id);
+
+      setCampaigns(prev => prev.map(c => 
+        c.id === campaign.id ? { ...c, status: 'running', paused_at_limit: false } : c
+      ));
+      
+      toast({
+        title: "Campanha retomada",
+        description: "Continuando os disparos...",
+      });
+    } catch (err) {
+      console.error('Error resuming campaign:', err);
+    }
+  };
+
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 mb-8">
       {['leads', 'messages', 'settings'].map((s, i) => {
@@ -479,6 +538,17 @@ const WhatsAppCampaign = () => {
             />
           ) : (
             <>
+              {/* Active Campaigns Section */}
+              {step === 'leads' && (
+                <ActiveCampaigns
+                  campaigns={campaigns}
+                  usedToday={usedToday}
+                  dailyLimit={DAILY_LIMIT}
+                  onResume={handleResumeCampaignFromList}
+                  onPause={handlePauseCampaignFromList}
+                />
+              )}
+              
               {step !== 'running' && renderStepIndicator()}
 
               {/* Step: Select Leads */}
