@@ -64,6 +64,28 @@ export const useNotifications = () => {
     });
   }, [sendNotification]);
 
+  const notifyCampaignPausedByLimit = useCallback((campaignName: string) => {
+    sendNotification("Campanha pausada por segurança 🛡️", {
+      body: `"${campaignName}" foi pausada ao atingir o limite diário de 200 disparos. Será retomada amanhã às 00:00.`,
+      tag: "campaign-paused-limit",
+      requireInteraction: true,
+    });
+  }, [sendNotification]);
+
+  const notifyCampaignResumed = useCallback((campaignName: string) => {
+    sendNotification("Campanha retomada! 🚀", {
+      body: `"${campaignName}" foi retomada automaticamente. Seus disparos continuam!`,
+      tag: "campaign-resumed",
+    });
+  }, [sendNotification]);
+
+  const notifyCampaignCompleted = useCallback((campaignName: string, sentCount: number) => {
+    sendNotification("Campanha concluída! ✅", {
+      body: `"${campaignName}" finalizou com ${sentCount} mensagens enviadas.`,
+      tag: "campaign-completed",
+    });
+  }, [sendNotification]);
+
   return {
     isSupported,
     permission,
@@ -71,5 +93,8 @@ export const useNotifications = () => {
     sendNotification,
     notifyCreditsExhausted,
     notifyLowCredits,
+    notifyCampaignPausedByLimit,
+    notifyCampaignResumed,
+    notifyCampaignCompleted,
   };
 };

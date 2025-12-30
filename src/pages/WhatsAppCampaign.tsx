@@ -15,7 +15,8 @@ import {
   Users,
   Smartphone,
   History,
-  Plus
+  Plus,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -497,11 +498,13 @@ const WhatsAppCampaign = () => {
               <Logo size="md" />
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-                <MessageSquare size={16} className="text-primary" />
-                <span>Disparos</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Link to="/whatsapp/reports">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <BarChart3 size={16} />
+                  <span className="hidden sm:inline">Relatórios</span>
+                </Button>
+              </Link>
               <WhatsAppConnectionStatus
                 isConnected={isConnected}
                 onConnect={handleWhatsAppConnect}
