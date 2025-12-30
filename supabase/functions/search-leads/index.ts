@@ -104,6 +104,8 @@ serve(async (req) => {
     const pagesToFetch = Math.ceil(maxLeads / resultsPerPage);
     
     let allResults: any[] = [];
+    const seenPlaceIds = new Set<string>();
+    const seenNames = new Set<string>();
     
     console.log(`Calling SERP API... Will fetch up to ${pagesToFetch} pages`);
     
@@ -122,7 +124,7 @@ serve(async (req) => {
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        break; // If first page fails, return error. Otherwise, use what we have.
+        break;
       }
 
       const serpData = await serpResponse.json();
@@ -134,12 +136,29 @@ serve(async (req) => {
         break;
       }
       
-      allResults = [...allResults, ...pageResults];
+      // Deduplicate results by place_id and name
+      for (const result of pageResults) {
+        const placeId = result.place_id || '';
+        const name = (result.title || '').toLowerCase().trim();
+        
+        // Skip if we've seen this place_id or name
+        if ((placeId && seenPlaceIds.has(placeId)) || (name && seenNames.has(name))) {
+          console.log(`Skipping duplicate: ${result.title}`);
+          continue;
+        }
+        
+        if (placeId) seenPlaceIds.add(placeId);
+        if (name) seenNames.add(name);
+        
+        allResults.push(result);
+        
+        if (allResults.length >= maxLeads) break;
+      }
     }
 
-    console.log(`Total results collected: ${allResults.length}`);
+    console.log(`Total unique results collected: ${allResults.length}`);
 
-    // Parse leads from SERP response (limit to maxLeads - curated results)
+    // Parse leads from SERP response
     const leads: Lead[] = allResults.slice(0, maxLeads).map((result: any) => ({
       name: result.title || '-',
       category: result.type || result.types?.[0] || '-',
@@ -149,10 +168,10 @@ serve(async (req) => {
       website: result.website || '-',
       rating: result.rating || 0,
       reviewCount: result.reviews || 0,
-      mapsLink: result.link || result.place_id ? `https://www.google.com/maps/place/?q=place_id:${result.place_id}` : '-',
+      mapsLink: result.link || (result.place_id ? `https://www.google.com/maps/place/?q=place_id:${result.place_id}` : '-'),
     }));
 
-    console.log(`Found ${leads.length} leads`);
+    console.log(`Found ${leads.length} unique leads`);
 
     // Update user's search count
     const { error: updateError } = await supabase
@@ -176,6 +195,27 @@ serve(async (req) => {
 
     if (historyError) {
       console.error('Error saving search history:', historyError);
+    }
+
+    // Delete oldest searches if user has more than 50
+    const { data: historyCount } = await supabase
+      .from('search_history')
+      .select('id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (historyCount && historyCount.length > 50) {
+      const idsToDelete = historyCount.slice(50).map(h => h.id);
+      console.log(`Deleting ${idsToDelete.length} old search history entries`);
+      
+      const { error: deleteError } = await supabase
+        .from('search_history')
+        .delete()
+        .in('id', idsToDelete);
+
+      if (deleteError) {
+        console.error('Error deleting old search history:', deleteError);
+      }
     }
 
     console.log('Search completed successfully');
