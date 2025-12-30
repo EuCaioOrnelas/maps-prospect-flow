@@ -67,7 +67,7 @@ export const FeaturesSection = () => {
 
         {/* AI Value Block */}
         <div 
-          className={`glass rounded-2xl p-8 mb-16 max-w-4xl mx-auto transition-all duration-700 delay-150 ${
+          className={`glass rounded-2xl p-8 mb-16 transition-all duration-700 delay-150 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
@@ -81,7 +81,7 @@ export const FeaturesSection = () => {
               </h3>
               <p className="text-muted-foreground">
                 Em vez de entregar centenas de contatos desatualizados, o Prospex entrega até 50 leads 
-                estrategicamente selecionados por busca — empresas com atividade recente, 
+                estrategicamente selecionados por busca. Empresas com atividade recente, 
                 avaliações positivas e informações de contato verificadas.
               </p>
             </div>

@@ -28,6 +28,17 @@ export const HeroSection = () => {
   const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
   const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
 
+  // Generate particles once
+  const particles = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    size: Math.random() * 4 + 2,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    duration: Math.random() * 8 + 10,
+    delay: Math.random() * 5,
+    opacity: Math.random() * 0.4 + 0.1,
+  }));
+
   return (
     <section 
       ref={sectionRef}
@@ -50,6 +61,23 @@ export const HeroSection = () => {
         className="absolute bottom-40 left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
         style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
+      
+      {/* Floating Particles */}
+      {particles.map((particle) => (
+        <div
+          key={particle.id}
+          className="absolute rounded-full bg-primary/30 animate-float pointer-events-none"
+          style={{
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            left: `${particle.left}%`,
+            top: `${particle.top}%`,
+            opacity: particle.opacity,
+            animationDuration: `${particle.duration}s`,
+            animationDelay: `${particle.delay}s`,
+          }}
+        />
+      ))}
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
