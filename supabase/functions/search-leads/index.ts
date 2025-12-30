@@ -97,28 +97,50 @@ serve(async (req) => {
 
     console.log(`Searching for: ${keyword} in ${location}`);
 
-    // Call SERP API
+    // Call SERP API with pagination to get more results
     const searchQuery = encodeURIComponent(`${keyword} ${location}`);
-    const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${searchQuery}&api_key=${SERP_API_KEY}&hl=pt-br&gl=br`;
+    const maxLeads = 50;
+    const resultsPerPage = 20;
+    const pagesToFetch = Math.ceil(maxLeads / resultsPerPage);
     
-    console.log('Calling SERP API...');
-    const serpResponse = await fetch(serpUrl);
+    let allResults: any[] = [];
     
-    if (!serpResponse.ok) {
-      console.error('SERP API error:', serpResponse.status, serpResponse.statusText);
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar dados do Google Maps' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    console.log(`Calling SERP API... Will fetch up to ${pagesToFetch} pages`);
+    
+    for (let page = 0; page < pagesToFetch && allResults.length < maxLeads; page++) {
+      const startIndex = page * resultsPerPage;
+      const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${searchQuery}&api_key=${SERP_API_KEY}&hl=pt-br&gl=br&start=${startIndex}`;
+      
+      console.log(`Fetching page ${page + 1} (start=${startIndex})...`);
+      const serpResponse = await fetch(serpUrl);
+      
+      if (!serpResponse.ok) {
+        console.error('SERP API error:', serpResponse.status, serpResponse.statusText);
+        if (page === 0) {
+          return new Response(
+            JSON.stringify({ error: 'Erro ao buscar dados do Google Maps' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        break; // If first page fails, return error. Otherwise, use what we have.
+      }
+
+      const serpData = await serpResponse.json();
+      const pageResults = serpData.local_results || [];
+      console.log(`Page ${page + 1}: received ${pageResults.length} results`);
+      
+      if (pageResults.length === 0) {
+        console.log('No more results available, stopping pagination');
+        break;
+      }
+      
+      allResults = [...allResults, ...pageResults];
     }
 
-    const serpData = await serpResponse.json();
-    console.log('SERP API response received, local_results:', serpData.local_results?.length || 0);
+    console.log(`Total results collected: ${allResults.length}`);
 
-    // Parse leads from SERP response (limit to 50 leads - curated results)
-    const localResults = serpData.local_results || [];
-    const maxLeads = 50;
-    const leads: Lead[] = localResults.slice(0, maxLeads).map((result: any) => ({
+    // Parse leads from SERP response (limit to maxLeads - curated results)
+    const leads: Lead[] = allResults.slice(0, maxLeads).map((result: any) => ({
       name: result.title || '-',
       category: result.type || result.types?.[0] || '-',
       address: result.address || '-',
