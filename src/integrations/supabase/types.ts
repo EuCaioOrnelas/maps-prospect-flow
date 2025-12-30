@@ -52,6 +52,7 @@ export type Database = {
           created_at: string
           id: string
           keyword: string
+          leads: Json | null
           location: string
           results_count: number
           user_id: string
@@ -60,6 +61,7 @@ export type Database = {
           created_at?: string
           id?: string
           keyword: string
+          leads?: Json | null
           location: string
           results_count?: number
           user_id: string
@@ -68,6 +70,7 @@ export type Database = {
           created_at?: string
           id?: string
           keyword?: string
+          leads?: Json | null
           location?: string
           results_count?: number
           user_id?: string
