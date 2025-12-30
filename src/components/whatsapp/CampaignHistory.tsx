@@ -10,7 +10,8 @@ import {
   Users,
   Loader2,
   Pause,
-  Play
+  Play,
+  AlertTriangle
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 
@@ -34,7 +35,10 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
     });
   };
 
-  const getStatusInfo = (status: string) => {
+  const getStatusInfo = (status: string, pausedAtLimit?: boolean) => {
+    if (status === 'paused' && pausedAtLimit) {
+      return { label: 'Limite Diário', icon: AlertTriangle, color: 'text-destructive' };
+    }
     switch (status) {
       case 'completed':
         return { label: 'Concluída', icon: CheckCircle2, color: 'text-green-500' };
@@ -118,7 +122,7 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
       {/* Campaign List */}
       <div className="space-y-3">
         {campaigns.map((campaign) => {
-          const statusInfo = getStatusInfo(campaign.status);
+          const statusInfo = getStatusInfo(campaign.status, (campaign as any).paused_at_limit);
           const successRate = calculateSuccessRate(campaign.sent_count, campaign.failed_count);
           
           return (
