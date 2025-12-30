@@ -17,32 +17,44 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          device_fingerprint: string | null
           email: string
+          fraud_flags: Json | null
           id: string
+          last_searches_reset: string | null
           name: string | null
           plan: string
           searches_limit: number
           searches_used: number
+          signup_ip: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          device_fingerprint?: string | null
           email: string
+          fraud_flags?: Json | null
           id: string
+          last_searches_reset?: string | null
           name?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
+          signup_ip?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          device_fingerprint?: string | null
           email?: string
+          fraud_flags?: Json | null
           id?: string
+          last_searches_reset?: string | null
           name?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
+          signup_ip?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -196,6 +208,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_reset_monthly_searches: {
+        Args: { user_id: string }
+        Returns: Json
+      }
+      check_signup_fraud: {
+        Args: { p_fingerprint: string; p_ip: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
