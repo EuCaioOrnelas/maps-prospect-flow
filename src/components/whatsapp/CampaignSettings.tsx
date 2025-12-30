@@ -13,8 +13,10 @@ import {
   Info,
   FileText,
   Send,
-  WifiOff
+  WifiOff,
+  CalendarClock
 } from "lucide-react";
+import { CampaignScheduler } from "./CampaignScheduler";
 
 interface CampaignSettingsProps {
   campaignName: string;
@@ -27,6 +29,12 @@ interface CampaignSettingsProps {
   onPauseMinutesChange: (value: number) => void;
   enableSmartPause: boolean;
   onEnableSmartPauseChange: (value: boolean) => void;
+  isScheduled: boolean;
+  onScheduleChange: (value: boolean) => void;
+  scheduledDate: Date | undefined;
+  onScheduledDateChange: (date: Date | undefined) => void;
+  scheduledTime: string;
+  onScheduledTimeChange: (time: string) => void;
   onBack: () => void;
   onStartCampaign: () => void;
   canProceed: boolean;
@@ -45,6 +53,12 @@ export const CampaignSettings = ({
   onPauseMinutesChange,
   enableSmartPause,
   onEnableSmartPauseChange,
+  isScheduled,
+  onScheduleChange,
+  scheduledDate,
+  onScheduledDateChange,
+  scheduledTime,
+  onScheduledTimeChange,
   onBack,
   onStartCampaign,
   canProceed,
@@ -59,8 +73,18 @@ export const CampaignSettings = ({
     return secs > 0 ? `${mins}min ${secs}s` : `${mins} minuto${mins > 1 ? 's' : ''}`;
   };
 
-  const estimatedTimePerContact = delaySeconds;
-  const pauseTime = enableSmartPause ? Math.ceil(pauseAfterContacts / pauseAfterContacts) * pauseMinutes * 60 : 0;
+  const isValidSchedule = () => {
+    if (!isScheduled) return true;
+    if (!scheduledDate || !scheduledTime) return false;
+    
+    const [hours, minutes] = scheduledTime.split(':').map(Number);
+    const scheduled = new Date(scheduledDate);
+    scheduled.setHours(hours, minutes, 0, 0);
+    
+    return scheduled > new Date();
+  };
+
+  const canStart = canProceed && (!isScheduled || isValidSchedule());
   
   return (
     <div className="glass rounded-2xl p-6">
@@ -220,14 +244,31 @@ export const CampaignSettings = ({
             </div>
           </div>
         )}
+
+        {/* Campaign Scheduler */}
+        <CampaignScheduler
+          isScheduled={isScheduled}
+          onScheduleChange={onScheduleChange}
+          scheduledDate={scheduledDate}
+          onDateChange={onScheduledDateChange}
+          scheduledTime={scheduledTime}
+          onTimeChange={onScheduledTimeChange}
+        />
       </div>
 
       {/* Campaign Summary & Start */}
       <div className="mt-6 pt-6 border-t border-border space-y-4">
-        {!isConnected && (
+        {!isConnected && !isScheduled && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
             <WifiOff size={16} className="text-warning" />
             <span>Conecte seu WhatsApp no botão do topo para iniciar</span>
+          </div>
+        )}
+
+        {isScheduled && !isConnected && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border text-sm">
+            <Info size={16} className="text-muted-foreground" />
+            <span>Você poderá conectar o WhatsApp antes do horário agendado</span>
           </div>
         )}
 
@@ -243,9 +284,18 @@ export const CampaignSettings = ({
             <ArrowLeft size={16} />
             Voltar
           </Button>
-          <Button onClick={onStartCampaign} disabled={!canProceed} className="gap-2">
-            <Send size={16} />
-            Iniciar Disparos
+          <Button onClick={onStartCampaign} disabled={!canStart} className="gap-2">
+            {isScheduled ? (
+              <>
+                <CalendarClock size={16} />
+                Agendar Campanha
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                Iniciar Disparos
+              </>
+            )}
           </Button>
         </div>
       </div>
