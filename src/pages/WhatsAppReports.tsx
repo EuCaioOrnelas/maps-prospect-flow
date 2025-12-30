@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { Card } from "@/components/ui/card";
 import {
@@ -9,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   MessageSquare,
@@ -21,11 +29,19 @@ import {
   Target,
   Zap,
   Clock,
-  Shield
+  Shield,
+  Share2,
+  Link as LinkIcon,
+  FileText,
+  Copy,
+  Check,
+  Loader2,
+  Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   AreaChart,
   Area,
@@ -69,7 +85,14 @@ const WhatsAppReports = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7' | '14' | '30' | '90'>('30');
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareMode, setShareMode] = useState<'link' | null>(null);
+  const [linkPassword, setLinkPassword] = useState("");
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchCampaigns();
@@ -173,6 +196,75 @@ const WhatsAppReports = () => {
       .slice(0, 5);
   }, [campaigns]);
 
+  const handleShareClick = () => {
+    setShowShareDialog(true);
+    setShareMode(null);
+    setLinkPassword("");
+    setGeneratedLink("");
+  };
+
+  const handleGenerateLink = async () => {
+    if (!linkPassword || linkPassword.length < 4) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 4 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const reportData = {
+        stats,
+        dateRange,
+        type: 'whatsapp',
+        generatedAt: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('shared_reports')
+        .insert([{
+          user_id: user?.id as string,
+          password_hash: btoa(linkPassword),
+          filter_type: dateRange,
+          report_data: reportData as any
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const link = `${window.location.origin}/shared-report/${data.id}`;
+      setGeneratedLink(link);
+      
+      toast({
+        title: "Link gerado!",
+        description: "O link foi criado e expira em 7 dias",
+      });
+    } catch (error) {
+      console.error('Error generating link:', error);
+      toast({
+        title: "Erro ao gerar link",
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({
+      title: "Link copiado!",
+      description: "Compartilhe junto com a senha",
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -219,18 +311,30 @@ const WhatsAppReports = () => {
               </p>
             </div>
 
-            <Select value={dateRange} onValueChange={(v) => setDateRange(v as typeof dateRange)}>
-              <SelectTrigger className="w-[180px]">
-                <Calendar size={16} className="mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="14">Últimos 14 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-                <SelectItem value="90">Últimos 90 dias</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShareClick}
+                className="gap-2"
+              >
+                <Share2 size={16} />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </Button>
+
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as typeof dateRange)}>
+                <SelectTrigger className="w-[180px]">
+                  <Calendar size={16} className="mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="14">Últimos 14 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90">Últimos 90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -483,7 +587,7 @@ const WhatsAppReports = () => {
                   Proteção Anti-Ban Ativa
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Suas campanhas respeitam o limite de 200 disparos diários para garantir a segurança da sua conta. 
+                  Suas campanhas respeitam o limite de <strong>200 disparos por número</strong> diários para garantir a segurança da sua conta. 
                   Campanhas são automaticamente pausadas ao atingir o limite e retomadas no dia seguinte às 00:00.
                 </p>
               </div>
@@ -491,6 +595,129 @@ const WhatsAppReports = () => {
           </Card>
         </div>
       </main>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 size={20} />
+              Compartilhar Relatório
+            </DialogTitle>
+          </DialogHeader>
+          
+          {!shareMode ? (
+            <div className="space-y-4 py-4">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 h-16"
+                onClick={() => setShareMode('link')}
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LinkIcon size={20} className="text-primary" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Link Protegido</p>
+                  <p className="text-xs text-muted-foreground">
+                    Gere um link com senha que expira em 7 dias
+                  </p>
+                </div>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              {!generatedLink ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="flex items-center gap-2">
+                      <Lock size={14} />
+                      Senha de acesso
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Mínimo 4 caracteres"
+                      value={linkPassword}
+                      onChange={(e) => setLinkPassword(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Quem acessar o link precisará desta senha
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShareMode(null)}
+                      className="flex-1"
+                    >
+                      Voltar
+                    </Button>
+                    <Button
+                      onClick={handleGenerateLink}
+                      disabled={isGenerating || linkPassword.length < 4}
+                      className="flex-1 gap-2"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <LinkIcon size={16} />
+                          Gerar Link
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label>Link gerado</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={generatedLink}
+                        readOnly
+                        className="text-xs"
+                      />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={handleCopyLink}
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Senha:</strong> {linkPassword}
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      ⚠️ Este link expira em 7 dias. Compartilhe a senha separadamente.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShareMode(null);
+                      setGeneratedLink("");
+                      setLinkPassword("");
+                    }}
+                    className="w-full"
+                  >
+                    Gerar novo link
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
