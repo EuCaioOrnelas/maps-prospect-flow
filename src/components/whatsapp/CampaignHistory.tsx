@@ -37,13 +37,15 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'completed':
-        return { label: 'Concluída', icon: CheckCircle2, color: 'text-primary' };
+        return { label: 'Concluída', icon: CheckCircle2, color: 'text-green-500' };
       case 'running':
-        return { label: 'Em andamento', icon: Play, color: 'text-info' };
+        return { label: 'Em andamento', icon: Play, color: 'text-blue-500' };
       case 'paused':
-        return { label: 'Pausada', icon: Pause, color: 'text-warning' };
+        return { label: 'Pausada', icon: Pause, color: 'text-yellow-500' };
       case 'failed':
         return { label: 'Falhou', icon: XCircle, color: 'text-destructive' };
+      case 'scheduled':
+        return { label: 'Agendada', icon: Clock, color: 'text-primary' };
       default:
         return { label: 'Pendente', icon: Clock, color: 'text-muted-foreground' };
     }

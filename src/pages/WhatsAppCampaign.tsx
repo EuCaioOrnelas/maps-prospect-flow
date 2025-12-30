@@ -80,6 +80,9 @@ const WhatsAppCampaign = () => {
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
   const [usedToday, setUsedToday] = useState(0);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [scheduledTime, setScheduledTime] = useState('09:00');
   
   const [campaignState, setCampaignState] = useState<CampaignState>({
     status: 'idle',
@@ -100,7 +103,7 @@ const WhatsAppCampaign = () => {
 
   const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (DAILY_LIMIT - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canStartCampaign = delaySeconds >= 40 && isConnected;
+  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled);
 
   // Fetch campaigns history and calculate daily usage
   useEffect(() => {
@@ -154,10 +157,18 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  const createCampaign = async (): Promise<string | null> => {
+  const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
     if (!user) return null;
 
     const name = campaignName || `Campanha ${new Date().toLocaleDateString('pt-BR')}`;
+    
+    let scheduledAt: string | null = null;
+    if (scheduled && scheduledDate && scheduledTime) {
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const schedDate = new Date(scheduledDate);
+      schedDate.setHours(hours, minutes, 0, 0);
+      scheduledAt = schedDate.toISOString();
+    }
     
     try {
       const { data, error } = await supabase
@@ -165,7 +176,7 @@ const WhatsAppCampaign = () => {
         .insert({
           user_id: user.id,
           name,
-          status: 'running',
+          status: scheduled ? 'scheduled' : 'running',
           total_leads: selectedLeads.length,
           delay_seconds: delaySeconds,
           pause_after_contacts: pauseAfterContacts,
@@ -173,7 +184,8 @@ const WhatsAppCampaign = () => {
           enable_smart_pause: enableSmartPause,
           messages: messages,
           leads: selectedLeads as unknown as any,
-          started_at: new Date().toISOString()
+          started_at: scheduled ? null : new Date().toISOString(),
+          scheduled_at: scheduledAt
         })
         .select()
         .single();
@@ -209,6 +221,33 @@ const WhatsAppCampaign = () => {
   };
 
   const handleStartCampaign = async () => {
+    // If scheduled, create the campaign and go back
+    if (isScheduled) {
+      if (!scheduledDate || !scheduledTime) {
+        toast({
+          title: "Data não selecionada",
+          description: "Selecione uma data e horário para agendar",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const campaignId = await createCampaign(true);
+      if (!campaignId) return;
+
+      await fetchCampaigns();
+
+      toast({
+        title: "Campanha agendada!",
+        description: `A campanha será iniciada no horário programado`,
+      });
+      
+      handleNewCampaign();
+      setActiveTab('history');
+      return;
+    }
+
+    // Regular start - requires connection
     if (!isConnected) {
       toast({
         title: "WhatsApp não conectado",
@@ -227,7 +266,7 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    const campaignId = await createCampaign();
+    const campaignId = await createCampaign(false);
     if (!campaignId) return;
 
     setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
@@ -318,6 +357,9 @@ const WhatsAppCampaign = () => {
     setSelectedLeads([]);
     setMessages(['', '', '', '', '']);
     setCampaignName('');
+    setIsScheduled(false);
+    setScheduledDate(undefined);
+    setScheduledTime('09:00');
     setCampaignState({
       status: isConnected ? 'connected' : 'idle',
       currentIndex: 0,
@@ -475,6 +517,12 @@ const WhatsAppCampaign = () => {
                   onPauseMinutesChange={setPauseMinutes}
                   enableSmartPause={enableSmartPause}
                   onEnableSmartPauseChange={setEnableSmartPause}
+                  isScheduled={isScheduled}
+                  onScheduleChange={setIsScheduled}
+                  scheduledDate={scheduledDate}
+                  onScheduledDateChange={setScheduledDate}
+                  scheduledTime={scheduledTime}
+                  onScheduledTimeChange={setScheduledTime}
                   onBack={() => setStep('messages')}
                   onStartCampaign={handleStartCampaign}
                   canProceed={canStartCampaign}
