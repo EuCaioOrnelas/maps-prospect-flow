@@ -30,7 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
-  Zap
+  Zap,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -94,12 +95,14 @@ const Dashboard = () => {
     }
   }, [isSupported, permission, requestPermission]);
 
-  // Notify when credits are low
+  // Notify and show popup when credits are low or exhausted
   useEffect(() => {
     if (searchesRemaining === 3) {
       notifyLowCredits(3);
     } else if (searchesRemaining === 0 && profile?.searches_used && profile.searches_used > 0) {
       notifyCreditsExhausted();
+      // Show upgrade modal automatically when credits reach zero
+      setShowUpgradeModal(true);
     }
   }, [searchesRemaining, notifyLowCredits, notifyCreditsExhausted, profile?.searches_used]);
 
@@ -408,6 +411,12 @@ const Dashboard = () => {
                   </Button>
                 </Link>
               </div>
+
+              <Link to="/reports">
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" title="Relatórios">
+                  <BarChart3 size={18} className="sm:w-5 sm:h-5" />
+                </Button>
+              </Link>
 
               <div className="hidden lg:block text-sm text-muted-foreground">
                 Plano: <span className="font-medium text-foreground">{getPlanName(profile?.plan || 'free')}</span>
