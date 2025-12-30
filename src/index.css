@@ -9,8 +9,9 @@
     --background: 0 0% 100%;
     --foreground: 220 20% 10%;
 
-    --card: 0 0% 98%;
+    --card: 0 0% 100%;
     --card-foreground: 220 20% 10%;
+    --card-border: 220 14% 85%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
@@ -39,11 +40,11 @@
     /* Custom tokens */
     --gradient-primary: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(175 84% 32%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 96%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 97%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 97%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(160 84% 39% / 0.1) 0%, transparent 70%);
     
     --shadow-glow: 0 0 60px hsl(160 84% 39% / 0.15);
-    --shadow-card: 0 4px 24px hsl(220 20% 10% / 0.08);
+    --shadow-card: 0 8px 32px hsl(220 20% 10% / 0.12), 0 2px 8px hsl(220 20% 10% / 0.08);
     --shadow-button: 0 4px 16px hsl(160 84% 39% / 0.25);
 
     /* Sidebar */
