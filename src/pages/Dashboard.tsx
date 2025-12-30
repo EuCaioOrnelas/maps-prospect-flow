@@ -762,7 +762,7 @@ const Dashboard = () => {
                           <div className="mt-2">
                             <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
                               <Search size={10} />
-                              {item.results_count} resultados
+                              {item.leads?.length || item.results_count} leads
                             </span>
                           </div>
                         </div>
