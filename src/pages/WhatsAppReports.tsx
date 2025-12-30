@@ -36,7 +36,8 @@ import {
   Copy,
   Check,
   Loader2,
-  Lock
+  Lock,
+  Smartphone
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,6 +71,13 @@ interface Campaign {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  whatsapp_number_id: string | null;
+}
+
+interface WhatsAppNumber {
+  id: string;
+  name: string;
+  phone_number: string | null;
 }
 
 interface DailyStats {
@@ -83,6 +91,8 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--mut
 
 const WhatsAppReports = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
+  const [selectedNumber, setSelectedNumber] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7' | '14' | '30' | '90'>('30');
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -95,41 +105,57 @@ const WhatsAppReports = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCampaigns();
+    fetchData();
   }, [user, dateRange]);
 
-  const fetchCampaigns = async () => {
+  const fetchData = async () => {
     if (!user) return;
     
     const startDate = subDays(new Date(), parseInt(dateRange));
     
     try {
-      const { data, error } = await supabase
-        .from('whatsapp_campaigns')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: false });
+      // Fetch campaigns and numbers in parallel
+      const [campaignsRes, numbersRes] = await Promise.all([
+        supabase
+          .from('whatsapp_campaigns')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', startDate.toISOString())
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('whatsapp_numbers')
+          .select('id, name, phone_number')
+          .eq('user_id', user.id)
+      ]);
 
-      if (error) throw error;
-      setCampaigns(data || []);
+      if (campaignsRes.error) throw campaignsRes.error;
+      if (numbersRes.error) throw numbersRes.error;
+      
+      setCampaigns(campaignsRes.data || []);
+      setNumbers(numbersRes.data || []);
     } catch (err) {
-      console.error('Error fetching campaigns:', err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Filter campaigns by selected number
+  const filteredCampaigns = useMemo(() => {
+    if (selectedNumber === 'all') return campaigns;
+    return campaigns.filter(c => c.whatsapp_number_id === selectedNumber);
+  }, [campaigns, selectedNumber]);
+
   // Calculate stats
   const stats = useMemo(() => {
-    const totalCampaigns = campaigns.length;
-    const totalSent = campaigns.reduce((acc, c) => acc + c.sent_count, 0);
-    const totalFailed = campaigns.reduce((acc, c) => acc + c.failed_count, 0);
-    const totalLeads = campaigns.reduce((acc, c) => acc + c.total_leads, 0);
+    const totalCampaigns = filteredCampaigns.length;
+    const totalSent = filteredCampaigns.reduce((acc, c) => acc + c.sent_count, 0);
+    const totalFailed = filteredCampaigns.reduce((acc, c) => acc + c.failed_count, 0);
+    const totalLeads = filteredCampaigns.reduce((acc, c) => acc + c.total_leads, 0);
     const successRate = totalSent + totalFailed > 0 
       ? Math.round((totalSent / (totalSent + totalFailed)) * 100) 
       : 0;
-    const completedCampaigns = campaigns.filter(c => c.status === 'completed').length;
+    const completedCampaigns = filteredCampaigns.filter(c => c.status === 'completed').length;
     const avgPerCampaign = totalCampaigns > 0 
       ? Math.round(totalSent / totalCampaigns) 
       : 0;
@@ -143,7 +169,7 @@ const WhatsAppReports = () => {
       completedCampaigns,
       avgPerCampaign
     };
-  }, [campaigns]);
+  }, [filteredCampaigns]);
 
   // Daily chart data
   const dailyData = useMemo((): DailyStats[] => {
@@ -157,7 +183,7 @@ const WhatsAppReports = () => {
       const dayStart = startOfDay(day);
       const dayEnd = endOfDay(day);
       
-      const dayCampaigns = campaigns.filter(c => {
+      const dayCampaigns = filteredCampaigns.filter(c => {
         const createdAt = parseISO(c.created_at);
         return createdAt >= dayStart && createdAt <= dayEnd;
       });
@@ -172,11 +198,11 @@ const WhatsAppReports = () => {
         total: enviadas + falhas
       };
     });
-  }, [campaigns, dateRange]);
+  }, [filteredCampaigns, dateRange]);
 
   // Status pie chart data
   const statusData = useMemo(() => {
-    const statusCounts = campaigns.reduce((acc, c) => {
+    const statusCounts = filteredCampaigns.reduce((acc, c) => {
       acc[c.status] = (acc[c.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -187,14 +213,21 @@ const WhatsAppReports = () => {
       { name: 'Pausadas', value: statusCounts['paused'] || 0, color: 'hsl(38, 92%, 50%)' },
       { name: 'Agendadas', value: statusCounts['scheduled'] || 0, color: 'hsl(217, 91%, 60%)' },
     ].filter(item => item.value > 0);
-  }, [campaigns]);
+  }, [filteredCampaigns]);
 
   // Top campaigns
   const topCampaigns = useMemo(() => {
-    return [...campaigns]
+    return [...filteredCampaigns]
       .sort((a, b) => b.sent_count - a.sent_count)
       .slice(0, 5);
-  }, [campaigns]);
+  }, [filteredCampaigns]);
+
+  // Get number name by id
+  const getNumberName = (numberId: string | null) => {
+    if (!numberId) return 'Sem número';
+    const number = numbers.find(n => n.id === numberId);
+    return number?.name || 'Número removido';
+  };
 
   const handleShareClick = () => {
     setShowShareDialog(true);
@@ -311,7 +344,7 @@ const WhatsAppReports = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -322,8 +355,26 @@ const WhatsAppReports = () => {
                 <span className="hidden sm:inline">Compartilhar</span>
               </Button>
 
+              {/* Number Filter */}
+              {numbers.length > 0 && (
+                <Select value={selectedNumber} onValueChange={setSelectedNumber}>
+                  <SelectTrigger className="w-[160px]">
+                    <Smartphone size={16} className="mr-2" />
+                    <SelectValue placeholder="Todos números" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos números</SelectItem>
+                    {numbers.map(number => (
+                      <SelectItem key={number.id} value={number.id}>
+                        {number.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               <Select value={dateRange} onValueChange={(v) => setDateRange(v as typeof dateRange)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[160px]">
                   <Calendar size={16} className="mr-2" />
                   <SelectValue />
                 </SelectTrigger>
@@ -336,6 +387,24 @@ const WhatsAppReports = () => {
               </Select>
             </div>
           </div>
+
+          {/* Active Number Filter Indicator */}
+          {selectedNumber !== 'all' && (
+            <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Smartphone size={16} className="text-primary" />
+                <span>Filtrando por: <strong>{getNumberName(selectedNumber)}</strong></span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSelectedNumber('all')}
+                className="h-7 px-2 text-xs"
+              >
+                Limpar filtro
+              </Button>
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -588,7 +657,7 @@ const WhatsAppReports = () => {
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Suas campanhas respeitam o limite de <strong>200 disparos por número</strong> diários para garantir a segurança da sua conta. 
-                  Campanhas são automaticamente pausadas ao atingir o limite e retomadas no dia seguinte às 00:00.
+                  Campanhas são automaticamente pausadas ao atingir o limite e retomadas no dia seguinte às <strong>08:00h</strong>.
                 </p>
               </div>
             </div>
