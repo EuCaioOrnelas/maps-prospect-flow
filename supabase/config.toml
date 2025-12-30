@@ -2,3 +2,6 @@ project_id = "mobezhxlgumrxbtgdrkg"
 
 [functions.search-leads]
 verify_jwt = false
+
+[functions.verify-shared-report]
+verify_jwt = false

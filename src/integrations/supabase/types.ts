@@ -77,6 +77,36 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_reports: {
+        Row: {
+          created_at: string
+          expires_at: string
+          filter_type: string
+          id: string
+          password_hash: string
+          report_data: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          filter_type?: string
+          id?: string
+          password_hash: string
+          report_data: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          filter_type?: string
+          id?: string
+          password_hash?: string
+          report_data?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
