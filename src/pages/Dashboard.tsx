@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Lead {
   name: string;
@@ -39,14 +41,9 @@ const Dashboard = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { profile, signOut, refreshProfile } = useAuth();
 
-  // Mock user data - will be replaced with actual auth
-  const user = {
-    name: "Usuário",
-    searchesRemaining: 8,
-    searchesTotal: 10,
-    plan: "Gratuito",
-  };
+  const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +57,7 @@ const Dashboard = () => {
       return;
     }
 
-    if (user.searchesRemaining <= 0) {
+    if (searchesRemaining <= 0) {
       toast({
         title: "Limite de buscas atingido",
         description: "Faça upgrade do seu plano para continuar prospectando",
@@ -72,73 +69,60 @@ const Dashboard = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-    // Simulate API call - will be replaced with actual SERP API integration
-    setTimeout(() => {
-      const mockLeads: Lead[] = [
-        {
-          name: "Restaurante Bella Italia",
-          category: "Restaurante Italiano",
-          address: "Rua Augusta, 1234",
-          city: "São Paulo, SP",
-          phone: "(11) 3456-7890",
-          website: "www.bellaitalia.com.br",
-          rating: 4.5,
-          reviewCount: 342,
-          mapsLink: "https://maps.google.com",
-        },
-        {
-          name: "Pizzaria Napoli",
-          category: "Pizzaria",
-          address: "Av. Paulista, 567",
-          city: "São Paulo, SP",
-          phone: "(11) 2345-6789",
-          website: "www.pizzarianapoli.com.br",
-          rating: 4.8,
-          reviewCount: 521,
-          mapsLink: "https://maps.google.com",
-        },
-        {
-          name: "Trattoria da Nonna",
-          category: "Restaurante Italiano",
-          address: "Rua Oscar Freire, 890",
-          city: "São Paulo, SP",
-          phone: "(11) 4567-8901",
-          website: "www.trattoriadanonna.com.br",
-          rating: 4.3,
-          reviewCount: 189,
-          mapsLink: "https://maps.google.com",
-        },
-        {
-          name: "La Pasta Fresca",
-          category: "Restaurante Italiano",
-          address: "Rua Haddock Lobo, 432",
-          city: "São Paulo, SP",
-          phone: "(11) 5678-9012",
-          website: "www.lapastafresca.com.br",
-          rating: 4.6,
-          reviewCount: 267,
-          mapsLink: "https://maps.google.com",
-        },
-        {
-          name: "Cantina Toscana",
-          category: "Restaurante Italiano",
-          address: "Alameda Santos, 1500",
-          city: "São Paulo, SP",
-          phone: "(11) 6789-0123",
-          website: "-",
-          rating: 4.2,
-          reviewCount: 145,
-          mapsLink: "https://maps.google.com",
-        },
-      ];
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
 
-      setLeads(mockLeads);
-      setIsSearching(false);
+      const response = await supabase.functions.invoke('search-leads', {
+        body: { keyword, location },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao buscar leads');
+      }
+
+      const data = response.data;
+
+      if (data.error) {
+        if (data.limitReached) {
+          toast({
+            title: "Limite de buscas atingido",
+            description: data.message,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(data.error);
+        }
+        setIsSearching(false);
+        return;
+      }
+
+      setLeads(data.leads || []);
+      await refreshProfile();
+      
       toast({
         title: "Busca concluída!",
-        description: `${mockLeads.length} leads encontrados para "${keyword}" em ${location}`,
+        description: `${data.leads?.length || 0} leads encontrados para "${keyword}" em ${location}`,
       });
-    }, 2000);
+    } catch (error: any) {
+      console.error('Search error:', error);
+      toast({
+        title: "Erro na busca",
+        description: error.message || "Erro ao buscar leads. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleExport = () => {
@@ -176,12 +160,22 @@ const Dashboard = () => {
     });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
     toast({
       title: "Logout realizado",
       description: "Até logo!",
     });
+  };
+
+  const getPlanName = (plan: string) => {
+    switch (plan) {
+      case 'start': return 'Start';
+      case 'growth': return 'Growth';
+      case 'scale': return 'Scale';
+      default: return 'Gratuito';
+    }
   };
 
   return (
@@ -197,17 +191,23 @@ const Dashboard = () => {
               <div className="hidden md:flex items-center gap-3 bg-secondary rounded-lg px-4 py-2">
                 <div className="text-sm">
                   <span className="text-muted-foreground">Buscas restantes: </span>
-                  <span className="font-semibold text-primary">{user.searchesRemaining}/{user.searchesTotal}</span>
+                  <span className="font-semibold text-primary">
+                    {searchesRemaining}/{profile?.searches_limit || 10}
+                  </span>
                 </div>
                 <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(user.searchesRemaining / user.searchesTotal) * 100}%` }}
+                    style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
                   />
                 </div>
               </div>
 
-              <Link to="/pricing">
+              <div className="hidden md:block text-sm text-muted-foreground">
+                Plano: <span className="font-medium text-foreground">{getPlanName(profile?.plan || 'free')}</span>
+              </div>
+
+              <Link to="/#pricing">
                 <Button variant="outline" size="sm" className="gap-2">
                   <Crown size={16} />
                   Upgrade
@@ -270,7 +270,7 @@ const Dashboard = () => {
               variant="hero"
               size="lg"
               className="w-full"
-              disabled={isSearching}
+              disabled={isSearching || searchesRemaining <= 0}
             >
               {isSearching ? (
                 <>
@@ -284,6 +284,12 @@ const Dashboard = () => {
                 </>
               )}
             </Button>
+
+            {searchesRemaining <= 0 && (
+              <p className="text-center text-destructive mt-4 text-sm">
+                Você atingiu seu limite de buscas. Faça upgrade para continuar.
+              </p>
+            )}
           </form>
 
           {/* Results */}
@@ -328,30 +334,36 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Phone size={16} />
-                            <span>{lead.phone}</span>
-                          </div>
-                          {lead.website !== "-" && (
+                          {lead.phone !== '-' && (
                             <div className="flex items-center gap-2 text-muted-foreground">
-                              <Globe size={16} />
-                              <span>{lead.website}</span>
+                              <Phone size={16} />
+                              <span>{lead.phone}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1 text-warning">
-                            <Star size={16} fill="currentColor" />
-                            <span className="font-medium">{lead.rating}</span>
-                            <span className="text-muted-foreground">({lead.reviewCount})</span>
-                          </div>
-                          <a
-                            href={lead.mapsLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <ExternalLink size={16} />
-                            Ver no Maps
-                          </a>
+                          {lead.website !== "-" && lead.website !== '-' && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Globe size={16} />
+                              <span className="truncate max-w-[150px]">{lead.website}</span>
+                            </div>
+                          )}
+                          {lead.rating > 0 && (
+                            <div className="flex items-center gap-1 text-warning">
+                              <Star size={16} fill="currentColor" />
+                              <span className="font-medium">{lead.rating}</span>
+                              <span className="text-muted-foreground">({lead.reviewCount})</span>
+                            </div>
+                          )}
+                          {lead.mapsLink !== '-' && (
+                            <a
+                              href={lead.mapsLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <ExternalLink size={16} />
+                              Ver no Maps
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
