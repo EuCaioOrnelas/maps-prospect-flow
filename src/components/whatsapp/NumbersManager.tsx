@@ -2,20 +2,25 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Smartphone, 
   Plus,
@@ -27,40 +32,35 @@ import {
   RefreshCw,
   Wifi,
   WifiOff,
-  Crown
+  Crown,
+  Settings2,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
-export interface WhatsAppNumber {
-  id: string;
-  name: string;
-  phone_number: string | null;
-  is_connected: boolean;
-  daily_sent_count: number;
-  last_sent_at: string | null;
-}
-
-interface ConnectedNumbersProps {
-  selectedNumberId: string | null;
-  onSelectNumber: (numberId: string | null) => void;
+interface NumbersManagerProps {
   numbers: WhatsAppNumber[];
   onNumbersChange: (numbers: WhatsAppNumber[]) => void;
   maxNumbers: number;
+  onConnect: (numberId: string) => void;
 }
 
 const DAILY_LIMIT_PER_NUMBER = 200;
 
-export const ConnectedNumbers = ({
-  selectedNumberId,
-  onSelectNumber,
+export const NumbersManager = ({
   numbers,
   onNumbersChange,
-  maxNumbers
-}: ConnectedNumbersProps) => {
+  maxNumbers,
+  onConnect
+}: NumbersManagerProps) => {
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [numberToDelete, setNumberToDelete] = useState<string | null>(null);
   const [newNumberName, setNewNumberName] = useState("");
   const [connectingNumberId, setConnectingNumberId] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(true);
@@ -71,15 +71,10 @@ export const ConnectedNumbers = ({
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  // Check if user has access to mass messaging (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const hasMassMessagingAccess = ['start', 'growth', 'scale'].includes(userPlan);
-
-  useEffect(() => {
-    if (user && hasMassMessagingAccess) {
-      fetchNumbers();
-    }
-  }, [user, hasMassMessagingAccess]);
+  const connectedNumbers = numbers.filter(n => n.is_connected);
+  const hasConnectedNumber = connectedNumbers.length > 0;
 
   // QR code loading simulation
   useEffect(() => {
@@ -110,23 +105,6 @@ export const ConnectedNumbers = ({
 
     return () => clearInterval(interval);
   }, [qrLoading, qrExpired, connectDialogOpen]);
-
-  const fetchNumbers = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('whatsapp_numbers')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      onNumbersChange(data || []);
-    } catch (err) {
-      console.error('Error fetching numbers:', err);
-    }
-  };
 
   const handleAddNumber = async () => {
     if (!user || !newNumberName.trim()) return;
@@ -177,20 +155,20 @@ export const ConnectedNumbers = ({
     }
   };
 
-  const handleDeleteNumber = async (numberId: string) => {
+  const handleDeleteNumber = async () => {
+    if (!numberToDelete) return;
+
     try {
       const { error } = await supabase
         .from('whatsapp_numbers')
         .delete()
-        .eq('id', numberId);
+        .eq('id', numberToDelete);
 
       if (error) throw error;
 
-      onNumbersChange(numbers.filter(n => n.id !== numberId));
-      
-      if (selectedNumberId === numberId) {
-        onSelectNumber(null);
-      }
+      onNumbersChange(numbers.filter(n => n.id !== numberToDelete));
+      setDeleteConfirmOpen(false);
+      setNumberToDelete(null);
 
       toast({
         title: "Número removido",
@@ -206,7 +184,7 @@ export const ConnectedNumbers = ({
     }
   };
 
-  const handleConnect = async (numberId: string) => {
+  const handleConnectNumber = async (numberId: string) => {
     try {
       const { error } = await supabase
         .from('whatsapp_numbers')
@@ -220,7 +198,7 @@ export const ConnectedNumbers = ({
       ));
 
       setConnectDialogOpen(false);
-      onSelectNumber(numberId);
+      onConnect(numberId);
 
       toast({
         title: "WhatsApp conectado!",
@@ -244,10 +222,6 @@ export const ConnectedNumbers = ({
         n.id === numberId ? { ...n, is_connected: false } : n
       ));
 
-      if (selectedNumberId === numberId) {
-        onSelectNumber(null);
-      }
-
       toast({
         title: "WhatsApp desconectado",
         description: "Conecte novamente para disparar mensagens",
@@ -264,80 +238,195 @@ export const ConnectedNumbers = ({
     setTimeout(() => setQrLoading(false), 1500);
   };
 
-  const connectedNumbers = numbers.filter(n => n.is_connected);
-  const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+  const openConnectDialog = (numberId: string) => {
+    setConnectingNumberId(numberId);
+    setConnectDialogOpen(true);
+    setManageDialogOpen(false);
+  };
+
+  const confirmDelete = (numberId: string) => {
+    setNumberToDelete(numberId);
+    setDeleteConfirmOpen(true);
+  };
 
   if (!hasMassMessagingAccess) {
     return (
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
-        <Crown size={16} className="text-warning" />
-        <span className="text-sm">
-          Disparos em massa exclusivo para planos pagos
-        </span>
-        <Button variant="outline" size="sm" asChild>
-          <a href="/upgrade">Fazer Upgrade</a>
-        </Button>
-      </div>
+      <Button variant="outline" size="sm" asChild className="gap-2">
+        <a href="/upgrade">
+          <Crown size={16} className="text-warning" />
+          Fazer Upgrade
+        </a>
+      </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Number selector */}
-      {numbers.length > 0 && (
-        <Select
-          value={selectedNumberId || ""}
-          onValueChange={(value) => onSelectNumber(value || null)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <div className="flex items-center gap-2">
-              {selectedNumber?.is_connected ? (
-                <Wifi size={14} className="text-green-500" />
-              ) : (
-                <WifiOff size={14} className="text-muted-foreground" />
-              )}
-              <SelectValue placeholder="Selecionar número" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {numbers.map((number) => (
-              <SelectItem key={number.id} value={number.id}>
-                <div className="flex items-center gap-2">
-                  {number.is_connected ? (
-                    <CheckCircle2 size={12} className="text-green-500" />
-                  ) : (
-                    <XCircle size={12} className="text-muted-foreground" />
-                  )}
-                  <span>{number.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({number.daily_sent_count}/{DAILY_LIMIT_PER_NUMBER})
-                  </span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {/* Add number button */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogTrigger asChild>
+    <>
+      {/* Main Connect Button - Green and prominent */}
+      <div className="flex items-center gap-2">
+        {hasConnectedNumber ? (
           <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            disabled={numbers.length >= maxNumbers}
+            variant="outline"
+            size="sm"
+            className="gap-2 border-green-500/50 text-green-500 hover:bg-green-500/10"
+            onClick={() => setManageDialogOpen(true)}
           >
-            <Plus size={16} />
-            <span className="hidden sm:inline">
-              {numbers.length}/{maxNumbers}
-            </span>
+            <Wifi size={16} className="text-green-500" />
+            <span className="hidden sm:inline">{connectedNumbers.length} Conectado(s)</span>
+            <span className="sm:hidden">{connectedNumbers.length}</span>
           </Button>
-        </DialogTrigger>
-        <DialogContent>
+        ) : (
+          <Button 
+            size="sm"
+            className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+            onClick={() => {
+              if (numbers.length === 0) {
+                setAddDialogOpen(true);
+              } else {
+                setManageDialogOpen(true);
+              }
+            }}
+          >
+            <Smartphone size={16} />
+            <span className="hidden sm:inline">Conectar WhatsApp</span>
+            <span className="sm:hidden">Conectar</span>
+          </Button>
+        )}
+
+        {/* Manage Numbers Button */}
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setManageDialogOpen(true)}
+          className="text-muted-foreground"
+        >
+          <Settings2 size={18} />
+        </Button>
+      </div>
+
+      {/* Manage Numbers Dialog */}
+      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Smartphone size={20} />
+              Gerenciar Números ({numbers.length}/{maxNumbers})
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {numbers.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <Smartphone size={32} className="text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Nenhum número cadastrado
+                </p>
+                <Button onClick={() => { setManageDialogOpen(false); setAddDialogOpen(true); }} className="gap-2">
+                  <Plus size={16} />
+                  Adicionar Número
+                </Button>
+              </div>
+            ) : (
+              <>
+                {numbers.map((number) => {
+                  const isAtLimit = number.daily_sent_count >= DAILY_LIMIT_PER_NUMBER;
+                  const usagePercent = (number.daily_sent_count / DAILY_LIMIT_PER_NUMBER) * 100;
+                  
+                  return (
+                    <div 
+                      key={number.id}
+                      className="p-4 rounded-lg border border-border bg-card"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          {number.is_connected ? (
+                            <CheckCircle2 size={16} className="text-green-500" />
+                          ) : (
+                            <XCircle size={16} className="text-muted-foreground" />
+                          )}
+                          <span className="font-medium">{number.name}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => confirmDelete(number.id)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+
+                      {/* Daily Usage */}
+                      <div className="space-y-2 mb-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Disparos hoje</span>
+                          <span className={`font-medium ${isAtLimit ? 'text-destructive' : 'text-foreground'}`}>
+                            {number.daily_sent_count}/{DAILY_LIMIT_PER_NUMBER}
+                          </span>
+                        </div>
+                        <Progress 
+                          value={usagePercent} 
+                          className={`h-2 ${isAtLimit ? '[&>div]:bg-destructive' : ''}`}
+                        />
+                        {isAtLimit && (
+                          <div className="flex items-center gap-1 text-xs text-destructive">
+                            <AlertTriangle size={12} />
+                            Limite atingido - retoma às 08:00
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        {!number.is_connected ? (
+                          <Button 
+                            size="sm" 
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => openConnectDialog(number.id)}
+                          >
+                            <Wifi size={14} className="mr-1" />
+                            Conectar
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleDisconnect(number.id)}
+                          >
+                            <WifiOff size={14} className="mr-1" />
+                            Desconectar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {numbers.length < maxNumbers && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={() => { setManageDialogOpen(false); setAddDialogOpen(true); }}
+                  >
+                    <Plus size={16} />
+                    Adicionar Número
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Number Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus size={20} />
               Adicionar Número WhatsApp
             </DialogTitle>
           </DialogHeader>
@@ -363,7 +452,7 @@ export const ConnectedNumbers = ({
 
             <Button 
               onClick={handleAddNumber} 
-              className="w-full"
+              className="w-full bg-green-600 hover:bg-green-700"
               disabled={!newNumberName.trim() || loading}
             >
               {loading ? (
@@ -387,7 +476,6 @@ export const ConnectedNumbers = ({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
-            {/* QR Code Display */}
             <div className="flex flex-col items-center">
               <div className="relative w-56 h-56 bg-white rounded-2xl p-4">
                 {qrLoading ? (
@@ -417,10 +505,10 @@ export const ConnectedNumbers = ({
                     </div>
                     
                     <button
-                      onClick={() => connectingNumberId && handleConnect(connectingNumberId)}
+                      onClick={() => connectingNumberId && handleConnectNumber(connectingNumberId)}
                       className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-2xl"
                     >
-                      <span className="text-white text-sm font-medium bg-primary px-4 py-2 rounded-lg">
+                      <span className="text-white text-sm font-medium bg-green-600 px-4 py-2 rounded-lg">
                         Simular Conexão
                       </span>
                     </button>
@@ -448,41 +536,26 @@ export const ConnectedNumbers = ({
         </DialogContent>
       </Dialog>
 
-      {/* Numbers management dropdown */}
-      {connectedNumbers.length > 0 && selectedNumber && (
-        <div className="flex items-center gap-2">
-          {!selectedNumber.is_connected && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setConnectingNumberId(selectedNumber.id);
-                setConnectDialogOpen(true);
-              }}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir número?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O número será desconectado e removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteNumber}
+              className="bg-destructive hover:bg-destructive/90"
             >
-              Conectar
-            </Button>
-          )}
-          {selectedNumber.is_connected && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => handleDisconnect(selectedNumber.id)}
-            >
-              <WifiOff size={14} className="mr-1" />
-              Desconectar
-            </Button>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => handleDeleteNumber(selectedNumber.id)}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-      )}
-    </div>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
