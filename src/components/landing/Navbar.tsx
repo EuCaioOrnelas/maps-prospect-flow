@@ -5,11 +5,16 @@ import { Menu, X, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 export const PromoBanner = () => (
-  <div className="bg-primary/10 border-b border-primary/20">
-    <div className="container mx-auto px-4 py-2">
-      <p className="text-center text-xs sm:text-sm text-muted-foreground">
-        <Sparkles size={14} className="inline-block mr-1.5 text-primary" />
-        <span className="text-primary font-medium">Promoção de Lançamento:</span> até 50% de desconto em todos os planos
+  <div className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
+    <div className="container mx-auto px-4 py-3 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
+      <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
+        <Sparkles size={14} className="inline-block mr-1.5 text-primary animate-pulse" />
+        <span className="text-primary font-semibold">Promoção de Lançamento:</span>{" "}
+        até 50% de desconto em todos os planos{" "}
+        <span className="inline-flex items-center gap-1 ml-1 bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+          Por tempo limitado
+        </span>
       </p>
     </div>
   </div>
