@@ -16,7 +16,10 @@ import {
   ExternalLink,
   Crown,
   History,
-  Clock
+  Clock,
+  Brain,
+  Target,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -297,15 +300,35 @@ const Dashboard = () => {
             {/* Main Content */}
             <div className="lg:col-span-3">
               <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
+                  <Brain size={16} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">Prospecção Inteligente com IA</span>
+                </div>
                 <h1 className="font-display text-3xl font-bold mb-2">
                   Encontre seus próximos clientes
                 </h1>
                 <p className="text-muted-foreground">
-                  Busque empresas e profissionais no Google Maps
+                  Nossa IA analisa e entrega até 50 leads estratégicos por busca
                 </p>
               </div>
 
               <form onSubmit={handleSearch} className="glass rounded-2xl p-6 mb-8">
+                {/* AI Badge */}
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-6 pb-6 border-b border-border">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Target size={16} className="text-primary" />
+                    <span>Leads pré-qualificados</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Sparkles size={16} className="text-primary" />
+                    <span>Contatos verificados</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Brain size={16} className="text-primary" />
+                    <span>Alto potencial de conversão</span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="space-y-2">
                     <Label htmlFor="keyword" className="flex items-center gap-2">
@@ -346,12 +369,12 @@ const Dashboard = () => {
                   {isSearching ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      Buscando leads...
+                      Analisando e filtrando leads...
                     </>
                   ) : (
                     <>
                       <Search size={20} />
-                      Buscar Leads
+                      Buscar Leads Estratégicos
                     </>
                   )}
                 </Button>
