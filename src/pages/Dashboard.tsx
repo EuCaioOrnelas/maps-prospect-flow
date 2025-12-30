@@ -31,7 +31,8 @@ import {
   ChevronRight,
   Trash2,
   Zap,
-  BarChart3
+  BarChart3,
+  MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -414,6 +415,17 @@ const Dashboard = () => {
                   >
                     <BarChart3 size={16} />
                     <span className="hidden sm:inline">Relatórios</span>
+                  </Button>
+                </Link>
+
+                <Link to="/whatsapp">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                  >
+                    <MessageSquare size={16} />
+                    <span className="hidden sm:inline">Disparos</span>
                   </Button>
                 </Link>
 

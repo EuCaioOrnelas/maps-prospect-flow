@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Upgrade from "./pages/Upgrade";
 import Reports from "./pages/Reports";
 import SharedReport from "./pages/SharedReport";
+import WhatsAppCampaign from "./pages/WhatsAppCampaign";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/whatsapp" 
+              element={
+                <ProtectedRoute>
+                  <WhatsAppCampaign />
                 </ProtectedRoute>
               } 
             />
