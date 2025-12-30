@@ -1,0 +1,193 @@
+import { Button } from "@/components/ui/button";
+import { Check, Sparkles, ArrowLeft, Crown } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+const plans = [
+  {
+    name: "Start",
+    price: "69",
+    searches: "200",
+    description: "Ideal para começar a prospectar novos clientes",
+    features: [
+      "Até 200 buscas estratégicas/mês",
+      "Até 50 leads por busca",
+      "Download em Excel",
+      "Dados completos dos leads",
+      "Suporte por email",
+    ],
+    popular: false,
+  },
+  {
+    name: "Growth",
+    price: "197",
+    searches: "600",
+    description: "Para profissionais que querem escalar resultados",
+    features: [
+      "Até 600 buscas estratégicas/mês",
+      "Até 50 leads por busca",
+      "Download em Excel",
+      "Dados completos dos leads",
+      "Suporte prioritário",
+      "Relatório de uso mensal",
+    ],
+    popular: true,
+  },
+  {
+    name: "Scale",
+    price: "397",
+    searches: "1.200",
+    description: "Para equipes e agências com alta demanda",
+    features: [
+      "Até 1.200 buscas estratégicas/mês",
+      "Até 50 leads por busca",
+      "Download em Excel",
+      "Dados completos dos leads",
+      "Suporte VIP",
+      "Relatório de uso mensal",
+      "API access (em breve)",
+    ],
+    popular: false,
+  },
+];
+
+const Upgrade = () => {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  const currentPlan = profile?.plan || "free";
+
+  const getPlanOrder = (planName: string) => {
+    const order: Record<string, number> = {
+      free: 0,
+      start: 1,
+      growth: 2,
+      scale: 3,
+    };
+    return order[planName.toLowerCase()] || 0;
+  };
+
+  const isCurrentPlan = (planName: string) => {
+    return currentPlan.toLowerCase() === planName.toLowerCase();
+  };
+
+  const isDowngrade = (planName: string) => {
+    return getPlanOrder(planName) < getPlanOrder(currentPlan);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/dashboard")}
+            className="gap-2"
+          >
+            <ArrowLeft size={18} />
+            Voltar ao Dashboard
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Crown size={16} className="text-primary" />
+            Plano atual: <span className="font-medium text-foreground capitalize">{currentPlan}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12 animate-fade-in">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            Escolha o plano <span className="text-gradient">ideal para você</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Faça upgrade do seu plano e desbloqueie mais buscas para encontrar novos clientes.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+          {plans.map((plan, index) => {
+            const isCurrent = isCurrentPlan(plan.name);
+            const isDowngradeOption = isDowngrade(plan.name);
+
+            return (
+              <div
+                key={index}
+                className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
+                  plan.popular
+                    ? "bg-gradient-card border-2 border-primary shadow-glow"
+                    : "glass"
+                } ${isCurrent ? "ring-2 ring-primary/50" : ""}`}
+                style={{ animationDelay: `${index * 0.15}s` }}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap">
+                      <Sparkles size={14} />
+                      Mais Popular
+                    </div>
+                  </div>
+                )}
+
+                {isCurrent && (
+                  <div className="absolute -top-4 right-4">
+                    <div className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                      <Crown size={12} />
+                      Seu plano
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">{plan.name}</h3>
+                  <p className="text-muted-foreground text-sm">{plan.description}</p>
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm text-muted-foreground">R$</span>
+                    <span className="font-display text-4xl sm:text-5xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground">/mês</span>
+                  </div>
+                  <p className="text-sm text-primary mt-2">
+                    Até {plan.searches} buscas estratégicas
+                  </p>
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  variant={isCurrent ? "secondary" : plan.popular ? "hero" : "outline"}
+                  size="lg"
+                  className="w-full"
+                  disabled={isCurrent || isDowngradeOption}
+                >
+                  {isCurrent
+                    ? "Plano Atual"
+                    : isDowngradeOption
+                    ? "Indisponível"
+                    : "Fazer Upgrade"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-muted-foreground mt-12 text-sm animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          Dúvidas? Entre em contato com nosso suporte.
+        </p>
+      </main>
+    </div>
+  );
+};
+
+export default Upgrade;
