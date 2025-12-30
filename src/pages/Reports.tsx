@@ -588,21 +588,16 @@ const Reports = () => {
                 {stats.topNiches.length > 0 ? (
                   <div className="space-y-3">
                     {stats.topNiches.map((niche, index) => (
-                      <div key={niche.name} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                          {index + 1}
+                      <div key={niche.name} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30">
+                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                          {index + 1}º
                         </div>
-                        <div className="flex-1">
-                          <div className="font-medium capitalize truncate">{niche.name}</div>
-                          <div className="text-sm text-muted-foreground">{niche.count} buscas</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium capitalize truncate text-foreground">{niche.name}</div>
                         </div>
-                        <div className="w-24">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary rounded-full"
-                              style={{ width: `${(niche.count / stats.topNiches[0].count) * 100}%` }}
-                            />
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-primary">{niche.count}</span>
+                          <span className="text-xs text-muted-foreground">buscas</span>
                         </div>
                       </div>
                     ))}
@@ -627,21 +622,16 @@ const Reports = () => {
                 {stats.topRegions.length > 0 ? (
                   <div className="space-y-3">
                     {stats.topRegions.map((region, index) => (
-                      <div key={region.name} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-chart-2/20 flex items-center justify-center text-sm font-bold text-chart-2">
-                          {index + 1}
+                      <div key={region.name} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400">
+                          {index + 1}º
                         </div>
-                        <div className="flex-1">
-                          <div className="font-medium capitalize truncate">{region.name}</div>
-                          <div className="text-sm text-muted-foreground">{region.count} buscas</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium capitalize truncate text-foreground">{region.name}</div>
                         </div>
-                        <div className="w-24">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-chart-2 rounded-full"
-                              style={{ width: `${(region.count / stats.topRegions[0].count) * 100}%` }}
-                            />
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-emerald-400">{region.count}</span>
+                          <span className="text-xs text-muted-foreground">buscas</span>
                         </div>
                       </div>
                     ))}
