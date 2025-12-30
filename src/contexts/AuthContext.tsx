@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
 
 interface Profile {
   id: string;
@@ -9,6 +10,7 @@ interface Profile {
   searches_used: number;
   searches_limit: number;
   plan: string;
+  last_searches_reset?: string;
 }
 
 interface AuthContextType {
@@ -97,14 +99,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
-    const { error } = await supabase.auth.signUp({
+    // Get device fingerprint and IP for fraud prevention
+    const [fingerprint, clientIP] = await Promise.all([
+      generateFingerprint(),
+      getClientIP()
+    ]);
+    
+    // Check for fraud before signup
+    const { data: fraudCheck } = await supabase.rpc('check_signup_fraud', {
+      p_ip: clientIP,
+      p_fingerprint: fingerprint
+    });
+    
+    const fraudResult = fraudCheck as { is_suspicious?: boolean; reasons?: string[] } | null;
+    
+    if (fraudResult?.is_suspicious) {
+      console.warn('Suspicious signup detected:', fraudResult.reasons);
+      return { 
+        error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
+      };
+    }
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { name }
+        data: { 
+          name,
+          signup_ip: clientIP,
+          device_fingerprint: fingerprint
+        }
       }
     });
+
+    // Update profile with IP and fingerprint after signup
+    if (!error && data.user) {
+      setTimeout(async () => {
+        await supabase
+          .from('profiles')
+          .update({
+            signup_ip: clientIP,
+            device_fingerprint: fingerprint
+          })
+          .eq('id', data.user!.id);
+      }, 1000);
+    }
 
     return { error };
   };

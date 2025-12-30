@@ -221,11 +221,20 @@ serve(async (req) => {
 
     console.log('Search completed successfully');
 
+    // Build response with accurate count info
+    const maxExpected = 50;
+    const foundLess = leads.length < maxExpected;
+
     return new Response(
       JSON.stringify({ 
         leads,
         searchesUsed: profile.searches_used + 1,
         searchesLimit: profile.searches_limit,
+        resultsCount: leads.length,
+        foundLessThanExpected: foundLess,
+        message: foundLess 
+          ? `Encontramos apenas ${leads.length} resultados para "${keyword}" em ${location}. Isso pode indicar que o nicho é pequeno na região ou há poucos estabelecimentos cadastrados.`
+          : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

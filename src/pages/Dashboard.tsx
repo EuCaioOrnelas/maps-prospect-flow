@@ -121,6 +121,34 @@ const Dashboard = () => {
     currentHistoryPage * HISTORY_PER_PAGE
   );
 
+  // Check and reset monthly searches for free users
+  useEffect(() => {
+    const checkMonthlyReset = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase.rpc('check_and_reset_monthly_searches', {
+          user_id: user.id
+        });
+        
+        const result = data as { reset?: boolean; message?: string } | null;
+        
+        if (result?.reset) {
+          toast({
+            title: "Buscas renovadas!",
+            description: result.message || "Suas 10 buscas gratuitas mensais foram renovadas.",
+            duration: 6000,
+          });
+          await refreshProfile();
+        }
+      } catch (err) {
+        console.error('Error checking monthly reset:', err);
+      }
+    };
+    
+    checkMonthlyReset();
+  }, [user]);
+
   // Fetch search history
   useEffect(() => {
     const fetchHistory = async () => {
@@ -236,10 +264,20 @@ const Dashboard = () => {
         }
       }
       
-      toast({
-        title: "Busca concluída!",
-        description: `${data.leads?.length || 0} leads encontrados para "${keyword}" em ${location}`,
-      });
+      // Show appropriate toast based on results count
+      const resultsCount = data.leads?.length || 0;
+      if (data.foundLessThanExpected && data.message) {
+        toast({
+          title: `${resultsCount} leads encontrados`,
+          description: data.message,
+          duration: 8000,
+        });
+      } else {
+        toast({
+          title: "Busca concluída!",
+          description: `${resultsCount} leads encontrados para "${keyword}" em ${location}`,
+        });
+      }
     } catch (error: any) {
       console.error('Search error:', error);
       toast({
