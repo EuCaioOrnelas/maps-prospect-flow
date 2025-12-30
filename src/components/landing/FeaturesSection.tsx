@@ -1,4 +1,4 @@
-import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle } from "lucide-react";
+import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, ShieldCheck } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const features = [
@@ -21,6 +21,18 @@ const features = [
     icon: Download,
     title: "Até 50 Leads por Busca",
     description: "Cada busca estratégica retorna até 50 leads qualificados, prontos para download em planilha Excel.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Disparos em Massa via WhatsApp",
+    description: "Envie mensagens automatizadas para seus leads com limite de 200 disparos/dia. Estratégia anti-bloqueio com API oficial.",
+    badge: "Novo",
+  },
+  {
+    icon: BarChart3,
+    title: "Relatórios Inteligentes",
+    description: "Acompanhe métricas de campanhas, taxa de conversão e performance dos leads com dashboards visuais completos.",
+    badge: "Novo",
   },
   {
     icon: Shield,
@@ -102,15 +114,20 @@ export const FeaturesSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`group glass rounded-2xl p-8 hover:bg-card/90 transition-all duration-500 hover:-translate-y-1 ${
+              className={`group glass rounded-2xl p-8 hover:bg-card/90 transition-all duration-500 hover:-translate-y-1 relative ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ transitionDelay: `${200 + index * 100}ms` }}
             >
+              {'badge' in feature && feature.badge && (
+                <span className="absolute top-4 right-4 px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
+                  {feature.badge}
+                </span>
+              )}
               <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
                 <feature.icon size={28} className="text-primary" />
               </div>
