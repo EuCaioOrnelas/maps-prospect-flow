@@ -352,40 +352,39 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             <Logo size="md" />
             
-            <div className="flex items-center gap-6">
-              {/* Usage indicator */}
-              <div className="hidden md:flex items-center gap-3 bg-secondary rounded-lg px-4 py-2">
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Buscas restantes: </span>
+            <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+              {/* Usage indicator - now visible on all screens */}
+              <div className="flex items-center gap-2 sm:gap-3 bg-secondary rounded-lg px-2 sm:px-4 py-1.5 sm:py-2">
+                <div className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline text-muted-foreground">Buscas: </span>
                   <span className="font-semibold text-primary">
-                    {searchesRemaining}/{profile?.searches_limit || 10}
+                    {searchesRemaining}<span className="text-muted-foreground">/{profile?.searches_limit || 10}</span>
                   </span>
                 </div>
-                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                <div className="hidden sm:block w-16 lg:w-24 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
                   />
                 </div>
+                <Link to="/upgrade">
+                  <Button variant="ghost" size="sm" className="h-6 sm:h-7 px-2 text-xs text-primary hover:text-primary">
+                    <Crown size={14} className="sm:mr-1" />
+                    <span className="hidden sm:inline">Upgrade</span>
+                  </Button>
+                </Link>
               </div>
 
-              <div className="hidden md:block text-sm text-muted-foreground">
+              <div className="hidden lg:block text-sm text-muted-foreground">
                 Plano: <span className="font-medium text-foreground">{getPlanName(profile?.plan || 'free')}</span>
               </div>
 
-              <Link to="/#pricing">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Crown size={16} />
-                  Upgrade
-                </Button>
-              </Link>
-
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut size={20} />
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 sm:h-10 sm:w-10">
+                <LogOut size={18} className="sm:w-5 sm:h-5" />
               </Button>
             </div>
           </div>
