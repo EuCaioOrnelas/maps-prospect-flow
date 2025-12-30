@@ -11,10 +11,13 @@ import {
   Users,
   Pause,
   AlertTriangle,
-  Info
+  Info,
+  FileText
 } from "lucide-react";
 
 interface CampaignSettingsProps {
+  campaignName: string;
+  onCampaignNameChange: (value: string) => void;
   delaySeconds: number;
   onDelayChange: (value: number) => void;
   pauseAfterContacts: number;
@@ -29,6 +32,8 @@ interface CampaignSettingsProps {
 }
 
 export const CampaignSettings = ({
+  campaignName,
+  onCampaignNameChange,
   delaySeconds,
   onDelayChange,
   pauseAfterContacts,
@@ -78,6 +83,20 @@ export const CampaignSettings = ({
       </div>
 
       <div className="space-y-8">
+        {/* Campaign Name */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <FileText size={16} className="text-primary" />
+            Nome da campanha (opcional)
+          </Label>
+          <Input
+            value={campaignName}
+            onChange={(e) => onCampaignNameChange(e.target.value)}
+            placeholder={`Campanha ${new Date().toLocaleDateString('pt-BR')}`}
+            className="bg-secondary border-border"
+          />
+        </div>
+
         {/* Delay Between Messages */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
