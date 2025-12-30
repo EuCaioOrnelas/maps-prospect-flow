@@ -79,7 +79,7 @@ export const HeroSection = () => {
         />
       ))}
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
@@ -154,7 +154,7 @@ export const HeroSection = () => {
 
         {/* Dashboard preview with parallax */}
         <div 
-          className="mt-12 sm:mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform px-2" 
+          className="mt-12 sm:mt-20 max-w-6xl mx-auto animate-slide-up will-change-transform px-2" 
           style={{ 
             animationDelay: "0.5s",
             transform: `translateY(${-parallaxOffset * 0.1}px) scale(${imageScale})`,
