@@ -37,7 +37,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
-
+import { useNotifications } from "@/hooks/useNotifications";
 interface Lead {
   name: string;
   category: string;
@@ -79,8 +79,29 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile, user } = useAuth();
+  const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if (isSupported && permission === "default") {
+      // Request permission after a short delay
+      const timer = setTimeout(() => {
+        requestPermission();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSupported, permission, requestPermission]);
+
+  // Notify when credits are low
+  useEffect(() => {
+    if (searchesRemaining === 3) {
+      notifyLowCredits(3);
+    } else if (searchesRemaining === 0 && profile?.searches_used && profile.searches_used > 0) {
+      notifyCreditsExhausted();
+    }
+  }, [searchesRemaining, notifyLowCredits, notifyCreditsExhausted, profile?.searches_used]);
 
   // Calculate pagination for results
   const totalResultPages = Math.ceil(leads.length / RESULTS_PER_PAGE);
