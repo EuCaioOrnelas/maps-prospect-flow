@@ -802,6 +802,7 @@ const Reports = () => {
                           borderRadius: '8px',
                           color: '#f9fafb'
                         }}
+                        labelStyle={{ color: '#f9fafb' }}
                         itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
@@ -849,6 +850,7 @@ const Reports = () => {
                           borderRadius: '8px',
                           color: '#f9fafb'
                         }}
+                        labelStyle={{ color: '#f9fafb' }}
                         itemStyle={{ color: '#f9fafb' }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
