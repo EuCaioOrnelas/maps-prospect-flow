@@ -183,7 +183,7 @@ serve(async (req) => {
       console.error('Error updating search count:', updateError);
     }
 
-    // Save search to history
+    // Save search to history with leads data
     const { error: historyError } = await supabase
       .from('search_history')
       .insert({
@@ -191,6 +191,7 @@ serve(async (req) => {
         keyword,
         location,
         results_count: leads.length,
+        leads: leads, // Store the leads for future retrieval
       });
 
     if (historyError) {

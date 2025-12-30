@@ -48,6 +48,7 @@ interface SearchHistoryItem {
   location: string;
   results_count: number;
   created_at: string;
+  leads?: Lead[];
 }
 
 const RESULTS_PER_PAGE = 10;
@@ -104,7 +105,10 @@ const Dashboard = () => {
           return;
         }
 
-        setSearchHistory(data || []);
+        setSearchHistory((data || []).map(item => ({
+          ...item,
+          leads: Array.isArray(item.leads) ? (item.leads as unknown as Lead[]) : []
+        })));
       } catch (err) {
         console.error('Error:', err);
       } finally {
@@ -194,7 +198,10 @@ const Dashboard = () => {
           .limit(50);
         
         if (historyData) {
-          setSearchHistory(historyData);
+          setSearchHistory(historyData.map(item => ({
+            ...item,
+            leads: Array.isArray(item.leads) ? (item.leads as unknown as Lead[]) : []
+          })));
           setCurrentHistoryPage(1);
         }
       }
@@ -288,82 +295,26 @@ const Dashboard = () => {
     });
   };
 
-  const handleHistoryClick = async (item: SearchHistoryItem) => {
+  const handleHistoryClick = (item: SearchHistoryItem) => {
     setKeyword(item.keyword);
     setLocation(item.location);
-    
-    // Execute the search automatically
-    setIsSearching(true);
     setHasSearched(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-
-      const response = await supabase.functions.invoke('search-leads', {
-        body: { keyword: item.keyword, location: item.location },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Erro ao buscar leads');
-      }
-
-      const data = response.data;
-
-      if (data.error) {
-        if (data.limitReached) {
-          toast({
-            title: "Limite de buscas atingido",
-            description: data.message,
-            variant: "destructive",
-          });
-        } else {
-          throw new Error(data.error);
-        }
-        setIsSearching(false);
-        return;
-      }
-
-      setLeads(data.leads || []);
-      await refreshProfile();
-      
-      // Refresh history
-      if (user) {
-        const { data: historyData } = await supabase
-          .from('search_history')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        if (historyData) {
-          setSearchHistory(historyData);
-          setCurrentHistoryPage(1);
-        }
-      }
-      
+    
+    // Use saved leads from history instead of making a new search
+    if (item.leads && item.leads.length > 0) {
+      setLeads(item.leads);
       toast({
-        title: "Busca concluída!",
-        description: `${data.leads?.length || 0} leads encontrados para "${item.keyword}" em ${item.location}`,
+        title: "Resultados carregados",
+        description: `${item.leads.length} leads da busca anterior`,
       });
-    } catch (error: any) {
-      console.error('Search error:', error);
+    } else {
+      // Fallback for old history items without saved leads
+      setLeads([]);
       toast({
-        title: "Erro na busca",
-        description: error.message || "Erro ao buscar leads. Tente novamente.",
+        title: "Busca antiga",
+        description: "Esta busca não possui resultados salvos. Faça uma nova busca.",
         variant: "destructive",
       });
-    } finally {
-      setIsSearching(false);
     }
   };
 
