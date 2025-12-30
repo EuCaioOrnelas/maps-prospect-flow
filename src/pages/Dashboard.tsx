@@ -579,17 +579,22 @@ const Dashboard = () => {
                         <button
                           key={item.id}
                           onClick={() => handleHistoryClick(item)}
-                          className="w-full text-left p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                          className="w-full text-left p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors border border-transparent hover:border-border"
                         >
-                          <p className="font-medium text-sm truncate">{item.keyword}</p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="font-semibold text-foreground truncate">{item.keyword}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1">
+                            <MapPin size={12} className="flex-shrink-0" />
                             {item.location}
                           </p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                            <Clock size={12} />
-                            <span>{formatDate(item.created_at)}</span>
-                            <span>•</span>
-                            <span>{item.results_count} resultados</span>
+                          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                            <Clock size={12} className="flex-shrink-0" />
+                            {formatDate(item.created_at)}
+                          </p>
+                          <div className="mt-2">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                              <Search size={10} />
+                              {item.results_count} resultados
+                            </span>
                           </div>
                         </button>
                       ))}
