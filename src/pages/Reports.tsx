@@ -395,7 +395,8 @@ const Reports = () => {
       pdf.text(`${i + 1}.`, leftCol + 6, itemY);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
-      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 10), leftCol + 12, itemY);
+      const nicheName1 = niche.name.charAt(0).toUpperCase() + niche.name.slice(1);
+      pdf.text(nicheName1.slice(0, 12), leftCol + 12, itemY);
       
       // Bar background
       pdf.setFillColor(229, 231, 235);
@@ -433,7 +434,8 @@ const Reports = () => {
       pdf.text(`${i + 1}.`, rightCol + 6, itemY);
       
       pdf.setTextColor(dark.r, dark.g, dark.b);
-      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 10), rightCol + 12, itemY);
+      const regionName1 = region.name.charAt(0).toUpperCase() + region.name.slice(1);
+      pdf.text(regionName1.slice(0, 12), rightCol + 12, itemY);
       
       pdf.setFillColor(229, 231, 235);
       pdf.roundedRect(rightCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
@@ -467,7 +469,8 @@ const Reports = () => {
       pdf.setTextColor(dark.r, dark.g, dark.b);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 10), leftCol + 6, itemY);
+      const nicheName2 = niche.name.charAt(0).toUpperCase() + niche.name.slice(1);
+      pdf.text(nicheName2.slice(0, 12), leftCol + 6, itemY);
       
       pdf.setFillColor(229, 231, 235);
       pdf.roundedRect(leftCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
@@ -498,7 +501,8 @@ const Reports = () => {
       pdf.setTextColor(dark.r, dark.g, dark.b);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(region.name.charAt(0).toUpperCase() + region.name.slice(0, 10), rightCol + 6, itemY);
+      const regionName2 = region.name.charAt(0).toUpperCase() + region.name.slice(1);
+      pdf.text(regionName2.slice(0, 12), rightCol + 6, itemY);
       
       pdf.setFillColor(229, 231, 235);
       pdf.roundedRect(rightCol + barStartX, itemY - 2.5, barMaxWidth, 3.5, 1.5, 1.5, 'F');
