@@ -11,18 +11,31 @@ import {
   Loader2,
   Pause,
   Play,
-  AlertTriangle
+  AlertTriangle,
+  Smartphone
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
+import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
 interface CampaignHistoryProps {
   campaigns: Campaign[];
   loading: boolean;
   onDelete: (id: string) => void;
   onNewCampaign: () => void;
+  onPause?: (campaign: Campaign) => void;
+  onResume?: (campaign: Campaign) => void;
+  numbers?: WhatsAppNumber[];
 }
 
-export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }: CampaignHistoryProps) => {
+export const CampaignHistory = ({ 
+  campaigns, 
+  loading, 
+  onDelete, 
+  onNewCampaign,
+  onPause,
+  onResume,
+  numbers = []
+}: CampaignHistoryProps) => {
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -59,6 +72,12 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
     const total = sent + failed;
     if (total === 0) return 0;
     return Math.round((sent / total) * 100);
+  };
+
+  const getNumberName = (numberId?: string | null) => {
+    if (!numberId) return null;
+    const number = numbers.find(n => n.id === numberId);
+    return number?.name || null;
   };
 
   if (loading) {
@@ -122,8 +141,11 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
       {/* Campaign List */}
       <div className="space-y-3">
         {campaigns.map((campaign) => {
-          const statusInfo = getStatusInfo(campaign.status, (campaign as any).paused_at_limit);
+          const statusInfo = getStatusInfo(campaign.status, campaign.paused_at_limit);
           const successRate = calculateSuccessRate(campaign.sent_count, campaign.failed_count);
+          const numberName = getNumberName(campaign.whatsapp_number_id);
+          const canPause = campaign.status === 'running' && onPause;
+          const canResume = (campaign.status === 'paused' || campaign.status === 'scheduled') && onResume;
           
           return (
             <div
@@ -149,6 +171,12 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
                       <MessageSquare size={14} />
                       <span>{campaign.messages.length} variações</span>
                     </div>
+                    {numberName && (
+                      <div className="flex items-center gap-1">
+                        <Smartphone size={14} />
+                        <span>{numberName}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1">
                       <Clock size={14} />
                       <span>{formatDate(campaign.created_at)}</span>
@@ -156,14 +184,38 @@ export const CampaignHistory = ({ campaigns, loading, onDelete, onNewCampaign }:
                   </div>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDelete(campaign.id)}
-                  className="text-muted-foreground hover:text-destructive flex-shrink-0"
-                >
-                  <Trash2 size={16} />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {canPause && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onPause(campaign)}
+                      className="text-yellow-500 hover:text-yellow-600"
+                    >
+                      <Pause size={14} className="mr-1" />
+                      Pausar
+                    </Button>
+                  )}
+                  {canResume && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onResume(campaign)}
+                      className="text-green-500 hover:text-green-600"
+                    >
+                      <Play size={14} className="mr-1" />
+                      Retomar
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDelete(campaign.id)}
+                    className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
 
               {/* Stats Bar */}

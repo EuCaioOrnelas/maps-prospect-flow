@@ -163,6 +163,7 @@ export type Database = {
           total_leads: number
           updated_at: string
           user_id: string
+          whatsapp_number_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -186,6 +187,7 @@ export type Database = {
           total_leads?: number
           updated_at?: string
           user_id: string
+          whatsapp_number_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -207,6 +209,51 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_leads?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp_number_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaigns_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_numbers: {
+        Row: {
+          created_at: string
+          daily_sent_count: number
+          id: string
+          is_connected: boolean
+          last_sent_at: string | null
+          name: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_sent_count?: number
+          id?: string
+          is_connected?: boolean
+          last_sent_at?: string | null
+          name: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_sent_count?: number
+          id?: string
+          is_connected?: boolean
+          last_sent_at?: string | null
+          name?: string
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
         }
