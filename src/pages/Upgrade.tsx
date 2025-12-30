@@ -149,8 +149,11 @@ const Upgrade = () => {
                 </div>
 
                 <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm text-muted-foreground line-through">R$ {plan.anchorPrice}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base text-muted-foreground line-through decoration-destructive/70 decoration-2">R$ {plan.anchorPrice}</span>
+                    <span className="bg-destructive/15 text-destructive text-xs font-bold px-2 py-0.5 rounded-full">
+                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice)) * 100)}%
+                    </span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
