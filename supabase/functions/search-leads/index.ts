@@ -159,7 +159,7 @@ serve(async (req) => {
     console.log(`Total unique results collected: ${allResults.length}`);
 
     // Parse leads from SERP response
-    const leads: Lead[] = allResults.slice(0, maxLeads).map((result: any) => ({
+    const allLeads: Lead[] = allResults.slice(0, maxLeads).map((result: any) => ({
       name: result.title || '-',
       category: result.type || result.types?.[0] || '-',
       address: result.address || '-',
@@ -171,7 +171,13 @@ serve(async (req) => {
       mapsLink: result.link || (result.place_id ? `https://www.google.com/maps/place/?q=place_id:${result.place_id}` : '-'),
     }));
 
-    console.log(`Found ${leads.length} unique leads`);
+    // Filter out leads without valid phone numbers
+    const leads = allLeads.filter(lead => {
+      const phone = lead.phone?.trim();
+      return phone && phone !== '-' && phone !== '' && phone.length >= 8;
+    });
+
+    console.log(`Found ${allLeads.length} total leads, ${leads.length} with valid phone numbers`);
 
     // Update user's search count
     const { error: updateError } = await supabase
