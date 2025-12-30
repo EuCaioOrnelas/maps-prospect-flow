@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -63,10 +61,13 @@ export const NumbersManager = ({
   const [numberToDelete, setNumberToDelete] = useState<string | null>(null);
   const [newNumberName, setNewNumberName] = useState("");
   const [connectingNumberId, setConnectingNumberId] = useState<string | null>(null);
+  const [connectingInstanceName, setConnectingInstanceName] = useState<string>("");
+  const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(true);
   const [qrExpired, setQrExpired] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(false);
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -76,18 +77,57 @@ export const NumbersManager = ({
   const connectedNumbers = numbers.filter(n => n.is_connected);
   const hasConnectedNumber = connectedNumbers.length > 0;
 
-  // QR code loading simulation
+  // Generate unique instance name
+  const generateInstanceName = useCallback(() => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `prospex_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
+  }, [user?.id]);
+
+  // Check connection status periodically
   useEffect(() => {
-    if (connectDialogOpen && connectingNumberId) {
-      setQrLoading(true);
-      setQrExpired(false);
-      setCountdown(60);
-      const timer = setTimeout(() => {
-        setQrLoading(false);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [connectDialogOpen, connectingNumberId]);
+    if (!connectDialogOpen || !connectingNumberId || !connectingInstanceName || qrLoading) return;
+
+    const checkStatus = async () => {
+      try {
+        setCheckingConnection(true);
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        const response = await supabase.functions.invoke('evolution-check-status', {
+          body: { 
+            instanceName: connectingInstanceName,
+            numberId: connectingNumberId 
+          },
+        });
+
+        if (response.data?.connected) {
+          // Update local state
+          onNumbersChange(numbers.map(n => 
+            n.id === connectingNumberId 
+              ? { ...n, is_connected: true, phone_number: response.data.phoneNumber } 
+              : n
+          ));
+
+          setConnectDialogOpen(false);
+          onConnect(connectingNumberId);
+
+          toast({
+            title: "WhatsApp conectado!",
+            description: response.data.phoneNumber 
+              ? `Número ${response.data.phoneNumber} conectado com sucesso`
+              : "Número pronto para disparos",
+          });
+        }
+      } catch (err) {
+        console.error('Error checking connection status:', err);
+      } finally {
+        setCheckingConnection(false);
+      }
+    };
+
+    const interval = setInterval(checkStatus, 3000);
+    return () => clearInterval(interval);
+  }, [connectDialogOpen, connectingNumberId, connectingInstanceName, qrLoading, numbers, onNumbersChange, onConnect, toast]);
 
   // QR code expiration countdown
   useEffect(() => {
@@ -106,6 +146,62 @@ export const NumbersManager = ({
     return () => clearInterval(interval);
   }, [qrLoading, qrExpired, connectDialogOpen]);
 
+  const createInstanceAndGetQR = async (numberId: string, instanceName: string) => {
+    setQrLoading(true);
+    setQrExpired(false);
+    setQrCode(null);
+    setCountdown(60);
+
+    try {
+      // Create instance in Evolution API
+      const createResponse = await supabase.functions.invoke('evolution-create-instance', {
+        body: { 
+          numberId,
+          instanceName 
+        },
+      });
+
+      if (createResponse.error) {
+        throw new Error(createResponse.error.message);
+      }
+
+      console.log('Instance created:', createResponse.data);
+
+      // If QR code came with instance creation
+      if (createResponse.data?.qrcode) {
+        setQrCode(createResponse.data.qrcode);
+        setQrLoading(false);
+        return;
+      }
+
+      // Otherwise, get QR code separately
+      const qrResponse = await supabase.functions.invoke('evolution-get-qrcode', {
+        body: { instanceName },
+      });
+
+      if (qrResponse.error) {
+        throw new Error(qrResponse.error.message);
+      }
+
+      if (qrResponse.data?.qrcode) {
+        setQrCode(qrResponse.data.qrcode);
+      } else {
+        throw new Error('QR Code não disponível');
+      }
+
+    } catch (err) {
+      console.error('Error creating instance:', err);
+      toast({
+        title: "Erro ao gerar QR Code",
+        description: err instanceof Error ? err.message : "Tente novamente",
+        variant: "destructive",
+      });
+      setQrExpired(true);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
   const handleAddNumber = async () => {
     if (!user || !newNumberName.trim()) return;
 
@@ -120,6 +216,8 @@ export const NumbersManager = ({
 
     setLoading(true);
     try {
+      const instanceName = generateInstanceName();
+
       const { data, error } = await supabase
         .from('whatsapp_numbers')
         .insert({
@@ -137,11 +235,15 @@ export const NumbersManager = ({
       
       // Open connection dialog for new number
       setConnectingNumberId(data.id);
+      setConnectingInstanceName(instanceName);
       setConnectDialogOpen(true);
+
+      // Create instance and get QR
+      await createInstanceAndGetQR(data.id, instanceName);
 
       toast({
         title: "Número adicionado",
-        description: "Agora conecte seu WhatsApp",
+        description: "Escaneie o QR Code para conectar",
       });
     } catch (err) {
       console.error('Error adding number:', err);
@@ -159,6 +261,23 @@ export const NumbersManager = ({
     if (!numberToDelete) return;
 
     try {
+      // Find the number to get instance name
+      const numberToRemove = numbers.find(n => n.id === numberToDelete);
+      
+      // Try to disconnect from Evolution API if connected
+      if (numberToRemove?.is_connected) {
+        try {
+          await supabase.functions.invoke('evolution-disconnect', {
+            body: { 
+              instanceName: numberToRemove.name,
+              numberId: numberToDelete 
+            },
+          });
+        } catch (e) {
+          console.error('Error disconnecting from Evolution:', e);
+        }
+      }
+
       const { error } = await supabase
         .from('whatsapp_numbers')
         .delete()
@@ -184,42 +303,20 @@ export const NumbersManager = ({
     }
   };
 
-  const handleConnectNumber = async (numberId: string) => {
-    try {
-      const { error } = await supabase
-        .from('whatsapp_numbers')
-        .update({ is_connected: true })
-        .eq('id', numberId);
-
-      if (error) throw error;
-
-      onNumbersChange(numbers.map(n => 
-        n.id === numberId ? { ...n, is_connected: true } : n
-      ));
-
-      setConnectDialogOpen(false);
-      onConnect(numberId);
-
-      toast({
-        title: "WhatsApp conectado!",
-        description: "Número pronto para disparos",
-      });
-    } catch (err) {
-      console.error('Error connecting number:', err);
-    }
-  };
-
   const handleDisconnect = async (numberId: string) => {
-    try {
-      const { error } = await supabase
-        .from('whatsapp_numbers')
-        .update({ is_connected: false })
-        .eq('id', numberId);
+    const numberToDisconnect = numbers.find(n => n.id === numberId);
+    if (!numberToDisconnect) return;
 
-      if (error) throw error;
+    try {
+      await supabase.functions.invoke('evolution-disconnect', {
+        body: { 
+          instanceName: numberToDisconnect.name,
+          numberId 
+        },
+      });
 
       onNumbersChange(numbers.map(n => 
-        n.id === numberId ? { ...n, is_connected: false } : n
+        n.id === numberId ? { ...n, is_connected: false, phone_number: null } : n
       ));
 
       toast({
@@ -228,20 +325,33 @@ export const NumbersManager = ({
       });
     } catch (err) {
       console.error('Error disconnecting number:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível desconectar",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleRefreshQR = () => {
-    setQrLoading(true);
-    setQrExpired(false);
-    setCountdown(60);
-    setTimeout(() => setQrLoading(false), 1500);
+  const handleRefreshQR = async () => {
+    if (!connectingNumberId) return;
+    const instanceName = generateInstanceName();
+    setConnectingInstanceName(instanceName);
+    await createInstanceAndGetQR(connectingNumberId, instanceName);
   };
 
-  const openConnectDialog = (numberId: string) => {
+  const openConnectDialog = async (numberId: string) => {
+    const number = numbers.find(n => n.id === numberId);
+    if (!number) return;
+
+    const instanceName = generateInstanceName();
+    
     setConnectingNumberId(numberId);
+    setConnectingInstanceName(instanceName);
     setConnectDialogOpen(true);
     setManageDialogOpen(false);
+
+    await createInstanceAndGetQR(numberId, instanceName);
   };
 
   const confirmDelete = (numberId: string) => {
@@ -354,7 +464,12 @@ export const NumbersManager = ({
                           ) : (
                             <XCircle size={16} className="text-muted-foreground" />
                           )}
-                          <span className="font-medium">{number.name}</span>
+                          <div>
+                            <span className="font-medium">{number.name}</span>
+                            {number.phone_number && (
+                              <p className="text-xs text-muted-foreground">{number.phone_number}</p>
+                            )}
+                          </div>
                         </div>
                         <Button
                           variant="ghost"
@@ -485,13 +600,14 @@ export const NumbersManager = ({
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="flex flex-col items-center">
-              <div className="relative w-56 h-56 bg-white rounded-2xl p-4">
+              <div className="relative w-64 h-64 bg-white rounded-2xl p-2 flex items-center justify-center">
                 {qrLoading ? (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Loader2 size={40} className="animate-spin text-muted-foreground" />
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <Loader2 size={40} className="animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
                   </div>
                 ) : qrExpired ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-center">
+                  <div className="flex flex-col items-center justify-center text-center p-4">
                     <QrCode size={40} className="text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground mb-3">QR Code expirado</p>
                     <Button size="sm" variant="outline" onClick={handleRefreshQR}>
@@ -499,35 +615,36 @@ export const NumbersManager = ({
                       Gerar novo
                     </Button>
                   </div>
+                ) : qrCode ? (
+                  <img 
+                    src={qrCode.startsWith('data:') ? qrCode : `data:image/png;base64,${qrCode}`}
+                    alt="QR Code WhatsApp"
+                    className="w-full h-full object-contain"
+                  />
                 ) : (
-                  <>
-                    <div className="w-full h-full grid grid-cols-8 gap-1">
-                      {Array.from({ length: 64 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`rounded-sm ${
-                            Math.random() > 0.5 ? 'bg-gray-900' : 'bg-white'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    
-                    <button
-                      onClick={() => connectingNumberId && handleConnectNumber(connectingNumberId)}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-2xl"
-                    >
-                      <span className="text-white text-sm font-medium bg-green-600 px-4 py-2 rounded-lg">
-                        Simular Conexão
-                      </span>
-                    </button>
-                  </>
+                  <div className="flex flex-col items-center justify-center text-center p-4">
+                    <QrCode size={40} className="text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Erro ao carregar QR Code</p>
+                    <Button size="sm" variant="outline" onClick={handleRefreshQR} className="mt-3">
+                      <RefreshCw size={14} className="mr-2" />
+                      Tentar novamente
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              {!qrExpired && !qrLoading && (
-                <p className="text-sm text-muted-foreground mt-3">
-                  Expira em <span className="font-medium text-foreground">{countdown}s</span>
-                </p>
+              {!qrExpired && !qrLoading && qrCode && (
+                <div className="flex flex-col items-center gap-2 mt-3">
+                  <p className="text-sm text-muted-foreground">
+                    Expira em <span className="font-medium text-foreground">{countdown}s</span>
+                  </p>
+                  {checkingConnection && (
+                    <div className="flex items-center gap-2 text-xs text-primary">
+                      <Loader2 size={12} className="animate-spin" />
+                      Aguardando conexão...
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
