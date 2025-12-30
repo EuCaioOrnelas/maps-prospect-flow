@@ -60,6 +60,16 @@
     --success: 160 84% 39%;
     --warning: 45 93% 47%;
     --info: 200 98% 39%;
+
+    /* Chart colors - vibrant colors for dark theme */
+    --chart-1: 160 84% 39%;
+    --chart-2: 173 80% 40%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 43 96% 56%;
+    --chart-6: 199 89% 48%;
+    --chart-7: 291 64% 42%;
+    --chart-8: 24 95% 53%;
   }
 
   .dark {

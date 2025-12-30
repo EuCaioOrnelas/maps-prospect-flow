@@ -63,15 +63,16 @@ interface ReportStats {
   regionsByLeads: { name: string; leads: number }[];
 }
 
+// Vibrant colors that work on dark backgrounds
 const CHART_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "#8b5cf6",
-  "#06b6d4",
-  "#f97316",
+  "#22c55e", // green
+  "#14b8a6", // teal
+  "#a855f7", // purple
+  "#ec4899", // pink
+  "#f59e0b", // amber
+  "#0ea5e9", // sky blue
+  "#8b5cf6", // violet
+  "#f97316", // orange
 ];
 
 const Reports = () => {
@@ -514,7 +515,7 @@ const Reports = () => {
                       />
                       <Bar 
                         dataKey="leads" 
-                        fill="hsl(var(--primary))" 
+                        fill="#22c55e"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
@@ -563,7 +564,7 @@ const Reports = () => {
                       />
                       <Bar 
                         dataKey="leads" 
-                        fill="hsl(var(--chart-2))" 
+                        fill="#14b8a6"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
