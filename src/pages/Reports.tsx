@@ -1,7 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   BarChart3, 
   PieChart, 
@@ -13,7 +22,13 @@ import {
   Calendar,
   ArrowLeft,
   Download,
-  Filter
+  Filter,
+  Link as LinkIcon,
+  FileText,
+  Copy,
+  Check,
+  Loader2,
+  Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,11 +52,9 @@ import {
   Pie,
   Cell,
   Legend,
-  LineChart,
-  Line
 } from "recharts";
-import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 interface SearchHistoryItem {
   id: string;
@@ -63,34 +76,26 @@ interface ReportStats {
   regionsByLeads: { name: string; leads: number }[];
 }
 
-// 15+ vibrant colors that work on dark backgrounds
+// 18 vibrant colors that work on dark backgrounds
 const CHART_COLORS = [
-  "#22c55e", // green
-  "#14b8a6", // teal
-  "#06b6d4", // cyan
-  "#0ea5e9", // sky blue
-  "#3b82f6", // blue
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#a855f7", // purple
-  "#d946ef", // fuchsia
-  "#ec4899", // pink
-  "#f43f5e", // rose
-  "#f97316", // orange
-  "#f59e0b", // amber
-  "#eab308", // yellow
-  "#84cc16", // lime
-  "#10b981", // emerald
-  "#2dd4bf", // teal light
-  "#38bdf8", // sky light
+  "#22c55e", "#14b8a6", "#06b6d4", "#0ea5e9", "#3b82f6", "#6366f1",
+  "#8b5cf6", "#a855f7", "#d946ef", "#ec4899", "#f43f5e", "#f97316",
+  "#f59e0b", "#eab308", "#84cc16", "#10b981", "#2dd4bf", "#38bdf8",
 ];
 
 const Reports = () => {
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState("all");
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportMode, setExportMode] = useState<'link' | 'pdf' | null>(null);
+  const [linkPassword, setLinkPassword] = useState("");
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -157,20 +162,16 @@ const Reports = () => {
     let totalLeads = 0;
 
     filteredHistory.forEach(item => {
-      // Count by niche (keyword)
       const niche = item.keyword.toLowerCase().trim();
       nicheCount[niche] = (nicheCount[niche] || 0) + 1;
       nicheLeads[niche] = (nicheLeads[niche] || 0) + item.results_count;
       
-      // Count by region
       const region = item.location.toLowerCase().trim();
       regionCount[region] = (regionCount[region] || 0) + 1;
       regionLeads[region] = (regionLeads[region] || 0) + item.results_count;
       
-      // Count total leads
       totalLeads += item.results_count;
       
-      // Daily stats
       const date = new Date(item.created_at).toLocaleDateString('pt-BR');
       if (!dailyStats[date]) {
         dailyStats[date] = { searches: 0, leads: 0 };
@@ -206,7 +207,7 @@ const Reports = () => {
         const [dayB, monthB, yearB] = b.date.split('/').map(Number);
         return new Date(yearA, monthA - 1, dayA).getTime() - new Date(yearB, monthB - 1, dayB).getTime();
       })
-      .slice(-14); // Last 14 days
+      .slice(-14);
 
     return {
       totalSearches: filteredHistory.length,
@@ -220,44 +221,196 @@ const Reports = () => {
     };
   }, [filteredHistory]);
 
-  const handleExportReport = () => {
-    const reportData = filteredHistory.map(item => ({
-      'Data': new Date(item.created_at).toLocaleDateString('pt-BR'),
-      'Nicho': item.keyword,
-      'Região': item.location,
-      'Leads Encontrados': item.results_count
-    }));
+  const handleExportClick = () => {
+    setShowExportDialog(true);
+    setExportMode(null);
+    setLinkPassword("");
+    setGeneratedLink("");
+  };
 
-    const summaryData = [
-      { 'Métrica': 'Total de Buscas', 'Valor': stats.totalSearches },
-      { 'Métrica': 'Total de Leads', 'Valor': stats.totalLeads },
-      { 'Métrica': 'Média de Leads por Busca', 'Valor': stats.avgLeadsPerSearch },
+  const handleGenerateLink = async () => {
+    if (!linkPassword || linkPassword.length < 4) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 4 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const reportData = {
+        stats,
+        dateFilter,
+        generatedAt: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('shared_reports')
+        .insert([{
+          user_id: user?.id as string,
+          password_hash: btoa(linkPassword),
+          filter_type: dateFilter,
+          report_data: reportData as any
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const link = `${window.location.origin}/shared-report/${data.id}`;
+      setGeneratedLink(link);
+      
+      toast({
+        title: "Link gerado!",
+        description: "O link foi criado e expira em 7 dias",
+      });
+    } catch (error) {
+      console.error('Error generating link:', error);
+      toast({
+        title: "Erro ao gerar link",
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({
+      title: "Link copiado!",
+      description: "Compartilhe junto com a senha",
+    });
+  };
+
+  const handleExportPDF = () => {
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    let yPos = margin;
+
+    // Background white (default)
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    // Title
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(24);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Relatório de Prospecção', margin, yPos + 10);
+    
+    // Date and filter
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    const filterText = dateFilter === 'all' ? 'Todo período' : 
+                       dateFilter === '7days' ? 'Últimos 7 dias' :
+                       dateFilter === '30days' ? 'Últimos 30 dias' : 'Últimos 90 dias';
+    pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} | Período: ${filterText}`, margin, yPos + 18);
+    
+    yPos += 30;
+
+    // Stats boxes
+    pdf.setFillColor(245, 245, 245);
+    const boxWidth = (pageWidth - margin * 2 - 15) / 4;
+    const boxHeight = 25;
+    
+    const statsData = [
+      { label: 'Total de Buscas', value: stats.totalSearches.toString() },
+      { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR') },
+      { label: 'Média por Busca', value: stats.avgLeadsPerSearch.toString() },
+      { label: 'Nichos Explorados', value: stats.topNiches.length.toString() },
     ];
 
-    const workbook = XLSX.utils.book_new();
-    
-    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
-    
-    const historySheet = XLSX.utils.json_to_sheet(reportData);
-    XLSX.utils.book_append_sheet(workbook, historySheet, 'Histórico Detalhado');
+    statsData.forEach((stat, i) => {
+      const xPos = margin + (boxWidth + 5) * i;
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(xPos, yPos, boxWidth, boxHeight, 3, 3, 'F');
+      
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(9);
+      pdf.text(stat.label, xPos + 5, yPos + 8);
+      
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(stat.value, xPos + 5, yPos + 19);
+      pdf.setFont('helvetica', 'normal');
+    });
 
-    const nichesSheet = XLSX.utils.json_to_sheet(
-      stats.topNiches.map(n => ({ 'Nicho': n.name, 'Buscas': n.count }))
-    );
-    XLSX.utils.book_append_sheet(workbook, nichesSheet, 'Top Nichos');
+    yPos += boxHeight + 15;
 
-    const regionsSheet = XLSX.utils.json_to_sheet(
-      stats.topRegions.map(r => ({ 'Região': r.name, 'Buscas': r.count }))
-    );
-    XLSX.utils.book_append_sheet(workbook, regionsSheet, 'Top Regiões');
+    // Two columns layout
+    const colWidth = (pageWidth - margin * 2 - 10) / 2;
 
-    XLSX.writeFile(workbook, `relatorio-prospeccao-${new Date().toISOString().split('T')[0]}.xlsx`);
+    // Top Niches
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Nichos Mais Prospectados', margin, yPos);
+    pdf.setFont('helvetica', 'normal');
     
+    yPos += 8;
+    stats.topNiches.forEach((niche, i) => {
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      const text = `${i + 1}. ${niche.name.charAt(0).toUpperCase() + niche.name.slice(0, 25)}`;
+      pdf.text(text, margin + 5, yPos + (i * 7));
+      pdf.text(`${niche.count} buscas`, margin + colWidth - 30, yPos + (i * 7));
+    });
+
+    // Top Regions
+    const col2X = margin + colWidth + 10;
+    let yPosCol2 = yPos - 8;
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Regiões Mais Prospectadas', col2X, yPosCol2);
+    pdf.setFont('helvetica', 'normal');
+    
+    yPosCol2 += 8;
+    stats.topRegions.forEach((region, i) => {
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      const text = `${i + 1}. ${region.name.charAt(0).toUpperCase() + region.name.slice(0, 25)}`;
+      pdf.text(text, col2X + 5, yPosCol2 + (i * 7));
+      pdf.text(`${region.count} buscas`, col2X + colWidth - 30, yPosCol2 + (i * 7));
+    });
+
+    // Footer
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text('Gerado por LeadHunter Pro', margin, pageHeight - 10);
+
+    // Save
+    pdf.save(`relatorio-prospeccao-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    setShowExportDialog(false);
     toast({
-      title: "Relatório exportado!",
+      title: "PDF exportado!",
       description: "Seu relatório foi baixado com sucesso.",
     });
+  };
+
+  const getFilterLabel = () => {
+    switch (dateFilter) {
+      case "7days": return "Últimos 7 dias";
+      case "30days": return "Últimos 30 dias";
+      case "90days": return "Últimos 90 dias";
+      default: return "Todo período";
+    }
   };
 
   if (loading) {
@@ -297,7 +450,7 @@ const Reports = () => {
                 </SelectContent>
               </Select>
               
-              <Button variant="outline" size="sm" onClick={handleExportReport} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2">
                 <Download size={16} />
                 <span className="hidden sm:inline">Exportar</span>
               </Button>
@@ -306,83 +459,47 @@ const Reports = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8" ref={reportRef}>
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
-          <div className="mb-8">
+          <div className="mb-8 animate-fade-in">
             <h1 className="font-display text-3xl font-bold mb-2">Relatórios de Prospecção</h1>
             <p className="text-muted-foreground">
               Acompanhe suas métricas e performance de prospecção
             </p>
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards with staggered animation */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total de Buscas
-                </CardTitle>
-                <Search className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalSearches}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  prospecções realizadas
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total de Leads
-                </CardTitle>
-                <Users className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalLeads.toLocaleString('pt-BR')}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  empresas encontradas
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Média por Busca
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.avgLeadsPerSearch}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  leads por prospecção
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Nichos Explorados
-                </CardTitle>
-                <Target className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.topNiches.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  segmentos diferentes
-                </p>
-              </CardContent>
-            </Card>
+            {[
+              { label: 'Total de Buscas', value: stats.totalSearches, sub: 'prospecções realizadas', icon: Search },
+              { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR'), sub: 'empresas encontradas', icon: Users },
+              { label: 'Média por Busca', value: stats.avgLeadsPerSearch, sub: 'leads por prospecção', icon: TrendingUp },
+              { label: 'Nichos Explorados', value: stats.topNiches.length, sub: 'segmentos diferentes', icon: Target },
+            ].map((stat, index) => (
+              <Card 
+                key={stat.label} 
+                className="glass animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.label}
+                  </CardTitle>
+                  <stat.icon className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Charts Row 1 */}
+          {/* Charts Row 1 with animation */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Timeline Chart */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Calendar size={18} className="text-primary" />
@@ -412,24 +529,11 @@ const Reports = () => {
                           borderRadius: '8px',
                           color: 'hsl(var(--foreground))'
                         }}
-                        labelStyle={{ color: 'hsl(var(--foreground))' }}
                         cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
                       />
-                      <Legend 
-                        wrapperStyle={{ color: 'hsl(var(--foreground))' }}
-                      />
-                      <Bar 
-                        dataKey="searches" 
-                        name="Buscas"
-                        fill="hsl(var(--primary))" 
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar 
-                        dataKey="leads" 
-                        name="Leads"
-                        fill="#22c55e"
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Legend />
+                      <Bar dataKey="searches" name="Buscas" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="leads" name="Leads" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -441,7 +545,7 @@ const Reports = () => {
             </Card>
 
             {/* Niches Pie Chart */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '500ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <PieChart size={18} className="text-primary" />
@@ -461,7 +565,7 @@ const Reports = () => {
                         paddingAngle={2}
                         dataKey="count"
                         nameKey="name"
-                        label={({ name, percent }) => `${name.slice(0, 15)}${name.length > 15 ? '...' : ''} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent }) => `${name.slice(0, 12)}${name.length > 12 ? '..' : ''} (${(percent * 100).toFixed(0)}%)`}
                         labelLine={false}
                       >
                         {stats.topNiches.map((_, index) => (
@@ -472,7 +576,8 @@ const Reports = () => {
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
                         formatter={(value: number) => [`${value} buscas`, 'Quantidade']}
                       />
@@ -490,7 +595,7 @@ const Reports = () => {
           {/* Charts Row 2 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Top Niches Bar Chart */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <BarChart3 size={18} className="text-primary" />
@@ -519,15 +624,12 @@ const Reports = () => {
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
-                      <Bar 
-                        dataKey="leads" 
-                        fill="#22c55e"
-                        radius={[0, 4, 4, 0]}
-                      />
+                      <Bar dataKey="leads" fill="#22c55e" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -539,7 +641,7 @@ const Reports = () => {
             </Card>
 
             {/* Top Regions Bar Chart */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '700ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <MapPin size={18} className="text-primary" />
@@ -568,15 +670,12 @@ const Reports = () => {
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
                         formatter={(value: number) => [`${value} leads`, 'Quantidade']}
                       />
-                      <Bar 
-                        dataKey="leads" 
-                        fill="#14b8a6"
-                        radius={[0, 4, 4, 0]}
-                      />
+                      <Bar dataKey="leads" fill="#14b8a6" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -591,7 +690,7 @@ const Reports = () => {
           {/* Top Lists */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Niches List */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '800ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Target size={18} className="text-primary" />
@@ -602,15 +701,22 @@ const Reports = () => {
                 {stats.topNiches.length > 0 ? (
                   <div className="space-y-3">
                     {stats.topNiches.map((niche, index) => (
-                      <div key={niche.name} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30">
-                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                      <div 
+                        key={niche.name} 
+                        className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30 animate-fade-in"
+                        style={{ animationDelay: `${850 + index * 50}ms`, animationFillMode: 'both' }}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                          style={{ backgroundColor: `${CHART_COLORS[index]}20`, color: CHART_COLORS[index] }}
+                        >
                           {index + 1}º
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium capitalize truncate text-foreground">{niche.name}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-primary">{niche.count}</span>
+                          <span className="text-lg font-bold" style={{ color: CHART_COLORS[index] }}>{niche.count}</span>
                           <span className="text-xs text-muted-foreground">buscas</span>
                         </div>
                       </div>
@@ -625,7 +731,7 @@ const Reports = () => {
             </Card>
 
             {/* Top Regions List */}
-            <Card className="glass">
+            <Card className="glass animate-fade-in" style={{ animationDelay: '900ms', animationFillMode: 'both' }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <MapPin size={18} className="text-primary" />
@@ -636,15 +742,22 @@ const Reports = () => {
                 {stats.topRegions.length > 0 ? (
                   <div className="space-y-3">
                     {stats.topRegions.map((region, index) => (
-                      <div key={region.name} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400">
+                      <div 
+                        key={region.name} 
+                        className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/30 animate-fade-in"
+                        style={{ animationDelay: `${950 + index * 50}ms`, animationFillMode: 'both' }}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                          style={{ backgroundColor: `${CHART_COLORS[index + 8]}20`, color: CHART_COLORS[index + 8] }}
+                        >
                           {index + 1}º
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium capitalize truncate text-foreground">{region.name}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-emerald-400">{region.count}</span>
+                          <span className="text-lg font-bold" style={{ color: CHART_COLORS[index + 8] }}>{region.count}</span>
                           <span className="text-xs text-muted-foreground">buscas</span>
                         </div>
                       </div>
@@ -660,6 +773,138 @@ const Reports = () => {
           </div>
         </div>
       </main>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Exportar Relatório</DialogTitle>
+            <DialogDescription>
+              Escolha como deseja exportar seu relatório de prospecção
+            </DialogDescription>
+          </DialogHeader>
+
+          {!exportMode && (
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <button
+                onClick={() => setExportMode('link')}
+                className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-secondary/50 transition-all"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LinkIcon size={24} className="text-primary" />
+                </div>
+                <div className="text-center">
+                  <div className="font-medium">Compartilhar Link</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Protegido por senha
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setExportMode('pdf')}
+                className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-secondary/50 transition-all"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText size={24} className="text-primary" />
+                </div>
+                <div className="text-center">
+                  <div className="font-medium">Baixar PDF</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Formato paisagem
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {exportMode === 'link' && !generatedLink && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="flex items-center gap-2">
+                  <Lock size={14} />
+                  Crie uma senha de acesso
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Mínimo 4 caracteres"
+                  value={linkPassword}
+                  onChange={(e) => setLinkPassword(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quem receber o link precisará desta senha para visualizar o relatório
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setExportMode(null)} className="flex-1">
+                  Voltar
+                </Button>
+                <Button onClick={handleGenerateLink} className="flex-1 gap-2" disabled={isGenerating}>
+                  {isGenerating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Gerando...
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon size={16} />
+                      Gerar Link
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {exportMode === 'link' && generatedLink && (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-secondary rounded-lg">
+                <Label className="text-xs text-muted-foreground">Link gerado:</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  <Input value={generatedLink} readOnly className="text-xs" />
+                  <Button size="icon" variant="outline" onClick={handleCopyLink}>
+                    {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <p className="text-sm text-amber-200">
+                  <strong>Importante:</strong> Envie a senha separadamente para quem receber o link. O link expira em 7 dias.
+                </p>
+              </div>
+
+              <Button variant="outline" onClick={() => setShowExportDialog(false)} className="w-full">
+                Fechar
+              </Button>
+            </div>
+          )}
+
+          {exportMode === 'pdf' && (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-secondary/50 rounded-lg text-center">
+                <FileText size={48} className="mx-auto mb-3 text-primary" />
+                <p className="font-medium">Relatório em PDF</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Formato paisagem • Fundo branco • Filtro: {getFilterLabel()}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setExportMode(null)} className="flex-1">
+                  Voltar
+                </Button>
+                <Button onClick={handleExportPDF} className="flex-1 gap-2">
+                  <Download size={16} />
+                  Baixar PDF
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
