@@ -369,7 +369,7 @@ const SharedReport = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-muted-foreground">
-            Relatório gerado por LeadHunter Pro
+            Relatório gerado por Prospex
           </div>
         </div>
       </main>
