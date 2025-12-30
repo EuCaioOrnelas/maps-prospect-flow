@@ -269,7 +269,13 @@ export const NumbersManager = ({
             variant="outline"
             size="sm"
             className="gap-2 border-green-500/50 text-green-500 hover:bg-green-500/10"
-            onClick={() => setManageDialogOpen(true)}
+            onClick={() => {
+              if (numbers.length === 0) {
+                setAddDialogOpen(true);
+              } else {
+                setManageDialogOpen(true);
+              }
+            }}
           >
             <Wifi size={16} className="text-green-500" />
             <span className="hidden sm:inline">{connectedNumbers.length} Conectado(s)</span>
@@ -293,14 +299,16 @@ export const NumbersManager = ({
           </Button>
         )}
 
-        {/* Manage Numbers Button */}
+        {/* Manage Numbers Button - More prominent */}
         <Button 
-          variant="ghost" 
-          size="icon"
+          variant="outline" 
+          size="sm"
           onClick={() => setManageDialogOpen(true)}
-          className="text-muted-foreground"
+          className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
         >
-          <Settings2 size={18} />
+          <Settings2 size={16} />
+          <span className="hidden sm:inline">Gerenciar Números</span>
+          <span className="sm:hidden">Gerenciar</span>
         </Button>
       </div>
 

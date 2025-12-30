@@ -39,7 +39,7 @@ const CHART_COLORS = [
   "#f59e0b", "#eab308", "#84cc16", "#10b981", "#2dd4bf", "#38bdf8",
 ];
 
-interface ReportData {
+interface ProspectionReportData {
   stats: {
     totalSearches: number;
     totalLeads: number;
@@ -52,7 +52,25 @@ interface ReportData {
   };
   dateFilter: string;
   generatedAt: string;
+  type?: string;
 }
+
+interface WhatsAppReportData {
+  stats: {
+    totalCampaigns: number;
+    totalSent: number;
+    totalFailed: number;
+    totalLeads: number;
+    successRate: number;
+    completedCampaigns: number;
+    avgPerCampaign: number;
+  };
+  dateRange: string;
+  type: 'whatsapp';
+  generatedAt: string;
+}
+
+type ReportData = ProspectionReportData | WhatsAppReportData;
 
 const SharedReport = () => {
   const { reportId } = useParams<{ reportId: string }>();
@@ -96,7 +114,16 @@ const SharedReport = () => {
     }
   };
 
-  const getFilterLabel = (filter: string) => {
+  const getFilterLabel = (filter: string, isWhatsApp: boolean = false) => {
+    if (isWhatsApp) {
+      switch (filter) {
+        case "7": return "Últimos 7 dias";
+        case "14": return "Últimos 14 dias";
+        case "30": return "Últimos 30 dias";
+        case "90": return "Últimos 90 dias";
+        default: return "Todo período";
+      }
+    }
     switch (filter) {
       case "7days": return "Últimos 7 dias";
       case "30days": return "Últimos 30 dias";
@@ -104,6 +131,8 @@ const SharedReport = () => {
       default: return "Todo período";
     }
   };
+
+  const isWhatsAppReport = reportData && 'type' in reportData && reportData.type === 'whatsapp';
 
   if (!reportData) {
     return (
@@ -162,7 +191,146 @@ const SharedReport = () => {
     );
   }
 
-  const { stats } = reportData;
+  // Render WhatsApp Report
+  if (isWhatsAppReport) {
+    const whatsappData = reportData as WhatsAppReportData;
+    const { stats } = whatsappData;
+    
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border bg-card/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Logo size="md" />
+              <div className="text-sm text-muted-foreground">
+                <span className="hidden sm:inline">Relatório compartilhado • </span>
+                {getFilterLabel(whatsappData.dateRange, true)}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Notice banner */}
+            <div className="mb-6 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+              <p className="text-sm text-center">
+                Este é um relatório compartilhado (somente leitura). Gerado em {new Date(createdAt).toLocaleDateString('pt-BR')}.
+              </p>
+            </div>
+
+            {/* Page Title */}
+            <div className="mb-8 animate-fade-in">
+              <h1 className="font-display text-3xl font-bold mb-2">Relatório de Campanhas WhatsApp</h1>
+              <p className="text-muted-foreground">
+                Período: {getFilterLabel(whatsappData.dateRange, true)}
+              </p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <Card className="glass animate-fade-in p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalCampaigns}</p>
+                    <p className="text-xs text-muted-foreground">Campanhas</p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '100ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalSent.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-muted-foreground">Enviadas</p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '200ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertCircle className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalFailed.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-muted-foreground">Falhas</p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '300ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.successRate}%</p>
+                    <p className="text-xs text-muted-foreground">Taxa de sucesso</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Additional Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '400ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold">{stats.totalLeads.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-muted-foreground">Leads alcançados</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '500ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold">{stats.completedCampaigns}</p>
+                    <p className="text-xs text-muted-foreground">Campanhas concluídas</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="glass animate-fade-in p-4" style={{ animationDelay: '600ms' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold">{stats.avgPerCampaign}</p>
+                    <p className="text-xs text-muted-foreground">Média por campanha</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 text-center text-sm text-muted-foreground">
+              Relatório gerado por Prospex
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Render Prospection Report (original)
+  const prospectionData = reportData as ProspectionReportData;
+  const { stats } = prospectionData;
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,7 +341,7 @@ const SharedReport = () => {
             <Logo size="md" />
             <div className="text-sm text-muted-foreground">
               <span className="hidden sm:inline">Relatório compartilhado • </span>
-              {getFilterLabel(reportData.dateFilter)}
+              {getFilterLabel(prospectionData.dateFilter)}
             </div>
           </div>
         </div>
@@ -192,7 +360,7 @@ const SharedReport = () => {
           <div className="mb-8 animate-fade-in">
             <h1 className="font-display text-3xl font-bold mb-2">Relatório de Prospecção</h1>
             <p className="text-muted-foreground">
-              Período: {getFilterLabel(reportData.dateFilter)}
+              Período: {getFilterLabel(prospectionData.dateFilter)}
             </p>
           </div>
 
