@@ -6,13 +6,14 @@ import { Slider } from "@/components/ui/slider";
 import { 
   Settings, 
   ArrowLeft, 
-  ArrowRight,
   Clock,
   Users,
   Pause,
   AlertTriangle,
   Info,
-  FileText
+  FileText,
+  Send,
+  WifiOff
 } from "lucide-react";
 
 interface CampaignSettingsProps {
@@ -27,8 +28,10 @@ interface CampaignSettingsProps {
   enableSmartPause: boolean;
   onEnableSmartPauseChange: (value: boolean) => void;
   onBack: () => void;
-  onNext: () => void;
+  onStartCampaign: () => void;
   canProceed: boolean;
+  isConnected: boolean;
+  totalLeads: number;
 }
 
 export const CampaignSettings = ({
@@ -43,8 +46,10 @@ export const CampaignSettings = ({
   enableSmartPause,
   onEnableSmartPauseChange,
   onBack,
-  onNext,
-  canProceed
+  onStartCampaign,
+  canProceed,
+  isConnected,
+  totalLeads
 }: CampaignSettingsProps) => {
   
   const formatTime = (seconds: number) => {
@@ -217,16 +222,32 @@ export const CampaignSettings = ({
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between mt-6 pt-6 border-t border-border">
-        <Button variant="ghost" onClick={onBack} className="gap-2">
-          <ArrowLeft size={16} />
-          Voltar
-        </Button>
-        <Button onClick={onNext} disabled={!canProceed} className="gap-2">
-          Próximo
-          <ArrowRight size={16} />
-        </Button>
+      {/* Campaign Summary & Start */}
+      <div className="mt-6 pt-6 border-t border-border space-y-4">
+        {!isConnected && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
+            <WifiOff size={16} className="text-warning" />
+            <span>Conecte seu WhatsApp no botão do topo para iniciar</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+          <div>
+            <p className="font-medium">Resumo da campanha</p>
+            <p className="text-sm text-muted-foreground">{totalLeads} leads • {formatTime(delaySeconds)} de delay</p>
+          </div>
+        </div>
+
+        <div className="flex justify-between">
+          <Button variant="ghost" onClick={onBack} className="gap-2">
+            <ArrowLeft size={16} />
+            Voltar
+          </Button>
+          <Button onClick={onStartCampaign} disabled={!canProceed} className="gap-2">
+            <Send size={16} />
+            Iniciar Disparos
+          </Button>
+        </div>
       </div>
     </div>
   );

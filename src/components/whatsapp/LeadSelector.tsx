@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Upload, 
   History, 
@@ -10,13 +10,15 @@ import {
   CheckCircle2,
   X,
   Search,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
+import { DailyLimitIndicator } from "./DailyLimitIndicator";
 
 interface SearchHistoryItem {
   id: string;
@@ -32,17 +34,30 @@ interface LeadSelectorProps {
   onLeadsChange: (leads: Lead[]) => void;
   onNext: () => void;
   canProceed: boolean;
+  dailyLimit: number;
+  usedToday: number;
 }
 
-export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed }: LeadSelectorProps) => {
+export const LeadSelector = ({ 
+  selectedLeads, 
+  onLeadsChange, 
+  onNext, 
+  canProceed,
+  dailyLimit,
+  usedToday
+}: LeadSelectorProps) => {
   const [source, setSource] = useState<'file' | 'history' | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const remaining = dailyLimit - usedToday;
+  const willExceed = selectedLeads.length > remaining;
 
   useEffect(() => {
     if (source === 'history') {
@@ -137,22 +152,47 @@ export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed 
     reader.readAsBinaryString(file);
   };
 
-  const handleSelectHistory = (item: SearchHistoryItem) => {
-    if (!item.leads || item.leads.length === 0) {
+  const handleToggleHistory = (item: SearchHistoryItem) => {
+    const newSelected = new Set(selectedHistoryIds);
+    
+    if (newSelected.has(item.id)) {
+      newSelected.delete(item.id);
+    } else {
+      newSelected.add(item.id);
+    }
+    
+    setSelectedHistoryIds(newSelected);
+    
+    // Merge all leads from selected history items
+    const allLeads: Lead[] = [];
+    searchHistory.forEach(h => {
+      if (newSelected.has(h.id) && h.leads) {
+        h.leads.forEach(lead => {
+          if (lead.phone && !allLeads.some(l => l.phone === lead.phone)) {
+            allLeads.push(lead);
+          }
+        });
+      }
+    });
+    
+    onLeadsChange(allLeads);
+  };
+
+  const handleConfirmHistorySelection = () => {
+    if (selectedLeads.length === 0) {
       toast({
-        title: "Sem leads",
-        description: "Esta busca não possui leads salvos",
+        title: "Nenhum lead selecionado",
+        description: "Selecione pelo menos uma busca do histórico",
         variant: "destructive",
       });
       return;
     }
-
-    const leadsWithPhone = item.leads.filter(lead => lead.phone);
-    onLeadsChange(leadsWithPhone);
+    
     toast({
       title: "Leads carregados!",
-      description: `${leadsWithPhone.length} contatos selecionados`,
+      description: `${selectedLeads.length} contatos selecionados de ${selectedHistoryIds.size} buscas`,
     });
+    setSource(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -223,9 +263,20 @@ export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed 
         onChange={handleFileUpload}
       />
 
-      {/* History List */}
-      {source === 'history' && selectedLeads.length === 0 && (
+      {/* History List - Multi-select */}
+      {source === 'history' && (
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Selecione uma ou mais buscas para combinar os leads
+            </p>
+            {selectedHistoryIds.size > 0 && (
+              <span className="text-sm font-medium text-primary">
+                {selectedHistoryIds.size} selecionadas ({selectedLeads.length} leads)
+              </span>
+            )}
+          </div>
+
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -246,34 +297,81 @@ export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed 
             </div>
           ) : (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {filteredHistory.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectHistory(item)}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
-                >
-                  <div>
-                    <p className="font-medium">{item.keyword}</p>
-                    <p className="text-sm text-muted-foreground">{item.location}</p>
+              {filteredHistory.map((item) => {
+                const isSelected = selectedHistoryIds.has(item.id);
+                const hasLeads = item.leads && item.leads.length > 0;
+                
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => hasLeads && handleToggleHistory(item)}
+                    className={`
+                      flex items-center gap-3 p-4 rounded-lg border transition-all cursor-pointer
+                      ${isSelected 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      }
+                      ${!hasLeads ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    <Checkbox 
+                      checked={isSelected} 
+                      disabled={!hasLeads}
+                      className="pointer-events-none"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{item.keyword}</p>
+                      <p className="text-sm text-muted-foreground">{item.location}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-medium ${hasLeads ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {item.results_count} leads
+                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-primary">{item.results_count} leads</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          <Button variant="ghost" onClick={() => setSource(null)} className="w-full">
-            Voltar
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setSource(null);
+                setSelectedHistoryIds(new Set());
+                if (selectedLeads.length === 0) {
+                  onLeadsChange([]);
+                }
+              }} 
+              className="flex-1"
+            >
+              Voltar
+            </Button>
+            {selectedHistoryIds.size > 0 && (
+              <Button 
+                onClick={handleConfirmHistorySelection}
+                className="flex-1 gap-2"
+              >
+                <CheckCircle2 size={16} />
+                Confirmar ({selectedLeads.length} leads)
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Selected Leads Summary */}
-      {selectedLeads.length > 0 && (
+      {selectedLeads.length > 0 && source !== 'history' && (
         <div className="space-y-4">
+          {/* Daily Limit Indicator */}
+          <DailyLimitIndicator 
+            usedToday={usedToday}
+            dailyLimit={dailyLimit}
+            selectedCount={selectedLeads.length}
+          />
+
           <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
             <div className="flex items-center gap-3">
               <CheckCircle2 size={20} className="text-primary" />
@@ -288,6 +386,7 @@ export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed 
               onClick={() => {
                 onLeadsChange([]);
                 setSource(null);
+                setSelectedHistoryIds(new Set());
               }}
             >
               <X size={18} />
@@ -312,27 +411,42 @@ export const LeadSelector = ({ selectedLeads, onLeadsChange, onNext, canProceed 
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSource(null);
-              fileInputRef.current?.click();
-            }}
-            className="w-full"
-          >
-            <Upload size={16} className="mr-2" />
-            Importar outra planilha
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+              className="flex-1"
+            >
+              <Plus size={16} className="mr-2" />
+              Adicionar planilha
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSource('history')}
+              className="flex-1"
+            >
+              <History size={16} className="mr-2" />
+              Adicionar do histórico
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Navigation */}
-      <div className="flex justify-end mt-6 pt-6 border-t border-border">
-        <Button onClick={onNext} disabled={!canProceed} className="gap-2">
-          Próximo
-          <ArrowRight size={16} />
-        </Button>
-      </div>
+      {source !== 'history' && (
+        <div className="flex justify-end mt-6 pt-6 border-t border-border">
+          <Button 
+            onClick={onNext} 
+            disabled={!canProceed || willExceed} 
+            className="gap-2"
+          >
+            Próximo
+            <ArrowRight size={16} />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

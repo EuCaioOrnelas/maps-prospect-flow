@@ -24,9 +24,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadSelector } from "@/components/whatsapp/LeadSelector";
 import { MessageVariations } from "@/components/whatsapp/MessageVariations";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
-import { QRCodeConnection } from "@/components/whatsapp/QRCodeConnection";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
+import { WhatsAppConnectionStatus } from "@/components/whatsapp/WhatsAppConnectionStatus";
 
 export interface Lead {
   name: string;
@@ -67,9 +67,11 @@ export interface CampaignState {
   campaignId: string | null;
 }
 
+const DAILY_LIMIT = 200;
+
 const WhatsAppCampaign = () => {
   const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
-  const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'connect' | 'running'>('leads');
+  const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'running'>('leads');
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(['', '', '', '', '']);
   const [campaignName, setCampaignName] = useState('');
@@ -77,6 +79,7 @@ const WhatsAppCampaign = () => {
   const [pauseAfterContacts, setPauseAfterContacts] = useState(50);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
+  const [usedToday, setUsedToday] = useState(0);
   
   const [campaignState, setCampaignState] = useState<CampaignState>({
     status: 'idle',
@@ -95,13 +98,14 @@ const WhatsAppCampaign = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const canProceedToMessages = selectedLeads.length > 0;
+  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (DAILY_LIMIT - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canProceedToConnect = delaySeconds >= 40;
+  const canStartCampaign = delaySeconds >= 40 && isConnected;
 
-  // Fetch campaigns history
+  // Fetch campaigns history and calculate daily usage
   useEffect(() => {
     fetchCampaigns();
+    calculateDailyUsage();
   }, [user]);
 
   const fetchCampaigns = async () => {
@@ -125,6 +129,28 @@ const WhatsAppCampaign = () => {
       console.error('Error fetching campaigns:', err);
     } finally {
       setLoadingCampaigns(false);
+    }
+  };
+
+  const calculateDailyUsage = async () => {
+    if (!user) return;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_campaigns')
+        .select('sent_count')
+        .eq('user_id', user.id)
+        .gte('created_at', today.toISOString());
+
+      if (error) throw error;
+
+      const totalUsed = (data || []).reduce((sum, c) => sum + (c.sent_count || 0), 0);
+      setUsedToday(totalUsed);
+    } catch (err) {
+      console.error('Error calculating daily usage:', err);
     }
   };
 
@@ -186,7 +212,16 @@ const WhatsAppCampaign = () => {
     if (!isConnected) {
       toast({
         title: "WhatsApp não conectado",
-        description: "Escaneie o QR Code para conectar seu WhatsApp",
+        description: "Conecte seu WhatsApp no botão do topo da página",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedLeads.length > (DAILY_LIMIT - usedToday)) {
+      toast({
+        title: "Limite diário excedido",
+        description: `Você só pode enviar mais ${DAILY_LIMIT - usedToday} mensagens hoje`,
         variant: "destructive",
       });
       return;
@@ -243,6 +278,7 @@ const WhatsAppCampaign = () => {
     }
     
     await fetchCampaigns();
+    await calculateDailyUsage();
     
     toast({
       title: "Campanha encerrada",
@@ -264,7 +300,16 @@ const WhatsAppCampaign = () => {
     setCampaignState(prev => ({ ...prev, status: 'connected' }));
     toast({
       title: "WhatsApp conectado!",
-      description: "Você já pode iniciar sua campanha",
+      description: "Agora você pode iniciar suas campanhas",
+    });
+  };
+
+  const handleWhatsAppDisconnect = () => {
+    setIsConnected(false);
+    setCampaignState(prev => ({ ...prev, status: 'idle' }));
+    toast({
+      title: "WhatsApp desconectado",
+      description: "Conecte novamente para enviar mensagens",
     });
   };
 
@@ -274,15 +319,15 @@ const WhatsAppCampaign = () => {
     setMessages(['', '', '', '', '']);
     setCampaignName('');
     setCampaignState({
-      status: 'idle',
+      status: isConnected ? 'connected' : 'idle',
       currentIndex: 0,
       totalSent: 0,
       totalFailed: 0,
       isPausing: false,
       campaignId: null
     });
-    setIsConnected(false);
     setActiveTab('new');
+    calculateDailyUsage();
   };
 
   const handleDeleteCampaign = async (campaignId: string) => {
@@ -311,9 +356,9 @@ const WhatsAppCampaign = () => {
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {['leads', 'messages', 'settings', 'connect'].map((s, i) => {
-        const stepLabels = ['Leads', 'Mensagens', 'Configurações', 'Conectar'];
-        const stepIndex = ['leads', 'messages', 'settings', 'connect'].indexOf(step);
+      {['leads', 'messages', 'settings'].map((s, i) => {
+        const stepLabels = ['Leads', 'Mensagens', 'Configurações'];
+        const stepIndex = ['leads', 'messages', 'settings'].indexOf(step);
         const isActive = s === step;
         const isCompleted = i < stepIndex;
         
@@ -329,7 +374,7 @@ const WhatsAppCampaign = () => {
             <span className={`ml-2 text-sm hidden sm:inline ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
               {stepLabels[i]}
             </span>
-            {i < 3 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
+            {i < 2 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
           </div>
         );
       })}
@@ -339,7 +384,7 @@ const WhatsAppCampaign = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -351,9 +396,16 @@ const WhatsAppCampaign = () => {
               <Logo size="md" />
             </div>
             
-            <div className="flex items-center gap-2 text-sm">
-              <MessageSquare size={16} className="text-primary" />
-              <span className="text-muted-foreground">Disparos WhatsApp</span>
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                <MessageSquare size={16} className="text-primary" />
+                <span>Disparos</span>
+              </div>
+              <WhatsAppConnectionStatus
+                isConnected={isConnected}
+                onConnect={handleWhatsAppConnect}
+                onDisconnect={handleWhatsAppDisconnect}
+              />
             </div>
           </div>
         </div>
@@ -394,6 +446,8 @@ const WhatsAppCampaign = () => {
                   onLeadsChange={setSelectedLeads}
                   onNext={() => setStep('messages')}
                   canProceed={canProceedToMessages}
+                  dailyLimit={DAILY_LIMIT}
+                  usedToday={usedToday}
                 />
               )}
 
@@ -422,18 +476,9 @@ const WhatsAppCampaign = () => {
                   enableSmartPause={enableSmartPause}
                   onEnableSmartPauseChange={setEnableSmartPause}
                   onBack={() => setStep('messages')}
-                  onNext={() => setStep('connect')}
-                  canProceed={canProceedToConnect}
-                />
-              )}
-
-              {/* Step: Connect WhatsApp */}
-              {step === 'connect' && (
-                <QRCodeConnection
-                  isConnected={isConnected}
-                  onConnect={handleWhatsAppConnect}
-                  onBack={() => setStep('settings')}
                   onStartCampaign={handleStartCampaign}
+                  canProceed={canStartCampaign}
+                  isConnected={isConnected}
                   totalLeads={selectedLeads.length}
                 />
               )}
