@@ -16,7 +16,8 @@ import {
   Smartphone,
   History,
   Plus,
-  BarChart3
+  BarChart3,
+  Crown
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -27,8 +28,9 @@ import { MessageVariations } from "@/components/whatsapp/MessageVariations";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
-import { WhatsAppConnectionStatus } from "@/components/whatsapp/WhatsAppConnectionStatus";
 import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
+import { ConnectedNumbers } from "@/components/whatsapp/ConnectedNumbers";
+import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
 export interface Lead {
   name: string;
@@ -62,6 +64,7 @@ export interface Campaign {
   paused_at_limit?: boolean;
   pause_reason?: string;
   resume_at?: string | null;
+  whatsapp_number_id?: string | null;
 }
 
 export interface CampaignState {
@@ -73,8 +76,6 @@ export interface CampaignState {
   campaignId: string | null;
 }
 
-const DAILY_LIMIT = 200;
-
 const WhatsAppCampaign = () => {
   const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
   const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'running'>('leads');
@@ -85,7 +86,6 @@ const WhatsAppCampaign = () => {
   const [pauseAfterContacts, setPauseAfterContacts] = useState(50);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
-  const [usedToday, setUsedToday] = useState(0);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [scheduledTime, setScheduledTime] = useState('09:00');
@@ -99,22 +99,37 @@ const WhatsAppCampaign = () => {
     campaignId: null
   });
 
-  const [isConnected, setIsConnected] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
-  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (DAILY_LIMIT - usedToday);
+  const {
+    numbers,
+    setNumbers,
+    selectedNumberId,
+    setSelectedNumberId,
+    maxNumbers,
+    hasMassMessagingAccess,
+    getRemainingDailyLimit,
+    isAtDailyLimit,
+    DAILY_LIMIT_PER_NUMBER
+  } = useWhatsAppNumbers();
+
+  const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+  const isConnected = selectedNumber?.is_connected || false;
+  const usedToday = selectedNumber?.daily_sent_count || 0;
+  const dailyLimit = DAILY_LIMIT_PER_NUMBER;
+
+  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled);
+  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && selectedNumberId;
 
-  // Fetch campaigns history and calculate daily usage
+  // Fetch campaigns history
   useEffect(() => {
     fetchCampaigns();
-    calculateDailyUsage();
   }, [user]);
 
   const fetchCampaigns = async () => {
@@ -141,30 +156,8 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  const calculateDailyUsage = async () => {
-    if (!user) return;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    try {
-      const { data, error } = await supabase
-        .from('whatsapp_campaigns')
-        .select('sent_count')
-        .eq('user_id', user.id)
-        .gte('created_at', today.toISOString());
-
-      if (error) throw error;
-
-      const totalUsed = (data || []).reduce((sum, c) => sum + (c.sent_count || 0), 0);
-      setUsedToday(totalUsed);
-    } catch (err) {
-      console.error('Error calculating daily usage:', err);
-    }
-  };
-
   const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
-    if (!user) return null;
+    if (!user || !selectedNumberId) return null;
 
     const name = campaignName || `Campanha ${new Date().toLocaleDateString('pt-BR')}`;
     
@@ -191,7 +184,8 @@ const WhatsAppCampaign = () => {
           messages: messages,
           leads: selectedLeads as unknown as any,
           started_at: scheduled ? null : new Date().toISOString(),
-          scheduled_at: scheduledAt
+          scheduled_at: scheduledAt,
+          whatsapp_number_id: selectedNumberId
         })
         .select()
         .single();
@@ -215,6 +209,8 @@ const WhatsAppCampaign = () => {
     sent_count?: number;
     failed_count?: number;
     completed_at?: string;
+    paused_at_limit?: boolean;
+    pause_reason?: string;
   }) => {
     try {
       await supabase
@@ -227,6 +223,15 @@ const WhatsAppCampaign = () => {
   };
 
   const handleStartCampaign = async () => {
+    if (!selectedNumberId) {
+      toast({
+        title: "Selecione um número",
+        description: "Escolha um número WhatsApp para os disparos",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // If scheduled, create the campaign and go back
     if (isScheduled) {
       if (!scheduledDate || !scheduledTime) {
@@ -257,16 +262,16 @@ const WhatsAppCampaign = () => {
     if (!isConnected) {
       toast({
         title: "WhatsApp não conectado",
-        description: "Conecte seu WhatsApp no botão do topo da página",
+        description: "Conecte o número selecionado antes de iniciar",
         variant: "destructive",
       });
       return;
     }
 
-    if (selectedLeads.length > (DAILY_LIMIT - usedToday)) {
+    if (selectedLeads.length > (dailyLimit - usedToday)) {
       toast({
         title: "Limite diário excedido",
-        description: `Você só pode enviar mais ${DAILY_LIMIT - usedToday} mensagens hoje`,
+        description: `O número ${selectedNumber?.name} só pode enviar mais ${dailyLimit - usedToday} mensagens hoje`,
         variant: "destructive",
       });
       return;
@@ -280,7 +285,7 @@ const WhatsAppCampaign = () => {
     
     toast({
       title: "Campanha iniciada!",
-      description: `Enviando mensagens para ${selectedLeads.length} contatos`,
+      description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
     });
   };
 
@@ -323,7 +328,6 @@ const WhatsAppCampaign = () => {
     }
     
     await fetchCampaigns();
-    await calculateDailyUsage();
     
     toast({
       title: "Campanha encerrada",
@@ -338,24 +342,6 @@ const WhatsAppCampaign = () => {
         failed_count: failed
       });
     }
-  };
-
-  const handleWhatsAppConnect = () => {
-    setIsConnected(true);
-    setCampaignState(prev => ({ ...prev, status: 'connected' }));
-    toast({
-      title: "WhatsApp conectado!",
-      description: "Agora você pode iniciar suas campanhas",
-    });
-  };
-
-  const handleWhatsAppDisconnect = () => {
-    setIsConnected(false);
-    setCampaignState(prev => ({ ...prev, status: 'idle' }));
-    toast({
-      title: "WhatsApp desconectado",
-      description: "Conecte novamente para enviar mensagens",
-    });
   };
 
   const handleNewCampaign = () => {
@@ -375,7 +361,6 @@ const WhatsAppCampaign = () => {
       campaignId: null
     });
     setActiveTab('new');
-    calculateDailyUsage();
   };
 
   const handleDeleteCampaign = async (campaignId: string) => {
@@ -423,11 +408,13 @@ const WhatsAppCampaign = () => {
   };
 
   const handleResumeCampaignFromList = async (campaign: Campaign) => {
-    // Check daily limit before resuming
-    if (usedToday >= DAILY_LIMIT) {
+    // Find the number associated with this campaign
+    const campaignNumber = numbers.find(n => n.id === campaign.whatsapp_number_id);
+    
+    if (campaignNumber && campaignNumber.daily_sent_count >= dailyLimit) {
       toast({
         title: "Limite diário atingido",
-        description: "Aguarde até amanhã para retomar a campanha",
+        description: `O número "${campaignNumber.name}" atingiu o limite de ${dailyLimit} disparos hoje`,
         variant: "destructive",
       });
       return;
@@ -483,6 +470,54 @@ const WhatsAppCampaign = () => {
     </div>
   );
 
+  // Show upgrade prompt for free users
+  if (!hasMassMessagingAccess) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="icon">
+                    <ArrowLeft size={20} />
+                  </Button>
+                </Link>
+                <Logo size="md" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-12">
+          <div className="max-w-lg mx-auto text-center">
+            <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-6">
+              <Crown size={40} className="text-warning" />
+            </div>
+            <h1 className="font-display text-3xl font-bold mb-4">
+              Disparos em Massa
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Esta funcionalidade é exclusiva para membros dos planos Start, Growth e Scale.
+              Faça upgrade para conectar seus números WhatsApp e enviar mensagens em massa.
+            </p>
+            <div className="space-y-4">
+              <Button asChild size="lg" className="w-full gap-2">
+                <Link to="/upgrade">
+                  <Crown size={18} />
+                  Fazer Upgrade
+                </Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/dashboard">Voltar ao Dashboard</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -505,10 +540,13 @@ const WhatsAppCampaign = () => {
                   <span className="hidden sm:inline">Relatórios</span>
                 </Button>
               </Link>
-              <WhatsAppConnectionStatus
-                isConnected={isConnected}
-                onConnect={handleWhatsAppConnect}
-                onDisconnect={handleWhatsAppDisconnect}
+              
+              <ConnectedNumbers
+                selectedNumberId={selectedNumberId}
+                onSelectNumber={setSelectedNumberId}
+                numbers={numbers}
+                onNumbersChange={setNumbers}
+                maxNumbers={maxNumbers}
               />
             </div>
           </div>
@@ -538,6 +576,9 @@ const WhatsAppCampaign = () => {
               loading={loadingCampaigns}
               onDelete={handleDeleteCampaign}
               onNewCampaign={handleNewCampaign}
+              onPause={handlePauseCampaignFromList}
+              onResume={handleResumeCampaignFromList}
+              numbers={numbers}
             />
           ) : (
             <>
@@ -546,7 +587,7 @@ const WhatsAppCampaign = () => {
                 <ActiveCampaigns
                   campaigns={campaigns}
                   usedToday={usedToday}
-                  dailyLimit={DAILY_LIMIT}
+                  dailyLimit={dailyLimit}
                   onResume={handleResumeCampaignFromList}
                   onPause={handlePauseCampaignFromList}
                 />
@@ -561,7 +602,7 @@ const WhatsAppCampaign = () => {
                   onLeadsChange={setSelectedLeads}
                   onNext={() => setStep('messages')}
                   canProceed={canProceedToMessages}
-                  dailyLimit={DAILY_LIMIT}
+                  dailyLimit={dailyLimit}
                   usedToday={usedToday}
                 />
               )}

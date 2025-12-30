@@ -7,9 +7,10 @@ import { Logo } from "@/components/Logo";
 const plans = [
   {
     name: "Start",
-    price: "69",
-    anchorPrice: "129",
+    price: "97",
+    anchorPrice: "197",
     searches: "200",
+    whatsappNumbers: 1,
     description: "Ideal para começar a prospectar novos clientes",
     features: [
       "Até 200 buscas estratégicas/mês",
@@ -17,14 +18,16 @@ const plans = [
       "Download em Excel",
       "Dados completos dos leads",
       "Suporte por email",
+      "Disparos em massa (1 número)",
     ],
     popular: false,
   },
   {
     name: "Growth",
-    price: "197",
-    anchorPrice: "397",
+    price: "247",
+    anchorPrice: "497",
     searches: "600",
+    whatsappNumbers: 2,
     description: "Para profissionais que querem escalar resultados",
     features: [
       "Até 600 buscas estratégicas/mês",
@@ -33,14 +36,16 @@ const plans = [
       "Dados completos dos leads",
       "Suporte prioritário",
       "Relatório de uso mensal",
+      "Disparos em massa (2 números)",
     ],
     popular: true,
   },
   {
     name: "Scale",
-    price: "397",
-    anchorPrice: "797",
+    price: "497",
+    anchorPrice: "997",
     searches: "1.200",
+    whatsappNumbers: 5,
     description: "Para equipes e agências com alta demanda",
     features: [
       "Até 1.200 buscas estratégicas/mês",
@@ -50,6 +55,7 @@ const plans = [
       "Suporte VIP",
       "Relatório de uso mensal",
       "API access (em breve)",
+      "Disparos em massa (5 números)",
     ],
     popular: false,
   },
