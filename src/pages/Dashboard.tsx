@@ -380,9 +380,7 @@ const Dashboard = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className={`h-6 sm:h-7 px-2 text-xs text-primary hover:text-primary ${
-                      searchesRemaining <= 3 ? "animate-pulse bg-primary/10" : ""
-                    }`}
+                    className="h-6 sm:h-7 px-2 text-xs text-primary hover:text-primary"
                   >
                     <Crown size={14} className="sm:mr-1" />
                     <span className="hidden sm:inline">Upgrade</span>
