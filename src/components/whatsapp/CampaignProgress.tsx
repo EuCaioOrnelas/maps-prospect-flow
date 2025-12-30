@@ -27,6 +27,7 @@ interface CampaignProgressProps {
   onResume: () => void;
   onStop: () => void;
   onNewCampaign: () => void;
+  onUpdateStats?: (sent: number, failed: number) => void;
 }
 
 export const CampaignProgress = ({
@@ -40,7 +41,8 @@ export const CampaignProgress = ({
   onPause,
   onResume,
   onStop,
-  onNewCampaign
+  onNewCampaign,
+  onUpdateStats
 }: CampaignProgressProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sent, setSent] = useState(0);
@@ -62,9 +64,17 @@ export const CampaignProgress = ({
           if (currentIndex < totalLeads) {
             const success = Math.random() > 0.05; // 95% success rate
             if (success) {
-              setSent(s => s + 1);
+              setSent(s => {
+                const newSent = s + 1;
+                onUpdateStats?.(newSent, failed);
+                return newSent;
+              });
             } else {
-              setFailed(f => f + 1);
+              setFailed(f => {
+                const newFailed = f + 1;
+                onUpdateStats?.(sent, newFailed);
+                return newFailed;
+              });
             }
             setCurrentIndex(i => i + 1);
             setCurrentMessageIndex(Math.floor(Math.random() * 5)); // Random message variation

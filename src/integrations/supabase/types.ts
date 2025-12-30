@@ -128,6 +128,66 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_campaigns: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          delay_seconds: number
+          enable_smart_pause: boolean
+          failed_count: number
+          id: string
+          leads: Json
+          messages: Json
+          name: string
+          pause_after_contacts: number | null
+          pause_minutes: number | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          total_leads: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          delay_seconds?: number
+          enable_smart_pause?: boolean
+          failed_count?: number
+          id?: string
+          leads?: Json
+          messages?: Json
+          name: string
+          pause_after_contacts?: number | null
+          pause_minutes?: number | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_leads?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          delay_seconds?: number
+          enable_smart_pause?: boolean
+          failed_count?: number
+          id?: string
+          leads?: Json
+          messages?: Json
+          name?: string
+          pause_after_contacts?: number | null
+          pause_minutes?: number | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_leads?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
