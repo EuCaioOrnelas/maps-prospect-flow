@@ -25,20 +25,20 @@ const faqs = [
     answer: "Sim! Você pode cancelar sua assinatura quando quiser. Não há fidelidade ou taxas de cancelamento. Seu acesso continua ativo até o final do período pago."
   },
   {
+    question: "Como funcionam os disparos em massa via WhatsApp?",
+    answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O limite é resetado automaticamente às 08:00h. Se atingir o limite, as campanhas são pausadas e retomadas no dia seguinte."
+  },
+  {
+    question: "Quantos números WhatsApp posso conectar?",
+    answer: "Depende do seu plano: Start permite 1 número (200 disparos/dia), Growth permite 2 números (400 disparos/dia no total), e Scale permite 5 números (1.000 disparos/dia no total). Cada número tem limite individual de 200 disparos."
+  },
+  {
     question: "Os dados dos leads são atualizados?",
     answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
   },
   {
-    question: "Posso exportar os leads para Excel?",
-    answer: "Sim! Todos os leads podem ser exportados instantaneamente em formato CSV/Excel, com dados organizados em colunas separadas: nome da empresa, categoria, endereço, telefone, site, avaliação e link do Google Maps."
-  },
-  {
-    question: "Como a IA identifica leads qualificados?",
-    answer: "Nossa IA analisa diversos fatores: atividade recente da empresa, qualidade e quantidade de avaliações, presença de informações de contato completas, e outros indicadores que sugerem um negócio ativo e receptivo a novas parcerias."
-  },
-  {
     question: "Qual plano é ideal para mim?",
-    answer: "O plano Start (R$69/mês) é ideal para freelancers e profissionais autônomos. O Growth (R$197/mês) é perfeito para vendedores e pequenas equipes. O Scale (R$397/mês) é indicado para agências e empresas com alto volume de prospecção."
+    answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números WhatsApp."
   }
 ];
 
