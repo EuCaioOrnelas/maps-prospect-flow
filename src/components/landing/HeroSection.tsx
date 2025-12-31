@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const HeroSection = () => {
@@ -102,11 +102,15 @@ export const HeroSection = () => {
           </p>
 
           {/* AI Value Proposition */}
-          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-8 text-xs sm:text-sm">
+          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <Target size={16} className="text-primary flex-shrink-0" />
                 <span>Leads pré-qualificados</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle size={16} className="text-primary flex-shrink-0" />
+                <span>Disparo em massa via WhatsApp</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} className="text-primary flex-shrink-0" />
