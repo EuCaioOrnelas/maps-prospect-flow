@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,10 +37,13 @@ import {
   Server,
   Zap,
   Calendar,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-// Email autorizado para acessar o admin
+// Email autorizado para acessar o admin (não conta no MRR)
 const ADMIN_EMAIL = "caiowiize@gmail.com";
 
 // Preços dos planos para cálculo de MRR
@@ -49,6 +52,13 @@ const PLAN_PRICES: { [key: string]: number } = {
   start: 97,
   growth: 247,
   scale: 497,
+};
+
+const PLAN_COLORS: { [key: string]: string } = {
+  free: '#6b7280',
+  start: '#3b82f6',
+  growth: '#8b5cf6',
+  scale: '#f59e0b',
 };
 
 interface UserProfile {
@@ -68,21 +78,24 @@ interface Stats {
   activeUsers: number;
   activeUsers7Days: number;
   activeUsers30Days: number;
-  planDistribution: { plan: string; count: number }[];
+  planDistribution: { plan: string; count: number; revenue: number }[];
   mrr: number;
   activationRate: number;
+  payingUsers: number;
 }
 
 interface ApiStatus {
   serpApi: {
     status: 'ok' | 'warning' | 'error';
     message: string;
-    lastError?: string;
+    lastCheck: Date;
+    errorCount: number;
   };
   evolutionApi: {
     status: 'ok' | 'warning' | 'error';
     message: string;
-    lastError?: string;
+    lastCheck: Date;
+    errorCount: number;
   };
 }
 
@@ -98,13 +111,104 @@ const Admin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
-    serpApi: { status: 'ok', message: 'Funcionando normalmente' },
-    evolutionApi: { status: 'ok', message: 'Funcionando normalmente' },
+    serpApi: { status: 'ok', message: 'Verificando...', lastCheck: new Date(), errorCount: 0 },
+    evolutionApi: { status: 'ok', message: 'Verificando...', lastCheck: new Date(), errorCount: 0 },
   });
+  const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
+
+  // Monitoramento automático das APIs
+  const checkApiStatus = useCallback(async () => {
+    // Check SerpAPI by making a test call
+    try {
+      const serpResponse = await supabase.functions.invoke('search-leads', {
+        body: { keyword: 'test', location: 'test', dryRun: true },
+      });
+      
+      if (serpResponse.error) {
+        setApiStatus(prev => ({
+          ...prev,
+          serpApi: {
+            status: prev.serpApi.errorCount >= 2 ? 'error' : 'warning',
+            message: serpResponse.error.message || 'Erro na API',
+            lastCheck: new Date(),
+            errorCount: prev.serpApi.errorCount + 1,
+          }
+        }));
+        
+        if (apiStatus.serpApi.errorCount >= 2) {
+          toast({
+            title: "⚠️ Alerta SerpAPI",
+            description: "A API de buscas está com problemas. Considere verificar o saldo ou fazer upgrade.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setApiStatus(prev => ({
+          ...prev,
+          serpApi: {
+            status: 'ok',
+            message: 'Funcionando normalmente',
+            lastCheck: new Date(),
+            errorCount: 0,
+          }
+        }));
+      }
+    } catch (error) {
+      console.log('SerpAPI check skipped');
+    }
+
+    // Check Evolution API
+    try {
+      const evolutionResponse = await supabase.functions.invoke('evolution-check-status', {
+        body: { instanceId: 'health-check' },
+      });
+      
+      if (evolutionResponse.error && !evolutionResponse.error.message?.includes('not found')) {
+        setApiStatus(prev => ({
+          ...prev,
+          evolutionApi: {
+            status: prev.evolutionApi.errorCount >= 2 ? 'error' : 'warning',
+            message: evolutionResponse.error.message || 'Erro na API',
+            lastCheck: new Date(),
+            errorCount: prev.evolutionApi.errorCount + 1,
+          }
+        }));
+        
+        if (apiStatus.evolutionApi.errorCount >= 2) {
+          toast({
+            title: "⚠️ Alerta Evolution API",
+            description: "A API de WhatsApp está com problemas. A VPS pode estar sobrecarregada.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setApiStatus(prev => ({
+          ...prev,
+          evolutionApi: {
+            status: 'ok',
+            message: 'Funcionando normalmente',
+            lastCheck: new Date(),
+            errorCount: 0,
+          }
+        }));
+      }
+    } catch (error) {
+      console.log('Evolution API check skipped');
+    }
+  }, [toast, apiStatus.serpApi.errorCount, apiStatus.evolutionApi.errorCount]);
 
   useEffect(() => {
     checkAdminAndLoad();
   }, [user, profile]);
+
+  // Monitoramento automático a cada 5 minutos
+  useEffect(() => {
+    if (isAdmin) {
+      checkApiStatus();
+      const interval = setInterval(checkApiStatus, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, checkApiStatus]);
 
   const checkAdminAndLoad = async () => {
     if (!user || !profile) {
@@ -143,12 +247,15 @@ const Admin = () => {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+      // Filtrar admin do cálculo de MRR
+      const payingUsersData = usersData?.filter(u => u.email !== ADMIN_EMAIL) || [];
+
       // Calculate stats
       const totalUsers = usersData?.length || 0;
       const totalSearches = usersData?.reduce((acc, u) => acc + u.searches_used, 0) || 0;
       const activeUsers = usersData?.filter(u => u.searches_used > 0).length || 0;
       
-      // Usuários ativos nos últimos 7 dias (baseado em updated_at)
+      // Usuários ativos nos últimos 7 dias
       const activeUsers7Days = usersData?.filter(u => 
         new Date(u.updated_at) >= sevenDaysAgo && u.searches_used > 0
       ).length || 0;
@@ -158,17 +265,50 @@ const Admin = () => {
         new Date(u.updated_at) >= thirtyDaysAgo && u.searches_used > 0
       ).length || 0;
       
-      // Calcular MRR
-      const mrr = usersData?.reduce((acc, u) => acc + (PLAN_PRICES[u.plan] || 0), 0) || 0;
+      // Calcular MRR (excluindo admin)
+      const mrr = payingUsersData.reduce((acc, u) => acc + (PLAN_PRICES[u.plan] || 0), 0);
       
-      // Taxa de ativação (usuários que fizeram pelo menos 1 busca / total)
+      // Usuários pagantes (excluindo admin)
+      const payingUsers = payingUsersData.filter(u => u.plan !== 'free').length;
+      
+      // Taxa de ativação
       const activationRate = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
       
-      const planCounts: { [key: string]: number } = {};
-      usersData?.forEach(u => {
-        planCounts[u.plan] = (planCounts[u.plan] || 0) + 1;
+      // Distribuição de planos (excluindo admin)
+      const planCounts: { [key: string]: { count: number; revenue: number } } = {};
+      payingUsersData.forEach(u => {
+        if (!planCounts[u.plan]) {
+          planCounts[u.plan] = { count: 0, revenue: 0 };
+        }
+        planCounts[u.plan].count += 1;
+        planCounts[u.plan].revenue += PLAN_PRICES[u.plan] || 0;
       });
-      const planDistribution = Object.entries(planCounts).map(([plan, count]) => ({ plan, count }));
+      const planDistribution = Object.entries(planCounts).map(([plan, data]) => ({ 
+        plan, 
+        count: data.count,
+        revenue: data.revenue 
+      }));
+
+      // Simular histórico de MRR (últimos 7 dias)
+      const revenueHistoryData = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        
+        // Calcular MRR baseado em usuários criados até aquela data
+        const usersUntilDate = payingUsersData.filter(u => 
+          new Date(u.created_at) <= date
+        );
+        const mrrAtDate = usersUntilDate.reduce((acc, u) => acc + (PLAN_PRICES[u.plan] || 0), 0);
+        
+        revenueHistoryData.push({
+          date: dateStr,
+          mrr: mrrAtDate,
+          users: usersUntilDate.filter(u => u.plan !== 'free').length,
+        });
+      }
+      setRevenueHistory(revenueHistoryData);
 
       setStats({
         totalUsers,
@@ -179,6 +319,7 @@ const Admin = () => {
         planDistribution,
         mrr,
         activationRate,
+        payingUsers,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -259,13 +400,6 @@ const Admin = () => {
     }
   };
 
-  const updateApiStatus = (api: 'serpApi' | 'evolutionApi', status: 'ok' | 'warning' | 'error', message: string) => {
-    setApiStatus(prev => ({
-      ...prev,
-      [api]: { status, message }
-    }));
-  };
-
   const handleLogout = async () => {
     await signOut();
     navigate("/");
@@ -303,9 +437,9 @@ const Admin = () => {
 
   const getStatusIcon = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
-      case 'ok': return <Activity size={16} />;
+      case 'ok': return <CheckCircle2 size={16} />;
       case 'warning': return <AlertTriangle size={16} />;
-      case 'error': return <AlertTriangle size={16} />;
+      case 'error': return <XCircle size={16} />;
     }
   };
 
@@ -316,6 +450,12 @@ const Admin = () => {
       </div>
     );
   }
+
+  const pieData = stats?.planDistribution.map(item => ({
+    name: item.plan.charAt(0).toUpperCase() + item.plan.slice(1),
+    value: item.count,
+    revenue: item.revenue,
+  })) || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -366,12 +506,17 @@ const Admin = () => {
                     <Search size={18} />
                     <span className="font-semibold">SerpAPI (Buscas)</span>
                   </div>
-                  {getStatusIcon(apiStatus.serpApi.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(apiStatus.serpApi.status)}
+                    <span className="text-xs opacity-60">
+                      {apiStatus.serpApi.lastCheck.toLocaleTimeString('pt-BR')}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-sm opacity-80">{apiStatus.serpApi.message}</p>
                 {apiStatus.serpApi.status !== 'ok' && (
                   <p className="text-xs mt-2 opacity-60">
-                    Considere fazer upgrade do plano da API
+                    ⚠️ Considere fazer upgrade do plano da API - {apiStatus.serpApi.errorCount} erros detectados
                   </p>
                 )}
               </div>
@@ -382,12 +527,17 @@ const Admin = () => {
                     <Server size={18} />
                     <span className="font-semibold">Evolution API (WhatsApp)</span>
                   </div>
-                  {getStatusIcon(apiStatus.evolutionApi.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(apiStatus.evolutionApi.status)}
+                    <span className="text-xs opacity-60">
+                      {apiStatus.evolutionApi.lastCheck.toLocaleTimeString('pt-BR')}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-sm opacity-80">{apiStatus.evolutionApi.message}</p>
                 {apiStatus.evolutionApi.status !== 'ok' && (
                   <p className="text-xs mt-2 opacity-60">
-                    VPS pode estar sobrecarregada - considere upgrade
+                    ⚠️ VPS pode estar sobrecarregada - {apiStatus.evolutionApi.errorCount} erros detectados
                   </p>
                 )}
               </div>
@@ -410,13 +560,11 @@ const Admin = () => {
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <TrendingUp size={20} className="text-primary" />
+                    <Crown size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.activationRate.toFixed(1) || 0}%
-                </p>
-                <p className="text-sm text-muted-foreground">Taxa de Ativação</p>
+                <p className="text-2xl sm:text-3xl font-bold">{stats?.payingUsers || 0}</p>
+                <p className="text-sm text-muted-foreground">Usuários Pagantes</p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
@@ -440,9 +588,88 @@ const Admin = () => {
               </div>
             </div>
 
+            {/* Revenue Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp size={20} className="text-primary" />
+                  <h2 className="font-display font-semibold">Evolução do MRR (7 dias)</h2>
+                </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueHistory}>
+                      <defs>
+                        <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `R$${value}`} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="mrr" 
+                        stroke="hsl(var(--primary))" 
+                        fillOpacity={1} 
+                        fill="url(#colorMrr)" 
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 size={20} className="text-primary" />
+                  <h2 className="font-display font-semibold">Distribuição de Planos</h2>
+                </div>
+                <div className="h-64 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PLAN_COLORS[entry.name.toLowerCase()] || '#8884d8'} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number, name: string, props: any) => [
+                          `${value} usuários (R$ ${props.payload.revenue?.toLocaleString('pt-BR') || 0}/mês)`,
+                          props.payload.name
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
             {/* General Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.7s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Users size={20} className="text-primary" />
@@ -452,7 +679,7 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Total de Usuários</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Search size={20} className="text-primary" />
@@ -462,7 +689,7 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Buscas Realizadas</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.7s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.9s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Activity size={20} className="text-primary" />
@@ -472,40 +699,21 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Usuários Ativos (total)</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Crown size={20} className="text-primary" />
+                    <TrendingUp size={20} className="text-primary" />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.planDistribution.filter(p => p.plan !== 'free').reduce((acc, p) => acc + p.count, 0) || 0}
+                  {stats?.activationRate.toFixed(1) || 0}%
                 </p>
-                <p className="text-sm text-muted-foreground">Usuários Pagantes</p>
-              </div>
-            </div>
-
-            {/* Plan Distribution */}
-            <div className="glass rounded-xl p-4 sm:p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.9s' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 size={20} className="text-primary" />
-                <h2 className="font-display font-semibold">Distribuição de Planos</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {stats?.planDistribution.map((item) => (
-                  <div key={item.plan} className="text-center p-4 bg-secondary/50 rounded-lg">
-                    <p className="text-2xl font-bold">{item.count}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{item.plan}</p>
-                    <p className="text-xs text-primary mt-1">
-                      R$ {(item.count * (PLAN_PRICES[item.plan] || 0)).toLocaleString('pt-BR')}/mês
-                    </p>
-                  </div>
-                ))}
+                <p className="text-sm text-muted-foreground">Taxa de Ativação</p>
               </div>
             </div>
 
             {/* Users Table */}
-            <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1s' }}>
+            <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1.1s' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Users size={20} className="text-primary" />
@@ -540,21 +748,26 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.map((user) => (
-                        <TableRow key={user.id}>
+                      {filteredUsers.map((u) => (
+                        <TableRow key={u.id} className={u.email === ADMIN_EMAIL ? 'bg-primary/5' : ''}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium">{user.name || '-'}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <p className="font-medium">{u.name || '-'}</p>
+                                <p className="text-sm text-muted-foreground">{u.email}</p>
+                              </div>
+                              {u.email === ADMIN_EMAIL && (
+                                <Crown size={14} className="text-primary" />
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Select
-                              value={user.plan}
-                              onValueChange={(value) => updateUserPlan(user.id, value)}
-                              disabled={updating === user.id}
+                              value={u.plan}
+                              onValueChange={(value) => updateUserPlan(u.id, value)}
+                              disabled={updating === u.id}
                             >
-                              <SelectTrigger className={`w-28 ${getPlanBadgeColor(user.plan)}`}>
+                              <SelectTrigger className={`w-28 ${getPlanBadgeColor(u.plan)}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -567,21 +780,21 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{user.searches_used}</span>
-                              <span className="text-muted-foreground">/ {user.searches_limit}</span>
+                              <span className="font-medium">{u.searches_used}</span>
+                              <span className="text-muted-foreground">/ {u.searches_limit}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {formatDate(user.created_at)}
+                            {formatDate(u.created_at)}
                           </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => resetUserSearches(user.id)}
-                              disabled={updating === user.id}
+                              onClick={() => resetUserSearches(u.id)}
+                              disabled={updating === u.id}
                             >
-                              {updating === user.id ? (
+                              {updating === u.id ? (
                                 <Loader2 size={14} className="animate-spin" />
                               ) : (
                                 'Resetar'
