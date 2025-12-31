@@ -32,8 +32,24 @@ import {
   TrendingUp,
   Activity,
   RefreshCw,
+  DollarSign,
+  AlertTriangle,
+  Server,
+  Zap,
+  Calendar,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+
+// Email autorizado para acessar o admin
+const ADMIN_EMAIL = "caiowiize@gmail.com";
+
+// Preços dos planos para cálculo de MRR
+const PLAN_PRICES: { [key: string]: number } = {
+  free: 0,
+  start: 97,
+  growth: 247,
+  scale: 497,
+};
 
 interface UserProfile {
   id: string;
@@ -43,17 +59,35 @@ interface UserProfile {
   searches_limit: number;
   plan: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface Stats {
   totalUsers: number;
   totalSearches: number;
   activeUsers: number;
+  activeUsers7Days: number;
+  activeUsers30Days: number;
   planDistribution: { plan: string; count: number }[];
+  mrr: number;
+  activationRate: number;
+}
+
+interface ApiStatus {
+  serpApi: {
+    status: 'ok' | 'warning' | 'error';
+    message: string;
+    lastError?: string;
+  };
+  evolutionApi: {
+    status: 'ok' | 'warning' | 'error';
+    message: string;
+    lastError?: string;
+  };
 }
 
 const Admin = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -63,46 +97,34 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [apiStatus, setApiStatus] = useState<ApiStatus>({
+    serpApi: { status: 'ok', message: 'Funcionando normalmente' },
+    evolutionApi: { status: 'ok', message: 'Funcionando normalmente' },
+  });
 
   useEffect(() => {
     checkAdminAndLoad();
-  }, [user]);
+  }, [user, profile]);
 
   const checkAdminAndLoad = async () => {
-    if (!user) {
+    if (!user || !profile) {
       navigate("/login");
       return;
     }
 
-    try {
-      // Check if user is admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (roleError) {
-        console.error('Role check error:', roleError);
-      }
-
-      if (!roleData) {
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão para acessar esta página.",
-          variant: "destructive",
-        });
-        navigate("/dashboard");
-        return;
-      }
-
-      setIsAdmin(true);
-      await loadData();
-    } catch (error) {
-      console.error('Error:', error);
+    // Verificar se é o email autorizado
+    if (profile.email !== ADMIN_EMAIL) {
+      toast({
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página.",
+        variant: "destructive",
+      });
       navigate("/dashboard");
+      return;
     }
+
+    setIsAdmin(true);
+    await loadData();
   };
 
   const loadData = async () => {
@@ -117,10 +139,30 @@ const Admin = () => {
       if (usersError) throw usersError;
       setUsers(usersData || []);
 
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
       // Calculate stats
       const totalUsers = usersData?.length || 0;
       const totalSearches = usersData?.reduce((acc, u) => acc + u.searches_used, 0) || 0;
       const activeUsers = usersData?.filter(u => u.searches_used > 0).length || 0;
+      
+      // Usuários ativos nos últimos 7 dias (baseado em updated_at)
+      const activeUsers7Days = usersData?.filter(u => 
+        new Date(u.updated_at) >= sevenDaysAgo && u.searches_used > 0
+      ).length || 0;
+      
+      // Usuários ativos nos últimos 30 dias
+      const activeUsers30Days = usersData?.filter(u => 
+        new Date(u.updated_at) >= thirtyDaysAgo && u.searches_used > 0
+      ).length || 0;
+      
+      // Calcular MRR
+      const mrr = usersData?.reduce((acc, u) => acc + (PLAN_PRICES[u.plan] || 0), 0) || 0;
+      
+      // Taxa de ativação (usuários que fizeram pelo menos 1 busca / total)
+      const activationRate = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
       
       const planCounts: { [key: string]: number } = {};
       usersData?.forEach(u => {
@@ -132,7 +174,11 @@ const Admin = () => {
         totalUsers,
         totalSearches,
         activeUsers,
+        activeUsers7Days,
+        activeUsers30Days,
         planDistribution,
+        mrr,
+        activationRate,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -161,6 +207,7 @@ const Admin = () => {
         .update({ 
           plan: newPlan,
           searches_limit: limits[newPlan] || 10,
+          searches_used: 0,
         })
         .eq('id', userId);
 
@@ -168,7 +215,7 @@ const Admin = () => {
 
       toast({
         title: "Plano atualizado",
-        description: `Plano alterado para ${newPlan.toUpperCase()}`,
+        description: `Plano alterado para ${newPlan.toUpperCase()} e buscas resetadas`,
       });
 
       await loadData();
@@ -212,6 +259,13 @@ const Admin = () => {
     }
   };
 
+  const updateApiStatus = (api: 'serpApi' | 'evolutionApi', status: 'ok' | 'warning' | 'error', message: string) => {
+    setApiStatus(prev => ({
+      ...prev,
+      [api]: { status, message }
+    }));
+  };
+
   const handleLogout = async () => {
     await signOut();
     navigate("/");
@@ -236,6 +290,22 @@ const Admin = () => {
       case 'growth': return 'bg-primary/20 text-primary';
       case 'start': return 'bg-blue-500/20 text-blue-400';
       default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
+    switch (status) {
+      case 'ok': return 'bg-success/20 text-success border-success/30';
+      case 'warning': return 'bg-warning/20 text-warning border-warning/30';
+      case 'error': return 'bg-destructive/20 text-destructive border-destructive/30';
+    }
+  };
+
+  const getStatusIcon = (status: 'ok' | 'warning' | 'error') => {
+    switch (status) {
+      case 'ok': return <Activity size={16} />;
+      case 'warning': return <AlertTriangle size={16} />;
+      case 'error': return <AlertTriangle size={16} />;
     }
   };
 
@@ -288,9 +358,91 @@ const Admin = () => {
           </div>
         ) : (
           <>
-            {/* Stats Cards */}
+            {/* API Status Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.serpApi.status)} animate-fade-in`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Search size={18} />
+                    <span className="font-semibold">SerpAPI (Buscas)</span>
+                  </div>
+                  {getStatusIcon(apiStatus.serpApi.status)}
+                </div>
+                <p className="text-sm opacity-80">{apiStatus.serpApi.message}</p>
+                {apiStatus.serpApi.status !== 'ok' && (
+                  <p className="text-xs mt-2 opacity-60">
+                    Considere fazer upgrade do plano da API
+                  </p>
+                )}
+              </div>
+
+              <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.evolutionApi.status)} animate-fade-in`} style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Server size={18} />
+                    <span className="font-semibold">Evolution API (WhatsApp)</span>
+                  </div>
+                  {getStatusIcon(apiStatus.evolutionApi.status)}
+                </div>
+                <p className="text-sm opacity-80">{apiStatus.evolutionApi.message}</p>
+                {apiStatus.evolutionApi.status !== 'ok' && (
+                  <p className="text-xs mt-2 opacity-60">
+                    VPS pode estar sobrecarregada - considere upgrade
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Financial Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <DollarSign size={20} className="text-success" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-success">
+                  R$ {stats?.mrr.toLocaleString('pt-BR') || 0}
+                </p>
+                <p className="text-sm text-muted-foreground">MRR (Receita Mensal)</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <TrendingUp size={20} className="text-primary" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  {stats?.activationRate.toFixed(1) || 0}%
+                </p>
+                <p className="text-sm text-muted-foreground">Taxa de Ativação</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Zap size={20} className="text-primary" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold">{stats?.activeUsers7Days || 0}</p>
+                <p className="text-sm text-muted-foreground">Ativos (7 dias)</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Calendar size={20} className="text-primary" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold">{stats?.activeUsers30Days || 0}</p>
+                <p className="text-sm text-muted-foreground">Ativos (30 dias)</p>
+              </div>
+            </div>
+
+            {/* General Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Users size={20} className="text-primary" />
@@ -300,7 +452,7 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Total de Usuários</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Search size={20} className="text-primary" />
@@ -310,47 +462,50 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Buscas Realizadas</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.7s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Activity size={20} className="text-primary" />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">{stats?.activeUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Usuários Ativos</p>
+                <p className="text-sm text-muted-foreground">Usuários Ativos (total)</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <TrendingUp size={20} className="text-primary" />
+                    <Crown size={20} className="text-primary" />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.totalUsers ? ((stats.activeUsers / stats.totalUsers) * 100).toFixed(0) : 0}%
+                  {stats?.planDistribution.filter(p => p.plan !== 'free').reduce((acc, p) => acc + p.count, 0) || 0}
                 </p>
-                <p className="text-sm text-muted-foreground">Taxa de Ativação</p>
+                <p className="text-sm text-muted-foreground">Usuários Pagantes</p>
               </div>
             </div>
 
             {/* Plan Distribution */}
-            <div className="glass rounded-xl p-4 sm:p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+            <div className="glass rounded-xl p-4 sm:p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.9s' }}>
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 size={20} className="text-primary" />
                 <h2 className="font-display font-semibold">Distribuição de Planos</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {stats?.planDistribution.map((item, index) => (
+                {stats?.planDistribution.map((item) => (
                   <div key={item.plan} className="text-center p-4 bg-secondary/50 rounded-lg">
                     <p className="text-2xl font-bold">{item.count}</p>
                     <p className="text-sm text-muted-foreground capitalize">{item.plan}</p>
+                    <p className="text-xs text-primary mt-1">
+                      R$ {(item.count * (PLAN_PRICES[item.plan] || 0)).toLocaleString('pt-BR')}/mês
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Users Table */}
-            <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1s' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Users size={20} className="text-primary" />
