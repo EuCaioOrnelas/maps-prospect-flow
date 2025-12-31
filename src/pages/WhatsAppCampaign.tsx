@@ -284,10 +284,33 @@ const WhatsAppCampaign = () => {
       return;
     }
 
+    // VALIDATE BEFORE creating campaign - check instance_name first
+    const instanceName = selectedNumber?.instance_name;
+    
+    if (!instanceName) {
+      toast({
+        title: "Erro",
+        description: "Número não tem instância configurada. Reconecte o WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validMessages = messages.filter(m => m.trim());
+    
+    if (validMessages.length < 5) {
+      toast({
+        title: "Erro",
+        description: "Preencha todas as 5 variações de mensagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsStartingCampaign(true);
 
     try {
-      // Create campaign first
+      // Only create campaign AFTER all validations pass
       const campaignId = await createCampaign(false);
       if (!campaignId) {
         setIsStartingCampaign(false);
@@ -295,21 +318,6 @@ const WhatsAppCampaign = () => {
       }
 
       setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
-
-      // Get the instance name from the selected number's database record
-      const instanceName = selectedNumber?.instance_name;
-      
-      if (!instanceName) {
-        toast({
-          title: "Erro",
-          description: "Número não tem instância configurada. Reconecte o WhatsApp.",
-          variant: "destructive",
-        });
-        setIsStartingCampaign(false);
-        return;
-      }
-      
-      const validMessages = messages.filter(m => m.trim());
 
       // Call the edge function to start the campaign
       const { data, error } = await supabase.functions.invoke('evolution-run-campaign', {
@@ -326,12 +334,18 @@ const WhatsAppCampaign = () => {
 
       if (error) {
         console.error('Error starting campaign:', error);
+        
+        // If edge function fails, mark campaign as failed
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ status: 'failed', pause_reason: error.message })
+          .eq('id', campaignId);
+        
         toast({
           title: "Erro ao iniciar campanha",
           description: error.message || "Ocorreu um erro ao iniciar a campanha",
           variant: "destructive",
         });
-        // Campaign was created but sending failed - it will show in active campaigns
       } else {
         toast({
           title: "Campanha iniciada!",
