@@ -88,7 +88,8 @@ const WhatsAppCampaign = () => {
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(['', '', '', '', '']);
   const [campaignName, setCampaignName] = useState('');
-  const [delaySeconds, setDelaySeconds] = useState(40);
+  const [delaySecondsMin, setDelaySecondsMin] = useState(40);
+  const [delaySecondsMax, setDelaySecondsMax] = useState(60);
   const [pauseAfterContacts, setPauseAfterContacts] = useState(50);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
@@ -148,7 +149,7 @@ const WhatsAppCampaign = () => {
 
   const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && !!selectedNumberId;
+  const canStartCampaign = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && (isConnected || isScheduled) && !!selectedNumberId;
 
   const isValidSchedule = () => {
     if (!isScheduled) return true;
@@ -185,7 +186,7 @@ const WhatsAppCampaign = () => {
           name,
           status: scheduled ? 'scheduled' : 'running',
           total_leads: selectedLeads.length,
-          delay_seconds: delaySeconds,
+          delay_seconds: delaySecondsMin, // Store minimum as base, max will be calculated
           pause_after_contacts: pauseAfterContacts,
           pause_minutes: pauseMinutes,
           enable_smart_pause: enableSmartPause,
@@ -318,7 +319,8 @@ const WhatsAppCampaign = () => {
           instanceName,
           leads: selectedLeads,
           messages: validMessages,
-          delaySeconds
+          delaySecondsMin,
+          delaySecondsMax
         }
       });
 
@@ -415,6 +417,8 @@ const WhatsAppCampaign = () => {
     setSelectedLeads([]);
     setMessages(['', '', '', '', '']);
     setCampaignName('');
+    setDelaySecondsMin(40);
+    setDelaySecondsMax(60);
     setIsScheduled(false);
     setScheduledDate(undefined);
     setScheduledTime('09:00');
@@ -700,8 +704,10 @@ const WhatsAppCampaign = () => {
                 <CampaignSettings
                   campaignName={campaignName}
                   onCampaignNameChange={setCampaignName}
-                  delaySeconds={delaySeconds}
-                  onDelayChange={setDelaySeconds}
+                  delaySecondsMin={delaySecondsMin}
+                  delaySecondsMax={delaySecondsMax}
+                  onDelayMinChange={setDelaySecondsMin}
+                  onDelayMaxChange={setDelaySecondsMax}
                   pauseAfterContacts={pauseAfterContacts}
                   onPauseAfterContactsChange={setPauseAfterContacts}
                   pauseMinutes={pauseMinutes}
@@ -731,7 +737,8 @@ const WhatsAppCampaign = () => {
                   campaignName={campaignName}
                   selectedLeads={selectedLeads}
                   messages={messages}
-                  delaySeconds={delaySeconds}
+                  delaySecondsMin={delaySecondsMin}
+                  delaySecondsMax={delaySecondsMax}
                   pauseAfterContacts={pauseAfterContacts}
                   pauseMinutes={pauseMinutes}
                   enableSmartPause={enableSmartPause}
@@ -753,7 +760,8 @@ const WhatsAppCampaign = () => {
                   campaignState={campaignState}
                   totalLeads={selectedLeads.length}
                   messages={messages}
-                  delaySeconds={delaySeconds}
+                  delaySecondsMin={delaySecondsMin}
+                  delaySecondsMax={delaySecondsMax}
                   pauseAfterContacts={pauseAfterContacts}
                   pauseMinutes={pauseMinutes}
                   enableSmartPause={enableSmartPause}

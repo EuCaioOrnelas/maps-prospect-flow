@@ -56,9 +56,7 @@ export const MessageVariations = ({
   const replaceVariables = (message: string): string => {
     if (!firstLead || !message.trim()) return message;
     
-    return message
-      .replace(/\{nome\}/gi, firstLead.name || 'Cliente')
-      .replace(/\{categoria\}/gi, firstLead.category || 'sua área');
+    return message.replace(/\{nome\}/gi, firstLead.name || 'Cliente');
   };
 
   return (
@@ -80,7 +78,6 @@ export const MessageVariations = ({
           <p className="font-medium text-foreground mb-2">Como usar variáveis:</p>
           <ul className="text-muted-foreground space-y-1">
             <li>• Use <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{'{nome}'}</code> para inserir automaticamente o nome do lead/empresa</li>
-            <li>• Use <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{'{categoria}'}</code> para inserir a categoria do lead</li>
             <li>• O sistema substituirá automaticamente pelos dados de cada contato</li>
             <li>• Exemplo: "Olá {'{nome}'}" → "Olá João Silva"</li>
           </ul>

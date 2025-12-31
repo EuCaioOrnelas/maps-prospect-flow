@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   Info,
   FileText,
-  Smartphone
+  Shuffle
 } from "lucide-react";
 import { CampaignScheduler } from "./CampaignScheduler";
 import { NumberSelector } from "./NumberSelector";
@@ -22,8 +22,10 @@ import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 interface CampaignSettingsProps {
   campaignName: string;
   onCampaignNameChange: (value: string) => void;
-  delaySeconds: number;
-  onDelayChange: (value: number) => void;
+  delaySecondsMin: number;
+  delaySecondsMax: number;
+  onDelayMinChange: (value: number) => void;
+  onDelayMaxChange: (value: number) => void;
   pauseAfterContacts: number;
   onPauseAfterContactsChange: (value: number) => void;
   pauseMinutes: number;
@@ -50,8 +52,10 @@ interface CampaignSettingsProps {
 export const CampaignSettings = ({
   campaignName,
   onCampaignNameChange,
-  delaySeconds,
-  onDelayChange,
+  delaySecondsMin,
+  delaySecondsMax,
+  onDelayMinChange,
+  onDelayMaxChange,
   pauseAfterContacts,
   onPauseAfterContactsChange,
   pauseMinutes,
@@ -75,13 +79,13 @@ export const CampaignSettings = ({
 }: CampaignSettingsProps) => {
   
   const formatTime = (seconds: number) => {
-    if (seconds < 60) return `${seconds} segundos`;
+    if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return secs > 0 ? `${mins}min ${secs}s` : `${mins} minuto${mins > 1 ? 's' : ''}`;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
-  const canProceed = delaySeconds >= 40 && !!selectedNumberId;
+  const canProceed = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && !!selectedNumberId;
   
   return (
     <div className="glass rounded-2xl p-6">
@@ -123,34 +127,83 @@ export const CampaignSettings = ({
           />
         </div>
 
-        {/* Delay Between Messages */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="flex items-center gap-2">
-              <Clock size={16} className="text-primary" />
-              Delay entre mensagens
-            </Label>
-            <span className="text-sm font-medium text-primary">{formatTime(delaySeconds)}</span>
+        {/* Smart Delay - Min/Max */}
+        <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Shuffle size={18} className="text-primary" />
+            <Label className="font-medium">Delay Inteligente</Label>
           </div>
           
-          <Slider
-            value={[delaySeconds]}
-            onValueChange={([value]) => onDelayChange(value)}
-            min={40}
-            max={180}
-            step={5}
-            className="w-full"
-          />
-          
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>40s (mínimo)</span>
-            <span>180s (mais seguro)</span>
+          <p className="text-sm text-muted-foreground mb-4">
+            O sistema escolherá aleatoriamente um tempo entre o mínimo e máximo para cada mensagem, 
+            tornando o padrão de envio mais natural e reduzindo risco de bloqueio.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Minimum Delay */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Mínimo</Label>
+                <span className="text-sm font-medium text-primary">{formatTime(delaySecondsMin)}</span>
+              </div>
+              <Slider
+                value={[delaySecondsMin]}
+                onValueChange={([value]) => {
+                  onDelayMinChange(value);
+                  // Ensure max is always >= min
+                  if (value > delaySecondsMax) {
+                    onDelayMaxChange(value);
+                  }
+                }}
+                min={40}
+                max={180}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>40s</span>
+                <span>180s</span>
+              </div>
+            </div>
+
+            {/* Maximum Delay */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Máximo</Label>
+                <span className="text-sm font-medium text-primary">{formatTime(delaySecondsMax)}</span>
+              </div>
+              <Slider
+                value={[delaySecondsMax]}
+                onValueChange={([value]) => {
+                  // Ensure max is always >= min
+                  if (value >= delaySecondsMin) {
+                    onDelayMaxChange(value);
+                  }
+                }}
+                min={40}
+                max={300}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>40s</span>
+                <span>5min</span>
+              </div>
+            </div>
           </div>
 
-          {delaySeconds < 60 && (
-            <p className="text-xs text-warning flex items-center gap-1">
+          {/* Example */}
+          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2 p-2 rounded bg-muted/50">
+            <Info size={14} className="mt-0.5 flex-shrink-0" />
+            <p>
+              Exemplo: com {formatTime(delaySecondsMin)} a {formatTime(delaySecondsMax)}, cada mensagem pode sair em {delaySecondsMin}s, {Math.floor((delaySecondsMin + delaySecondsMax) / 2)}s, {delaySecondsMax}s...
+            </p>
+          </div>
+
+          {delaySecondsMin < 60 && (
+            <p className="text-xs text-warning flex items-center gap-1 mt-2">
               <AlertTriangle size={12} />
-              Delay baixo pode aumentar o risco de bloqueio
+              Delay mínimo baixo pode aumentar o risco de bloqueio
             </p>
           )}
         </div>

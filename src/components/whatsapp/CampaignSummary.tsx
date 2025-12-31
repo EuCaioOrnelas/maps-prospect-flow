@@ -9,7 +9,7 @@ import {
   Clock,
   Pause,
   Smartphone,
-  CheckCircle2
+  Shuffle
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
@@ -18,7 +18,8 @@ interface CampaignSummaryProps {
   campaignName: string;
   selectedLeads: Lead[];
   messages: string[];
-  delaySeconds: number;
+  delaySecondsMin: number;
+  delaySecondsMax: number;
   pauseAfterContacts: number;
   pauseMinutes: number;
   enableSmartPause: boolean;
@@ -37,7 +38,8 @@ export const CampaignSummary = ({
   campaignName,
   selectedLeads,
   messages,
-  delaySeconds,
+  delaySecondsMin,
+  delaySecondsMax,
   pauseAfterContacts,
   pauseMinutes,
   enableSmartPause,
@@ -53,10 +55,10 @@ export const CampaignSummary = ({
 }: CampaignSummaryProps) => {
   
   const formatTime = (seconds: number) => {
-    if (seconds < 60) return `${seconds} segundos`;
+    if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return secs > 0 ? `${mins}min ${secs}s` : `${mins} minuto${mins > 1 ? 's' : ''}`;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
   const formatScheduledDate = () => {
@@ -68,7 +70,9 @@ export const CampaignSummary = ({
   const estimatedDuration = () => {
     const totalMessages = selectedLeads.length;
     const pauseCount = enableSmartPause ? Math.floor(totalMessages / pauseAfterContacts) : 0;
-    const messagingTime = totalMessages * delaySeconds;
+    // Use average delay for estimation
+    const avgDelay = (delaySecondsMin + delaySecondsMax) / 2;
+    const messagingTime = totalMessages * avgDelay;
     const pauseTime = pauseCount * pauseMinutes * 60;
     const totalSeconds = messagingTime + pauseTime;
     
@@ -149,13 +153,15 @@ export const CampaignSummary = ({
           </div>
         </div>
 
-        {/* Delay */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+        {/* Smart Delay */}
+        <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
           <div className="flex items-center gap-3">
-            <Clock size={18} className="text-primary" />
-            <span className="text-muted-foreground">Delay entre mensagens</span>
+            <Shuffle size={18} className="text-primary" />
+            <span className="text-muted-foreground">Delay inteligente</span>
           </div>
-          <span className="font-medium">{formatTime(delaySeconds)}</span>
+          <span className="font-medium text-primary">
+            {formatTime(delaySecondsMin)} a {formatTime(delaySecondsMax)}
+          </span>
         </div>
 
         {/* Smart Pause */}
