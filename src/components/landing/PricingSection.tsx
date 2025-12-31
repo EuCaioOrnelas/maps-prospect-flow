@@ -93,7 +93,7 @@ export const PricingSection = () => {
       }
 
       if (response.data?.url) {
-        window.location.href = response.data.url;
+        window.open(response.data.url, "_blank");
       } else {
         throw new Error("URL de checkout não recebida");
       }
