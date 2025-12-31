@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   History, 
@@ -27,7 +28,7 @@ interface CampaignHistoryProps {
   numbers?: WhatsAppNumber[];
 }
 
-export const CampaignHistory = ({ 
+export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(({ 
   campaigns, 
   loading, 
   onDelete, 
@@ -35,7 +36,7 @@ export const CampaignHistory = ({
   onPause,
   onResume,
   numbers = []
-}: CampaignHistoryProps) => {
+}, ref) => {
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -82,7 +83,7 @@ export const CampaignHistory = ({
 
   if (loading) {
     return (
-      <div className="glass rounded-2xl p-12 flex flex-col items-center justify-center">
+      <div ref={ref} className="glass rounded-2xl p-12 flex flex-col items-center justify-center">
         <Loader2 size={32} className="animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">Carregando histórico...</p>
       </div>
@@ -91,13 +92,13 @@ export const CampaignHistory = ({
 
   if (campaigns.length === 0) {
     return (
-      <div className="glass rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+      <div ref={ref} className="glass rounded-2xl p-12 flex flex-col items-center justify-center text-center">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
           <History size={32} className="text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-bold mb-2">Nenhuma campanha ainda</h3>
+        <h3 className="text-xl font-bold mb-2">Nenhuma campanha concluída</h3>
         <p className="text-muted-foreground mb-6">
-          Crie sua primeira campanha de disparos
+          Campanhas finalizadas aparecerão aqui
         </p>
         <Button onClick={onNewCampaign} className="gap-2">
           <Plus size={16} />
@@ -108,7 +109,7 @@ export const CampaignHistory = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={ref} className="space-y-4">
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="glass rounded-xl p-4 text-center">
@@ -258,4 +259,6 @@ export const CampaignHistory = ({
       </div>
     </div>
   );
-};
+});
+
+CampaignHistory.displayName = "CampaignHistory";

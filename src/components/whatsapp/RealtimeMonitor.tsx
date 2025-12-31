@@ -70,6 +70,26 @@ export const RealtimeMonitor = ({
     return `~${mins}min restante`;
   };
 
+  const formatRunningTime = (startedAt: string | null) => {
+    if (!startedAt) return '0s';
+    
+    const start = new Date(startedAt);
+    const diffMs = now.getTime() - start.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    
+    const hours = Math.floor(diffSecs / 3600);
+    const mins = Math.floor((diffSecs % 3600) / 60);
+    const secs = diffSecs % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m ${secs}s`;
+    }
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
+  };
+
   return (
     <div className="space-y-4 mb-8">
       {/* Real-time Header */}
@@ -116,6 +136,11 @@ export const RealtimeMonitor = ({
                   <div className="flex items-center gap-1">
                     <Smartphone size={14} />
                     <span>{getNumberName(campaign.whatsapp_number_id)}</span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-1">
+                    <Clock size={14} className="text-primary" />
+                    <span className="font-medium text-foreground">{formatRunningTime(campaign.started_at)}</span>
                   </div>
                   <span>•</span>
                   <span>{formatEstimatedTime(campaign)}</span>
