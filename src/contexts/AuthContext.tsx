@@ -11,6 +11,8 @@ interface Profile {
   searches_limit: number;
   plan: string;
   last_searches_reset?: string;
+  created_at?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {

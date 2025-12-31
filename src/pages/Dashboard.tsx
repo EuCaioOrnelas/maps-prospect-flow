@@ -32,7 +32,8 @@ import {
   Trash2,
   Zap,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -496,6 +497,17 @@ const Dashboard = () => {
                 )}
 
                 <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+
+                <Link to="/profile">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 sm:h-10 sm:w-10"
+                    title="Meu perfil"
+                  >
+                    <User size={18} />
+                  </Button>
+                </Link>
 
                 <Button 
                   variant="ghost" 
