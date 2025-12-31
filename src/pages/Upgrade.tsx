@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 
 const PRICE_IDS = {
   start: "price_1SkEsEK8CM0R6xMM9Y1ip21w",
@@ -80,6 +81,8 @@ const Upgrade = () => {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
 
@@ -132,14 +135,14 @@ const Upgrade = () => {
     return getPlanOrder(planName) < getPlanOrder(currentPlan);
   };
 
-  const handleUpgrade = async (planKey: string) => {
+  const handleCheckout = async (planKey: string, guestEmail?: string) => {
     setLoadingPlan(planKey);
     
     try {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
       
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId },
+        body: { priceId, guestEmail },
       });
 
       if (response.error) {
@@ -147,7 +150,7 @@ const Upgrade = () => {
       }
 
       if (response.data?.url) {
-        window.open(response.data.url, "_blank");
+        window.location.href = response.data.url;
       } else {
         throw new Error("URL de checkout não recebida");
       }
@@ -160,6 +163,24 @@ const Upgrade = () => {
       });
     } finally {
       setLoadingPlan(null);
+      setEmailModalOpen(false);
+    }
+  };
+
+  const handleUpgrade = (planKey: string) => {
+    if (user) {
+      // User is logged in, go directly to checkout
+      handleCheckout(planKey);
+    } else {
+      // User is not logged in, show email modal
+      setSelectedPlanKey(planKey);
+      setEmailModalOpen(true);
+    }
+  };
+
+  const handleEmailSubmit = (email: string) => {
+    if (selectedPlanKey) {
+      handleCheckout(selectedPlanKey, email);
     }
   };
 
@@ -370,6 +391,14 @@ const Upgrade = () => {
           Dúvidas? Entre em contato com nosso suporte.
         </p>
       </main>
+
+      <EmailCaptureModal
+        open={emailModalOpen}
+        onOpenChange={setEmailModalOpen}
+        onSubmit={handleEmailSubmit}
+        loading={loadingPlan !== null}
+        planName={plans.find(p => p.key === selectedPlanKey)?.name || ""}
+      />
     </div>
   );
 };
