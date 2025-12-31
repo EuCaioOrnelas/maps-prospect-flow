@@ -1,5 +1,4 @@
 import { Logo } from "@/components/Logo";
-import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
@@ -18,9 +17,6 @@ export const Footer = () => {
             <a href="#" className="hover:text-foreground transition-colors">
               Contato
             </a>
-            <Link to="/admin" className="hover:text-foreground transition-colors">
-              Admin
-            </Link>
           </div>
 
           <p className="text-sm text-muted-foreground">
