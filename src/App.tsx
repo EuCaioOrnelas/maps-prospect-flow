@@ -23,6 +23,7 @@ import Privacy from "./pages/Privacy";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutFailed from "./pages/CheckoutFailed";
 import Contact from "./pages/Contact";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <WhatsAppReports />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 } 
               />

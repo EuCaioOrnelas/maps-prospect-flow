@@ -133,10 +133,10 @@ const Profile = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with avatar URL
+      // Update profile with avatar URL using raw query since type might not be updated yet
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: publicUrl } as any)
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -280,7 +280,7 @@ const Profile = () => {
               <div className="flex items-center gap-6">
                 <div className="relative group">
                   <Avatar className="h-24 w-24 border-2 border-border">
-                    <AvatarImage src={(profile as any)?.avatar_url} />
+                    <AvatarImage src={profile?.avatar_url} />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                       {getUserInitials()}
                     </AvatarFallback>
