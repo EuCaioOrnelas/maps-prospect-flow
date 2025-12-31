@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +52,7 @@ export const LeadSelector = ({
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -126,10 +127,7 @@ export const LeadSelector = ({
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -214,6 +212,47 @@ export const LeadSelector = ({
       }
     };
     reader.readAsBinaryString(file);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      
+      if (validExtensions.includes(fileExtension)) {
+        processFile(file);
+      } else {
+        toast({
+          title: "Arquivo inválido",
+          description: "Arraste apenas arquivos Excel (.xlsx, .xls) ou CSV",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleToggleHistory = (item: SearchHistoryItem) => {
@@ -302,21 +341,38 @@ export const LeadSelector = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
+            {/* Drag and Drop Import Area */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onClick={() => {
                 setSource('file');
                 fileInputRef.current?.click();
               }}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
+              className={`
+                flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed transition-all cursor-pointer group
+                ${isDragging 
+                  ? 'border-primary bg-primary/10 scale-[1.02]' 
+                  : 'border-border hover:border-primary hover:bg-primary/5'
+                }
+              `}
             >
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                <FileSpreadsheet size={24} className="text-muted-foreground group-hover:text-primary" />
+              <div className={`
+                w-12 h-12 rounded-full flex items-center justify-center transition-colors
+                ${isDragging ? 'bg-primary/20' : 'bg-muted group-hover:bg-primary/10'}
+              `}>
+                <FileSpreadsheet size={24} className={`${isDragging ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
               </div>
               <div className="text-center">
-                <p className="font-medium">Importar Planilha</p>
-                <p className="text-sm text-muted-foreground">Nome na 1ª coluna, Telefone na 2ª</p>
+                <p className="font-medium">
+                  {isDragging ? 'Solte a planilha aqui' : 'Importar Planilha'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {isDragging ? 'Excel ou CSV' : 'Arraste ou clique para selecionar'}
+                </p>
               </div>
-            </button>
+            </div>
             
             <button
               onClick={() => setSource('history')}

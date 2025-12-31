@@ -9,12 +9,19 @@ import {
   Info
 } from "lucide-react";
 
+interface Lead {
+  name: string;
+  category?: string;
+  phone: string;
+}
+
 interface MessageVariationsProps {
   messages: string[];
   onMessagesChange: (messages: string[]) => void;
   onBack: () => void;
   onNext: () => void;
   canProceed: boolean;
+  selectedLeads?: Lead[];
 }
 
 export const MessageVariations = ({ 
@@ -22,7 +29,8 @@ export const MessageVariations = ({
   onMessagesChange, 
   onBack, 
   onNext, 
-  canProceed 
+  canProceed,
+  selectedLeads = []
 }: MessageVariationsProps) => {
   
   const handleMessageChange = (index: number, value: string) => {
@@ -32,6 +40,7 @@ export const MessageVariations = ({
   };
 
   const filledCount = messages.filter(m => m.trim()).length;
+  const firstLead = selectedLeads[0];
 
   const placeholders = [
     "Olá {nome}! Vi que você trabalha com {categoria}. Tenho uma proposta que pode interessar...",
@@ -40,6 +49,19 @@ export const MessageVariations = ({
     "Oi {nome}, tudo bem? Estou entrando em contato porque...",
     "Olá! Sou da [sua empresa] e gostaria de apresentar uma oportunidade para {nome}..."
   ];
+
+  // Substitui variáveis na mensagem com dados do primeiro lead
+  const replaceVariables = (message: string): string => {
+    if (!firstLead || !message.trim()) return message;
+    
+    return message
+      .replace(/\{nome\}/gi, firstLead.name || 'Cliente')
+      .replace(/\{categoria\}/gi, firstLead.category || 'sua área');
+  };
+
+  // Pega a primeira mensagem preenchida para mostrar o preview
+  const firstFilledMessage = messages.find(m => m.trim());
+  const previewMessage = firstFilledMessage ? replaceVariables(firstFilledMessage) : null;
 
   return (
     <div className="glass rounded-2xl p-6">
@@ -66,6 +88,18 @@ export const MessageVariations = ({
           </ul>
         </div>
       </div>
+
+      {/* Message Preview */}
+      {previewMessage && firstLead && (
+        <div className="mb-6 p-4 rounded-lg bg-muted/50 border border-border">
+          <p className="text-sm font-medium text-muted-foreground mb-2">
+            Preview para o primeiro contato ({firstLead.name}):
+          </p>
+          <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm text-foreground whitespace-pre-wrap">{previewMessage}</p>
+          </div>
+        </div>
+      )}
 
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-6 p-3 rounded-lg bg-muted/50">

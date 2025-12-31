@@ -670,6 +670,7 @@ const WhatsAppCampaign = () => {
                   onBack={() => setStep('leads')}
                   onNext={() => setStep('settings')}
                   canProceed={canProceedToSettings}
+                  selectedLeads={selectedLeads}
                 />
               )}
 
