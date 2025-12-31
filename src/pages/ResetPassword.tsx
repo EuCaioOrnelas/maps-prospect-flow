@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { ArrowLeft, Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -18,7 +19,6 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a valid session from email link
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -81,99 +81,107 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-glow opacity-30" />
-      
-      <div className="w-full max-w-md relative z-10">
-        <Link to="/login" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors">
-          <ArrowLeft size={16} />
-          Voltar para login
-        </Link>
+    <>
+      <SEO 
+        title="Redefinir Senha"
+        description="Redefina sua senha do Prospex."
+        noIndex
+      />
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="absolute inset-0 bg-gradient-glow opacity-30" />
+        
+        <div className="w-full max-w-md relative z-10">
+          <Link to="/login" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 sm:mb-8 transition-colors text-sm sm:text-base">
+            <ArrowLeft size={16} />
+            <span>Voltar para login</span>
+          </Link>
 
-        <div className="glass rounded-2xl p-8">
-          <div className="flex justify-center mb-8">
-            <Logo size="lg" />
-          </div>
+          <div className="glass rounded-2xl p-6 sm:p-8">
+            <div className="flex justify-center mb-6 sm:mb-8">
+              <Logo size="lg" />
+            </div>
 
-          {!isSuccess ? (
-            <>
-              <h1 className="font-display text-2xl font-bold text-center mb-2">
-                Redefinir senha
-              </h1>
-              <p className="text-muted-foreground text-center mb-8">
-                Digite sua nova senha abaixo
-              </p>
+            {!isSuccess ? (
+              <>
+                <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+                  Redefinir senha
+                </h1>
+                <p className="text-muted-foreground text-center mb-6 sm:mb-8 text-sm sm:text-base">
+                  Digite sua nova senha abaixo
+                </p>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Nova senha</Label>
-                  <div className="relative">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm sm:text-base">Nova senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="h-11 sm:h-12 bg-secondary border-border pr-12 text-sm sm:text-base"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm sm:text-base">Confirmar senha</Label>
                     <Input
-                      id="password"
+                      id="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className="h-12 bg-secondary border-border pr-12"
+                      className="h-11 sm:h-12 bg-secondary border-border text-sm sm:text-base"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                  <Input
-                    id="confirmPassword"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="h-12 bg-secondary border-border"
-                  />
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                        Redefinindo...
+                      </>
+                    ) : (
+                      "Redefinir senha"
+                    )}
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <Check size={28} className="text-primary sm:hidden" />
+                  <Check size={32} className="text-primary hidden sm:block" />
                 </div>
-
-                <Button
-                  type="submit"
-                  variant="hero"
-                  size="lg"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={20} />
-                      Redefinindo...
-                    </>
-                  ) : (
-                    "Redefinir senha"
-                  )}
-                </Button>
-              </form>
-            </>
-          ) : (
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Check size={32} className="text-primary" />
+                <h1 className="font-display text-xl sm:text-2xl font-bold mb-2">
+                  Senha redefinida!
+                </h1>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  Redirecionando para o dashboard...
+                </p>
               </div>
-              <h1 className="font-display text-2xl font-bold mb-2">
-                Senha redefinida!
-              </h1>
-              <p className="text-muted-foreground">
-                Redirecionando para o dashboard...
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
