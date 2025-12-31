@@ -265,11 +265,11 @@ export const NumbersManager = ({
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
       
       // Try to disconnect from Evolution API if connected
-      if (numberToRemove?.is_connected) {
+      if (numberToRemove?.is_connected && numberToRemove.instance_name) {
         try {
           await supabase.functions.invoke('evolution-disconnect', {
             body: { 
-              instanceName: numberToRemove.name,
+              instanceName: numberToRemove.instance_name,
               numberId: numberToDelete 
             },
           });
@@ -305,12 +305,12 @@ export const NumbersManager = ({
 
   const handleDisconnect = async (numberId: string) => {
     const numberToDisconnect = numbers.find(n => n.id === numberId);
-    if (!numberToDisconnect) return;
+    if (!numberToDisconnect || !numberToDisconnect.instance_name) return;
 
     try {
       await supabase.functions.invoke('evolution-disconnect', {
         body: { 
-          instanceName: numberToDisconnect.name,
+          instanceName: numberToDisconnect.instance_name,
           numberId 
         },
       });
