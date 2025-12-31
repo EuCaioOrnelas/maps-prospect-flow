@@ -108,7 +108,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             size="lg"
           >
             <Crown className="h-4 w-4" />
-            Ver planos com desconto
+            Adquirir plano com desconto
           </Button>
           <Button 
             variant="ghost" 
