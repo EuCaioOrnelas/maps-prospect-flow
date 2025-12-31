@@ -160,6 +160,15 @@ const Profile = () => {
   };
 
   const handlePasswordChange = async () => {
+    if (!newPassword.trim()) {
+      toast({
+        title: "Senha obrigatória",
+        description: "Digite a nova senha",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Senhas não coincidem",
@@ -185,7 +194,13 @@ const Profile = () => {
         password: newPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error messages
+        if (error.message.includes('same password')) {
+          throw new Error('A nova senha deve ser diferente da atual');
+        }
+        throw error;
+      }
 
       toast({
         title: "Senha alterada!",
@@ -193,11 +208,9 @@ const Profile = () => {
       });
 
       setShowPasswordModal(false);
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      console.error('Password change error:', error);
       toast({
         title: "Erro ao alterar senha",
         description: error.message || "Tente novamente mais tarde",
@@ -458,24 +471,12 @@ const Profile = () => {
                     Tire suas dúvidas ou reporte um problema
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Link to="/contato">
-                    <Button variant="outline" className="gap-2">
-                      <Mail className="h-4 w-4" />
-                      E-mail
-                    </Button>
-                  </Link>
-                  <a 
-                    href="https://wa.me/5511999999999?text=Olá! Preciso de ajuda com a Prospex" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    <Button variant="default" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                      <MessageCircle className="h-4 w-4" />
-                      WhatsApp
-                    </Button>
-                  </a>
-                </div>
+                <Link to="/contato">
+                  <Button variant="default" className="gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Entrar em contato
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
