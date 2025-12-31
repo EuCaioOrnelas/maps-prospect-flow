@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   History, 
@@ -13,8 +13,12 @@ import {
   Pause,
   Play,
   AlertTriangle,
-  Smartphone
+  Smartphone,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
@@ -28,6 +32,9 @@ interface CampaignHistoryProps {
   numbers?: WhatsAppNumber[];
 }
 
+const CAMPAIGNS_PER_PAGE = 5;
+const MAX_CAMPAIGNS = 50;
+
 export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(({ 
   campaigns, 
   loading, 
@@ -37,7 +44,52 @@ export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(
   onResume,
   numbers = []
 }, ref) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const { user } = useAuth();
   
+  // Sort campaigns by date (newest first) and limit to MAX_CAMPAIGNS
+  const sortedCampaigns = [...campaigns]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, MAX_CAMPAIGNS);
+  
+  const totalPages = Math.ceil(sortedCampaigns.length / CAMPAIGNS_PER_PAGE);
+  const startIndex = (currentPage - 1) * CAMPAIGNS_PER_PAGE;
+  const endIndex = startIndex + CAMPAIGNS_PER_PAGE;
+  const paginatedCampaigns = sortedCampaigns.slice(startIndex, endIndex);
+
+  // Delete old campaigns if over limit
+  useEffect(() => {
+    const cleanupOldCampaigns = async () => {
+      if (!user || campaigns.length <= MAX_CAMPAIGNS) return;
+      
+      const sortedByDate = [...campaigns]
+        .filter(c => c.status === 'completed' || c.status === 'failed')
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      
+      const campaignsToDelete = sortedByDate.slice(0, campaigns.length - MAX_CAMPAIGNS);
+      
+      if (campaignsToDelete.length > 0) {
+        console.log(`Cleaning up ${campaignsToDelete.length} old campaigns`);
+        
+        for (const campaign of campaignsToDelete) {
+          await supabase
+            .from('whatsapp_campaigns')
+            .delete()
+            .eq('id', campaign.id);
+        }
+      }
+    };
+
+    cleanupOldCampaigns();
+  }, [campaigns, user]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
@@ -113,26 +165,26 @@ export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="glass rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{campaigns.length}</p>
+          <p className="text-2xl font-bold text-primary">{sortedCampaigns.length}</p>
           <p className="text-sm text-muted-foreground">Campanhas</p>
         </div>
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-foreground">
-            {campaigns.reduce((acc, c) => acc + c.sent_count, 0)}
+            {sortedCampaigns.reduce((acc, c) => acc + c.sent_count, 0)}
           </p>
           <p className="text-sm text-muted-foreground">Mensagens enviadas</p>
         </div>
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-foreground">
-            {campaigns.reduce((acc, c) => acc + c.total_leads, 0)}
+            {sortedCampaigns.reduce((acc, c) => acc + c.total_leads, 0)}
           </p>
           <p className="text-sm text-muted-foreground">Leads prospectados</p>
         </div>
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-foreground">
             {calculateSuccessRate(
-              campaigns.reduce((acc, c) => acc + c.sent_count, 0),
-              campaigns.reduce((acc, c) => acc + c.failed_count, 0)
+              sortedCampaigns.reduce((acc, c) => acc + c.sent_count, 0),
+              sortedCampaigns.reduce((acc, c) => acc + c.failed_count, 0)
             )}%
           </p>
           <p className="text-sm text-muted-foreground">Taxa de sucesso</p>
@@ -141,7 +193,7 @@ export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(
 
       {/* Campaign List */}
       <div className="space-y-3">
-        {campaigns.map((campaign) => {
+        {paginatedCampaigns.map((campaign) => {
           const statusInfo = getStatusInfo(campaign.status, campaign.paused_at_limit);
           const successRate = calculateSuccessRate(campaign.sent_count, campaign.failed_count);
           const numberName = getNumberName(campaign.whatsapp_number_id);
@@ -257,6 +309,52 @@ export const CampaignHistory = forwardRef<HTMLDivElement, CampaignHistoryProps>(
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="gap-1"
+          >
+            <ChevronLeft size={16} />
+            Anterior
+          </Button>
+          
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <Button
+                key={page}
+                variant={page === currentPage ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+                className="w-8 h-8 p-0"
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="gap-1"
+          >
+            Próximo
+            <ChevronRight size={16} />
+          </Button>
+        </div>
+      )}
+
+      {/* Info about max campaigns */}
+      <p className="text-center text-xs text-muted-foreground pt-2">
+        Mostrando {paginatedCampaigns.length} de {sortedCampaigns.length} campanhas (máximo: {MAX_CAMPAIGNS})
+      </p>
     </div>
   );
 });

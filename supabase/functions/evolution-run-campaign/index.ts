@@ -95,6 +95,11 @@ serve(async (req) => {
       try {
         // Process leads
         for (let i = 0; i < leads.length; i++) {
+          // Wait BEFORE sending (including first message) for anti-ban
+          const randomDelay = getRandomDelay();
+          console.log(`Waiting ${randomDelay}s before message ${i + 1}`);
+          await new Promise(resolve => setTimeout(resolve, randomDelay * 1000));
+
           const lead = leads[i];
           
           // Check daily limit
@@ -192,12 +197,7 @@ serve(async (req) => {
             })
             .eq('id', numberId);
 
-          // Wait between messages with random delay (anti-ban)
-          if (i < leads.length - 1 && dailySentCount < DAILY_LIMIT) {
-            const randomDelay = getRandomDelay();
-            console.log(`Waiting ${randomDelay}s before next message`);
-            await new Promise(resolve => setTimeout(resolve, randomDelay * 1000));
-          }
+          // Delay is now at the start of the loop, so no need for delay at the end
         }
 
         // Campaign completed

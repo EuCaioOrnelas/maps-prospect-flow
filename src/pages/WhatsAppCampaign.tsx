@@ -639,11 +639,11 @@ const WhatsAppCampaign = () => {
                   <Plus size={16} />
                   Nova Campanha
                 </TabsTrigger>
-                <TabsTrigger value="active" className="gap-2 relative">
+                <TabsTrigger value="active" className="gap-2">
                   <Play size={16} />
                   Em Andamento
                   {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                    <span className="ml-1 min-w-5 h-5 px-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full inline-flex items-center justify-center">
                       {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length}
                     </span>
                   )}
