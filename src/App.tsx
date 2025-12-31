@@ -20,6 +20,7 @@ import WhatsAppReports from "./pages/WhatsAppReports";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutFailed from "./pages/CheckoutFailed";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,7 +42,8 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/upgrade" element={<Upgrade />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
-            <Route 
+            <Route path="/checkout-failed" element={<CheckoutFailed />} />
+            <Route
               path="/dashboard" 
               element={
                 <ProtectedRoute>

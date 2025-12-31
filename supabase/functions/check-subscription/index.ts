@@ -27,6 +27,25 @@ const PLAN_LIMITS: Record<string, number> = {
   "scale": 1200,
 };
 
+// Calculate new searches limit considering remaining searches from previous plan
+const calculateNewSearchesLimit = (
+  currentSearchesUsed: number,
+  currentSearchesLimit: number,
+  newPlanLimit: number
+): { newLimit: number; carryOver: number } => {
+  // Calculate remaining searches from current plan
+  const remainingSearches = Math.max(0, currentSearchesLimit - currentSearchesUsed);
+  
+  // If upgrading and has remaining searches, add them to new plan
+  if (remainingSearches > 0 && newPlanLimit > currentSearchesLimit) {
+    const carryOver = remainingSearches;
+    const newLimit = newPlanLimit + carryOver;
+    return { newLimit, carryOver };
+  }
+  
+  return { newLimit: newPlanLimit, carryOver: 0 };
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -56,6 +75,13 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get current profile to check existing searches
+    const { data: currentProfile } = await supabaseClient
+      .from('profiles')
+      .select('searches_used, searches_limit, plan')
+      .eq('id', user.id)
+      .single();
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
@@ -83,6 +109,7 @@ serve(async (req) => {
     const hasActiveSub = subscriptions.data.length > 0;
     let plan = "free";
     let subscriptionEnd = null;
+    let searchesLimit = PLAN_LIMITS["free"];
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
@@ -92,10 +119,36 @@ serve(async (req) => {
       // Get the price ID from the subscription
       const priceId = subscription.items.data[0].price.id;
       plan = PRICE_TO_PLAN[priceId] || "free";
+      const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
       logStep("Determined plan from price", { priceId, plan });
 
+      // Calculate new limit with carry-over if upgrading
+      if (currentProfile) {
+        // Only calculate carry-over if this is a new subscription or upgrade
+        if (currentProfile.plan !== plan || currentProfile.searches_limit < basePlanLimit) {
+          const { newLimit, carryOver } = calculateNewSearchesLimit(
+            currentProfile.searches_used,
+            currentProfile.searches_limit,
+            basePlanLimit
+          );
+          searchesLimit = newLimit;
+          
+          logStep("Calculated new searches limit with carry-over", {
+            currentSearchesUsed: currentProfile.searches_used,
+            currentSearchesLimit: currentProfile.searches_limit,
+            basePlanLimit,
+            carryOver,
+            newLimit: searchesLimit
+          });
+        } else {
+          // Keep existing limit if already on this plan
+          searchesLimit = currentProfile.searches_limit;
+        }
+      } else {
+        searchesLimit = basePlanLimit;
+      }
+
       // Update user profile with new plan and limits
-      const searchesLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
       const { error: updateError } = await supabaseClient
         .from('profiles')
         .update({ 
@@ -129,7 +182,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       plan: plan,
-      searches_limit: PLAN_LIMITS[plan] || PLAN_LIMITS["free"],
+      searches_limit: searchesLimit,
       subscription_end: subscriptionEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
