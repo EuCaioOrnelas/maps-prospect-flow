@@ -25,9 +25,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId, couponCode } = await req.json();
+    const { priceId, couponCode, guestEmail } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Request data received", { priceId, hasCoupon: !!couponCode });
+    logStep("Request data received", { priceId, hasCoupon: !!couponCode, guestEmail });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -58,6 +58,19 @@ serve(async (req) => {
       }
     }
 
+    // Use guest email if no authenticated user
+    if (!userEmail && guestEmail) {
+      userEmail = guestEmail;
+      logStep("Using guest email", { email: guestEmail });
+      
+      // Check if customer already exists in Stripe for guest
+      const customers = await stripe.customers.list({ email: guestEmail, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found existing customer for guest", { customerId });
+      }
+    }
+
     // Build checkout session options
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       line_items: [
@@ -68,17 +81,17 @@ serve(async (req) => {
       ],
       mode: "subscription",
       success_url: `${origin}/checkout-success`,
-      cancel_url: `${origin}/upgrade?checkout=canceled`,
-      allow_promotion_codes: true, // Allow users to enter promo codes at checkout
+      cancel_url: `${origin}/#pricing`,
+      allow_promotion_codes: true,
     };
 
-    // If user is logged in, use their email
+    // If user is logged in or guest email provided, use their email
     if (customerId) {
       sessionOptions.customer = customerId;
     } else if (userEmail) {
       sessionOptions.customer_email = userEmail;
     }
-    // If no user is logged in, Stripe Checkout will collect the email
+    // If no email provided, Stripe Checkout will collect it
 
     // Apply coupon code if provided
     if (couponCode) {
