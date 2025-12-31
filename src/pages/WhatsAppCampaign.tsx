@@ -35,6 +35,7 @@ import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
+import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 
 export interface Lead {
   name: string;
@@ -111,17 +112,13 @@ const WhatsAppCampaign = () => {
 
   // Check if user has access (paid plans only)
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+  const [showUpgradeModal, setShowUpgradeModal] = useState(isFreePlan);
   
   useEffect(() => {
     if (isFreePlan) {
-      toast({
-        title: "Acesso restrito",
-        description: "Disparos de WhatsApp estão disponíveis apenas para planos pagos.",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
+      setShowUpgradeModal(true);
     }
-  }, [isFreePlan, navigate, toast]);
+  }, [isFreePlan]);
   
   // Use realtime hook for campaigns
   const { 
@@ -535,49 +532,19 @@ const WhatsAppCampaign = () => {
   );
 
   // Show upgrade prompt for free users
+  // Show upgrade modal for free users
+  if (isFreePlan) {
+    return (
+      <div className="min-h-screen bg-background">
+        <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+      </div>
+    );
+  }
+
   if (!hasMassMessagingAccess) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="icon">
-                    <ArrowLeft size={20} />
-                  </Button>
-                </Link>
-                <Logo size="md" />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="container mx-auto px-4 py-12">
-          <div className="max-w-lg mx-auto text-center">
-            <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-6">
-              <Crown size={40} className="text-warning" />
-            </div>
-            <h1 className="font-display text-3xl font-bold mb-4">
-              Disparos em Massa
-            </h1>
-            <p className="text-muted-foreground mb-8">
-              Esta funcionalidade é exclusiva para membros dos planos Start, Growth e Scale.
-              Faça upgrade para conectar seus números WhatsApp e enviar mensagens em massa.
-            </p>
-            <div className="space-y-4">
-              <Button asChild size="lg" className="w-full gap-2">
-                <Link to="/upgrade">
-                  <Crown size={18} />
-                  Fazer Upgrade
-                </Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/dashboard">Voltar ao Dashboard</Link>
-              </Button>
-            </div>
-          </div>
-        </main>
+        <UpgradeModal isOpen={true} onClose={() => navigate('/dashboard')} />
       </div>
     );
   }
