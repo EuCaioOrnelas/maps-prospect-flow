@@ -18,7 +18,8 @@ interface CampaignRequest {
   instanceName: string;
   leads: Lead[];
   messages: string[];
-  delaySeconds: number;
+  delaySecondsMin: number;
+  delaySecondsMax: number;
 }
 
 serve(async (req) => {
@@ -50,7 +51,12 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { campaignId, numberId, instanceName, leads, messages, delaySeconds }: CampaignRequest = await req.json();
+    const { campaignId, numberId, instanceName, leads, messages, delaySecondsMin, delaySecondsMax }: CampaignRequest = await req.json();
+
+    // Helper function to get random delay between min and max
+    const getRandomDelay = () => {
+      return Math.floor(Math.random() * (delaySecondsMax - delaySecondsMin + 1)) + delaySecondsMin;
+    };
 
     console.log(`Starting campaign ${campaignId} with ${leads.length} leads`);
 
@@ -178,9 +184,11 @@ serve(async (req) => {
         })
         .eq('id', numberId);
 
-      // Wait between messages (anti-ban)
+      // Wait between messages with random delay (anti-ban)
       if (i < leads.length - 1 && dailySentCount < DAILY_LIMIT) {
-        await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+        const randomDelay = getRandomDelay();
+        console.log(`Waiting ${randomDelay}s before next message`);
+        await new Promise(resolve => setTimeout(resolve, randomDelay * 1000));
       }
     }
 

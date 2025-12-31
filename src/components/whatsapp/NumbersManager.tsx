@@ -305,18 +305,49 @@ export const NumbersManager = ({
 
   const handleDisconnect = async (numberId: string) => {
     const numberToDisconnect = numbers.find(n => n.id === numberId);
-    if (!numberToDisconnect || !numberToDisconnect.instance_name) return;
-
-    try {
-      await supabase.functions.invoke('evolution-disconnect', {
-        body: { 
-          instanceName: numberToDisconnect.instance_name,
-          numberId 
-        },
+    if (!numberToDisconnect) {
+      toast({
+        title: "Erro",
+        description: "Número não encontrado",
+        variant: "destructive",
       });
+      return;
+    }
 
+    setLoading(true);
+    try {
+      // If there's an instance name, try to disconnect from Evolution API
+      if (numberToDisconnect.instance_name) {
+        try {
+          const response = await supabase.functions.invoke('evolution-disconnect', {
+            body: { 
+              instanceName: numberToDisconnect.instance_name,
+              numberId 
+            },
+          });
+          console.log('Disconnect response:', response);
+        } catch (e) {
+          console.error('Error calling evolution-disconnect:', e);
+          // Continue anyway to update local state
+        }
+      }
+
+      // Update in database directly as a fallback
+      const { error } = await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          phone_number: null,
+          instance_name: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId);
+
+      if (error) throw error;
+
+      // Update local state
       onNumbersChange(numbers.map(n => 
-        n.id === numberId ? { ...n, is_connected: false, phone_number: null } : n
+        n.id === numberId ? { ...n, is_connected: false, phone_number: null, instance_name: null } : n
       ));
 
       toast({
@@ -330,6 +361,8 @@ export const NumbersManager = ({
         description: "Não foi possível desconectar",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

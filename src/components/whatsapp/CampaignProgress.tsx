@@ -19,7 +19,8 @@ interface CampaignProgressProps {
   campaignState: CampaignState;
   totalLeads: number;
   messages: string[];
-  delaySeconds: number;
+  delaySecondsMin: number;
+  delaySecondsMax: number;
   pauseAfterContacts: number;
   pauseMinutes: number;
   enableSmartPause: boolean;
@@ -34,7 +35,8 @@ export const CampaignProgress = ({
   campaignState,
   totalLeads,
   messages,
-  delaySeconds,
+  delaySecondsMin,
+  delaySecondsMax,
   pauseAfterContacts,
   pauseMinutes,
   enableSmartPause,
@@ -49,9 +51,15 @@ export const CampaignProgress = ({
   const [failed, setFailed] = useState(0);
   const [isSmartPausing, setIsSmartPausing] = useState(false);
   const [smartPauseCountdown, setSmartPauseCountdown] = useState(0);
-  const [nextMessageCountdown, setNextMessageCountdown] = useState(delaySeconds);
+  const [currentDelay, setCurrentDelay] = useState(delaySecondsMin);
+  const [nextMessageCountdown, setNextMessageCountdown] = useState(delaySecondsMin);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(campaignState.status === 'running');
+
+  // Generate random delay between min and max
+  const getRandomDelay = () => {
+    return Math.floor(Math.random() * (delaySecondsMax - delaySecondsMin + 1)) + delaySecondsMin;
+  };
 
   // Simulate message sending
   useEffect(() => {
@@ -85,14 +93,17 @@ export const CampaignProgress = ({
               setSmartPauseCountdown(pauseMinutes * 60);
             }
           }
-          return delaySeconds;
+          // Get new random delay for next message
+          const newDelay = getRandomDelay();
+          setCurrentDelay(newDelay);
+          return newDelay;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [campaignState.status, currentIndex, totalLeads, delaySeconds, enableSmartPause, pauseAfterContacts, pauseMinutes, isSmartPausing]);
+  }, [campaignState.status, currentIndex, totalLeads, delaySecondsMin, delaySecondsMax, enableSmartPause, pauseAfterContacts, pauseMinutes, isSmartPausing]);
 
   // Smart pause countdown
   useEffect(() => {
@@ -128,7 +139,9 @@ export const CampaignProgress = ({
   const estimatedTimeRemaining = () => {
     const remaining = totalLeads - currentIndex;
     const pauseCount = enableSmartPause ? Math.floor(remaining / pauseAfterContacts) : 0;
-    const totalSeconds = remaining * delaySeconds + pauseCount * pauseMinutes * 60;
+    // Use average delay for estimation
+    const avgDelay = (delaySecondsMin + delaySecondsMax) / 2;
+    const totalSeconds = remaining * avgDelay + pauseCount * pauseMinutes * 60;
     const hours = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
     
@@ -225,10 +238,15 @@ export const CampaignProgress = ({
                 <span className="font-mono text-primary font-medium">{formatTime(nextMessageCountdown)}</span>
               </div>
               
-              <div className="flex items-center gap-2 text-sm">
-                <MessageSquare size={14} className="text-muted-foreground" />
-                <span className="text-muted-foreground">Variação atual:</span>
-                <span className="font-medium">Mensagem {currentMessageIndex + 1}</span>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="text-muted-foreground" />
+                  <span className="text-muted-foreground">Variação atual:</span>
+                  <span className="font-medium">Mensagem {currentMessageIndex + 1}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Delay: {currentDelay}s
+                </span>
               </div>
             </>
           ) : null}
