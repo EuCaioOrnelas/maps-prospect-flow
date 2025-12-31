@@ -99,15 +99,12 @@ export const LeadSelector = ({
   const handleDownloadTemplate = () => {
     const templateData = [
       {
-        'Telefone': '5511999999999',
         'Nome': 'Exemplo Cliente',
-        'Categoria': 'Restaurante',
-        'Endereço': 'Rua Exemplo, 123',
-        'Cidade': 'São Paulo',
-        'Site': 'www.exemplo.com',
-        'Avaliação': '4.5',
-        'Nº Avaliações': '100',
-        'Link Maps': 'https://maps.google.com/...'
+        'Telefone': '5511999999999',
+      },
+      {
+        'Nome': 'Empresa ABC',
+        'Telefone': '5521988888888',
       }
     ];
 
@@ -117,22 +114,15 @@ export const LeadSelector = ({
     
     // Ajustar largura das colunas
     worksheet['!cols'] = [
+      { wch: 25 }, // Nome
       { wch: 15 }, // Telefone
-      { wch: 20 }, // Nome
-      { wch: 15 }, // Categoria
-      { wch: 25 }, // Endereço
-      { wch: 15 }, // Cidade
-      { wch: 20 }, // Site
-      { wch: 10 }, // Avaliação
-      { wch: 12 }, // Nº Avaliações
-      { wch: 30 }, // Link Maps
     ];
 
     XLSX.writeFile(workbook, 'modelo-disparos-whatsapp.xlsx');
     
     toast({
       title: "Modelo baixado!",
-      description: "Use este modelo para organizar seus contatos",
+      description: "Preencha com nome na 1ª coluna e telefone na 2ª",
     });
   };
 
@@ -148,35 +138,47 @@ export const LeadSelector = ({
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         
-        // Primeiro, pegar como array para acessar primeira coluna se necessário
         const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
         
-        // Detectar se a primeira coluna contém telefones (padrão numérico)
         const headers = rawData[0] || [];
-        const firstColumnIsPhone = rawData.slice(1).some(row => {
-          const firstCell = String(row[0] || '').replace(/\D/g, '');
-          return firstCell.length >= 10 && firstCell.length <= 13;
-        });
+        
+        // Detectar formato: prospecção (com vários campos) ou modelo simples (Nome, Telefone)
+        const isProspectionFormat = headers.some((h: string) => 
+          ['Categoria', 'categoria', 'Category', 'Endereço', 'endereco', 'Address'].includes(h)
+        );
 
-        // Map columns - tentar encontrar coluna de telefone por header ou usar primeira coluna
-        const leads: Lead[] = jsonData.map((row, index) => {
-          // Tentar headers conhecidos primeiro (compatível com prospecções)
-          let phone = row['Telefone'] || row['telefone'] || row['Phone'] || row['phone'] || 
-                     row['Celular'] || row['celular'] || row['WhatsApp'] || row['whatsapp'] || '';
+        const leads: Lead[] = jsonData.map((row) => {
+          let name = '';
+          let phone = '';
           
-          // Se não encontrou por header e primeira coluna parece ser telefone, usar ela
-          if (!phone && firstColumnIsPhone && rawData[index + 1]) {
-            phone = rawData[index + 1][0] || '';
-          }
-          
-          // Se ainda não tem telefone, tentar pegar o valor da primeira coluna pelo nome do header
-          if (!phone && headers[0]) {
-            phone = row[headers[0]] || '';
+          if (isProspectionFormat) {
+            // Formato de prospecção - pegar campos específicos
+            name = row['Nome'] || row['nome'] || row['Name'] || row['name'] || 'Sem nome';
+            phone = row['Telefone'] || row['telefone'] || row['Phone'] || row['phone'] || 
+                   row['Celular'] || row['celular'] || row['WhatsApp'] || row['whatsapp'] || '';
+          } else {
+            // Formato simples - 1ª coluna: Nome, 2ª coluna: Telefone
+            const firstHeader = headers[0];
+            const secondHeader = headers[1];
+            
+            // Verificar se segue o padrão Nome/Telefone
+            if (firstHeader && secondHeader) {
+              name = row[firstHeader] || 'Sem nome';
+              phone = row[secondHeader] || '';
+            }
+            
+            // Fallback para headers conhecidos
+            if (!phone) {
+              phone = row['Telefone'] || row['telefone'] || row['Phone'] || '';
+            }
+            if (name === 'Sem nome') {
+              name = row['Nome'] || row['nome'] || row['Name'] || 'Sem nome';
+            }
           }
           
           return {
-            name: row['Nome'] || row['nome'] || row['Name'] || row['name'] || 'Sem nome',
+            name: String(name),
             category: row['Categoria'] || row['categoria'] || row['Category'] || '',
             address: row['Endereço'] || row['endereco'] || row['Address'] || '',
             city: row['Cidade'] || row['cidade'] || row['City'] || '',
@@ -191,7 +193,7 @@ export const LeadSelector = ({
         if (leads.length === 0) {
           toast({
             title: "Nenhum contato encontrado",
-            description: "Certifique-se de que a planilha possui números de telefone na primeira coluna ou em uma coluna chamada 'Telefone'",
+            description: "A planilha deve ter Nome na 1ª coluna e Telefone na 2ª coluna",
             variant: "destructive",
           });
           return;
@@ -312,7 +314,7 @@ export const LeadSelector = ({
               </div>
               <div className="text-center">
                 <p className="font-medium">Importar Planilha</p>
-                <p className="text-sm text-muted-foreground">Excel ou CSV com telefones na 1ª coluna</p>
+                <p className="text-sm text-muted-foreground">Nome na 1ª coluna, Telefone na 2ª</p>
               </div>
             </button>
             
@@ -324,14 +326,14 @@ export const LeadSelector = ({
                 <History size={24} className="text-muted-foreground group-hover:text-primary" />
               </div>
               <div className="text-center">
-                <p className="font-medium">Usar Histórico</p>
+                <p className="font-medium">Usar Buscas</p>
                 <p className="text-sm text-muted-foreground">Selecione uma busca anterior</p>
               </div>
             </button>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            Use sua própria planilha com telefones na primeira coluna, ou importe planilhas exportadas das prospecções
+            Baixe o modelo ou importe planilhas exportadas das prospecções (compatível automaticamente)
           </p>
         </div>
       )}

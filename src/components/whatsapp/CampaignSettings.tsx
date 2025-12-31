@@ -6,15 +6,13 @@ import { Slider } from "@/components/ui/slider";
 import { 
   Settings, 
   ArrowLeft, 
+  ArrowRight,
   Clock,
   Users,
   Pause,
   AlertTriangle,
   Info,
   FileText,
-  Send,
-  WifiOff,
-  CalendarClock,
   Smartphone
 } from "lucide-react";
 import { CampaignScheduler } from "./CampaignScheduler";
@@ -39,8 +37,7 @@ interface CampaignSettingsProps {
   scheduledTime: string;
   onScheduledTimeChange: (time: string) => void;
   onBack: () => void;
-  onStartCampaign: () => void;
-  canProceed: boolean;
+  onNext: () => void;
   isConnected: boolean;
   totalLeads: number;
   // Number selection props
@@ -68,8 +65,7 @@ export const CampaignSettings = ({
   scheduledTime,
   onScheduledTimeChange,
   onBack,
-  onStartCampaign,
-  canProceed,
+  onNext,
   isConnected,
   totalLeads,
   numbers = [],
@@ -85,18 +81,7 @@ export const CampaignSettings = ({
     return secs > 0 ? `${mins}min ${secs}s` : `${mins} minuto${mins > 1 ? 's' : ''}`;
   };
 
-  const isValidSchedule = () => {
-    if (!isScheduled) return true;
-    if (!scheduledDate || !scheduledTime) return false;
-    
-    const [hours, minutes] = scheduledTime.split(':').map(Number);
-    const scheduled = new Date(scheduledDate);
-    scheduled.setHours(hours, minutes, 0, 0);
-    
-    return scheduled > new Date();
-  };
-
-  const canStart = canProceed && (!isScheduled || isValidSchedule());
+  const canProceed = delaySeconds >= 40 && !!selectedNumberId;
   
   return (
     <div className="glass rounded-2xl p-6">
@@ -278,48 +263,16 @@ export const CampaignSettings = ({
         />
       </div>
 
-      {/* Campaign Summary & Start */}
-      <div className="mt-6 pt-6 border-t border-border space-y-4">
-        {!isConnected && !isScheduled && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
-            <WifiOff size={16} className="text-warning" />
-            <span>Conecte seu WhatsApp no botão do topo para iniciar</span>
-          </div>
-        )}
-
-        {isScheduled && !isConnected && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border text-sm">
-            <Info size={16} className="text-muted-foreground" />
-            <span>Você poderá conectar o WhatsApp antes do horário agendado</span>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-          <div>
-            <p className="font-medium">Resumo da campanha</p>
-            <p className="text-sm text-muted-foreground">{totalLeads} leads • {formatTime(delaySeconds)} de delay</p>
-          </div>
-        </div>
-
-        <div className="flex justify-between">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
-            <ArrowLeft size={16} />
-            Voltar
-          </Button>
-          <Button onClick={onStartCampaign} disabled={!canStart} className="gap-2">
-            {isScheduled ? (
-              <>
-                <CalendarClock size={16} />
-                Agendar Campanha
-              </>
-            ) : (
-              <>
-                <Send size={16} />
-                Iniciar Disparos
-              </>
-            )}
-          </Button>
-        </div>
+      {/* Navigation */}
+      <div className="flex justify-between mt-6 pt-6 border-t border-border">
+        <Button variant="ghost" onClick={onBack} className="gap-2">
+          <ArrowLeft size={16} />
+          Voltar
+        </Button>
+        <Button onClick={onNext} disabled={!canProceed} className="gap-2">
+          Próximo
+          <ArrowRight size={16} />
+        </Button>
       </div>
     </div>
   );

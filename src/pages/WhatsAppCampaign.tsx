@@ -29,6 +29,7 @@ import { MessageVariations } from "@/components/whatsapp/MessageVariations";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
+import { CampaignSummary } from "@/components/whatsapp/CampaignSummary";
 import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
 import { RealtimeMonitor } from "@/components/whatsapp/RealtimeMonitor";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
@@ -83,7 +84,7 @@ export interface CampaignState {
 
 const WhatsAppCampaign = () => {
   const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
-  const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'running'>('leads');
+  const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'summary' | 'running'>('leads');
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(['', '', '', '', '']);
   const [campaignName, setCampaignName] = useState('');
@@ -148,6 +149,19 @@ const WhatsAppCampaign = () => {
   const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday);
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
   const canStartCampaign = delaySeconds >= 40 && (isConnected || isScheduled) && !!selectedNumberId;
+
+  const isValidSchedule = () => {
+    if (!isScheduled) return true;
+    if (!scheduledDate || !scheduledTime) return false;
+    
+    const [hours, minutes] = scheduledTime.split(':').map(Number);
+    const scheduled = new Date(scheduledDate);
+    scheduled.setHours(hours, minutes, 0, 0);
+    
+    return scheduled > new Date();
+  };
+
+  const canStart = canStartCampaign && (!isScheduled || isValidSchedule());
 
 
   const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
@@ -506,9 +520,9 @@ const WhatsAppCampaign = () => {
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {['leads', 'messages', 'settings'].map((s, i) => {
-        const stepLabels = ['Leads', 'Mensagens', 'Configurações'];
-        const stepIndex = ['leads', 'messages', 'settings'].indexOf(step);
+      {['leads', 'messages', 'settings', 'summary'].map((s, i) => {
+        const stepLabels = ['Leads', 'Mensagens', 'Configurações', 'Resumo'];
+        const stepIndex = ['leads', 'messages', 'settings', 'summary'].indexOf(step);
         const isActive = s === step;
         const isCompleted = i < stepIndex;
         
@@ -524,7 +538,7 @@ const WhatsAppCampaign = () => {
             <span className={`ml-2 text-sm hidden sm:inline ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
               {stepLabels[i]}
             </span>
-            {i < 2 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
+            {i < 3 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
           </div>
         );
       })}
@@ -679,14 +693,35 @@ const WhatsAppCampaign = () => {
                   scheduledTime={scheduledTime}
                   onScheduledTimeChange={setScheduledTime}
                   onBack={() => setStep('messages')}
-                  onStartCampaign={handleStartCampaign}
-                  canProceed={canStartCampaign}
+                  onNext={() => setStep('summary')}
                   isConnected={isConnected}
                   totalLeads={selectedLeads.length}
                   numbers={numbers}
                   selectedNumberId={selectedNumberId}
                   onSelectNumber={setSelectedNumberId}
                   dailyLimit={dailyLimit}
+                />
+              )}
+
+              {/* Step: Campaign Summary */}
+              {step === 'summary' && (
+                <CampaignSummary
+                  campaignName={campaignName}
+                  selectedLeads={selectedLeads}
+                  messages={messages}
+                  delaySeconds={delaySeconds}
+                  pauseAfterContacts={pauseAfterContacts}
+                  pauseMinutes={pauseMinutes}
+                  enableSmartPause={enableSmartPause}
+                  isScheduled={isScheduled}
+                  scheduledDate={scheduledDate}
+                  scheduledTime={scheduledTime}
+                  selectedNumber={selectedNumber}
+                  isConnected={isConnected}
+                  onBack={() => setStep('settings')}
+                  onStartCampaign={handleStartCampaign}
+                  canStart={canStart}
+                  isStarting={isStartingCampaign}
                 />
               )}
 
