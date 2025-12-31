@@ -44,10 +44,7 @@ const Profile = () => {
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
 
   const getPlanName = (plan: string) => {
@@ -159,65 +156,39 @@ const Profile = () => {
     }
   };
 
-  const handlePasswordChange = async () => {
-    if (!newPassword.trim()) {
+  const handleSendPasswordResetEmail = async () => {
+    if (!user?.email) {
       toast({
-        title: "Senha obrigatória",
-        description: "Digite a nova senha",
+        title: "Erro",
+        description: "E-mail não encontrado",
         variant: "destructive",
       });
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Senhas não coincidem",
-        description: "A nova senha e confirmação devem ser iguais",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsChangingPassword(true);
+    setIsSendingResetEmail(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) {
-        // Handle specific error messages
-        if (error.message.includes('same password')) {
-          throw new Error('A nova senha deve ser diferente da atual');
-        }
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Senha alterada!",
-        description: "Sua senha foi atualizada com sucesso",
+        title: "E-mail enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha",
       });
 
       setShowPasswordModal(false);
-      setNewPassword("");
-      setConfirmPassword("");
     } catch (error: any) {
       toast({
-        title: "Erro ao alterar senha",
+        title: "Erro ao enviar e-mail",
         description: error.message || "Tente novamente mais tarde",
         variant: "destructive",
       });
     } finally {
-      setIsChangingPassword(false);
+      setIsSendingResetEmail(false);
     }
   };
 
@@ -483,7 +454,7 @@ const Profile = () => {
         </div>
       </main>
 
-      {/* Password Change Modal */}
+      {/* Password Reset Modal */}
       <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -492,38 +463,23 @@ const Profile = () => {
               Alterar senha
             </DialogTitle>
             <DialogDescription>
-              Digite sua nova senha abaixo
+              Enviaremos um e-mail de confirmação para redefinir sua senha
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">Nova senha</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Digite a nova senha"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirme a nova senha"
-              />
-            </div>
-
-            {newPassword && newPassword.length < 6 && (
-              <div className="flex items-center gap-2 text-sm text-amber-500">
-                <AlertCircle className="h-4 w-4" />
-                A senha deve ter pelo menos 6 caracteres
+            <div className="p-4 rounded-lg bg-muted/50 border border-border/50 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">E-mail de destino:</span>
               </div>
-            )}
+              <p className="font-medium">{user?.email}</p>
+            </div>
+            
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500" />
+              <p>Você receberá um link no seu e-mail para criar uma nova senha. O link expira em 1 hora.</p>
+            </div>
           </div>
 
           <DialogFooter>
@@ -534,16 +490,16 @@ const Profile = () => {
               Cancelar
             </Button>
             <Button
-              onClick={handlePasswordChange}
-              disabled={isChangingPassword || newPassword.length < 6}
+              onClick={handleSendPasswordResetEmail}
+              disabled={isSendingResetEmail}
               className="gap-2"
             >
-              {isChangingPassword ? (
+              {isSendingResetEmail ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Check className="h-4 w-4" />
+                <Mail className="h-4 w-4" />
               )}
-              Salvar nova senha
+              Enviar e-mail
             </Button>
           </DialogFooter>
         </DialogContent>
