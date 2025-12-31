@@ -17,6 +17,9 @@ import Reports from "./pages/Reports";
 import SharedReport from "./pages/SharedReport";
 import WhatsAppCampaign from "./pages/WhatsAppCampaign";
 import WhatsAppReports from "./pages/WhatsAppReports";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,19 +37,15 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/checkout-success" element={<CheckoutSuccess />} />
             <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/upgrade" 
-              element={
-                <ProtectedRoute>
-                  <Upgrade />
                 </ProtectedRoute>
               } 
             />

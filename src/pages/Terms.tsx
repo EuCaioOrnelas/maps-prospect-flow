@@ -1,0 +1,124 @@
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
+
+const Terms = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft size={18} />
+              <span className="hidden sm:inline">Voltar</span>
+            </Button>
+            
+            <Link to="/">
+              <Logo size="md" />
+            </Link>
+            
+            <div className="w-20" />
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-12 max-w-4xl">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold mb-8">
+          Termos de Uso
+        </h1>
+
+        <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
+            Última atualização: {new Date().toLocaleDateString('pt-BR')}
+          </p>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">1. Aceitação dos Termos</h2>
+            <p>
+              Ao acessar e usar a plataforma Prospex, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
+              Se você não concordar com qualquer parte destes termos, não deverá usar nossos serviços.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">2. Descrição do Serviço</h2>
+            <p>
+              O Prospex é uma plataforma de geração de leads que permite aos usuários buscar e coletar informações 
+              de empresas e contatos comerciais disponíveis publicamente na internet para fins de prospecção comercial.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">3. Uso Aceitável</h2>
+            <p>Você concorda em usar o serviço apenas para fins legais e de acordo com estes termos. É proibido:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Usar o serviço para enviar spam ou comunicações não solicitadas em massa</li>
+              <li>Violar leis de proteção de dados aplicáveis</li>
+              <li>Coletar dados para fins ilegais ou antiéticos</li>
+              <li>Compartilhar credenciais de acesso com terceiros</li>
+              <li>Tentar burlar limitações do sistema ou acessar áreas não autorizadas</li>
+            </ul>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">4. Conta e Segurança</h2>
+            <p>
+              Você é responsável por manter a confidencialidade de sua conta e senha. Você concorda em notificar 
+              imediatamente sobre qualquer uso não autorizado de sua conta.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">5. Pagamentos e Assinaturas</h2>
+            <p>
+              Os planos pagos são cobrados mensalmente. Você pode cancelar sua assinatura a qualquer momento através 
+              do portal de gerenciamento. Reembolsos serão avaliados caso a caso conforme nossa política.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">6. Propriedade Intelectual</h2>
+            <p>
+              Todo o conteúdo, marcas, logos e software da plataforma são de propriedade exclusiva do Prospex. 
+              É proibida a reprodução sem autorização prévia.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">7. Limitação de Responsabilidade</h2>
+            <p>
+              O Prospex não se responsabiliza por danos indiretos, incidentais ou consequentes resultantes do uso 
+              ou impossibilidade de uso do serviço. Os dados fornecidos são obtidos de fontes públicas e podem 
+              conter imprecisões.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">8. Modificações dos Termos</h2>
+            <p>
+              Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas 
+              serão comunicadas através da plataforma ou por email.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">9. Lei Aplicável</h2>
+            <p>
+              Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será 
+              resolvida nos tribunais competentes do Brasil.
+            </p>
+          </section>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Terms;
