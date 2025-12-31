@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
@@ -9,16 +10,23 @@ import { Footer } from "@/components/landing/Footer";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
-      <HeroSection />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <PricingSection />
-      <FAQSection />
-      <CTASection />
-      <Footer />
-    </main>
+    <>
+      <SEO 
+        title="Prospecção Inteligente com IA"
+        description="Encontre leads estratégicos com IA. Nossa tecnologia analisa milhares de empresas e entrega apenas os melhores leads para prospectar novos clientes."
+        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital"
+      />
+      <main className="min-h-screen bg-background overflow-x-hidden">
+        <Navbar />
+        <HeroSection />
+        <FeaturesSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <FAQSection />
+        <CTASection />
+        <Footer />
+      </main>
+    </>
   );
 };
 
