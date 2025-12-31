@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { Eye, EyeOff, ArrowLeft, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -28,10 +29,10 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password.length < 8) {
+    if (!isPasswordStrong(password)) {
       toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 8 caracteres.",
+        title: "Senha fraca",
+        description: "A senha deve ter no mínimo 8 caracteres, letra maiúscula, minúscula e número.",
         variant: "destructive",
       });
       return;
@@ -140,12 +141,12 @@ const Signup = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Crie uma senha forte"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  className="h-12 bg-secondary border-border pr-12"
+                  className="h-12 bg-secondary border-border pr-12 text-foreground"
                 />
                 <button
                   type="button"
@@ -155,6 +156,7 @@ const Signup = () => {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <PasswordStrength password={password} />
             </div>
 
             <Button

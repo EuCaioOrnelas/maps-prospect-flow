@@ -189,3 +189,23 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* Fix autofill styles for inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(220 16% 12%) inset !important;
+  -webkit-text-fill-color: hsl(210 40% 98%) !important;
+  caret-color: hsl(210 40% 98%) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Ensure text color in inputs */
+input, textarea, select {
+  color: hsl(var(--foreground));
+}
+
+input::placeholder, textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}
