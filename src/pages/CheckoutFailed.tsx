@@ -218,12 +218,12 @@ const CheckoutFailed = () => {
                     Voltar ao início
                   </Button>
                 </Link>
-                <a href="mailto:suporte@leadly.com" className="w-full">
+                <Link to="/contato" className="w-full">
                   <Button variant="outline" className="w-full h-11">
                     <Mail className="w-4 h-4 mr-2" />
                     Falar com suporte
                   </Button>
-                </a>
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -267,10 +267,10 @@ const CheckoutFailed = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4 }}
         >
-          Se o problema persistir, entre em contato conosco pelo email{" "}
-          <a href="mailto:suporte@leadly.com" className="text-primary hover:underline">
-            suporte@leadly.com
-          </a>
+          Se o problema persistir,{" "}
+          <Link to="/contato" className="text-primary hover:underline">
+            entre em contato conosco
+          </Link>
         </motion.p>
       </main>
     </div>
