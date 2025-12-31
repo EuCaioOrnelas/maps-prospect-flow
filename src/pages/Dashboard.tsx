@@ -426,17 +426,17 @@ const Dashboard = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-4 sm:gap-6">
-              {/* Credits indicator - clean and slim */}
+              {/* Credits indicator - shows searches used */}
               <div className="flex items-center gap-2 text-sm">
                 <Search size={14} className="text-muted-foreground" />
                 <span className="text-muted-foreground">Buscas:</span>
-                <span className="font-semibold text-primary">{searchesRemaining}</span>
+                <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
                 <span className="text-muted-foreground">/</span>
                 <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
                 <div className="hidden sm:block w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(searchesRemaining / (profile?.searches_limit || 10)) * 100}%` }}
+                    style={{ width: `${((profile?.searches_used || 0) / (profile?.searches_limit || 10)) * 100}%` }}
                   />
                 </div>
                 <span className="hidden md:inline text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
