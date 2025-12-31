@@ -33,7 +33,7 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil" 
     });
 
-    const origin = req.headers.get("origin") || "https://prospex.lovable.app";
+    const origin = req.headers.get("origin") || "https://leadspro.lovable.app";
     
     // Check if user is authenticated
     const authHeader = req.headers.get("Authorization");
@@ -67,7 +67,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/dashboard?checkout=success`,
+      success_url: `${origin}/checkout-success`,
       cancel_url: `${origin}/upgrade?checkout=canceled`,
       allow_promotion_codes: true, // Allow users to enter promo codes at checkout
     };

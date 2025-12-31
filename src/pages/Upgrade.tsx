@@ -76,7 +76,7 @@ const plans = [
 const Upgrade = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
@@ -136,17 +136,6 @@ const Upgrade = () => {
     setLoadingPlan(planKey);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
       
       const response = await supabase.functions.invoke("create-checkout", {
