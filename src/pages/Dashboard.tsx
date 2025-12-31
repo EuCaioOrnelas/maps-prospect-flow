@@ -84,6 +84,7 @@ const Dashboard = () => {
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
+  const isFreePlan = profile?.plan === 'free' || !profile?.plan;
 
   // Request notification permission on mount
   useEffect(() => {
@@ -456,16 +457,29 @@ const Dashboard = () => {
                   </Button>
                 </Link>
 
-                <Link to="/whatsapp">
+                {isFreePlan ? (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium opacity-50 cursor-not-allowed"
+                    disabled
+                    title="Disponível apenas para planos pagos"
                   >
                     <MessageSquare size={16} />
                     <span className="hidden sm:inline">Disparos</span>
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/whatsapp">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    >
+                      <MessageSquare size={16} />
+                      <span className="hidden sm:inline">Disparos</span>
+                    </Button>
+                  </Link>
+                )}
 
                 <Link to="/upgrade">
                   <Button 

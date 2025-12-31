@@ -107,6 +107,20 @@ const WhatsAppCampaign = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+
+  // Check if user has access (paid plans only)
+  const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+  
+  useEffect(() => {
+    if (isFreePlan) {
+      toast({
+        title: "Acesso restrito",
+        description: "Disparos de WhatsApp estão disponíveis apenas para planos pagos.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+    }
+  }, [isFreePlan, navigate, toast]);
   
   // Use realtime hook for campaigns
   const { 
