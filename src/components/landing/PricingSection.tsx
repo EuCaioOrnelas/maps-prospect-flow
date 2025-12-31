@@ -6,6 +6,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const plans = [
   {
     name: "Start",
+    key: "start",
     price: "97",
     anchorPrice: "197",
     searches: "200",
@@ -22,6 +23,7 @@ const plans = [
   },
   {
     name: "Growth",
+    key: "growth",
     price: "247",
     anchorPrice: "497",
     searches: "600",
@@ -39,6 +41,7 @@ const plans = [
   },
   {
     name: "Scale",
+    key: "scale",
     price: "497",
     anchorPrice: "997",
     searches: "1.200",
@@ -132,7 +135,7 @@ export const PricingSection = () => {
                 ))}
               </ul>
 
-              <Link to="/signup" className="block">
+              <Link to={`/upgrade?plan=${plan.key}`} className="block">
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
                   size="lg"
