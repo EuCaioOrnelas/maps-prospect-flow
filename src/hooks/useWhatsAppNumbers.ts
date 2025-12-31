@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface WhatsAppNumber {
   id: string;
   name: string;
+  instance_name: string | null;
   phone_number: string | null;
   is_connected: boolean;
   daily_sent_count: number;

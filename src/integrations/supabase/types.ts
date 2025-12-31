@@ -228,6 +228,7 @@ export type Database = {
           created_at: string
           daily_sent_count: number
           id: string
+          instance_name: string | null
           is_connected: boolean
           last_sent_at: string | null
           name: string
@@ -239,6 +240,7 @@ export type Database = {
           created_at?: string
           daily_sent_count?: number
           id?: string
+          instance_name?: string | null
           is_connected?: boolean
           last_sent_at?: string | null
           name: string
@@ -250,6 +252,7 @@ export type Database = {
           created_at?: string
           daily_sent_count?: number
           id?: string
+          instance_name?: string | null
           is_connected?: boolean
           last_sent_at?: string | null
           name?: string
