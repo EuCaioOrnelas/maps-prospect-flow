@@ -39,16 +39,6 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-warning to-warning/80 shadow-lg shadow-warning/25">
               <Crown className="h-8 w-8 text-warning-foreground" />
             </div>
-            {/* Discount badge */}
-            <div className="absolute -top-2 -right-2 flex items-center justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary rounded-full animate-pulse" />
-                <div className="relative bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  50% OFF
-                </div>
-              </div>
-            </div>
           </div>
           
           <div className="text-center space-y-2">
@@ -79,8 +69,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <Users className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium">Múltiplos números</p>
-                <p className="text-xs text-muted-foreground">Conecte até 5 números WhatsApp</p>
+                <p className="text-sm font-medium">Até 5 números WhatsApp</p>
+                <p className="text-xs text-muted-foreground">Conecte múltiplos números</p>
               </div>
             </div>
             
