@@ -40,6 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import { useNotifications } from "@/hooks/useNotifications";
+import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 interface Lead {
   name: string;
   category: string;
@@ -73,6 +74,7 @@ const Dashboard = () => {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showWhatsAppUpgradeModal, setShowWhatsAppUpgradeModal] = useState(false);
   
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
@@ -461,9 +463,8 @@ const Dashboard = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium opacity-50 cursor-not-allowed"
-                    disabled
-                    title="Disponível apenas para planos pagos"
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    onClick={() => setShowWhatsAppUpgradeModal(true)}
                   >
                     <MessageSquare size={16} />
                     <span className="hidden sm:inline">Disparos</span>
@@ -861,6 +862,12 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* WhatsApp Upgrade Modal for free users */}
+      <UpgradeModal 
+        isOpen={showWhatsAppUpgradeModal} 
+        onClose={() => setShowWhatsAppUpgradeModal(false)} 
+      />
     </div>
   );
 };
