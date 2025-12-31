@@ -1,7 +1,44 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
+
+// Floating glow orb component
+const FloatingOrb = ({ 
+  size, 
+  left, 
+  top, 
+  delay, 
+  duration, 
+  color = "primary"
+}: { 
+  size: number; 
+  left: number; 
+  top: number; 
+  delay: number; 
+  duration: number;
+  color?: "primary" | "accent" | "info";
+}) => {
+  const colorClasses = {
+    primary: "bg-primary/20 shadow-[0_0_60px_20px_hsl(var(--primary)/0.3)]",
+    accent: "bg-accent/15 shadow-[0_0_40px_15px_hsl(var(--accent)/0.25)]",
+    info: "bg-info/10 shadow-[0_0_50px_18px_hsl(var(--info)/0.2)]",
+  };
+
+  return (
+    <div
+      className={`absolute rounded-full pointer-events-none animate-float blur-sm ${colorClasses[color]}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        left: `${left}%`,
+        top: `${top}%`,
+        animationDuration: `${duration}s`,
+        animationDelay: `${delay}s`,
+      }}
+    />
+  );
+};
 
 export const HeroSection = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -28,16 +65,28 @@ export const HeroSection = () => {
   const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
   const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
 
-  // Generate particles once
-  const particles = Array.from({ length: 15 }, (_, i) => ({
+  // Generate floating orbs with memoization
+  const floatingOrbs = useMemo(() => [
+    { size: 120, left: 5, top: 20, delay: 0, duration: 12, color: "primary" as const },
+    { size: 80, left: 85, top: 15, delay: 2, duration: 15, color: "accent" as const },
+    { size: 60, left: 15, top: 70, delay: 4, duration: 10, color: "info" as const },
+    { size: 100, left: 90, top: 60, delay: 1, duration: 14, color: "primary" as const },
+    { size: 50, left: 50, top: 10, delay: 3, duration: 11, color: "accent" as const },
+    { size: 70, left: 75, top: 80, delay: 5, duration: 13, color: "info" as const },
+    { size: 40, left: 25, top: 85, delay: 2.5, duration: 9, color: "primary" as const },
+    { size: 90, left: 60, top: 40, delay: 1.5, duration: 16, color: "accent" as const },
+  ], []);
+
+  // Generate small sparkle particles
+  const particles = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
     id: i,
-    size: Math.random() * 4 + 2,
+    size: Math.random() * 3 + 1,
     left: Math.random() * 100,
     top: Math.random() * 100,
-    duration: Math.random() * 8 + 10,
+    duration: Math.random() * 6 + 8,
     delay: Math.random() * 5,
-    opacity: Math.random() * 0.4 + 0.1,
-  }));
+    opacity: Math.random() * 0.5 + 0.2,
+  })), []);
 
   return (
     <section 
@@ -49,24 +98,23 @@ export const HeroSection = () => {
         className="absolute inset-0 bg-gradient-hero will-change-transform"
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
+      
+      {/* Main glow */}
       <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-glow opacity-50 will-change-transform"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-50 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
-      <div 
-        className="absolute top-20 right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
-        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
-      />
-      <div 
-        className="absolute bottom-40 left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
-        style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
-      />
       
-      {/* Floating Particles */}
+      {/* Floating Glow Orbs */}
+      {floatingOrbs.map((orb, i) => (
+        <FloatingOrb key={i} {...orb} />
+      ))}
+      
+      {/* Sparkle Particles */}
       {particles.map((particle) => (
         <div
           key={particle.id}
-          className="absolute rounded-full bg-primary/30 animate-float pointer-events-none"
+          className="absolute rounded-full bg-primary animate-float pointer-events-none"
           style={{
             width: `${particle.size}px`,
             height: `${particle.size}px`,
@@ -75,9 +123,20 @@ export const HeroSection = () => {
             opacity: particle.opacity,
             animationDuration: `${particle.duration}s`,
             animationDelay: `${particle.delay}s`,
+            boxShadow: `0 0 ${particle.size * 3}px ${particle.size}px hsl(var(--primary) / 0.4)`,
           }}
         />
       ))}
+      
+      {/* Corner accents */}
+      <div 
+        className="absolute top-20 right-10 md:right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
+        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
+      />
+      <div 
+        className="absolute bottom-40 left-10 md:left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
+        style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
+      />
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="max-w-4xl mx-auto text-center">
