@@ -482,16 +482,18 @@ const Dashboard = () => {
                   </Link>
                 )}
 
-                <Link to="/upgrade">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
-                  >
-                    <Crown size={16} />
-                    <span className="hidden sm:inline">Upgrade</span>
-                  </Button>
-                </Link>
+                {profile?.plan !== 'scale' && (
+                  <Link to="/upgrade">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    >
+                      <Crown size={16} />
+                      <span className="hidden sm:inline">Upgrade</span>
+                    </Button>
+                  </Link>
+                )}
 
                 <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
 
