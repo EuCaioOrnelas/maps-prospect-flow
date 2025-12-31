@@ -11,7 +11,8 @@ import {
   X,
   Search,
   ArrowRight,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -95,6 +96,46 @@ export const LeadSelector = ({
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        'Telefone': '5511999999999',
+        'Nome': 'Exemplo Cliente',
+        'Categoria': 'Restaurante',
+        'Endereço': 'Rua Exemplo, 123',
+        'Cidade': 'São Paulo',
+        'Site': 'www.exemplo.com',
+        'Avaliação': '4.5',
+        'Nº Avaliações': '100',
+        'Link Maps': 'https://maps.google.com/...'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Modelo');
+    
+    // Ajustar largura das colunas
+    worksheet['!cols'] = [
+      { wch: 15 }, // Telefone
+      { wch: 20 }, // Nome
+      { wch: 15 }, // Categoria
+      { wch: 25 }, // Endereço
+      { wch: 15 }, // Cidade
+      { wch: 20 }, // Site
+      { wch: 10 }, // Avaliação
+      { wch: 12 }, // Nº Avaliações
+      { wch: 30 }, // Link Maps
+    ];
+
+    XLSX.writeFile(workbook, 'modelo-disparos-whatsapp.xlsx');
+    
+    toast({
+      title: "Modelo baixado!",
+      description: "Use este modelo para organizar seus contatos",
+    });
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,12 +147,33 @@ export const LeadSelector = ({
         const workbook = XLSX.read(data, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
+        
+        // Primeiro, pegar como array para acessar primeira coluna se necessário
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+        
+        // Detectar se a primeira coluna contém telefones (padrão numérico)
+        const headers = rawData[0] || [];
+        const firstColumnIsPhone = rawData.slice(1).some(row => {
+          const firstCell = String(row[0] || '').replace(/\D/g, '');
+          return firstCell.length >= 10 && firstCell.length <= 13;
+        });
 
-        // Map columns - try to find phone column
-        const leads: Lead[] = jsonData.map(row => {
-          const phone = row['Telefone'] || row['telefone'] || row['Phone'] || row['phone'] || 
-                       row['Celular'] || row['celular'] || row['WhatsApp'] || row['whatsapp'] || '';
+        // Map columns - tentar encontrar coluna de telefone por header ou usar primeira coluna
+        const leads: Lead[] = jsonData.map((row, index) => {
+          // Tentar headers conhecidos primeiro (compatível com prospecções)
+          let phone = row['Telefone'] || row['telefone'] || row['Phone'] || row['phone'] || 
+                     row['Celular'] || row['celular'] || row['WhatsApp'] || row['whatsapp'] || '';
+          
+          // Se não encontrou por header e primeira coluna parece ser telefone, usar ela
+          if (!phone && firstColumnIsPhone && rawData[index + 1]) {
+            phone = rawData[index + 1][0] || '';
+          }
+          
+          // Se ainda não tem telefone, tentar pegar o valor da primeira coluna pelo nome do header
+          if (!phone && headers[0]) {
+            phone = row[headers[0]] || '';
+          }
           
           return {
             name: row['Nome'] || row['nome'] || row['Name'] || row['name'] || 'Sem nome',
@@ -124,12 +186,12 @@ export const LeadSelector = ({
             reviewCount: row['Nº Avaliações'] || row['reviews'] || 0,
             mapsLink: row['Link Maps'] || row['maps'] || '',
           };
-        }).filter(lead => lead.phone);
+        }).filter(lead => lead.phone && lead.phone.length >= 10);
 
         if (leads.length === 0) {
           toast({
             title: "Nenhum contato encontrado",
-            description: "Certifique-se de que a planilha possui uma coluna com telefones",
+            description: "Certifique-se de que a planilha possui números de telefone na primeira coluna ou em uma coluna chamada 'Telefone'",
             variant: "destructive",
           });
           return;
@@ -223,35 +285,54 @@ export const LeadSelector = ({
 
       {/* Source Selection */}
       {!source && selectedLeads.length === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <button
-            onClick={() => {
-              setSource('file');
-              fileInputRef.current?.click();
-            }}
-            className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
-          >
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-              <FileSpreadsheet size={24} className="text-muted-foreground group-hover:text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Importar Planilha</p>
-              <p className="text-sm text-muted-foreground">Excel ou CSV com telefones</p>
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setSource('history')}
-            className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
-          >
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-              <History size={24} className="text-muted-foreground group-hover:text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Usar Histórico</p>
-              <p className="text-sm text-muted-foreground">Selecione uma busca anterior</p>
-            </div>
-          </button>
+        <div className="space-y-4 mb-6">
+          {/* Download Template Button */}
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadTemplate}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Download size={16} />
+              Baixar modelo de planilha
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                setSource('file');
+                fileInputRef.current?.click();
+              }}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <FileSpreadsheet size={24} className="text-muted-foreground group-hover:text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Importar Planilha</p>
+                <p className="text-sm text-muted-foreground">Excel ou CSV com telefones na 1ª coluna</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setSource('history')}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <History size={24} className="text-muted-foreground group-hover:text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Usar Histórico</p>
+                <p className="text-sm text-muted-foreground">Selecione uma busca anterior</p>
+              </div>
+            </button>
+          </div>
+
+          <p className="text-xs text-center text-muted-foreground">
+            Use sua própria planilha com telefones na primeira coluna, ou importe planilhas exportadas das prospecções
+          </p>
         </div>
       )}
 
