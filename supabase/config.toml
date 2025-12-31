@@ -14,3 +14,21 @@ verify_jwt = false
 
 [functions.resume-campaigns]
 verify_jwt = false
+
+[functions.evolution-create-instance]
+verify_jwt = false
+
+[functions.evolution-get-qrcode]
+verify_jwt = false
+
+[functions.evolution-check-status]
+verify_jwt = false
+
+[functions.evolution-disconnect]
+verify_jwt = false
+
+[functions.evolution-send-message]
+verify_jwt = false
+
+[functions.evolution-run-campaign]
+verify_jwt = false
