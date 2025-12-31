@@ -30,16 +30,10 @@ export const HeroSection = () => {
 
   // Pontos de brilho pequenos e sutis
   const glowDots = useMemo(() => [
-    { left: '8%', top: '25%', delay: 0 },
-    { left: '92%', top: '20%', delay: 1.5 },
-    { left: '15%', top: '65%', delay: 0.5 },
-    { left: '85%', top: '70%', delay: 2 },
-    { left: '45%', top: '12%', delay: 1 },
-    { left: '55%', top: '85%', delay: 2.5 },
-    { left: '25%', top: '40%', delay: 0.8 },
-    { left: '75%', top: '45%', delay: 1.8 },
-    { left: '5%', top: '80%', delay: 3 },
-    { left: '95%', top: '35%', delay: 0.3 },
+    { left: '10%', top: '30%', delay: 0 },
+    { left: '88%', top: '25%', delay: 1.2 },
+    { left: '18%', top: '70%', delay: 0.6 },
+    { left: '82%', top: '65%', delay: 1.8 },
   ], []);
 
   return (
@@ -59,15 +53,16 @@ export const HeroSection = () => {
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
       
-      {/* Small glow dots - pontos pequenos e sutis */}
+      {/* Small glow dots - pontos pequenos com float */}
       {glowDots.map((dot, i) => (
         <div
           key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-pulse-glow"
+          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-float"
           style={{
             left: dot.left,
             top: dot.top,
             animationDelay: `${dot.delay}s`,
+            animationDuration: `${4 + i}s`,
             boxShadow: '0 0 8px 2px hsl(var(--primary) / 0.4)',
           }}
         />
