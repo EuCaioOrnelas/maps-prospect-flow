@@ -260,6 +260,7 @@ export const NumbersManager = ({
   const handleDeleteNumber = async () => {
     if (!numberToDelete) return;
 
+    setLoading(true);
     try {
       // Find the number to get instance name
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
@@ -278,6 +279,18 @@ export const NumbersManager = ({
         }
       }
 
+      // First, unlink any campaigns associated with this number
+      const { error: unlinkError } = await supabase
+        .from('whatsapp_campaigns')
+        .update({ whatsapp_number_id: null })
+        .eq('whatsapp_number_id', numberToDelete);
+
+      if (unlinkError) {
+        console.error('Error unlinking campaigns:', unlinkError);
+        // Continue anyway, this shouldn't block deletion
+      }
+
+      // Now delete the number
       const { error } = await supabase
         .from('whatsapp_numbers')
         .delete()
@@ -297,9 +310,11 @@ export const NumbersManager = ({
       console.error('Error deleting number:', err);
       toast({
         title: "Erro",
-        description: "Não foi possível remover o número",
+        description: err instanceof Error ? err.message : "Não foi possível remover o número",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
