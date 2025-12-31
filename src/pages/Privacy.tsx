@@ -126,6 +126,16 @@ const Privacy = () => {
               através da plataforma.
             </p>
           </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">10. Contato</h2>
+            <p>
+              Para exercer seus direitos ou esclarecer dúvidas sobre nossa política de privacidade,{" "}
+              <Link to="/contato" className="text-primary hover:underline">
+                entre em contato conosco
+              </Link>.
+            </p>
+          </section>
         </div>
       </main>
     </div>

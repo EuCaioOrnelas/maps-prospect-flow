@@ -115,6 +115,16 @@ const Terms = () => {
               resolvida nos tribunais competentes do Brasil.
             </p>
           </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">10. Contato</h2>
+            <p>
+              Para dúvidas ou sugestões sobre estes termos,{" "}
+              <Link to="/contato" className="text-primary hover:underline">
+                entre em contato conosco
+              </Link>.
+            </p>
+          </section>
         </div>
       </main>
     </div>
