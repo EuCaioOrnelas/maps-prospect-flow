@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.evolution-webhook]
 verify_jwt = false
+
+[functions.reset-daily-counts]
+verify_jwt = false
+
+[functions.resume-campaigns]
+verify_jwt = false
