@@ -167,41 +167,24 @@ const CheckoutSuccess = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-primary/20 to-emerald-500/20 rounded-3xl blur-xl" />
           
           <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-2xl">
-            {/* Active Subscription Badge */}
+            {/* Important Notice - Single Message */}
             <motion.div 
-              className="flex items-center gap-3 mb-6 p-4 bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 rounded-xl"
+              className="mb-6 p-4 bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 rounded-xl"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-primary flex items-center justify-center">
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  Sua assinatura está ativa! 🎉
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Use o mesmo email da compra para vincular seu plano
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Important Notice */}
-            <motion.div 
-              className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-            >
               <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-amber-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-amber-700 dark:text-amber-400 mb-1">
-                    Importante: Use o mesmo email!
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-primary flex items-center justify-center flex-shrink-0">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+                    Sua assinatura está ativa! 🎉
                   </p>
-                  <p className="text-amber-600/80 dark:text-amber-400/80">
-                    Para que seu plano seja vinculado automaticamente, crie sua conta ou faça login usando <strong>o mesmo email</strong> que você usou no pagamento.
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground">Novo aqui?</strong> Crie sua conta com o email usado na compra. <br />
+                    <strong className="text-foreground">Já tem conta?</strong> Faça login com o mesmo email para vincular seu plano.
                   </p>
                 </div>
               </div>
@@ -330,7 +313,7 @@ const CheckoutSuccess = () => {
               transition={{ delay: 1.3 }}
             >
               Precisa de ajuda?{" "}
-              <a href="mailto:suporte@leadly.com" className="text-primary hover:underline">
+              <a href="mailto:suporte@prospex.com" className="text-primary hover:underline">
                 Entre em contato conosco
               </a>
             </motion.p>
@@ -344,7 +327,7 @@ const CheckoutSuccess = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4 }}
         >
-          Obrigado por escolher a Leadly! 💚
+          Obrigado por escolher a Prospex! 💚
         </motion.p>
       </main>
     </div>
