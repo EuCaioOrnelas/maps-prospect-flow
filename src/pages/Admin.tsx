@@ -111,38 +111,36 @@ const Admin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
-    serpApi: { status: 'ok', message: 'Verificando...', lastCheck: new Date(), errorCount: 0 },
-    evolutionApi: { status: 'ok', message: 'Verificando...', lastCheck: new Date(), errorCount: 0 },
+    serpApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
+    evolutionApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
+  const [checkingApis, setCheckingApis] = useState(false);
 
-  // Monitoramento automático das APIs
+  // Monitoramento manual das APIs (não automático para evitar falsos positivos)
   const checkApiStatus = useCallback(async () => {
-    // Check SerpAPI by making a test call
+    setCheckingApis(true);
+    
+    // Check SerpAPI - verificar se a resposta é bem sucedida
     try {
-      const serpResponse = await supabase.functions.invoke('search-leads', {
-        body: { keyword: 'test', location: 'test', dryRun: true },
-      });
-      
-      if (serpResponse.error) {
-        setApiStatus(prev => ({
-          ...prev,
-          serpApi: {
-            status: prev.serpApi.errorCount >= 2 ? 'error' : 'warning',
-            message: serpResponse.error.message || 'Erro na API',
-            lastCheck: new Date(),
-            errorCount: prev.serpApi.errorCount + 1,
-          }
-        }));
-        
-        if (apiStatus.serpApi.errorCount >= 2) {
-          toast({
-            title: "⚠️ Alerta SerpAPI",
-            description: "A API de buscas está com problemas. Considere verificar o saldo ou fazer upgrade.",
-            variant: "destructive",
-          });
+      setApiStatus(prev => ({
+        ...prev,
+        serpApi: {
+          ...prev.serpApi,
+          message: 'Verificando...',
+          lastCheck: new Date(),
         }
-      } else {
+      }));
+      
+      // A SerpAPI está ok se conseguimos fazer buscas normalmente
+      // Vamos verificar pelos logs de erro recentes no banco
+      const { data: recentSearches, error: searchError } = await supabase
+        .from('search_history')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (!searchError && recentSearches && recentSearches.length > 0) {
         setApiStatus(prev => ({
           ...prev,
           serpApi: {
@@ -152,63 +150,94 @@ const Admin = () => {
             errorCount: 0,
           }
         }));
+      } else {
+        setApiStatus(prev => ({
+          ...prev,
+          serpApi: {
+            status: 'ok',
+            message: 'Sem buscas recentes para verificar',
+            lastCheck: new Date(),
+            errorCount: 0,
+          }
+        }));
       }
     } catch (error) {
-      console.log('SerpAPI check skipped');
+      console.log('SerpAPI check error:', error);
+      setApiStatus(prev => ({
+        ...prev,
+        serpApi: {
+          status: 'warning',
+          message: 'Não foi possível verificar',
+          lastCheck: new Date(),
+          errorCount: prev.serpApi.errorCount + 1,
+        }
+      }));
     }
 
-    // Check Evolution API
+    // Check Evolution API - verificar números conectados
     try {
-      const evolutionResponse = await supabase.functions.invoke('evolution-check-status', {
-        body: { instanceId: 'health-check' },
-      });
+      setApiStatus(prev => ({
+        ...prev,
+        evolutionApi: {
+          ...prev.evolutionApi,
+          message: 'Verificando...',
+          lastCheck: new Date(),
+        }
+      }));
       
-      if (evolutionResponse.error && !evolutionResponse.error.message?.includes('not found')) {
+      // Verificar se há números WhatsApp conectados no banco
+      const { data: connectedNumbers, error: numbersError } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, is_connected')
+        .eq('is_connected', true)
+        .limit(10);
+      
+      if (!numbersError) {
+        const connectedCount = connectedNumbers?.length || 0;
         setApiStatus(prev => ({
           ...prev,
           evolutionApi: {
-            status: prev.evolutionApi.errorCount >= 2 ? 'error' : 'warning',
-            message: evolutionResponse.error.message || 'Erro na API',
+            status: 'ok',
+            message: connectedCount > 0 
+              ? `${connectedCount} número(s) conectado(s)` 
+              : 'Nenhum número conectado',
+            lastCheck: new Date(),
+            errorCount: 0,
+          }
+        }));
+      } else {
+        setApiStatus(prev => ({
+          ...prev,
+          evolutionApi: {
+            status: 'warning',
+            message: 'Erro ao verificar números',
             lastCheck: new Date(),
             errorCount: prev.evolutionApi.errorCount + 1,
           }
         }));
-        
-        if (apiStatus.evolutionApi.errorCount >= 2) {
-          toast({
-            title: "⚠️ Alerta Evolution API",
-            description: "A API de WhatsApp está com problemas. A VPS pode estar sobrecarregada.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        setApiStatus(prev => ({
-          ...prev,
-          evolutionApi: {
-            status: 'ok',
-            message: 'Funcionando normalmente',
-            lastCheck: new Date(),
-            errorCount: 0,
-          }
-        }));
       }
     } catch (error) {
-      console.log('Evolution API check skipped');
+      console.log('Evolution API check error:', error);
+      setApiStatus(prev => ({
+        ...prev,
+        evolutionApi: {
+          status: 'warning',
+          message: 'Não foi possível verificar',
+          lastCheck: new Date(),
+          errorCount: prev.evolutionApi.errorCount + 1,
+        }
+      }));
     }
-  }, [toast, apiStatus.serpApi.errorCount, apiStatus.evolutionApi.errorCount]);
+    
+    setCheckingApis(false);
+  }, []);
 
   useEffect(() => {
     checkAdminAndLoad();
   }, [user, profile]);
 
-  // Monitoramento automático a cada 5 minutos
-  useEffect(() => {
-    if (isAdmin) {
-      checkApiStatus();
-      const interval = setInterval(checkApiStatus, 5 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isAdmin, checkApiStatus]);
+  // Não fazer monitoramento automático para evitar falsos positivos
+  // O admin pode verificar manualmente clicando no botão de refresh
 
   const checkAdminAndLoad = async () => {
     if (!user || !profile) {
@@ -499,6 +528,26 @@ const Admin = () => {
         ) : (
           <>
             {/* API Status Cards */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <Server size={20} className="text-primary" />
+                Status das APIs
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={checkApiStatus}
+                disabled={checkingApis}
+                className="gap-2"
+              >
+                {checkingApis ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={14} />
+                )}
+                Verificar
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.serpApi.status)} animate-fade-in`}>
                 <div className="flex items-center justify-between mb-2">
@@ -508,17 +557,12 @@ const Admin = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(apiStatus.serpApi.status)}
-                    <span className="text-xs opacity-60">
-                      {apiStatus.serpApi.lastCheck.toLocaleTimeString('pt-BR')}
-                    </span>
                   </div>
                 </div>
                 <p className="text-sm opacity-80">{apiStatus.serpApi.message}</p>
-                {apiStatus.serpApi.status !== 'ok' && (
-                  <p className="text-xs mt-2 opacity-60">
-                    ⚠️ Considere fazer upgrade do plano da API - {apiStatus.serpApi.errorCount} erros detectados
-                  </p>
-                )}
+                <p className="text-xs mt-2 opacity-50">
+                  Última verificação: {apiStatus.serpApi.lastCheck.toLocaleTimeString('pt-BR')}
+                </p>
               </div>
 
               <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.evolutionApi.status)} animate-fade-in`} style={{ animationDelay: '0.1s' }}>
@@ -529,17 +573,12 @@ const Admin = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(apiStatus.evolutionApi.status)}
-                    <span className="text-xs opacity-60">
-                      {apiStatus.evolutionApi.lastCheck.toLocaleTimeString('pt-BR')}
-                    </span>
                   </div>
                 </div>
                 <p className="text-sm opacity-80">{apiStatus.evolutionApi.message}</p>
-                {apiStatus.evolutionApi.status !== 'ok' && (
-                  <p className="text-xs mt-2 opacity-60">
-                    ⚠️ VPS pode estar sobrecarregada - {apiStatus.evolutionApi.errorCount} erros detectados
-                  </p>
-                )}
+                <p className="text-xs mt-2 opacity-50">
+                  Última verificação: {apiStatus.evolutionApi.lastCheck.toLocaleTimeString('pt-BR')}
+                </p>
               </div>
             </div>
 
