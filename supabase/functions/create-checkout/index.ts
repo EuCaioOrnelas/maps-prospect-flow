@@ -81,7 +81,7 @@ serve(async (req) => {
       ],
       mode: "subscription",
       success_url: `${origin}/checkout-success`,
-      cancel_url: `${origin}/#pricing`,
+      cancel_url: `${origin}/checkout-failed`,
       allow_promotion_codes: true,
     };
 

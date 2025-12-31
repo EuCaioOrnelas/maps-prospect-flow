@@ -2,12 +2,25 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Rocket, ArrowRight, Loader2 } from "lucide-react";
+import { 
+  Check, 
+  Rocket, 
+  ArrowRight, 
+  Loader2, 
+  Sparkles, 
+  Mail, 
+  Lock, 
+  User,
+  PartyPopper,
+  Crown
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Confetti } from "@/components/ui/confetti";
+import { motion } from "framer-motion";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -17,6 +30,7 @@ const CheckoutSuccess = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(true);
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
@@ -70,8 +84,17 @@ const CheckoutSuccess = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-background overflow-hidden">
+      <Confetti trigger={showConfetti} />
+      
+      {/* Background decorations */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/5 to-emerald-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <header className="relative border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center">
             <Link to="/">
@@ -81,90 +104,248 @@ const CheckoutSuccess = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-md">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-primary" />
+      <main className="relative container mx-auto px-4 py-12 max-w-lg">
+        {/* Success Header */}
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div 
+            className="relative w-24 h-24 mx-auto mb-6"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-primary rounded-full animate-pulse" />
+            <div className="absolute inset-1 bg-background rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-primary rounded-full flex items-center justify-center">
+                <Check className="w-8 h-8 text-white" strokeWidth={3} />
+              </div>
+            </div>
+            <motion.div
+              className="absolute -top-2 -right-2"
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.5, type: "spring" }}
+            >
+              <PartyPopper className="w-8 h-8 text-amber-500" />
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <span className="text-sm font-medium text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full">
+                Pagamento Confirmado!
+              </span>
+              <Sparkles className="w-5 h-5 text-amber-500" />
+            </div>
+            
+            <h1 className="font-display text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Obrigado pela sua compra!
+            </h1>
+            
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Seu plano já está ativo. Crie sua conta ou faça login para começar a usar todas as funcionalidades.
+            </p>
+          </motion.div>
+        </motion.div>
+
+        {/* Main Card */}
+        <motion.div 
+          className="relative"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-primary/20 to-emerald-500/20 rounded-3xl blur-xl" />
+          
+          <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-2xl">
+            {/* Active Subscription Badge */}
+            <motion.div 
+              className="flex items-center gap-3 mb-6 p-4 bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 rounded-xl"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-primary flex items-center justify-center">
+                <Crown className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  Sua assinatura está ativa! 🎉
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use o mesmo email da compra para vincular seu plano
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Important Notice */}
+            <motion.div 
+              className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+            >
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-amber-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-700 dark:text-amber-400 mb-1">
+                    Importante: Use o mesmo email!
+                  </p>
+                  <p className="text-amber-600/80 dark:text-amber-400/80">
+                    Para que seu plano seja vinculado automaticamente, crie sua conta ou faça login usando <strong>o mesmo email</strong> que você usou no pagamento.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Create Account Form */}
+            <form onSubmit={handleCreateAccount} className="space-y-4">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Nome
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="h-12"
+                />
+              </motion.div>
+
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+              >
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Use o mesmo email do pagamento"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12"
+                />
+              </motion.div>
+
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.0 }}
+              >
+                <Label htmlFor="password" className="flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
+                  required
+                  className="h-12"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.1 }}
+              >
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-primary/90" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="w-5 h-5 mr-2" />
+                      Criar conta e acessar
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-4 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            {/* Login Button */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              <Link to="/login">
+                <Button variant="outline" className="w-full h-12 text-base">
+                  <User className="w-5 h-5 mr-2" />
+                  Já tenho uma conta - Fazer login
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.p 
+              className="text-center text-sm text-muted-foreground mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+            >
+              Precisa de ajuda?{" "}
+              <a href="mailto:suporte@leadly.com" className="text-primary hover:underline">
+                Entre em contato conosco
+              </a>
+            </motion.p>
           </div>
-          <h1 className="font-display text-3xl font-bold mb-4">
-            Pagamento confirmado!
-          </h1>
-          <p className="text-muted-foreground">
-            Obrigado pela sua compra. Agora crie sua conta para acessar a plataforma.
-          </p>
-        </div>
+        </motion.div>
 
-        <div className="glass rounded-2xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <div className="flex items-center gap-3 mb-6 p-4 bg-primary/10 rounded-lg">
-            <Rocket className="w-6 h-6 text-primary" />
-            <div>
-              <p className="font-medium text-sm">Sua assinatura está ativa</p>
-              <p className="text-xs text-muted-foreground">
-                Use o mesmo email do pagamento para vincular
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Seu nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Mesmo email usado no pagamento"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Criando conta...
-                </>
-              ) : (
-                <>
-                  Criar conta e acessar
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Já tem uma conta?{" "}
-            <Link to="/login" className="text-primary hover:underline">
-              Fazer login
-            </Link>
-          </p>
-        </div>
+        {/* Footer Message */}
+        <motion.p 
+          className="text-center text-sm text-muted-foreground mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4 }}
+        >
+          Obrigado por escolher a Leadly! 💚
+        </motion.p>
       </main>
     </div>
   );
