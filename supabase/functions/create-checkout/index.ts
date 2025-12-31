@@ -25,33 +25,41 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
-
-    const { priceId } = await req.json();
+    const { priceId, couponCode } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Price ID received", { priceId });
+    logStep("Request data received", { priceId, hasCoupon: !!couponCode });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
     });
 
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
-    }
-
     const origin = req.headers.get("origin") || "https://prospex.lovable.app";
     
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+    // Check if user is authenticated
+    const authHeader = req.headers.get("Authorization");
+    let userEmail: string | null = null;
+    let customerId: string | undefined;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data } = await supabaseClient.auth.getUser(token);
+      const user = data.user;
+      
+      if (user?.email) {
+        userEmail = user.email;
+        logStep("User authenticated", { userId: user.id, email: userEmail });
+
+        // Check if customer already exists in Stripe
+        const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+          logStep("Found existing customer", { customerId });
+        }
+      }
+    }
+
+    // Build checkout session options
+    const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         {
           price: priceId,
@@ -61,11 +69,35 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${origin}/dashboard?checkout=success`,
       cancel_url: `${origin}/upgrade?checkout=canceled`,
-      metadata: {
-        user_id: user.id,
-      },
-    });
+      allow_promotion_codes: true, // Allow users to enter promo codes at checkout
+    };
 
+    // If user is logged in, use their email
+    if (customerId) {
+      sessionOptions.customer = customerId;
+    } else if (userEmail) {
+      sessionOptions.customer_email = userEmail;
+    }
+    // If no user is logged in, Stripe Checkout will collect the email
+
+    // Apply coupon code if provided
+    if (couponCode) {
+      try {
+        // Verify the coupon exists
+        const coupon = await stripe.coupons.retrieve(couponCode);
+        if (coupon && coupon.valid) {
+          sessionOptions.discounts = [{ coupon: couponCode }];
+          // Remove allow_promotion_codes when using discounts
+          delete sessionOptions.allow_promotion_codes;
+          logStep("Coupon applied", { couponId: coupon.id, percentOff: coupon.percent_off });
+        }
+      } catch (couponError) {
+        logStep("Invalid coupon code", { couponCode });
+        // Continue without the coupon
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionOptions);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     return new Response(JSON.stringify({ url: session.url }), {
