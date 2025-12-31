@@ -101,10 +101,10 @@ export const NumbersManager = ({
         });
 
         if (response.data?.connected) {
-          // Update local state
+          // Update local state - IMPORTANT: Include instance_name so campaigns can use it
           onNumbersChange(numbers.map(n => 
             n.id === connectingNumberId 
-              ? { ...n, is_connected: true, phone_number: response.data.phoneNumber } 
+              ? { ...n, is_connected: true, phone_number: response.data.phoneNumber, instance_name: connectingInstanceName } 
               : n
           ));
 
