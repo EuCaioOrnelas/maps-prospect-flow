@@ -63,19 +63,8 @@ serve(async (req) => {
     const instanceData = await createResponse.json();
     console.log('Instance created:', JSON.stringify(instanceData));
 
-    // Update the whatsapp_numbers record with instance name
-    const { error: updateError } = await supabase
-      .from('whatsapp_numbers')
-      .update({ 
-        name: instanceName,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', numberId)
-      .eq('user_id', user.id);
-
-    if (updateError) {
-      console.error('Error updating number:', updateError);
-    }
+    // Note: We don't update the 'name' field here as it contains the user-friendly name
+    // The instanceName is generated dynamically when needed based on the number id
 
     return new Response(JSON.stringify({
       success: true,
