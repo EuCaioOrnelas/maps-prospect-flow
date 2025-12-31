@@ -84,6 +84,62 @@ export const NumbersManager = ({
     return `prospex_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
   }, [user?.id]);
 
+  // Refresh connection status for all numbers
+  const handleRefreshStatus = async () => {
+    setLoading(true);
+    try {
+      // Check each connected number's real status
+      for (const number of numbers) {
+        if (number.is_connected && number.instance_name) {
+          try {
+            const response = await supabase.functions.invoke('evolution-check-status', {
+              body: { instanceName: number.instance_name, numberId: number.id },
+            });
+
+            const isReallyConnected = response.data?.connected === true;
+            
+            if (!isReallyConnected) {
+              // Update database
+              await supabase
+                .from('whatsapp_numbers')
+                .update({ 
+                  is_connected: false,
+                  phone_number: null,
+                  instance_name: null,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', number.id);
+
+              // Update local state
+              onNumbersChange(numbers.map(n => 
+                n.id === number.id 
+                  ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
+                  : n
+              ));
+
+              toast({
+                title: "Conexão perdida",
+                description: `O número "${number.name}" foi desconectado`,
+                variant: "destructive",
+              });
+            }
+          } catch (e) {
+            console.error('Error checking status for', number.name, e);
+          }
+        }
+      }
+
+      toast({
+        title: "Status atualizado",
+        description: "Verificação de conexões concluída",
+      });
+    } catch (err) {
+      console.error('Error refreshing status:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check connection status periodically
   useEffect(() => {
     if (!connectDialogOpen || !connectingNumberId || !connectingInstanceName || qrLoading) return;
@@ -477,9 +533,20 @@ export const NumbersManager = ({
       <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone size={20} />
-              Gerenciar Números ({numbers.length}/{maxNumbers})
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Smartphone size={20} />
+                Gerenciar Números ({numbers.length}/{maxNumbers})
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshStatus}
+                disabled={loading}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              </Button>
             </DialogTitle>
           </DialogHeader>
           

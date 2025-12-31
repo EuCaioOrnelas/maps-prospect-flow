@@ -60,11 +60,60 @@ export const useWhatsAppNumbers = () => {
       if (firstConnected) {
         setSelectedNumberId(firstConnected.id);
       }
+
+      // Verify real connection status for numbers marked as connected
+      const connectedNumbers = fetchedNumbers.filter(n => n.is_connected && n.instance_name);
+      for (const number of connectedNumbers) {
+        verifyConnectionStatus(number.id, number.instance_name!);
+      }
     } catch (err) {
       console.error('Error fetching numbers:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Verify real connection status from Evolution API
+  const verifyConnectionStatus = async (numberId: string, instanceName: string) => {
+    try {
+      const response = await supabase.functions.invoke('evolution-check-status', {
+        body: { instanceName, numberId },
+      });
+
+      const isReallyConnected = response.data?.connected === true;
+      
+      // Get current number from state
+      const currentNumber = numbers.find(n => n.id === numberId);
+      
+      // If status changed, update database and state
+      if (currentNumber?.is_connected && !isReallyConnected) {
+        console.log(`Number ${numberId} is no longer connected, updating status`);
+        
+        await supabase
+          .from('whatsapp_numbers')
+          .update({ 
+            is_connected: false,
+            phone_number: null,
+            instance_name: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', numberId);
+
+        setNumbers(prev => prev.map(n => 
+          n.id === numberId 
+            ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
+            : n
+        ));
+      }
+    } catch (err) {
+      console.error('Error verifying connection status:', err);
+    }
+  };
+
+  // Manual refresh of connection status
+  const refreshConnectionStatus = async () => {
+    setLoading(true);
+    await fetchNumbers();
   };
 
   const resetDailyCountsIfNeeded = async () => {
@@ -152,6 +201,8 @@ export const useWhatsAppNumbers = () => {
     maxNumbers,
     hasMassMessagingAccess,
     fetchNumbers,
+    refreshConnectionStatus,
+    verifyConnectionStatus,
     resetDailyCountsIfNeeded,
     incrementSentCount,
     getSelectedNumber,
