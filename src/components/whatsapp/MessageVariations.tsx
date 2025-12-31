@@ -6,7 +6,8 @@ import {
   ArrowLeft, 
   ArrowRight,
   Sparkles,
-  Info
+  Info,
+  AlertCircle
 } from "lucide-react";
 
 interface Lead {
@@ -41,6 +42,7 @@ export const MessageVariations = ({
 
   const filledCount = messages.filter(m => m.trim()).length;
   const firstLead = selectedLeads[0];
+  const allFilled = filledCount === 5;
 
   const placeholders = [
     "Olá {nome}! Vi que você trabalha com {categoria}. Tenho uma proposta que pode interessar...",
@@ -59,10 +61,6 @@ export const MessageVariations = ({
       .replace(/\{categoria\}/gi, firstLead.category || 'sua área');
   };
 
-  // Pega a primeira mensagem preenchida para mostrar o preview
-  const firstFilledMessage = messages.find(m => m.trim());
-  const previewMessage = firstFilledMessage ? replaceVariables(firstFilledMessage) : null;
-
   return (
     <div className="glass rounded-2xl p-6">
       <div className="text-center mb-6">
@@ -75,28 +73,29 @@ export const MessageVariations = ({
         </p>
       </div>
 
-      {/* Info Banner */}
+      {/* Info Banner - How to use variables */}
       <div className="flex items-start gap-3 p-4 rounded-lg bg-info/10 border border-info/20 mb-6">
         <Info size={18} className="text-info mt-0.5 flex-shrink-0" />
         <div className="text-sm">
-          <p className="font-medium text-foreground mb-1">Dicas para suas mensagens:</p>
+          <p className="font-medium text-foreground mb-2">Como usar variáveis:</p>
           <ul className="text-muted-foreground space-y-1">
-            <li>• Use <code className="bg-muted px-1 rounded">{'{nome}'}</code> para inserir o nome do lead</li>
-            <li>• Use <code className="bg-muted px-1 rounded">{'{categoria}'}</code> para inserir a categoria</li>
-            <li>• Varie o início e o tom de cada mensagem</li>
-            <li>• O sistema escolherá aleatoriamente entre as 5 variações</li>
+            <li>• Use <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{'{nome}'}</code> para inserir automaticamente o nome do lead/empresa</li>
+            <li>• Use <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{'{categoria}'}</code> para inserir a categoria do lead</li>
+            <li>• O sistema substituirá automaticamente pelos dados de cada contato</li>
+            <li>• Exemplo: "Olá {'{nome}'}" → "Olá João Silva"</li>
           </ul>
         </div>
       </div>
 
-      {/* Message Preview */}
-      {previewMessage && firstLead && (
-        <div className="mb-6 p-4 rounded-lg bg-muted/50 border border-border">
-          <p className="text-sm font-medium text-muted-foreground mb-2">
-            Preview para o primeiro contato ({firstLead.name}):
-          </p>
-          <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-            <p className="text-sm text-foreground whitespace-pre-wrap">{previewMessage}</p>
+      {/* Requirement warning */}
+      {!allFilled && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/20 mb-6">
+          <AlertCircle size={18} className="text-warning mt-0.5 flex-shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Todas as 5 mensagens são obrigatórias</p>
+            <p className="text-muted-foreground">
+              Preencha todas as variações para evitar detecção como spam pelo WhatsApp
+            </p>
           </div>
         </div>
       )}
@@ -121,31 +120,48 @@ export const MessageVariations = ({
         </div>
       </div>
 
-      {/* Message Inputs */}
-      <div className="space-y-4">
-        {messages.map((message, index) => (
-          <div key={index} className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <span className={`
-                inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-medium
-                ${message.trim() ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
-              `}>
-                {index + 1}
-              </span>
-              Mensagem {index + 1}
-              {message.trim() && <Sparkles size={12} className="text-primary" />}
-            </Label>
-            <Textarea
-              value={message}
-              onChange={(e) => handleMessageChange(index, e.target.value)}
-              placeholder={placeholders[index]}
-              className="min-h-[100px] resize-none"
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {message.length} caracteres
-            </p>
-          </div>
-        ))}
+      {/* Message Inputs with Individual Previews */}
+      <div className="space-y-6">
+        {messages.map((message, index) => {
+          const hasContent = message.trim().length > 0;
+          const previewText = hasContent && firstLead ? replaceVariables(message) : null;
+          
+          return (
+            <div key={index} className="space-y-2 p-4 rounded-lg border border-border bg-card/50">
+              <Label className="flex items-center gap-2">
+                <span className={`
+                  inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium
+                  ${hasContent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
+                `}>
+                  {index + 1}
+                </span>
+                Mensagem {index + 1}
+                {hasContent && <Sparkles size={12} className="text-primary" />}
+                {!hasContent && <span className="text-xs text-destructive">(obrigatória)</span>}
+              </Label>
+              <Textarea
+                value={message}
+                onChange={(e) => handleMessageChange(index, e.target.value)}
+                placeholder={placeholders[index]}
+                className={`min-h-[100px] resize-none ${!hasContent ? 'border-warning/50' : ''}`}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Dica: Use {'{nome}'} para personalizar</span>
+                <span>{message.length} caracteres</span>
+              </div>
+              
+              {/* Preview for this message */}
+              {previewText && (
+                <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">
+                    Preview para "{firstLead.name}":
+                  </p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{previewText}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Navigation */}
@@ -155,7 +171,7 @@ export const MessageVariations = ({
           Voltar
         </Button>
         <Button onClick={onNext} disabled={!canProceed} className="gap-2">
-          Próximo
+          {!allFilled ? `Falta ${5 - filledCount} mensagem${5 - filledCount > 1 ? 's' : ''}` : 'Próximo'}
           <ArrowRight size={16} />
         </Button>
       </div>

@@ -12,7 +12,9 @@ import {
   Search,
   ArrowRight,
   Plus,
-  Download
+  Download,
+  AlertCircle,
+  Phone
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +22,33 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { DailyLimitIndicator } from "./DailyLimitIndicator";
+
+// Phone validation helper
+const validateAndFormatPhone = (phone: string): { isValid: boolean; formatted: string; display: string } => {
+  // Remove all non-digits
+  const digits = String(phone).replace(/\D/g, '');
+  
+  // Valid Brazilian numbers: 10-13 digits (with or without country code)
+  const isValid = digits.length >= 10 && digits.length <= 13;
+  
+  // Format for display
+  let display = digits;
+  if (digits.length === 11) {
+    // (XX) XXXXX-XXXX
+    display = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  } else if (digits.length === 10) {
+    // (XX) XXXX-XXXX
+    display = `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  } else if (digits.length === 13) {
+    // +55 (XX) XXXXX-XXXX
+    display = `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  } else if (digits.length === 12) {
+    // +55 (XX) XXXX-XXXX
+    display = `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  
+  return { isValid, formatted: digits, display };
+};
 
 interface SearchHistoryItem {
   id: string;
@@ -53,6 +82,7 @@ export const LeadSelector = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
+  const [importStats, setImportStats] = useState<{ valid: number; invalid: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -60,6 +90,9 @@ export const LeadSelector = ({
 
   const remaining = dailyLimit - usedToday;
   const willExceed = selectedLeads.length > remaining;
+
+  // Get phone validation status for display
+  const getPhoneStatus = (phone: string) => validateAndFormatPhone(phone);
 
   useEffect(() => {
     if (source === 'history') {
@@ -186,22 +219,53 @@ export const LeadSelector = ({
             reviewCount: row['Nº Avaliações'] || row['reviews'] || 0,
             mapsLink: row['Link Maps'] || row['maps'] || '',
           };
-        }).filter(lead => lead.phone && lead.phone.length >= 10);
+        });
 
-        if (leads.length === 0) {
+        // Validate phones and separate valid/invalid
+        const validLeads: Lead[] = [];
+        const invalidPhones: string[] = [];
+
+        leads.forEach(lead => {
+          const phoneStatus = validateAndFormatPhone(lead.phone);
+          if (phoneStatus.isValid) {
+            validLeads.push({
+              ...lead,
+              phone: phoneStatus.formatted
+            });
+          } else if (lead.phone) {
+            invalidPhones.push(lead.name || lead.phone);
+          }
+        });
+
+        if (validLeads.length === 0) {
           toast({
-            title: "Nenhum contato encontrado",
-            description: "A planilha deve ter Nome na 1ª coluna e Telefone na 2ª coluna",
+            title: "Nenhum contato válido encontrado",
+            description: `A planilha deve ter Nome na 1ª coluna e Telefone (10-13 dígitos) na 2ª coluna`,
             variant: "destructive",
           });
+          setImportStats(null);
           return;
         }
 
-        onLeadsChange(leads);
-        toast({
-          title: "Planilha importada!",
-          description: `${leads.length} contatos carregados`,
+        // Set import stats for visual feedback
+        setImportStats({
+          valid: validLeads.length,
+          invalid: invalidPhones.length
         });
+
+        onLeadsChange(validLeads);
+        
+        if (invalidPhones.length > 0) {
+          toast({
+            title: "Planilha importada com avisos",
+            description: `${validLeads.length} contatos válidos, ${invalidPhones.length} ignorados por telefone inválido`,
+          });
+        } else {
+          toast({
+            title: "Planilha importada!",
+            description: `${validLeads.length} contatos carregados com sucesso`,
+          });
+        }
       } catch (err) {
         console.error('Error parsing file:', err);
         toast({
@@ -532,16 +596,44 @@ export const LeadSelector = ({
             </Button>
           </div>
 
+          {/* Import stats feedback */}
+          {importStats && (
+            <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 text-sm">
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <CheckCircle2 size={16} />
+                <span>{importStats.valid} válidos</span>
+              </div>
+              {importStats.invalid > 0 && (
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle size={16} />
+                  <span>{importStats.invalid} ignorados (telefone inválido)</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Preview of first 5 leads */}
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Prévia dos contatos:</p>
             <div className="space-y-1">
-              {selectedLeads.slice(0, 5).map((lead, i) => (
-                <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
-                  <span>{lead.name}</span>
-                  <span className="text-muted-foreground">{lead.phone}</span>
-                </div>
-              ))}
+              {selectedLeads.slice(0, 5).map((lead, i) => {
+                const phoneStatus = getPhoneStatus(lead.phone);
+                return (
+                  <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
+                    <span>{lead.name}</span>
+                    <div className="flex items-center gap-2">
+                      {phoneStatus.isValid ? (
+                        <CheckCircle2 size={14} className="text-green-500" />
+                      ) : (
+                        <AlertCircle size={14} className="text-destructive" />
+                      )}
+                      <span className={`font-mono text-xs ${phoneStatus.isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
+                        {phoneStatus.display}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
               {selectedLeads.length > 5 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
                   + {selectedLeads.length - 5} outros contatos

@@ -83,7 +83,7 @@ export interface CampaignState {
 }
 
 const WhatsAppCampaign = () => {
-  const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'active' | 'history'>('new');
   const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'summary' | 'running'>('leads');
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(['', '', '', '', '']);
@@ -295,8 +295,19 @@ const WhatsAppCampaign = () => {
 
       setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
 
-      // Get the instance name for Evolution API
-      const instanceName = `whatsapp_${selectedNumberId.replace(/-/g, '_')}`;
+      // Get the instance name from the selected number's database record
+      const instanceName = selectedNumber?.instance_name;
+      
+      if (!instanceName) {
+        toast({
+          title: "Erro",
+          description: "Número não tem instância configurada. Reconecte o WhatsApp.",
+          variant: "destructive",
+        });
+        setIsStartingCampaign(false);
+        return;
+      }
+      
       const validMessages = messages.filter(m => m.trim());
 
       // Call the edge function to start the campaign
@@ -324,9 +335,12 @@ const WhatsAppCampaign = () => {
           title: "Campanha iniciada!",
           description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
         });
+        
+        // Redirect to active campaigns tab
+        setActiveTab('active');
       }
 
-      // Go back to leads step to show realtime monitor
+      // Reset form
       handleNewCampaign();
       
     } catch (err) {
@@ -601,15 +615,24 @@ const WhatsAppCampaign = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {step !== 'running' && (
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'history')} className="mb-8">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'active' | 'history')} className="mb-8">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="new" className="gap-2">
                   <Plus size={16} />
                   Nova Campanha
                 </TabsTrigger>
+                <TabsTrigger value="active" className="gap-2 relative">
+                  <Play size={16} />
+                  Em Andamento
+                  {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                      {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="history" className="gap-2">
                   <History size={16} />
-                  Histórico ({campaigns.length})
+                  Histórico
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -617,7 +640,7 @@ const WhatsAppCampaign = () => {
 
           {activeTab === 'history' && step !== 'running' ? (
             <CampaignHistory
-              campaigns={campaigns}
+              campaigns={campaigns.filter(c => c.status === 'completed' || c.status === 'failed')}
               loading={loadingCampaigns}
               onDelete={handleDeleteCampaign}
               onNewCampaign={handleNewCampaign}
@@ -625,30 +648,28 @@ const WhatsAppCampaign = () => {
               onResume={handleResumeCampaignFromList}
               numbers={numbers}
             />
+          ) : activeTab === 'active' && step !== 'running' ? (
+            <>
+              <RealtimeMonitor
+                campaigns={campaigns}
+                numbers={numbers}
+                onPause={handlePauseCampaignFromList}
+                onResume={handleResumeCampaignFromList}
+                onStop={handleStopCampaignFromList}
+              />
+              
+              <ActiveCampaigns
+                campaigns={campaigns}
+                usedToday={usedToday}
+                dailyLimit={dailyLimit}
+                onResume={handleResumeCampaignFromList}
+                onPause={handlePauseCampaignFromList}
+              />
+            </>
           ) : (
             <>
-              {/* Real-time Monitor for Active Campaigns */}
-              {step === 'leads' && (
-                <>
-                  <RealtimeMonitor
-                    campaigns={campaigns}
-                    numbers={numbers}
-                    onPause={handlePauseCampaignFromList}
-                    onResume={handleResumeCampaignFromList}
-                    onStop={handleStopCampaignFromList}
-                  />
-                  
-                  <ActiveCampaigns
-                    campaigns={campaigns}
-                    usedToday={usedToday}
-                    dailyLimit={dailyLimit}
-                    onResume={handleResumeCampaignFromList}
-                    onPause={handlePauseCampaignFromList}
-                  />
-                </>
-              )}
               
-              {step !== 'running' && renderStepIndicator()}
+              {step !== 'running' && activeTab === 'new' && renderStepIndicator()}
 
               {/* Step: Select Leads */}
               {step === 'leads' && (
