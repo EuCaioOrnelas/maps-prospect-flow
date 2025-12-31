@@ -3,43 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Floating glow orb component
-const FloatingOrb = ({ 
-  size, 
-  left, 
-  top, 
-  delay, 
-  duration, 
-  color = "primary"
-}: { 
-  size: number; 
-  left: number; 
-  top: number; 
-  delay: number; 
-  duration: number;
-  color?: "primary" | "accent" | "info";
-}) => {
-  const colorClasses = {
-    primary: "bg-primary/20 shadow-[0_0_60px_20px_hsl(var(--primary)/0.3)]",
-    accent: "bg-accent/15 shadow-[0_0_40px_15px_hsl(var(--accent)/0.25)]",
-    info: "bg-info/10 shadow-[0_0_50px_18px_hsl(var(--info)/0.2)]",
-  };
-
-  return (
-    <div
-      className={`absolute rounded-full pointer-events-none animate-float blur-sm ${colorClasses[color]}`}
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        left: `${left}%`,
-        top: `${top}%`,
-        animationDuration: `${duration}s`,
-        animationDelay: `${delay}s`,
-      }}
-    />
-  );
-};
-
 export const HeroSection = () => {
   const [scrollY, setScrollY] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
@@ -65,28 +28,19 @@ export const HeroSection = () => {
   const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
   const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
 
-  // Generate floating orbs with memoization
-  const floatingOrbs = useMemo(() => [
-    { size: 120, left: 5, top: 20, delay: 0, duration: 12, color: "primary" as const },
-    { size: 80, left: 85, top: 15, delay: 2, duration: 15, color: "accent" as const },
-    { size: 60, left: 15, top: 70, delay: 4, duration: 10, color: "info" as const },
-    { size: 100, left: 90, top: 60, delay: 1, duration: 14, color: "primary" as const },
-    { size: 50, left: 50, top: 10, delay: 3, duration: 11, color: "accent" as const },
-    { size: 70, left: 75, top: 80, delay: 5, duration: 13, color: "info" as const },
-    { size: 40, left: 25, top: 85, delay: 2.5, duration: 9, color: "primary" as const },
-    { size: 90, left: 60, top: 40, delay: 1.5, duration: 16, color: "accent" as const },
+  // Pontos de brilho pequenos e sutis
+  const glowDots = useMemo(() => [
+    { left: '8%', top: '25%', delay: 0 },
+    { left: '92%', top: '20%', delay: 1.5 },
+    { left: '15%', top: '65%', delay: 0.5 },
+    { left: '85%', top: '70%', delay: 2 },
+    { left: '45%', top: '12%', delay: 1 },
+    { left: '55%', top: '85%', delay: 2.5 },
+    { left: '25%', top: '40%', delay: 0.8 },
+    { left: '75%', top: '45%', delay: 1.8 },
+    { left: '5%', top: '80%', delay: 3 },
+    { left: '95%', top: '35%', delay: 0.3 },
   ], []);
-
-  // Generate small sparkle particles
-  const particles = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 3 + 1,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    duration: Math.random() * 6 + 8,
-    delay: Math.random() * 5,
-    opacity: Math.random() * 0.5 + 0.2,
-  })), []);
 
   return (
     <section 
@@ -105,25 +59,16 @@ export const HeroSection = () => {
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
       
-      {/* Floating Glow Orbs */}
-      {floatingOrbs.map((orb, i) => (
-        <FloatingOrb key={i} {...orb} />
-      ))}
-      
-      {/* Sparkle Particles */}
-      {particles.map((particle) => (
+      {/* Small glow dots - pontos pequenos e sutis */}
+      {glowDots.map((dot, i) => (
         <div
-          key={particle.id}
-          className="absolute rounded-full bg-primary animate-float pointer-events-none"
+          key={i}
+          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-pulse-glow"
           style={{
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            left: `${particle.left}%`,
-            top: `${particle.top}%`,
-            opacity: particle.opacity,
-            animationDuration: `${particle.duration}s`,
-            animationDelay: `${particle.delay}s`,
-            boxShadow: `0 0 ${particle.size * 3}px ${particle.size}px hsl(var(--primary) / 0.4)`,
+            left: dot.left,
+            top: dot.top,
+            animationDelay: `${dot.delay}s`,
+            boxShadow: '0 0 8px 2px hsl(var(--primary) / 0.4)',
           }}
         />
       ))}
