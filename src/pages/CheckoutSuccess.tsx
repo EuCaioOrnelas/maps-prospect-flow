@@ -313,9 +313,9 @@ const CheckoutSuccess = () => {
               transition={{ delay: 1.3 }}
             >
               Precisa de ajuda?{" "}
-              <a href="mailto:suporte@prospex.com" className="text-primary hover:underline">
+              <Link to="/contato" className="text-primary hover:underline">
                 Entre em contato conosco
-              </a>
+              </Link>
             </motion.p>
           </div>
         </motion.div>
