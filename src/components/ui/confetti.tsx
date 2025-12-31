@@ -11,42 +11,31 @@ export const useConfetti = () => {
     confetti({
       origin: { y: 0.7 },
       ...opts,
-      particleCount: Math.floor(200 * particleRatio),
+      particleCount: Math.floor(50 * particleRatio), // Reduced from 200 to 50
     });
   }, []);
 
   const fireConfetti = useCallback(() => {
-    // Fire multiple bursts for a more spectacular effect
-    fire(0.25, {
-      spread: 26,
-      startVelocity: 55,
-      colors: ['#10b981', '#059669', '#047857'],
+    // Subtle celebration effect
+    fire(0.3, {
+      spread: 60,
+      startVelocity: 35,
+      decay: 0.94,
+      colors: ['#10b981', '#059669'],
     });
 
     fire(0.2, {
-      spread: 60,
-      colors: ['#fbbf24', '#f59e0b', '#d97706'],
+      spread: 80,
+      decay: 0.93,
+      scalar: 0.9,
+      colors: ['#fbbf24', '#f59e0b'],
     });
 
-    fire(0.35, {
+    fire(0.2, {
       spread: 100,
-      decay: 0.91,
-      scalar: 0.8,
-      colors: ['#8b5cf6', '#7c3aed', '#6d28d9'],
-    });
-
-    fire(0.1, {
-      spread: 120,
-      startVelocity: 25,
       decay: 0.92,
-      scalar: 1.2,
-      colors: ['#3b82f6', '#2563eb', '#1d4ed8'],
-    });
-
-    fire(0.1, {
-      spread: 120,
-      startVelocity: 45,
-      colors: ['#ec4899', '#db2777', '#be185d'],
+      scalar: 0.8,
+      colors: ['#8b5cf6', '#3b82f6'],
     });
   }, [fire]);
 
@@ -93,24 +82,29 @@ export const useConfetti = () => {
   }, []);
 
   const fireSides = useCallback(() => {
-    const end = Date.now() + 3 * 1000;
-    const colors = ['#10b981', '#fbbf24', '#8b5cf6', '#3b82f6', '#ec4899'];
+    const end = Date.now() + 1.5 * 1000; // Reduced from 3s to 1.5s
+    const colors = ['#10b981', '#fbbf24', '#8b5cf6'];
 
+    let frameCount = 0;
     (function frame() {
-      confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: colors,
-      });
-      confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: colors,
-      });
+      frameCount++;
+      // Only fire every 3rd frame to reduce particles
+      if (frameCount % 3 === 0) {
+        confetti({
+          particleCount: 1,
+          angle: 60,
+          spread: 45,
+          origin: { x: 0 },
+          colors: colors,
+        });
+        confetti({
+          particleCount: 1,
+          angle: 120,
+          spread: 45,
+          origin: { x: 1 },
+          colors: colors,
+        });
+      }
 
       if (Date.now() < end) {
         requestAnimationFrame(frame);
