@@ -21,6 +21,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutFailed from "./pages/CheckoutFailed";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/upgrade" element={<Upgrade />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
             <Route path="/checkout-failed" element={<CheckoutFailed />} />
+            <Route path="/contato" element={<Contact />} />
             <Route
               path="/dashboard" 
               element={
