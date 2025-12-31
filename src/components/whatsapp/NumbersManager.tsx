@@ -265,15 +265,18 @@ export const NumbersManager = ({
       // Find the number to get instance name
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
       
-      // Try to disconnect from Evolution API if connected
-      if (numberToRemove?.is_connected && numberToRemove.instance_name) {
+      // Always try to disconnect from Evolution API if there's an instance name
+      // This ensures the WhatsApp session is terminated even if is_connected is false
+      if (numberToRemove?.instance_name) {
         try {
-          await supabase.functions.invoke('evolution-disconnect', {
+          console.log('Disconnecting instance:', numberToRemove.instance_name);
+          const response = await supabase.functions.invoke('evolution-disconnect', {
             body: { 
               instanceName: numberToRemove.instance_name,
               numberId: numberToDelete 
             },
           });
+          console.log('Disconnect response:', response);
         } catch (e) {
           console.error('Error disconnecting from Evolution:', e);
         }
