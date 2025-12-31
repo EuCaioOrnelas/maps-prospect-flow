@@ -1,19 +1,29 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, ArrowLeft, Crown } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const PRICE_IDS = {
+  start: "price_1SkEsEK8CM0R6xMM9Y1ip21w",
+  growth: "price_1SkEsZK8CM0R6xMMr0B2gEP1",
+  scale: "price_1SkEsoK8CM0R6xMMF72J3hAi",
+};
 
 const plans = [
   {
     name: "Start",
+    key: "start",
     price: "97",
     anchorPrice: "197",
-    searches: "200",
+    searches: "100",
     whatsappNumbers: 1,
     description: "Ideal para começar a prospectar novos clientes",
     features: [
-      "Até 200 buscas estratégicas/mês",
+      "Até 100 buscas estratégicas/mês",
       "Até 50 leads por busca",
       "Download em Excel",
       "Dados completos dos leads",
@@ -24,13 +34,14 @@ const plans = [
   },
   {
     name: "Growth",
+    key: "growth",
     price: "247",
     anchorPrice: "497",
-    searches: "600",
+    searches: "500",
     whatsappNumbers: 2,
     description: "Para profissionais que querem escalar resultados",
     features: [
-      "Até 600 buscas estratégicas/mês",
+      "Até 500 buscas estratégicas/mês",
       "Até 50 leads por busca",
       "Download em Excel",
       "Dados completos dos leads",
@@ -42,6 +53,7 @@ const plans = [
   },
   {
     name: "Scale",
+    key: "scale",
     price: "497",
     anchorPrice: "997",
     searches: "1.200",
@@ -63,9 +75,44 @@ const plans = [
 
 const Upgrade = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   const currentPlan = profile?.plan || "free";
+
+  // Check for checkout result
+  useEffect(() => {
+    const checkoutResult = searchParams.get("checkout");
+    if (checkoutResult === "canceled") {
+      toast({
+        title: "Checkout cancelado",
+        description: "Você pode tentar novamente quando quiser.",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, toast]);
+
+  // Check subscription status on mount and after checkout success
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await supabase.functions.invoke("check-subscription");
+        if (response.data && !response.error) {
+          await refreshProfile();
+        }
+      } catch (error) {
+        console.error("Error checking subscription:", error);
+      }
+    };
+
+    checkSubscription();
+  }, [refreshProfile]);
 
   const getPlanOrder = (planName: string) => {
     const order: Record<string, number> = {
@@ -84,6 +131,88 @@ const Upgrade = () => {
   const isDowngrade = (planName: string) => {
     return getPlanOrder(planName) < getPlanOrder(currentPlan);
   };
+
+  const handleUpgrade = async (planKey: string) => {
+    setLoadingPlan(planKey);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
+      
+      const response = await supabase.functions.invoke("create-checkout", {
+        body: { priceId },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.url) {
+        window.open(response.data.url, "_blank");
+      } else {
+        throw new Error("URL de checkout não recebida");
+      }
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast({
+        title: "Erro ao iniciar checkout",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const response = await supabase.functions.invoke("customer-portal");
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.url) {
+        window.open(response.data.url, "_blank");
+      } else {
+        throw new Error("URL do portal não recebida");
+      }
+    } catch (error: any) {
+      console.error("Portal error:", error);
+      toast({
+        title: "Erro ao abrir portal",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
+
+  const hasPaidPlan = currentPlan !== "free";
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,10 +268,30 @@ const Upgrade = () => {
           </p>
         </div>
 
+        {/* Manage Subscription Button for paid users */}
+        {hasPaidPlan && (
+          <div className="flex justify-center mb-8">
+            <Button
+              variant="outline"
+              onClick={handleManageSubscription}
+              disabled={loadingPortal}
+              className="gap-2"
+            >
+              {loadingPortal ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Settings size={16} />
+              )}
+              Gerenciar Assinatura
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => {
             const isCurrent = isCurrentPlan(plan.name);
             const isDowngradeOption = isDowngrade(plan.name);
+            const isLoading = loadingPlan === plan.key;
 
             return (
               <div
@@ -207,13 +356,21 @@ const Upgrade = () => {
                   variant={isCurrent ? "secondary" : plan.popular ? "hero" : "outline"}
                   size="lg"
                   className="w-full"
-                  disabled={isCurrent || isDowngradeOption}
+                  disabled={isCurrent || isDowngradeOption || isLoading}
+                  onClick={() => handleUpgrade(plan.key)}
                 >
-                  {isCurrent
-                    ? "Plano Atual"
-                    : isDowngradeOption
-                    ? "Indisponível"
-                    : "Fazer Upgrade"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                      Processando...
+                    </>
+                  ) : isCurrent ? (
+                    "Plano Atual"
+                  ) : isDowngradeOption ? (
+                    "Indisponível"
+                  ) : (
+                    "Fazer Upgrade"
+                  )}
                 </Button>
               </div>
             );
