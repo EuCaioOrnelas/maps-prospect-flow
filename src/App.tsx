@@ -17,6 +17,7 @@ import Upgrade from "./pages/Upgrade";
 import Reports from "./pages/Reports";
 import SharedReport from "./pages/SharedReport";
 import WhatsAppCampaign from "./pages/WhatsAppCampaign";
+import UserInsights from "./pages/UserInsights";
 import WhatsAppReports from "./pages/WhatsAppReports";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -61,6 +62,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Admin />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/insights" 
+                element={
+                  <ProtectedRoute>
+                    <UserInsights />
                   </ProtectedRoute>
                 } 
               />
