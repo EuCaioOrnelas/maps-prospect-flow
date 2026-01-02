@@ -42,6 +42,9 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
+import { useOnboardingModals } from "@/hooks/useOnboardingModals";
 interface Lead {
   name: string;
   category: string;
@@ -85,6 +88,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile, user } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
+  const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
@@ -882,6 +886,12 @@ const Dashboard = () => {
         isOpen={showWhatsAppUpgradeModal} 
         onClose={() => setShowWhatsAppUpgradeModal(false)} 
       />
+
+      {/* Onboarding Modal */}
+      <OnboardingModal isOpen={showOnboarding} onClose={closeOnboarding} />
+
+      {/* Trial Feedback Modal */}
+      <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
     </div>
   );
 };

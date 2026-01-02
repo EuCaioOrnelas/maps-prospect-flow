@@ -28,6 +28,7 @@ export type Database = {
           searches_limit: number
           searches_used: number
           signup_ip: string | null
+          trial_start_at: string | null
           updated_at: string
         }
         Insert: {
@@ -43,6 +44,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          trial_start_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -58,6 +60,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          trial_start_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -119,6 +122,99 @@ export type Database = {
           password_hash?: string
           report_data?: Json
           user_id?: string
+        }
+        Relationships: []
+      }
+      trial_feedback: {
+        Row: {
+          created_at: string
+          experience_status: string
+          id: string
+          missing_features: string | null
+          not_continue_reason: string | null
+          nps_score: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_status: string
+          id?: string
+          missing_features?: string | null
+          not_continue_reason?: string | null
+          nps_score?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_status?: string
+          id?: string
+          missing_features?: string | null
+          not_continue_reason?: string | null
+          nps_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_onboarding: {
+        Row: {
+          created_at: string
+          id: string
+          main_objective: string
+          previous_experience: string | null
+          previous_tool: string | null
+          service_types: string[]
+          skipped: boolean
+          team_size: string
+          user_id: string
+          user_profile: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          main_objective: string
+          previous_experience?: string | null
+          previous_tool?: string | null
+          service_types: string[]
+          skipped?: boolean
+          team_size: string
+          user_id: string
+          user_profile: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          main_objective?: string
+          previous_experience?: string | null
+          previous_tool?: string | null
+          service_types?: string[]
+          skipped?: boolean
+          team_size?: string
+          user_id?: string
+          user_profile?: string
         }
         Relationships: []
       }
