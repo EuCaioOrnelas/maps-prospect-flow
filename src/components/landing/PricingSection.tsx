@@ -276,51 +276,67 @@ export const PricingSection = () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
               
               <div className="relative z-10">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-                  {/* Left side - Text */}
-                  <div className="lg:max-w-md">
-                    <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                      <Gift className="h-4 w-4" />
-                      Teste Gratuito por 30 dias
-                    </div>
-                    
-                    <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                      Experimente antes de assinar
-                    </h3>
-                    <p className="text-muted-foreground mb-6 lg:mb-0">
-                      Teste todas as funcionalidades da Prospex gratuitamente durante 30 dias. Sem compromisso.
-                    </p>
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                    <Gift className="h-4 w-4" />
+                    Teste Gratuito por 30 dias
                   </div>
                   
-                  {/* Right side - Features */}
-                  <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-background/90 border border-border/50 shadow-sm">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <Search className="h-6 w-6 text-primary" />
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                    Experimente antes de assinar
+                  </h3>
+                  <p className="text-muted-foreground max-w-lg mx-auto">
+                    Teste todas as funcionalidades da Prospex gratuitamente durante 30 dias. Sem compromisso.
+                  </p>
+                </div>
+                
+                {/* Features Cards */}
+                <div className="space-y-4">
+                  {/* Search card - full width on top */}
+                  <div 
+                    className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}
+                    style={{ transitionDelay: '700ms' }}
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                      <Search className="h-7 w-7 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg text-foreground">10 buscas estratégicas com IA</p>
+                      <p className="text-sm text-muted-foreground">grátis</p>
+                    </div>
+                  </div>
+                  
+                  {/* Bottom row - messages and whatsapp side by side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div 
+                      className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{ transitionDelay: '800ms' }}
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <MessageSquare className="h-7 w-7 text-primary" />
                       </div>
                       <div>
-                        <p className="font-bold text-lg text-foreground">10 buscas</p>
+                        <p className="font-bold text-lg text-foreground">400 disparos em massa</p>
                         <p className="text-sm text-muted-foreground">grátis</p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-background/90 border border-border/50 shadow-sm">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <MessageSquare className="h-6 w-6 text-primary" />
+                    <div 
+                      className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{ transitionDelay: '900ms' }}
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <Smartphone className="h-7 w-7 text-primary" />
                       </div>
                       <div>
-                        <p className="font-bold text-lg text-foreground">400 disparos</p>
+                        <p className="font-bold text-lg text-foreground">1 número WhatsApp</p>
                         <p className="text-sm text-muted-foreground">grátis</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-background/90 border border-border/50 shadow-sm">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <Smartphone className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-lg text-foreground">1 número</p>
-                        <p className="text-sm text-muted-foreground">WhatsApp</p>
                       </div>
                     </div>
                   </div>
