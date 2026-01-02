@@ -6,185 +6,256 @@ import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
 import { motion } from "framer-motion";
 
-// Animated Astronaut Component
-const FloatingAstronaut = () => {
+// Animated Astronaut Component with cord
+const FloatingAstronaut = ({ showCord = false }: { showCord?: boolean }) => {
   return (
     <motion.div
-      className="relative w-48 h-48 sm:w-64 sm:h-64"
+      className="relative w-40 h-40 sm:w-52 sm:h-52"
       animate={{
-        y: [0, -20, 0],
-        rotate: [0, 5, -5, 0],
+        y: [0, -15, 0],
+        rotate: [0, 3, -3, 0],
       }}
       transition={{
-        duration: 6,
+        duration: 5,
         repeat: Infinity,
         ease: "easeInOut",
       }}
     >
-      <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
-        {/* Glow effect */}
+      <svg viewBox="0 0 200 200" className="w-full h-full" style={{ filter: "drop-shadow(0 0 20px hsl(var(--primary) / 0.4))" }}>
         <defs>
-          <radialGradient id="helmetGlow" cx="50%" cy="30%" r="50%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+          {/* Enhanced gradients for more vibrant look */}
+          <radialGradient id="helmetGlow" cx="50%" cy="30%" r="60%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
             <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="suitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--muted))" />
-            <stop offset="100%" stopColor="hsl(var(--muted-foreground) / 0.3)" />
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="50%" stopColor="#e8e8e8" />
+            <stop offset="100%" stopColor="#d0d0d0" />
+          </linearGradient>
+          <linearGradient id="suitShadow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f5f5f5" />
+            <stop offset="100%" stopColor="#b8b8b8" />
           </linearGradient>
           <linearGradient id="visorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="50%" stopColor="hsl(var(--secondary))" />
-            <stop offset="100%" stopColor="hsl(var(--primary) / 0.8)" />
+            <stop offset="40%" stopColor="hsl(var(--secondary))" />
+            <stop offset="100%" stopColor="#1a1a2e" />
           </linearGradient>
+          <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffd700" />
+            <stop offset="100%" stopColor="#ff8c00" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
         {/* Backpack */}
-        <motion.rect
-          x="70"
-          y="75"
-          width="60"
-          height="70"
+        <rect
+          x="72"
+          y="78"
+          width="56"
+          height="65"
           rx="8"
-          fill="hsl(var(--muted-foreground) / 0.4)"
-          stroke="hsl(var(--border))"
+          fill="#8a8a8a"
+          stroke="#666"
           strokeWidth="2"
         />
-        
-        {/* Backpack details */}
-        <rect x="78" y="85" width="15" height="20" rx="3" fill="hsl(var(--primary) / 0.3)" />
-        <rect x="78" y="110" width="15" height="15" rx="3" fill="hsl(var(--secondary) / 0.3)" />
+        <rect x="78" y="85" width="18" height="22" rx="4" fill="#555" />
+        <rect x="78" y="112" width="18" height="18" rx="4" fill="#444" />
+        {/* Backpack vents */}
+        <rect x="100" y="88" width="20" height="3" rx="1" fill="#333" />
+        <rect x="100" y="94" width="20" height="3" rx="1" fill="#333" />
+        <rect x="100" y="100" width="20" height="3" rx="1" fill="#333" />
         
         {/* Body */}
-        <motion.ellipse
+        <ellipse
           cx="100"
-          cy="115"
-          rx="45"
-          ry="50"
+          cy="118"
+          rx="42"
+          ry="48"
           fill="url(#suitGradient)"
-          stroke="hsl(var(--border))"
+          stroke="#999"
           strokeWidth="2"
         />
         
-        {/* Body stripe */}
-        <rect x="90" y="80" width="20" height="70" rx="5" fill="hsl(var(--primary) / 0.3)" />
+        {/* Chest details */}
+        <rect x="88" y="85" width="24" height="60" rx="6" fill="url(#suitShadow)" opacity="0.5" />
+        
+        {/* NASA-style logo area */}
+        <ellipse cx="100" cy="95" rx="12" ry="8" fill="hsl(var(--primary))" opacity="0.8" />
         
         {/* Control panel on chest */}
-        <rect x="85" y="100" width="30" height="20" rx="4" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="1" />
+        <rect x="82" y="108" width="36" height="24" rx="4" fill="#1a1a2e" stroke="#444" strokeWidth="1" />
         <motion.circle
-          cx="92"
-          cy="107"
-          r="3"
-          fill="hsl(var(--destructive))"
-          animate={{ opacity: [1, 0.3, 1] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          cx="90"
+          cy="116"
+          r="4"
+          fill="#ff4444"
+          filter="url(#glow)"
+          animate={{ opacity: [1, 0.4, 1] }}
+          transition={{ duration: 0.8, repeat: Infinity }}
         />
         <motion.circle
           cx="100"
-          cy="107"
-          r="3"
-          fill="hsl(var(--primary))"
-          animate={{ opacity: [0.3, 1, 0.3] }}
+          cy="116"
+          r="4"
+          fill="#44ff44"
+          filter="url(#glow)"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
+        />
+        <motion.circle
+          cx="110"
+          cy="116"
+          r="4"
+          fill="#4488ff"
+          filter="url(#glow)"
+          animate={{ opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         />
-        <circle cx="108" cy="107" r="3" fill="hsl(var(--secondary))" />
-        <rect x="88" y="112" width="24" height="4" rx="1" fill="hsl(var(--muted-foreground) / 0.5)" />
+        <rect x="86" y="123" width="28" height="5" rx="2" fill="#333" />
 
         {/* Left Arm */}
         <motion.g
-          animate={{ rotate: [0, 10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          style={{ transformOrigin: "60px 100px" }}
+          animate={{ rotate: [0, 12, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          style={{ transformOrigin: "58px 105px" }}
         >
-          <ellipse cx="45" cy="110" rx="18" ry="25" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
-          <circle cx="40" cy="130" r="12" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
+          <ellipse cx="48" cy="112" rx="16" ry="24" fill="url(#suitGradient)" stroke="#999" strokeWidth="2" />
+          {/* Glove */}
+          <circle cx="44" cy="132" r="11" fill="url(#suitShadow)" stroke="#888" strokeWidth="2" />
+          {/* Gold ring */}
+          <ellipse cx="48" cy="95" rx="14" ry="4" fill="url(#goldAccent)" />
         </motion.g>
         
-        {/* Right Arm */}
+        {/* Right Arm - waving */}
         <motion.g
-          animate={{ rotate: [0, -15, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          style={{ transformOrigin: "140px 100px" }}
+          animate={{ rotate: [0, -20, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+          style={{ transformOrigin: "142px 105px" }}
         >
-          <ellipse cx="155" cy="110" rx="18" ry="25" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
-          <circle cx="160" cy="130" r="12" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
+          <ellipse cx="152" cy="112" rx="16" ry="24" fill="url(#suitGradient)" stroke="#999" strokeWidth="2" />
+          {/* Glove */}
+          <circle cx="156" cy="132" r="11" fill="url(#suitShadow)" stroke="#888" strokeWidth="2" />
+          {/* Gold ring */}
+          <ellipse cx="152" cy="95" rx="14" ry="4" fill="url(#goldAccent)" />
         </motion.g>
         
         {/* Left Leg */}
         <motion.g
-          animate={{ rotate: [0, 5, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          style={{ transformOrigin: "75px 155px" }}
+          animate={{ rotate: [0, 6, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          style={{ transformOrigin: "78px 158px" }}
         >
-          <ellipse cx="75" cy="170" rx="15" ry="25" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
-          <ellipse cx="72" cy="192" rx="12" ry="8" fill="hsl(var(--muted-foreground) / 0.5)" stroke="hsl(var(--border))" strokeWidth="2" />
+          <ellipse cx="78" cy="168" rx="14" ry="22" fill="url(#suitGradient)" stroke="#999" strokeWidth="2" />
+          {/* Boot */}
+          <ellipse cx="75" cy="188" rx="14" ry="9" fill="#666" stroke="#555" strokeWidth="2" />
+          {/* Gold ring */}
+          <ellipse cx="78" cy="152" rx="12" ry="3" fill="url(#goldAccent)" />
         </motion.g>
         
         {/* Right Leg */}
         <motion.g
-          animate={{ rotate: [0, -5, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-          style={{ transformOrigin: "125px 155px" }}
+          animate={{ rotate: [0, -6, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          style={{ transformOrigin: "122px 158px" }}
         >
-          <ellipse cx="125" cy="170" rx="15" ry="25" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="2" />
-          <ellipse cx="128" cy="192" rx="12" ry="8" fill="hsl(var(--muted-foreground) / 0.5)" stroke="hsl(var(--border))" strokeWidth="2" />
+          <ellipse cx="122" cy="168" rx="14" ry="22" fill="url(#suitGradient)" stroke="#999" strokeWidth="2" />
+          {/* Boot */}
+          <ellipse cx="125" cy="188" rx="14" ry="9" fill="#666" stroke="#555" strokeWidth="2" />
+          {/* Gold ring */}
+          <ellipse cx="122" cy="152" rx="12" ry="3" fill="url(#goldAccent)" />
         </motion.g>
         
         {/* Helmet */}
-        <circle cx="100" cy="50" r="40" fill="url(#suitGradient)" stroke="hsl(var(--border))" strokeWidth="3" />
+        <circle cx="100" cy="52" r="38" fill="url(#suitGradient)" stroke="#999" strokeWidth="3" />
+        
+        {/* Gold helmet ring */}
+        <ellipse cx="100" cy="85" rx="30" ry="6" fill="url(#goldAccent)" />
         
         {/* Helmet glow */}
-        <circle cx="100" cy="50" r="42" fill="url(#helmetGlow)" />
+        <circle cx="100" cy="52" r="42" fill="url(#helmetGlow)" />
         
         {/* Visor */}
-        <ellipse cx="100" cy="50" rx="28" ry="25" fill="url(#visorGradient)" opacity="0.9" />
+        <ellipse cx="100" cy="52" rx="26" ry="23" fill="url(#visorGradient)" />
         
-        {/* Visor reflection */}
+        {/* Visor reflections */}
         <motion.ellipse
           cx="88"
-          cy="42"
-          rx="8"
-          ry="5"
+          cy="44"
+          rx="10"
+          ry="6"
           fill="white"
-          opacity="0.4"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity }}
+          opacity="0.5"
+          animate={{ opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
         />
+        <ellipse cx="108" cy="58" rx="5" ry="3" fill="white" opacity="0.2" />
         
         {/* Antenna */}
-        <line x1="130" y1="25" x2="140" y2="10" stroke="hsl(var(--muted-foreground))" strokeWidth="2" />
+        <line x1="128" y1="28" x2="140" y2="12" stroke="#888" strokeWidth="3" strokeLinecap="round" />
         <motion.circle
           cx="142"
-          cy="8"
-          r="4"
+          cy="10"
+          r="5"
           fill="hsl(var(--primary))"
+          filter="url(#glow)"
           animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.7, 1, 0.7]
+            scale: [1, 1.4, 1],
+            opacity: [0.8, 1, 0.8]
           }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          transition={{ duration: 1, repeat: Infinity }}
         />
       </svg>
 
-      {/* Floating cord */}
-      <motion.svg
-        className="absolute -right-8 top-1/2 w-32 h-16"
-        viewBox="0 0 100 50"
-        animate={{ 
-          d: ["M0,25 Q30,10 60,25 T100,25", "M0,25 Q30,40 60,25 T100,25", "M0,25 Q30,10 60,25 T100,25"]
-        }}
-      >
-        <motion.path
-          d="M0,25 Q30,10 60,25 T100,25"
-          stroke="hsl(var(--muted-foreground) / 0.5)"
-          strokeWidth="2"
-          fill="none"
-          animate={{
-            d: ["M0,25 Q30,10 60,25 T100,25", "M0,25 Q30,40 60,25 T100,25", "M0,25 Q30,10 60,25 T100,25"]
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.svg>
+      {/* Cord connecting to popup - goes down */}
+      {showCord && (
+        <svg
+          className="absolute left-1/2 -translate-x-1/2 top-full w-4 h-16"
+          viewBox="0 0 20 80"
+          style={{ marginTop: "-10px" }}
+        >
+          <motion.path
+            d="M10,0 Q5,20 10,40 Q15,60 10,80"
+            stroke="hsl(var(--primary))"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+            animate={{
+              d: [
+                "M10,0 Q5,20 10,40 Q15,60 10,80",
+                "M10,0 Q15,20 10,40 Q5,60 10,80",
+                "M10,0 Q5,20 10,40 Q15,60 10,80"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+          {/* Cord glow */}
+          <motion.path
+            d="M10,0 Q5,20 10,40 Q15,60 10,80"
+            stroke="hsl(var(--primary))"
+            strokeWidth="6"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.2"
+            animate={{
+              d: [
+                "M10,0 Q5,20 10,40 Q15,60 10,80",
+                "M10,0 Q15,20 10,40 Q5,60 10,80",
+                "M10,0 Q5,20 10,40 Q15,60 10,80"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </svg>
+      )}
     </motion.div>
   );
 };
@@ -341,14 +412,14 @@ const NotFound = () => {
             <Logo size="lg" />
           </motion.div>
 
-          {/* Astronaut - centered above content */}
+          {/* Astronaut - centered above content with cord */}
           <motion.div
-            className="mb-4"
+            className="mb-0"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <FloatingAstronaut />
+            <FloatingAstronaut showCord={true} />
           </motion.div>
 
           {/* Content card with glassmorphism */}
