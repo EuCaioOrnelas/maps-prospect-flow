@@ -54,29 +54,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     );
   }
 
-  // Block access for non-admin users on admin routes
+  // Show 404 for non-admin users on admin routes (hide existence of admin pages)
   if (requireAdmin && !isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
-            <ShieldAlert size={32} className="text-destructive" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">Acesso Negado</h1>
-            <p className="text-muted-foreground">
-              Você não tem permissão para acessar esta página.
-            </p>
-          </div>
-          <a
-            href="/dashboard"
-            className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Voltar ao Dashboard
-          </a>
-        </div>
-      </div>
-    );
+    return <Navigate to="/404" replace />;
   }
 
   // Redirect trial expired users to upgrade page (except if already on upgrade page)
