@@ -286,7 +286,7 @@ export const PricingSection = () => {
                     Experimente antes de assinar
                   </h3>
                   <p className="text-muted-foreground max-w-lg mx-auto">
-                    Teste todas as funcionalidades da Prospex gratuitamente durante 30 dias. Sem compromisso.
+                    Teste todas as funcionalidades da WiizeProspect gratuitamente durante 30 dias. Sem compromisso.
                   </p>
                 </div>
                 

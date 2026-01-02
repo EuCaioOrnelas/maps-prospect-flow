@@ -222,8 +222,8 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Meu Perfil - Prospex"
-        description="Gerencie seu perfil e configurações da conta Prospex"
+        title="Meu Perfil - WiizeProspect"
+        description="Gerencie seu perfil e configurações da conta WiizeProspect"
       />
 
       {/* Header */}

@@ -67,7 +67,7 @@ export const FAQSection = () => {
             Perguntas <span className="text-gradient">Frequentes</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            Tudo que você precisa saber sobre o Prospex
+            Tudo que você precisa saber sobre o WiizeProspect
           </p>
         </div>
 

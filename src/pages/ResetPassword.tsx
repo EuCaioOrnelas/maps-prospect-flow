@@ -84,7 +84,7 @@ const ResetPassword = () => {
     <>
       <SEO 
         title="Redefinir Senha"
-        description="Redefina sua senha do Prospex."
+        description="Redefina sua senha do WiizeProspect."
         noIndex
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8">

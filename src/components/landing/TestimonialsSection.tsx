@@ -12,7 +12,7 @@ interface Testimonial {
 
 const testimonials: Testimonial[] = [
   {
-    text: "O Prospex revolucionou nossa prospecção. Em uma semana conseguimos 3x mais leads qualificados do que em um mês usando métodos tradicionais.",
+    text: "O WiizeProspect revolucionou nossa prospecção. Em uma semana conseguimos 3x mais leads qualificados do que em um mês usando métodos tradicionais.",
     image: "https://randomuser.me/api/portraits/women/44.jpg",
     name: "Mariana Santos",
     role: "Diretora Comercial",
@@ -40,7 +40,7 @@ const testimonials: Testimonial[] = [
     company: "Vendas Express",
   },
   {
-    text: "O ROI foi imediato. No primeiro mês já fechamos 5 novos clientes que vieram das buscas do Prospex.",
+    text: "O ROI foi imediato. No primeiro mês já fechamos 5 novos clientes que vieram das buscas do WiizeProspect.",
     image: "https://randomuser.me/api/portraits/women/33.jpg",
     name: "Amanda Costa",
     role: "Empreendedora",
@@ -164,7 +164,7 @@ export const TestimonialsSection = () => {
             <span className="text-gradient">clientes dizem</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            Descubra como empresas estão transformando sua prospecção com o Prospex
+            Descubra como empresas estão transformando sua prospecção com o WiizeProspect
           </p>
         </div>
 

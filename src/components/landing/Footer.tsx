@@ -23,7 +23,7 @@ export const Footer = () => {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            © {currentYear} Prospex. Todos os direitos reservados.
+            © {currentYear} WiizeProspect. Todos os direitos reservados.
           </p>
         </div>
       </div>

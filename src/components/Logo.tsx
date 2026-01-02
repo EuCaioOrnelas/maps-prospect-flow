@@ -22,7 +22,7 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
       </div>
       {showText && (
         <span className={`font-display font-bold ${sizes[size].text} text-foreground`}>
-          Prospex
+          WiizeProspect
         </span>
       )}
     </div>

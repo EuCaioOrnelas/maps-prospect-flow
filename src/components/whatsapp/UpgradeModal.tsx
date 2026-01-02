@@ -46,7 +46,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               Funcionalidade Premium
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Disparos em massa estão disponíveis nos planos pagos da Prospex
+              Disparos em massa estão disponíveis nos planos pagos da WiizeProspect
             </DialogDescription>
           </div>
         </DialogHeader>
