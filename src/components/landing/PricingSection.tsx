@@ -343,19 +343,19 @@ export const PricingSection = () => {
                 </div>
                 
                 {/* CTA Button */}
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-primary/20">
-                  <p className="text-sm text-muted-foreground">
-                    * Válido apenas durante os 30 dias do período de teste
-                  </p>
+                <div className="mt-8 flex flex-col items-center gap-4 pt-6 border-t border-primary/20">
                   <Button 
                     variant="hero" 
                     size="lg" 
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-2 w-full sm:w-auto animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] hover:animate-none"
                     onClick={() => navigate("/signup")}
                   >
                     Começar Teste Grátis
                     <ArrowRight className="h-4 w-4" />
                   </Button>
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                    * Válido apenas durante os 30 dias do período de teste
+                  </p>
                 </div>
               </div>
             </div>
