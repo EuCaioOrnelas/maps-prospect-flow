@@ -33,7 +33,8 @@ import {
   Zap,
   BarChart3,
   MessageSquare,
-  User
+  User,
+  AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -86,12 +87,13 @@ const Dashboard = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { profile, signOut, refreshProfile, user } = useAuth();
+  const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+  const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
 
   // Request notification permission on mount
   useEffect(() => {
@@ -433,6 +435,32 @@ const Dashboard = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-4 sm:gap-6">
+              {/* Trial indicator */}
+              {showTrialIndicator && (
+                <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  trialDaysRemaining <= 3 
+                    ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+                    : trialDaysRemaining <= 7 
+                      ? 'bg-warning/10 text-warning border border-warning/20'
+                      : 'bg-primary/10 text-primary border border-primary/20'
+                }`}>
+                  <Clock size={14} />
+                  <span>
+                    {trialDaysRemaining === 1 
+                      ? 'Último dia de trial' 
+                      : `${trialDaysRemaining} dias restantes`}
+                  </span>
+                </div>
+              )}
+              
+              {/* Trial expired indicator */}
+              {isTrialExpired && isFreePlan && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                  <AlertCircle size={14} />
+                  <span>Trial expirado</span>
+                </div>
+              )}
+
               {/* Credits indicator - shows searches used */}
               <div className="flex items-center gap-2 text-sm">
                 <Search size={14} className="text-muted-foreground" />
