@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserEvents } from "@/hooks/useUserEvents";
 import { toast } from "sonner";
-import { ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles, PartyPopper } from "lucide-react";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -76,7 +76,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [previousExperience, setPreviousExperience] = useState("");
   const [previousTool, setPreviousTool] = useState("");
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const handleServiceTypeToggle = (service: string) => {
     setServiceTypes(prev => 
@@ -93,6 +93,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       case 3: return mainObjective !== "";
       case 4: return teamSize !== "";
       case 5: return true; // Optional step
+      case 6: return true; // Congratulations step
       default: return false;
     }
   };
@@ -145,8 +146,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         team_size: teamSize
       });
 
-      toast.success("Obrigado por compartilhar! Vamos começar 🚀");
-      onClose();
+      // Go to congratulations step instead of closing
+      setStep(6);
     } catch (error) {
       console.error('Error saving onboarding:', error);
       toast.error("Erro ao salvar. Tente novamente.");
@@ -156,8 +157,15 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   };
 
   const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1);
-    else handleSubmit();
+    if (step === 5) {
+      // Save data before showing congratulations
+      handleSubmit();
+    } else if (step < totalSteps) {
+      setStep(step + 1);
+    } else {
+      // Close on congratulations step
+      onClose();
+    }
   };
 
   const prevStep = () => {
@@ -211,7 +219,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           {step === 2 && (
             <div className="space-y-4">
               <Label className="text-base font-medium">
-                Qual tipo de serviço você pretende vender para essas empresas?
+                Qual tipo de serviço você pretende vender?
               </Label>
               <p className="text-sm text-muted-foreground">Selecione uma ou mais opções</p>
               <div className="space-y-2">
@@ -295,25 +303,53 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               )}
             </div>
           )}
+
+          {/* Step 6 - Congratulations */}
+          {step === 6 && (
+            <div className="flex flex-col items-center justify-center text-center space-y-6 py-8">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <PartyPopper className="h-10 w-10 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">Parabéns! 🎉</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  Obrigado por compartilhar suas informações. Agora podemos personalizar sua experiência e ajudá-lo a alcançar seus objetivos!
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <Sparkles className="h-4 w-4" />
+                <span>Vamos começar sua jornada!</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={step === 1 || loading}
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-          <Button
-            onClick={nextStep}
-            disabled={!canProceed() || loading}
-          >
-            {step === totalSteps ? "Concluir" : "Próximo"}
-            {step !== totalSteps && <ChevronRight className="h-4 w-4 ml-1" />}
-          </Button>
-        </div>
+        {step !== 6 ? (
+          <div className="flex justify-between pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={step === 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed() || loading}
+            >
+              {step === 5 ? "Concluir" : "Próximo"}
+              {step !== 5 && <ChevronRight className="h-4 w-4 ml-1" />}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-center pt-4 border-t">
+            <Button onClick={onClose} className="px-8">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Começar
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
