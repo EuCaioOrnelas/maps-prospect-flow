@@ -16,13 +16,19 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user } = useAuth();
+  const { signIn, user, isTrialExpired, profile, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    // Wait for profile to load before redirecting
+    if (user && !loading) {
+      // If trial expired and user is on free plan, redirect to upgrade
+      if (isTrialExpired && profile?.plan === 'free') {
+        navigate("/upgrade?expired=true");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, loading, isTrialExpired, profile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +56,9 @@ const Login = () => {
 
     toast({
       title: "Login realizado!",
-      description: "Redirecionando para o dashboard...",
+      description: "Redirecionando...",
     });
-    navigate("/dashboard");
+    // Redirect will be handled by useEffect based on trial status
     setIsLoading(false);
   };
 
