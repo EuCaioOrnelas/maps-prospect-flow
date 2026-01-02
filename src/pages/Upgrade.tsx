@@ -272,21 +272,38 @@ const Upgrade = () => {
       <main className="container mx-auto px-4 py-12">
         {/* Trial Expired Banner */}
         {isTrialExpired && (
-          <div className="max-w-2xl mx-auto mb-8 animate-fade-in">
-            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle size={24} className="text-destructive" />
+          <div className="max-w-3xl mx-auto mb-10 animate-fade-in">
+            <div className="relative overflow-hidden bg-gradient-to-br from-destructive/10 via-destructive/5 to-primary/10 border border-destructive/30 rounded-2xl p-8 text-center">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-destructive/10 rounded-full blur-2xl" />
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-5">
+                  <AlertTriangle size={32} className="text-destructive" />
+                </div>
+                
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                  Seu teste gratuito acabou
+                </h2>
+                
+                <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                  Obrigado por testar o Prospex! Para continuar prospectando e acessando todas as funcionalidades, 
+                  escolha o plano ideal para o seu negócio.
+                </p>
+
+                {/* Promo Card */}
+                <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-xl px-6 py-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20">
+                    <Sparkles size={20} className="text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-primary font-bold text-sm">Promoção de Lançamento</p>
+                    <p className="text-foreground font-display text-lg font-bold">Até 50% de desconto em todos os planos</p>
+                    <p className="text-muted-foreground text-xs">Por tempo limitado</p>
+                  </div>
+                </div>
               </div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">
-                Seu teste gratuito acabou
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Obrigado por testar o Prospex! Para continuar prospectando e acessando todas as funcionalidades, 
-                escolha um plano abaixo e desbloqueie todo o potencial da ferramenta.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Com um plano pago, você terá acesso a mais buscas, disparos de WhatsApp e suporte prioritário.
-              </p>
             </div>
           </div>
         )}
