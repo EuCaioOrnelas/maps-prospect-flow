@@ -235,19 +235,23 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               </Label>
               <p className="text-sm text-muted-foreground">Selecione uma ou mais opções</p>
               <div className="space-y-2">
-                {SERVICE_TYPES.map((service) => (
-                  <div 
-                    key={service} 
-                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-                    onClick={() => handleServiceTypeToggle(service)}
-                  >
-                    <Checkbox 
-                      checked={serviceTypes.includes(service)} 
-                      onCheckedChange={() => handleServiceTypeToggle(service)}
-                    />
-                    <Label className="cursor-pointer flex-1">{service}</Label>
-                  </div>
-                ))}
+                {SERVICE_TYPES.map((service) => {
+                  const checkboxId = `service-${service.replace(/\s+/g, '-').toLowerCase()}`;
+                  return (
+                    <div 
+                      key={service} 
+                      className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                      onClick={() => handleServiceTypeToggle(service)}
+                    >
+                      <Checkbox 
+                        id={checkboxId}
+                        checked={serviceTypes.includes(service)} 
+                        className="pointer-events-none"
+                      />
+                      <Label htmlFor={checkboxId} className="cursor-pointer flex-1 pointer-events-none">{service}</Label>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
