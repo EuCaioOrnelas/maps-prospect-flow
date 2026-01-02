@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, Gift, Search, MessageSquare, Smartphone, ArrowRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -155,14 +156,26 @@ export const PricingSection = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center">
             {plans.map((plan, index) => (
-              <div
+              <motion.div
                 key={index}
-                className={`relative rounded-2xl transition-all duration-500 hover:-translate-y-2 ${
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: plan.popular ? 1.05 : 0.95 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.15,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                whileHover={{ 
+                  y: -8, 
+                  scale: plan.popular ? 1.08 : 1,
+                  transition: { duration: 0.3 }
+                }}
+                className={`relative rounded-2xl ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-7 sm:p-9 md:scale-105 md:z-10"
-                    : "glass p-5 sm:p-7 md:scale-95"
-                } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                style={{ transitionDelay: `${150 + index * 100}ms` }}
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-7 sm:p-9 md:z-10"
+                    : "glass p-5 sm:p-7"
+                }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -221,8 +234,8 @@ export const PricingSection = () => {
                   ) : (
                     "Escolher Plano"
                   )}
-                </Button>
-              </div>
+              </Button>
+              </motion.div>
             ))}
           </div>
 
