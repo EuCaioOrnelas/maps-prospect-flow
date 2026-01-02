@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserEvents } from "@/hooks/useUserEvents";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, Sparkles, PartyPopper } from "lucide-react";
+import { useConfetti } from "@/components/ui/confetti";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ const EXPERIENCE_OPTIONS = [
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const { user } = useAuth();
   const { trackEvent } = useUserEvents();
+  const { fireConfetti, fireSides } = useConfetti();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
@@ -75,6 +77,16 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [teamSize, setTeamSize] = useState("");
   const [previousExperience, setPreviousExperience] = useState("");
   const [previousTool, setPreviousTool] = useState("");
+
+  // Fire confetti when reaching congratulations step
+  useEffect(() => {
+    if (step === 6) {
+      fireConfetti();
+      setTimeout(() => {
+        fireSides();
+      }, 300);
+    }
+  }, [step, fireConfetti, fireSides]);
 
   const totalSteps = 6;
 
