@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -347,13 +347,15 @@ const NotFound = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // Generate random stars
-  const stars = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    delay: Math.random() * 3,
-  }));
+  // Generate random stars - memoized to prevent regeneration on mouse move
+  const stars = useMemo(() => 
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 3,
+    })), 
+  []);
 
   return (
     <>
