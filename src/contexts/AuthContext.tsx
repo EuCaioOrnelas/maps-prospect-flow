@@ -15,6 +15,7 @@ interface Profile {
   avatar_url?: string;
   trial_start_at?: string;
   trial_messages_sent?: number;
+  is_blocked?: boolean;
 }
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
   loading: boolean;
   isTrialExpired: boolean;
   trialDaysRemaining: number;
+  isBlocked: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -68,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const trialStatus = calculateTrialStatus(profile?.trial_start_at, profile?.plan);
   const isTrialExpired = trialStatus.isExpired;
   const trialDaysRemaining = trialStatus.daysRemaining;
+  const isBlocked = profile?.is_blocked === true;
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -203,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isTrialExpired,
         trialDaysRemaining,
+        isBlocked,
         signUp,
         signIn,
         signOut,
