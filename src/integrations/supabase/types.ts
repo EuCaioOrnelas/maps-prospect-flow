@@ -64,6 +64,7 @@ export type Database = {
           searches_limit: number
           searches_used: number
           signup_ip: string | null
+          trial_messages_sent: number | null
           trial_start_at: string | null
           updated_at: string
         }
@@ -80,6 +81,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          trial_messages_sent?: number | null
           trial_start_at?: string | null
           updated_at?: string
         }
@@ -96,6 +98,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          trial_messages_sent?: number | null
           trial_start_at?: string | null
           updated_at?: string
         }

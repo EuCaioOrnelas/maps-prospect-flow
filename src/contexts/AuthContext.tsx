@@ -14,6 +14,7 @@ interface Profile {
   created_at?: string;
   avatar_url?: string;
   trial_start_at?: string;
+  trial_messages_sent?: number;
 }
 
 interface AuthContextType {

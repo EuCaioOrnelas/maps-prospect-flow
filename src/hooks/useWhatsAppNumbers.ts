@@ -13,7 +13,7 @@ export interface WhatsAppNumber {
 }
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: 0,
+  free: 1, // Free trial users get 1 number
   start: 1,
   growth: 2,
   scale: 5
