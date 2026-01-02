@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings } from "lucide-react";
+import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings, AlertTriangle } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -85,6 +85,7 @@ const Upgrade = () => {
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
+  const isTrialExpired = searchParams.get("expired") === "true";
 
   // Check for checkout result
   useEffect(() => {
@@ -269,6 +270,27 @@ const Upgrade = () => {
 
       {/* Content */}
       <main className="container mx-auto px-4 py-12">
+        {/* Trial Expired Banner */}
+        {isTrialExpired && (
+          <div className="max-w-2xl mx-auto mb-8 animate-fade-in">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={24} className="text-destructive" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">
+                Seu teste gratuito acabou
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Obrigado por testar o Prospex! Para continuar prospectando e acessando todas as funcionalidades, 
+                escolha um plano abaixo e desbloqueie todo o potencial da ferramenta.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Com um plano pago, você terá acesso a mais buscas, disparos de WhatsApp e suporte prioritário.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
             Escolha o plano <span className="text-gradient">ideal para você</span>

@@ -89,8 +89,9 @@ export function TrialFeedbackModal({ isOpen, onClose }: TrialFeedbackModalProps)
         await trackEvent('trial_not_converted', {
           reason: notContinueReason
         });
-        toast.success("Obrigado pelo feedback! Isso nos ajuda muito.");
+        toast.success("Obrigado pelo feedback! Seu teste gratuito encerrou.");
         onClose();
+        navigate('/upgrade?expired=true');
       }
     } catch (error) {
       console.error('Error saving feedback:', error);
