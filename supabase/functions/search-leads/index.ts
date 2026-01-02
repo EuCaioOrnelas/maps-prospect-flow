@@ -7,6 +7,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting helper
+async function checkRateLimit(
+  supabase: any, 
+  identifier: string, 
+  endpoint: string,
+  maxRequests: number = 30,
+  windowSeconds: number = 60
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  try {
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_endpoint: endpoint,
+      p_max_requests: maxRequests,
+      p_window_seconds: windowSeconds
+    });
+    
+    if (error) {
+      console.error('Rate limit check error:', error);
+      return { allowed: true }; // Fail open if rate limit check fails
+    }
+    
+    return { 
+      allowed: data?.allowed !== false,
+      retryAfter: data?.retry_after
+    };
+  } catch (e) {
+    console.error('Rate limit exception:', e);
+    return { allowed: true };
+  }
+}
+
+// Get client IP from request
+function getClientIP(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+         req.headers.get('x-real-ip') || 
+         'unknown';
+}
+
 // Multiple API keys for fallback
 const SERP_API_KEYS = [
   Deno.env.get('SERP_API_KEY'),
@@ -98,6 +136,31 @@ serve(async (req) => {
   }
 
   try {
+    // Create Supabase client for rate limiting
+    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    // Rate limiting check by IP
+    const clientIP = getClientIP(req);
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, clientIP, 'search-leads', 30, 60);
+    
+    if (!rateLimitResult.allowed) {
+      console.log('Rate limit exceeded for IP:', clientIP);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Muitas requisições. Aguarde alguns segundos.',
+          retryAfter: rateLimitResult.retryAfter
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          } 
+        }
+      );
+    }
+
     // Check if we have any API keys configured
     if (SERP_API_KEYS.length === 0) {
       console.error('No SERP API keys configured');

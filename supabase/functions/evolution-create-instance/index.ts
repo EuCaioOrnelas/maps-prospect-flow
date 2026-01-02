@@ -6,6 +6,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Get client IP from request
+function getClientIP(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+         req.headers.get('x-real-ip') || 
+         'unknown';
+}
+
+// Rate limiting helper
+async function checkRateLimit(
+  supabase: any, 
+  identifier: string, 
+  endpoint: string,
+  maxRequests: number = 5,
+  windowSeconds: number = 60
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  try {
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_endpoint: endpoint,
+      p_max_requests: maxRequests,
+      p_window_seconds: windowSeconds
+    });
+    
+    if (error) {
+      console.error('Rate limit check error:', error);
+      return { allowed: true };
+    }
+    
+    return { 
+      allowed: data?.allowed !== false,
+      retryAfter: data?.retry_after
+    };
+  } catch (e) {
+    console.error('Rate limit exception:', e);
+    return { allowed: true };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,12 +59,34 @@ serve(async (req) => {
       throw new Error('Evolution API credentials not configured');
     }
 
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    // Rate limiting check (5 requests per minute for instance creation)
+    const clientIP = getClientIP(req);
+    const rateLimitResult = await checkRateLimit(supabase, clientIP, 'evolution-create-instance', 5, 60);
+    
+    if (!rateLimitResult.allowed) {
+      console.log('Rate limit exceeded for IP:', clientIP);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Muitas requisições. Aguarde alguns segundos.',
+          retryAfter: rateLimitResult.retryAfter
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          } 
+        }
+      );
+    }
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
     }
-
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
     // Get user from token
     const token = authHeader.replace('Bearer ', '');
