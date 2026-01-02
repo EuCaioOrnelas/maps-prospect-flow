@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, MessageSquare, Search, Smartphone, Gift } from "lucide-react";
+import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -467,66 +467,7 @@ const Upgrade = () => {
           </div>
         </div>
 
-        {/* Free Trial Section */}
-        <div className="max-w-3xl mx-auto mt-16 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-muted/50 border border-primary/20 p-8">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
-            
-            <div className="relative z-10 text-center">
-              <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                <Gift className="h-4 w-4" />
-                Teste Gratuito por 30 dias
-              </div>
-              
-              <h3 className="font-display text-2xl font-bold text-foreground mb-2">
-                Experimente antes de assinar
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                Teste todas as funcionalidades da Prospex gratuitamente durante 30 dias
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                    <Search className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-foreground">10 buscas</p>
-                    <p className="text-xs text-muted-foreground">grátis</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-foreground">400 disparos</p>
-                    <p className="text-xs text-muted-foreground">grátis</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                    <Smartphone className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-foreground">1 número</p>
-                    <p className="text-xs text-muted-foreground">WhatsApp</p>
-                  </div>
-                </div>
-              </div>
-              
-              <p className="text-xs text-muted-foreground mt-4">
-                * Válido apenas durante os 30 dias do período de teste
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-center text-muted-foreground mt-12 text-sm animate-fade-in" style={{ animationDelay: '0.7s' }}>
+        <p className="text-center text-muted-foreground mt-12 text-sm animate-fade-in" style={{ animationDelay: '0.6s' }}>
           Dúvidas? Entre em contato com nosso suporte.
         </p>
       </main>
