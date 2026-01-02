@@ -468,6 +468,19 @@ const UserInsights = () => {
                 <Download size={16} />
                 Exportar CSV
               </Button>
+
+              {/* Filtered users counter */}
+              {(emailFilter || profileFilter !== "all" || dateFilter !== "all" || statusFilter !== "all") && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm">
+                  <Users size={14} />
+                  <span>
+                    {new Set([
+                      ...filteredOnboarding.map(d => d.user_id),
+                      ...filteredFeedback.map(d => d.user_id)
+                    ]).size} usuários encontrados
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Summary Stats */}
