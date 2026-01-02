@@ -13,5 +13,5 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://prospex.com.br/sitemap.xml
+Sitemap: https://wiizeprospect.com.br/sitemap.xml
 Allow: /

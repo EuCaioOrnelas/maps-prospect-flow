@@ -60,7 +60,7 @@ serve(async (req) => {
           // Update the whatsapp_numbers table based on connection state
           if (state === 'close' || state === 'connecting') {
             // Find and update the number by matching instance name pattern
-            // Instance names are like: prospex_userid_timestamp_random
+            // Instance names are like: wiizeprospect_userid_timestamp_random
             const { error } = await supabase
               .from('whatsapp_numbers')
               .update({ 

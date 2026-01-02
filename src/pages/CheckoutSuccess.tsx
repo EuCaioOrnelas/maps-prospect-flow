@@ -327,7 +327,7 @@ const CheckoutSuccess = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4 }}
         >
-          Obrigado por escolher a Prospex! 💚
+          Obrigado por escolher a WiizeProspect! 💚
         </motion.p>
       </main>
     </div>

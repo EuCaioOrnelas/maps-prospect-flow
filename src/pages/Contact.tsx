@@ -38,8 +38,8 @@ const Contact = () => {
     <>
       <SEO 
         title="Contato"
-        description="Entre em contato com a equipe Prospex. Estamos aqui para ajudar com suas dúvidas sobre prospecção de leads."
-        keywords="contato, suporte, ajuda, atendimento, prospex"
+        description="Entre em contato com a equipe WiizeProspect. Estamos aqui para ajudar com suas dúvidas sobre prospecção de leads."
+        keywords="contato, suporte, ajuda, atendimento, wiizeprospect"
       />
       <div className="min-h-screen bg-background">
         {/* Background decorations with glow */}
@@ -172,7 +172,7 @@ const Contact = () => {
                   src="https://typebot.co/my-typebot-obap8ag"
                   style={{ border: "none", width: "100%", height: "350px" }}
                   className="bg-card sm:h-[400px] md:h-[450px]"
-                  title="Assistente Virtual Prospex"
+                  title="Assistente Virtual WiizeProspect"
                 />
               </div>
             </motion.div>

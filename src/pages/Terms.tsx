@@ -11,8 +11,8 @@ const Terms = () => {
     <>
       <SEO 
         title="Termos de Uso"
-        description="Leia os Termos de Uso da plataforma Prospex. Saiba como usar nossos serviços de prospecção de leads de forma ética e legal."
-        keywords="termos de uso, termos de serviço, regras, prospex"
+        description="Leia os Termos de Uso da plataforma WiizeProspect. Saiba como usar nossos serviços de prospecção de leads de forma ética e legal."
+        keywords="termos de uso, termos de serviço, regras, wiizeprospect"
       />
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -49,7 +49,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">1. Aceitação dos Termos</h2>
               <p>
-                Ao acessar e usar a plataforma Prospex, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
+                Ao acessar e usar a plataforma WiizeProspect, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
                 Se você não concordar com qualquer parte destes termos, não deverá usar nossos serviços.
               </p>
             </section>
@@ -57,7 +57,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">2. Descrição do Serviço</h2>
               <p>
-                O Prospex é uma plataforma de geração de leads que permite aos usuários buscar e coletar informações 
+                O WiizeProspect é uma plataforma de geração de leads que permite aos usuários buscar e coletar informações 
                 de empresas e contatos comerciais disponíveis publicamente na internet para fins de prospecção comercial.
               </p>
             </section>
@@ -93,7 +93,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Propriedade Intelectual</h2>
               <p>
-                Todo o conteúdo, marcas, logos e software da plataforma são de propriedade exclusiva do Prospex. 
+                Todo o conteúdo, marcas, logos e software da plataforma são de propriedade exclusiva do WiizeProspect. 
                 É proibida a reprodução sem autorização prévia.
               </p>
             </section>
@@ -101,7 +101,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Limitação de Responsabilidade</h2>
               <p>
-                O Prospex não se responsabiliza por danos indiretos, incidentais ou consequentes resultantes do uso 
+                O WiizeProspect não se responsabiliza por danos indiretos, incidentais ou consequentes resultantes do uso 
                 ou impossibilidade de uso do serviço. Os dados fornecidos são obtidos de fontes públicas e podem 
                 conter imprecisões.
               </p>

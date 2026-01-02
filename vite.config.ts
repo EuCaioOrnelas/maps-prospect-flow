@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
-        name: "Prospex - Prospecção Inteligente",
-        short_name: "Prospex",
+        name: "WiizeProspect - Prospecção Inteligente",
+        short_name: "WiizeProspect",
         description: "Encontre leads estratégicos com IA para prospectar novos clientes",
         theme_color: "#22c55e",
         background_color: "#0a0a0a",
