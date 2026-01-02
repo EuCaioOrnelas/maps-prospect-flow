@@ -246,6 +246,17 @@ const Dashboard = () => {
             description: data.message,
             variant: "destructive",
           });
+        } else if (data.allKeysExhausted || data.redirectToContact) {
+          toast({
+            title: "Serviço temporariamente indisponível",
+            description: data.message,
+            variant: "destructive",
+            duration: 8000,
+          });
+          // Redirect to contact page after a short delay
+          setTimeout(() => {
+            navigate("/contact");
+          }, 2000);
         } else {
           throw new Error(data.error);
         }

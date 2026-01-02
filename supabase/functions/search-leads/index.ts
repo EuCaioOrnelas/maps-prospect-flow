@@ -201,7 +201,9 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               error: 'Limite de API atingido',
-              message: 'Todas as chaves de API atingiram o limite. Tente novamente mais tarde.'
+              message: 'Nosso serviço de buscas está temporariamente indisponível. Por favor, entre em contato com nosso suporte para resolvermos isso rapidamente.',
+              allKeysExhausted: true,
+              redirectToContact: true
             }),
             { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
