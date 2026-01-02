@@ -39,6 +39,7 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
+  Key,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -84,12 +85,19 @@ interface Stats {
   payingUsers: number;
 }
 
+interface ApiKeyStatus {
+  name: string;
+  status: 'ok' | 'warning' | 'error' | 'unknown';
+  message: string;
+}
+
 interface ApiStatus {
   serpApi: {
     status: 'ok' | 'warning' | 'error';
     message: string;
     lastCheck: Date;
     errorCount: number;
+    keys: ApiKeyStatus[];
   };
   evolutionApi: {
     status: 'ok' | 'warning' | 'error';
@@ -111,7 +119,18 @@ const Admin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
-    serpApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
+    serpApi: { 
+      status: 'ok', 
+      message: 'Funcionando normalmente', 
+      lastCheck: new Date(), 
+      errorCount: 0,
+      keys: [
+        { name: 'Chave 1 (Principal)', status: 'unknown', message: 'Não verificada' },
+        { name: 'Chave 2 (Backup)', status: 'unknown', message: 'Não verificada' },
+        { name: 'Chave 3 (Backup)', status: 'unknown', message: 'Não verificada' },
+        { name: 'Chave 4 (Backup)', status: 'unknown', message: 'Não verificada' },
+      ]
+    },
     evolutionApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
@@ -144,6 +163,7 @@ const Admin = () => {
         setApiStatus(prev => ({
           ...prev,
           serpApi: {
+            ...prev.serpApi,
             status: 'ok',
             message: 'Funcionando normalmente',
             lastCheck: new Date(),
@@ -154,6 +174,7 @@ const Admin = () => {
         setApiStatus(prev => ({
           ...prev,
           serpApi: {
+            ...prev.serpApi,
             status: 'ok',
             message: 'Sem buscas recentes para verificar',
             lastCheck: new Date(),
@@ -166,6 +187,7 @@ const Admin = () => {
       setApiStatus(prev => ({
         ...prev,
         serpApi: {
+          ...prev.serpApi,
           status: 'warning',
           message: 'Não foi possível verificar',
           lastCheck: new Date(),
@@ -554,7 +576,8 @@ const Admin = () => {
                 Verificar
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+              {/* SerpAPI Status Card */}
               <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.serpApi.status)} animate-fade-in`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -571,6 +594,38 @@ const Admin = () => {
                 </p>
               </div>
 
+              {/* SerpAPI Keys Monitoring */}
+              <div className="rounded-xl p-4 border border-border bg-card animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Key size={18} className="text-primary" />
+                  <span className="font-semibold">Chaves SerpAPI</span>
+                  <span className="text-xs text-muted-foreground ml-auto">4 chaves configuradas</span>
+                </div>
+                <div className="space-y-2">
+                  {apiStatus.serpApi.keys.map((key, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{key.name}</span>
+                      <span className={`flex items-center gap-1 ${
+                        key.status === 'ok' ? 'text-success' : 
+                        key.status === 'error' ? 'text-destructive' : 
+                        key.status === 'warning' ? 'text-warning' : 
+                        'text-muted-foreground'
+                      }`}>
+                        {key.status === 'ok' && <CheckCircle2 size={12} />}
+                        {key.status === 'error' && <XCircle size={12} />}
+                        {key.status === 'warning' && <AlertTriangle size={12} />}
+                        {key.status === 'unknown' && <span className="w-2 h-2 rounded-full bg-muted-foreground" />}
+                        <span className="text-xs">{key.message}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs mt-3 text-muted-foreground">
+                  Sistema usa fallback automático quando uma chave atinge o limite
+                </p>
+              </div>
+
+              {/* Evolution API Status Card */}
               <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.evolutionApi.status)} animate-fade-in`} style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
