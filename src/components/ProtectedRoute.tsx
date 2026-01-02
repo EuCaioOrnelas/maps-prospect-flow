@@ -1,16 +1,19 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Loader2, ShieldX } from 'lucide-react';
+import { Loader2, ShieldX, ShieldAlert } from 'lucide-react';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
   const { user, loading, isTrialExpired, profile, isBlocked, signOut } = useAuth();
+  const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
 
-  if (loading) {
+  if (loading || (requireAdmin && isAdminLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -46,6 +49,31 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           >
             Sair
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Block access for non-admin users on admin routes
+  if (requireAdmin && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md text-center space-y-6">
+          <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
+            <ShieldAlert size={32} className="text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground">Acesso Negado</h1>
+            <p className="text-muted-foreground">
+              Você não tem permissão para acessar esta página.
+            </p>
+          </div>
+          <a
+            href="/dashboard"
+            className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Voltar ao Dashboard
+          </a>
         </div>
       </div>
     );
