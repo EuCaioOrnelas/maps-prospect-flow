@@ -32,8 +32,8 @@ const Signup = () => {
     
     if (!isPasswordStrong(password)) {
       toast({
-        title: "Senha fraca",
-        description: "A senha deve ter no mínimo 8 caracteres, letra maiúscula, minúscula e número.",
+        title: "Senha muito fraca",
+        description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
         variant: "destructive",
       });
       return;

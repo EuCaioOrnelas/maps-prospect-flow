@@ -80,10 +80,17 @@ export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
 };
 
 export const isPasswordStrong = (password: string): boolean => {
-  return (
-    password.length >= 8 &&
-    /[A-Z]/.test(password) &&
-    /[a-z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
+  // Calcular quantos critérios a senha atende
+  const criteria = [
+    password.length >= 8,
+    /[A-Z]/.test(password),
+    /[a-z]/.test(password),
+    /[0-9]/.test(password),
+    /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  ];
+  
+  const metCount = criteria.filter(Boolean).length;
+  
+  // Exigir pelo menos 4 critérios (senha média ou forte)
+  return metCount >= 4;
 };
