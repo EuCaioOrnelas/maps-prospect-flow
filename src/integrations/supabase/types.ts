@@ -58,6 +58,7 @@ export type Database = {
           email: string
           fraud_flags: Json | null
           id: string
+          is_blocked: boolean | null
           last_searches_reset: string | null
           name: string | null
           plan: string
@@ -75,6 +76,7 @@ export type Database = {
           email: string
           fraud_flags?: Json | null
           id: string
+          is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
           plan?: string
@@ -92,6 +94,7 @@ export type Database = {
           email?: string
           fraud_flags?: Json | null
           id?: string
+          is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
           plan?: string
@@ -420,6 +423,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_current_user_admin: { Args: never; Returns: boolean }
+      is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

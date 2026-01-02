@@ -44,15 +44,22 @@ import {
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-// Email autorizado para acessar o admin (não conta no MRR)
-const ADMIN_EMAIL = "caiowiize@gmail.com";
-
 // Preços dos planos para cálculo de MRR
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
   start: 97,
   growth: 247,
   scale: 497,
+};
+
+// Função para verificar admin via banco de dados (seguro)
+const checkIsAdmin = async (): Promise<boolean> => {
+  const { data, error } = await supabase.rpc('is_current_user_admin');
+  if (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+  return data === true;
 };
 
 const PLAN_COLORS: { [key: string]: string } = {
@@ -309,8 +316,10 @@ const Admin = () => {
       return;
     }
 
-    // Verificar se é o email autorizado
-    if (profile.email !== ADMIN_EMAIL) {
+    // Verificar admin status via banco de dados (seguro contra manipulação)
+    const isAdminUser = await checkIsAdmin();
+    
+    if (!isAdminUser) {
       toast({
         title: "Acesso negado",
         description: "Você não tem permissão para acessar esta página.",
@@ -341,8 +350,9 @@ const Admin = () => {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Filtrar admin do cálculo de MRR
-      const payingUsersData = usersData?.filter(u => u.email !== ADMIN_EMAIL) || [];
+      // Filtrar admins do cálculo de MRR (usuários com role admin)
+      // Para simplificar, filtrar quem tem plano free como indicador
+      const payingUsersData = usersData?.filter(u => u.plan !== 'free') || [];
 
       // Calculate stats
       const totalUsers = usersData?.length || 0;
@@ -903,16 +913,13 @@ const Admin = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredUsers.map((u) => (
-                        <TableRow key={u.id} className={u.email === ADMIN_EMAIL ? 'bg-primary/5' : ''}>
+                        <TableRow key={u.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div>
                                 <p className="font-medium">{u.name || '-'}</p>
                                 <p className="text-sm text-muted-foreground">{u.email}</p>
                               </div>
-                              {u.email === ADMIN_EMAIL && (
-                                <Crown size={14} className="text-primary" />
-                              )}
                             </div>
                           </TableCell>
                           <TableCell>
