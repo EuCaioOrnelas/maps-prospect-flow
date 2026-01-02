@@ -687,6 +687,47 @@ const WhatsAppCampaign = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Free Trial Indicator */}
+        {isFreePlan && !isTrialExpired && (
+          <div className="max-w-4xl mx-auto mb-6">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Disparos Gratuitos</p>
+                    <p className="text-xs text-muted-foreground">Período de teste (30 dias)</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 sm:flex-none">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-bold text-foreground">{trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {remainingTrialMessages} restantes
+                      </span>
+                    </div>
+                    <div className="w-full sm:w-48 h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9 
+                            ? 'bg-destructive' 
+                            : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7 
+                              ? 'bg-yellow-500' 
+                              : 'bg-primary'
+                        }`}
+                        style={{ width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto">
           {step !== 'running' && (
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'active' | 'history')} className="mb-8">
