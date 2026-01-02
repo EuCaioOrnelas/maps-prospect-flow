@@ -47,7 +47,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from 'recharts';
+import { startOfWeek, format, subWeeks } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const ADMIN_EMAIL = "caiowiize@gmail.com";
 
@@ -328,6 +330,38 @@ const UserInsights = () => {
     ? ((convertedCount / filteredFeedback.length) * 100).toFixed(1)
     : 0;
 
+  // Weekly trend data (last 12 weeks)
+  const weeklyTrendData = (() => {
+    const weeks: { week: string; onboardings: number; weekStart: Date }[] = [];
+    const now = new Date();
+    
+    // Generate last 12 weeks
+    for (let i = 11; i >= 0; i--) {
+      const weekStart = startOfWeek(subWeeks(now, i), { weekStartsOn: 0 });
+      weeks.push({
+        week: format(weekStart, 'dd/MM', { locale: ptBR }),
+        weekStart,
+        onboardings: 0
+      });
+    }
+    
+    // Count onboardings per week
+    filteredOnboarding.forEach(d => {
+      const date = new Date(d.created_at);
+      const weekStart = startOfWeek(date, { weekStartsOn: 0 });
+      
+      const weekEntry = weeks.find(w => 
+        w.weekStart.getTime() === weekStart.getTime()
+      );
+      
+      if (weekEntry) {
+        weekEntry.onboardings++;
+      }
+    });
+    
+    return weeks.map(({ week, onboardings }) => ({ week, onboardings }));
+  })();
+
   // Pagination for all responses
   const allResponses = [
     ...filteredOnboarding.map(d => ({ type: 'onboarding' as const, data: d, date: d.created_at })),
@@ -534,6 +568,48 @@ const UserInsights = () => {
                 <p className="text-xs text-muted-foreground">
                   {profileChartData[0]?.value || 0} usuários
                 </p>
+              </div>
+            </div>
+
+            {/* Weekly Trend Chart */}
+            <div className="glass rounded-xl p-6 mb-8 animate-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp size={20} className="text-primary" />
+                <h3 className="font-semibold">Evolução Semanal de Onboardings</h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weeklyTrendData}>
+                    <defs>
+                      <linearGradient id="colorOnboarding" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(220 13% 18%)', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--foreground))'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      cursor={{ fill: 'hsl(220 13% 25% / 0.5)' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="onboardings" 
+                      stroke="hsl(var(--primary))" 
+                      fillOpacity={1} 
+                      fill="url(#colorOnboarding)" 
+                      name="Onboardings"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
