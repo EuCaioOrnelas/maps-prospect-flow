@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Loader2 } from "lucide-react";
+import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, Gift, Search, MessageSquare, Smartphone } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "./EmailCaptureModal";
-
 const PRICE_IDS = {
   start: "price_1SkEsEK8CM0R6xMM9Y1ip21w",
   growth: "price_1SkEsZK8CM0R6xMMr0B2gEP1",
@@ -27,7 +26,8 @@ const plans = [
       "Download em Excel",
       "Dados completos dos leads",
       "Suporte por email",
-      "1 número WhatsApp (200 disparos/dia)",
+      "1 número WhatsApp",
+      "Até 6.000 disparos/mês",
     ],
     popular: false,
   },
@@ -45,7 +45,8 @@ const plans = [
       "Dados completos dos leads",
       "Suporte prioritário",
       "Relatório de uso mensal",
-      "2 números WhatsApp (200 disparos/dia cada)",
+      "2 números WhatsApp",
+      "Até 12.000 disparos/mês",
     ],
     popular: true,
   },
@@ -64,7 +65,8 @@ const plans = [
       "Suporte VIP",
       "Relatório de uso mensal",
       "API access (em breve)",
-      "5 números WhatsApp (200 disparos/dia cada)",
+      "5 números WhatsApp",
+      "Até 30.000 disparos/mês",
     ],
     popular: false,
   },
@@ -222,14 +224,105 @@ export const PricingSection = () => {
             ))}
           </div>
 
-          <p 
-            className={`text-center text-muted-foreground mt-12 text-sm sm:text-base transition-all duration-700 delay-500 ${
+          {/* Guarantee Section */}
+          <div 
+            className={`grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 transition-all duration-700 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            Todos os planos incluem 10 buscas grátis para testar.
-            Cancele quando quiser.
-          </p>
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">100% Seguro</p>
+                <p className="text-sm text-muted-foreground">Pagamento via Stripe</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                <Clock className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Cancele quando quiser</p>
+                <p className="text-sm text-muted-foreground">Sem fidelidade</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Garantia 7 dias</p>
+                <p className="text-sm text-muted-foreground">Devolução sem burocracia</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Free Trial Section */}
+          <div 
+            className={`max-w-3xl mx-auto mt-16 transition-all duration-700 delay-600 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-muted/50 border border-primary/20 p-8">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
+              
+              <div className="relative z-10 text-center">
+                <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                  <Gift className="h-4 w-4" />
+                  Teste Gratuito por 30 dias
+                </div>
+                
+                <h3 className="font-display text-2xl font-bold text-foreground mb-2">
+                  Experimente antes de assinar
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+                  Teste todas as funcionalidades da Prospex gratuitamente durante 30 dias
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                      <Search className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-foreground">10 buscas</p>
+                      <p className="text-xs text-muted-foreground">grátis</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-foreground">400 disparos</p>
+                      <p className="text-xs text-muted-foreground">grátis</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-background/80 border border-border/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-foreground">1 número</p>
+                      <p className="text-xs text-muted-foreground">WhatsApp</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-muted-foreground mt-4">
+                  * Válido apenas durante os 30 dias do período de teste
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
