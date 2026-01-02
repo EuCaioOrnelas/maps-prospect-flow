@@ -7,7 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SERP_API_KEY = Deno.env.get('SERP_API_KEY');
+// Multiple API keys for fallback
+const SERP_API_KEYS = [
+  Deno.env.get('SERP_API_KEY'),
+  Deno.env.get('SERP_API_KEY_2'),
+  Deno.env.get('SERP_API_KEY_3'),
+  Deno.env.get('SERP_API_KEY_4'),
+].filter(key => key && key.trim() !== '');
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -23,6 +30,67 @@ interface Lead {
   mapsLink: string;
 }
 
+// Helper function to check if API key has reached its limit
+function isApiKeyExhausted(response: Response, responseData: any): boolean {
+  // SerpAPI returns 429 or specific error messages when limit is reached
+  if (response.status === 429) {
+    return true;
+  }
+  
+  // Check for limit-related error messages
+  if (responseData?.error) {
+    const errorMsg = responseData.error.toLowerCase();
+    if (
+      errorMsg.includes('limit') || 
+      errorMsg.includes('quota') || 
+      errorMsg.includes('exceeded') ||
+      errorMsg.includes('monthly') ||
+      errorMsg.includes('searches')
+    ) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Function to make API call with fallback between keys
+async function fetchWithFallback(searchQuery: string, startIndex: number): Promise<{ response: Response; data: any; keyIndex: number } | null> {
+  for (let keyIndex = 0; keyIndex < SERP_API_KEYS.length; keyIndex++) {
+    const apiKey = SERP_API_KEYS[keyIndex];
+    const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${searchQuery}&api_key=${apiKey}&hl=pt-br&gl=br&start=${startIndex}`;
+    
+    console.log(`Trying API key ${keyIndex + 1}/${SERP_API_KEYS.length} (start=${startIndex})...`);
+    
+    try {
+      const response = await fetch(serpUrl);
+      const data = await response.json();
+      
+      // Check if this key is exhausted
+      if (isApiKeyExhausted(response, data)) {
+        console.warn(`API key ${keyIndex + 1} exhausted, trying next key...`);
+        continue;
+      }
+      
+      // If request was successful, return the result
+      if (response.ok) {
+        console.log(`API key ${keyIndex + 1} worked successfully`);
+        return { response, data, keyIndex };
+      }
+      
+      // For other errors (not limit-related), log and try next key
+      console.error(`API key ${keyIndex + 1} returned error: ${response.status}`);
+      
+    } catch (error) {
+      console.error(`API key ${keyIndex + 1} network error:`, error);
+    }
+  }
+  
+  // All keys failed
+  console.error('All API keys exhausted or failed');
+  return null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -30,6 +98,17 @@ serve(async (req) => {
   }
 
   try {
+    // Check if we have any API keys configured
+    if (SERP_API_KEYS.length === 0) {
+      console.error('No SERP API keys configured');
+      return new Response(
+        JSON.stringify({ error: 'Configuração do servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Loaded ${SERP_API_KEYS.length} API keys for fallback`);
+
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -107,29 +186,31 @@ serve(async (req) => {
     const seenPlaceIds = new Set<string>();
     const seenNames = new Set<string>();
     
-    console.log(`Calling SERP API... Will fetch up to ${pagesToFetch} pages`);
+    console.log(`Will fetch up to ${pagesToFetch} pages with ${SERP_API_KEYS.length} API keys available`);
     
     for (let page = 0; page < pagesToFetch && allResults.length < maxLeads; page++) {
       const startIndex = page * resultsPerPage;
-      const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${searchQuery}&api_key=${SERP_API_KEY}&hl=pt-br&gl=br&start=${startIndex}`;
       
       console.log(`Fetching page ${page + 1} (start=${startIndex})...`);
-      const serpResponse = await fetch(serpUrl);
       
-      if (!serpResponse.ok) {
-        console.error('SERP API error:', serpResponse.status, serpResponse.statusText);
+      const result = await fetchWithFallback(searchQuery, startIndex);
+      
+      if (!result) {
+        console.error('All API keys exhausted for this request');
         if (page === 0) {
           return new Response(
-            JSON.stringify({ error: 'Erro ao buscar dados do Google Maps' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ 
+              error: 'Limite de API atingido',
+              message: 'Todas as chaves de API atingiram o limite. Tente novamente mais tarde.'
+            }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
         break;
       }
 
-      const serpData = await serpResponse.json();
-      const pageResults = serpData.local_results || [];
-      console.log(`Page ${page + 1}: received ${pageResults.length} results`);
+      const pageResults = result.data.local_results || [];
+      console.log(`Page ${page + 1}: received ${pageResults.length} results (using key ${result.keyIndex + 1})`);
       
       if (pageResults.length === 0) {
         console.log('No more results available, stopping pagination');
@@ -137,20 +218,20 @@ serve(async (req) => {
       }
       
       // Deduplicate results by place_id and name
-      for (const result of pageResults) {
-        const placeId = result.place_id || '';
-        const name = (result.title || '').toLowerCase().trim();
+      for (const item of pageResults) {
+        const placeId = item.place_id || '';
+        const name = (item.title || '').toLowerCase().trim();
         
         // Skip if we've seen this place_id or name
         if ((placeId && seenPlaceIds.has(placeId)) || (name && seenNames.has(name))) {
-          console.log(`Skipping duplicate: ${result.title}`);
+          console.log(`Skipping duplicate: ${item.title}`);
           continue;
         }
         
         if (placeId) seenPlaceIds.add(placeId);
         if (name) seenNames.add(name);
         
-        allResults.push(result);
+        allResults.push(item);
         
         if (allResults.length >= maxLeads) break;
       }
