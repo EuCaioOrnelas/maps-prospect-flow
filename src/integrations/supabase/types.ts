@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_key_status: {
+        Row: {
+          created_at: string
+          error_details: string | null
+          id: string
+          key_index: number
+          key_name: string
+          last_checked_at: string
+          message: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_details?: string | null
+          id?: string
+          key_index: number
+          key_name: string
+          last_checked_at?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_details?: string | null
+          id?: string
+          key_index?: number
+          key_name?: string
+          last_checked_at?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

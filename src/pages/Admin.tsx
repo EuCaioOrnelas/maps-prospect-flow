@@ -87,7 +87,7 @@ interface Stats {
 
 interface ApiKeyStatus {
   name: string;
-  status: 'ok' | 'warning' | 'error' | 'unknown';
+  status: 'ok' | 'warning' | 'error' | 'unknown' | 'exhausted' | 'not_configured';
   message: string;
 }
 
@@ -136,66 +136,108 @@ const Admin = () => {
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
   const [checkingApis, setCheckingApis] = useState(false);
 
-  // Monitoramento manual das APIs (não automático para evitar falsos positivos)
-  const checkApiStatus = useCallback(async () => {
+  // Load API key status from database
+  const loadApiKeyStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('api_key_status')
+        .select('*')
+        .order('key_index', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading API key status:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const keys: ApiKeyStatus[] = data.map(item => ({
+          name: `Chave ${item.key_index} ${item.key_index === 1 ? '(Principal)' : '(Backup)'}`,
+          status: item.status as 'ok' | 'warning' | 'error' | 'unknown',
+          message: item.message || 'Status desconhecido',
+        }));
+        
+        // Calculate overall status
+        const okCount = keys.filter(k => k.status === 'ok').length;
+        const errorCount = keys.filter(k => k.status === 'error' || k.status === 'exhausted').length;
+        
+        let overallStatus: 'ok' | 'warning' | 'error' = 'ok';
+        let overallMessage = 'Funcionando normalmente';
+        
+        if (okCount === 0) {
+          overallStatus = 'error';
+          overallMessage = 'Todas as chaves indisponíveis!';
+        } else if (errorCount > 0) {
+          overallStatus = 'warning';
+          overallMessage = `${okCount} chave(s) funcionando`;
+        }
+        
+        const lastCheck = data[0]?.last_checked_at ? new Date(data[0].last_checked_at) : new Date();
+        
+        setApiStatus(prev => ({
+          ...prev,
+          serpApi: {
+            ...prev.serpApi,
+            status: overallStatus,
+            message: overallMessage,
+            lastCheck,
+            keys,
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading API key status:', error);
+    }
+  }, []);
+
+  // Run the check-serp-keys edge function
+  const runKeyCheck = useCallback(async () => {
     setCheckingApis(true);
     
-    // Check SerpAPI - verificar se a resposta é bem sucedida
     try {
       setApiStatus(prev => ({
         ...prev,
         serpApi: {
           ...prev.serpApi,
-          message: 'Verificando...',
-          lastCheck: new Date(),
+          message: 'Verificando chaves...',
         }
       }));
       
-      // A SerpAPI está ok se conseguimos fazer buscas normalmente
-      // Vamos verificar pelos logs de erro recentes no banco
-      const { data: recentSearches, error: searchError } = await supabase
-        .from('search_history')
-        .select('created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const { data, error } = await supabase.functions.invoke('check-serp-keys');
       
-      if (!searchError && recentSearches && recentSearches.length > 0) {
-        setApiStatus(prev => ({
-          ...prev,
-          serpApi: {
-            ...prev.serpApi,
-            status: 'ok',
-            message: 'Funcionando normalmente',
-            lastCheck: new Date(),
-            errorCount: 0,
-          }
-        }));
+      if (error) {
+        throw error;
+      }
+      
+      if (data?.success) {
+        toast({
+          title: "Verificação concluída",
+          description: data.overallMessage,
+        });
+        
+        // Reload status from database
+        await loadApiKeyStatus();
       } else {
-        setApiStatus(prev => ({
-          ...prev,
-          serpApi: {
-            ...prev.serpApi,
-            status: 'ok',
-            message: 'Sem buscas recentes para verificar',
-            lastCheck: new Date(),
-            errorCount: 0,
-          }
-        }));
+        throw new Error(data?.error || 'Erro na verificação');
       }
     } catch (error) {
-      console.log('SerpAPI check error:', error);
-      setApiStatus(prev => ({
-        ...prev,
-        serpApi: {
-          ...prev.serpApi,
-          status: 'warning',
-          message: 'Não foi possível verificar',
-          lastCheck: new Date(),
-          errorCount: prev.serpApi.errorCount + 1,
-        }
-      }));
+      console.error('Error checking keys:', error);
+      toast({
+        title: "Erro na verificação",
+        description: "Não foi possível verificar as chaves",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingApis(false);
     }
+  }, [toast, loadApiKeyStatus]);
 
+  // Monitoramento manual das APIs
+  const checkApiStatus = useCallback(async () => {
+    setCheckingApis(true);
+    
+    // Run the edge function to check SerpAPI keys
+    await runKeyCheck();
+    
     // Check Evolution API - verificar números conectados
     try {
       setApiStatus(prev => ({
@@ -252,7 +294,7 @@ const Admin = () => {
     }
     
     setCheckingApis(false);
-  }, []);
+  }, [runKeyCheck]);
 
   useEffect(() => {
     checkAdminAndLoad();
@@ -280,6 +322,7 @@ const Admin = () => {
 
     setIsAdmin(true);
     await loadData();
+    await loadApiKeyStatus();
   };
 
   const loadData = async () => {
@@ -607,13 +650,14 @@ const Admin = () => {
                       <span className="text-muted-foreground">{key.name}</span>
                       <span className={`flex items-center gap-1 ${
                         key.status === 'ok' ? 'text-success' : 
-                        key.status === 'error' ? 'text-destructive' : 
+                        key.status === 'error' || key.status === 'not_configured' ? 'text-destructive' : 
+                        key.status === 'exhausted' ? 'text-warning' : 
                         key.status === 'warning' ? 'text-warning' : 
                         'text-muted-foreground'
                       }`}>
                         {key.status === 'ok' && <CheckCircle2 size={12} />}
-                        {key.status === 'error' && <XCircle size={12} />}
-                        {key.status === 'warning' && <AlertTriangle size={12} />}
+                        {(key.status === 'error' || key.status === 'not_configured') && <XCircle size={12} />}
+                        {(key.status === 'warning' || key.status === 'exhausted') && <AlertTriangle size={12} />}
                         {key.status === 'unknown' && <span className="w-2 h-2 rounded-full bg-muted-foreground" />}
                         <span className="text-xs">{key.message}</span>
                       </span>
