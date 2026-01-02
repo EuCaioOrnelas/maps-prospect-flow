@@ -110,6 +110,8 @@ const UserInsights = () => {
   // Filters
   const [dateFilter, setDateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [emailFilter, setEmailFilter] = useState("");
+  const [profileFilter, setProfileFilter] = useState("all");
   
   // Pagination for responses
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,6 +183,9 @@ const UserInsights = () => {
     }
   };
 
+  // Get unique profiles for filter dropdown
+  const uniqueProfiles = [...new Set(onboardingData.filter(d => !d.skipped).map(d => d.user_profile))];
+
   // Calculate statistics
   const getFilteredData = () => {
     let filteredOnboarding = [...onboardingData];
@@ -211,6 +216,28 @@ const UserInsights = () => {
       } else if (statusFilter === "not_converted") {
         filteredFeedback = filteredFeedback.filter(f => !convertedUserIds.has(f.user_id));
       }
+    }
+
+    // Email filter
+    if (emailFilter.trim()) {
+      const searchTerm = emailFilter.toLowerCase().trim();
+      const matchingUserIds = new Set(
+        Object.values(userProfiles)
+          .filter(p => p.email.toLowerCase().includes(searchTerm))
+          .map(p => p.id)
+      );
+      filteredOnboarding = filteredOnboarding.filter(d => matchingUserIds.has(d.user_id));
+      filteredFeedback = filteredFeedback.filter(d => matchingUserIds.has(d.user_id));
+    }
+
+    // Profile filter
+    if (profileFilter !== "all") {
+      filteredOnboarding = filteredOnboarding.filter(d => d.user_profile === profileFilter);
+      // For feedback, filter by user IDs that have that profile
+      const matchingUserIds = new Set(
+        onboardingData.filter(d => d.user_profile === profileFilter).map(d => d.user_id)
+      );
+      filteredFeedback = filteredFeedback.filter(d => matchingUserIds.has(d.user_id));
     }
 
     return { filteredOnboarding, filteredFeedback };
@@ -416,6 +443,27 @@ const UserInsights = () => {
                 </SelectContent>
               </Select>
 
+              <Input
+                placeholder="Buscar por email..."
+                value={emailFilter}
+                onChange={(e) => setEmailFilter(e.target.value)}
+                className="w-48"
+              />
+
+              <Select value={profileFilter} onValueChange={setProfileFilter}>
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Filtrar por perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os perfis</SelectItem>
+                  {uniqueProfiles.map((profile) => (
+                    <SelectItem key={profile} value={profile}>
+                      {profile.length > 25 ? profile.substring(0, 25) + '...' : profile}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Button variant="outline" onClick={exportToCSV} className="gap-2">
                 <Download size={16} />
                 Exportar CSV
@@ -545,6 +593,7 @@ const UserInsights = () => {
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        cursor={{ fill: 'hsl(220 13% 25% / 0.5)' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -573,6 +622,7 @@ const UserInsights = () => {
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        cursor={{ fill: 'hsl(220 13% 25% / 0.5)' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -602,6 +652,7 @@ const UserInsights = () => {
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        cursor={{ fill: 'hsl(220 13% 25% / 0.5)' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
                     </BarChart>
