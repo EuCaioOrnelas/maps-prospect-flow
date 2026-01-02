@@ -153,14 +153,14 @@ export const PricingSection = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center">
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-500 hover:-translate-y-2 ${
+                className={`relative rounded-2xl transition-all duration-500 hover:-translate-y-2 ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow"
-                    : "glass"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-7 sm:p-9 md:scale-105 md:z-10"
+                    : "glass p-5 sm:p-7 md:scale-95"
                 } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                 style={{ transitionDelay: `${150 + index * 100}ms` }}
               >
@@ -174,31 +174,31 @@ export const PricingSection = () => {
                 )}
 
                 <div className="mb-6">
-                  <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-muted-foreground text-sm">{plan.description}</p>
+                  <h3 className={`font-display font-bold mb-2 ${plan.popular ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'}`}>{plan.name}</h3>
+                  <p className={`text-muted-foreground ${plan.popular ? 'text-sm' : 'text-xs sm:text-sm'}`}>{plan.description}</p>
                 </div>
 
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base text-muted-foreground line-through decoration-muted-foreground/50 decoration-2">R$ {plan.anchorPrice}</span>
+                    <span className={`text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 ${plan.popular ? 'text-base' : 'text-sm'}`}>R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
                       -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display text-4xl sm:text-5xl font-bold">{plan.price}</span>
+                    <span className={`font-display font-bold ${plan.popular ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'}`}>{plan.price}</span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className="text-sm text-primary mt-2">
+                  <p className={`text-primary mt-2 ${plan.popular ? 'text-sm' : 'text-xs sm:text-sm'}`}>
                     Até {plan.searches} buscas estratégicas para encontrar novos clientes
                   </p>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className={`space-y-3 mb-8 ${plan.popular ? '' : 'text-sm'}`}>
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm">
-                      <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                      <Check size={plan.popular ? 18 : 16} className="text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{feature}</span>
                     </li>
                   ))}
@@ -206,7 +206,7 @@ export const PricingSection = () => {
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
-                  size="lg"
+                  size={plan.popular ? "lg" : "default"}
                   className="w-full"
                   onClick={() => handlePlanClick(plan)}
                   disabled={loadingPlan === plan.key}
@@ -347,7 +347,7 @@ export const PricingSection = () => {
                   <Button 
                     variant="hero" 
                     size="lg" 
-                    className="gap-2 w-full sm:w-auto animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] hover:animate-none"
+                    className="gap-2 w-full sm:w-auto"
                     onClick={() => navigate("/signup")}
                   >
                     Começar Teste Grátis
