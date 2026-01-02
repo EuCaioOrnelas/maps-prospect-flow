@@ -37,6 +37,7 @@ import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
+import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
 
 export interface Lead {
   name: string;
@@ -110,17 +111,29 @@ const WhatsAppCampaign = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isTrialExpired, refreshProfile } = useAuth();
 
-  // Check if user has access (paid plans only)
+  // Free trial limits
+  const FREE_TRIAL_MESSAGE_LIMIT = 400;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
-  const [showUpgradeModal, setShowUpgradeModal] = useState(isFreePlan);
+  const trialMessagesUsed = profile?.trial_messages_sent || 0;
+  const hasReachedTrialLimit = isFreePlan && trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT;
+  const remainingTrialMessages = FREE_TRIAL_MESSAGE_LIMIT - trialMessagesUsed;
+
+  // Show upgrade modal only if trial expired (not for free trial users who can still use)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
   
   useEffect(() => {
-    if (isFreePlan) {
+    // If trial expired, show upgrade modal
+    if (isFreePlan && isTrialExpired) {
       setShowUpgradeModal(true);
     }
-  }, [isFreePlan]);
+    // If free trial but reached message limit, show trial limit modal
+    else if (hasReachedTrialLimit && !isTrialExpired) {
+      setShowTrialLimitModal(true);
+    }
+  }, [isFreePlan, isTrialExpired, hasReachedTrialLimit]);
   
   // Use realtime hook for campaigns
   const { 
@@ -265,6 +278,18 @@ const WhatsAppCampaign = () => {
       return;
     }
 
+    // Check free trial limit
+    if (isFreePlan && !isTrialExpired) {
+      if (selectedLeads.length > remainingTrialMessages) {
+        toast({
+          title: "Limite do teste gratuito",
+          description: `Você só pode enviar mais ${remainingTrialMessages} mensagens no período de teste`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Regular start - requires connection
     if (!isConnected) {
       toast({
@@ -347,6 +372,23 @@ const WhatsAppCampaign = () => {
           variant: "destructive",
         });
       } else {
+        // Update trial messages sent for free trial users
+        if (isFreePlan && !isTrialExpired && user) {
+          const newCount = trialMessagesUsed + selectedLeads.length;
+          await supabase
+            .from('profiles')
+            .update({ trial_messages_sent: newCount })
+            .eq('id', user.id);
+          
+          // Refresh profile to get updated count
+          await refreshProfile();
+          
+          // Check if limit reached after this campaign
+          if (newCount >= FREE_TRIAL_MESSAGE_LIMIT) {
+            setShowTrialLimitModal(true);
+          }
+        }
+        
         toast({
           title: "Campanha iniciada!",
           description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
@@ -578,16 +620,30 @@ const WhatsAppCampaign = () => {
   );
 
   // Show upgrade prompt for free users
-  // Show upgrade modal for free users
-  if (isFreePlan) {
+  // Show upgrade modal for free users with expired trial
+  if (isFreePlan && isTrialExpired) {
     return (
       <div className="min-h-screen bg-background">
-        <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+        <UpgradeModal isOpen={showUpgradeModal} onClose={() => navigate('/dashboard')} />
       </div>
     );
   }
 
-  if (!hasMassMessagingAccess) {
+  // Show trial limit modal for free users who reached message limit
+  if (hasReachedTrialLimit && !isTrialExpired) {
+    return (
+      <div className="min-h-screen bg-background">
+        <FreeTrialLimitModal 
+          isOpen={showTrialLimitModal} 
+          onClose={() => setShowTrialLimitModal(false)} 
+          usedMessages={trialMessagesUsed}
+          limit={FREE_TRIAL_MESSAGE_LIMIT}
+        />
+      </div>
+    );
+  }
+
+  if (!hasMassMessagingAccess && !isFreePlan) {
     return (
       <div className="min-h-screen bg-background">
         <UpgradeModal isOpen={true} onClose={() => navigate('/dashboard')} />
