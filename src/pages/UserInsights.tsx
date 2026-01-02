@@ -37,8 +37,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Eye,
+  X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 const ADMIN_EMAIL = "caiowiize@gmail.com";
@@ -81,7 +89,11 @@ const EXPERIENCE_LABELS: Record<string, string> = {
   not_solved: "Não resolveu problema",
   too_complex: "Achou complexa",
   technical_issues: "Problemas técnicos",
-  price_high: "Preço alto"
+  price_high: "Preço alto",
+  loved_it: "Adorou",
+  good_experience: "Boa experiência",
+  neutral: "Neutro",
+  bad_experience: "Experiência ruim"
 };
 
 const UserInsights = () => {
@@ -102,6 +114,9 @@ const UserInsights = () => {
   // Pagination for responses
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Selected response for detail view
+  const [selectedResponse, setSelectedResponse] = useState<{ type: 'onboarding' | 'feedback', data: OnboardingData | FeedbackData } | null>(null);
 
   useEffect(() => {
     checkAdminAndLoad();
@@ -487,10 +502,13 @@ const UserInsights = () => {
                       <Tooltip 
                         formatter={(value, name, props) => [value, props.payload.fullName]}
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                          backgroundColor: 'hsl(220 13% 18%)', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px' 
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -520,10 +538,13 @@ const UserInsights = () => {
                       <Tooltip 
                         formatter={(value, name, props) => [value, props.payload.fullName]}
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                          backgroundColor: 'hsl(220 13% 18%)', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px' 
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -545,10 +566,13 @@ const UserInsights = () => {
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                          backgroundColor: 'hsl(220 13% 18%)', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px' 
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -571,10 +595,13 @@ const UserInsights = () => {
                       <Tooltip 
                         formatter={(value, name, props) => [value, props.payload.fullName]}
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                          backgroundColor: 'hsl(220 13% 18%)', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px' 
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Bar dataKey="value" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -589,17 +616,21 @@ const UserInsights = () => {
                 <MessageCircle size={20} className="text-primary" />
                 <h3 className="font-semibold">Status de Experiência (Feedback Trial)</h3>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                {experienceChartData.map((item, i) => (
-                  <div key={i} className="bg-secondary/50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold">{item.value}</p>
-                    <p className="text-xs text-muted-foreground">{item.name}</p>
-                  </div>
-                ))}
-              </div>
+              {experienceChartData.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {experienceChartData.map((item, i) => (
+                    <div key={i} className="bg-secondary/50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold">{item.value}</p>
+                      <p className="text-xs text-muted-foreground">{item.name}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">Nenhum feedback coletado ainda</p>
+              )}
             </div>
 
-            {/* All Responses Table */}
+            {/* All Responses - Cards */}
             <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -611,77 +642,55 @@ const UserInsights = () => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto -mx-6 px-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Resumo</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedResponses.map((response, i) => {
-                      const userId = response.type === 'onboarding' 
-                        ? (response.data as OnboardingData).user_id 
-                        : (response.data as FeedbackData).user_id;
-                      const userProfile = userProfiles[userId];
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedResponses.map((response, i) => {
+                  const userId = response.type === 'onboarding' 
+                    ? (response.data as OnboardingData).user_id 
+                    : (response.data as FeedbackData).user_id;
+                  const userProfile = userProfiles[userId];
+                  
+                  return (
+                    <div 
+                      key={i} 
+                      className="bg-secondary/30 rounded-lg p-4 cursor-pointer hover:bg-secondary/50 transition-colors border border-border/50 hover:border-primary/30"
+                      onClick={() => setSelectedResponse({ type: response.type, data: response.data })}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          response.type === 'onboarding' 
+                            ? 'bg-primary/20 text-primary' 
+                            : 'bg-warning/20 text-warning'
+                        }`}>
+                          {response.type === 'onboarding' ? 'Onboarding' : 'Feedback'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(response.date).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
                       
-                      return (
-                        <TableRow key={i}>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              response.type === 'onboarding' 
-                                ? 'bg-primary/20 text-primary' 
-                                : 'bg-warning/20 text-warning'
-                            }`}>
-                              {response.type === 'onboarding' ? 'Onboarding' : 'Feedback'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{userProfile?.name || '-'}</p>
-                              <p className="text-xs text-muted-foreground">{userProfile?.email || 'N/A'}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(response.date)}
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            {response.type === 'onboarding' ? (
-                              <div className="text-sm">
-                                {(response.data as OnboardingData).skipped ? (
-                                  <span className="text-muted-foreground italic">Pulou o onboarding</span>
-                                ) : (
-                                  <>
-                                    <p className="truncate">
-                                      <strong>Perfil:</strong> {(response.data as OnboardingData).user_profile}
-                                    </p>
-                                    <p className="truncate text-muted-foreground">
-                                      <strong>Objetivo:</strong> {(response.data as OnboardingData).main_objective}
-                                    </p>
-                                  </>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-sm">
-                                <p className="truncate">
-                                  <strong>Status:</strong> {EXPERIENCE_LABELS[(response.data as FeedbackData).experience_status] || (response.data as FeedbackData).experience_status}
-                                </p>
-                                {(response.data as FeedbackData).nps_score !== null && (
-                                  <p className="text-muted-foreground">
-                                    <strong>NPS:</strong> {(response.data as FeedbackData).nps_score}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                      <div className="mb-2">
+                        <p className="font-medium text-sm truncate">{userProfile?.name || userProfile?.email || 'Usuário'}</p>
+                      </div>
+                      
+                      {response.type === 'onboarding' ? (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {(response.data as OnboardingData).skipped 
+                            ? 'Pulou o onboarding' 
+                            : (response.data as OnboardingData).user_profile}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {EXPERIENCE_LABELS[(response.data as FeedbackData).experience_status] || (response.data as FeedbackData).experience_status}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center gap-1 mt-3 text-xs text-primary">
+                        <Eye size={12} />
+                        <span>Ver detalhes</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Pagination */}
@@ -717,6 +726,136 @@ const UserInsights = () => {
                 </div>
               )}
             </div>
+
+            {/* Response Detail Modal */}
+            <Dialog open={!!selectedResponse} onOpenChange={() => setSelectedResponse(null)}>
+              <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {selectedResponse?.type === 'onboarding' ? (
+                      <>
+                        <Users size={18} className="text-primary" />
+                        Detalhes do Onboarding
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle size={18} className="text-warning" />
+                        Detalhes do Feedback
+                      </>
+                    )}
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {selectedResponse && (
+                  <div className="space-y-4 mt-4">
+                    {/* User Info */}
+                    <div className="bg-secondary/30 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Usuário</p>
+                      <p className="font-medium">
+                        {userProfiles[selectedResponse.type === 'onboarding' 
+                          ? (selectedResponse.data as OnboardingData).user_id 
+                          : (selectedResponse.data as FeedbackData).user_id]?.email || 'N/A'}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-secondary/30 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Data</p>
+                      <p className="font-medium">
+                        {formatDate(selectedResponse.type === 'onboarding' 
+                          ? (selectedResponse.data as OnboardingData).created_at 
+                          : (selectedResponse.data as FeedbackData).created_at)}
+                      </p>
+                    </div>
+                    
+                    {selectedResponse.type === 'onboarding' ? (
+                      <>
+                        {(selectedResponse.data as OnboardingData).skipped ? (
+                          <div className="bg-warning/10 rounded-lg p-4">
+                            <p className="text-warning italic">Usuário pulou o onboarding</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">Perfil</p>
+                              <p className="font-medium">{(selectedResponse.data as OnboardingData).user_profile}</p>
+                            </div>
+                            
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">Tipos de Serviço</p>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {(selectedResponse.data as OnboardingData).service_types.map((s, i) => (
+                                  <span key={i} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">{s}</span>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">Objetivo Principal</p>
+                              <p className="font-medium">{(selectedResponse.data as OnboardingData).main_objective}</p>
+                            </div>
+                            
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <p className="text-xs text-muted-foreground mb-1">Tamanho da Equipe</p>
+                              <p className="font-medium">{(selectedResponse.data as OnboardingData).team_size}</p>
+                            </div>
+                            
+                            {(selectedResponse.data as OnboardingData).previous_experience && (
+                              <div className="bg-secondary/30 rounded-lg p-4">
+                                <p className="text-xs text-muted-foreground mb-1">Experiência Anterior</p>
+                                <p className="font-medium">{(selectedResponse.data as OnboardingData).previous_experience}</p>
+                                {(selectedResponse.data as OnboardingData).previous_tool && (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Ferramenta: {(selectedResponse.data as OnboardingData).previous_tool}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-secondary/30 rounded-lg p-4">
+                          <p className="text-xs text-muted-foreground mb-1">Status da Experiência</p>
+                          <p className="font-medium">
+                            {EXPERIENCE_LABELS[(selectedResponse.data as FeedbackData).experience_status] || (selectedResponse.data as FeedbackData).experience_status}
+                          </p>
+                        </div>
+                        
+                        {(selectedResponse.data as FeedbackData).not_continue_reason && (
+                          <div className="bg-secondary/30 rounded-lg p-4">
+                            <p className="text-xs text-muted-foreground mb-1">Motivo de Não Continuar</p>
+                            <p className="font-medium">{(selectedResponse.data as FeedbackData).not_continue_reason}</p>
+                          </div>
+                        )}
+                        
+                        {(selectedResponse.data as FeedbackData).missing_features && (
+                          <div className="bg-secondary/30 rounded-lg p-4">
+                            <p className="text-xs text-muted-foreground mb-1">Recursos que Faltaram</p>
+                            <p className="font-medium">{(selectedResponse.data as FeedbackData).missing_features}</p>
+                          </div>
+                        )}
+                        
+                        {(selectedResponse.data as FeedbackData).nps_score !== null && (
+                          <div className="bg-secondary/30 rounded-lg p-4">
+                            <p className="text-xs text-muted-foreground mb-1">NPS Score</p>
+                            <p className={`text-2xl font-bold ${
+                              (selectedResponse.data as FeedbackData).nps_score! >= 9 
+                                ? 'text-green-500' 
+                                : (selectedResponse.data as FeedbackData).nps_score! >= 7 
+                                  ? 'text-yellow-500' 
+                                  : 'text-red-500'
+                            }`}>
+                              {(selectedResponse.data as FeedbackData).nps_score}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </main>
