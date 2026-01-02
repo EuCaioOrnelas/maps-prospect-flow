@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useOnboardingModals() {
-  const { user, profile } = useAuth();
+  const { user, profile, isTrialExpired, trialDaysRemaining } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTrialFeedback, setShowTrialFeedback] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ export function useOnboardingModals() {
     }
 
     checkModals();
-  }, [user, profile]);
+  }, [user, profile, isTrialExpired, trialDaysRemaining]);
 
   const checkModals = async () => {
     if (!user || !profile) return;
@@ -36,13 +36,8 @@ export function useOnboardingModals() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Calculate trial status
-      const trialStartAt = (profile as any).trial_start_at || profile.created_at;
-      const trialStart = new Date(trialStartAt);
-      const now = new Date();
-      const daysSinceTrialStart = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
-      const trialExpired = daysSinceTrialStart >= 30;
-      const trialExpiringTomorrow = daysSinceTrialStart >= 29;
+      // Use trial status from AuthContext (already calculated on each login)
+      const trialExpiringTomorrow = trialDaysRemaining <= 1 && trialDaysRemaining > 0;
       const isFreePlan = profile.plan === 'free';
 
       // Show onboarding modal on first login (no onboarding record exists)
@@ -51,7 +46,7 @@ export function useOnboardingModals() {
         setShowTrialFeedback(false);
       } 
       // Show trial feedback if trial expired/expiring and no feedback submitted
-      else if (isFreePlan && (trialExpired || trialExpiringTomorrow) && !feedback) {
+      else if (isFreePlan && (isTrialExpired || trialExpiringTomorrow) && !feedback) {
         setShowOnboarding(false);
         setShowTrialFeedback(true);
       } else {
@@ -80,6 +75,8 @@ export function useOnboardingModals() {
     showTrialFeedback,
     closeOnboarding,
     closeTrialFeedback,
-    loading
+    loading,
+    isTrialExpired,
+    trialDaysRemaining
   };
 }

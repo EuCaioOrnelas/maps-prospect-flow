@@ -13,6 +13,7 @@ interface Profile {
   last_searches_reset?: string;
   created_at?: string;
   avatar_url?: string;
+  trial_start_at?: string;
 }
 
 interface AuthContextType {
@@ -20,6 +21,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isTrialExpired: boolean;
+  trialDaysRemaining: number;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -41,6 +44,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Calculate trial status
+  const calculateTrialStatus = (trialStartAt?: string, plan?: string) => {
+    if (plan && plan !== 'free') {
+      return { isExpired: false, daysRemaining: 0 };
+    }
+    
+    if (!trialStartAt) {
+      return { isExpired: false, daysRemaining: 30 };
+    }
+    
+    const trialStart = new Date(trialStartAt);
+    const now = new Date();
+    const daysPassed = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.max(0, 30 - daysPassed);
+    const isExpired = daysPassed >= 30;
+    
+    return { isExpired, daysRemaining };
+  };
+
+  const trialStatus = calculateTrialStatus(profile?.trial_start_at, profile?.plan);
+  const isTrialExpired = trialStatus.isExpired;
+  const trialDaysRemaining = trialStatus.daysRemaining;
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -174,6 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         loading,
+        isTrialExpired,
+        trialDaysRemaining,
         signUp,
         signIn,
         signOut,

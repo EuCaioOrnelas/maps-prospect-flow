@@ -501,6 +501,12 @@ const Admin = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <Link to="/admin/insights">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <BarChart3 size={16} />
+                  <span className="hidden sm:inline">Insights</span>
+                </Button>
+              </Link>
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <ArrowLeft size={16} />
