@@ -664,9 +664,19 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs mt-3 text-muted-foreground">
-                  Sistema usa fallback automático quando uma chave atinge o limite
-                </p>
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Fallback automático ativado
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Verificado: {apiStatus.serpApi.lastCheck.toLocaleString('pt-BR', { 
+                      day: '2-digit', 
+                      month: '2-digit', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </p>
+                </div>
               </div>
 
               {/* Evolution API Status Card */}
