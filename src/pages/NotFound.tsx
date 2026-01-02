@@ -327,14 +327,13 @@ const NotFound = () => {
           />
         </div>
 
-        {/* Floating planets */}
-        <FloatingPlanet className="absolute top-[10%] right-[15%] opacity-60" size="lg" />
-        <FloatingPlanet className="absolute bottom-[20%] left-[10%] opacity-40" size="md" />
-        <FloatingPlanet className="absolute top-[60%] right-[8%] opacity-30" size="sm" />
+        {/* Floating planets - positioned at edges */}
+        <FloatingPlanet className="absolute top-[5%] right-[5%] opacity-40" size="md" />
+        <FloatingPlanet className="absolute bottom-[10%] left-[5%] opacity-30" size="sm" />
         
-        <div className="text-center relative z-10 max-w-4xl w-full">
+        <div className="text-center relative z-10 max-w-lg w-full flex flex-col items-center">
           <motion.div 
-            className="flex justify-center mb-6"
+            className="mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -342,132 +341,86 @@ const NotFound = () => {
             <Logo size="lg" />
           </motion.div>
 
-          {/* Main content grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Astronaut */}
+          {/* Astronaut - centered above content */}
+          <motion.div
+            className="mb-4"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <FloatingAstronaut />
+          </motion.div>
+
+          {/* Content card with glassmorphism */}
+          <motion.div
+            className="glass rounded-3xl p-6 sm:p-8 backdrop-blur-xl border border-white/10 shadow-2xl w-full"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            style={{
+              transform: `perspective(1000px) rotateX(${mousePosition.y * 0.05}deg) rotateY(${mousePosition.x * 0.05}deg)`,
+            }}
+          >
+            {/* 3D 404 text */}
             <motion.div
-              className="flex justify-center lg:justify-end order-2 lg:order-1"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative mb-4"
+              style={{ perspective: "1000px" }}
             >
-              <FloatingAstronaut />
+              <motion.h1
+                className="text-[80px] sm:text-[100px] font-display font-black text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary/80 to-secondary leading-none"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+                style={{ textShadow: "0 0 80px hsl(var(--primary) / 0.5)" }}
+              >
+                404
+              </motion.h1>
             </motion.div>
 
-            {/* Content */}
-            <div className="order-1 lg:order-2">
-              {/* 3D 404 text */}
-              <motion.div
-                className="relative mb-4"
-                style={{
-                  perspective: "1000px",
-                }}
+            <motion.div
+              className="space-y-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+                Perdido no espaço?
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Nosso astronauta também está procurando essa página, mas parece que ela não existe.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-3 justify-center mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                asChild
+                className="h-11 px-5 text-sm group relative overflow-hidden"
               >
-                <motion.div
-                  style={{
-                    transformStyle: "preserve-3d",
-                    rotateX: mousePosition.y * 0.3,
-                    rotateY: mousePosition.x * 0.3,
-                  }}
-                >
-                  <motion.h1
-                    className="text-[100px] sm:text-[140px] font-display font-black text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary/80 to-secondary leading-none"
-                    initial={{ opacity: 0, scale: 0.5, rotateX: -90 }}
-                    animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      type: "spring",
-                      stiffness: 100,
-                    }}
-                    style={{
-                      textShadow: "0 0 80px hsl(var(--primary) / 0.5)",
-                    }}
-                  >
-                    404
-                  </motion.h1>
-                </motion.div>
-              </motion.div>
-
-              {/* Content card with glassmorphism */}
-              <motion.div
-                className="glass rounded-3xl p-6 sm:p-8 backdrop-blur-xl border border-white/10 shadow-2xl"
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                style={{
-                  transform: `perspective(1000px) rotateX(${mousePosition.y * 0.05}deg) rotateY(${mousePosition.x * 0.05}deg)`,
-                }}
+                <Link to="javascript:history.back()">
+                  <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                  Voltar
+                </Link>
+              </Button>
+              <Button
+                variant="hero"
+                size="lg"
+                asChild
+                className="h-11 px-5 text-sm group relative overflow-hidden"
               >
-                <motion.div
-                  className="space-y-3"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                    Perdido no espaço?
-                  </h2>
-                  <p className="text-muted-foreground text-sm sm:text-base">
-                    Nosso astronauta também está procurando essa página, mas parece que ela não existe.
-                  </p>
-                </motion.div>
-                
-                <motion.div 
-                  className="flex flex-col sm:flex-row gap-3 justify-center mt-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    asChild
-                    className="h-11 px-5 text-sm group relative overflow-hidden"
-                  >
-                    <Link to="javascript:history.back()">
-                      <motion.span
-                        className="absolute inset-0 bg-primary/10"
-                        initial={{ x: "-100%" }}
-                        whileHover={{ x: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                      Voltar
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="hero"
-                    size="lg"
-                    asChild
-                    className="h-11 px-5 text-sm group relative overflow-hidden"
-                  >
-                    <Link to="/">
-                      <motion.span
-                        className="absolute inset-0 bg-white/20"
-                        initial={{ x: "-100%" }}
-                        whileHover={{ x: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      <Home size={16} className="mr-2 group-hover:scale-110 transition-transform" />
-                      Ir para Home
-                    </Link>
-                  </Button>
-                </motion.div>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Decorative circles */}
-          <motion.div
-            className="absolute -top-20 -left-20 w-40 h-40 border border-primary/20 rounded-full hidden lg:block"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute -bottom-10 -right-10 w-60 h-60 border border-secondary/20 rounded-full hidden lg:block"
-            animate={{ rotate: -360 }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          />
+                <Link to="/">
+                  <Home size={16} className="mr-2 group-hover:scale-110 transition-transform" />
+                  Ir para Home
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </>
