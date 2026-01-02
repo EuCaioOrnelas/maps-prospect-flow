@@ -12,6 +12,44 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Get client IP from request
+function getClientIP(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+         req.headers.get('x-real-ip') || 
+         'unknown';
+}
+
+// Rate limiting helper
+async function checkRateLimit(
+  supabase: any, 
+  identifier: string, 
+  endpoint: string,
+  maxRequests: number = 10,
+  windowSeconds: number = 60
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  try {
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_endpoint: endpoint,
+      p_max_requests: maxRequests,
+      p_window_seconds: windowSeconds
+    });
+    
+    if (error) {
+      console.error('Rate limit check error:', error);
+      return { allowed: true };
+    }
+    
+    return { 
+      allowed: data?.allowed !== false,
+      retryAfter: data?.retry_after
+    };
+  } catch (e) {
+    console.error('Rate limit exception:', e);
+    return { allowed: true };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,8 +57,30 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
+
+  // Rate limiting check
+  const clientIP = getClientIP(req);
+  const rateLimitResult = await checkRateLimit(supabaseClient, clientIP, 'create-checkout', 10, 60);
+  
+  if (!rateLimitResult.allowed) {
+    logStep("Rate limit exceeded", { ip: clientIP });
+    return new Response(
+      JSON.stringify({ 
+        error: "Muitas requisições. Tente novamente em alguns segundos.",
+        retryAfter: rateLimitResult.retryAfter
+      }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimitResult.retryAfter || 60)
+        } 
+      }
+    );
+  }
 
   try {
     logStep("Function started");
