@@ -27,6 +27,14 @@ const PLAN_LIMITS: Record<string, number> = {
   "scale": 1200,
 };
 
+// Map plan names to prices (for tracking revenue)
+const PLAN_PRICES: Record<string, number> = {
+  "free": 0,
+  "start": 97,
+  "growth": 247,
+  "scale": 497,
+};
+
 // Calculate new searches limit considering remaining searches from previous plan
 const calculateNewSearchesLimit = (
   currentSearchesUsed: number,
@@ -44,6 +52,35 @@ const calculateNewSearchesLimit = (
   }
   
   return { newLimit: newPlanLimit, carryOver: 0 };
+};
+
+// Track purchase for landing page analytics
+const trackPurchase = async (
+  supabaseClient: any,
+  userId: string,
+  plan: string,
+  amount: number
+) => {
+  try {
+    // Get user's landing source
+    const { data: source } = await supabaseClient
+      .from('user_landing_source')
+      .select('landing_page_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (source?.landing_page_id) {
+      await supabaseClient.from('landing_page_events').insert({
+        landing_page_id: source.landing_page_id,
+        event_type: 'purchase',
+        user_id: userId,
+        metadata: { plan, amount },
+      });
+      logStep("Purchase tracked for landing page analytics", { userId, plan, amount });
+    }
+  } catch (error) {
+    logStep("Error tracking purchase", { error: String(error) });
+  }
 };
 
 serve(async (req) => {
@@ -170,6 +207,10 @@ serve(async (req) => {
                   carryOver,
                   searchesUsed: carryOver > 0 ? profile.searches_used : 0
                 });
+
+                // Track purchase for landing page analytics
+                const amount = PLAN_PRICES[plan] || 0;
+                await trackPurchase(supabaseClient, profile.id, plan, amount);
               }
             }
           } else {

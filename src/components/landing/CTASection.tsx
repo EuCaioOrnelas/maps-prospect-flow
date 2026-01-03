@@ -3,7 +3,11 @@ import { ArrowRight, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
-export const CTASection = () => {
+interface CTASectionProps {
+  onSignupClick?: () => void;
+}
+
+export const CTASection = ({ onSignupClick }: CTASectionProps) => {
   const { ref, isVisible } = useScrollAnimation();
   
   return (
@@ -31,7 +35,7 @@ export const CTASection = () => {
             Não perca mais tempo buscando leads manualmente.
             Experimente grátis e veja os resultados.
           </p>
-          <Link to="/signup">
+          <Link to="/signup" onClick={onSignupClick}>
             <Button variant="hero" size="xl" className="group">
               Criar conta gratuita
               <ArrowRight className="group-hover:translate-x-1 transition-transform" />

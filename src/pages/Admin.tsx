@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   XCircle,
   Key,
+  LayoutDashboard,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -576,6 +577,12 @@ const Admin = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <Link to="/admin/landing-pages">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <LayoutDashboard size={16} />
+                  <span className="hidden sm:inline">Landing Pages</span>
+                </Button>
+              </Link>
               <Link to="/admin/insights">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <BarChart3 size={16} />
