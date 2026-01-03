@@ -22,7 +22,7 @@ const plans = [
     anchorPrice: "197",
     searches: "100",
     whatsappNumbers: 2,
-    monthlyMessages: "12.000",
+    monthlyMessages: "10.000",
     description: "Ideal para começar a prospectar novos clientes",
     features: [
       "Até 100 buscas estratégicas/mês",
@@ -31,7 +31,7 @@ const plans = [
       "Dados completos dos leads",
       "Suporte por email",
       "2 números WhatsApp",
-      "Até 12.000 disparos/mês",
+      "Até 10.000 disparos/mês",
     ],
     popular: false,
   },
