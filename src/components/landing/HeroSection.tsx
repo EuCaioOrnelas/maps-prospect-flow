@@ -69,13 +69,13 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
   return <span ref={ref}>{displayValue}</span>;
 };
 
-// Floating stats cards data - positioned to overlap just the edges
+// Floating stats cards data - positioned around the demo
 const floatingCards = [
   { 
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-8 lg:-left-20 xl:-left-28 top-20 lg:top-16",
+    position: "-left-16 lg:-left-32 xl:-left-44 top-20 lg:top-16",
     delay: "0.8s"
   },
   { 
