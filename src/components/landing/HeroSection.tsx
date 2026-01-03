@@ -3,34 +3,34 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Floating stats cards data
+// Floating stats cards data - positioned outside the demo container
 const floatingCards = [
   { 
     icon: Send, 
     value: "2.4K+", 
     label: "Mensagens enviadas", 
-    position: "left-0 sm:-left-4 lg:-left-16 top-1/4",
+    position: "-left-2 sm:-left-8 lg:-left-32 xl:-left-40 top-8",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "847", 
     label: "Leads prospectados", 
-    position: "right-0 sm:-right-4 lg:-right-16 top-1/3",
+    position: "-right-2 sm:-right-8 lg:-right-32 xl:-right-40 top-20",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "32%", 
     label: "Taxa de resposta", 
-    position: "left-0 sm:-left-4 lg:-left-12 bottom-1/4",
+    position: "-left-2 sm:-left-8 lg:-left-28 xl:-left-36 bottom-20",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "5min", 
     label: "Tempo médio", 
-    position: "right-0 sm:-right-4 lg:-right-12 bottom-1/3",
+    position: "-right-2 sm:-right-8 lg:-right-28 xl:-right-36 bottom-8",
     delay: "2s"
   },
 ];
