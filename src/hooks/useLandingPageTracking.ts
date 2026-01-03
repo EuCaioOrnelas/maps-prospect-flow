@@ -24,10 +24,14 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
   const hasTrackedPageView = useRef(false);
   const sessionId = getSessionId();
 
-  // Track page view on mount
+  // Track page view on mount - use sessionStorage to prevent duplicate tracking across remounts
   useEffect(() => {
-    if (hasTrackedPageView.current) return;
+    const trackingKey = `tracked_page_view_${pageSlug}`;
+    const alreadyTracked = sessionStorage.getItem(trackingKey);
+    
+    if (hasTrackedPageView.current || alreadyTracked) return;
     hasTrackedPageView.current = true;
+    sessionStorage.setItem(trackingKey, 'true');
 
     // Store the slug for later use (signup, purchase, etc.)
     setLandingPageSlug(pageSlug);
