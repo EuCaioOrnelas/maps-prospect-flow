@@ -69,34 +69,34 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
   return <span ref={ref}>{displayValue}</span>;
 };
 
-// Floating stats cards data - positioned with subtle overlap
+// Floating stats cards data - positioned to overlap just the edges
 const floatingCards = [
   { 
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "left-2 lg:left-4 xl:-left-8 top-8 lg:top-6",
+    position: "-left-8 lg:-left-20 xl:-left-28 top-20 lg:top-16",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "right-2 lg:right-4 xl:-right-8 top-2 lg:-top-4",
+    position: "-right-8 lg:-right-20 xl:-right-28 top-8 lg:top-4",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "left-2 lg:-left-4 xl:-left-16 bottom-20 lg:bottom-12",
+    position: "-left-6 lg:-left-16 xl:-left-24 bottom-28 lg:bottom-24",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "right-2 lg:-right-4 xl:-right-12 bottom-4 lg:bottom-0",
+    position: "-right-6 lg:-right-16 xl:-right-24 bottom-12 lg:bottom-8",
     delay: "2s"
   },
 ];
