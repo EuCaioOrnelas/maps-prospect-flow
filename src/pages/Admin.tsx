@@ -45,7 +45,8 @@ import {
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
-// Preços dos planos para cálculo de MRR
+// Função para verificar admin via banco de dados (seguro)
+// Preços dos planos (fallback caso Stripe falhe)
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
   start: 97,
@@ -79,6 +80,19 @@ interface UserProfile {
   plan: string;
   created_at: string;
   updated_at: string;
+}
+
+interface StripeMRRData {
+  totalMRR: number;
+  activeSubscriptions: number;
+  subscriptionDetails: Array<{
+    email: string;
+    plan: string;
+    price: number;
+    startDate: string;
+  }>;
+  planDistribution: { [plan: string]: number };
+  monthlyMRR: Array<{ month: string; mrr: number }>;
 }
 
 interface Stats {
@@ -126,6 +140,8 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
+  const [loadingMRR, setLoadingMRR] = useState(false);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
@@ -143,6 +159,20 @@ const Admin = () => {
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
   const [checkingApis, setCheckingApis] = useState(false);
+
+  // Fetch real MRR from Stripe
+  const loadStripeMRR = useCallback(async () => {
+    setLoadingMRR(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-stripe-mrr');
+      if (error) throw error;
+      setStripeMRR(data);
+    } catch (error) {
+      console.error('Error loading Stripe MRR:', error);
+    } finally {
+      setLoadingMRR(false);
+    }
+  }, []);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
@@ -331,8 +361,7 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await loadData();
-    await loadApiKeyStatus();
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR()]);
   };
 
   const loadData = async () => {
@@ -714,18 +743,24 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Financial Stats */}
+            {/* Financial Stats - Using Real Stripe MRR */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                     <DollarSign size={20} className="text-success" />
                   </div>
+                  {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-success">
-                  R$ {stats?.mrr.toLocaleString('pt-BR') || 0}
+                  R$ {(stripeMRR?.totalMRR ?? stats?.mrr ?? 0).toLocaleString('pt-BR')}
                 </p>
-                <p className="text-sm text-muted-foreground">MRR (Receita Mensal)</p>
+                <p className="text-sm text-muted-foreground">
+                  MRR (Stripe Real)
+                  {stripeMRR && (
+                    <span className="ml-1 text-xs text-success">✓</span>
+                  )}
+                </p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -734,8 +769,15 @@ const Admin = () => {
                     <Crown size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.payingUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Usuários Pagantes</p>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  {stripeMRR?.activeSubscriptions ?? stats?.payingUsers ?? 0}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Assinantes Ativos
+                  {stripeMRR && (
+                    <span className="ml-1 text-xs text-success">✓</span>
+                  )}
+                </p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
