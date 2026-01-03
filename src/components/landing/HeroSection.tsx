@@ -69,6 +69,59 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
   return <span ref={ref}>{displayValue}</span>;
 };
 
+// Typing animation component that types and deletes text in a loop
+const TypingText = ({ texts, typingSpeed = 100, deletingSpeed = 50, pauseDuration = 2000 }: { 
+  texts: string[]; 
+  typingSpeed?: number; 
+  deletingSpeed?: number;
+  pauseDuration?: number;
+}) => {
+  const [displayText, setDisplayText] = useState("");
+  const [textIndex, setTextIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const currentFullText = texts[textIndex];
+    
+    if (isPaused) {
+      const pauseTimer = setTimeout(() => {
+        setIsPaused(false);
+        setIsDeleting(true);
+      }, pauseDuration);
+      return () => clearTimeout(pauseTimer);
+    }
+
+    if (isDeleting) {
+      if (displayText.length > 0) {
+        const deleteTimer = setTimeout(() => {
+          setDisplayText(currentFullText.substring(0, displayText.length - 1));
+        }, deletingSpeed);
+        return () => clearTimeout(deleteTimer);
+      } else {
+        setIsDeleting(false);
+        setTextIndex((prev) => (prev + 1) % texts.length);
+      }
+    } else {
+      if (displayText.length < currentFullText.length) {
+        const typeTimer = setTimeout(() => {
+          setDisplayText(currentFullText.substring(0, displayText.length + 1));
+        }, typingSpeed);
+        return () => clearTimeout(typeTimer);
+      } else {
+        setIsPaused(true);
+      }
+    }
+  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration]);
+
+  return (
+    <>
+      <span className="text-foreground">{displayText}</span>
+      <span className="typing-cursor">|</span>
+    </>
+  );
+}
+
 // Floating stats cards data - positioned around the demo
 const floatingCards = [
   { 
@@ -330,10 +383,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               <div className="bg-background/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                 {/* Search bar simulation */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm flex items-center">
+                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm flex items-center min-h-[44px]">
                     <span className="text-muted-foreground mr-2">🔍</span>
-                    <span className="text-foreground">restaurantes italianos</span>
-                    <span className="typing-animation ml-0.5">&nbsp;</span>
+                    <TypingText 
+                      texts={["restaurantes italianos", "clínicas odontológicas", "academias crossfit", "escritórios advocacia"]} 
+                      typingSpeed={80}
+                      deletingSpeed={40}
+                      pauseDuration={2500}
+                    />
                   </div>
                   <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm text-muted-foreground">
                     📍 São Paulo, SP
