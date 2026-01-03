@@ -750,6 +750,26 @@ const Admin = () => {
             </div>
 
             {/* Financial Stats - Using Real Stripe MRR */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <DollarSign size={20} className="text-success" />
+                Métricas Financeiras (Stripe)
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadStripeMRR}
+                disabled={loadingMRR}
+                className="gap-2"
+              >
+                {loadingMRR ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={14} />
+                )}
+                Atualizar MRR
+              </Button>
+            </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
@@ -939,9 +959,11 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.activationRate.toFixed(1) || 0}%
+                  {stats?.totalUsers && (stripeMRR?.activeSubscriptions ?? 0) > 0 
+                    ? (((stripeMRR?.activeSubscriptions ?? 0) / stats.totalUsers) * 100).toFixed(1)
+                    : '0.0'}%
                 </p>
-                <p className="text-sm text-muted-foreground">Taxa de Ativação</p>
+                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
               </div>
             </div>
 
