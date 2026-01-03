@@ -64,7 +64,13 @@ import {
   Cell,
 } from "recharts";
 
-// Preços dos planos
+// Preços dos planos baseados nos IDs de preço da Stripe
+const STRIPE_PRICE_TO_PLAN: { [key: string]: { name: string; price: number } } = {
+  "price_1SkEsEK8CM0R6xMM9Y1ip21w": { name: "start", price: 97 },
+  "price_1SkEsZK8CM0R6xMMr0B2gEP1": { name: "growth", price: 247 },
+  "price_1SkEsoK8CM0R6xMMF72J3hAi": { name: "scale", price: 497 },
+};
+
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
   start: 97,
@@ -96,6 +102,13 @@ interface MonthlyMRR {
   purchases: number;
 }
 
+interface StripeMRRData {
+  totalMRR: number;
+  activeSubscriptions: number;
+  planDistribution: { [plan: string]: number };
+  monthlyMRR: Array<{ month: string; mrr: number }>;
+}
+
 const AdminLandingPages = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -109,6 +122,8 @@ const AdminLandingPages = () => {
   const [monthlyMRR, setMonthlyMRR] = useState<{ [key: string]: MonthlyMRR[] }>({});
   const [averageMRR, setAverageMRR] = useState<number>(0);
   const [totalMRR, setTotalMRR] = useState<number>(0);
+  const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
+  const [loadingStripeMRR, setLoadingStripeMRR] = useState(false);
 
   // Create page dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -212,11 +227,32 @@ const AdminLandingPages = () => {
     }
     setMonthlyMRR(monthlyMRRMap);
 
-    // Calculate total and average MRR
+    // Calculate total and average MRR from page events (fallback)
     const allMRR = Object.values(statsMap).reduce((sum, s) => sum + s.totalRevenue, 0);
     setTotalMRR(allMRR);
     setAverageMRR(pages.length > 0 ? allMRR / pages.length : 0);
   }, [pages]);
+
+  // Load real MRR from Stripe
+  const loadStripeMRR = useCallback(async () => {
+    setLoadingStripeMRR(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-stripe-mrr");
+      if (error) {
+        console.error("Error loading Stripe MRR:", error);
+        return;
+      }
+      if (data) {
+        setStripeMRR(data);
+        // Override with real Stripe data
+        setTotalMRR(data.totalMRR);
+      }
+    } catch (err) {
+      console.error("Error invoking get-stripe-mrr:", err);
+    } finally {
+      setLoadingStripeMRR(false);
+    }
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -249,6 +285,12 @@ const AdminLandingPages = () => {
       loadStats();
     }
   }, [pages, loadStats]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadStripeMRR();
+    }
+  }, [isAdmin, loadStripeMRR]);
 
   const createPage = async () => {
     if (!newPageName.trim() || !newPageSlug.trim()) {
@@ -608,25 +650,52 @@ const AdminLandingPages = () => {
           </div>
         </div>
 
-        {/* MRR Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* MRR Summary - Using real Stripe data */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={20} className="text-primary" />
-              <h3 className="font-semibold">MRR Total</h3>
+              <h3 className="font-semibold">MRR Total (Stripe)</h3>
+              {loadingStripeMRR && <Loader2 size={16} className="animate-spin" />}
             </div>
-            <p className="text-3xl font-bold text-primary">{formatCurrency(totalMRR)}</p>
-            <p className="text-sm text-muted-foreground mt-1">Soma de todas as páginas</p>
+            <p className="text-3xl font-bold text-primary">
+              {formatCurrency(stripeMRR?.totalMRR || totalMRR)}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {stripeMRR ? `${stripeMRR.activeSubscriptions} assinaturas ativas` : "Carregando..."}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              * Exclui contas admin
+            </p>
           </div>
 
           <div className="glass rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 size={20} className="text-primary" />
-              <h3 className="font-semibold">MRR Médio por Página</h3>
+              <h3 className="font-semibold">Distribuição por Plano</h3>
+            </div>
+            {stripeMRR?.planDistribution ? (
+              <div className="space-y-2">
+                {Object.entries(stripeMRR.planDistribution).map(([plan, count]) => (
+                  <div key={plan} className="flex justify-between items-center">
+                    <span className="capitalize text-sm">{plan}</span>
+                    <span className="font-semibold">{count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Carregando...</p>
+            )}
+          </div>
+
+          <div className="glass rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign size={20} className="text-primary" />
+              <h3 className="font-semibold">MRR por Página (Eventos)</h3>
             </div>
             <p className="text-3xl font-bold text-primary">{formatCurrency(averageMRR)}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Baseado em {pages.length} página(s)
+              Média de {pages.length} página(s)
             </p>
           </div>
         </div>
