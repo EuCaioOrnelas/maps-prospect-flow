@@ -69,25 +69,63 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
   return <span ref={ref}>{displayValue}</span>;
 };
 
-// Typing animation component that types and deletes text in a loop
-const TypingText = ({ texts, typingSpeed = 100, deletingSpeed = 50, pauseDuration = 2000 }: { 
-  texts: string[]; 
-  typingSpeed?: number; 
-  deletingSpeed?: number;
-  pauseDuration?: number;
-}) => {
+// Data for synchronized demo animation
+const demoData = [
+  {
+    searchTerm: "restaurantes italianos",
+    location: "São Paulo, SP",
+    leads: [
+      { emoji: "🍝", name: "Trattoria Bella Italia", phone: "(11) 99XXX-XXXX", rating: "4.8" },
+      { emoji: "🍕", name: "Cantina do Nonno", phone: "(11) 98XXX-XXXX", rating: "4.6" },
+      { emoji: "🍷", name: "Ristorante Milano", phone: "(11) 97XXX-XXXX", rating: "4.9" },
+    ]
+  },
+  {
+    searchTerm: "clínicas odontológicas",
+    location: "Rio de Janeiro, RJ",
+    leads: [
+      { emoji: "🦷", name: "OdontoLife Centro", phone: "(21) 99XXX-XXXX", rating: "4.9" },
+      { emoji: "😁", name: "Sorriso Perfeito", phone: "(21) 98XXX-XXXX", rating: "4.7" },
+      { emoji: "🏥", name: "Clínica Dental Prime", phone: "(21) 97XXX-XXXX", rating: "4.8" },
+    ]
+  },
+  {
+    searchTerm: "academias crossfit",
+    location: "Belo Horizonte, MG",
+    leads: [
+      { emoji: "🏋️", name: "CrossFit Box BH", phone: "(31) 99XXX-XXXX", rating: "4.9" },
+      { emoji: "💪", name: "Arena Fit Training", phone: "(31) 98XXX-XXXX", rating: "4.7" },
+      { emoji: "🔥", name: "Power CrossFit", phone: "(31) 97XXX-XXXX", rating: "4.8" },
+    ]
+  },
+  {
+    searchTerm: "escritórios advocacia",
+    location: "Curitiba, PR",
+    leads: [
+      { emoji: "⚖️", name: "Silva & Associados", phone: "(41) 99XXX-XXXX", rating: "4.9" },
+      { emoji: "📜", name: "Advocacia Martins", phone: "(41) 98XXX-XXXX", rating: "4.8" },
+      { emoji: "🏛️", name: "Jurídico Paraná", phone: "(41) 97XXX-XXXX", rating: "4.7" },
+    ]
+  },
+];
+
+// Typing animation component with callback for index changes
+const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 2500) => {
   const [displayText, setDisplayText] = useState("");
   const [textIndex, setTextIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [phase, setPhase] = useState<'typing' | 'showing' | 'deleting'>('typing');
 
   useEffect(() => {
     const currentFullText = texts[textIndex];
     
     if (isPaused) {
+      setPhase('showing');
       const pauseTimer = setTimeout(() => {
         setIsPaused(false);
         setIsDeleting(true);
+        setPhase('deleting');
       }, pauseDuration);
       return () => clearTimeout(pauseTimer);
     }
@@ -101,6 +139,7 @@ const TypingText = ({ texts, typingSpeed = 100, deletingSpeed = 50, pauseDuratio
       } else {
         setIsDeleting(false);
         setTextIndex((prev) => (prev + 1) % texts.length);
+        setPhase('typing');
       }
     } else {
       if (displayText.length < currentFullText.length) {
@@ -114,13 +153,8 @@ const TypingText = ({ texts, typingSpeed = 100, deletingSpeed = 50, pauseDuratio
     }
   }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration]);
 
-  return (
-    <>
-      <span className="text-foreground">{displayText}</span>
-      <span className="typing-cursor">|</span>
-    </>
-  );
-}
+  return { displayText, textIndex, phase };
+};
 
 // Floating stats cards data - positioned around the demo
 const floatingCards = [
@@ -163,6 +197,16 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
+  
+  // Synchronized typing animation
+  const { displayText, textIndex, phase } = useTypingAnimation(
+    demoData.map(d => d.searchTerm),
+    80,
+    40,
+    2500
+  );
+  
+  const currentData = demoData[textIndex];
 
   useEffect(() => {
     let ticking = false;
@@ -382,86 +426,66 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               
               <div className="bg-background/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                 {/* Search bar simulation */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm flex items-center min-h-[44px]">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <div className="flex-1 bg-secondary rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm flex items-center min-h-[40px] sm:min-h-[44px]">
                     <span className="text-muted-foreground mr-2">🔍</span>
-                    <TypingText 
-                      texts={["restaurantes italianos", "clínicas odontológicas", "academias crossfit", "escritórios advocacia"]} 
-                      typingSpeed={80}
-                      deletingSpeed={40}
-                      pauseDuration={2500}
-                    />
+                    <span className="text-foreground">{displayText}</span>
+                    <span className="typing-cursor">|</span>
                   </div>
-                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm text-muted-foreground">
-                    📍 São Paulo, SP
+                  <div className="flex-1 bg-secondary rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-muted-foreground">
+                    📍 {currentData.location}
                   </div>
-                  <button className="bg-primary text-primary-foreground rounded-lg px-6 py-3 font-medium text-sm flex items-center justify-center gap-2 search-pulse">
-                    <Search size={16} />
+                  <button className="bg-primary text-primary-foreground rounded-lg px-4 sm:px-6 py-2.5 sm:py-3 font-medium text-xs sm:text-sm flex items-center justify-center gap-2 search-pulse">
+                    <Search size={14} className="sm:w-4 sm:h-4" />
                     Buscar
                   </button>
                 </div>
                 
-                {/* Animated leads appearing */}
-                <div className="space-y-3">
-                  {/* Lead 1 - appears first */}
-                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '0.5s' }}>
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">🍝</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">Trattoria Bella Italia</p>
-                      <p className="text-xs text-muted-foreground truncate">📱 (11) 99XXX-XXXX • ⭐ 4.8</p>
-                    </div>
-                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '2s' }}>
-                      <div className="bg-success/20 text-success rounded-full p-2">
-                        <MessageCircle size={14} />
+                {/* Animated leads appearing - synced with search term */}
+                <div className="space-y-2 sm:space-y-3">
+                  {currentData.leads.map((lead, idx) => (
+                    <div 
+                      key={`${textIndex}-${idx}`}
+                      className={`flex items-center gap-3 sm:gap-4 bg-secondary/50 rounded-lg p-3 sm:p-4 transition-all duration-300 ${
+                        phase === 'showing' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                      }`}
+                      style={{ 
+                        transitionDelay: phase === 'showing' ? `${idx * 150}ms` : '0ms'
+                      }}
+                    >
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base sm:text-lg">{lead.emoji}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs sm:text-sm truncate">{lead.name}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">📱 {lead.phone} • ⭐ {lead.rating}</p>
+                      </div>
+                      <div 
+                        className={`transition-all duration-300 ${
+                          phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                        }`}
+                        style={{ 
+                          transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms'
+                        }}
+                      >
+                        <div className="bg-success/20 text-success rounded-full p-1.5 sm:p-2">
+                          <MessageCircle size={12} className="sm:w-3.5 sm:h-3.5" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Lead 2 */}
-                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '1s' }}>
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">🍕</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">Cantina do Nonno</p>
-                      <p className="text-xs text-muted-foreground truncate">📱 (11) 98XXX-XXXX • ⭐ 4.6</p>
-                    </div>
-                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '2.5s' }}>
-                      <div className="bg-success/20 text-success rounded-full p-2">
-                        <MessageCircle size={14} />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Lead 3 */}
-                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '1.5s' }}>
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">🍷</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">Ristorante Milano</p>
-                      <p className="text-xs text-muted-foreground truncate">📱 (11) 97XXX-XXXX • ⭐ 4.9</p>
-                    </div>
-                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '3s' }}>
-                      <div className="bg-success/20 text-success rounded-full p-2">
-                        <MessageCircle size={14} />
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 
                 {/* Stats bar */}
-                <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-4">
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50 flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-                      <span className="counter-animation">47</span> leads encontrados
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-success animate-pulse"></span>
+                      <span className="counter-animation">47</span> leads
                     </span>
-                    <span className="hidden sm:flex items-center gap-1">
-                      <Zap size={12} className="text-primary" />
-                      <span className="counter-animation">12</span> mensagens enviadas
+                    <span className="flex items-center gap-1">
+                      <Zap size={10} className="text-primary sm:w-3 sm:h-3" />
+                      <span className="counter-animation">12</span> enviadas
                     </span>
                   </div>
                 </div>
