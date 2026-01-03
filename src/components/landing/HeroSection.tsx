@@ -3,34 +3,100 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Floating stats cards data - positioned around the demo container
+// Animated counter component
+const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
+  const [displayValue, setDisplayValue] = useState("0");
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          
+          // Parse the target value
+          const isPercentage = value.includes('%');
+          const isPlus = value.startsWith('+');
+          const hasK = value.includes('K');
+          const hasM = value.includes('M');
+          
+          let numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
+          
+          const startTime = performance.now();
+          
+          const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const currentValue = numericValue * easeOutQuart;
+            
+            let formatted: string;
+            if (hasM) {
+              formatted = currentValue.toFixed(1) + 'M+';
+            } else if (hasK) {
+              formatted = Math.floor(currentValue) + 'K+';
+            } else if (isPercentage) {
+              formatted = (isPlus ? '+' : '') + Math.floor(currentValue) + '%';
+            } else {
+              formatted = (isPlus ? '+' : '') + Math.floor(currentValue).toString();
+            }
+            
+            setDisplayValue(formatted);
+            
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setDisplayValue(value);
+            }
+          };
+          
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [value, duration]);
+
+  return <span ref={ref}>{displayValue}</span>;
+};
+
+// Floating stats cards data - positioned with subtle overlap
 const floatingCards = [
   { 
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-4 lg:-left-24 xl:-left-32 top-16 lg:top-12",
+    position: "left-2 lg:left-4 xl:-left-8 top-8 lg:top-6",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-4 lg:-right-20 xl:-right-28 top-4 lg:-top-2",
+    position: "right-2 lg:right-4 xl:-right-8 top-2 lg:-top-4",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-4 lg:-left-20 xl:-left-24 bottom-24 lg:bottom-16",
+    position: "left-2 lg:-left-4 xl:-left-16 bottom-20 lg:bottom-12",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-4 lg:-right-16 xl:-right-20 bottom-8 lg:bottom-4",
+    position: "right-2 lg:-right-4 xl:-right-12 bottom-4 lg:bottom-0",
     delay: "2s"
   },
 ];
@@ -210,13 +276,15 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 className={`absolute ${card.position} z-30 floating-card hidden sm:block`}
                 style={{ animationDelay: card.delay }}
               >
-                <div className="glass rounded-lg p-3 shadow-lg border border-primary/20 hover:border-primary/40 transition-colors">
+                <div className="glass rounded-lg p-3 shadow-lg border border-primary/20 hover:border-primary/40 transition-all hover:scale-105">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                       <card.icon size={14} className="text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">{card.value}</p>
+                      <p className="text-sm font-bold text-foreground">
+                        <AnimatedCounter value={card.value} duration={2000} />
+                      </p>
                       <p className="text-[10px] text-muted-foreground whitespace-nowrap">{card.label}</p>
                     </div>
                   </div>
