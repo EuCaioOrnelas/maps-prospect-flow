@@ -107,7 +107,9 @@ interface HeroSectionProps {
 
 export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [scrollY, setScrollY] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const demoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let ticking = false;
@@ -124,6 +126,22 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Control animation based on viewport visibility
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsAnimating(entries[0].isIntersecting);
+      },
+      { threshold: 0.2 }
+    );
+
+    if (demoRef.current) {
+      observer.observe(demoRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   const parallaxOffset = scrollY * 0.3;
@@ -299,7 +317,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </span>
             </div>
             
-            <div className="relative glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-card hover:shadow-glow transition-shadow duration-500">
+            <div ref={demoRef} className={`relative glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
               {/* Window controls */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -307,7 +325,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-warning/60" />
                   <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-success/60" />
                 </div>
-                <span className="text-xs text-muted-foreground">prospectai.io/dashboard</span>
               </div>
               
               <div className="bg-background/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
@@ -390,7 +407,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                       <span className="counter-animation">12</span> mensagens enviadas
                     </span>
                   </div>
-                  <span className="text-primary font-medium">Prospecção ativa...</span>
                 </div>
               </div>
             </div>
