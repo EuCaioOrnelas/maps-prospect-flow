@@ -155,9 +155,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Dashboard preview with parallax */}
+        {/* Animated Demo Section */}
         <div 
-          className="mt-12 sm:mt-20 max-w-6xl mx-auto animate-slide-up will-change-transform px-2" 
+          className="mt-12 sm:mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform px-2" 
           style={{ 
             animationDelay: "0.5s",
             transform: `translateY(${-parallaxOffset * 0.1}px) scale(${imageScale})`,
@@ -165,37 +165,112 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           }}
         >
           <div className="relative">
+            {/* Background glow */}
             <div 
               className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl will-change-transform"
               style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
             />
+            
+            {/* Demo badge */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+              <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
+                ✨ Demonstração em tempo real
+              </span>
+            </div>
+            
             <div className="relative glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-card hover:shadow-glow transition-shadow duration-500">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-destructive/60" />
-                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-warning/60" />
-                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-success/60" />
+              {/* Window controls */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-destructive/60" />
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-warning/60" />
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-success/60" />
+                </div>
+                <span className="text-xs text-muted-foreground">prospectai.io/dashboard</span>
               </div>
+              
               <div className="bg-background/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
-                <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <div className="flex-1 bg-secondary rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-muted-foreground text-sm sm:text-base">
-                      🔍 restaurantes italianos
-                    </div>
-                    <div className="flex-1 bg-secondary rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-muted-foreground text-sm sm:text-base">
-                      📍 São Paulo, SP
+                {/* Search bar simulation */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <div className="flex-1 relative overflow-hidden">
+                    <div className="bg-secondary rounded-lg px-4 py-3 text-sm">
+                      <span className="text-muted-foreground">🔍 </span>
+                      <span className="text-foreground typing-animation">restaurantes italianos</span>
                     </div>
                   </div>
-                  <div className="bg-primary text-primary-foreground rounded-lg px-4 sm:px-6 py-2 sm:py-3 font-medium text-center text-sm sm:text-base">
-                    Buscar Leads
+                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm text-muted-foreground">
+                    📍 São Paulo, SP
+                  </div>
+                  <button className="bg-primary text-primary-foreground rounded-lg px-6 py-3 font-medium text-sm flex items-center justify-center gap-2 search-pulse">
+                    <Search size={16} />
+                    Buscar
+                  </button>
+                </div>
+                
+                {/* Animated leads appearing */}
+                <div className="space-y-3">
+                  {/* Lead 1 - appears first */}
+                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '0.5s' }}>
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">🍝</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">Trattoria Bella Italia</p>
+                      <p className="text-xs text-muted-foreground truncate">📱 (11) 99XXX-XXXX • ⭐ 4.8</p>
+                    </div>
+                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '2s' }}>
+                      <div className="bg-success/20 text-success rounded-full p-2">
+                        <MessageCircle size={14} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Lead 2 */}
+                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '1s' }}>
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">🍕</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">Cantina do Nonno</p>
+                      <p className="text-xs text-muted-foreground truncate">📱 (11) 98XXX-XXXX • ⭐ 4.6</p>
+                    </div>
+                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '2.5s' }}>
+                      <div className="bg-success/20 text-success rounded-full p-2">
+                        <MessageCircle size={14} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Lead 3 */}
+                  <div className="flex items-center gap-4 bg-secondary/50 rounded-lg p-4 lead-card" style={{ animationDelay: '1.5s' }}>
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">🍷</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">Ristorante Milano</p>
+                      <p className="text-xs text-muted-foreground truncate">📱 (11) 97XXX-XXXX • ⭐ 4.9</p>
+                    </div>
+                    <div className="message-sent-icon opacity-0" style={{ animationDelay: '3s' }}>
+                      <div className="bg-success/20 text-success rounded-full p-2">
+                        <MessageCircle size={14} />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-secondary/50 rounded-lg p-3 sm:p-4">
-                      <div className="h-2 sm:h-3 bg-muted rounded w-3/4 mb-2" />
-                      <div className="h-1.5 sm:h-2 bg-muted/50 rounded w-1/2" />
-                    </div>
-                  ))}
+                
+                {/* Stats bar */}
+                <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                      <span className="counter-animation">47</span> leads encontrados
+                    </span>
+                    <span className="hidden sm:flex items-center gap-1">
+                      <Zap size={12} className="text-primary" />
+                      <span className="counter-animation">12</span> mensagens enviadas
+                    </span>
+                  </div>
+                  <span className="text-primary font-medium">Prospecção ativa...</span>
                 </div>
               </div>
             </div>

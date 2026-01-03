@@ -192,6 +192,75 @@
   }
 }
 
+/* Hero Demo Animations */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes lead-appear {
+  0% { 
+    opacity: 0; 
+    transform: translateX(-20px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0);
+  }
+}
+
+@keyframes message-sent {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+@keyframes search-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+  }
+}
+
+@keyframes counter {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+.typing-animation {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 2s steps(25) infinite alternate;
+}
+
+.lead-card {
+  opacity: 0;
+  animation: lead-appear 0.5s ease-out forwards;
+}
+
+.message-sent-icon {
+  animation: message-sent 0.4s ease-out forwards;
+}
+
+.search-pulse {
+  animation: search-pulse 2s ease-in-out infinite;
+}
+
+.counter-animation {
+  animation: counter 1s ease-in-out infinite alternate;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
