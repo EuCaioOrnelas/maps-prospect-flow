@@ -27,6 +27,47 @@ declare const EdgeRuntime: {
   waitUntil: (promise: Promise<unknown>) => void;
 };
 
+// Função para verificar se a instância está realmente conectada
+async function checkInstanceConnection(
+  evolutionUrl: string, 
+  apiKey: string, 
+  instanceName: string
+): Promise<{ connected: boolean; error?: string }> {
+  try {
+    console.log(`Verifying connection for instance: ${instanceName}`);
+    
+    const statusResponse = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
+      method: 'GET',
+      headers: {
+        'apikey': apiKey,
+      },
+    });
+
+    if (!statusResponse.ok) {
+      const errorText = await statusResponse.text();
+      console.error('Evolution API status check error:', errorText);
+      return { connected: false, error: `API error: ${errorText}` };
+    }
+
+    const statusData = await statusResponse.json();
+    console.log('Connection status response:', JSON.stringify(statusData));
+
+    const isConnected = statusData.state === 'open' || statusData.instance?.state === 'open';
+    
+    if (!isConnected) {
+      return { 
+        connected: false, 
+        error: `Instance not connected. State: ${statusData.state || statusData.instance?.state || 'unknown'}` 
+      };
+    }
+
+    return { connected: true };
+  } catch (error) {
+    console.error('Error checking connection:', error);
+    return { connected: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -60,6 +101,43 @@ serve(async (req) => {
 
     console.log(`Starting campaign ${campaignId} with ${leads.length} leads`);
 
+    // VERIFICAR CONEXÃO ANTES DE INICIAR A CAMPANHA
+    const connectionCheck = await checkInstanceConnection(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName);
+    
+    if (!connectionCheck.connected) {
+      console.log(`Instance ${instanceName} is not connected. Updating database and failing campaign.`);
+      
+      // Atualizar o status do número no banco para desconectado
+      await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
+
+      // Marcar campanha como falha
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'failed',
+          pause_reason: `Número WhatsApp desconectado: ${connectionCheck.error}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', campaignId);
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'WhatsApp não está conectado. Por favor, reconecte o número antes de iniciar a campanha.',
+        needsReconnect: true,
+        connectionError: connectionCheck.error
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Update campaign status to running immediately
     await supabase
       .from('whatsapp_campaigns')
@@ -91,10 +169,41 @@ serve(async (req) => {
 
       let sentCount = 0;
       let failedCount = 0;
+      let consecutiveFailures = 0;
+      const MAX_CONSECUTIVE_FAILURES = 5;
 
       try {
         // Process leads
         for (let i = 0; i < leads.length; i++) {
+          // Verificar conexão periodicamente (a cada 10 mensagens)
+          if (i > 0 && i % 10 === 0) {
+            const recheck = await checkInstanceConnection(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, instanceName);
+            if (!recheck.connected) {
+              console.log('Connection lost during campaign, pausing...');
+              
+              await supabase
+                .from('whatsapp_numbers')
+                .update({ 
+                  is_connected: false,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', numberId);
+
+              await supabase
+                .from('whatsapp_campaigns')
+                .update({ 
+                  status: 'paused',
+                  pause_reason: 'Conexão WhatsApp perdida durante a campanha',
+                  sent_count: sentCount,
+                  failed_count: failedCount,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', campaignId);
+
+              return;
+            }
+          }
+
           // Wait BEFORE sending (including first message) for anti-ban
           const randomDelay = getRandomDelay();
           console.log(`Waiting ${randomDelay}s before message ${i + 1}`);
@@ -166,15 +275,47 @@ serve(async (req) => {
             if (sendResponse.ok) {
               sentCount++;
               dailySentCount++;
+              consecutiveFailures = 0; // Reset on success
               console.log(`Message sent to ${formattedPhone} (${sentCount}/${leads.length})`);
             } else {
               const errorText = await sendResponse.text();
               console.error(`Failed to send to ${formattedPhone}:`, errorText);
               failedCount++;
+              consecutiveFailures++;
+              
+              // Se muitas falhas consecutivas, pode ser problema de conexão
+              if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                console.log('Too many consecutive failures, checking connection...');
+                const recheck = await checkInstanceConnection(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, instanceName);
+                if (!recheck.connected) {
+                  await supabase
+                    .from('whatsapp_numbers')
+                    .update({ 
+                      is_connected: false,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', numberId);
+
+                  await supabase
+                    .from('whatsapp_campaigns')
+                    .update({ 
+                      status: 'failed',
+                      pause_reason: 'Muitas falhas consecutivas - conexão perdida',
+                      sent_count: sentCount,
+                      failed_count: failedCount,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', campaignId);
+
+                  return;
+                }
+                consecutiveFailures = 0;
+              }
             }
           } catch (sendError) {
             console.error(`Error sending to ${formattedPhone}:`, sendError);
             failedCount++;
+            consecutiveFailures++;
           }
 
           // Update campaign progress
@@ -196,8 +337,6 @@ serve(async (req) => {
               updated_at: new Date().toISOString()
             })
             .eq('id', numberId);
-
-          // Delay is now at the start of the loop, so no need for delay at the end
         }
 
         // Campaign completed

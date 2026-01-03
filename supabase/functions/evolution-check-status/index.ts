@@ -50,57 +50,99 @@ serve(async (req) => {
     if (!statusResponse.ok) {
       const errorText = await statusResponse.text();
       console.error('Evolution API error:', errorText);
-      throw new Error(`Failed to check status: ${errorText}`);
-    }
-
-    const statusData = await statusResponse.json();
-    console.log('Status response:', JSON.stringify(statusData));
-
-    const isConnected = statusData.state === 'open' || statusData.instance?.state === 'open';
-    
-    // If connected, get the phone number
-    let phoneNumber = null;
-    if (isConnected) {
-      try {
-        const infoResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
-          method: 'GET',
-          headers: {
-            'apikey': EVOLUTION_API_KEY,
-          },
-        });
-        
-        if (infoResponse.ok) {
-          const infoData = await infoResponse.json();
-          console.log('Instance info:', JSON.stringify(infoData));
-          
-          if (infoData && infoData.length > 0) {
-            phoneNumber = infoData[0].owner || infoData[0].instance?.owner;
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching instance info:', e);
-      }
-
-      // Update database with connected status
-      const { error: updateError } = await supabase
+      
+      // Se a API retornar erro, provavelmente a instância não existe mais ou está desconectada
+      // Atualizar o banco para refletir isso
+      await supabase
         .from('whatsapp_numbers')
         .update({ 
-          is_connected: true,
-          phone_number: phoneNumber,
+          is_connected: false,
           updated_at: new Date().toISOString()
         })
         .eq('id', numberId)
         .eq('user_id', user.id);
 
-      if (updateError) {
-        console.error('Error updating number status:', updateError);
+      return new Response(JSON.stringify({
+        success: true,
+        connected: false,
+        state: 'disconnected',
+        phoneNumber: null,
+        error: 'Instance not found or disconnected'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const statusData = await statusResponse.json();
+    console.log('Status response:', JSON.stringify(statusData));
+
+    const state = statusData.state || statusData.instance?.state;
+    const isConnected = state === 'open';
+    
+    // Se não está conectado, atualizar o banco imediatamente
+    if (!isConnected) {
+      console.log(`Instance ${instanceName} is not connected (state: ${state}). Updating database.`);
+      
+      await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
+
+      return new Response(JSON.stringify({
+        success: true,
+        connected: false,
+        state: state || 'unknown',
+        phoneNumber: null,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Se conectado, obter o número de telefone
+    let phoneNumber = null;
+    try {
+      const infoResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
+        method: 'GET',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+        },
+      });
+      
+      if (infoResponse.ok) {
+        const infoData = await infoResponse.json();
+        console.log('Instance info:', JSON.stringify(infoData));
+        
+        if (infoData && infoData.length > 0) {
+          phoneNumber = infoData[0].owner || infoData[0].instance?.owner;
+        }
       }
+    } catch (e) {
+      console.error('Error fetching instance info:', e);
+    }
+
+    // Update database with connected status
+    const { error: updateError } = await supabase
+      .from('whatsapp_numbers')
+      .update({ 
+        is_connected: true,
+        phone_number: phoneNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', numberId)
+      .eq('user_id', user.id);
+
+    if (updateError) {
+      console.error('Error updating number status:', updateError);
     }
 
     return new Response(JSON.stringify({
       success: true,
-      connected: isConnected,
-      state: statusData.state || statusData.instance?.state,
+      connected: true,
+      state: state,
       phoneNumber: phoneNumber,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -110,7 +152,8 @@ serve(async (req) => {
     console.error('Error in evolution-check-status:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ 
-      error: errorMessage 
+      error: errorMessage,
+      connected: false,
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
