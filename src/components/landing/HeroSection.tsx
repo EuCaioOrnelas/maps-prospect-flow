@@ -1,7 +1,39 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle } from "lucide-react";
+import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+
+// Floating stats cards data
+const floatingCards = [
+  { 
+    icon: Send, 
+    value: "2.4K+", 
+    label: "Mensagens enviadas", 
+    position: "left-0 sm:-left-4 lg:-left-16 top-1/4",
+    delay: "0.8s"
+  },
+  { 
+    icon: Users, 
+    value: "847", 
+    label: "Leads prospectados", 
+    position: "right-0 sm:-right-4 lg:-right-16 top-1/3",
+    delay: "1.2s"
+  },
+  { 
+    icon: TrendingUp, 
+    value: "32%", 
+    label: "Taxa de resposta", 
+    position: "left-0 sm:-left-4 lg:-left-12 bottom-1/4",
+    delay: "1.6s"
+  },
+  { 
+    icon: Zap, 
+    value: "5min", 
+    label: "Tempo médio", 
+    position: "right-0 sm:-right-4 lg:-right-12 bottom-1/3",
+    delay: "2s"
+  },
+];
 
 interface HeroSectionProps {
   onSignupClick?: () => void;
@@ -171,6 +203,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
             />
             
+            {/* Floating Stats Cards */}
+            {floatingCards.map((card, index) => (
+              <div
+                key={index}
+                className={`absolute ${card.position} z-30 floating-card hidden sm:block`}
+                style={{ animationDelay: card.delay }}
+              >
+                <div className="glass rounded-lg p-3 shadow-lg border border-primary/20 hover:border-primary/40 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <card.icon size={14} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{card.value}</p>
+                      <p className="text-[10px] text-muted-foreground whitespace-nowrap">{card.label}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
             {/* Demo badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
               <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
@@ -192,11 +245,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               <div className="bg-background/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                 {/* Search bar simulation */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="flex-1 relative overflow-hidden">
-                    <div className="bg-secondary rounded-lg px-4 py-3 text-sm">
-                      <span className="text-muted-foreground">🔍 </span>
-                      <span className="text-foreground typing-animation">restaurantes italianos</span>
-                    </div>
+                  <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm flex items-center">
+                    <span className="text-muted-foreground mr-2">🔍</span>
+                    <span className="text-foreground">restaurantes italianos</span>
+                    <span className="typing-animation ml-0.5">&nbsp;</span>
                   </div>
                   <div className="flex-1 bg-secondary rounded-lg px-4 py-3 text-sm text-muted-foreground">
                     📍 São Paulo, SP
