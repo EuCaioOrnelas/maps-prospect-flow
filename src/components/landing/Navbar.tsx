@@ -20,8 +20,16 @@ export const PromoBanner = () => (
   </div>
 );
 
-export const Navbar = () => {
+interface NavbarProps {
+  onSignupClick?: () => void;
+}
+
+export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignupClick = () => {
+    onSignupClick?.();
+  };
 
   return (
     <>
@@ -56,7 +64,7 @@ export const Navbar = () => {
                   Entrar
                 </Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/signup" onClick={handleSignupClick}>
                 <Button variant="hero" size="sm">
                   Começar Grátis
                 </Button>
@@ -117,7 +125,7 @@ export const Navbar = () => {
                       Entrar
                     </Button>
                   </Link>
-                  <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/signup" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
                     <Button variant="hero" size="sm" className="w-full justify-center">
                       Começar Grátis
                     </Button>

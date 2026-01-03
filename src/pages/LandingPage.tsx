@@ -1,3 +1,4 @@
+import { useParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -8,10 +9,54 @@ import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import NotFound from "./NotFound";
 
-const Index = () => {
-  // Track the main index page
-  const { trackSignupClick } = useLandingPageTracking('index');
+const LandingPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const [pageExists, setPageExists] = useState<boolean | null>(null);
+  const [pageName, setPageName] = useState<string>("");
+  
+  // Initialize tracking for this page
+  const { trackSignupClick } = useLandingPageTracking(slug || 'index');
+
+  useEffect(() => {
+    const checkPage = async () => {
+      if (!slug) {
+        setPageExists(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('landing_pages')
+        .select('id, name')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      setPageExists(!!data);
+      if (data) {
+        setPageName(data.name);
+      }
+    };
+
+    checkPage();
+  }, [slug]);
+
+  // Show loading while checking
+  if (pageExists === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show 404 if page doesn't exist
+  if (!pageExists) {
+    return <NotFound />;
+  }
 
   return (
     <>
@@ -34,4 +79,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default LandingPage;

@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import AdminLandingPages from "./pages/AdminLandingPages";
+import LandingPage from "./pages/LandingPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Upgrade from "./pages/Upgrade";
@@ -74,7 +76,16 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/reports" 
+                path="/admin/landing-pages" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminLandingPages />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/lp/:slug" element={<LandingPage />} />
+              <Route 
+                path="/reports"
                 element={
                   <ProtectedRoute>
                     <Reports />

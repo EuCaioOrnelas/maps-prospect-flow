@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const HeroSection = () => {
+interface HeroSectionProps {
+  onSignupClick?: () => void;
+}
+
+export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [scrollY, setScrollY] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -121,7 +125,7 @@ export const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
-            <Link to="/signup" className="w-full sm:w-auto">
+            <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
               <Button variant="hero" size="xl" className="group w-full sm:w-auto">
                 Começar com 10 buscas grátis
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />

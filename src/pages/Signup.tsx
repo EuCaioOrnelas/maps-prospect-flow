@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { SEO } from "@/components/SEO";
+import { trackSignupCompleted } from "@/hooks/useLandingPageTracking";
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -59,6 +61,13 @@ const Signup = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Track signup completion for landing page analytics
+    // Get the user that was just created
+    const { data: { user: newUser } } = await supabase.auth.getUser();
+    if (newUser) {
+      await trackSignupCompleted(newUser.id);
     }
 
     // Show email verification message
