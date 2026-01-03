@@ -137,13 +137,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getClientIP()
     ]);
     
-    // Check for fraud before signup
-    const { data: fraudCheck } = await supabase.rpc('check_signup_fraud', {
-      p_ip: clientIP,
-      p_fingerprint: fingerprint
+    // Check for fraud before signup using strict validation
+    const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
+      p_fingerprint: fingerprint,
+      p_ip: clientIP
     });
     
-    const fraudResult = fraudCheck as { is_suspicious?: boolean; reasons?: string[] } | null;
+    if (fraudError) {
+      console.error('Fraud check error:', fraudError);
+    }
+    
+    // Handle both old and new fraud check formats
+    const fraudResult = fraudCheck as { 
+      allowed?: boolean; 
+      is_suspicious?: boolean; 
+      message?: string;
+      reason?: string;
+      reasons?: string[] 
+    } | null;
+    
+    // Block signup if not allowed (new format) or suspicious (old format)
+    if (fraudResult?.allowed === false) {
+      console.warn('Signup blocked:', fraudResult.reason);
+      return { 
+        error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
+      };
+    }
     
     if (fraudResult?.is_suspicious) {
       console.warn('Suspicious signup detected:', fraudResult.reasons);
