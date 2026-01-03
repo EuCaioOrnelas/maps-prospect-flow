@@ -14,9 +14,17 @@ export interface WhatsAppNumber {
 
 const PLAN_LIMITS: Record<string, number> = {
   free: 1, // Free trial users get 1 number
-  start: 1,
-  growth: 2,
-  scale: 5
+  start: 2,
+  growth: 5,
+  scale: 10
+};
+
+// Limites mensais de disparos por plano
+const MONTHLY_MESSAGE_LIMITS: Record<string, number> = {
+  free: 400,
+  start: 12000,
+  growth: 30000,
+  scale: 60000
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
@@ -61,11 +69,15 @@ export const useWhatsAppNumbers = () => {
         setSelectedNumberId(firstConnected.id);
       }
 
-      // Verify real connection status for numbers marked as connected
+      // Verify real connection status for ALL numbers marked as connected
+      // Isso é crítico para garantir que o status no banco corresponde à realidade
       const connectedNumbers = fetchedNumbers.filter(n => n.is_connected && n.instance_name);
-      for (const number of connectedNumbers) {
-        verifyConnectionStatus(number.id, number.instance_name!);
-      }
+      const verificationPromises = connectedNumbers.map(number => 
+        verifyAndUpdateConnectionStatus(number.id, number.instance_name!)
+      );
+      
+      // Executar todas as verificações em paralelo
+      await Promise.all(verificationPromises);
     } catch (err) {
       console.error('Error fetching numbers:', err);
     } finally {
@@ -73,42 +85,46 @@ export const useWhatsAppNumbers = () => {
     }
   };
 
-  // Verify real connection status from Evolution API
-  const verifyConnectionStatus = async (numberId: string, instanceName: string) => {
+  // Verify and update connection status from Evolution API
+  // Esta função atualiza o estado local imediatamente quando detecta desconexão
+  const verifyAndUpdateConnectionStatus = async (numberId: string, instanceName: string): Promise<boolean> => {
     try {
+      console.log(`Verifying connection status for ${instanceName}...`);
+      
       const response = await supabase.functions.invoke('evolution-check-status', {
         body: { instanceName, numberId },
       });
 
       const isReallyConnected = response.data?.connected === true;
       
-      // Get current number from state
-      const currentNumber = numbers.find(n => n.id === numberId);
-      
-      // If status changed, update database and state
-      if (currentNumber?.is_connected && !isReallyConnected) {
-        console.log(`Number ${numberId} is no longer connected, updating status`);
+      // Se não está conectado, atualizar o estado local imediatamente
+      if (!isReallyConnected) {
+        console.log(`Number ${numberId} (${instanceName}) is NOT connected. Updating local state.`);
         
-        await supabase
-          .from('whatsapp_numbers')
-          .update({ 
-            is_connected: false,
-            phone_number: null,
-            instance_name: null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', numberId);
-
         setNumbers(prev => prev.map(n => 
           n.id === numberId 
-            ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
+            ? { ...n, is_connected: false } 
             : n
         ));
+        
+        return false;
       }
+      
+      return true;
     } catch (err) {
       console.error('Error verifying connection status:', err);
+      // Em caso de erro, assumir desconectado por segurança
+      setNumbers(prev => prev.map(n => 
+        n.id === numberId 
+          ? { ...n, is_connected: false } 
+          : n
+      ));
+      return false;
     }
   };
+
+  // Alias para manter compatibilidade
+  const verifyConnectionStatus = verifyAndUpdateConnectionStatus;
 
   // Manual refresh of connection status
   const refreshConnectionStatus = async () => {
@@ -192,6 +208,11 @@ export const useWhatsAppNumbers = () => {
     return getRemainingDailyLimit(numberId) <= 0;
   };
 
+  // Obter limite mensal de mensagens do plano atual
+  const getMonthlyMessageLimit = () => {
+    return MONTHLY_MESSAGE_LIMITS[userPlan] || MONTHLY_MESSAGE_LIMITS.free;
+  };
+
   return {
     numbers,
     setNumbers,
@@ -203,11 +224,15 @@ export const useWhatsAppNumbers = () => {
     fetchNumbers,
     refreshConnectionStatus,
     verifyConnectionStatus,
+    verifyAndUpdateConnectionStatus,
     resetDailyCountsIfNeeded,
     incrementSentCount,
     getSelectedNumber,
     getRemainingDailyLimit,
     isAtDailyLimit,
-    DAILY_LIMIT_PER_NUMBER
+    getMonthlyMessageLimit,
+    DAILY_LIMIT_PER_NUMBER,
+    MONTHLY_MESSAGE_LIMITS,
+    userPlan
   };
 };
