@@ -239,9 +239,13 @@
 
 .typing-animation {
   display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typing 2s steps(25) infinite alternate;
+  border-right: 2px solid hsl(var(--primary));
+  animation: blink-caret 0.75s step-end infinite;
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: hsl(var(--primary)); }
 }
 
 .lead-card {
@@ -259,6 +263,23 @@
 
 .counter-animation {
   animation: counter 1s ease-in-out infinite alternate;
+}
+
+/* Floating cards animation */
+@keyframes float-card {
+  0%, 100% { 
+    transform: translateY(0px);
+  }
+  50% { 
+    transform: translateY(-8px);
+  }
+}
+
+.floating-card {
+  opacity: 0;
+  animation: 
+    lead-appear 0.6s ease-out forwards,
+    float-card 4s ease-in-out infinite;
 }
 
 /* Custom scrollbar */
