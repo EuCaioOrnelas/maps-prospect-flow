@@ -766,9 +766,6 @@ const Admin = () => {
                   {stripeMRR && !stripeMRRError && (
                     <span className="ml-1 text-xs text-success">✓</span>
                   )}
-                  {stripeMRRError && (
-                    <span className="ml-1 text-xs text-destructive" title={stripeMRRError}>⚠</span>
-                  )}
                 </p>
               </div>
 
@@ -785,9 +782,6 @@ const Admin = () => {
                   Assinantes Ativos
                   {stripeMRR && !stripeMRRError && (
                     <span className="ml-1 text-xs text-success">✓</span>
-                  )}
-                  {stripeMRRError && (
-                    <span className="ml-1 text-xs text-destructive" title={stripeMRRError}>⚠</span>
                   )}
                 </p>
               </div>
@@ -813,43 +807,57 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Revenue Chart */}
+            {/* Revenue Chart - Using Stripe Monthly MRR */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp size={20} className="text-primary" />
-                  <h2 className="font-display font-semibold">Evolução do MRR (7 dias)</h2>
+                  <h2 className="font-display font-semibold">Evolução do MRR (Stripe)</h2>
+                  {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueHistory}>
-                      <defs>
-                        <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `R$${value}`} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                        }}
-                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="mrr" 
-                        stroke="hsl(var(--primary))" 
-                        fillOpacity={1} 
-                        fill="url(#colorMrr)" 
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {stripeMRR?.monthlyMRR && stripeMRR.monthlyMRR.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={stripeMRR.monthlyMRR.map(item => ({
+                        date: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                        mrr: item.mrr
+                      }))}>
+                        <defs>
+                          <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `R$${value}`} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="mrr" 
+                          stroke="hsl(var(--primary))" 
+                          fillOpacity={1} 
+                          fill="url(#colorMrr)" 
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      {stripeMRRError ? (
+                        <p className="text-sm">Erro ao carregar dados do Stripe</p>
+                      ) : (
+                        <p className="text-sm">Nenhum dado de MRR disponível</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
