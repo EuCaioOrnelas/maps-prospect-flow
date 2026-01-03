@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.check-serp-keys]
 verify_jwt = false
+
+[functions.get-stripe-mrr]
+verify_jwt = false
