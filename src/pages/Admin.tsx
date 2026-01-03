@@ -142,6 +142,7 @@ const Admin = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
   const [loadingMRR, setLoadingMRR] = useState(false);
+  const [stripeMRRError, setStripeMRRError] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
@@ -163,12 +164,17 @@ const Admin = () => {
   // Fetch real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
     setLoadingMRR(true);
+    setStripeMRRError(null);
     try {
       const { data, error } = await supabase.functions.invoke('get-stripe-mrr');
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setStripeMRR(data);
     } catch (error) {
       console.error('Error loading Stripe MRR:', error);
+      setStripeMRRError(error instanceof Error ? error.message : 'Erro ao carregar MRR');
+      // Set empty data when Stripe fails - don't use database fallback
+      setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, subscriptionDetails: [], planDistribution: {}, monthlyMRR: [] });
     } finally {
       setLoadingMRR(false);
     }
@@ -753,12 +759,15 @@ const Admin = () => {
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-success">
-                  R$ {(stripeMRR?.totalMRR ?? stats?.mrr ?? 0).toLocaleString('pt-BR')}
+                  R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   MRR (Stripe Real)
-                  {stripeMRR && (
+                  {stripeMRR && !stripeMRRError && (
                     <span className="ml-1 text-xs text-success">✓</span>
+                  )}
+                  {stripeMRRError && (
+                    <span className="ml-1 text-xs text-destructive" title={stripeMRRError}>⚠</span>
                   )}
                 </p>
               </div>
@@ -770,12 +779,15 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stripeMRR?.activeSubscriptions ?? stats?.payingUsers ?? 0}
+                  {stripeMRR?.activeSubscriptions ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Assinantes Ativos
-                  {stripeMRR && (
+                  {stripeMRR && !stripeMRRError && (
                     <span className="ml-1 text-xs text-success">✓</span>
+                  )}
+                  {stripeMRRError && (
+                    <span className="ml-1 text-xs text-destructive" title={stripeMRRError}>⚠</span>
                   )}
                 </p>
               </div>
