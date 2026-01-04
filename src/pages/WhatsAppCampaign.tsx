@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { InternalHeader } from "@/components/InternalHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
@@ -671,29 +672,7 @@ const WhatsAppCampaign = () => {
       <div className="min-h-screen bg-background">
         <DisclaimerModal />
         {/* Header */}
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="icon">
-                    <ArrowLeft size={20} />
-                  </Button>
-                </Link>
-                <Logo size="md" />
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Link to="/whatsapp/reports">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <BarChart3 size={16} />
-                    <span className="hidden sm:inline">Relatórios</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </header>
+        <InternalHeader showCredits={false} />
 
         <main className="container mx-auto px-4 py-8">
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
@@ -726,11 +705,20 @@ const WhatsAppCampaign = () => {
                   <ArrowLeft size={18} />
                 </Button>
               </Link>
-              <Logo size="md" showText={false} />
-              <span className="hidden sm:block font-display font-bold text-lg sm:text-xl">WiizeProspect</span>
+              <Logo size="sm" />
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Trial message indicator */}
+              {isFreePlan && !isTrialExpired && (
+                <div className="flex items-center gap-1 sm:gap-2 text-xs px-2 py-1 rounded-lg bg-primary/10 border border-primary/20">
+                  <MessageSquare size={12} className="text-primary" />
+                  <span className="text-primary font-medium">{trialMessagesUsed}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-muted-foreground">{FREE_TRIAL_MESSAGE_LIMIT}</span>
+                </div>
+              )}
+              
               <Link to="/whatsapp/reports">
                 <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 gap-1 sm:gap-2">
                   <BarChart3 size={14} />

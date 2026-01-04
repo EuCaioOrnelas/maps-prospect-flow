@@ -154,27 +154,22 @@ export const PricingSection = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch px-2">
             {plans.map((plan, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: plan.popular ? 1.05 : 0.95 }}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ 
                   duration: 0.6, 
                   delay: index * 0.15,
                   ease: [0.25, 0.46, 0.45, 0.94]
                 }}
-                whileHover={{ 
-                  y: -8, 
-                  scale: plan.popular ? 1.08 : 1,
-                  transition: { duration: 0.3 }
-                }}
                 className={`relative rounded-2xl ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-7 sm:p-9 md:z-10"
-                    : "glass p-5 sm:p-7"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 sm:p-7 md:z-10"
+                    : "glass p-5 sm:p-6"
                 }`}
               >
                 {plan.popular && (
