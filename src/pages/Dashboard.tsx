@@ -70,7 +70,8 @@ interface SearchHistoryItem {
 }
 
 const RESULTS_PER_PAGE = 10;
-const HISTORY_PER_PAGE = 5;
+const HISTORY_PER_PAGE = 6;
+const MAX_HISTORY_ITEMS = 60;
 
 const Dashboard = () => {
   const [keyword, setKeyword] = useState("");
@@ -162,18 +163,19 @@ const Dashboard = () => {
     checkMonthlyReset();
   }, [user]);
 
-  // Fetch search history
+  // Fetch search history and clean up old entries
   useEffect(() => {
     const fetchHistory = async () => {
       if (!user) return;
       
       try {
+        // Fetch history ordered by date, limit to MAX_HISTORY_ITEMS
         const { data, error } = await supabase
           .from('search_history')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(MAX_HISTORY_ITEMS);
 
         if (error) {
           console.error('Error fetching history:', error);
@@ -184,6 +186,30 @@ const Dashboard = () => {
           ...item,
           leads: Array.isArray(item.leads) ? (item.leads as unknown as Lead[]) : []
         })));
+
+        // Check if we need to delete old entries (more than MAX_HISTORY_ITEMS)
+        const { count } = await supabase
+          .from('search_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (count && count > MAX_HISTORY_ITEMS) {
+          // Get IDs of entries to delete (oldest ones beyond limit)
+          const { data: oldEntries } = await supabase
+            .from('search_history')
+            .select('id')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: true })
+            .limit(count - MAX_HISTORY_ITEMS);
+
+          if (oldEntries && oldEntries.length > 0) {
+            const idsToDelete = oldEntries.map(e => e.id);
+            await supabase
+              .from('search_history')
+              .delete()
+              .in('id', idsToDelete);
+          }
+        }
       } catch (err) {
         console.error('Error:', err);
       } finally {
@@ -924,17 +950,17 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty state - when no search has been done yet */}
           {!hasSearched && (
             <div className="text-center py-12 sm:py-20">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 border border-primary/10">
                 <Search size={40} className="text-primary" />
               </div>
               <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">
-                Faça sua primeira busca
+                Pronto para prospectar?
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto text-base">
-                Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps
+                Insira uma palavra-chave e localização acima para descobrir novos leads qualificados
               </p>
             </div>
           )}
