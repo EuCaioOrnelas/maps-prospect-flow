@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,6 +28,27 @@ const MONTHLY_MESSAGE_LIMITS: Record<string, number> = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
+const RESET_HOUR = 8; // Reset às 08:00
+
+// Verifica se o último envio foi antes do horário de reset de hoje
+const shouldResetCount = (lastSentAt: string | null, dailySentCount: number): boolean => {
+  if (!lastSentAt || dailySentCount === 0) return false;
+  
+  const now = new Date();
+  const lastSent = new Date(lastSentAt);
+  
+  // Cria a data do reset de hoje às 08:00
+  const todayReset = new Date(now);
+  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+  
+  // Se ainda não passou das 08:00 hoje, usa o reset de ontem
+  if (now < todayReset) {
+    todayReset.setDate(todayReset.getDate() - 1);
+  }
+  
+  // Reseta se o último envio foi antes do horário de reset
+  return lastSent < todayReset;
+};
 
 export const useWhatsAppNumbers = () => {
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
@@ -40,15 +61,7 @@ export const useWhatsAppNumbers = () => {
   const maxNumbers = PLAN_LIMITS[userPlan] || 0;
   const hasMassMessagingAccess = maxNumbers > 0;
 
-  useEffect(() => {
-    if (user && hasMassMessagingAccess) {
-      fetchNumbers();
-    } else {
-      setLoading(false);
-    }
-  }, [user, hasMassMessagingAccess]);
-
-  const fetchNumbers = async () => {
+  const fetchNumbers = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -62,15 +75,10 @@ export const useWhatsAppNumbers = () => {
       
       let fetchedNumbers = data || [];
       
-      // Reset daily counts for numbers where last_sent_at is from a previous day
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const numbersToReset = fetchedNumbers.filter(n => {
-        if (!n.last_sent_at) return false;
-        const lastSent = new Date(n.last_sent_at);
-        return lastSent < today && n.daily_sent_count > 0;
-      });
+      // Reset daily counts for numbers where last_sent_at is before today's 08:00
+      const numbersToReset = fetchedNumbers.filter(n => 
+        shouldResetCount(n.last_sent_at, n.daily_sent_count)
+      );
 
       if (numbersToReset.length > 0) {
         // Reset counts in database
@@ -107,7 +115,50 @@ export const useWhatsAppNumbers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Subscribe to realtime updates for whatsapp_numbers
+  useEffect(() => {
+    if (!user || !hasMassMessagingAccess) return;
+
+    const channel = supabase
+      .channel('whatsapp-numbers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'whatsapp_numbers',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Realtime update received:', payload);
+          const updatedNumber = payload.new as WhatsAppNumber;
+          
+          // Check if we should reset this number's count based on the 08:00 rule
+          if (shouldResetCount(updatedNumber.last_sent_at, updatedNumber.daily_sent_count)) {
+            updatedNumber.daily_sent_count = 0;
+          }
+          
+          setNumbers(prev => prev.map(n => 
+            n.id === updatedNumber.id ? { ...n, ...updatedNumber } : n
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, hasMassMessagingAccess]);
+
+  useEffect(() => {
+    if (user && hasMassMessagingAccess) {
+      fetchNumbers();
+    } else {
+      setLoading(false);
+    }
+  }, [user, hasMassMessagingAccess, fetchNumbers]);
 
   // Verify and update connection status from Evolution API
   // Esta função atualiza o estado local imediatamente quando detecta desconexão
