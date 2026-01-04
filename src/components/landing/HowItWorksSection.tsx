@@ -74,8 +74,8 @@ export const HowItWorksSection = () => {
         {/* Steps - Desktop */}
         <div className="hidden md:block">
           <div className="relative">
-            {/* Connection line */}
-            <div className="absolute top-10 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-blue-500/50 via-green-500/50 to-primary/50 z-0" />
+            {/* Connection line - positioned at icon center */}
+            <div className="absolute top-[40px] lg:top-[48px] left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-blue-500/50 via-green-500/50 to-primary/50 z-0" />
             
             <div className="grid grid-cols-3 gap-6 lg:gap-10 relative z-10">
               {steps.map((step, index) => (
@@ -90,22 +90,28 @@ export const HowItWorksSection = () => {
                 >
                   {/* Animated Icon Container - Outside card */}
                   <div className="flex justify-center mb-4">
-                    <div className="relative">
+                    <div className="relative group cursor-pointer">
+                      {/* Glow effect on hover */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${step.color} rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
+                      
                       {/* Main icon container */}
-                      <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300`}>
-                        <step.icon className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                      <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                        <step.icon className="w-8 h-8 lg:w-10 lg:h-10 text-white group-hover:animate-pulse" />
                         
                         {/* Floating secondary icon */}
-                        <div className={`absolute -top-2 -right-2 w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-background border-2 border-border flex items-center justify-center ${step.bgColor}`}>
+                        <div className={`absolute -top-2 -right-2 w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-background border-2 border-border flex items-center justify-center ${step.bgColor} group-hover:scale-110 transition-transform duration-300`}>
                           <step.secondaryIcon className="w-3 h-3 lg:w-4 lg:h-4 text-foreground" />
                         </div>
                       </div>
+                      
+                      {/* Pulse ring on hover */}
+                      <div className={`absolute inset-0 rounded-2xl border-2 border-current opacity-0 group-hover:opacity-30 group-hover:animate-ping transition-opacity`} style={{ borderColor: 'inherit' }} />
                     </div>
                   </div>
 
-                  {/* Arrow between steps */}
+                  {/* Arrow between steps - centered with line */}
                   {index < steps.length - 1 && (
-                    <div className="absolute right-0 top-8 translate-x-1/2 z-20 hidden lg:flex items-center justify-center">
+                    <div className="absolute right-0 top-[32px] lg:top-[40px] translate-x-1/2 z-20 hidden lg:flex items-center justify-center">
                       <div className={`w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center shadow-sm transition-all duration-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} style={{ transitionDelay: `${index * 200 + 400}ms` }}>
                         <ChevronRight className="w-4 h-4 text-primary" />
                       </div>
