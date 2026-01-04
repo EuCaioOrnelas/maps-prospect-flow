@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-x-hidden overflow-y-visible"
+      className="relative flex flex-col justify-center pt-20 pb-12 sm:pt-16 sm:pb-24 sm:min-h-screen"
     >
       {/* Parallax Background effects */}
       <div 
@@ -297,29 +297,30 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in text-left sm:text-center">
+          {/* Badge - hidden on mobile to reduce clutter */}
+          <div className="hidden sm:inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
             <Brain size={16} className="text-primary flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-muted-foreground text-left">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               IA que identifica leads com maior potencial de conversão
             </span>
           </div>
 
           {/* Main heading */}
-          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 animate-slide-up px-2" style={{ animationDelay: "0.1s" }}>
+          <h1 className="font-display text-2xl sm:text-5xl md:text-7xl font-bold mb-3 sm:mb-6 animate-slide-up px-2" style={{ animationDelay: "0.1s" }}>
             Prospecção{" "}
             <span className="text-gradient">Inteligente</span>
             {" "}com IA
           </h1>
 
-          {/* Subheading */}
-          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground mb-4 sm:mb-6 max-w-2xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.2s" }}>
-            Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
-            empresas ativas, com contatos verificados e alto potencial de conversão.
+          {/* Subheading - shorter on mobile */}
+          <p className="text-sm sm:text-xl md:text-2xl text-muted-foreground mb-4 sm:mb-6 max-w-2xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.2s" }}>
+            <span className="hidden sm:inline">Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
+            empresas ativas, com contatos verificados e alto potencial de conversão.</span>
+            <span className="sm:hidden">IA que entrega leads qualificados com contatos verificados.</span>
           </p>
 
-          {/* AI Value Proposition */}
-          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+          {/* AI Value Proposition - hidden on mobile */}
+          <div className="hidden sm:block glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <Target size={16} className="text-primary flex-shrink-0" />
@@ -337,22 +338,22 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
             <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-              <Button variant="hero" size="xl" className="group w-full sm:w-auto text-sm sm:text-base">
+              <Button variant="hero" size="xl" className="group w-full sm:w-auto text-xs sm:text-base py-3 sm:py-4">
                 Começar com 10 buscas grátis
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={14} />
               </Button>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
-              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto text-sm sm:text-base">
+              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto text-xs sm:text-base py-3 sm:py-4">
                 Ver como funciona
               </Button>
             </a>
           </div>
 
-          {/* Feature highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.4s" }}>
+          {/* Feature highlights - hidden on mobile */}
+          <div className="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.4s" }}>
             <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm sm:text-base">
               <Search size={18} className="text-primary flex-shrink-0" />
               <span>Busca por palavra-chave</span>
@@ -368,9 +369,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Animated Demo Section */}
+        {/* Animated Demo Section - hidden on mobile */}
         <div 
-          className="mt-12 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
+          className="hidden sm:block mt-12 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
           style={{ 
             animationDelay: "0.5s",
             transform: `translateY(${-parallaxOffset * 0.1}px)`,
