@@ -52,10 +52,10 @@ export const FeaturesSection = () => {
   return (
     <section 
       id="features" 
-      className="py-16 md:py-24 relative"
+      className="py-12 md:py-24 relative"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      <div className="absolute inset-0 bg-gradient-glow opacity-30" />
+      <div className="absolute inset-0 bg-gradient-glow opacity-30 hidden sm:block" />
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div 

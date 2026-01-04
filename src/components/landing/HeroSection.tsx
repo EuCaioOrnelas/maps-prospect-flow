@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 pb-12 sm:pt-16 sm:pb-24 sm:min-h-screen"
+      className="relative flex flex-col justify-center pt-20 pb-8 sm:pt-16 sm:pb-24 sm:min-h-screen"
     >
       {/* Parallax Background effects */}
       <div 
@@ -369,21 +369,16 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Animated Demo Section - hidden on mobile */}
+        {/* Animated Demo Section */}
         <div 
-          className="hidden sm:block mt-12 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
+          className="mt-6 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-2 sm:px-4" 
           style={{ 
             animationDelay: "0.5s",
-            transform: `translateY(${-parallaxOffset * 0.1}px)`,
-            opacity: imageOpacity
           }}
         >
           <div className="relative">
-            {/* Background glow */}
-            <div 
-              className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl will-change-transform"
-              style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
-            />
+            {/* Background glow - hidden on mobile */}
+            <div className="hidden sm:block absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl" />
             
             {/* Floating Stats Cards - hidden on mobile/tablet to prevent overflow */}
             {floatingCards.map((card, index) => (
