@@ -7,16 +7,16 @@ interface LogoProps {
 
 export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
-    sm: { icon: 16, padding: "p-1.5", text: "text-base sm:text-lg" },
-    md: { icon: 20, padding: "p-2", text: "text-lg sm:text-xl" },
-    lg: { icon: 28, padding: "p-2", text: "text-xl sm:text-2xl" },
+    sm: { icon: 20, text: "text-lg" },
+    md: { icon: 28, text: "text-2xl" },
+    lg: { icon: 36, text: "text-3xl" },
   };
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2">
+    <div className="flex items-center gap-2">
       <div className="relative">
         <div className="absolute inset-0 bg-primary/30 blur-lg rounded-full" />
-        <div className={`relative bg-primary rounded-lg sm:rounded-xl ${sizes[size].padding} shadow-button`}>
+        <div className="relative bg-primary rounded-xl p-2 shadow-button">
           <MapPin size={sizes[size].icon} className="text-primary-foreground" />
         </div>
       </div>

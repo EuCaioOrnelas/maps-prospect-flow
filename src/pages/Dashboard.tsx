@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
-import { InternalHeader } from "@/components/InternalHeader";
 import {
   Dialog,
   DialogContent,
@@ -439,68 +438,188 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <InternalHeader
-        showCredits={true}
-        creditsUsed={profile?.searches_used || 0}
-        creditsLimit={profile?.searches_limit || 10}
-        onShowWhatsAppUpgrade={() => setShowWhatsAppUpgradeModal(true)}
-      />
-
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-3 order-1">
-              <div className="text-center mb-6 sm:mb-8">
-                <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full glass mb-3 sm:mb-4">
-                  <Brain size={14} className="text-primary" />
-                  <span className="text-xs sm:text-sm text-muted-foreground">Prospecção Inteligente com IA</span>
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Logo size="md" />
+            
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Trial indicator */}
+              {showTrialIndicator && (
+                <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  trialDaysRemaining <= 3 
+                    ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+                    : trialDaysRemaining <= 7 
+                      ? 'bg-warning/10 text-warning border border-warning/20'
+                      : 'bg-primary/10 text-primary border border-primary/20'
+                }`}>
+                  <Clock size={14} />
+                  <span>
+                    {trialDaysRemaining === 1 
+                      ? 'Último dia de trial' 
+                      : `${trialDaysRemaining} dias restantes`}
+                  </span>
                 </div>
-                <h1 className="font-display text-2xl sm:text-3xl font-bold mb-2">
+              )}
+              
+              {/* Trial expired indicator */}
+              {isTrialExpired && isFreePlan && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                  <AlertCircle size={14} />
+                  <span>Trial expirado</span>
+                </div>
+              )}
+
+              {/* Credits indicator - shows searches used */}
+              <div className="flex items-center gap-2 text-sm">
+                <Search size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Buscas:</span>
+                <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
+                <div className="hidden sm:block w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${((profile?.searches_used || 0) / (profile?.searches_limit || 10)) * 100}%` }}
+                  />
+                </div>
+                <span className="hidden md:inline text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
+                  {getPlanName(profile?.plan || 'free')}
+                </span>
+              </div>
+
+              {/* Action buttons with proper spacing */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Link to="/reports">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                  >
+                    <BarChart3 size={16} />
+                    <span className="hidden sm:inline">Relatórios</span>
+                  </Button>
+                </Link>
+
+                {isFreePlan ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    onClick={() => setShowWhatsAppUpgradeModal(true)}
+                  >
+                    <MessageSquare size={16} />
+                    <span className="hidden sm:inline">Disparos</span>
+                  </Button>
+                ) : (
+                  <Link to="/whatsapp">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    >
+                      <MessageSquare size={16} />
+                      <span className="hidden sm:inline">Disparos</span>
+                    </Button>
+                  </Link>
+                )}
+
+                {profile?.plan !== 'scale' && (
+                  <Link to="/upgrade">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
+                    >
+                      <Crown size={16} />
+                      <span className="hidden sm:inline">Upgrade</span>
+                    </Button>
+                  </Link>
+                )}
+
+                <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+
+                <Link to="/profile">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 sm:h-10 sm:w-10"
+                    title="Meu perfil"
+                  >
+                    <User size={18} />
+                  </Button>
+                </Link>
+
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleLogout} 
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  title="Sair da conta"
+                >
+                  <LogOut size={18} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-3">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
+                  <Brain size={16} className="text-primary" />
+                  <span className="text-sm text-muted-foreground">Prospecção Inteligente com IA</span>
+                </div>
+                <h1 className="font-display text-3xl font-bold mb-2">
                   Encontre seus próximos clientes
                 </h1>
-                <p className="text-sm sm:text-base text-muted-foreground px-2">
+                <p className="text-muted-foreground">
                   Nossa IA analisa e entrega até 50 leads estratégicos por busca
                 </p>
               </div>
 
-              <form onSubmit={handleSearch} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8">
+              <form onSubmit={handleSearch} className="glass rounded-2xl p-6 mb-8">
                 {/* AI Badge */}
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-border">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                    <Target size={14} className="text-primary flex-shrink-0" />
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-6 pb-6 border-b border-border">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Target size={16} className="text-primary" />
                     <span>Leads pré-qualificados</span>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                    <Sparkles size={14} className="text-primary flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Sparkles size={16} className="text-primary" />
                     <span>Contatos verificados</span>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                    <Brain size={14} className="text-primary flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Brain size={16} className="text-primary" />
                     <span>Alto potencial de conversão</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="keyword" className="flex items-center gap-1.5 sm:gap-2 text-sm">
-                      <Search size={14} className="text-primary" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="keyword" className="flex items-center gap-2">
+                      <Search size={16} className="text-primary" />
                       Palavra-chave
                     </Label>
                     <Input
                       id="keyword"
-                      placeholder="Ex: restaurantes italianos, dentistas..."
+                      placeholder="Ex: restaurantes italianos, dentistas, advogados..."
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
-                      className="h-10 sm:h-12 bg-secondary border-border text-sm sm:text-base"
+                      className="h-12 bg-secondary border-border"
                     />
                   </div>
 
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="location" className="flex items-center gap-1.5 sm:gap-2 text-sm">
-                      <MapPin size={14} className="text-primary" />
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="flex items-center gap-2">
+                      <MapPin size={16} className="text-primary" />
                       Cidade ou Região
                     </Label>
                     <Input
@@ -508,7 +627,7 @@ const Dashboard = () => {
                       placeholder="Ex: São Paulo, SP"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      className="h-10 sm:h-12 bg-secondary border-border text-sm sm:text-base"
+                      className="h-12 bg-secondary border-border"
                     />
                   </div>
                 </div>
@@ -517,24 +636,24 @@ const Dashboard = () => {
                   type="submit"
                   variant="hero"
                   size="lg"
-                  className="w-full h-11 sm:h-auto text-sm sm:text-base"
+                  className="w-full"
                   disabled={isSearching || searchesRemaining <= 0}
                 >
                   {isSearching ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" />
-                      <span className="ml-2">Analisando leads...</span>
+                      <Loader2 size={20} className="animate-spin" />
+                      Analisando e filtrando leads...
                     </>
                   ) : (
                     <>
-                      <Search size={18} />
-                      <span className="ml-2">Buscar Leads Estratégicos</span>
+                      <Search size={20} />
+                      Buscar Leads Estratégicos
                     </>
                   )}
                 </Button>
 
                 {searchesRemaining <= 0 && (
-                  <p className="text-center text-destructive mt-3 sm:mt-4 text-xs sm:text-sm">
+                  <p className="text-center text-destructive mt-4 text-sm">
                     Você atingiu seu limite de buscas. Faça upgrade para continuar.
                   </p>
                 )}
@@ -543,16 +662,16 @@ const Dashboard = () => {
               {/* Results */}
               {hasSearched && (
                 <div className="animate-fade-in">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                    <h2 className="font-display text-lg sm:text-xl font-semibold">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display text-xl font-semibold">
                       {leads.length > 0 
                         ? `${leads.length} leads encontrados`
                         : "Nenhum lead encontrado"
                       }
                     </h2>
                     {leads.length > 0 && (
-                      <Button variant="outline" onClick={handleExport} className="gap-2 w-full sm:w-auto text-sm">
-                        <Download size={16} />
+                      <Button variant="outline" onClick={handleExport} className="gap-2">
+                        <Download size={18} />
                         Exportar Excel
                       </Button>
                     )}
@@ -560,15 +679,15 @@ const Dashboard = () => {
 
                   {leads.length > 0 && (
                     <>
-                      <div className="space-y-3 sm:space-y-4">
+                      <div className="space-y-4">
                         {paginatedLeads.map((lead, index) => (
                           <div
                             key={index}
-                            className="glass rounded-lg sm:rounded-xl p-3 sm:p-5 hover:bg-card/90 transition-colors"
+                            className="glass rounded-xl p-5 hover:bg-card/90 transition-colors"
                           >
-                            <div className="flex flex-col gap-3 sm:gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-start gap-3">
                                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                                     <Building2 size={20} className="text-primary" />
                                   </div>
@@ -590,14 +709,14 @@ const Dashboard = () => {
                                   </div>
                                 )}
                                 {lead.website !== "-" && lead.website !== '-' && (
-                                  <div className="flex items-center gap-1.5 text-muted-foreground hidden sm:flex">
-                                    <Globe size={14} />
-                                    <span className="truncate max-w-[120px]">{lead.website}</span>
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Globe size={16} />
+                                    <span className="truncate max-w-[150px]">{lead.website}</span>
                                   </div>
                                 )}
                                 {lead.rating > 0 && (
                                   <div className="flex items-center gap-1 text-warning">
-                                    <Star size={14} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
                                     <span className="font-medium">{lead.rating}</span>
                                     <span className="text-muted-foreground">({lead.reviewCount})</span>
                                   </div>
@@ -609,8 +728,8 @@ const Dashboard = () => {
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-1 text-primary hover:underline"
                                   >
-                                    <ExternalLink size={14} />
-                                    <span className="hidden xs:inline">Ver no Maps</span>
+                                    <ExternalLink size={16} />
+                                    Ver no Maps
                                   </a>
                                 )}
                               </div>
@@ -654,26 +773,26 @@ const Dashboard = () => {
 
               {/* Empty state */}
               {!hasSearched && (
-                <div className="text-center py-10 sm:py-16">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                    <Search size={28} className="text-primary" />
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                    <Search size={40} className="text-primary" />
                   </div>
-                  <h3 className="font-display text-lg sm:text-xl font-semibold mb-2">
+                  <h3 className="font-display text-xl font-semibold mb-2">
                     Faça sua primeira busca
                   </h3>
-                  <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto px-4">
-                    Digite uma palavra-chave e localização para encontrar empresas
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Sidebar - Search History - Hidden on mobile, shown at bottom or collapsible */}
-            <div className="lg:col-span-1 order-2 lg:order-none">
-              <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:sticky lg:top-20">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                  <History size={16} className="text-primary" />
-                  <h3 className="font-semibold text-sm sm:text-base">Histórico de Buscas</h3>
+            {/* Sidebar - Search History */}
+            <div className="lg:col-span-1">
+              <div className="glass rounded-2xl p-5 sticky top-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <History size={18} className="text-primary" />
+                  <h3 className="font-semibold">Histórico de Buscas</h3>
                 </div>
 
                 {loadingHistory ? (

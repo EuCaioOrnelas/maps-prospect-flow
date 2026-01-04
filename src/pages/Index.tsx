@@ -16,31 +16,9 @@ const Index = () => {
   return (
     <>
       <SEO 
-        title="Prospecção Inteligente com IA | Disparos em Massa WhatsApp"
-        description="Prospecte novos clientes com IA. Encontre leads qualificados, faça disparos em massa via WhatsApp e aumente suas vendas. Teste grátis por 30 dias com 10 buscas e 400 disparos!"
-        keywords="prospecção, leads, vendas, IA, inteligência artificial, disparos em massa, WhatsApp, WiizeProspect, prospectar clientes, geração de leads, marketing digital, vendas B2B, automação WhatsApp, captação de clientes, prospecção inteligente, buscar leads, encontrar clientes"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "WebApplication",
-          "name": "WiizeProspect",
-          "applicationCategory": "BusinessApplication",
-          "operatingSystem": "Web",
-          "description": "Plataforma de prospecção inteligente com IA para encontrar leads qualificados e fazer disparos em massa via WhatsApp",
-          "url": "https://wiizeprospect.com.br",
-          "offers": {
-            "@type": "AggregateOffer",
-            "lowPrice": "97",
-            "highPrice": "497",
-            "priceCurrency": "BRL",
-            "offerCount": "3"
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "ratingCount": "500",
-            "bestRating": "5"
-          }
-        }}
+        title="Prospecção Inteligente com IA"
+        description="Encontre leads estratégicos com IA. Nossa tecnologia analisa milhares de empresas e entrega apenas os melhores leads para prospectar novos clientes."
+        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital"
       />
       <main className="min-h-screen bg-background overflow-x-hidden">
         <Navbar onSignupClick={trackSignupClick} />

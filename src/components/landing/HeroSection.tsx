@@ -156,34 +156,34 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
   return { displayText, textIndex, phase };
 };
 
-// Floating stats cards data - positioned around the demo (hidden on mobile to prevent overflow)
+// Floating stats cards data - positioned around the demo
 const floatingCards = [
   { 
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "left-0 lg:-left-20 xl:-left-32 top-20 lg:top-16",
+    position: "-left-16 lg:-left-32 xl:-left-44 top-20 lg:top-16",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "right-0 lg:-right-12 xl:-right-20 top-8 lg:top-4",
+    position: "-right-8 lg:-right-20 xl:-right-28 top-8 lg:top-4",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "left-0 lg:-left-12 xl:-left-20 bottom-28 lg:bottom-24",
+    position: "-left-6 lg:-left-16 xl:-left-24 bottom-28 lg:bottom-24",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "right-0 lg:-right-12 xl:-right-20 bottom-12 lg:bottom-8",
+    position: "-right-6 lg:-right-16 xl:-right-24 bottom-12 lg:bottom-8",
     delay: "2s"
   },
 ];
@@ -370,10 +370,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
         {/* Animated Demo Section */}
         <div 
-          className="mt-12 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
+          className="mt-12 sm:mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform px-2" 
           style={{ 
             animationDelay: "0.5s",
-            transform: `translateY(${-parallaxOffset * 0.1}px)`,
+            transform: `translateY(${-parallaxOffset * 0.1}px) scale(${imageScale})`,
             opacity: imageOpacity
           }}
         >
@@ -384,11 +384,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
             />
             
-            {/* Floating Stats Cards - hidden on mobile/tablet to prevent overflow */}
+            {/* Floating Stats Cards */}
             {floatingCards.map((card, index) => (
               <div
                 key={index}
-                className={`absolute ${card.position} z-30 floating-card hidden xl:block`}
+                className={`absolute ${card.position} z-30 floating-card hidden sm:block`}
                 style={{ animationDelay: card.delay }}
               >
                 <div className="glass rounded-lg p-3 shadow-lg border border-primary/20 hover:border-primary/40 transition-all hover:scale-105">
