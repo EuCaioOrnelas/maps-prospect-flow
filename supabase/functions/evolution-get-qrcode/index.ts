@@ -35,12 +35,21 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName } = await req.json();
+    const { instanceName, phoneNumber } = await req.json();
 
-    console.log(`Getting QR Code for instance: ${instanceName}`);
+    console.log(`Getting QR Code for instance: ${instanceName}, phoneNumber: ${phoneNumber || 'not provided'}`);
 
-    // Get QR Code from Evolution API
-    const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+    // Build URL with optional phone number for pairing code
+    let connectUrl = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
+    if (phoneNumber) {
+      // Format phone number: remove non-digits and ensure it starts with country code
+      const cleanNumber = phoneNumber.replace(/\D/g, '');
+      connectUrl += `?number=${cleanNumber}`;
+      console.log(`Requesting pairing code for number: ${cleanNumber}`);
+    }
+
+    // Get QR Code (and optionally pairing code) from Evolution API
+    const qrResponse = await fetch(connectUrl, {
       method: 'GET',
       headers: {
         'apikey': EVOLUTION_API_KEY,
