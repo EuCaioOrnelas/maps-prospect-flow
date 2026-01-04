@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-6 sm:pb-24 sm:min-h-screen overflow-hidden"
+      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen"
     >
       {/* Parallax Background effects */}
       <div 
@@ -369,9 +369,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Animated Demo Section - hidden on mobile */}
+        {/* Animated Demo Section */}
         <div 
-          className="hidden sm:block mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
+          className="mt-8 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-2 sm:px-4" 
           style={{ 
             animationDelay: "0.5s",
           }}
@@ -403,9 +403,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </div>
             ))}
             
-            {/* Demo badge - hidden on mobile, shown below demo on mobile */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
-              <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
+            {/* Demo badge */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+              <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm whitespace-nowrap">
                 ✨ Demonstração em tempo real
               </span>
             </div>
