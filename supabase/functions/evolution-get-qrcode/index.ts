@@ -39,11 +39,12 @@ serve(async (req) => {
 
     console.log(`Getting QR Code for instance: ${instanceName}, phoneNumber: ${phoneNumber || 'not provided'}`);
 
+    // Format phone number if provided
+    const cleanNumber = phoneNumber ? phoneNumber.replace(/\D/g, '') : null;
+
     // Build URL with optional phone number for pairing code
     let connectUrl = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
-    if (phoneNumber) {
-      // Format phone number: remove non-digits and ensure it starts with country code
-      const cleanNumber = phoneNumber.replace(/\D/g, '');
+    if (cleanNumber) {
       connectUrl += `?number=${cleanNumber}`;
       console.log(`Requesting pairing code for number: ${cleanNumber}`);
     }
@@ -53,6 +54,7 @@ serve(async (req) => {
       method: 'GET',
       headers: {
         'apikey': EVOLUTION_API_KEY,
+        'Content-Type': 'application/json',
       },
     });
 
@@ -63,22 +65,24 @@ serve(async (req) => {
     }
 
     const qrData = await qrResponse.json();
-    console.log('QR Code raw response:', JSON.stringify(qrData));
+    console.log('QR Code raw response keys:', Object.keys(qrData));
+    console.log('QR Code raw response:', JSON.stringify(qrData).substring(0, 500));
 
-    // Extract pairing code - Evolution API returns it in different formats
-    const pairingCode = qrData.pairingCode || 
-                        qrData.code?.pairingCode || 
-                        qrData.instance?.pairingCode ||
-                        null;
+    // Extract pairing code - Evolution API v2 returns it directly as "pairingCode"
+    // The response format is: { pairingCode: "ABCD1234", code: "...", base64: "..." }
+    let pairingCode = null;
+    if (qrData.pairingCode && typeof qrData.pairingCode === 'string' && qrData.pairingCode.length > 0) {
+      pairingCode = qrData.pairingCode;
+    }
 
     // Extract QR code base64
     const qrcode = qrData.base64 || 
                    qrData.qrcode?.base64 || 
                    qrData.code?.base64 ||
-                   qrData.qrcode ||
+                   (typeof qrData.qrcode === 'string' ? qrData.qrcode : null) ||
                    null;
 
-    console.log('Extracted - QR Code:', !!qrcode, 'Pairing Code:', pairingCode);
+    console.log('Extracted - QR Code:', !!qrcode, 'Pairing Code:', pairingCode, 'cleanNumber:', cleanNumber);
 
     return new Response(JSON.stringify({
       success: true,
