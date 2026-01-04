@@ -34,7 +34,9 @@ import {
   Settings2,
   AlertTriangle,
   Hash,
-  PartyPopper
+  PartyPopper,
+  Copy,
+  Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +83,7 @@ export const NumbersManager = ({
   const [connectionMode, setConnectionMode] = useState<'qr' | 'code'>('qr');
   const [phoneNumberForCode, setPhoneNumberForCode] = useState("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -786,15 +789,33 @@ export const NumbersManager = ({
       </Dialog>
 
       {/* Connect QR Dialog - Modal stays open when clicking outside */}
-      <Dialog open={connectDialogOpen} onOpenChange={(open) => {
+      <Dialog open={connectDialogOpen} onOpenChange={async (open) => {
         // Only close via X button or success, not clicking outside
         if (!open && !showSuccessAnimation) {
-          // User clicked X or pressed escape
+          // User clicked X - cancel the instance if not connected
+          if (connectingInstanceName && connectingNumberId) {
+            try {
+              // Delete the orphan instance from Evolution API
+              await supabase.functions.invoke('evolution-disconnect', {
+                body: { 
+                  instanceName: connectingInstanceName,
+                  numberId: connectingNumberId
+                },
+              });
+              console.log('Cancelled orphan instance:', connectingInstanceName);
+            } catch (err) {
+              console.error('Error cancelling instance:', err);
+            }
+          }
+          
           setConnectDialogOpen(false);
           // Reset states
           setPairingCode(null);
           setPhoneNumberForCode("");
           setConnectionMode('qr');
+          setCopiedCode(false);
+          setConnectingInstanceName("");
+          setConnectingNumberId(null);
         }
       }}>
         <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
@@ -985,6 +1006,34 @@ export const NumbersManager = ({
                           </motion.div>
                         ))}
                       </div>
+
+                      {/* Copy button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(pairingCode);
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                          toast({
+                            title: "Código copiado!",
+                            description: "Cole no seu WhatsApp",
+                          });
+                        }}
+                      >
+                        {copiedCode ? (
+                          <>
+                            <Check size={14} className="text-green-500" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={14} />
+                            Copiar código
+                          </>
+                        )}
+                      </Button>
                       
                       {!qrExpired && (
                         <div className="flex flex-col items-center gap-2 mt-4">
