@@ -239,7 +239,7 @@ const Profile = () => {
               >
                 <ArrowLeft size={18} />
               </Button>
-              <Logo size="md" mobileSize="sm" />
+              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
             </div>
             <h1 className="text-sm sm:text-lg font-semibold">Meu Perfil</h1>
           </div>
