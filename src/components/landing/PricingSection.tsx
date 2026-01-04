@@ -154,7 +154,7 @@ export const PricingSection = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {plans.map((plan, index) => (
               <motion.div
                 key={index}
@@ -171,9 +171,9 @@ export const PricingSection = () => {
                   scale: plan.popular ? 1.02 : 1.03,
                   transition: { duration: 0.3 }
                 }}
-                className={`relative rounded-2xl flex flex-col ${
+                className={`relative rounded-2xl flex flex-col h-full ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:scale-105 md:z-10"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:scale-[1.03] md:z-10 origin-center"
                     : "glass p-5 md:p-6"
                 }`}
               >
