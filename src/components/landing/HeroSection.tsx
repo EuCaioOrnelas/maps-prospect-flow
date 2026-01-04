@@ -297,10 +297,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge - hidden on mobile to reduce clutter */}
-          <div className="hidden sm:inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
-            <Brain size={16} className="text-primary flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-muted-foreground">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-4 sm:mb-8 animate-fade-in">
+            <Brain size={14} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
+            <span className="text-[10px] sm:text-sm text-muted-foreground">
               IA que identifica leads com maior potencial de conversão
             </span>
           </div>
@@ -312,27 +312,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             {" "}com IA
           </h1>
 
-          {/* Subheading - shorter on mobile */}
-          <p className="text-sm sm:text-xl md:text-2xl text-muted-foreground mb-4 sm:mb-6 max-w-2xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.2s" }}>
+          {/* Subheading */}
+          <p className="text-xs sm:text-xl md:text-2xl text-muted-foreground mb-4 sm:mb-6 max-w-2xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.2s" }}>
             <span className="hidden sm:inline">Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
             empresas ativas, com contatos verificados e alto potencial de conversão.</span>
-            <span className="sm:hidden">IA que entrega leads qualificados com contatos verificados.</span>
+            <span className="sm:hidden">IA que entrega leads qualificados com contatos verificados e alto potencial de conversão.</span>
           </p>
 
-          {/* AI Value Proposition - hidden on mobile */}
-          <div className="hidden sm:block glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
-              <div className="flex items-center gap-2">
-                <Target size={16} className="text-primary flex-shrink-0" />
-                <span>Leads pré-qualificados</span>
+          {/* AI Value Proposition */}
+          <div className="glass rounded-lg sm:rounded-xl px-3 sm:px-6 py-2 sm:py-4 mb-6 sm:mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+            <div className="flex flex-row items-center justify-center gap-2 sm:gap-6 text-[10px] sm:text-sm">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Target size={12} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Leads pré-qualificados</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MessageCircle size={16} className="text-primary flex-shrink-0" />
-                <span>Disparo em massa via WhatsApp</span>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <MessageCircle size={12} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Disparo WhatsApp</span>
               </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp size={16} className="text-primary flex-shrink-0" />
-                <span>Maior taxa de conversão</span>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <TrendingUp size={12} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">+Conversão</span>
               </div>
             </div>
           </div>
@@ -352,19 +352,19 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </a>
           </div>
 
-          {/* Feature highlights - hidden on mobile */}
-          <div className="hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.4s" }}>
-            <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm sm:text-base">
-              <Search size={18} className="text-primary flex-shrink-0" />
-              <span>Busca por palavra-chave</span>
+          {/* Feature highlights */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-6 max-w-3xl mx-auto animate-slide-up px-2" style={{ animationDelay: "0.4s" }}>
+            <div className="flex items-center justify-center gap-1 sm:gap-3 text-muted-foreground text-[10px] sm:text-base">
+              <Search size={12} className="text-primary flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
+              <span className="whitespace-nowrap">Busca por palavra</span>
             </div>
-            <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm sm:text-base">
-              <MapPin size={18} className="text-primary flex-shrink-0" />
-              <span>Filtro por cidade/região</span>
+            <div className="flex items-center justify-center gap-1 sm:gap-3 text-muted-foreground text-[10px] sm:text-base">
+              <MapPin size={12} className="text-primary flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
+              <span className="whitespace-nowrap">Filtro por cidade</span>
             </div>
-            <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm sm:text-base">
-              <Download size={18} className="text-primary flex-shrink-0" />
-              <span>Download em planilha</span>
+            <div className="flex items-center justify-center gap-1 sm:gap-3 text-muted-foreground text-[10px] sm:text-base">
+              <Download size={12} className="text-primary flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
+              <span className="whitespace-nowrap">Download Excel</span>
             </div>
           </div>
         </div>
