@@ -785,9 +785,19 @@ export const NumbersManager = ({
         </DialogContent>
       </Dialog>
 
-      {/* Connect QR Dialog */}
-      <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      {/* Connect QR Dialog - Modal stays open when clicking outside */}
+      <Dialog open={connectDialogOpen} onOpenChange={(open) => {
+        // Only close via X button or success, not clicking outside
+        if (!open && !showSuccessAnimation) {
+          // User clicked X or pressed escape
+          setConnectDialogOpen(false);
+          // Reset states
+          setPairingCode(null);
+          setPhoneNumberForCode("");
+          setConnectionMode('qr');
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Smartphone size={20} />
@@ -931,9 +941,26 @@ export const NumbersManager = ({
                     <Label>Número do WhatsApp</Label>
                     <Input
                       value={phoneNumberForCode}
-                      onChange={(e) => setPhoneNumberForCode(e.target.value)}
+                      onChange={(e) => {
+                        // Apply phone mask: (XX) XXXXX-XXXX
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length > 11) value = value.slice(0, 11);
+                        
+                        if (value.length > 0) {
+                          if (value.length <= 2) {
+                            value = `(${value}`;
+                          } else if (value.length <= 7) {
+                            value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                          } else {
+                            value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+                          }
+                        }
+                        
+                        setPhoneNumberForCode(value);
+                      }}
                       placeholder="(11) 99999-9999"
                       type="tel"
+                      maxLength={16}
                     />
                     <p className="text-xs text-muted-foreground">
                       Digite seu número com DDD (sem o 55)

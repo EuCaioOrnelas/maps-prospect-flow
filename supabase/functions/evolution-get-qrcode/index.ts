@@ -63,12 +63,27 @@ serve(async (req) => {
     }
 
     const qrData = await qrResponse.json();
-    console.log('QR Code response:', JSON.stringify(qrData));
+    console.log('QR Code raw response:', JSON.stringify(qrData));
+
+    // Extract pairing code - Evolution API returns it in different formats
+    const pairingCode = qrData.pairingCode || 
+                        qrData.code?.pairingCode || 
+                        qrData.instance?.pairingCode ||
+                        null;
+
+    // Extract QR code base64
+    const qrcode = qrData.base64 || 
+                   qrData.qrcode?.base64 || 
+                   qrData.code?.base64 ||
+                   qrData.qrcode ||
+                   null;
+
+    console.log('Extracted - QR Code:', !!qrcode, 'Pairing Code:', pairingCode);
 
     return new Response(JSON.stringify({
       success: true,
-      qrcode: qrData.base64 || qrData.qrcode?.base64 || null,
-      pairingCode: qrData.pairingCode || null,
+      qrcode: qrcode,
+      pairingCode: pairingCode,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
