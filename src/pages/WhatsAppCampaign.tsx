@@ -714,26 +714,27 @@ const WhatsAppCampaign = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DisclaimerModal />
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft size={20} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                  <ArrowLeft size={18} />
                 </Button>
               </Link>
-              <Logo size="md" />
+              <Logo size="md" showText={false} />
+              <span className="hidden sm:block font-display font-bold text-lg sm:text-xl">WiizeProspect</span>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link to="/whatsapp/reports">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <BarChart3 size={16} />
-                  <span className="hidden sm:inline">Relatórios</span>
+                <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 gap-1 sm:gap-2">
+                  <BarChart3 size={14} />
+                  <span className="hidden xs:inline text-xs sm:text-sm">Relatórios</span>
                 </Button>
               </Link>
               
@@ -748,29 +749,30 @@ const WhatsAppCampaign = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
         {/* Pending Reset Warning */}
         {hasPendingReset && selectedNumber && (
-          <div className="max-w-4xl mx-auto mb-6">
-            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/15 flex-shrink-0">
-                  <Clock className="h-5 w-5 text-destructive" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-destructive">Reset pendente</p>
-                  <p className="text-xs text-muted-foreground">
-                    O contador de disparos do número "{selectedNumber.name}" precisa ser resetado. 
-                    O reset ocorre automaticamente às 08:00. Aguarde o horário de reset para continuar os disparos.
-                  </p>
+          <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-destructive/15 flex-shrink-0">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-destructive">Reset pendente</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
+                      Contador resetado às 08:00. Aguarde para continuar.
+                    </p>
+                  </div>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={refreshConnectionStatus}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 text-xs h-8"
                 >
-                  Verificar novamente
+                  Verificar
                 </Button>
               </div>
             </div>
@@ -778,40 +780,37 @@ const WhatsAppCampaign = () => {
         )}
 
         {/* Free Trial Indicator */}
-        {/* Free Trial Indicator */}
         {isFreePlan && !isTrialExpired && (
-          <div className="max-w-4xl mx-auto mb-6">
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-primary" />
+          <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">Disparos Gratuitos</p>
-                    <p className="text-xs text-muted-foreground">Período de teste (30 dias)</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">Disparos Gratuitos</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Teste (30 dias)</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 sm:flex-none">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-foreground">{trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {remainingTrialMessages} restantes
-                      </span>
-                    </div>
-                    <div className="w-full sm:w-48 h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9 
-                            ? 'bg-destructive' 
-                            : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7 
-                              ? 'bg-yellow-500' 
-                              : 'bg-primary'
-                        }`}
-                        style={{ width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%` }}
-                      />
-                    </div>
+                <div className="flex-1 sm:flex-none">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs sm:text-sm font-bold text-foreground">{trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground ml-2">
+                      {remainingTrialMessages} restantes
+                    </span>
+                  </div>
+                  <div className="w-full sm:w-48 h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9 
+                          ? 'bg-destructive' 
+                          : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7 
+                            ? 'bg-yellow-500' 
+                            : 'bg-primary'
+                      }`}
+                      style={{ width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -821,23 +820,23 @@ const WhatsAppCampaign = () => {
 
         <div className="max-w-4xl mx-auto">
           {step !== 'running' && (
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'active' | 'history')} className="mb-8">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="new" className="gap-2">
-                  <Plus size={16} />
-                  Nova Campanha
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'active' | 'history')} className="mb-4 sm:mb-8">
+              <TabsList className="grid w-full grid-cols-3 h-auto">
+                <TabsTrigger value="new" className="gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+                  <Plus size={14} className="hidden xs:block" />
+                  <span className="hidden xs:inline">Nova</span> Campanha
                 </TabsTrigger>
-                <TabsTrigger value="active" className="gap-2">
-                  <Play size={16} />
-                  Em Andamento
+                <TabsTrigger value="active" className="gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+                  <Play size={14} className="hidden xs:block" />
+                  <span className="hidden xs:inline">Em</span> Andamento
                   {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length > 0 && (
-                    <span className="ml-1 min-w-5 h-5 px-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full inline-flex items-center justify-center">
+                    <span className="min-w-4 h-4 px-1 bg-primary text-primary-foreground text-[10px] font-medium rounded-full inline-flex items-center justify-center">
                       {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length}
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="history" className="gap-2">
-                  <History size={16} />
+                <TabsTrigger value="history" className="gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+                  <History size={14} className="hidden xs:block" />
                   Histórico
                 </TabsTrigger>
               </TabsList>

@@ -1,8 +1,18 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
+Disallow: /whatsapp
+Disallow: /profile
+Disallow: /admin
+Disallow: /reports
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
+Disallow: /whatsapp
+Disallow: /profile
+Disallow: /admin
+Disallow: /reports
 
 User-agent: Twitterbot
 Allow: /
@@ -12,6 +22,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /whatsapp
+Disallow: /profile
+Disallow: /admin
+Disallow: /reports
+Disallow: /api/
 
 Sitemap: https://wiizeprospect.com.br/sitemap.xml
-Allow: /
