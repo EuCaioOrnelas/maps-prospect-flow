@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +34,6 @@ import {
   Zap,
   BarChart3,
   MessageSquare,
-  User,
   AlertCircle,
   Menu,
   X
@@ -393,6 +393,20 @@ const Dashboard = () => {
     });
   };
 
+  const getUserInitials = () => {
+    if (profile?.name) {
+      const names = profile.name.split(' ').filter(n => n.length > 0);
+      if (names.length >= 2) {
+        return (names[0][0] + names[1][0]).toUpperCase();
+      }
+      return names[0].slice(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
   const getPlanName = (plan: string) => {
     switch (plan) {
       case 'start': return 'Start';
@@ -571,15 +585,13 @@ const Dashboard = () => {
 
                 <div className="w-px h-6 bg-border mx-1" />
 
-                <Link to="/profile">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-9 w-9 sm:h-10 sm:w-10"
-                    title="Meu perfil"
-                  >
-                    <User size={18} />
-                  </Button>
+                <Link to="/profile" title="Meu perfil">
+                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                    <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
                 </Link>
 
                 <Button 
@@ -605,15 +617,13 @@ const Dashboard = () => {
               </div>
 
               {/* Profile and Logout always visible */}
-              <Link to="/profile">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 sm:h-9 sm:w-9"
-                  title="Meu perfil"
-                >
-                  <User size={16} />
-                </Button>
+              <Link to="/profile" title="Meu perfil">
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                  <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
               </Link>
 
               <Button 
