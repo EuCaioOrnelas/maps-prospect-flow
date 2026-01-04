@@ -344,7 +344,7 @@ const Upgrade = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-center">
           {plans.map((plan, index) => {
             const isCurrent = isCurrentPlan(plan.name);
             const isDowngradeOption = isDowngrade(plan.name);
@@ -356,7 +356,7 @@ const Upgrade = () => {
                 className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow"
-                    : "glass"
+                    : "glass md:scale-[0.92] origin-center"
                 } ${isCurrent ? "ring-2 ring-primary/50" : ""}`}
                 style={{ animationDelay: `${index * 0.15}s` }}
               >
@@ -387,7 +387,7 @@ const Upgrade = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-base text-muted-foreground line-through decoration-muted-foreground/50 decoration-2">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice)) * 100)}%
+                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice.replace('.', ''))) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
