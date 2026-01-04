@@ -256,25 +256,28 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen"
+      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen overflow-hidden"
     >
+      {/* Background - solid color to prevent gaps */}
+      <div className="absolute inset-0 bg-background" />
+      
       {/* Parallax Background effects */}
       <div 
         className="absolute inset-0 bg-gradient-hero will-change-transform"
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
       
-      {/* Main glow */}
+      {/* Main glow - hidden on mobile to prevent issues */}
       <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-50 will-change-transform"
+        className="hidden sm:block absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-50 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
       
-      {/* Small glow dots - pontos pequenos com float */}
+      {/* Small glow dots - hidden on mobile */}
       {glowDots.map((dot, i) => (
         <div
           key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-float"
+          className="hidden sm:block absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-float"
           style={{
             left: dot.left,
             top: dot.top,
@@ -285,13 +288,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         />
       ))}
       
-      {/* Corner accents */}
+      {/* Corner accents - hidden on mobile */}
       <div 
-        className="absolute top-20 right-10 md:right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
+        className="hidden sm:block absolute top-20 right-10 md:right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
         style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
       />
       <div 
-        className="absolute bottom-40 left-10 md:left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
+        className="hidden sm:block absolute bottom-40 left-10 md:left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
         style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
@@ -306,7 +309,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
 
           {/* Main heading */}
-          <h1 className="font-display text-2xl sm:text-5xl md:text-7xl font-bold mb-3 sm:mb-6 animate-slide-up px-2" style={{ animationDelay: "0.1s" }}>
+          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-3 sm:mb-6 animate-slide-up px-2" style={{ animationDelay: "0.1s" }}>
             Prospecção{" "}
             <span className="text-gradient">Inteligente</span>
             {" "}com IA
@@ -340,13 +343,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
             <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-              <Button variant="hero" size="xl" className="group w-full sm:w-auto text-xs sm:text-base py-3 sm:py-4">
+              <Button variant="hero" size="xl" className="group w-full sm:w-auto text-sm sm:text-base py-3.5 sm:py-4">
                 Começar com 10 buscas grátis
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={14} />
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
               </Button>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
-              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto text-xs sm:text-base py-3 sm:py-4">
+              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto text-sm sm:text-base py-3.5 sm:py-4">
                 Ver como funciona
               </Button>
             </a>
