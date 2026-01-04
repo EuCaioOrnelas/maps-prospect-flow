@@ -957,10 +957,13 @@ const Dashboard = () => {
                 <Search size={40} className="text-primary" />
               </div>
               <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">
-                Pronto para prospectar?
+                {searchHistory.length > 0 ? 'Pronto para prospectar?' : 'Faça sua primeira busca'}
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto text-base">
-                Insira uma palavra-chave e localização acima para descobrir novos leads qualificados
+                {searchHistory.length > 0 
+                  ? 'Insira uma palavra-chave e localização acima para descobrir novos leads qualificados'
+                  : 'Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps'
+                }
               </p>
             </div>
           )}
