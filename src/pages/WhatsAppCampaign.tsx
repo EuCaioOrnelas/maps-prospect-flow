@@ -699,7 +699,7 @@ const WhatsAppCampaign = () => {
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
         </main>
 
-        {/* Modal de gerenciamento de números */}
+        {/* Modal de gerenciamento de números - só mostra os dialogs, sem os botões */}
         <NumbersManager
           numbers={numbers}
           onNumbersChange={setNumbers}
@@ -707,6 +707,7 @@ const WhatsAppCampaign = () => {
           onConnect={setSelectedNumberId}
           forceOpen={showConnectModal}
           onClose={() => setShowConnectModal(false)}
+          hideButtons={true}
         />
       </div>
     );

@@ -46,6 +46,7 @@ interface NumbersManagerProps {
   onConnect: (numberId: string) => void;
   forceOpen?: boolean;
   onClose?: () => void;
+  hideButtons?: boolean;
 }
 
 const DAILY_LIMIT_PER_NUMBER = 200;
@@ -56,7 +57,8 @@ export const NumbersManager = ({
   maxNumbers,
   onConnect,
   forceOpen = false,
-  onClose
+  onClose,
+  hideButtons = false
 }: NumbersManagerProps) => {
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -506,54 +508,56 @@ export const NumbersManager = ({
   return (
     <>
       {/* Main Connect Button - Green and prominent */}
-      <div className="flex items-center gap-2">
-        {hasConnectedNumber ? (
-          <Button 
-            variant="outline"
-            size="sm"
-            className="gap-2 border-green-500/50 text-green-500 hover:bg-green-500/10"
-            onClick={() => {
-              if (numbers.length === 0) {
-                setAddDialogOpen(true);
-              } else {
-                setManageDialogOpen(true);
-              }
-            }}
-          >
-            <Wifi size={16} className="text-green-500" />
-            <span className="hidden sm:inline">{connectedNumbers.length} Conectado(s)</span>
-            <span className="sm:hidden">{connectedNumbers.length}</span>
-          </Button>
-        ) : (
-          <Button 
-            size="sm"
-            className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-            onClick={() => {
-              if (numbers.length === 0) {
-                setAddDialogOpen(true);
-              } else {
-                setManageDialogOpen(true);
-              }
-            }}
-          >
-            <Smartphone size={16} />
-            <span className="hidden sm:inline">Conectar WhatsApp</span>
-            <span className="sm:hidden">Conectar</span>
-          </Button>
-        )}
+      {!hideButtons && (
+        <div className="flex items-center gap-2">
+          {hasConnectedNumber ? (
+            <Button 
+              variant="outline"
+              size="sm"
+              className="gap-2 border-green-500/50 text-green-500 hover:bg-green-500/10"
+              onClick={() => {
+                if (numbers.length === 0) {
+                  setAddDialogOpen(true);
+                } else {
+                  setManageDialogOpen(true);
+                }
+              }}
+            >
+              <Wifi size={16} className="text-green-500" />
+              <span className="hidden sm:inline">{connectedNumbers.length} Conectado(s)</span>
+              <span className="sm:hidden">{connectedNumbers.length}</span>
+            </Button>
+          ) : (
+            <Button 
+              size="sm"
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                if (numbers.length === 0) {
+                  setAddDialogOpen(true);
+                } else {
+                  setManageDialogOpen(true);
+                }
+              }}
+            >
+              <Smartphone size={16} />
+              <span className="hidden sm:inline">Conectar WhatsApp</span>
+              <span className="sm:hidden">Conectar</span>
+            </Button>
+          )}
 
-        {/* Manage Numbers Button - More prominent */}
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setManageDialogOpen(true)}
-          className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
-        >
-          <Settings2 size={16} />
-          <span className="hidden sm:inline">Gerenciar Números</span>
-          <span className="sm:hidden">Gerenciar</span>
-        </Button>
-      </div>
+          {/* Manage Numbers Button - More prominent */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setManageDialogOpen(true)}
+            className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+          >
+            <Settings2 size={16} />
+            <span className="hidden sm:inline">Gerenciar Números</span>
+            <span className="sm:hidden">Gerenciar</span>
+          </Button>
+        </div>
+      )}
 
       {/* Manage Numbers Dialog */}
       <Dialog open={manageDialogOpen} onOpenChange={handleDialogClose}>
