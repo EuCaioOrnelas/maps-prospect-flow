@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Search, 
   MapPin, 
@@ -36,7 +43,9 @@ import {
   MessageSquare,
   AlertCircle,
   Menu,
-  X
+  X,
+  User,
+  Settings
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -585,24 +594,40 @@ const Dashboard = () => {
 
                 <div className="w-px h-6 bg-border mx-1" />
 
-                <Link to="/profile" title="Meu perfil">
-                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                    <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={handleLogout} 
-                  className="h-9 w-9 sm:h-10 sm:w-10"
-                  title="Sair da conta"
-                >
-                  <LogOut size={18} />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="focus:outline-none">
+                      <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                        <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg z-50">
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link to="/profile" className="flex items-center gap-2">
+                        <User size={16} />
+                        Ver perfil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link to="/profile" className="flex items-center gap-2">
+                        <Settings size={16} />
+                        Configurações
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleLogout} 
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -616,25 +641,41 @@ const Dashboard = () => {
                 <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
               </div>
 
-              {/* Profile and Logout always visible */}
-              <Link to="/profile" title="Meu perfil">
-                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                  <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleLogout} 
-                className="h-8 w-8 sm:h-9 sm:w-9"
-                title="Sair da conta"
-              >
-                <LogOut size={16} />
-              </Button>
+              {/* Profile dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="focus:outline-none">
+                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                      <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'Perfil'} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-lg z-50">
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/profile" className="flex items-center gap-2">
+                      <User size={16} />
+                      Ver perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/profile" className="flex items-center gap-2">
+                      <Settings size={16} />
+                      Configurações
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Hamburger menu button */}
               <button
