@@ -319,7 +319,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </p>
 
           {/* AI Value Proposition */}
-          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-2 sm:mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-4 sm:mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <Target size={16} className="text-primary flex-shrink-0" />
