@@ -304,51 +304,51 @@ export const PricingSection = () => {
                 </div>
                 
                 {/* Features Cards */}
-                <div className="space-y-4 md:space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {/* Search card - full width on top */}
                   <div 
-                    className={`flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                    className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
                       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                     }`}
                     style={{ transitionDelay: '700ms' }}
                   >
-                    <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                      <Search className="h-5 w-5 md:h-7 md:w-7 text-primary" />
+                    <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                      <Search className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                     </div>
-                    <div className="flex items-center gap-1 md:block">
-                      <p className="font-bold text-sm md:text-lg text-foreground whitespace-nowrap">10 buscas com IA</p>
+                    <div className="flex items-center gap-1 md:block min-w-0">
+                      <p className="font-bold text-xs md:text-lg text-foreground">10 buscas IA</p>
                       <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
                     </div>
                   </div>
                   
                   {/* Bottom row - messages and whatsapp side by side */}
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div 
-                      className={`flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                      className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                       style={{ transitionDelay: '800ms' }}
                     >
-                      <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <MessageSquare className="h-5 w-5 md:h-7 md:w-7 text-primary" />
+                      <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <MessageSquare className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm md:text-lg text-foreground whitespace-nowrap">400 disparos</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">400 disparos</p>
                         <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
                       </div>
                     </div>
                     
                     <div 
-                      className={`flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                      className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                       style={{ transitionDelay: '900ms' }}
                     >
-                      <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <Smartphone className="h-5 w-5 md:h-7 md:w-7 text-primary" />
+                      <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <Smartphone className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm md:text-lg text-foreground whitespace-nowrap">1 WhatsApp</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">1 WhatsApp</p>
                         <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
                       </div>
                     </div>
