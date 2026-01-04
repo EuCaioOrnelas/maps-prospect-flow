@@ -5,9 +5,9 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="py-12 border-t border-border">
+    <footer className="py-8 sm:py-12 border-t border-border overflow-hidden w-full">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
+        <div className="flex flex-col items-center gap-4 sm:gap-6 text-center md:flex-row md:justify-between md:text-left">
           <Logo size="sm" />
           
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground">

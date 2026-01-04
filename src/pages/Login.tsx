@@ -69,7 +69,7 @@ const Login = () => {
         description="Acesse sua conta WiizeProspect e continue prospectando novos clientes com inteligência artificial."
         noIndex
       />
-      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-x-hidden">
         <div className="absolute inset-0 bg-gradient-glow opacity-30" />
         
         <div className="w-full max-w-md relative z-10">

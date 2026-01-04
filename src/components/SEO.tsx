@@ -11,9 +11,9 @@ interface SEOProps {
 }
 
 const defaultMeta = {
-  title: 'WiizeProspect - Prospecção Inteligente com IA',
-  description: 'Encontre leads estratégicos com IA. Nossa tecnologia analisa milhares de empresas e entrega apenas os melhores leads para prospectar novos clientes.',
-  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B',
+  title: 'WiizeProspect - Prospecção Inteligente e Disparos em Massa via WhatsApp',
+  description: 'Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente, automação de mensagens e geração de leads B2B para aumentar suas vendas.',
+  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, WiizeProspect, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
   url: 'https://wiizeprospect.com.br',
   type: 'website',

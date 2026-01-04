@@ -668,24 +668,24 @@ const WhatsAppCampaign = () => {
   // Se não tem nenhum número conectado, mostra tela especial
   if (!loadingNumbers && !hasConnectedNumbers) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <DisclaimerModal />
         {/* Header */}
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
+          <div className="container mx-auto px-3 sm:px-4 py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Link to="/dashboard">
-                  <Button variant="ghost" size="icon">
-                    <ArrowLeft size={20} />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                    <ArrowLeft size={18} />
                   </Button>
                 </Link>
-                <Logo size="md" />
+                <Logo size="md" mobileSize="sm" />
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Link to="/whatsapp/reports">
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
                     <BarChart3 size={16} />
                     <span className="hidden sm:inline">Relatórios</span>
                   </Button>
@@ -695,7 +695,7 @@ const WhatsAppCampaign = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
         </main>
 
@@ -714,24 +714,24 @@ const WhatsAppCampaign = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DisclaimerModal />
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-3 sm:px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft size={20} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                  <ArrowLeft size={18} />
                 </Button>
               </Link>
-              <Logo size="md" />
+              <Logo size="md" mobileSize="sm" />
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link to="/whatsapp/reports">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
                   <BarChart3 size={16} />
                   <span className="hidden sm:inline">Relatórios</span>
                 </Button>
@@ -748,7 +748,7 @@ const WhatsAppCampaign = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Pending Reset Warning */}
         {hasPendingReset && selectedNumber && (
           <div className="max-w-4xl mx-auto mb-6">

@@ -220,7 +220,7 @@ const Profile = () => {
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Meu Perfil - WiizeProspect"
         description="Gerencie seu perfil e configurações da conta WiizeProspect"
@@ -228,25 +228,25 @@ const Profile = () => {
 
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-3 sm:px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/dashboard')}
-                className="h-9 w-9"
+                className="h-8 w-8 sm:h-9 sm:w-9"
               >
                 <ArrowLeft size={18} />
               </Button>
-              <Logo size="md" />
+              <Logo size="md" mobileSize="sm" />
             </div>
-            <h1 className="text-lg font-semibold">Meu Perfil</h1>
+            <h1 className="text-sm sm:text-lg font-semibold">Meu Perfil</h1>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
         <div className="grid gap-6">
           {/* Profile Card */}
           <Card className="border-border/50">
