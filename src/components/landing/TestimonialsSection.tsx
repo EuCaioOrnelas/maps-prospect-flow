@@ -190,7 +190,7 @@ export const TestimonialsSection = () => {
         </div>
 
         {/* Mobile: 1 column */}
-        <div className="md:hidden max-w-sm mx-auto h-[400px] mask-gradient">
+        <div className="md:hidden w-full h-[400px] mask-gradient px-2">
           <TestimonialsColumn testimonials={firstColumn} duration={20} />
         </div>
       </div>

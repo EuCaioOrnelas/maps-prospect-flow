@@ -143,7 +143,7 @@ export const HowItWorksSection = () => {
         </div>
 
         {/* Steps - Mobile (icons inside cards, centered) */}
-        <div className="md:hidden space-y-6">
+        <div className="md:hidden space-y-6 px-2">
           {steps.map((step, index) => (
             <div
               key={step.number}
