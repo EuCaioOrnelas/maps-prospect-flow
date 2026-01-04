@@ -34,6 +34,7 @@ import { ActiveCampaigns } from "@/components/whatsapp/ActiveCampaigns";
 import { RealtimeMonitor } from "@/components/whatsapp/RealtimeMonitor";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import { NoConnectedNumbers } from "@/components/whatsapp/NoConnectedNumbers";
 import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
@@ -148,21 +149,29 @@ const WhatsAppCampaign = () => {
     setNumbers,
     selectedNumberId,
     setSelectedNumberId,
+    loading: loadingNumbers,
     maxNumbers,
     hasMassMessagingAccess,
+    hasConnectedNumbers,
     getRemainingDailyLimit,
     isAtDailyLimit,
+    hasNumberPendingReset,
+    canSendMessages,
+    refreshConnectionStatus,
     DAILY_LIMIT_PER_NUMBER
   } = useWhatsAppNumbers();
+
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const selectedNumber = numbers.find(n => n.id === selectedNumberId);
   const isConnected = selectedNumber?.is_connected || false;
   const usedToday = selectedNumber?.daily_sent_count || 0;
   const dailyLimit = DAILY_LIMIT_PER_NUMBER;
+  const hasPendingReset = hasNumberPendingReset(selectedNumberId || undefined);
 
-  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday);
+  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday) && !hasPendingReset;
   const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
-  const canStartCampaign = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && (isConnected || isScheduled) && !!selectedNumberId;
+  const canStartCampaign = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && (isConnected || isScheduled) && !!selectedNumberId && !hasPendingReset;
 
   const isValidSchedule = () => {
     if (!isScheduled) return true;
@@ -651,6 +660,58 @@ const WhatsAppCampaign = () => {
     );
   }
 
+  // Handler para abrir o modal de conectar número
+  const handleConnectNumber = () => {
+    setShowConnectModal(true);
+  };
+
+  // Se não tem nenhum número conectado, mostra tela especial
+  if (!loadingNumbers && !hasConnectedNumbers) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DisclaimerModal />
+        {/* Header */}
+        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="icon">
+                    <ArrowLeft size={20} />
+                  </Button>
+                </Link>
+                <Logo size="md" />
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Link to="/whatsapp/reports">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <BarChart3 size={16} />
+                    <span className="hidden sm:inline">Relatórios</span>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <NoConnectedNumbers onConnectClick={handleConnectNumber} />
+        </main>
+
+        {/* Modal de gerenciamento de números */}
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={setNumbers}
+          maxNumbers={maxNumbers}
+          onConnect={setSelectedNumberId}
+          forceOpen={showConnectModal}
+          onClose={() => setShowConnectModal(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <DisclaimerModal />
@@ -687,6 +748,35 @@ const WhatsAppCampaign = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Pending Reset Warning */}
+        {hasPendingReset && selectedNumber && (
+          <div className="max-w-4xl mx-auto mb-6">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/15 flex-shrink-0">
+                  <Clock className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive">Reset pendente</p>
+                  <p className="text-xs text-muted-foreground">
+                    O contador de disparos do número "{selectedNumber.name}" precisa ser resetado. 
+                    O reset ocorre automaticamente às 08:00. Aguarde o horário de reset para continuar os disparos.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={refreshConnectionStatus}
+                  className="flex-shrink-0"
+                >
+                  Verificar novamente
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Free Trial Indicator */}
         {/* Free Trial Indicator */}
         {isFreePlan && !isTrialExpired && (
           <div className="max-w-4xl mx-auto mb-6">

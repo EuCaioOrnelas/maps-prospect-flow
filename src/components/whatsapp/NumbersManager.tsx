@@ -44,6 +44,8 @@ interface NumbersManagerProps {
   onNumbersChange: (numbers: WhatsAppNumber[]) => void;
   maxNumbers: number;
   onConnect: (numberId: string) => void;
+  forceOpen?: boolean;
+  onClose?: () => void;
 }
 
 const DAILY_LIMIT_PER_NUMBER = 200;
@@ -52,7 +54,9 @@ export const NumbersManager = ({
   numbers,
   onNumbersChange,
   maxNumbers,
-  onConnect
+  onConnect,
+  forceOpen = false,
+  onClose
 }: NumbersManagerProps) => {
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -71,6 +75,28 @@ export const NumbersManager = ({
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
+
+  // Handle forceOpen prop
+  useEffect(() => {
+    if (forceOpen) {
+      setAddDialogOpen(true);
+    }
+  }, [forceOpen]);
+
+  // Handle dialog close
+  const handleDialogClose = (open: boolean) => {
+    setManageDialogOpen(open);
+    if (!open && onClose) {
+      onClose();
+    }
+  };
+
+  const handleAddDialogClose = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open && onClose) {
+      onClose();
+    }
+  };
 
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const hasMassMessagingAccess = ['start', 'growth', 'scale'].includes(userPlan);
@@ -530,7 +556,7 @@ export const NumbersManager = ({
       </div>
 
       {/* Manage Numbers Dialog */}
-      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
+      <Dialog open={manageDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
@@ -663,7 +689,7 @@ export const NumbersManager = ({
       </Dialog>
 
       {/* Add Number Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      <Dialog open={addDialogOpen} onOpenChange={handleAddDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

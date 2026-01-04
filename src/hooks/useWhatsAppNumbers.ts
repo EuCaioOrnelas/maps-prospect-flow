@@ -50,6 +50,11 @@ const shouldResetCount = (lastSentAt: string | null, dailySentCount: number): bo
   return lastSent < todayReset;
 };
 
+// Verifica se um número está com reset pendente (contador não zerado quando deveria)
+const hasPendingReset = (lastSentAt: string | null, dailySentCount: number): boolean => {
+  return shouldResetCount(lastSentAt, dailySentCount);
+};
+
 export const useWhatsAppNumbers = () => {
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
@@ -283,6 +288,31 @@ export const useWhatsAppNumbers = () => {
     return getRemainingDailyLimit(numberId) <= 0;
   };
 
+  // Verifica se um número tem reset pendente (não pode disparar até resetar)
+  const hasNumberPendingReset = (numberId?: string): boolean => {
+    const id = numberId || selectedNumberId;
+    const number = numbers.find(n => n.id === id);
+    if (!number) return false;
+    return hasPendingReset(number.last_sent_at, number.daily_sent_count);
+  };
+
+  // Verifica se pode fazer disparos (sem reset pendente e não no limite)
+  const canSendMessages = (numberId?: string): boolean => {
+    const id = numberId || selectedNumberId;
+    if (!id) return false;
+    
+    const number = numbers.find(n => n.id === id);
+    if (!number) return false;
+    if (!number.is_connected) return false;
+    if (hasNumberPendingReset(id)) return false;
+    if (isAtDailyLimit(id)) return false;
+    
+    return true;
+  };
+
+  // Verifica se tem algum número conectado
+  const hasConnectedNumbers = numbers.some(n => n.is_connected);
+
   // Obter limite mensal de mensagens do plano atual
   const getMonthlyMessageLimit = () => {
     return MONTHLY_MESSAGE_LIMITS[userPlan] || MONTHLY_MESSAGE_LIMITS.free;
@@ -296,6 +326,7 @@ export const useWhatsAppNumbers = () => {
     loading,
     maxNumbers,
     hasMassMessagingAccess,
+    hasConnectedNumbers,
     fetchNumbers,
     refreshConnectionStatus,
     verifyConnectionStatus,
@@ -305,6 +336,8 @@ export const useWhatsAppNumbers = () => {
     getSelectedNumber,
     getRemainingDailyLimit,
     isAtDailyLimit,
+    hasNumberPendingReset,
+    canSendMessages,
     getMonthlyMessageLimit,
     DAILY_LIMIT_PER_NUMBER,
     MONTHLY_MESSAGE_LIMITS,
