@@ -571,7 +571,7 @@ const Reports = () => {
                   <ArrowLeft size={18} />
                 </Button>
               </Link>
-              <Logo size="md" mobileSize="sm" />
+              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">

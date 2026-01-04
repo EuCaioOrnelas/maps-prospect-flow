@@ -248,7 +248,7 @@ const Upgrade = () => {
             </Button>
             
             <Link to="/">
-              <Logo size="md" mobileSize="sm" />
+              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
             </Link>
             
             <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">

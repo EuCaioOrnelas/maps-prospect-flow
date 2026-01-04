@@ -318,7 +318,7 @@ const WhatsAppReports = () => {
                   <ArrowLeft size={20} />
                 </Button>
               </Link>
-              <Logo size="md" />
+              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
             </div>
             
             <div className="flex items-center gap-4">
