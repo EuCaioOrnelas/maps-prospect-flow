@@ -59,12 +59,13 @@ serve(async (req) => {
 
     console.log('Delete response status:', deleteResponse.status);
 
-    // Update database
+    // Update database - also clear instance_name since it's deleted
     const { error: updateError } = await supabase
       .from('whatsapp_numbers')
       .update({ 
         is_connected: false,
         phone_number: null,
+        instance_name: null,
         updated_at: new Date().toISOString()
       })
       .eq('id', numberId)
