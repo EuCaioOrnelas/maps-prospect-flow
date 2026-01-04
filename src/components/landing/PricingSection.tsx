@@ -173,7 +173,7 @@ export const PricingSection = () => {
                 }}
                 className={`relative rounded-2xl ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 sm:p-9 md:z-10"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-9 md:z-10"
                     : "glass p-5 sm:p-7"
                 }`}
               >
@@ -187,31 +187,31 @@ export const PricingSection = () => {
                 )}
 
                 <div className="mb-6">
-                  <h3 className={`font-display font-bold mb-2 ${plan.popular ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'}`}>{plan.name}</h3>
-                  <p className={`text-muted-foreground ${plan.popular ? 'text-sm' : 'text-xs sm:text-sm'}`}>{plan.description}</p>
+                  <h3 className={`font-display font-bold mb-2 text-lg md:text-xl ${plan.popular ? 'md:text-2xl' : 'sm:text-xl'}`}>{plan.name}</h3>
+                  <p className={`text-muted-foreground text-xs sm:text-sm`}>{plan.description}</p>
                 </div>
 
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 ${plan.popular ? 'text-base' : 'text-sm'}`}>R$ {plan.anchorPrice}</span>
+                    <span className={`text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm`}>R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
                       -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className={`font-display font-bold ${plan.popular ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'}`}>{plan.price}</span>
+                    <span className={`font-display font-bold text-3xl md:text-4xl ${plan.popular ? 'md:text-5xl' : 'sm:text-4xl'}`}>{plan.price}</span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className={`text-primary mt-2 ${plan.popular ? 'text-sm' : 'text-xs sm:text-sm'}`}>
+                  <p className={`text-primary mt-2 text-xs sm:text-sm`}>
                     Até {plan.searches} buscas estratégicas para encontrar novos clientes
                   </p>
                 </div>
 
-                <ul className={`space-y-3 mb-8 ${plan.popular ? '' : 'text-sm'}`}>
+                <ul className={`space-y-3 mb-8 text-sm`}>
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm">
-                      <Check size={plan.popular ? 18 : 16} className="text-primary flex-shrink-0 mt-0.5" />
+                      <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{feature}</span>
                     </li>
                   ))}
