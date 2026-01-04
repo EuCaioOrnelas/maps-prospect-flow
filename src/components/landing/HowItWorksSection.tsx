@@ -75,9 +75,9 @@ export const HowItWorksSection = () => {
         <div className="hidden md:block">
           <div className="relative">
             {/* Connection line */}
-            <div className="absolute top-24 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-500/50 via-green-500/50 to-primary/50 z-0" />
+            <div className="absolute top-10 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-blue-500/50 via-green-500/50 to-primary/50 z-0" />
             
-            <div className="grid grid-cols-3 gap-8 relative z-10">
+            <div className="grid grid-cols-3 gap-6 lg:gap-10 relative z-10">
               {steps.map((step, index) => (
                 <div
                   key={step.number}
@@ -89,60 +89,46 @@ export const HowItWorksSection = () => {
                   style={{ transitionDelay: `${index * 200 + 200}ms` }}
                 >
                   {/* Animated Icon Container - Outside card */}
-                  <div className="flex justify-center mb-6">
-                    <div className="relative group">
-                      {/* Glow effect */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${step.color} rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
-                      
+                  <div className="flex justify-center mb-4">
+                    <div className="relative">
                       {/* Main icon container */}
-                      <div className={`relative w-20 h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg ${step.glowColor} group-hover:scale-110 transition-all duration-500`}>
-                        <step.icon className="w-10 h-10 text-white animate-pulse" style={{ animationDuration: '3s' }} />
+                      <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300`}>
+                        <step.icon className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
                         
                         {/* Floating secondary icon */}
-                        <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full bg-background border-2 border-current flex items-center justify-center ${step.bgColor} animate-bounce`} style={{ animationDuration: '2s', animationDelay: `${index * 0.3}s` }}>
-                          <step.secondaryIcon className="w-4 h-4 text-foreground" />
+                        <div className={`absolute -top-2 -right-2 w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-background border-2 border-border flex items-center justify-center ${step.bgColor}`}>
+                          <step.secondaryIcon className="w-3 h-3 lg:w-4 lg:h-4 text-foreground" />
                         </div>
-                      </div>
-
-                      {/* Orbiting dots */}
-                      <div className="absolute inset-0 animate-spin" style={{ animationDuration: '8s' }}>
-                        <div className={`absolute -top-1 left-1/2 w-2 h-2 rounded-full bg-gradient-to-br ${step.color}`} />
-                      </div>
-                      <div className="absolute inset-0 animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}>
-                        <div className={`absolute top-1/2 -right-1 w-1.5 h-1.5 rounded-full bg-gradient-to-br ${step.color} opacity-60`} />
                       </div>
                     </div>
                   </div>
 
                   {/* Arrow between steps */}
                   {index < steps.length - 1 && (
-                    <div className="absolute right-0 top-12 translate-x-1/2 z-20 hidden lg:flex items-center justify-center">
-                      <div className={`w-10 h-10 rounded-full bg-background border-2 border-border flex items-center justify-center shadow-md transition-all duration-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} style={{ transitionDelay: `${index * 200 + 400}ms` }}>
-                        <ChevronRight className="w-5 h-5 text-primary animate-pulse" />
+                    <div className="absolute right-0 top-8 translate-x-1/2 z-20 hidden lg:flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center shadow-sm transition-all duration-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} style={{ transitionDelay: `${index * 200 + 400}ms` }}>
+                        <ChevronRight className="w-4 h-4 text-primary" />
                       </div>
                     </div>
                   )}
 
                   {/* Card */}
-                  <div className="group/card relative bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 h-full">
+                  <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-5 lg:p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                     {/* Step number badge */}
-                    <div className="absolute -top-3 left-6">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
                         Passo {step.number}
                       </span>
                     </div>
 
                     {/* Content */}
-                    <div className="mt-4">
-                      <h3 className="text-xl font-bold mb-1">{step.title}</h3>
-                      <p className="text-primary text-sm font-medium mb-3">{step.subtitle}</p>
+                    <div className="mt-3 text-center">
+                      <h3 className="text-lg lg:text-xl font-bold mb-1">{step.title}</h3>
+                      <p className="text-primary text-sm font-medium mb-2">{step.subtitle}</p>
                       <p className="text-muted-foreground text-sm leading-relaxed">
                         {step.description}
                       </p>
                     </div>
-
-                    {/* Decorative corner */}
-                    <div className={`absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl ${step.color} opacity-5 rounded-tl-3xl rounded-br-2xl`} />
                   </div>
                 </div>
               ))}
@@ -150,30 +136,30 @@ export const HowItWorksSection = () => {
           </div>
         </div>
 
-        {/* Steps - Mobile (icons inside cards) */}
+        {/* Steps - Mobile (icons inside cards, centered) */}
         <div className="md:hidden space-y-6">
           {steps.map((step, index) => (
             <div
               key={step.number}
               className={`relative transition-all duration-700 ${
                 isVisible
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 -translate-x-8"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: `${index * 150 + 200}ms` }}
             >
               {/* Card with icon inside */}
               <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-5 border border-border/50">
-                {/* Step badge */}
-                <div className="absolute -top-3 left-4">
+                {/* Step badge - centered */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
                     Passo {step.number}
                   </span>
                 </div>
 
-                <div className="flex gap-4 items-start mt-3">
-                  {/* Icon inside card */}
-                  <div className="flex-shrink-0 relative">
+                {/* Icon centered */}
+                <div className="flex justify-center mt-3 mb-4">
+                  <div className="relative">
                     <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
                       <step.icon className="w-7 h-7 text-white" />
                     </div>
@@ -182,19 +168,16 @@ export const HowItWorksSection = () => {
                       <step.secondaryIcon className="w-3 h-3 text-foreground" />
                     </div>
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold">{step.title}</h3>
-                    <p className="text-primary text-xs font-medium mb-2">{step.subtitle}</p>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
                 </div>
 
-                {/* Decorative corner */}
-                <div className={`absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-tl ${step.color} opacity-5 rounded-tl-2xl rounded-br-2xl`} />
+                {/* Content - centered */}
+                <div className="text-center">
+                  <h3 className="text-lg font-bold">{step.title}</h3>
+                  <p className="text-primary text-xs font-medium mb-2">{step.subtitle}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
               </div>
 
               {/* Arrow down for mobile */}
