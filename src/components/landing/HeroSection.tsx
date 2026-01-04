@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-x-hidden overflow-y-visible"
     >
       {/* Parallax Background effects */}
       <div 
@@ -298,9 +298,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in text-left sm:text-center">
             <Brain size={16} className="text-primary flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground text-left">
               IA que identifica leads com maior potencial de conversão
             </span>
           </div>
@@ -339,13 +339,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
             <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-              <Button variant="hero" size="xl" className="group w-full sm:w-auto">
+              <Button variant="hero" size="xl" className="group w-full sm:w-auto text-sm sm:text-base">
                 Começar com 10 buscas grátis
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
               </Button>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
-              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto">
+              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto text-sm sm:text-base">
                 Ver como funciona
               </Button>
             </a>
@@ -407,8 +407,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </div>
             ))}
             
-            {/* Demo badge */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+            {/* Demo badge - hidden on mobile, shown below demo on mobile */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
               <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
                 ✨ Demonstração em tempo real
               </span>
@@ -490,6 +490,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Mobile demo badge - shown at bottom on mobile */}
+            <div className="mt-4 text-center sm:hidden">
+              <span className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
+                ✨ Demonstração em tempo real
+              </span>
             </div>
           </div>
         </div>
