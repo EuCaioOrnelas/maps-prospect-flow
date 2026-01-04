@@ -80,30 +80,6 @@ const firstColumn = testimonials.slice(0, 3);
 const secondColumn = testimonials.slice(3, 6);
 const thirdColumn = testimonials.slice(6, 9);
 
-const TestimonialCard = ({ text, image, name, role, company }: Testimonial) => (
-  <div className="glass rounded-2xl p-4 sm:p-6">
-    <Quote size={20} className="text-primary/30 mb-3 sm:mb-4" />
-    <p className="text-muted-foreground leading-relaxed mb-4 sm:mb-6 text-xs sm:text-sm md:text-base">
-      {text}
-    </p>
-    <div className="flex items-center gap-3 sm:gap-4">
-      <img
-        src={image}
-        alt={name}
-        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
-      />
-      <div className="min-w-0">
-        <p className="font-semibold text-foreground text-xs sm:text-sm md:text-base truncate">
-          {name}
-        </p>
-        <p className="text-muted-foreground text-[10px] sm:text-xs md:text-sm truncate">
-          {role} • {company}
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
 const TestimonialsColumn = ({
   className,
   testimonials,
@@ -114,7 +90,7 @@ const TestimonialsColumn = ({
   duration?: number;
 }) => {
   return (
-    <div className={`relative ${className}`} style={{ overflow: 'hidden' }}>
+    <div className={`relative ${className}`} style={{ overflow: 'hidden', touchAction: 'pan-x' }}>
       <motion.div
         animate={{ translateY: "-50%" }}
         transition={{
@@ -124,11 +100,36 @@ const TestimonialsColumn = ({
           repeatType: "loop",
         }}
         className="flex flex-col gap-6"
+        style={{ pointerEvents: 'none' }}
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
-            {testimonials.map((testimonial, i) => (
-              <TestimonialCard key={`${index}-${i}`} {...testimonial} />
+            {testimonials.map(({ text, image, name, role, company }, i) => (
+              <div
+                key={`${index}-${i}`}
+                className="glass rounded-2xl p-4 sm:p-6"
+                style={{ pointerEvents: 'auto' }}
+              >
+                <Quote size={20} className="text-primary/30 mb-3 sm:mb-4" />
+                <p className="text-muted-foreground leading-relaxed mb-4 sm:mb-6 text-xs sm:text-sm md:text-base">
+                  {text}
+                </p>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <img
+                    src={image}
+                    alt={name}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-xs sm:text-sm md:text-base truncate">
+                      {name}
+                    </p>
+                    <p className="text-muted-foreground text-[10px] sm:text-xs md:text-sm truncate">
+                      {role} • {company}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ))}
@@ -136,15 +137,6 @@ const TestimonialsColumn = ({
     </div>
   );
 };
-
-// Static testimonials for mobile (no animation)
-const StaticTestimonials = ({ testimonials }: { testimonials: Testimonial[] }) => (
-  <div className="flex flex-col gap-4">
-    {testimonials.slice(0, 3).map((testimonial, i) => (
-      <TestimonialCard key={i} {...testimonial} />
-    ))}
-  </div>
-);
 
 export const TestimonialsSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -199,9 +191,9 @@ export const TestimonialsSection = () => {
           />
         </div>
 
-        {/* Mobile: Static cards (no scroll issues) */}
-        <div className="md:hidden max-w-sm mx-auto px-2">
-          <StaticTestimonials testimonials={firstColumn} />
+        {/* Mobile: 1 column */}
+        <div className="md:hidden max-w-sm mx-auto h-[400px] mask-gradient">
+          <TestimonialsColumn testimonials={firstColumn} duration={20} />
         </div>
       </div>
 

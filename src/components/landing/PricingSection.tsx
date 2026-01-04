@@ -290,58 +290,62 @@ export const PricingSection = () => {
                     Teste Gratuito por 30 dias
                   </div>
                   
-                  <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
                     Experimente antes de assinar
                   </h3>
-                  <p className="text-xs sm:text-base text-muted-foreground max-w-lg mx-auto">
-                    Teste todas as funcionalidades da WiizeProspect gratuitamente durante 30 dias. Sem compromisso, sem cartão de crédito.
+                  <p className="text-muted-foreground max-w-lg mx-auto">
+                    Teste todas as funcionalidades da WiizeProspect gratuitamente durante 30 dias. Sem compromisso.
                   </p>
                 </div>
                 
-                {/* Features Cards - Single row on mobile */}
-                <div className="flex flex-row gap-2 sm:gap-4">
+                {/* Features Cards */}
+                <div className="space-y-4">
+                  {/* Search card - full width on top */}
                   <div 
-                    className={`flex-1 flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-5 rounded-lg sm:rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                    className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
                       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                     }`}
                     style={{ transitionDelay: '700ms' }}
                   >
-                    <div className="flex h-8 w-8 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                      <Search className="h-4 w-4 sm:h-7 sm:w-7 text-primary" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                      <Search className="h-7 w-7 text-primary" />
                     </div>
-                    <div className="text-center">
-                      <p className="font-bold text-[10px] sm:text-lg text-foreground leading-tight">10 buscas IA</p>
-                      <p className="text-[8px] sm:text-sm text-muted-foreground">grátis</p>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className={`flex-1 flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-5 rounded-lg sm:rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
-                    style={{ transitionDelay: '800ms' }}
-                  >
-                    <div className="flex h-8 w-8 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                      <MessageSquare className="h-4 w-4 sm:h-7 sm:w-7 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-[10px] sm:text-lg text-foreground leading-tight">400 disparos</p>
-                      <p className="text-[8px] sm:text-sm text-muted-foreground">grátis</p>
+                    <div>
+                      <p className="font-bold text-lg text-foreground">10 buscas estratégicas com IA</p>
+                      <p className="text-sm text-muted-foreground">grátis</p>
                     </div>
                   </div>
                   
-                  <div 
-                    className={`flex-1 flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-5 rounded-lg sm:rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
-                    style={{ transitionDelay: '900ms' }}
-                  >
-                    <div className="flex h-8 w-8 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                      <Smartphone className="h-4 w-4 sm:h-7 sm:w-7 text-primary" />
+                  {/* Bottom row - messages and whatsapp side by side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div 
+                      className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{ transitionDelay: '800ms' }}
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <MessageSquare className="h-7 w-7 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-lg text-foreground">400 disparos em massa</p>
+                        <p className="text-sm text-muted-foreground">grátis</p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="font-bold text-[10px] sm:text-lg text-foreground leading-tight">1 WhatsApp</p>
-                      <p className="text-[8px] sm:text-sm text-muted-foreground">grátis</p>
+                    
+                    <div 
+                      className={`flex items-center gap-4 p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
+                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{ transitionDelay: '900ms' }}
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                        <Smartphone className="h-7 w-7 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-lg text-foreground">1 número WhatsApp</p>
+                        <p className="text-sm text-muted-foreground">grátis</p>
+                      </div>
                     </div>
                   </div>
                 </div>
