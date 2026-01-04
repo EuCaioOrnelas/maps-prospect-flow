@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -68,6 +69,7 @@ const LandingPage = () => {
       <main className="min-h-screen bg-background overflow-x-hidden">
         <Navbar onSignupClick={trackSignupClick} />
         <HeroSection onSignupClick={trackSignupClick} />
+        <HowItWorksSection />
         <FeaturesSection />
         <TestimonialsSection />
         <PricingSection />
