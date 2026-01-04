@@ -36,7 +36,8 @@ import {
   Hash,
   PartyPopper,
   Copy,
-  Check
+  Check,
+  Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,6 +85,9 @@ export const NumbersManager = ({
   const [phoneNumberForCode, setPhoneNumberForCode] = useState("");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [numberToRename, setNumberToRename] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -545,6 +549,51 @@ export const NumbersManager = ({
     setDeleteConfirmOpen(true);
   };
 
+  const openRenameDialog = (numberId: string, currentName: string) => {
+    setNumberToRename(numberId);
+    setNewName(currentName);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameNumber = async () => {
+    if (!numberToRename || !newName.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          name: newName.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberToRename);
+
+      if (error) throw error;
+
+      onNumbersChange(numbers.map(n => 
+        n.id === numberToRename ? { ...n, name: newName.trim() } : n
+      ));
+
+      setRenameDialogOpen(false);
+      setNumberToRename(null);
+      setNewName("");
+
+      toast({
+        title: "Nome atualizado",
+        description: "O número foi renomeado com sucesso",
+      });
+    } catch (err) {
+      console.error('Error renaming number:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível renomear o número",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!hasMassMessagingAccess) {
     return (
       <Button variant="outline" size="sm" asChild className="gap-2">
@@ -670,14 +719,24 @@ export const NumbersManager = ({
                             )}
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => confirmDelete(number.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openRenameDialog(number.id, number.name)}
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            <Pencil size={14} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => confirmDelete(number.id)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Daily Usage */}
@@ -1113,6 +1172,47 @@ export const NumbersManager = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil size={20} />
+              Renomear Número
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Novo nome</Label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Ex: WhatsApp Comercial"
+                maxLength={50}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleRenameNumber}
+              disabled={loading || !newName.trim()}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin mr-2" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
