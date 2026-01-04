@@ -100,28 +100,78 @@ serve(async (req) => {
 
     console.log(`Creating Evolution instance: ${instanceName} for user: ${user.id}`);
 
-    // Create instance in Evolution API
-    const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY,
-      },
-      body: JSON.stringify({
-        instanceName: instanceName,
-        qrcode: true,
-        integration: "WHATSAPP-BAILEYS",
-      }),
-    });
+    // First, check if instance already exists
+    let instanceData = null;
+    let instanceExists = false;
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error('Evolution API error:', errorText);
-      throw new Error(`Failed to create instance: ${errorText}`);
+    try {
+      const fetchResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
+        method: 'GET',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+        },
+      });
+
+      if (fetchResponse.ok) {
+        const fetchData = await fetchResponse.json();
+        if (fetchData && (Array.isArray(fetchData) ? fetchData.length > 0 : fetchData.instance)) {
+          console.log('Instance already exists:', instanceName);
+          instanceExists = true;
+          instanceData = Array.isArray(fetchData) ? fetchData[0] : fetchData;
+        }
+      }
+    } catch (e) {
+      console.log('Error checking existing instance, will try to create:', e);
     }
 
-    const instanceData = await createResponse.json();
-    console.log('Instance created:', JSON.stringify(instanceData));
+    // If instance doesn't exist, create it
+    if (!instanceExists) {
+      const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({
+          instanceName: instanceName,
+          qrcode: true,
+          integration: "WHATSAPP-BAILEYS",
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        console.error('Evolution API error:', errorText);
+        
+        // Check if error is "already in use" - if so, treat as success and fetch the instance
+        if (errorText.includes('already in use')) {
+          console.log('Instance already exists (from error), fetching it...');
+          instanceExists = true;
+        } else {
+          throw new Error(`Failed to create instance: ${errorText}`);
+        }
+      } else {
+        instanceData = await createResponse.json();
+        console.log('Instance created:', JSON.stringify(instanceData));
+      }
+    }
+
+    // If we detected instance exists from error, fetch it now
+    if (instanceExists && !instanceData) {
+      const refetchResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
+        method: 'GET',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+        },
+      });
+      
+      if (refetchResponse.ok) {
+        const refetchData = await refetchResponse.json();
+        instanceData = Array.isArray(refetchData) ? refetchData[0] : refetchData;
+      }
+    }
+
+    console.log('Final instance data:', JSON.stringify(instanceData));
 
     // Store the instance_name separately (not overwriting the user-friendly 'name')
     const { error: updateError } = await supabase
