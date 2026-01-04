@@ -154,7 +154,7 @@ export const PricingSection = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {plans.map((plan, index) => (
               <motion.div
                 key={index}
@@ -168,13 +168,13 @@ export const PricingSection = () => {
                 }}
                 whileHover={{ 
                   y: -8, 
-                  scale: 1.03,
+                  scale: 1.02,
                   transition: { duration: 0.3 }
                 }}
-                className={`relative rounded-2xl ${
+                className={`relative rounded-2xl h-full flex flex-col ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-9 md:z-10"
-                    : "glass p-5 md:p-9"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:z-10"
+                    : "glass p-5 md:p-8"
                 }`}
               >
                 {plan.popular && (
@@ -187,28 +187,28 @@ export const PricingSection = () => {
                 )}
 
                 <div className="mb-6">
-                  <h3 className={`font-display font-bold mb-2 text-lg md:text-xl ${plan.popular ? 'md:text-2xl' : 'sm:text-xl'}`}>{plan.name}</h3>
-                  <p className={`text-muted-foreground text-xs sm:text-sm`}>{plan.description}</p>
+                  <h3 className="font-display font-bold mb-2 text-lg md:text-xl">{plan.name}</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm">{plan.description}</p>
                 </div>
 
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm`}>R$ {plan.anchorPrice}</span>
+                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice)) * 100)}%
+                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice.replace('.', ''))) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className={`font-display font-bold text-3xl md:text-4xl ${plan.popular ? 'md:text-5xl' : 'sm:text-4xl'}`}>{plan.price}</span>
+                    <span className="font-display font-bold text-3xl md:text-4xl">{plan.price}</span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className={`text-primary mt-2 text-xs sm:text-sm`}>
+                  <p className="text-primary mt-2 text-xs sm:text-sm">
                     Até {plan.searches} buscas estratégicas para encontrar novos clientes
                   </p>
                 </div>
 
-                <ul className={`space-y-3 mb-8 text-sm`}>
+                <ul className="space-y-3 mb-8 text-sm flex-grow">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm">
                       <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
@@ -219,8 +219,8 @@ export const PricingSection = () => {
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
-                  size={plan.popular ? "lg" : "default"}
-                  className="w-full"
+                  size="lg"
+                  className="w-full mt-auto"
                   onClick={() => handlePlanClick(plan)}
                   disabled={loadingPlan === plan.key}
                 >
