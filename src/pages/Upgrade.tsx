@@ -355,8 +355,8 @@ const Upgrade = () => {
                 key={index}
                 className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow"
-                    : "glass md:scale-[0.92] origin-center"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow md:scale-105"
+                    : "glass"
                 } ${isCurrent ? "ring-2 ring-primary/50" : ""}`}
                 style={{ animationDelay: `${index * 0.15}s` }}
               >

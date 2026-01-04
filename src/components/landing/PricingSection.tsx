@@ -173,8 +173,8 @@ export const PricingSection = () => {
                 }}
                 className={`relative rounded-2xl flex flex-col ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:z-10"
-                    : "glass p-5 md:p-6 md:scale-[0.92] origin-center"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:scale-105 md:z-10"
+                    : "glass p-5 md:p-6"
                 }`}
               >
                 {plan.popular && (
