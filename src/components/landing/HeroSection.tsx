@@ -162,28 +162,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "left-0 lg:-left-20 xl:-left-32 top-20 lg:top-16",
+    position: "left-2 top-20 lg:top-16",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "right-0 lg:-right-12 xl:-right-20 top-8 lg:top-4",
+    position: "right-2 top-8 lg:top-4",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "left-0 lg:-left-12 xl:-left-20 bottom-28 lg:bottom-24",
+    position: "left-2 bottom-28 lg:bottom-24",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "right-0 lg:-right-12 xl:-right-20 bottom-12 lg:bottom-8",
+    position: "right-2 bottom-12 lg:bottom-8",
     delay: "2s"
   },
 ];
@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen"
+      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen overflow-hidden"
     >
       {/* Background - solid color to prevent gaps */}
       <div className="absolute inset-0 bg-background" />
