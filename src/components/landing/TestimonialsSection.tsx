@@ -90,7 +90,7 @@ const TestimonialsColumn = ({
   duration?: number;
 }) => {
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative ${className}`} style={{ overflow: 'hidden', touchAction: 'pan-x' }}>
       <motion.div
         animate={{ translateY: "-50%" }}
         transition={{
@@ -100,29 +100,31 @@ const TestimonialsColumn = ({
           repeatType: "loop",
         }}
         className="flex flex-col gap-6"
+        style={{ pointerEvents: 'none' }}
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
             {testimonials.map(({ text, image, name, role, company }, i) => (
               <div
                 key={`${index}-${i}`}
-                className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
+                className="glass rounded-2xl p-4 sm:p-6"
+                style={{ pointerEvents: 'auto' }}
               >
-                <Quote size={24} className="text-primary/30 mb-4" />
-                <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
+                <Quote size={20} className="text-primary/30 mb-3 sm:mb-4" />
+                <p className="text-muted-foreground leading-relaxed mb-4 sm:mb-6 text-xs sm:text-sm md:text-base">
                   {text}
                 </p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <img
                     src={image}
                     alt={name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
                   />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm md:text-base">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-xs sm:text-sm md:text-base truncate">
                       {name}
                     </p>
-                    <p className="text-muted-foreground text-xs md:text-sm">
+                    <p className="text-muted-foreground text-[10px] sm:text-xs md:text-sm truncate">
                       {role} • {company}
                     </p>
                   </div>

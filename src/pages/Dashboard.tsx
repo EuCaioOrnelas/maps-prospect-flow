@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
+import { InternalHeader } from "@/components/InternalHeader";
 import {
   Dialog,
   DialogContent,
@@ -440,135 +441,12 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
-          <div className="flex items-center justify-between gap-2">
-            <Logo size="md" />
-            
-            <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
-              {/* Trial indicator - hidden on very small screens */}
-              {showTrialIndicator && (
-                <div className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0 ${
-                  trialDaysRemaining <= 3 
-                    ? 'bg-destructive/10 text-destructive border border-destructive/20' 
-                    : trialDaysRemaining <= 7 
-                      ? 'bg-warning/10 text-warning border border-warning/20'
-                      : 'bg-primary/10 text-primary border border-primary/20'
-                }`}>
-                  <Clock size={14} />
-                  <span>
-                    {trialDaysRemaining === 1 
-                      ? 'Último dia de trial' 
-                      : `${trialDaysRemaining} dias restantes`}
-                  </span>
-                </div>
-              )}
-              
-              {/* Trial expired indicator */}
-              {isTrialExpired && isFreePlan && (
-                <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20 flex-shrink-0">
-                  <AlertCircle size={14} />
-                  <span>Trial expirado</span>
-                </div>
-              )}
-
-              {/* Credits indicator - simplified on mobile */}
-              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm flex-shrink-0">
-                <Search size={12} className="text-muted-foreground hidden xs:block" />
-                <span className="text-primary font-semibold">{profile?.searches_used || 0}</span>
-                <span className="text-muted-foreground">/</span>
-                <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
-                <div className="hidden sm:block w-12 lg:w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${((profile?.searches_used || 0) / (profile?.searches_limit || 10)) * 100}%` }}
-                  />
-                </div>
-                <span className="hidden lg:inline text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
-                  {getPlanName(profile?.plan || 'free')}
-                </span>
-              </div>
-
-              {/* Action buttons - condensed on mobile */}
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Link to="/reports">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8 sm:h-9 w-8 sm:w-auto px-0 sm:px-3"
-                    title="Relatórios"
-                  >
-                    <BarChart3 size={16} />
-                    <span className="hidden sm:inline ml-2">Relatórios</span>
-                  </Button>
-                </Link>
-
-                {isFreePlan ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8 sm:h-9 w-8 sm:w-auto px-0 sm:px-3"
-                    onClick={() => setShowWhatsAppUpgradeModal(true)}
-                    title="Disparos"
-                  >
-                    <MessageSquare size={16} />
-                    <span className="hidden sm:inline ml-2">Disparos</span>
-                  </Button>
-                ) : (
-                  <Link to="/whatsapp">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-8 sm:h-9 w-8 sm:w-auto px-0 sm:px-3"
-                      title="Disparos"
-                    >
-                      <MessageSquare size={16} />
-                      <span className="hidden sm:inline ml-2">Disparos</span>
-                    </Button>
-                  </Link>
-                )}
-
-                {profile?.plan !== 'scale' && (
-                  <Link to="/upgrade">
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      className="h-8 sm:h-9 w-8 sm:w-auto px-0 sm:px-3"
-                      title="Upgrade"
-                    >
-                      <Crown size={16} />
-                      <span className="hidden sm:inline ml-2">Upgrade</span>
-                    </Button>
-                  </Link>
-                )}
-
-                <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
-
-                <Link to="/profile">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    title="Meu perfil"
-                  >
-                    <User size={16} />
-                  </Button>
-                </Link>
-
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={handleLogout} 
-                  className="h-8 w-8 sm:h-9 sm:w-9"
-                  title="Sair da conta"
-                >
-                  <LogOut size={16} />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <InternalHeader
+        showCredits={true}
+        creditsUsed={profile?.searches_used || 0}
+        creditsLimit={profile?.searches_limit || 10}
+        onShowWhatsAppUpgrade={() => setShowWhatsAppUpgradeModal(true)}
+      />
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
