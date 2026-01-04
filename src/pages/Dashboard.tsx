@@ -691,311 +691,352 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4">
-                  <Brain size={16} className="text-primary" />
-                  <span className="text-sm text-muted-foreground">Prospecção Inteligente com IA</span>
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
+        <div className="max-w-4xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+              <Brain size={18} className="text-primary" />
+              <span className="text-sm font-medium text-primary">Prospecção Inteligente com IA</span>
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Encontre seus próximos clientes
+            </h1>
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+              Nossa IA analisa e entrega até <span className="text-primary font-semibold">50 leads estratégicos</span> por busca
+            </p>
+          </div>
+
+          {/* Search Card */}
+          <div className="relative mb-10">
+            {/* Glow effect behind card */}
+            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -z-10" />
+            
+            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
+              {/* Feature badges */}
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-8 pb-6 border-b border-border/50">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Target size={16} className="text-primary" />
+                  </div>
+                  <span>Leads qualificados</span>
                 </div>
-                <h1 className="font-display text-3xl font-bold mb-2">
-                  Encontre seus próximos clientes
-                </h1>
-                <p className="text-muted-foreground">
-                  Nossa IA analisa e entrega até 50 leads estratégicos por busca
-                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles size={16} className="text-primary" />
+                  </div>
+                  <span>Contatos verificados</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Brain size={16} className="text-primary" />
+                  </div>
+                  <span>Alta conversão</span>
+                </div>
               </div>
 
-              <form onSubmit={handleSearch} className="glass rounded-2xl p-6 mb-8">
-                {/* AI Badge */}
-                <div className="flex flex-wrap items-center justify-center gap-4 mb-6 pb-6 border-b border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Target size={16} className="text-primary" />
-                    <span>Leads pré-qualificados</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Sparkles size={16} className="text-primary" />
-                    <span>Contatos verificados</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Brain size={16} className="text-primary" />
-                    <span>Alto potencial de conversão</span>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                <div className="space-y-2">
+                  <Label htmlFor="keyword" className="flex items-center gap-2 text-sm font-medium">
+                    <Search size={14} className="text-primary" />
+                    Palavra-chave
+                  </Label>
+                  <Input
+                    id="keyword"
+                    placeholder="Ex: restaurantes, dentistas, advogados..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="keyword" className="flex items-center gap-2">
-                      <Search size={16} className="text-primary" />
-                      Palavra-chave
-                    </Label>
-                    <Input
-                      id="keyword"
-                      placeholder="Ex: restaurantes italianos, dentistas, advogados..."
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                      className="h-12 bg-secondary border-border"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location" className="flex items-center gap-2">
-                      <MapPin size={16} className="text-primary" />
-                      Cidade ou Região
-                    </Label>
-                    <Input
-                      id="location"
-                      placeholder="Ex: São Paulo, SP"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="h-12 bg-secondary border-border"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
+                    <MapPin size={14} className="text-primary" />
+                    Cidade ou Região
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="Ex: São Paulo, SP"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                  />
                 </div>
+              </div>
 
-                <Button
-                  type="submit"
-                  variant="hero"
-                  size="lg"
-                  className="w-full"
-                  disabled={isSearching || searchesRemaining <= 0}
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" />
-                      Analisando e filtrando leads...
-                    </>
-                  ) : (
-                    <>
-                      <Search size={20} />
-                      Buscar Leads Estratégicos
-                    </>
-                  )}
-                </Button>
-
-                {searchesRemaining <= 0 && (
-                  <p className="text-center text-destructive mt-4 text-sm">
-                    Você atingiu seu limite de buscas. Faça upgrade para continuar.
-                  </p>
+              <Button
+                type="submit"
+                variant="hero"
+                size="lg"
+                className="w-full h-14 text-base font-semibold"
+                disabled={isSearching || searchesRemaining <= 0}
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Analisando e filtrando leads...
+                  </>
+                ) : (
+                  <>
+                    <Search size={20} />
+                    Buscar Leads Estratégicos
+                  </>
                 )}
-              </form>
+              </Button>
 
-              {/* Results */}
-              {hasSearched && (
-                <div className="animate-fade-in">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-display text-xl font-semibold">
+              {searchesRemaining <= 0 && (
+                <div className="flex items-center justify-center gap-2 mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
+                  <AlertCircle size={16} className="text-destructive" />
+                  <p className="text-destructive text-sm font-medium">
+                    Limite de buscas atingido. Faça upgrade para continuar.
+                  </p>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Results Section */}
+          {hasSearched && (
+            <div className="animate-fade-in mb-10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Target size={20} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl sm:text-2xl font-bold">
                       {leads.length > 0 
                         ? `${leads.length} leads encontrados`
                         : "Nenhum lead encontrado"
                       }
                     </h2>
                     {leads.length > 0 && (
-                      <Button variant="outline" onClick={handleExport} className="gap-2">
-                        <Download size={18} />
-                        Exportar Excel
-                      </Button>
+                      <p className="text-sm text-muted-foreground">
+                        Busca por "{keyword}" em {location}
+                      </p>
                     )}
                   </div>
+                </div>
+                {leads.length > 0 && (
+                  <Button variant="outline" onClick={handleExport} className="gap-2 h-11">
+                    <Download size={18} />
+                    Exportar Excel
+                  </Button>
+                )}
+              </div>
 
-                  {leads.length > 0 && (
-                    <>
-                      <div className="space-y-4">
-                        {paginatedLeads.map((lead, index) => (
-                          <div
-                            key={index}
-                            className="glass rounded-xl p-5 hover:bg-card/90 transition-colors"
-                          >
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                    <Building2 size={20} className="text-primary" />
-                                  </div>
-                                  <div>
-                                    <h3 className="font-semibold text-lg">{lead.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{lead.category}</p>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      {lead.address} • {lead.city}
-                                    </p>
-                                  </div>
-                                </div>
+              {leads.length > 0 && (
+                <>
+                  <div className="space-y-3">
+                    {paginatedLeads.map((lead, index) => (
+                      <div
+                        key={index}
+                        className="bg-card border border-border/50 rounded-xl p-4 sm:p-5 hover:border-primary/30 hover:bg-card/90 transition-all duration-300"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
+                                <Building2 size={20} className="text-primary" />
                               </div>
-
-                              <div className="flex flex-wrap items-center gap-4 text-sm">
-                                {lead.phone !== '-' && (
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Phone size={16} />
-                                    <span>{lead.phone}</span>
-                                  </div>
-                                )}
-                                {lead.website !== "-" && lead.website !== '-' && (
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Globe size={16} />
-                                    <span className="truncate max-w-[150px]">{lead.website}</span>
-                                  </div>
-                                )}
-                                {lead.rating > 0 && (
-                                  <div className="flex items-center gap-1 text-warning">
-                                    <Star size={16} fill="currentColor" />
-                                    <span className="font-medium">{lead.rating}</span>
-                                    <span className="text-muted-foreground">({lead.reviewCount})</span>
-                                  </div>
-                                )}
-                                {lead.mapsLink !== '-' && (
-                                  <a
-                                    href={lead.mapsLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-primary hover:underline"
-                                  >
-                                    <ExternalLink size={16} />
-                                    Ver no Maps
-                                  </a>
-                                )}
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-base sm:text-lg truncate">{lead.name}</h3>
+                                <p className="text-sm text-primary/80 font-medium">{lead.category}</p>
+                                <p className="text-sm text-muted-foreground mt-1 truncate">
+                                  {lead.address} • {lead.city}
+                                </p>
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
 
-                      {/* Results Pagination */}
-                      {totalResultPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 mt-6">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentResultPage(prev => Math.max(1, prev - 1))}
-                            disabled={currentResultPage === 1}
-                            className="gap-2"
-                          >
-                            <ChevronLeft size={16} />
-                            Anterior
-                          </Button>
-                          <span className="text-sm text-muted-foreground">
-                            Página {currentResultPage} de {totalResultPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentResultPage(prev => Math.min(totalResultPages, prev + 1))}
-                            disabled={currentResultPage === totalResultPages}
-                            className="gap-2"
-                          >
-                            Próxima
-                            <ChevronRight size={16} />
-                          </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Empty state */}
-              {!hasSearched && (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                    <Search size={40} className="text-primary" />
-                  </div>
-                  <h3 className="font-display text-xl font-semibold mb-2">
-                    Faça sua primeira busca
-                  </h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar - Search History */}
-            <div className="lg:col-span-1">
-              <div className="glass rounded-2xl p-5 sticky top-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <History size={18} className="text-primary" />
-                  <h3 className="font-semibold">Histórico de Buscas</h3>
-                </div>
-
-                {loadingHistory ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 size={24} className="animate-spin text-primary" />
-                  </div>
-                ) : searchHistory.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Nenhuma busca realizada ainda
-                  </p>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      {paginatedHistory.map((item, index) => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleHistoryClick(item)}
-                          className="relative group w-full text-left p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 border border-transparent hover:border-border cursor-pointer animate-fade-in"
-                          style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
-                        >
-                          {/* Delete button */}
-                          <button
-                            onClick={(e) => handleDeleteHistoryItem(e, item.id)}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
-                            title="Excluir"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                          
-                          <p className="font-semibold text-foreground truncate pr-8">{item.keyword}</p>
-                          <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1">
-                            <MapPin size={12} className="flex-shrink-0" />
-                            {item.location}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                            <Clock size={12} className="flex-shrink-0" />
-                            {formatDate(item.created_at)}
-                          </p>
-                          <div className="mt-2">
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                              <Search size={10} />
-                              {item.leads?.length || item.results_count} leads
-                            </span>
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm pl-14 lg:pl-0">
+                            {lead.phone !== '-' && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg">
+                                <Phone size={14} className="text-primary" />
+                                <span className="font-medium">{lead.phone}</span>
+                              </div>
+                            )}
+                            {lead.website !== "-" && lead.website !== '-' && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg max-w-[180px]">
+                                <Globe size={14} className="text-primary flex-shrink-0" />
+                                <span className="truncate">{lead.website}</span>
+                              </div>
+                            )}
+                            {lead.rating > 0 && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-warning/10 rounded-lg">
+                                <Star size={14} className="text-warning" fill="currentColor" />
+                                <span className="font-semibold text-warning">{lead.rating}</span>
+                                <span className="text-muted-foreground text-xs">({lead.reviewCount})</span>
+                              </div>
+                            )}
+                            {lead.mapsLink !== '-' && (
+                              <a
+                                href={lead.mapsLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium"
+                              >
+                                <ExternalLink size={14} />
+                                Maps
+                              </a>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* History Pagination */}
-                    {totalHistoryPages > 1 && (
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentHistoryPage(prev => Math.max(1, prev - 1))}
-                          disabled={currentHistoryPage === 1}
-                          className="h-8 px-2"
-                        >
-                          <ChevronLeft size={14} />
-                        </Button>
-                        <span className="text-xs text-muted-foreground">
-                          {currentHistoryPage}/{totalHistoryPages}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
-                          disabled={currentHistoryPage === totalHistoryPages}
-                          className="h-8 px-2"
-                        >
-                          <ChevronRight size={14} />
-                        </Button>
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
+                    ))}
+                  </div>
+
+                  {/* Results Pagination */}
+                  {totalResultPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8 p-4 bg-card/50 rounded-xl border border-border/50">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentResultPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentResultPage === 1}
+                        className="gap-1 sm:gap-2 h-10"
+                      >
+                        <ChevronLeft size={16} />
+                        <span className="hidden sm:inline">Anterior</span>
+                      </Button>
+                      <div className="flex items-center gap-2 px-4">
+                        <span className="text-sm font-medium">
+                          Página {currentResultPage}
+                        </span>
+                        <span className="text-muted-foreground">/</span>
+                        <span className="text-sm text-muted-foreground">{totalResultPages}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentResultPage(prev => Math.min(totalResultPages, prev + 1))}
+                        disabled={currentResultPage === totalResultPages}
+                        className="gap-1 sm:gap-2 h-10"
+                      >
+                        <span className="hidden sm:inline">Próxima</span>
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Empty state */}
+          {!hasSearched && (
+            <div className="text-center py-12 sm:py-20">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 border border-primary/10">
+                <Search size={40} className="text-primary" />
+              </div>
+              <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">
+                Faça sua primeira busca
+              </h3>
+              <p className="text-muted-foreground max-w-md mx-auto text-base">
+                Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps
+              </p>
+            </div>
+          )}
+
+          {/* Search History Section - Below Results */}
+          {searchHistory.length > 0 && (
+            <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  <History size={20} className="text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg sm:text-xl font-bold">Histórico de Buscas</h3>
+                  <p className="text-sm text-muted-foreground">{searchHistory.length} buscas realizadas</p>
+                </div>
+              </div>
+
+              {loadingHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 size={28} className="animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    {paginatedHistory.map((item, index) => (
+                      <div
+                        key={item.id}
+                        onClick={() => handleHistoryClick(item)}
+                        className="relative group bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in"
+                        style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                      >
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => handleDeleteHistoryItem(e, item.id)}
+                          className="absolute top-3 right-3 p-2 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/20"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        
+                        <div className="pr-10">
+                          <p className="font-semibold text-foreground truncate text-base">{item.keyword}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1.5">
+                            <MapPin size={12} className="flex-shrink-0 text-primary/60" />
+                            {item.location}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock size={12} />
+                            {formatDate(item.created_at)}
+                          </div>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                            <Search size={10} />
+                            {item.leads?.length || item.results_count}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* History Pagination */}
+                  {totalHistoryPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 mt-6">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentHistoryPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentHistoryPage === 1}
+                        className="h-9 px-3"
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Página {currentHistoryPage} de {totalHistoryPages}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
+                        disabled={currentHistoryPage === totalHistoryPages}
+                        className="h-9 px-3"
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Empty history state */}
+          {!loadingHistory && searchHistory.length === 0 && hasSearched && (
+            <div className="mt-8 pt-8 border-t border-border/50 text-center py-8">
+              <History size={32} className="text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Seu histórico de buscas aparecerá aqui
+              </p>
+            </div>
+          )}
         </div>
       </main>
 
