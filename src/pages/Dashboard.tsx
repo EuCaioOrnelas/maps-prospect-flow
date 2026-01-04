@@ -446,7 +446,7 @@ const Dashboard = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3">
           <div className="flex items-center justify-between gap-2">
-            <Logo size="md" mobileSize="sm" />
+            <Logo size="md" mobileSize="sm" mobileInitialsOnly />
             
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-4 sm:gap-6">
