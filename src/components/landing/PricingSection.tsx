@@ -9,17 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "./EmailCaptureModal";
 const PRICE_IDS = {
-  start: "price_1SkEsEK8CM0R6xMM9Y1ip21w",
-  growth: "price_1SkEsZK8CM0R6xMMr0B2gEP1",
-  scale: "price_1SkEsoK8CM0R6xMMF72J3hAi",
+  start: "price_1SlykAK8CM0R6xMMOCM684rz",
+  growth: "price_1SlykkK8CM0R6xMMZu7WJesV",
+  scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
 const plans = [
   {
     name: "Start",
     key: "start",
-    price: "97",
-    anchorPrice: "197",
+    price: "197",
+    anchorPrice: "397",
     searches: "200",
     description: "Ideal para começar a prospectar novos clientes",
     features: [
@@ -36,8 +36,8 @@ const plans = [
   {
     name: "Growth",
     key: "growth",
-    price: "247",
-    anchorPrice: "497",
+    price: "497",
+    anchorPrice: "997",
     searches: "600",
     description: "Para profissionais que querem escalar resultados",
     features: [
@@ -55,8 +55,8 @@ const plans = [
   {
     name: "Scale",
     key: "scale",
-    price: "497",
-    anchorPrice: "997",
+    price: "897",
+    anchorPrice: "1.797",
     searches: "1.200",
     description: "Para equipes e agências com alta demanda",
     features: [

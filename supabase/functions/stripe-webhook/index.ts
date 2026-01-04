@@ -14,9 +14,9 @@ const logStep = (step: string, details?: any) => {
 
 // Map price IDs to plan names
 const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1SkEsEK8CM0R6xMM9Y1ip21w": "start",
-  "price_1SkEsZK8CM0R6xMMr0B2gEP1": "growth",
-  "price_1SkEsoK8CM0R6xMMF72J3hAi": "scale",
+  "price_1SlykAK8CM0R6xMMOCM684rz": "start",
+  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
 };
 
 // Map plan names to search limits
