@@ -34,7 +34,9 @@ import {
   BarChart3,
   MessageSquare,
   User,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -80,6 +82,7 @@ const Dashboard = () => {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsAppUpgradeModal, setShowWhatsAppUpgradeModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
@@ -438,17 +441,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Logo size="md" />
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <Logo size="md" mobileSize="sm" />
             
-            <div className="flex items-center gap-4 sm:gap-6">
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-4 sm:gap-6">
               {/* Trial indicator */}
               {showTrialIndicator && (
-                <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
                   trialDaysRemaining <= 3 
                     ? 'bg-destructive/10 text-destructive border border-destructive/20' 
                     : trialDaysRemaining <= 7 
@@ -466,7 +470,7 @@ const Dashboard = () => {
               
               {/* Trial expired indicator */}
               {isTrialExpired && isFreePlan && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20">
                   <AlertCircle size={14} />
                   <span>Trial expirado</span>
                 </div>
@@ -479,18 +483,18 @@ const Dashboard = () => {
                 <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
                 <span className="text-muted-foreground">/</span>
                 <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
-                <div className="hidden sm:block w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
+                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${((profile?.searches_used || 0) / (profile?.searches_limit || 10)) * 100}%` }}
                   />
                 </div>
-                <span className="hidden md:inline text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
+                <span className="text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
                   {getPlanName(profile?.plan || 'free')}
                 </span>
               </div>
 
-              {/* Action buttons with proper spacing */}
+              {/* Action buttons */}
               <div className="flex items-center gap-2 sm:gap-3">
                 <Link to="/reports">
                   <Button 
@@ -499,7 +503,7 @@ const Dashboard = () => {
                     className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
                   >
                     <BarChart3 size={16} />
-                    <span className="hidden sm:inline">Relatórios</span>
+                    <span>Relatórios</span>
                   </Button>
                 </Link>
 
@@ -511,7 +515,7 @@ const Dashboard = () => {
                     onClick={() => setShowWhatsAppUpgradeModal(true)}
                   >
                     <MessageSquare size={16} />
-                    <span className="hidden sm:inline">Disparos</span>
+                    <span>Disparos</span>
                   </Button>
                 ) : (
                   <Link to="/whatsapp">
@@ -521,7 +525,7 @@ const Dashboard = () => {
                       className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
                     >
                       <MessageSquare size={16} />
-                      <span className="hidden sm:inline">Disparos</span>
+                      <span>Disparos</span>
                     </Button>
                   </Link>
                 )}
@@ -534,12 +538,12 @@ const Dashboard = () => {
                       className="h-9 sm:h-10 px-3 sm:px-4 gap-2 text-sm font-medium"
                     >
                       <Crown size={16} />
-                      <span className="hidden sm:inline">Upgrade</span>
+                      <span>Upgrade</span>
                     </Button>
                   </Link>
                 )}
 
-                <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+                <div className="w-px h-6 bg-border mx-1" />
 
                 <Link to="/profile">
                   <Button 
@@ -563,11 +567,131 @@ const Dashboard = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Mobile/Tablet: Credits + Actions */}
+            <div className="flex lg:hidden items-center gap-2">
+              {/* Compact credits indicator */}
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm bg-secondary/50 px-2 py-1 rounded-lg">
+                <Search size={12} className="text-primary" />
+                <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
+              </div>
+
+              {/* Profile and Logout always visible */}
+              <Link to="/profile">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                  title="Meu perfil"
+                >
+                  <User size={16} />
+                </Button>
+              </Link>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleLogout} 
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                title="Sair da conta"
+              >
+                <LogOut size={16} />
+              </Button>
+
+              {/* Hamburger menu button */}
+              <button
+                className="p-2 text-muted-foreground hover:text-foreground"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
+              <div className="flex flex-col gap-3">
+                {/* Trial/Plan indicators */}
+                {showTrialIndicator && (
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                    trialDaysRemaining <= 3 
+                      ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+                      : trialDaysRemaining <= 7 
+                        ? 'bg-warning/10 text-warning border border-warning/20'
+                        : 'bg-primary/10 text-primary border border-primary/20'
+                  }`}>
+                    <Clock size={14} />
+                    <span>
+                      {trialDaysRemaining === 1 
+                        ? 'Último dia de trial' 
+                        : `${trialDaysRemaining} dias restantes`}
+                    </span>
+                  </div>
+                )}
+
+                {isTrialExpired && isFreePlan && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                    <AlertCircle size={14} />
+                    <span>Trial expirado</span>
+                  </div>
+                )}
+
+                {/* Plan badge */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Plano:</span>
+                  <span className="font-medium text-foreground">{getPlanName(profile?.plan || 'free')}</span>
+                </div>
+
+                {/* Navigation links */}
+                <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                  <Link to="/reports" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                      <BarChart3 size={16} />
+                      Relatórios
+                    </Button>
+                  </Link>
+
+                  {isFreePlan ? (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setShowWhatsAppUpgradeModal(true);
+                      }}
+                    >
+                      <MessageSquare size={16} />
+                      Disparos em Massa
+                    </Button>
+                  ) : (
+                    <Link to="/whatsapp" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                        <MessageSquare size={16} />
+                        Disparos em Massa
+                      </Button>
+                    </Link>
+                  )}
+
+                  {profile?.plan !== 'scale' && (
+                    <Link to="/upgrade" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="default" size="sm" className="w-full justify-start gap-2">
+                        <Crown size={16} />
+                        Fazer Upgrade
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Main Content */}

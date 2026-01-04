@@ -232,26 +232,27 @@ const Upgrade = () => {
   const hasPaidPlan = currentPlan !== "free";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => navigate("/dashboard")}
-              className="gap-2"
+              className="gap-2 h-8 sm:h-9 px-2 sm:px-3"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={16} />
               <span className="hidden sm:inline">Voltar</span>
             </Button>
             
             <Link to="/">
-              <Logo size="md" />
+              <Logo size="md" mobileSize="sm" />
             </Link>
             
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Crown size={16} className="text-primary" />
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Crown size={14} className="text-primary" />
               <span className="hidden sm:inline">Plano:</span>
               <span className="font-medium text-foreground capitalize">{currentPlan}</span>
             </div>
@@ -261,21 +262,22 @@ const Upgrade = () => {
 
       {/* Promo Banner */}
       <div className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
-        <div className="container mx-auto px-4 py-3 relative">
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
           <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
-            <Sparkles size={14} className="inline-block mr-1.5 text-primary animate-pulse" />
-            <span className="text-primary font-semibold">Promoção de Lançamento:</span>{" "}
-            até 50% de desconto em todos os planos{" "}
-            <span className="inline-flex items-center gap-1 ml-1 bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-              Por tempo limitado
+            <Sparkles size={14} className="inline-block mr-1 sm:mr-1.5 text-primary animate-pulse" />
+            <span className="text-primary font-semibold">Promoção:</span>{" "}
+            <span className="hidden xs:inline">até </span>50% OFF{" "}
+            <span className="hidden sm:inline">em todos os planos</span>
+            <span className="inline-flex items-center gap-1 ml-1 bg-primary/20 text-primary text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
+              Limitado
             </span>
           </p>
         </div>
       </div>
 
       {/* Content */}
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12">
         {/* Trial Expired Banner */}
         {isTrialExpired && (
           <div className="max-w-3xl mx-auto mb-10 animate-fade-in">

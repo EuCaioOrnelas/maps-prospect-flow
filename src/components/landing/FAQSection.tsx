@@ -48,7 +48,7 @@ export const FAQSection = () => {
   return (
     <section 
       id="faq" 
-      className="py-16 md:py-24 relative"
+      className="py-16 md:py-24 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />

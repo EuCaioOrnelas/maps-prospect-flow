@@ -560,24 +560,24 @@ const Reports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-3 sm:py-4">
+      <header className="border-b border-border sticky top-0 z-50 bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                   <ArrowLeft size={18} />
                 </Button>
               </Link>
-              <Logo size="md" />
+              <Logo size="md" mobileSize="sm" />
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-40 h-9">
-                  <Filter size={14} className="mr-2" />
+                <SelectTrigger className="w-28 sm:w-40 h-8 sm:h-9 text-xs sm:text-sm">
+                  <Filter size={14} className="mr-1 sm:mr-2 flex-shrink-0" />
                   <SelectValue placeholder="Período" />
                 </SelectTrigger>
                 <SelectContent>
@@ -588,7 +588,7 @@ const Reports = () => {
                 </SelectContent>
               </Select>
               
-              <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
                 <Download size={16} />
                 <span className="hidden sm:inline">Exportar</span>
               </Button>
@@ -597,7 +597,7 @@ const Reports = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8" ref={reportRef}>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8" ref={reportRef}>
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
           <div className="mb-8 animate-fade-in">

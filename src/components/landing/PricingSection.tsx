@@ -136,7 +136,7 @@ export const PricingSection = () => {
     <>
       <section 
         id="pricing" 
-        className="py-24 relative"
+        className="py-16 sm:py-24 relative overflow-hidden w-full"
         ref={ref as React.RefObject<HTMLElement>}
       >
         <div className="container mx-auto px-4 max-w-6xl">

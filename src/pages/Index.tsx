@@ -16,11 +16,11 @@ const Index = () => {
   return (
     <>
       <SEO 
-        title="Prospecção Inteligente com IA"
-        description="Encontre leads estratégicos com IA. Nossa tecnologia analisa milhares de empresas e entrega apenas os melhores leads para prospectar novos clientes."
-        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital"
+        title="Prospecção Inteligente e Disparos em Massa"
+        description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens e geração de leads qualificados."
+        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, WiizeProspect, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes"
       />
-      <main className="min-h-screen bg-background overflow-x-hidden">
+      <main className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
         <Navbar onSignupClick={trackSignupClick} />
         <HeroSection onSignupClick={trackSignupClick} />
         <FeaturesSection />

@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden w-full"
     >
       {/* Parallax Background effects */}
       <div 
@@ -295,7 +295,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
-      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+      <div className="container mx-auto px-4 relative z-10 max-w-6xl w-full">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
@@ -370,14 +370,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
         {/* Animated Demo Section */}
         <div 
-          className="mt-12 sm:mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform px-2" 
+          className="mt-12 sm:mt-20 max-w-5xl mx-auto animate-slide-up will-change-transform px-0 sm:px-2 w-full" 
           style={{ 
             animationDelay: "0.5s",
             transform: `translateY(${-parallaxOffset * 0.1}px) scale(${imageScale})`,
             opacity: imageOpacity
           }}
         >
-          <div className="relative">
+          <div className="relative w-full">
             {/* Background glow */}
             <div 
               className="absolute -inset-4 bg-primary/10 blur-3xl rounded-3xl will-change-transform"
@@ -407,8 +407,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </div>
             ))}
             
-            {/* Demo badge */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+            {/* Demo badge - hidden on mobile */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
               <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
                 ✨ Demonstração em tempo real
               </span>
