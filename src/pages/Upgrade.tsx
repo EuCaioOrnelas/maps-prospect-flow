@@ -344,7 +344,7 @@ const Upgrade = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, index) => {
             const isCurrent = isCurrentPlan(plan.name);
             const isDowngradeOption = isDowngrade(plan.name);
@@ -353,9 +353,9 @@ const Upgrade = () => {
             return (
               <div
                 key={index}
-                className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in ${
+                className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in flex flex-col h-full ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow md:scale-105"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow"
                     : "glass"
                 } ${isCurrent ? "ring-2 ring-primary/50" : ""}`}
                 style={{ animationDelay: `${index * 0.15}s` }}
