@@ -10,25 +10,33 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Shield, MessageSquare, Clock, X } from "lucide-react";
 
-const DISCLAIMER_KEY = "wiizeprospect_whatsapp_disclaimer_accepted";
+const DISCLAIMER_KEY = "wiizeprospect_whatsapp_disclaimer_accepted_at";
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function DisclaimerModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const hasAccepted = localStorage.getItem(DISCLAIMER_KEY);
-    if (!hasAccepted) {
+    const acceptedAt = localStorage.getItem(DISCLAIMER_KEY);
+    if (!acceptedAt) {
+      setIsOpen(true);
+      return;
+    }
+
+    const acceptedDate = new Date(acceptedAt).getTime();
+    const now = Date.now();
+    if (now - acceptedDate > THIRTY_DAYS_MS) {
       setIsOpen(true);
     }
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(DISCLAIMER_KEY, "true");
+    localStorage.setItem(DISCLAIMER_KEY, new Date().toISOString());
     setIsOpen(false);
   };
 
   const handleClose = () => {
-    localStorage.setItem(DISCLAIMER_KEY, "true");
+    localStorage.setItem(DISCLAIMER_KEY, new Date().toISOString());
     setIsOpen(false);
   };
 
