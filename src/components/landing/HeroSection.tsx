@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen overflow-hidden"
+      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-10 sm:pb-24 sm:min-h-screen"
     >
       {/* Background - solid color to prevent gaps */}
       <div className="absolute inset-0 bg-background" />
