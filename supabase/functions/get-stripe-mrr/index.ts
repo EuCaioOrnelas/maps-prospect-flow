@@ -9,9 +9,9 @@ const corsHeaders = {
 
 // Stripe price IDs to plan mapping
 const PRICE_TO_PLAN: { [key: string]: { name: string; price: number } } = {
-  "price_1SkEsEK8CM0R6xMM9Y1ip21w": { name: "start", price: 97 },
-  "price_1SkEsZK8CM0R6xMMr0B2gEP1": { name: "growth", price: 247 },
-  "price_1SkEsoK8CM0R6xMMF72J3hAi": { name: "scale", price: 497 },
+  "price_1SlykAK8CM0R6xMMOCM684rz": { name: "start", price: 197 },
+  "price_1SlykkK8CM0R6xMMZu7WJesV": { name: "growth", price: 497 },
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": { name: "scale", price: 897 },
 };
 
 // Admin emails to exclude from MRR calculations

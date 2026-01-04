@@ -49,9 +49,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // Preços dos planos (fallback caso Stripe falhe)
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
-  start: 97,
-  growth: 247,
-  scale: 497,
+  start: 197,
+  growth: 497,
+  scale: 897,
 };
 
 // Função para verificar admin via banco de dados (seguro)

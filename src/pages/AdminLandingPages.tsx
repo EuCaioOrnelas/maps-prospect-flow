@@ -66,16 +66,16 @@ import {
 
 // Preços dos planos baseados nos IDs de preço da Stripe
 const STRIPE_PRICE_TO_PLAN: { [key: string]: { name: string; price: number } } = {
-  "price_1SkEsEK8CM0R6xMM9Y1ip21w": { name: "start", price: 97 },
-  "price_1SkEsZK8CM0R6xMMr0B2gEP1": { name: "growth", price: 247 },
-  "price_1SkEsoK8CM0R6xMMF72J3hAi": { name: "scale", price: 497 },
+  "price_1SlykAK8CM0R6xMMOCM684rz": { name: "start", price: 197 },
+  "price_1SlykkK8CM0R6xMMZu7WJesV": { name: "growth", price: 497 },
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": { name: "scale", price: 897 },
 };
 
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
-  start: 97,
-  growth: 247,
-  scale: 497,
+  start: 197,
+  growth: 497,
+  scale: 897,
 };
 
 interface LandingPage {
