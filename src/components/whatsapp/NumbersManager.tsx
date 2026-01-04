@@ -89,6 +89,9 @@ export const NumbersManager = ({
   const [numberToRename, setNumberToRename] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   
+  // Track if we're creating a NEW number (not saved to DB yet) vs connecting existing one
+  const [pendingNumberName, setPendingNumberName] = useState<string | null>(null);
+  
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
@@ -184,17 +187,19 @@ export const NumbersManager = ({
 
   // Check connection status periodically
   useEffect(() => {
-    if (!connectDialogOpen || !connectingNumberId || !connectingInstanceName || qrLoading) return;
+    if (!connectDialogOpen || !connectingInstanceName || qrLoading) return;
+    
+    // For NEW numbers, we don't have an ID yet - check based on instance name
+    const isNewNumber = pendingNumberName !== null;
 
     const checkStatus = async () => {
       try {
         setCheckingConnection(true);
-        const { data: sessionData } = await supabase.auth.getSession();
         
         const response = await supabase.functions.invoke('evolution-check-status', {
           body: { 
             instanceName: connectingInstanceName,
-            numberId: connectingNumberId 
+            numberId: isNewNumber ? null : connectingNumberId 
           },
         });
 
@@ -202,24 +207,65 @@ export const NumbersManager = ({
           // Show success animation
           setShowSuccessAnimation(true);
           
-          // Update local state - IMPORTANT: Include instance_name so campaigns can use it
-          onNumbersChange(numbers.map(n => 
-            n.id === connectingNumberId 
-              ? { ...n, is_connected: true, phone_number: response.data.phoneNumber, instance_name: connectingInstanceName } 
-              : n
-          ));
-
-          // Wait for animation then close
-          setTimeout(() => {
-            setShowSuccessAnimation(false);
-            setConnectDialogOpen(false);
-            onConnect(connectingNumberId);
+          if (isNewNumber && user) {
+            // NOW create the number in database since connection succeeded
+            const { data: newNumber, error } = await supabase
+              .from('whatsapp_numbers')
+              .insert({
+                user_id: user.id,
+                name: pendingNumberName,
+                is_connected: true,
+                phone_number: response.data.phoneNumber || null,
+                instance_name: connectingInstanceName
+              })
+              .select()
+              .single();
             
-            // Reset states
-            setPairingCode(null);
-            setPhoneNumberForCode("");
-            setConnectionMode('qr');
-          }, 2000);
+            if (error) {
+              console.error('Error saving number:', error);
+              toast({
+                title: "Erro ao salvar",
+                description: "Conexão bem-sucedida mas erro ao salvar. Tente novamente.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            // Add to local state
+            onNumbersChange([...numbers, newNumber]);
+            
+            // Wait for animation then close
+            setTimeout(() => {
+              setShowSuccessAnimation(false);
+              setConnectDialogOpen(false);
+              onConnect(newNumber.id);
+              
+              // Reset all states
+              setPairingCode(null);
+              setPhoneNumberForCode("");
+              setConnectionMode('qr');
+              setPendingNumberName(null);
+            }, 2000);
+          } else {
+            // Existing number - just update local state
+            onNumbersChange(numbers.map(n => 
+              n.id === connectingNumberId 
+                ? { ...n, is_connected: true, phone_number: response.data.phoneNumber, instance_name: connectingInstanceName } 
+                : n
+            ));
+
+            // Wait for animation then close
+            setTimeout(() => {
+              setShowSuccessAnimation(false);
+              setConnectDialogOpen(false);
+              if (connectingNumberId) onConnect(connectingNumberId);
+              
+              // Reset states
+              setPairingCode(null);
+              setPhoneNumberForCode("");
+              setConnectionMode('qr');
+            }, 2000);
+          }
 
           toast({
             title: "WhatsApp conectado!",
@@ -237,7 +283,7 @@ export const NumbersManager = ({
 
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
-  }, [connectDialogOpen, connectingNumberId, connectingInstanceName, qrLoading, numbers, onNumbersChange, onConnect, toast]);
+  }, [connectDialogOpen, connectingNumberId, connectingInstanceName, qrLoading, numbers, onNumbersChange, onConnect, toast, pendingNumberName, user]);
 
   // QR code expiration countdown
   useEffect(() => {
@@ -256,7 +302,7 @@ export const NumbersManager = ({
     return () => clearInterval(interval);
   }, [qrLoading, qrExpired, connectDialogOpen]);
 
-  const createInstanceAndGetQR = async (numberId: string, instanceName: string, phoneNumber?: string) => {
+  const createInstanceAndGetQR = async (numberId: string | null, instanceName: string, phoneNumber?: string) => {
     setQrLoading(true);
     setQrExpired(false);
     setQrCode(null);
@@ -323,7 +369,7 @@ export const NumbersManager = ({
   };
 
   const handleGetPairingCode = async () => {
-    if (!phoneNumberForCode.trim() || !connectingNumberId || !connectingInstanceName) {
+    if (!phoneNumberForCode.trim() || !connectingInstanceName) {
       toast({
         title: "Número necessário",
         description: "Digite seu número de WhatsApp com DDD",
@@ -357,40 +403,32 @@ export const NumbersManager = ({
     try {
       const instanceName = generateInstanceName();
 
-      const { data, error } = await supabase
-        .from('whatsapp_numbers')
-        .insert({
-          user_id: user.id,
-          name: newNumberName.trim()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      onNumbersChange([...numbers, data]);
+      // DON'T save to database yet - wait for successful connection
+      // Just store the name and open the connection modal
+      setPendingNumberName(newNumberName.trim());
       setNewNumberName("");
       setAddDialogOpen(false);
       
-      // Open connection dialog for new number
-      setConnectingNumberId(data.id);
+      // Open connection dialog - NO numberId since it doesn't exist yet
+      setConnectingNumberId(null);
       setConnectingInstanceName(instanceName);
       setConnectDialogOpen(true);
 
-      // Create instance and get QR
-      await createInstanceAndGetQR(data.id, instanceName);
+      // Create instance in Evolution API and get QR
+      await createInstanceAndGetQR(null, instanceName);
 
       toast({
-        title: "Número adicionado",
-        description: "Escaneie o QR Code para conectar",
+        title: "Quase lá!",
+        description: "Escaneie o QR Code para conectar e salvar o número",
       });
     } catch (err) {
-      console.error('Error adding number:', err);
+      console.error('Error starting connection:', err);
       toast({
         title: "Erro",
-        description: "Não foi possível adicionar o número",
+        description: "Não foi possível iniciar a conexão",
         variant: "destructive",
       });
+      setPendingNumberName(null);
     } finally {
       setLoading(false);
     }
@@ -852,13 +890,15 @@ export const NumbersManager = ({
         // Only close via X button or success, not clicking outside
         if (!open && !showSuccessAnimation) {
           // User clicked X - cancel the instance if not connected
-          if (connectingInstanceName && connectingNumberId) {
+          // For NEW numbers (pendingNumberName set), there's no DB record to clean
+          // For EXISTING numbers, we might have an orphan instance in Evolution
+          if (connectingInstanceName) {
             try {
               // Delete the orphan instance from Evolution API
               await supabase.functions.invoke('evolution-disconnect', {
                 body: { 
                   instanceName: connectingInstanceName,
-                  numberId: connectingNumberId
+                  numberId: connectingNumberId // null for new numbers
                 },
               });
               console.log('Cancelled orphan instance:', connectingInstanceName);
@@ -868,13 +908,14 @@ export const NumbersManager = ({
           }
           
           setConnectDialogOpen(false);
-          // Reset states
+          // Reset ALL states including pending number
           setPairingCode(null);
           setPhoneNumberForCode("");
           setConnectionMode('qr');
           setCopiedCode(false);
           setConnectingInstanceName("");
           setConnectingNumberId(null);
+          setPendingNumberName(null);
         }
       }}>
         <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
