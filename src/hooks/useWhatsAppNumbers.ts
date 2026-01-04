@@ -60,7 +60,33 @@ export const useWhatsAppNumbers = () => {
 
       if (error) throw error;
       
-      const fetchedNumbers = data || [];
+      let fetchedNumbers = data || [];
+      
+      // Reset daily counts for numbers where last_sent_at is from a previous day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const numbersToReset = fetchedNumbers.filter(n => {
+        if (!n.last_sent_at) return false;
+        const lastSent = new Date(n.last_sent_at);
+        return lastSent < today && n.daily_sent_count > 0;
+      });
+
+      if (numbersToReset.length > 0) {
+        // Reset counts in database
+        await supabase
+          .from('whatsapp_numbers')
+          .update({ daily_sent_count: 0 })
+          .in('id', numbersToReset.map(n => n.id));
+        
+        // Update local data to reflect reset
+        fetchedNumbers = fetchedNumbers.map(n => 
+          numbersToReset.some(r => r.id === n.id) 
+            ? { ...n, daily_sent_count: 0 } 
+            : n
+        );
+      }
+      
       setNumbers(fetchedNumbers);
       
       // Auto-select first connected number
@@ -70,13 +96,11 @@ export const useWhatsAppNumbers = () => {
       }
 
       // Verify real connection status for ALL numbers marked as connected
-      // Isso é crítico para garantir que o status no banco corresponde à realidade
       const connectedNumbers = fetchedNumbers.filter(n => n.is_connected && n.instance_name);
       const verificationPromises = connectedNumbers.map(number => 
         verifyAndUpdateConnectionStatus(number.id, number.instance_name!)
       );
       
-      // Executar todas as verificações em paralelo
       await Promise.all(verificationPromises);
     } catch (err) {
       console.error('Error fetching numbers:', err);
