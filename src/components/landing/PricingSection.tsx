@@ -159,7 +159,7 @@ export const PricingSection = () => {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: plan.popular ? 1.05 : 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ 
                   duration: 0.6, 
@@ -168,13 +168,13 @@ export const PricingSection = () => {
                 }}
                 whileHover={{ 
                   y: -8, 
-                  scale: plan.popular ? 1.08 : 1,
+                  scale: 1.03,
                   transition: { duration: 0.3 }
                 }}
                 className={`relative rounded-2xl ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-9 md:z-10"
-                    : "glass p-5 sm:p-7"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-9 md:z-10 md:scale-105"
+                    : "glass p-5 md:scale-95"
                 }`}
               >
                 {plan.popular && (
