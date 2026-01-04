@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative flex flex-col justify-center pt-20 pb-8 sm:pt-16 sm:pb-24 sm:min-h-screen"
+      className="relative flex flex-col justify-center pt-20 sm:pt-16 pb-6 sm:pb-24 sm:min-h-screen overflow-hidden"
     >
       {/* Parallax Background effects */}
       <div 
@@ -369,9 +369,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Animated Demo Section */}
+        {/* Animated Demo Section - hidden on mobile */}
         <div 
-          className="mt-6 sm:mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-2 sm:px-4" 
+          className="hidden sm:block mt-20 max-w-4xl mx-auto animate-slide-up will-change-transform px-4" 
           style={{ 
             animationDelay: "0.5s",
           }}
@@ -486,13 +486,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Mobile demo badge - shown at bottom on mobile */}
-            <div className="mt-4 text-center sm:hidden">
-              <span className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
-                ✨ Demonstração em tempo real
-              </span>
             </div>
           </div>
         </div>
