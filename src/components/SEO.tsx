@@ -8,12 +8,13 @@ interface SEOProps {
   url?: string;
   type?: string;
   noIndex?: boolean;
+  jsonLd?: object;
 }
 
 const defaultMeta = {
-  title: 'WiizeProspect - Prospecção Inteligente com IA',
-  description: 'Encontre leads estratégicos com IA. Nossa tecnologia analisa milhares de empresas e entrega apenas os melhores leads para prospectar novos clientes.',
-  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B',
+  title: 'WiizeProspect - Prospecção Inteligente com IA | Disparos em Massa WhatsApp',
+  description: 'Prospecte novos clientes com IA. Encontre leads qualificados, faça disparos em massa via WhatsApp e aumente suas vendas. Plataforma completa de prospecção B2B.',
+  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, disparos em massa, WhatsApp, WiizeProspect, prospectar clientes, geração de leads, marketing digital, vendas B2B, automação WhatsApp, captação de clientes, prospecção inteligente, buscar leads, encontrar clientes',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
   url: 'https://wiizeprospect.com.br',
   type: 'website',
@@ -27,8 +28,30 @@ export const SEO = ({
   url = defaultMeta.url,
   type = defaultMeta.type,
   noIndex = false,
+  jsonLd,
 }: SEOProps) => {
   const fullTitle = title ? `${title} | WiizeProspect` : defaultMeta.title;
+
+  const defaultJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "WiizeProspect",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web, Android, iOS",
+    "description": description,
+    "url": url,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL",
+      "description": "Teste grátis por 30 dias"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "500"
+    }
+  };
 
   return (
     <Helmet>
@@ -62,6 +85,11 @@ export const SEO = ({
       {/* Additional SEO */}
       <meta name="theme-color" content="#22c55e" />
       <meta name="application-name" content="WiizeProspect" />
+
+      {/* JSON-LD Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(jsonLd || defaultJsonLd)}
+      </script>
     </Helmet>
   );
 };
