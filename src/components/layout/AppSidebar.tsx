@@ -123,7 +123,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       <aside
         className={cn(
           "h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
-          "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          "transition-[width] duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
           isHovered ? "w-56" : "w-14"
         )}
       >
