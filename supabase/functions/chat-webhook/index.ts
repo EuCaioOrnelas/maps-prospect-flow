@@ -17,15 +17,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload = await req.json();
-    console.log('=== WEBHOOK RECEIVED ===');
+    console.log('=== CHAT WEBHOOK RECEIVED ===');
     console.log('Full payload:', JSON.stringify(payload));
 
-    // Evolution API sends event in different cases - normalize to lowercase
-    const event = (payload.event || '').toLowerCase().replace('_', '.');
+    // Evolution API sends event in different formats - normalize all to lowercase with dots
+    const rawEvent = payload.event || '';
+    const event = rawEvent.toLowerCase().replace(/_/g, '.').replace(/-/g, '.');
     const instance = payload.instance;
     const data = payload.data;
 
-    console.log('Parsed event:', event);
+    console.log('Raw event:', rawEvent, '-> Normalized:', event);
     console.log('Instance:', instance);
 
     if (!instance) {
@@ -38,7 +39,7 @@ serve(async (req) => {
     // Find the WhatsApp number by instance name
     const { data: whatsappNumber, error: numberError } = await supabase
       .from('whatsapp_numbers')
-      .select('id, user_id')
+      .select('id, user_id, phone_number')
       .eq('instance_name', instance)
       .single();
 
@@ -51,9 +52,9 @@ serve(async (req) => {
 
     console.log('Found WhatsApp number:', whatsappNumber.id, 'for user:', whatsappNumber.user_id);
 
-    // Handle messages.upsert event (new messages)
-    if (event === 'messages.upsert' || event === 'messages_upsert') {
-      console.log('Processing messages.upsert event');
+    // Handle messages.upsert event (new messages) - support multiple event name formats
+    if (event === 'messages.upsert' || event === 'messagesupsert' || event === 'message.upsert') {
+      console.log('=== PROCESSING MESSAGES UPSERT ===');
       
       // Evolution API sends data directly with key and message
       const messageKey = data?.key;
@@ -82,7 +83,7 @@ serve(async (req) => {
       // Extract phone number from remoteJid (format: 5511999999999@s.whatsapp.net)
       const phone = remoteJid?.replace('@s.whatsapp.net', '') || '';
       
-      console.log('Processing message from:', phone, 'fromMe:', fromMe, 'messageId:', messageId);
+      console.log('Processing message - Phone:', phone, 'fromMe:', fromMe, 'messageId:', messageId);
 
       // Determine message type and content
       let messageType = 'text';
@@ -237,7 +238,7 @@ serve(async (req) => {
     }
 
     // Handle message status updates - support multiple event name formats
-    if (event === 'messages.update' || event === 'messages_update' || event === 'message.update' || event === 'messageupdate') {
+    if (event === 'messages.update' || event === 'messagesupdate' || event === 'message.update' || event === 'messageupdate') {
       console.log('=== PROCESSING MESSAGE STATUS UPDATE ===');
       console.log('Raw data:', JSON.stringify(data));
       
@@ -291,9 +292,9 @@ serve(async (req) => {
       }
     }
 
-    // Handle connection updates
-    if (event === 'connection.update' || event === 'connection_update') {
-      console.log('Processing connection.update event');
+    // Handle connection updates - support multiple event name formats
+    if (event === 'connection.update' || event === 'connectionupdate') {
+      console.log('=== PROCESSING CONNECTION UPDATE ===');
       const state = data?.state;
       
       if (state) {
