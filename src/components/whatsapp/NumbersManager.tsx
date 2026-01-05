@@ -92,12 +92,16 @@ export const NumbersManager = ({
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  // Handle forceOpen prop
+  // Handle forceOpen prop - open manage dialog when there are numbers, add dialog when empty
   useEffect(() => {
     if (forceOpen) {
-      setAddDialogOpen(true);
+      if (numbers.length > 0) {
+        setManageDialogOpen(true);
+      } else {
+        setAddDialogOpen(true);
+      }
     }
-  }, [forceOpen]);
+  }, [forceOpen, numbers.length]);
 
   // Handle dialog close
   const handleDialogClose = (open: boolean) => {
