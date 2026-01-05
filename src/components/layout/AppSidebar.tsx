@@ -7,6 +7,9 @@ import {
   Crown, 
   Settings,
   LogOut,
+  ChevronDown,
+  FileSearch,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,11 +34,15 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
+
+  // Keep reports submenu open if on a reports page
+  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports";
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -47,6 +54,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     return 'U';
   };
 
+  const reportsSubItems = [
+    {
+      title: "Relatórios de Buscas",
+      url: "/reports",
+      icon: FileSearch,
+      active: currentPath === "/reports"
+    },
+    {
+      title: "Relatórios de Disparos",
+      url: "/whatsapp/reports",
+      icon: Send,
+      active: currentPath === "/whatsapp/reports"
+    },
+  ];
+
   const mainNavItems = [
     { 
       title: "Prospecção", 
@@ -55,17 +77,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/dashboard"
     },
     { 
-      title: "Relatórios", 
-      url: "/reports", 
-      icon: BarChart3,
-      active: currentPath === "/reports"
-    },
-    { 
       title: "Disparos", 
       url: isFreePlan ? "#" : "/whatsapp", 
       icon: MessageSquare,
       onClick: isFreePlan ? onWhatsAppClick : undefined,
-      active: currentPath.startsWith("/whatsapp")
+      active: currentPath === "/whatsapp"
     },
   ];
 
@@ -89,18 +105,32 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     await signOut();
   };
 
+  const handleReportsClick = () => {
+    if (isHovered) {
+      setIsReportsOpen(!isReportsOpen);
+    }
+  };
+
+  // Reset reports submenu when sidebar closes
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (!isOnReportsPage) {
+      setIsReportsOpen(false);
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={0}>
       <div
         className="fixed left-0 top-0 h-screen z-40 hidden lg:flex"
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Sidebar */}
         <aside
           className={cn(
             "h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
-            "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
             isHovered ? "w-56" : "w-14"
           )}
         >
@@ -110,107 +140,182 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </div>
 
           {/* Main navigation */}
-          <nav className="flex-1 py-4 px-2">
+          <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-hidden">
             <ul className="space-y-1">
-              {mainNavItems.map((item, index) => (
-                <li 
-                  key={item.title}
-                  className="transition-all duration-300"
-                  style={{
-                    transitionDelay: isHovered ? `${index * 50}ms` : '0ms',
-                    transform: isHovered ? 'translateX(0)' : 'translateX(0)',
-                  }}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {item.onClick ? (
-                        <button
-                          onClick={item.onClick}
-                          className={cn(
-                            "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                            item.active 
-                              ? "bg-primary/20 text-primary font-medium" 
-                              : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
-                          <item.icon size={20} className="shrink-0" />
-                          {isHovered && (
-                            <span 
-                              className="whitespace-nowrap animate-fade-in"
-                              style={{
-                                animationDelay: `${index * 50}ms`,
-                              }}
-                            >
-                              {item.title}
-                            </span>
-                          )}
-                        </button>
-                      ) : (
-                        <Link
-                          to={item.url}
-                          className={cn(
-                            "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                            item.active 
-                              ? "bg-primary/20 text-primary font-medium" 
-                              : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
-                          <item.icon size={20} className="shrink-0" />
-                          {isHovered && (
-                            <span 
-                              className="whitespace-nowrap animate-fade-in"
-                              style={{
-                                animationDelay: `${index * 50}ms`,
-                              }}
-                            >
-                              {item.title}
-                            </span>
-                          )}
-                        </Link>
+              {/* Prospecção */}
+              <li className="transition-all duration-500 ease-out">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={mainNavItems[0].url}
+                      className={cn(
+                        "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
+                        mainNavItems[0].active 
+                          ? "bg-primary/20 text-primary font-medium" 
+                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
-                    </TooltipTrigger>
-                    {!isHovered && (
-                      <TooltipContent side="right" className="font-medium">
-                        {item.title}
-                      </TooltipContent>
+                    >
+                      <Search size={20} className="shrink-0 transition-transform duration-300" />
+                      {isHovered && (
+                        <span className="whitespace-nowrap animate-fade-in">
+                          {mainNavItems[0].title}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  {!isHovered && (
+                    <TooltipContent side="right" className="font-medium">
+                      {mainNavItems[0].title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </li>
+
+              {/* Relatórios with submenu */}
+              <li className="transition-all duration-500 ease-out">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleReportsClick}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
+                        isOnReportsPage
+                          ? "bg-primary/20 text-primary font-medium" 
+                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      )}
+                    >
+                      <BarChart3 size={20} className="shrink-0 transition-transform duration-300" />
+                      {isHovered && (
+                        <>
+                          <span className="whitespace-nowrap animate-fade-in flex-1 text-left">
+                            Relatórios
+                          </span>
+                          <ChevronDown 
+                            size={16} 
+                            className={cn(
+                              "shrink-0 transition-transform duration-300",
+                              (isReportsOpen || isOnReportsPage) && "rotate-180"
+                            )}
+                          />
+                        </>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  {!isHovered && (
+                    <TooltipContent side="right" className="font-medium">
+                      Relatórios
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+
+                {/* Submenu */}
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-out",
+                    isHovered && (isReportsOpen || isOnReportsPage)
+                      ? "max-h-24 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    {reportsSubItems.map((subItem, subIndex) => (
+                      <li key={subItem.title}>
+                        <Link
+                          to={subItem.url}
+                          className={cn(
+                            "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-all duration-300",
+                            subItem.active 
+                              ? "bg-primary/15 text-primary font-medium" 
+                              : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          )}
+                          style={{
+                            animationDelay: `${subIndex * 50}ms`,
+                          }}
+                        >
+                          <subItem.icon size={16} className="shrink-0" />
+                          <span className="whitespace-nowrap truncate">
+                            {subItem.title}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+
+              {/* Disparos */}
+              <li className="transition-all duration-500 ease-out">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {mainNavItems[1].onClick ? (
+                      <button
+                        onClick={mainNavItems[1].onClick}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
+                          mainNavItems[1].active 
+                            ? "bg-primary/20 text-primary font-medium" 
+                            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                      >
+                        <MessageSquare size={20} className="shrink-0 transition-transform duration-300" />
+                        {isHovered && (
+                          <span className="whitespace-nowrap animate-fade-in">
+                            {mainNavItems[1].title}
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <Link
+                        to={mainNavItems[1].url}
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
+                          mainNavItems[1].active 
+                            ? "bg-primary/20 text-primary font-medium" 
+                            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                      >
+                        <MessageSquare size={20} className="shrink-0 transition-transform duration-300" />
+                        {isHovered && (
+                          <span className="whitespace-nowrap animate-fade-in">
+                            {mainNavItems[1].title}
+                          </span>
+                        )}
+                      </Link>
                     )}
-                  </Tooltip>
-                </li>
-              ))}
+                  </TooltipTrigger>
+                  {!isHovered && (
+                    <TooltipContent side="right" className="font-medium">
+                      {mainNavItems[1].title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </li>
             </ul>
           </nav>
 
           {/* Bottom navigation */}
           <div className="py-4 px-2 border-t border-sidebar-border">
             <ul className="space-y-1">
-                {bottomNavItems.map((item, index) => (
+              {bottomNavItems.map((item) => (
                 <li 
                   key={item.title}
-                  className="transition-all duration-300"
-                  style={{
-                    transitionDelay: isHovered ? `${(index + mainNavItems.length) * 50}ms` : '0ms',
-                  }}
+                  className="transition-all duration-500 ease-out"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
                         to={item.url}
                         className={cn(
-                          "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                          "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
                           item.active 
                             ? "bg-primary/20 text-primary font-medium" 
                             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                           item.highlight && !item.active && "text-primary hover:text-primary"
                         )}
                       >
-                        <item.icon size={20} className="shrink-0" />
+                        <item.icon size={20} className="shrink-0 transition-transform duration-300" />
                         {isHovered && (
-                          <span 
-                            className="whitespace-nowrap animate-fade-in"
-                            style={{
-                              animationDelay: `${(index + mainNavItems.length) * 50}ms`,
-                            }}
-                          >
+                          <span className="whitespace-nowrap animate-fade-in">
                             {item.title}
                           </span>
                         )}
@@ -226,36 +331,26 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               ))}
               
               {/* Profile */}
-              <li
-                className="transition-all duration-300"
-                style={{
-                  transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length) * 50}ms` : '0ms',
-                }}
-              >
+              <li className="transition-all duration-500 ease-out">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
                       to="/profile"
                       className={cn(
-                        "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
+                        "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300",
                         currentPath === "/profile" 
                           ? "bg-primary/20 text-primary font-medium" 
                           : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                     >
-                      <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
+                      <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border transition-transform duration-300">
                         <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
                         <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>
                       {isHovered && (
-                        <span 
-                          className="whitespace-nowrap truncate animate-fade-in"
-                          style={{
-                            animationDelay: `${(bottomNavItems.length + mainNavItems.length) * 50}ms`,
-                          }}
-                        >
+                        <span className="whitespace-nowrap truncate animate-fade-in">
                           {profile?.name || 'Meu Perfil'}
                         </span>
                       )}
@@ -270,29 +365,19 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
 
               {/* Logout */}
-              <li
-                className="transition-all duration-300"
-                style={{
-                  transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length + 1) * 50}ms` : '0ms',
-                }}
-              >
+              <li className="transition-all duration-500 ease-out">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleLogout}
                       className={cn(
-                        "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                        "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-300",
                         "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                       )}
                     >
-                      <LogOut size={20} className="shrink-0" />
+                      <LogOut size={20} className="shrink-0 transition-transform duration-300" />
                       {isHovered && (
-                        <span 
-                          className="whitespace-nowrap animate-fade-in"
-                          style={{
-                            animationDelay: `${(bottomNavItems.length + mainNavItems.length + 1) * 50}ms`,
-                          }}
-                        >
+                        <span className="whitespace-nowrap animate-fade-in">
                           Sair
                         </span>
                       )}
