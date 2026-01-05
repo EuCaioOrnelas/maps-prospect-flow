@@ -354,21 +354,60 @@ export const useChat = (selectedNumberId?: string | null) => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'messages',
         },
-        async (payload) => {
-          console.log('Message realtime update:', payload);
+        (payload) => {
+          console.log('New message received:', payload);
+          const newMessage = payload.new as Message;
           
-          if (selectedConversation && payload.new) {
-            const newMessage = payload.new as Message;
-            if (newMessage.conversation_id === selectedConversation.id) {
-              await fetchMessages(selectedConversation.id);
-            }
+          // Add new message if it's for the selected conversation
+          if (selectedConversation && newMessage.conversation_id === selectedConversation.id) {
+            setMessages(prev => {
+              // Check if message already exists (avoid duplicates from optimistic updates)
+              const exists = prev.some(m => 
+                m.id === newMessage.id || 
+                m.message_id === newMessage.message_id ||
+                (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
+              );
+              
+              if (exists) {
+                // Replace temp message with real one
+                return prev.map(m => 
+                  (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
+                    ? newMessage
+                    : m
+                );
+              }
+              
+              return [...prev, newMessage];
+            });
           }
           
-          await fetchConversations();
+          // Refresh conversations to update last message
+          fetchConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('Message updated:', payload);
+          const updatedMessage = payload.new as Message;
+          
+          // Update message status in real-time
+          setMessages(prev => 
+            prev.map(m => 
+              (m.id === updatedMessage.id || m.message_id === updatedMessage.message_id)
+                ? { ...m, status: updatedMessage.status }
+                : m
+            )
+          );
         }
       )
       .subscribe();
@@ -376,7 +415,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, selectedConversation, fetchMessages, fetchConversations]);
+  }, [user, selectedConversation, fetchConversations]);
 
   // Realtime subscription for conversations
   useEffect(() => {

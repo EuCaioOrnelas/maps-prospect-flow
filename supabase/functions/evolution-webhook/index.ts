@@ -227,14 +227,30 @@ serve(async (req) => {
               }
 
               // Update conversation
+              const updateData: Record<string, unknown> = {
+                last_message: content || `[${messageType}]`,
+                last_message_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+              
+              if (data.pushName) {
+                updateData.contact_name = data.pushName;
+              }
+              
+              // If message is from lead, increment unread count
+              if (!fromMe) {
+                const { data: conv } = await supabase
+                  .from('conversations')
+                  .select('unread_count')
+                  .eq('id', conversationId)
+                  .single();
+                
+                updateData.unread_count = (conv?.unread_count || 0) + 1;
+              }
+              
               await supabase
                 .from('conversations')
-                .update({
-                  last_message: content || `[${messageType}]`,
-                  last_message_at: new Date().toISOString(),
-                  unread_count: fromMe ? 0 : supabase.rpc('increment', { x: 1 }),
-                  contact_name: data.pushName || undefined,
-                })
+                .update(updateData)
                 .eq('id', conversationId);
             }
           }
@@ -243,32 +259,42 @@ serve(async (req) => {
 
       case 'messages.update':
         // Message status update (delivered, read, etc)
-        console.log('Message update:', data);
+        // Can be a single object or an array
+        console.log('Message update received:', JSON.stringify(data));
         
-        if (data?.key?.id && data?.update?.status) {
-          const messageId = data.key.id;
-          const statusCode = data.update.status;
+        const updates = Array.isArray(data) ? data : [data];
+        
+        for (const update of updates) {
+          // Handle different payload structures from Evolution API
+          const messageId = update?.key?.id || update?.id;
+          const statusCode = update?.update?.status ?? update?.status;
           
-          // Map status codes to our status values
-          let status = 'sent';
-          switch (statusCode) {
-            case 0: status = 'pending'; break;
-            case 1: status = 'sent'; break;
-            case 2: status = 'delivered'; break;
-            case 3: status = 'read'; break;
-            case 4: status = 'played'; break;
-          }
-          
-          console.log(`Message ${messageId} status: ${status}`);
-          
-          // Update message status in database
-          const { error } = await supabase
-            .from('messages')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('message_id', messageId);
-          
-          if (error) {
-            console.error('Error updating message status:', error);
+          if (messageId && statusCode !== undefined) {
+            // Map status codes to our status values
+            let status = 'sent';
+            switch (statusCode) {
+              case 0: status = 'pending'; break;
+              case 1: status = 'sent'; break;
+              case 2: status = 'delivered'; break;
+              case 3: status = 'read'; break;
+              case 4: status = 'played'; break;
+              case 5: status = 'read'; break; // Some versions use 5 for read
+            }
+            
+            console.log(`Updating message ${messageId} to status: ${status}`);
+            
+            // Update message status in database
+            const { error, data: updatedMsg } = await supabase
+              .from('messages')
+              .update({ status, updated_at: new Date().toISOString() })
+              .eq('message_id', messageId)
+              .select();
+            
+            if (error) {
+              console.error('Error updating message status:', error);
+            } else {
+              console.log(`Message ${messageId} status updated to ${status}, rows:`, updatedMsg?.length);
+            }
           }
         }
         break;
