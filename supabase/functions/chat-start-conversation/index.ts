@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
+    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get auth user
@@ -36,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    const { phone, whatsappNumberId, contactName } = await req.json();
+    const { phone, whatsappNumberId, contactName, initialMessage } = await req.json();
 
     if (!phone || !whatsappNumberId) {
       return new Response(JSON.stringify({ error: 'Phone and whatsappNumberId are required' }), {
@@ -45,10 +47,10 @@ serve(async (req) => {
       });
     }
 
-    // Verify the WhatsApp number belongs to the user
+    // Verify the WhatsApp number belongs to the user and get instance_name
     const { data: whatsappNumber, error: numberError } = await supabase
       .from('whatsapp_numbers')
-      .select('id')
+      .select('id, instance_name')
       .eq('id', whatsappNumberId)
       .eq('user_id', user.id)
       .single();
@@ -73,6 +75,22 @@ serve(async (req) => {
       .single();
 
     if (existingConv) {
+      // If conversation exists and there's an initial message, send it
+      if (initialMessage && whatsappNumber.instance_name) {
+        await sendInitialMessage(
+          evolutionApiUrl,
+          evolutionApiKey,
+          whatsappNumber.instance_name,
+          cleanPhone,
+          initialMessage,
+          supabase,
+          existingConv.id,
+          user.id,
+          remoteJid,
+          whatsappNumberId
+        );
+      }
+      
       return new Response(JSON.stringify({ conversation: existingConv }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -115,6 +133,8 @@ serve(async (req) => {
         remote_jid: remoteJid,
         phone: cleanPhone,
         contact_name: contactNameValue,
+        last_message: initialMessage || null,
+        last_message_at: initialMessage ? new Date().toISOString() : null,
       })
       .select('*')
       .single();
@@ -122,6 +142,22 @@ serve(async (req) => {
     if (convError) {
       console.error('Error creating conversation:', convError);
       throw convError;
+    }
+
+    // Send initial message if provided
+    if (initialMessage && whatsappNumber.instance_name) {
+      await sendInitialMessage(
+        evolutionApiUrl,
+        evolutionApiKey,
+        whatsappNumber.instance_name,
+        cleanPhone,
+        initialMessage,
+        supabase,
+        newConv.id,
+        user.id,
+        remoteJid,
+        whatsappNumberId
+      );
     }
 
     return new Response(JSON.stringify({ conversation: newConv }), {
@@ -136,3 +172,75 @@ serve(async (req) => {
     });
   }
 });
+
+async function sendInitialMessage(
+  evolutionApiUrl: string,
+  evolutionApiKey: string,
+  instanceName: string,
+  phoneNumber: string,
+  message: string,
+  supabase: any,
+  conversationId: string,
+  userId: string,
+  remoteJid: string,
+  whatsappNumberId: string
+) {
+  try {
+    console.log('Sending initial message to:', phoneNumber);
+    
+    // Format phone number for Evolution API
+    const formattedPhone = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
+    
+    // Send message via Evolution API
+    const response = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': evolutionApiKey,
+      },
+      body: JSON.stringify({
+        number: formattedPhone,
+        text: message,
+      }),
+    });
+
+    const result = await response.json();
+    console.log('Evolution API response:', result);
+
+    if (!response.ok) {
+      console.error('Failed to send initial message:', result);
+      return;
+    }
+
+    // Save message to database
+    const { error: msgError } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        user_id: userId,
+        message_id: result.key?.id || null,
+        remote_jid: remoteJid,
+        from_me: true,
+        message_type: 'text',
+        content: message,
+        status: 'sent',
+      });
+
+    if (msgError) {
+      console.error('Error saving message:', msgError);
+    }
+
+    // Update daily sent count
+    await supabase
+      .from('whatsapp_numbers')
+      .update({
+        daily_sent_count: supabase.rpc('increment_daily_count', { row_id: whatsappNumberId }),
+        last_sent_at: new Date().toISOString(),
+      })
+      .eq('id', whatsappNumberId);
+
+    console.log('Initial message sent successfully');
+  } catch (error) {
+    console.error('Error sending initial message:', error);
+  }
+}

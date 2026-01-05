@@ -8,6 +8,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -17,13 +18,13 @@ import {
 } from '@/components/ui/select';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { toast } from 'sonner';
-import { MessageSquare, Phone, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Phone, AlertTriangle, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface NewChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string) => Promise<void>;
+  onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => Promise<void>;
   defaultWhatsAppNumberId?: string;
 }
 
@@ -36,6 +37,7 @@ export const NewChatDialog = ({
   const { numbers, loading } = useWhatsAppNumbers();
   const [phone, setPhone] = useState('');
   const [contactName, setContactName] = useState('');
+  const [initialMessage, setInitialMessage] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(defaultWhatsAppNumberId || '');
   const [isStarting, setIsStarting] = useState(false);
 
@@ -63,11 +65,17 @@ export const NewChatDialog = ({
 
     setIsStarting(true);
     try {
-      await onStartConversation(phone, selectedNumber, contactName || undefined);
-      toast.success('Conversa iniciada!');
+      await onStartConversation(
+        phone, 
+        selectedNumber, 
+        contactName || undefined,
+        initialMessage.trim() || undefined
+      );
+      toast.success(initialMessage.trim() ? 'Conversa iniciada e mensagem enviada!' : 'Conversa iniciada!');
       onOpenChange(false);
       setPhone('');
       setContactName('');
+      setInitialMessage('');
     } catch (error) {
       toast.error('Erro ao iniciar conversa');
     } finally {
@@ -161,6 +169,24 @@ export const NewChatDialog = ({
               />
             </div>
 
+            {/* Initial Message (optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="initialMessage" className="flex items-center gap-2">
+                <Send className="h-3.5 w-3.5" />
+                Mensagem Inicial (opcional)
+              </Label>
+              <Textarea
+                id="initialMessage"
+                value={initialMessage}
+                onChange={(e) => setInitialMessage(e.target.value)}
+                placeholder="Digite uma mensagem para enviar ao iniciar a conversa..."
+                className="min-h-[80px] resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                A mensagem será enviada automaticamente ao criar a conversa
+              </p>
+            </div>
+
             {/* Submit */}
             <div className="flex justify-end gap-2 pt-4">
               <Button
@@ -173,8 +199,14 @@ export const NewChatDialog = ({
               <Button
                 type="submit"
                 disabled={isStarting || !selectedNumber || !phone.trim()}
+                className="gap-2"
               >
-                {isStarting ? 'Iniciando...' : 'Iniciar Conversa'}
+                {isStarting ? 'Iniciando...' : (
+                  <>
+                    {initialMessage.trim() ? <Send className="h-4 w-4" /> : null}
+                    {initialMessage.trim() ? 'Enviar e Iniciar' : 'Iniciar Conversa'}
+                  </>
+                )}
               </Button>
             </div>
           </form>

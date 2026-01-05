@@ -112,9 +112,10 @@ const Chat = () => {
   const handleStartConversation = async (
     phone: string,
     whatsappNumberId: string,
-    contactName?: string
+    contactName?: string,
+    initialMessage?: string
   ) => {
-    const conversation = await startConversation(phone, whatsappNumberId, contactName);
+    const conversation = await startConversation(phone, whatsappNumberId, contactName, initialMessage);
     if (conversation) {
       selectConversation(conversation);
     }
