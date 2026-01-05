@@ -56,12 +56,11 @@ export const ConversationList = ({
   };
 
   const getDisplayName = (conversation: Conversation) => {
-    if (conversation.contacts?.name) {
+    // Only show name if contact is actually saved (has contact_id AND contacts.name)
+    if (conversation.contact_id && conversation.contacts?.name) {
       return conversation.contacts.name;
     }
-    if (conversation.contact_name) {
-      return conversation.contact_name;
-    }
+    // Otherwise always show the phone number
     return formatPhoneNumber(conversation.phone);
   };
 
@@ -172,10 +171,10 @@ export const ConversationList = ({
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-medium text-foreground truncate">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className="font-medium text-foreground truncate max-w-[140px]">
                             {displayName}
                           </span>
                           <TooltipProvider>
@@ -203,16 +202,16 @@ export const ConversationList = ({
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-auto">
                           {formatTime(conversation.last_message_at)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <p className="text-sm text-muted-foreground truncate">
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-sm text-muted-foreground truncate flex-1 min-w-0">
                           {conversation.last_message || 'Nenhuma mensagem'}
                         </p>
                         {conversation.unread_count > 0 && (
-                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs">
+                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs ml-auto">
                             {conversation.unread_count}
                           </Badge>
                         )}
