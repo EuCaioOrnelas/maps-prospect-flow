@@ -5,17 +5,20 @@ import {
   BarChart3, 
   MessageSquare, 
   Crown, 
-  User, 
   Settings,
   LogOut,
-  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AppSidebarProps {
   profile?: {
     plan?: string;
+    name?: string | null;
+    email?: string;
+    avatar_url?: string | null;
   } | null;
   onWhatsAppClick?: () => void;
 }
@@ -27,6 +30,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
+
+  const getUserInitials = () => {
+    if (profile?.name) {
+      return profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (profile?.email) {
+      return profile.email[0].toUpperCase();
+    }
+    return 'U';
+  };
 
   const mainNavItems = [
     { 
@@ -59,16 +72,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/upgrade"
     }] : []),
     {
-      title: "Perfil",
-      url: "/profile",
-      icon: User,
-      active: currentPath === "/profile"
-    },
-    {
       title: "Configurações",
       url: "/profile",
       icon: Settings,
-      active: false
+      active: currentPath === "/profile"
     },
   ];
 
@@ -89,22 +96,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           isHovered ? "w-56" : "w-14"
         )}
       >
-        {/* Logo area */}
-        <div className="h-14 flex items-center px-3 border-b border-sidebar-border">
-          <div className={cn(
-            "flex items-center gap-2 transition-opacity duration-200",
-            isHovered ? "opacity-100" : "opacity-0"
-          )}>
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">L</span>
-            </div>
-            <span className="font-semibold text-sidebar-foreground whitespace-nowrap">LeadPilot</span>
-          </div>
-          {!isHovered && (
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">L</span>
-            </div>
-          )}
+        {/* Logo area - aligned with header height */}
+        <div className="h-[57px] flex items-center px-3 border-b border-sidebar-border">
+          <Logo size="sm" showText={isHovered} />
         </div>
 
         {/* Main navigation */}
@@ -177,6 +171,31 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             ))}
             
+            {/* Profile */}
+            <li>
+              <Link
+                to="/profile"
+                className={cn(
+                  "flex items-center gap-3 px-2 py-2 rounded-lg transition-colors",
+                  "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                  currentPath === "/profile" && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                )}
+              >
+                <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className={cn(
+                  "whitespace-nowrap transition-opacity duration-200 truncate",
+                  isHovered ? "opacity-100" : "opacity-0"
+                )}>
+                  {profile?.name || 'Meu Perfil'}
+                </span>
+              </Link>
+            </li>
+
             {/* Logout */}
             <li>
               <button
@@ -196,14 +215,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </button>
             </li>
           </ul>
-        </div>
-
-        {/* Expand indicator */}
-        <div className={cn(
-          "absolute right-0 top-1/2 -translate-y-1/2 transition-opacity duration-200",
-          isHovered ? "opacity-0" : "opacity-50"
-        )}>
-          <ChevronRight size={16} className="text-sidebar-foreground/50" />
         </div>
       </aside>
     </div>
