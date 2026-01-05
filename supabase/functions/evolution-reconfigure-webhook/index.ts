@@ -43,7 +43,7 @@ serve(async (req) => {
 
     console.log(`Reconfiguring webhook for instance: ${instanceName}`);
 
-    const webhookUrl = `${SUPABASE_URL}/functions/v1/chat-webhook`;
+    const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
     
     let webhookConfigured = false;
     let responseData = null;
