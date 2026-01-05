@@ -134,16 +134,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           )}
                         >
                           <item.icon size={20} className="shrink-0" />
-                          <span 
-                            className="whitespace-nowrap transition-all duration-300"
-                            style={{
-                              opacity: isHovered ? 1 : 0,
-                              transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
-                              transitionDelay: isHovered ? `${index * 50 + 100}ms` : '0ms',
-                            }}
-                          >
-                            {item.title}
-                          </span>
+                          {isHovered && (
+                            <span 
+                              className="whitespace-nowrap animate-fade-in"
+                              style={{
+                                animationDelay: `${index * 50}ms`,
+                              }}
+                            >
+                              {item.title}
+                            </span>
+                          )}
                         </button>
                       ) : (
                         <Link
@@ -156,16 +156,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           )}
                         >
                           <item.icon size={20} className="shrink-0" />
-                          <span 
-                            className="whitespace-nowrap transition-all duration-300"
-                            style={{
-                              opacity: isHovered ? 1 : 0,
-                              transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
-                              transitionDelay: isHovered ? `${index * 50 + 100}ms` : '0ms',
-                            }}
-                          >
-                            {item.title}
-                          </span>
+                          {isHovered && (
+                            <span 
+                              className="whitespace-nowrap animate-fade-in"
+                              style={{
+                                animationDelay: `${index * 50}ms`,
+                              }}
+                            >
+                              {item.title}
+                            </span>
+                          )}
                         </Link>
                       )}
                     </TooltipTrigger>
@@ -204,16 +204,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <item.icon size={20} className="shrink-0" />
-                        <span 
-                          className="whitespace-nowrap transition-all duration-300"
-                          style={{
-                            opacity: isHovered ? 1 : 0,
-                            transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
-                            transitionDelay: isHovered ? `${(index + mainNavItems.length) * 50 + 100}ms` : '0ms',
-                          }}
-                        >
-                          {item.title}
-                        </span>
+                        {isHovered && (
+                          <span 
+                            className="whitespace-nowrap animate-fade-in"
+                            style={{
+                              animationDelay: `${(index + mainNavItems.length) * 50}ms`,
+                            }}
+                          >
+                            {item.title}
+                          </span>
+                        )}
                       </Link>
                     </TooltipTrigger>
                     {!isHovered && (
@@ -249,16 +249,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>
-                      <span 
-                        className="whitespace-nowrap transition-all duration-300 truncate"
-                        style={{
-                          opacity: isHovered ? 1 : 0,
-                          transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
-                          transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length) * 50 + 100}ms` : '0ms',
-                        }}
-                      >
-                        {profile?.name || 'Meu Perfil'}
-                      </span>
+                      {isHovered && (
+                        <span 
+                          className="whitespace-nowrap truncate animate-fade-in"
+                          style={{
+                            animationDelay: `${(bottomNavItems.length + mainNavItems.length) * 50}ms`,
+                          }}
+                        >
+                          {profile?.name || 'Meu Perfil'}
+                        </span>
+                      )}
                     </Link>
                   </TooltipTrigger>
                   {!isHovered && (
@@ -286,16 +286,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       )}
                     >
                       <LogOut size={20} className="shrink-0" />
-                      <span 
-                        className="whitespace-nowrap transition-all duration-300"
-                        style={{
-                          opacity: isHovered ? 1 : 0,
-                          transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
-                          transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length + 1) * 50 + 100}ms` : '0ms',
-                        }}
-                      >
-                        Sair
-                      </span>
+                      {isHovered && (
+                        <span 
+                          className="whitespace-nowrap animate-fade-in"
+                          style={{
+                            animationDelay: `${(bottomNavItems.length + mainNavItems.length + 1) * 50}ms`,
+                          }}
+                        >
+                          Sair
+                        </span>
+                      )}
                     </button>
                   </TooltipTrigger>
                   {!isHovered && (
