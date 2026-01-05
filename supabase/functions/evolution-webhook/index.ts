@@ -20,11 +20,16 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     const payload = await req.json();
-    console.log('Webhook received:', JSON.stringify(payload));
+    console.log('=== EVOLUTION WEBHOOK RAW ===');
+    console.log('Full payload:', JSON.stringify(payload));
 
-    const event = payload.event;
+    // Evolution API sends event in different formats - normalize
+    const rawEvent = payload.event || '';
+    const event = rawEvent.toLowerCase().replace(/_/g, '.').replace(/-/g, '.');
     const instance = payload.instance;
     const data = payload.data;
+    
+    console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
     // Helper function to fetch profile picture from Evolution API
     async function fetchProfilePicture(instanceName: string, phone: string): Promise<string | null> {
@@ -79,9 +84,11 @@ serve(async (req) => {
       }
     }
 
-    // Handle different webhook events
+    // Handle different webhook events - support multiple event name formats
     switch (event) {
       case 'messages.upsert':
+      case 'message.upsert':
+      case 'messagesupsert':
         // Message received or sent
         console.log('Message upsert:', JSON.stringify(data));
         
@@ -258,27 +265,45 @@ serve(async (req) => {
         break;
 
       case 'messages.update':
+      case 'message.update':
+      case 'messageupdate':
         // Message status update (delivered, read, etc)
         // Can be a single object or an array
-        console.log('Message update received:', JSON.stringify(data));
+        console.log('=== MESSAGE STATUS UPDATE ===');
+        console.log('Raw data:', JSON.stringify(data));
         
         const updates = Array.isArray(data) ? data : [data];
         
         for (const update of updates) {
-          // Handle different payload structures from Evolution API
-          const messageId = update?.key?.id || update?.id;
-          const statusCode = update?.update?.status ?? update?.status;
+          console.log('Processing update item:', JSON.stringify(update));
+          
+          // Handle different payload structures from Evolution API v1 and v2
+          const messageId = update?.key?.id || update?.id || update?.messageId;
+          // Status can be in different places depending on API version
+          const statusCode = update?.update?.status ?? update?.status ?? update?.ack;
+          
+          console.log('Extracted messageId:', messageId, 'statusCode:', statusCode);
           
           if (messageId && statusCode !== undefined) {
             // Map status codes to our status values
+            // Evolution API: 0=error, 1=pending, 2=sent, 3=delivered, 4=read, 5=played
+            // Some versions: 0=pending, 1=sent, 2=delivered, 3=read
             let status = 'sent';
-            switch (statusCode) {
-              case 0: status = 'pending'; break;
-              case 1: status = 'sent'; break;
-              case 2: status = 'delivered'; break;
-              case 3: status = 'read'; break;
-              case 4: status = 'played'; break;
-              case 5: status = 'read'; break; // Some versions use 5 for read
+            const numStatus = Number(statusCode);
+            
+            // Handle string status values too
+            if (typeof statusCode === 'string') {
+              status = statusCode.toLowerCase();
+            } else {
+              switch (numStatus) {
+                case 0: status = 'pending'; break;
+                case 1: status = 'sent'; break;
+                case 2: status = 'delivered'; break;
+                case 3: status = 'read'; break;
+                case 4: status = 'read'; break; // played = read
+                case 5: status = 'read'; break;
+                default: status = 'sent';
+              }
             }
             
             console.log(`Updating message ${messageId} to status: ${status}`);
@@ -295,6 +320,8 @@ serve(async (req) => {
             } else {
               console.log(`Message ${messageId} status updated to ${status}, rows:`, updatedMsg?.length);
             }
+          } else {
+            console.log('Could not extract messageId or statusCode from update');
           }
         }
         break;
