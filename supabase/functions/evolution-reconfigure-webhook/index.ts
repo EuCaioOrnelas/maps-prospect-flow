@@ -45,101 +45,129 @@ serve(async (req) => {
 
     const webhookUrl = `${SUPABASE_URL}/functions/v1/chat-webhook`;
     
-    // Try the main webhook set endpoint
     let webhookConfigured = false;
-    
-    try {
-      const webhookResponse = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
+    let responseData = null;
+
+    // Evolution API v2 format - POST to /webhook/set/{instance}
+    const endpoints = [
+      { 
+        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY,
-        },
-        body: JSON.stringify({
+        body: {
           url: webhookUrl,
           webhook_by_events: false,
           webhook_base64: true,
           events: [
             "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE",
+            "MESSAGES_UPDATE", 
             "CONNECTION_UPDATE",
             "QRCODE_UPDATED",
             "SEND_MESSAGE"
           ]
-        }),
-      });
-
-      if (webhookResponse.ok) {
-        const result = await webhookResponse.json();
-        console.log('Webhook configured via /webhook/set:', JSON.stringify(result));
-        webhookConfigured = true;
-      } else {
-        console.log('First method failed, trying alternative...');
+        }
+      },
+      {
+        // Alternative v1 format
+        url: `${EVOLUTION_API_URL}/instance/setWebhook/${instanceName}`,
+        method: 'POST',
+        body: {
+          webhook: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: [
+            "MESSAGES_UPSERT",
+            "MESSAGES_UPDATE",
+            "CONNECTION_UPDATE", 
+            "QRCODE_UPDATED",
+            "SEND_MESSAGE"
+          ]
+        }
+      },
+      {
+        // Another v2 format variant
+        url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
+        method: 'POST',
+        body: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: [
+            "MESSAGES_UPSERT",
+            "MESSAGES_UPDATE",
+            "CONNECTION_UPDATE",
+            "QRCODE_UPDATED", 
+            "SEND_MESSAGE"
+          ]
+        }
       }
-    } catch (e) {
-      console.log('First webhook method error:', e);
-    }
+    ];
 
-    // Try alternative endpoint if first failed
-    if (!webhookConfigured) {
+    for (const endpoint of endpoints) {
+      if (webhookConfigured) break;
+      
       try {
-        const altResponse = await fetch(`${EVOLUTION_API_URL}/webhook/instance/${instanceName}`, {
-          method: 'PUT',
+        console.log(`Trying webhook endpoint: ${endpoint.method} ${endpoint.url}`);
+        
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method,
           headers: {
             'Content-Type': 'application/json',
             'apikey': EVOLUTION_API_KEY,
           },
-          body: JSON.stringify({
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: [
-              "MESSAGES_UPSERT",
-              "MESSAGES_UPDATE",
-              "CONNECTION_UPDATE",
-              "QRCODE_UPDATED",
-              "SEND_MESSAGE"
-            ]
-          }),
+          body: JSON.stringify(endpoint.body),
         });
 
-        if (altResponse.ok) {
-          const result = await altResponse.json();
-          console.log('Webhook configured via alternative endpoint:', JSON.stringify(result));
+        const responseText = await response.text();
+        console.log(`Response status: ${response.status}, body: ${responseText}`);
+
+        if (response.ok || response.status === 201) {
+          try {
+            responseData = JSON.parse(responseText);
+          } catch {
+            responseData = { raw: responseText };
+          }
+          console.log('Webhook configured successfully:', JSON.stringify(responseData));
           webhookConfigured = true;
-        } else {
-          const errorText = await altResponse.text();
-          console.error('Alternative endpoint also failed:', errorText);
         }
       } catch (e) {
-        console.error('Alternative webhook method error:', e);
+        console.log(`Endpoint ${endpoint.url} failed:`, e);
       }
     }
 
     // Get current webhook config to verify
     let currentConfig = null;
-    try {
-      const findResponse = await fetch(`${EVOLUTION_API_URL}/webhook/find/${instanceName}`, {
-        method: 'GET',
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
-      });
-      
-      if (findResponse.ok) {
-        currentConfig = await findResponse.json();
-        console.log('Current webhook config:', JSON.stringify(currentConfig));
+    const findEndpoints = [
+      `${EVOLUTION_API_URL}/webhook/find/${instanceName}`,
+      `${EVOLUTION_API_URL}/instance/fetchWebhook/${instanceName}`,
+      `${EVOLUTION_API_URL}/webhook/${instanceName}`
+    ];
+
+    for (const findUrl of findEndpoints) {
+      try {
+        const findResponse = await fetch(findUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': EVOLUTION_API_KEY,
+          },
+        });
+        
+        if (findResponse.ok) {
+          currentConfig = await findResponse.json();
+          console.log('Current webhook config:', JSON.stringify(currentConfig));
+          break;
+        }
+      } catch (e) {
+        console.log(`Could not fetch webhook config from ${findUrl}:`, e);
       }
-    } catch (e) {
-      console.log('Could not fetch webhook config:', e);
     }
 
     return new Response(JSON.stringify({
       success: webhookConfigured,
       webhookUrl: webhookUrl,
       currentConfig: currentConfig,
-      message: webhookConfigured ? 'Webhook reconfigured successfully' : 'Failed to reconfigure webhook'
+      responseData: responseData,
+      message: webhookConfigured ? 'Webhook reconfigured successfully' : 'Failed to reconfigure webhook - check Evolution API version'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
