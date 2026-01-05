@@ -12,6 +12,7 @@ import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff } from 'lucide-react';
 import { SEO } from '@/components/SEO';
@@ -28,6 +29,7 @@ const Chat = () => {
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [notificationRequested, setNotificationRequested] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
+  const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
   
   const {
     conversations,
@@ -59,12 +61,38 @@ const Chat = () => {
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const maxNumbers = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS] || 1;
 
-  // Auto-select first connected number
+  // Auto-select first connected number and sync webhook
   useEffect(() => {
     if (connectedNumbers.length > 0 && !selectedNumberId) {
       setSelectedNumberId(connectedNumbers[0].id);
     }
   }, [connectedNumbers, selectedNumberId]);
+
+  // Auto-sync webhook when a number is selected to ensure messages are received
+  useEffect(() => {
+    const syncWebhook = async () => {
+      if (!selectedNumberId) return;
+      
+      // Only sync once per number per session
+      if (webhookSyncedFor === selectedNumberId) return;
+      
+      const selectedNumber = connectedNumbers.find(n => n.id === selectedNumberId);
+      if (!selectedNumber?.instance_name || !selectedNumber.is_connected) return;
+
+      try {
+        // Silently reconfigure webhook to ensure messages come through
+        await supabase.functions.invoke('evolution-reconfigure-webhook', {
+          body: { instanceName: selectedNumber.instance_name },
+        });
+        console.log('Webhook synced for:', selectedNumber.instance_name);
+        setWebhookSyncedFor(selectedNumberId);
+      } catch (error) {
+        console.error('Error syncing webhook:', error);
+      }
+    };
+
+    syncWebhook();
+  }, [selectedNumberId, connectedNumbers, webhookSyncedFor]);
 
   // Clear selected conversation when changing number
   const handleNumberChange = (numberId: string) => {

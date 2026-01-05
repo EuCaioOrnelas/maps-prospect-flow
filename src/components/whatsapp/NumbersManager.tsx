@@ -535,6 +535,37 @@ export const NumbersManager = ({
     }
   };
 
+  const handleReconfigureWebhook = async (instanceName: string) => {
+    setLoading(true);
+    try {
+      const response = await supabase.functions.invoke('evolution-reconfigure-webhook', {
+        body: { instanceName },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.success) {
+        toast({
+          title: "Webhook sincronizado!",
+          description: "As mensagens recebidas agora aparecerão no chat",
+        });
+      } else {
+        throw new Error(response.data?.message || 'Falha ao sincronizar');
+      }
+    } catch (err) {
+      console.error('Error reconfiguring webhook:', err);
+      toast({
+        title: "Erro ao sincronizar",
+        description: err instanceof Error ? err.message : "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRefreshQR = async () => {
     if (!connectingNumberId) return;
     const instanceName = generateInstanceName();
@@ -783,15 +814,26 @@ export const NumbersManager = ({
                             Conectar
                           </Button>
                         ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleDisconnect(number.id)}
-                          >
-                            <WifiOff size={14} className="mr-1" />
-                            Desconectar
-                          </Button>
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => handleReconfigureWebhook(number.instance_name!)}
+                            >
+                              <RefreshCw size={14} className="mr-1" />
+                              Sincronizar
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => handleDisconnect(number.id)}
+                            >
+                              <WifiOff size={14} className="mr-1" />
+                              Desconectar
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>

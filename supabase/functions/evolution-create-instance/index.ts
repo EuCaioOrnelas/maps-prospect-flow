@@ -204,18 +204,49 @@ serve(async (req) => {
           webhook_base64: true,
           events: [
             "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE",
+            "MESSAGES_UPDATE", 
             "CONNECTION_UPDATE",
-            "QRCODE_UPDATED"
+            "QRCODE_UPDATED",
+            "SEND_MESSAGE"
           ]
         }),
       });
 
       if (webhookResponse.ok) {
-        console.log('Webhook configured successfully for instance:', instanceName);
+        const webhookResult = await webhookResponse.json();
+        console.log('Webhook configured successfully for instance:', instanceName, JSON.stringify(webhookResult));
       } else {
         const webhookError = await webhookResponse.text();
         console.error('Failed to configure webhook:', webhookError);
+        
+        // Try alternative webhook endpoint
+        console.log('Trying alternative webhook endpoint...');
+        const altResponse = await fetch(`${EVOLUTION_API_URL}/webhook/instance/${instanceName}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY,
+          },
+          body: JSON.stringify({
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: [
+              "MESSAGES_UPSERT",
+              "MESSAGES_UPDATE",
+              "CONNECTION_UPDATE", 
+              "QRCODE_UPDATED",
+              "SEND_MESSAGE"
+            ]
+          }),
+        });
+        
+        if (altResponse.ok) {
+          console.log('Webhook configured via alternative endpoint');
+        } else {
+          console.error('Alternative webhook config also failed:', await altResponse.text());
+        }
       }
     } catch (webhookError) {
       console.error('Error configuring webhook:', webhookError);

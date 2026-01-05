@@ -17,9 +17,23 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload = await req.json();
-    console.log('Webhook received:', JSON.stringify(payload, null, 2));
+    console.log('=== WEBHOOK RECEIVED ===');
+    console.log('Full payload:', JSON.stringify(payload));
 
-    const { event, data, instance } = payload;
+    // Evolution API sends event in different cases - normalize to lowercase
+    const event = (payload.event || '').toLowerCase().replace('_', '.');
+    const instance = payload.instance;
+    const data = payload.data;
+
+    console.log('Parsed event:', event);
+    console.log('Instance:', instance);
+
+    if (!instance) {
+      console.log('No instance in payload, skipping');
+      return new Response(JSON.stringify({ ok: true, skipped: 'no instance' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Find the WhatsApp number by instance name
     const { data: whatsappNumber, error: numberError } = await supabase
@@ -29,29 +43,47 @@ serve(async (req) => {
       .single();
 
     if (numberError || !whatsappNumber) {
-      console.log('WhatsApp number not found for instance:', instance);
-      return new Response(JSON.stringify({ error: 'Instance not found' }), {
-        status: 404,
+      console.log('WhatsApp number not found for instance:', instance, numberError);
+      return new Response(JSON.stringify({ ok: true, skipped: 'instance not found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Handle different event types
-    if (event === 'messages.upsert') {
-      const message = data?.message;
-      if (!message) {
-        return new Response(JSON.stringify({ ok: true }), {
+    console.log('Found WhatsApp number:', whatsappNumber.id, 'for user:', whatsappNumber.user_id);
+
+    // Handle messages.upsert event (new messages)
+    if (event === 'messages.upsert' || event === 'messages_upsert') {
+      console.log('Processing messages.upsert event');
+      
+      // Evolution API sends data directly with key and message
+      const messageKey = data?.key;
+      const messageData = data?.message;
+      const pushName = data?.pushName;
+
+      if (!messageKey || !messageData) {
+        console.log('No message key or data, skipping. Data:', JSON.stringify(data));
+        return new Response(JSON.stringify({ ok: true, skipped: 'no message data' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const remoteJid = message.key?.remoteJid;
-      const fromMe = message.key?.fromMe || false;
-      const messageId = message.key?.id;
-      
+      const remoteJid = messageKey.remoteJid;
+      const fromMe = messageKey.fromMe || false;
+      const messageId = messageKey.id;
+
+      // Skip group messages
+      if (remoteJid?.includes('@g.us')) {
+        console.log('Skipping group message');
+        return new Response(JSON.stringify({ ok: true, skipped: 'group message' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Extract phone number from remoteJid (format: 5511999999999@s.whatsapp.net)
-      const phone = remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '') || '';
+      const phone = remoteJid?.replace('@s.whatsapp.net', '') || '';
       
+      console.log('Processing message from:', phone, 'fromMe:', fromMe, 'messageId:', messageId);
+
       // Determine message type and content
       let messageType = 'text';
       let content = '';
@@ -59,38 +91,50 @@ serve(async (req) => {
       let mediaMimetype = '';
       let mediaFilename = '';
 
-      if (message.message?.conversation) {
-        content = message.message.conversation;
-      } else if (message.message?.extendedTextMessage?.text) {
-        content = message.message.extendedTextMessage.text;
-      } else if (message.message?.imageMessage) {
+      if (messageData.conversation) {
+        content = messageData.conversation;
+      } else if (messageData.extendedTextMessage?.text) {
+        content = messageData.extendedTextMessage.text;
+      } else if (messageData.imageMessage) {
         messageType = 'image';
-        content = message.message.imageMessage.caption || '';
-        mediaMimetype = message.message.imageMessage.mimetype || 'image/jpeg';
-      } else if (message.message?.audioMessage) {
+        content = messageData.imageMessage.caption || '';
+        mediaMimetype = messageData.imageMessage.mimetype || 'image/jpeg';
+        mediaUrl = messageData.imageMessage.url || '';
+      } else if (messageData.audioMessage) {
         messageType = 'audio';
-        mediaMimetype = message.message.audioMessage.mimetype || 'audio/ogg';
-      } else if (message.message?.videoMessage) {
+        mediaMimetype = messageData.audioMessage.mimetype || 'audio/ogg';
+        mediaUrl = messageData.audioMessage.url || '';
+      } else if (messageData.videoMessage) {
         messageType = 'video';
-        content = message.message.videoMessage.caption || '';
-        mediaMimetype = message.message.videoMessage.mimetype || 'video/mp4';
-      } else if (message.message?.documentMessage) {
+        content = messageData.videoMessage.caption || '';
+        mediaMimetype = messageData.videoMessage.mimetype || 'video/mp4';
+        mediaUrl = messageData.videoMessage.url || '';
+      } else if (messageData.documentMessage) {
         messageType = 'document';
-        mediaFilename = message.message.documentMessage.fileName || 'document';
-        mediaMimetype = message.message.documentMessage.mimetype || 'application/pdf';
+        mediaFilename = messageData.documentMessage.fileName || 'document';
+        mediaMimetype = messageData.documentMessage.mimetype || 'application/pdf';
+        mediaUrl = messageData.documentMessage.url || '';
+      } else if (messageData.stickerMessage) {
+        messageType = 'sticker';
+        mediaMimetype = messageData.stickerMessage.mimetype || 'image/webp';
       }
+
+      console.log('Message type:', messageType, 'content:', content?.substring(0, 50));
 
       // Get or create conversation
       let conversationId: string;
-      const { data: existingConv } = await supabase
+      const { data: existingConv, error: convFetchError } = await supabase
         .from('conversations')
         .select('id, contact_id')
         .eq('whatsapp_number_id', whatsappNumber.id)
         .eq('remote_jid', remoteJid)
         .single();
 
+      console.log('Existing conversation:', existingConv, 'Error:', convFetchError);
+
       if (existingConv) {
         conversationId = existingConv.id;
+        console.log('Using existing conversation:', conversationId);
       } else {
         // Check if contact exists
         const { data: existingContact } = await supabase
@@ -109,7 +153,7 @@ serve(async (req) => {
             contact_id: existingContact?.id || null,
             remote_jid: remoteJid,
             phone: phone,
-            contact_name: existingContact?.name || message.pushName || null,
+            contact_name: existingContact?.name || pushName || null,
           })
           .select('id')
           .single();
@@ -119,10 +163,25 @@ serve(async (req) => {
           throw convError;
         }
         conversationId = newConv.id;
+        console.log('Created new conversation:', conversationId);
+      }
+
+      // Check if message already exists (avoid duplicates)
+      const { data: existingMsg } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('message_id', messageId)
+        .single();
+
+      if (existingMsg) {
+        console.log('Message already exists, skipping:', messageId);
+        return new Response(JSON.stringify({ ok: true, skipped: 'message exists' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Insert message
-      const { error: msgError } = await supabase
+      const { data: insertedMsg, error: msgError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
@@ -132,21 +191,26 @@ serve(async (req) => {
           from_me: fromMe,
           message_type: messageType,
           content: content,
-          media_url: mediaUrl,
-          media_mimetype: mediaMimetype,
-          media_filename: mediaFilename,
+          media_url: mediaUrl || null,
+          media_mimetype: mediaMimetype || null,
+          media_filename: mediaFilename || null,
           status: fromMe ? 'sent' : 'received',
-        });
+        })
+        .select()
+        .single();
 
       if (msgError) {
         console.error('Error inserting message:', msgError);
         throw msgError;
       }
 
+      console.log('Message inserted successfully:', insertedMsg?.id);
+
       // Update conversation with last message
       const updateData: Record<string, unknown> = {
         last_message: content || `[${messageType}]`,
         last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       // Increment unread count only for incoming messages
@@ -160,8 +224,8 @@ serve(async (req) => {
       }
 
       // Update contact name if we have pushName
-      if (message.pushName && !fromMe) {
-        updateData.contact_name = message.pushName;
+      if (pushName && !fromMe) {
+        updateData.contact_name = pushName;
       }
 
       await supabase
@@ -169,32 +233,64 @@ serve(async (req) => {
         .update(updateData)
         .eq('id', conversationId);
 
-      console.log('Message processed successfully');
+      console.log('Conversation updated, message processing complete');
     }
 
     // Handle message status updates
-    if (event === 'messages.update') {
+    if (event === 'messages.update' || event === 'messages_update') {
+      console.log('Processing messages.update event');
       const updates = Array.isArray(data) ? data : [data];
       
       for (const update of updates) {
-        const messageId = update.key?.id;
-        const status = update.update?.status;
+        const messageId = update?.key?.id || update?.id;
+        const statusCode = update?.update?.status ?? update?.status;
         
-        if (messageId && status !== undefined) {
+        if (messageId && statusCode !== undefined) {
+          // Map status codes: 0=pending, 1=sent, 2=delivered, 3=read, 4=played, 5=read
           let statusText = 'sent';
-          if (status === 2) statusText = 'sent';
-          if (status === 3) statusText = 'delivered';
-          if (status === 4) statusText = 'read';
+          switch (statusCode) {
+            case 0: statusText = 'pending'; break;
+            case 1: statusText = 'sent'; break;
+            case 2: statusText = 'delivered'; break;
+            case 3: statusText = 'read'; break;
+            case 4: statusText = 'read'; break; // played = read for audio
+            case 5: statusText = 'read'; break;
+          }
           
-          await supabase
+          console.log('Updating message status:', messageId, 'to:', statusText);
+          
+          const { error: updateErr } = await supabase
             .from('messages')
-            .update({ status: statusText })
+            .update({ status: statusText, updated_at: new Date().toISOString() })
             .eq('message_id', messageId);
+
+          if (updateErr) {
+            console.error('Error updating message status:', updateErr);
+          }
         }
       }
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    // Handle connection updates
+    if (event === 'connection.update' || event === 'connection_update') {
+      console.log('Processing connection.update event');
+      const state = data?.state;
+      
+      if (state) {
+        const isConnected = state === 'open';
+        console.log('Connection state:', state, 'isConnected:', isConnected);
+        
+        await supabase
+          .from('whatsapp_numbers')
+          .update({ 
+            is_connected: isConnected,
+            updated_at: new Date().toISOString()
+          })
+          .eq('instance_name', instance);
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, processed: event }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
