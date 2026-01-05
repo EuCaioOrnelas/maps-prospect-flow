@@ -171,6 +171,43 @@ export const useChat = (selectedNumberId?: string | null) => {
     await fetchArchivedConversations();
   }, [user, fetchConversations, fetchArchivedConversations]);
 
+  // Delete a conversation permanently
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    // First delete all messages in the conversation
+    const { error: msgError } = await supabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', conversationId);
+
+    if (msgError) {
+      console.error('Error deleting messages:', msgError);
+      throw msgError;
+    }
+
+    // Then delete the conversation
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting conversation:', error);
+      throw error;
+    }
+
+    // If the deleted conversation is selected, clear selection
+    if (selectedConversation?.id === conversationId) {
+      setSelectedConversation(null);
+      setMessages([]);
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+  }, [user, selectedConversation, fetchConversations, fetchArchivedConversations]);
+
   // Link contact to conversation
   const linkContactToConversation = useCallback(async (conversationId: string, contactId: string) => {
     if (!user) return;
@@ -355,6 +392,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     fetchArchivedConversations,
     archiveConversation,
     unarchiveConversation,
+    deleteConversation,
     linkContactToConversation,
     setSelectedConversation,
   };

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore } from 'lucide-react';
+import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -22,6 +22,7 @@ interface ConversationListProps {
   onSaveContact: (conversation: Conversation) => void;
   onArchive: (conversationId: string) => void;
   onUnarchive: (conversationId: string) => void;
+  onDelete: (conversationId: string) => void;
 }
 
 export const ConversationList = ({
@@ -33,6 +34,7 @@ export const ConversationList = ({
   onSaveContact,
   onArchive,
   onUnarchive,
+  onDelete,
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -247,6 +249,13 @@ export const ConversationList = ({
                           Desarquivar conversa
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem 
+                        onClick={() => onDelete(conversation.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Deletar conversa
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

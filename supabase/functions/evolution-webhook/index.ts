@@ -103,15 +103,7 @@ serve(async (req) => {
             .single();
           
           if (whatsappNumber) {
-            // If message is received (not from me), try to fetch profile picture
-            if (!fromMe && phone) {
-              const profilePicture = await fetchProfilePicture(instance, phone);
-              if (profilePicture) {
-                await updateContactAvatar(whatsappNumber.user_id, phone, profilePicture);
-              }
-            }
-
-            // Get or create conversation
+            // Get or create conversation first
             let conversationId: string;
             const { data: existingConv } = await supabase
               .from('conversations')
@@ -141,6 +133,34 @@ serve(async (req) => {
                 break;
               }
               conversationId = newConv.id;
+            }
+
+            // If message is received (not from me), try to fetch profile picture
+            if (!fromMe && phone) {
+              try {
+                const profilePicture = await fetchProfilePicture(instance, phone);
+                if (profilePicture) {
+                  await updateContactAvatar(whatsappNumber.user_id, phone, profilePicture);
+                  
+                  // Also try to update the conversation contact avatar if no contact linked
+                  const { data: contact } = await supabase
+                    .from('contacts')
+                    .select('id')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('phone', phone)
+                    .single();
+                    
+                  if (contact) {
+                    await supabase
+                      .from('conversations')
+                      .update({ contact_id: contact.id })
+                      .eq('id', conversationId)
+                      .is('contact_id', null);
+                  }
+                }
+              } catch (e) {
+                console.log('Profile picture fetch skipped:', e);
+              }
             }
 
             // Extract message content based on type

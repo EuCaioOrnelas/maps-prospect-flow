@@ -42,6 +42,7 @@ const Chat = () => {
     fetchConversations,
     archiveConversation,
     unarchiveConversation,
+    deleteConversation,
     linkContactToConversation,
     setSelectedConversation,
   } = useChat(selectedNumberId);
@@ -152,6 +153,15 @@ const Chat = () => {
       toast.success('Conversa desarquivada');
     } catch (error) {
       toast.error('Erro ao desarquivar conversa');
+    }
+  };
+
+  const handleDelete = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+      toast.success('Conversa deletada');
+    } catch (error) {
+      toast.error('Erro ao deletar conversa');
     }
   };
 
@@ -345,6 +355,7 @@ const Chat = () => {
                           onSaveContact={handleSaveContact}
                           onArchive={handleArchive}
                           onUnarchive={handleUnarchive}
+                          onDelete={handleDelete}
                         />
                       </div>
 
