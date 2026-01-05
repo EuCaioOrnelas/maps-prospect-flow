@@ -334,6 +334,121 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, [user, fetchConversations]);
 
+  // Merge duplicate conversations based on normalized phone number
+  const mergeDuplicateConversations = useCallback(async () => {
+    if (!user) return { merged: 0, deleted: 0 };
+
+    // Get all conversations (active + archived)
+    const { data: allConversations, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('last_message_at', { ascending: false, nullsFirst: true });
+
+    if (error || !allConversations) {
+      console.error('Error fetching conversations for merge:', error);
+      throw error;
+    }
+
+    // Group by normalized phone (last 10-11 digits) and whatsapp_number_id
+    const phoneGroups: Record<string, typeof allConversations> = {};
+    
+    allConversations.forEach(conv => {
+      const normalizedPhone = conv.phone.replace(/\D/g, '').slice(-11);
+      const key = `${normalizedPhone}_${conv.whatsapp_number_id}`;
+      
+      if (!phoneGroups[key]) {
+        phoneGroups[key] = [];
+      }
+      phoneGroups[key].push(conv);
+    });
+
+    let mergedCount = 0;
+    let deletedCount = 0;
+
+    // Process each group with duplicates
+    for (const [key, convs] of Object.entries(phoneGroups)) {
+      if (convs.length <= 1) continue;
+
+      // Keep the one with most recent message or contact_id
+      const sortedConvs = convs.sort((a, b) => {
+        // Prefer one with contact_id
+        if (a.contact_id && !b.contact_id) return -1;
+        if (!a.contact_id && b.contact_id) return 1;
+        // Then by most recent message
+        const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+        const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      const primary = sortedConvs[0];
+      const duplicates = sortedConvs.slice(1);
+
+      for (const dup of duplicates) {
+        // Move all messages from duplicate to primary
+        const { error: moveError } = await supabase
+          .from('messages')
+          .update({ conversation_id: primary.id })
+          .eq('conversation_id', dup.id);
+
+        if (moveError) {
+          console.error('Error moving messages:', moveError);
+          continue;
+        }
+
+        // Delete the duplicate conversation
+        const { error: deleteError } = await supabase
+          .from('conversations')
+          .delete()
+          .eq('id', dup.id);
+
+        if (deleteError) {
+          console.error('Error deleting duplicate:', deleteError);
+          continue;
+        }
+
+        deletedCount++;
+      }
+
+      if (duplicates.length > 0) {
+        mergedCount++;
+        
+        // Update primary conversation with correct unread count
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', primary.id)
+          .eq('from_me', false)
+          .gt('created_at', primary.updated_at || primary.created_at);
+
+        // Get most recent message
+        const { data: recentMsg } = await supabase
+          .from('messages')
+          .select('content, created_at')
+          .eq('conversation_id', primary.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (recentMsg) {
+          await supabase
+            .from('conversations')
+            .update({
+              last_message: recentMsg.content,
+              last_message_at: recentMsg.created_at,
+              unread_count: count || 0,
+            })
+            .eq('id', primary.id);
+        }
+      }
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+
+    return { merged: mergedCount, deleted: deletedCount };
+  }, [user, fetchConversations, fetchArchivedConversations]);
+
   // Select conversation
   const selectConversation = useCallback(async (conversation: Conversation) => {
     setSelectedConversation(conversation);
@@ -464,5 +579,6 @@ export const useChat = (selectedNumberId?: string | null) => {
     deleteConversation,
     linkContactToConversation,
     setSelectedConversation,
+    mergeDuplicateConversations,
   };
 };

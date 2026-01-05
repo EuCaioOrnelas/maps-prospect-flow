@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   X,
   Reply,
+  UserPlus,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +42,7 @@ interface ChatAreaProps {
   onSendMessage: (content: string, quotedMessageId?: string) => void;
   onOpenContactInfo: () => void;
   onBack?: () => void;
+  onSaveContact?: (conversation: Conversation) => void;
 }
 
 const FONT_SIZES = [
@@ -58,6 +60,7 @@ export const ChatArea = ({
   onSendMessage,
   onOpenContactInfo,
   onBack,
+  onSaveContact,
 }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
@@ -118,10 +121,16 @@ export const ChatArea = ({
     }
   };
 
+  const isContactSaved = () => {
+    return !!(conversation?.contact_id && conversation?.contacts?.name);
+  };
+
   const getDisplayName = () => {
     if (!conversation) return '';
+    // Only show name if contact is saved with a name
     if (conversation.contacts?.name) return conversation.contacts.name;
     if (conversation.contact_name) return conversation.contact_name;
+    // Otherwise show formatted phone
     return formatPhoneNumber(conversation.phone);
   };
 
@@ -248,11 +257,26 @@ export const ChatArea = ({
             </Avatar>
             <div className="text-left">
               <p className="font-medium text-foreground">{displayName}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatPhoneNumber(conversation.phone)}
-              </p>
+              {isContactSaved() && (
+                <p className="text-xs text-muted-foreground">
+                  {formatPhoneNumber(conversation.phone)}
+                </p>
+              )}
             </div>
           </button>
+          
+          {/* Save contact button - only show if not saved */}
+          {!isContactSaved() && onSaveContact && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onSaveContact(conversation)}
+              className="gap-1.5 text-primary hover:text-primary"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Salvar contato</span>
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
