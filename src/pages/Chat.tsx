@@ -176,7 +176,7 @@ const Chat = () => {
               </div>
             ) : (
               <>
-                <div className="px-4 py-3 border-b border-border bg-card/50 flex items-center gap-3">
+                <div className="h-14 px-4 border-b border-border bg-card/50 flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Número:</span>
                   <Select value={selectedNumberId || ''} onValueChange={handleNumberChange}>
