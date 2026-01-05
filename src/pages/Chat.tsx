@@ -202,9 +202,20 @@ const Chat = () => {
                     </Select>
                   </div>
                   
-                  {/* Status Indicator */}
-                  {selectedNumberId && (
-                    <div className="flex items-center gap-2">
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {/* New Chat Button */}
+                    <Button
+                      size="sm"
+                      onClick={() => setShowNewChatDialog(true)}
+                      className="gap-2 bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Nova Conversa</span>
+                    </Button>
+                    
+                    {/* Status Indicator */}
+                    {selectedNumberId && (
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -212,8 +223,8 @@ const Chat = () => {
                         </span>
                         <span className="text-xs font-medium text-green-500">Online</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Main Chat Content */}
@@ -266,14 +277,23 @@ const Chat = () => {
         </main>
 
         {/* New Chat Dialog */}
-        {selectedNumberId && (
-          <NewChatDialog
-            open={showNewChatDialog}
-            onOpenChange={setShowNewChatDialog}
-            onStartConversation={handleStartConversation}
-            defaultWhatsAppNumberId={selectedNumberId}
-          />
-        )}
+        <NewChatDialog
+          open={showNewChatDialog}
+          onOpenChange={setShowNewChatDialog}
+          onStartConversation={handleStartConversation}
+          defaultWhatsAppNumberId={selectedNumberId || undefined}
+        />
+
+        {/* Numbers Manager - reusing from WhatsApp campaigns */}
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={handleNumbersChange}
+          maxNumbers={maxNumbers}
+          onConnect={handleConnect}
+          forceOpen={showNumbersManager}
+          onClose={() => setShowNumbersManager(false)}
+          hideButtons={true}
+        />
 
         {/* Numbers Manager - reusing from WhatsApp campaigns */}
         <NumbersManager
