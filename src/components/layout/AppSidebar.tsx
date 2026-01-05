@@ -5,7 +5,7 @@ import {
   BarChart3, 
   MessageSquare, 
   Crown, 
-  Settings,
+  
   LogOut,
   ChevronDown,
   FileSearch,
@@ -87,12 +87,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       highlight: true,
       active: currentPath === "/upgrade"
     }] : []),
-    {
-      title: "Configurações",
-      url: "/profile",
-      icon: Settings,
-      active: currentPath === "/profile"
-    },
   ];
 
   const handleLogout = async () => {
