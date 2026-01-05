@@ -4,10 +4,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, UserCheck, UserX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Conversation } from '@/hooks/useChat';
 
 interface ConversationListProps {
@@ -70,11 +71,17 @@ export const ConversationList = ({
       .slice(0, 2);
   };
 
+  // Check if contact is saved (has an associated contact with a name)
+  const isContactSaved = (conversation: Conversation) => {
+    return !!(conversation.contact_id && conversation.contacts?.name);
+  };
+
   const filteredConversations = conversations.filter((conv) => {
     const name = getDisplayName(conv).toLowerCase();
     const phone = conv.phone.toLowerCase();
+    const lastMessage = (conv.last_message || '').toLowerCase();
     const searchLower = search.toLowerCase();
-    return name.includes(searchLower) || phone.includes(searchLower);
+    return name.includes(searchLower) || phone.includes(searchLower) || lastMessage.includes(searchLower);
   });
 
   return (
@@ -128,9 +135,27 @@ export const ConversationList = ({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-foreground truncate">
-                        {displayName}
-                      </span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-medium text-foreground truncate">
+                          {displayName}
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="shrink-0">
+                                {isContactSaved(conversation) ? (
+                                  <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                                ) : (
+                                  <UserX className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {isContactSaved(conversation) ? 'Contato salvo' : 'Contato não salvo'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {formatTime(conversation.last_message_at)}
                       </span>
