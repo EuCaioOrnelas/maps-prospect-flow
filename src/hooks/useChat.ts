@@ -308,7 +308,7 @@ export const useChat = (selectedNumberId?: string | null) => {
   }, [user, selectedConversation, fetchMessages, fetchConversations]);
 
   // Start new conversation
-  const startConversation = useCallback(async (phone: string, whatsappNumberId: string, contactName?: string) => {
+  const startConversation = useCallback(async (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => {
     if (!user) return null;
 
     try {
@@ -317,6 +317,7 @@ export const useChat = (selectedNumberId?: string | null) => {
           phone,
           whatsappNumberId,
           contactName,
+          initialMessage,
         },
       });
 
