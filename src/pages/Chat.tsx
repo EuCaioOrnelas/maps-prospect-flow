@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useChat } from '@/hooks/useChat';
+import { useChat, Conversation } from '@/hooks/useChat';
 import { useWhatsAppNumbers, PLAN_LIMITS } from '@/hooks/useWhatsAppNumbers';
+import { useContacts } from '@/hooks/useContacts';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
+import { SaveContactDialog } from '@/components/chat/SaveContactDialog';
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
@@ -21,6 +23,7 @@ import type { WhatsAppNumber } from '@/hooks/useWhatsAppNumbers';
 const Chat = () => {
   const { profile } = useAuth();
   const { numbers, loading: loadingNumbers, fetchNumbers } = useWhatsAppNumbers();
+  const { createContact } = useContacts();
   const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [notificationRequested, setNotificationRequested] = useState(false);
@@ -28,6 +31,7 @@ const Chat = () => {
   
   const {
     conversations,
+    archivedConversations,
     messages,
     selectedConversation,
     isLoading,
@@ -36,11 +40,16 @@ const Chat = () => {
     sendMessage,
     startConversation,
     fetchConversations,
+    archiveConversation,
+    unarchiveConversation,
+    linkContactToConversation,
     setSelectedConversation,
   } = useChat(selectedNumberId);
 
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [showSaveContactDialog, setShowSaveContactDialog] = useState(false);
+  const [conversationToSave, setConversationToSave] = useState<Conversation | null>(null);
 
   // Get connected numbers only
   const connectedNumbers = numbers.filter(n => n.is_connected);
@@ -97,6 +106,52 @@ const Chat = () => {
       toast.success('Notificações ativadas!');
     } else {
       toast.error('Permissão de notificações negada');
+    }
+  };
+
+  const handleSaveContact = (conversation: Conversation) => {
+    setConversationToSave(conversation);
+    setShowSaveContactDialog(true);
+  };
+
+  const handleSaveContactSubmit = async (data: { name: string; email?: string; company?: string; notes?: string }) => {
+    if (!conversationToSave) return;
+
+    try {
+      const contact = await createContact({
+        phone: conversationToSave.phone,
+        name: data.name,
+        email: data.email,
+        company: data.company,
+        notes: data.notes,
+        origin: 'chat',
+      });
+
+      if (contact) {
+        await linkContactToConversation(conversationToSave.id, contact.id);
+        toast.success('Contato salvo com sucesso!');
+      }
+    } catch (error) {
+      toast.error('Erro ao salvar contato');
+      throw error;
+    }
+  };
+
+  const handleArchive = async (conversationId: string) => {
+    try {
+      await archiveConversation(conversationId);
+      toast.success('Conversa arquivada');
+    } catch (error) {
+      toast.error('Erro ao arquivar conversa');
+    }
+  };
+
+  const handleUnarchive = async (conversationId: string) => {
+    try {
+      await unarchiveConversation(conversationId);
+      toast.success('Conversa desarquivada');
+    } catch (error) {
+      toast.error('Erro ao desarquivar conversa');
     }
   };
 
@@ -283,9 +338,13 @@ const Chat = () => {
                       <div className={`w-full sm:w-80 lg:w-96 shrink-0 ${selectedConversation ? 'hidden sm:block' : ''}`}>
                         <ConversationList
                           conversations={conversations}
+                          archivedConversations={archivedConversations}
                           selectedConversation={selectedConversation}
                           onSelect={selectConversation}
                           onNewChat={() => setShowNewChatDialog(true)}
+                          onSaveContact={handleSaveContact}
+                          onArchive={handleArchive}
+                          onUnarchive={handleUnarchive}
                         />
                       </div>
 
@@ -326,6 +385,14 @@ const Chat = () => {
           onOpenChange={setShowNewChatDialog}
           onStartConversation={handleStartConversation}
           defaultWhatsAppNumberId={selectedNumberId || undefined}
+        />
+
+        {/* Save Contact Dialog */}
+        <SaveContactDialog
+          open={showSaveContactDialog}
+          onOpenChange={setShowSaveContactDialog}
+          conversation={conversationToSave}
+          onSave={handleSaveContactSubmit}
         />
 
         {/* Numbers Manager - reusing from WhatsApp campaigns */}
