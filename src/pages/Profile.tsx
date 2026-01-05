@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
 import {
   Dialog,
@@ -16,7 +15,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { 
-  ArrowLeft,
   Camera,
   Mail,
   Lock,
@@ -35,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 const Profile = () => {
   const { profile, user, refreshProfile } = useAuth();
@@ -226,27 +226,18 @@ const Profile = () => {
         description="Gerencie seu perfil e configurações da conta WiizeProspect"
       />
 
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/dashboard')}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                <ArrowLeft size={18} />
-              </Button>
-              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-            </div>
-            <h1 className="text-sm sm:text-lg font-semibold">Meu Perfil</h1>
-          </div>
-        </div>
-      </header>
+      {/* Sidebar - Desktop only */}
+      <AppSidebar profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
+      {/* Header */}
+      <AppHeader profile={profile} />
+
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl lg:pl-20">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>
+          <p className="text-muted-foreground text-sm">Gerencie suas configurações de conta</p>
+        </div>
         <div className="grid gap-6">
           {/* Profile Card */}
           <Card className="border-border/50">

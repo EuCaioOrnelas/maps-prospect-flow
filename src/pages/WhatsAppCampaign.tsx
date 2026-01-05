@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ArrowLeft, 
   MessageSquare,
   Send,
   Pause,
@@ -39,6 +37,8 @@ import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export interface Lead {
   name: string;
@@ -670,32 +670,10 @@ const WhatsAppCampaign = () => {
     return (
       <div className="min-h-screen bg-background overflow-x-hidden">
         <DisclaimerModal />
-        {/* Header */}
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-3 sm:px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                    <ArrowLeft size={18} />
-                  </Button>
-                </Link>
-                <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-              </div>
-              
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Link to="/whatsapp/reports">
-                  <Button variant="outline" size="sm" className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
-                    <BarChart3 size={16} />
-                    <span className="hidden sm:inline">Relatórios</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </header>
+        <AppSidebar profile={profile} />
+        <AppHeader profile={profile} />
 
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20">
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
         </main>
 
@@ -716,39 +694,31 @@ const WhatsAppCampaign = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <DisclaimerModal />
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                  <ArrowLeft size={18} />
-                </Button>
-              </Link>
-              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-            </div>
-            
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link to="/whatsapp/reports">
-                <Button variant="outline" size="sm" className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
-                  <BarChart3 size={16} />
-                  <span className="hidden sm:inline">Relatórios</span>
-                </Button>
-              </Link>
-              
-              <NumbersManager
-                numbers={numbers}
-                onNumbersChange={setNumbers}
-                maxNumbers={maxNumbers}
-                onConnect={setSelectedNumberId}
-              />
-            </div>
+      <AppSidebar profile={profile} />
+      <AppHeader profile={profile} />
+
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20">
+        {/* Page Header */}
+        <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold">Disparos em Massa</h1>
+            <p className="text-muted-foreground text-sm">Gerencie suas campanhas de WhatsApp</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/whatsapp/reports">
+              <Button variant="outline" size="sm" className="gap-2">
+                <BarChart3 size={16} />
+                <span className="hidden sm:inline">Relatórios</span>
+              </Button>
+            </Link>
+            <NumbersManager
+              numbers={numbers}
+              onNumbersChange={setNumbers}
+              maxNumbers={maxNumbers}
+              onConnect={setSelectedNumberId}
+            />
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Pending Reset Warning */}
         {hasPendingReset && selectedNumber && (
           <div className="max-w-4xl mx-auto mb-6">

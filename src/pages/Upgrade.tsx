@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, ArrowLeft, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard } from "lucide-react";
+import { Check, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
@@ -233,35 +234,14 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Sidebar - Desktop only */}
+      <AppSidebar profile={profile} />
+
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/dashboard")}
-              className="gap-2 h-8 sm:h-9 px-2 sm:px-3"
-            >
-              <ArrowLeft size={16} />
-              <span className="hidden sm:inline">Voltar</span>
-            </Button>
-            
-            <Link to="/">
-              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-            </Link>
-            
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-              <Crown size={14} className="text-primary" />
-              <span className="hidden sm:inline">Plano:</span>
-              <span className="font-medium text-foreground capitalize">{currentPlan}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader profile={profile} />
 
       {/* Promo Banner */}
-      <div className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
+      <div className="lg:pl-14 bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
           <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
@@ -277,7 +257,7 @@ const Upgrade = () => {
       </div>
 
       {/* Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 lg:pl-20">
         {/* Trial Expired Banner */}
         {isTrialExpired && (
           <div className="max-w-3xl mx-auto mb-10 animate-fade-in">
