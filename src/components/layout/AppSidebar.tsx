@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AppSidebarProps {
   profile?: {
@@ -84,144 +90,182 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   };
 
   return (
-    <div
-      className="fixed left-0 top-0 h-screen z-40 hidden lg:flex"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
-          "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isHovered ? "w-56" : "w-14"
-        )}
+    <TooltipProvider delayDuration={0}>
+      <div
+        className="fixed left-0 top-0 h-screen z-40 hidden lg:flex"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Logo area - aligned with header height */}
-        <div className="h-[57px] flex items-center px-3 border-b border-sidebar-border">
-          <Logo size="sm" showText={isHovered} />
-        </div>
+        {/* Sidebar */}
+        <aside
+          className={cn(
+            "h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
+            "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            isHovered ? "w-56" : "w-14"
+          )}
+        >
+          {/* Logo area - aligned with header height */}
+          <div className="h-[57px] flex items-center px-3 border-b border-sidebar-border">
+            <Logo size="sm" showText={isHovered} />
+          </div>
 
-        {/* Main navigation */}
-        <nav className="flex-1 py-4 px-2">
-          <ul className="space-y-1">
-            {mainNavItems.map((item) => (
-              <li key={item.title}>
-                {item.onClick ? (
-                  <button
-                    onClick={item.onClick}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      item.active 
-                        ? "bg-primary/20 text-primary font-medium" 
-                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          {/* Main navigation */}
+          <nav className="flex-1 py-4 px-2">
+            <ul className="space-y-1">
+              {mainNavItems.map((item) => (
+                <li key={item.title}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {item.onClick ? (
+                        <button
+                          onClick={item.onClick}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                            item.active 
+                              ? "bg-primary/20 text-primary font-medium" 
+                              : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <item.icon size={20} className="shrink-0" />
+                          <span className={cn(
+                            "whitespace-nowrap transition-all duration-300",
+                            isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                          )}>
+                            {item.title}
+                          </span>
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.url}
+                          className={cn(
+                            "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                            item.active 
+                              ? "bg-primary/20 text-primary font-medium" 
+                              : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <item.icon size={20} className="shrink-0" />
+                          <span className={cn(
+                            "whitespace-nowrap transition-all duration-300",
+                            isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                          )}>
+                            {item.title}
+                          </span>
+                        </Link>
+                      )}
+                    </TooltipTrigger>
+                    {!isHovered && (
+                      <TooltipContent side="right" className="font-medium">
+                        {item.title}
+                      </TooltipContent>
                     )}
-                  >
-                    <item.icon size={20} className="shrink-0" />
-                    <span className={cn(
-                      "whitespace-nowrap transition-all duration-300",
-                      isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                    )}>
-                      {item.title}
-                    </span>
-                  </button>
-                ) : (
-                  <Link
-                    to={item.url}
-                    className={cn(
-                      "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      item.active 
-                        ? "bg-primary/20 text-primary font-medium" 
-                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                    )}
-                  >
-                    <item.icon size={20} className="shrink-0" />
-                    <span className={cn(
-                      "whitespace-nowrap transition-all duration-300",
-                      isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                    )}>
-                      {item.title}
-                    </span>
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
+                  </Tooltip>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Bottom navigation */}
-        <div className="py-4 px-2 border-t border-sidebar-border">
-          <ul className="space-y-1">
-              {bottomNavItems.map((item) => (
-              <li key={item.title}>
-                <Link
-                  to={item.url}
-                  className={cn(
-                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                    item.active 
-                      ? "bg-primary/20 text-primary font-medium" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                    item.highlight && !item.active && "text-primary hover:text-primary"
+          {/* Bottom navigation */}
+          <div className="py-4 px-2 border-t border-sidebar-border">
+            <ul className="space-y-1">
+                {bottomNavItems.map((item) => (
+                <li key={item.title}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.url}
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                          item.active 
+                            ? "bg-primary/20 text-primary font-medium" 
+                            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                          item.highlight && !item.active && "text-primary hover:text-primary"
+                        )}
+                      >
+                        <item.icon size={20} className="shrink-0" />
+                        <span className={cn(
+                          "whitespace-nowrap transition-all duration-300",
+                          isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                        )}>
+                          {item.title}
+                        </span>
+                      </Link>
+                    </TooltipTrigger>
+                    {!isHovered && (
+                      <TooltipContent side="right" className="font-medium">
+                        {item.title}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </li>
+              ))}
+              
+              {/* Profile */}
+              <li>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/profile"
+                      className={cn(
+                        "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
+                        currentPath === "/profile" 
+                          ? "bg-primary/20 text-primary font-medium" 
+                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      )}
+                    >
+                      <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
+                        <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={cn(
+                        "whitespace-nowrap transition-all duration-300 truncate",
+                        isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                      )}>
+                        {profile?.name || 'Meu Perfil'}
+                      </span>
+                    </Link>
+                  </TooltipTrigger>
+                  {!isHovered && (
+                    <TooltipContent side="right" className="font-medium">
+                      {profile?.name || 'Meu Perfil'}
+                    </TooltipContent>
                   )}
-                >
-                  <item.icon size={20} className="shrink-0" />
-                  <span className={cn(
-                    "whitespace-nowrap transition-all duration-300",
-                    isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                  )}>
-                    {item.title}
-                  </span>
-                </Link>
+                </Tooltip>
               </li>
-            ))}
-            
-            {/* Profile */}
-            <li>
-              <Link
-                to="/profile"
-                className={cn(
-                  "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
-                  currentPath === "/profile" 
-                    ? "bg-primary/20 text-primary font-medium" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                )}
-              >
-                <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className={cn(
-                  "whitespace-nowrap transition-all duration-300 truncate",
-                  isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                )}>
-                  {profile?.name || 'Meu Perfil'}
-                </span>
-              </Link>
-            </li>
 
-            {/* Logout */}
-            <li>
-              <button
-                onClick={handleLogout}
-                className={cn(
-                  "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                  "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                )}
-              >
-                <LogOut size={20} className="shrink-0" />
-                <span className={cn(
-                  "whitespace-nowrap transition-all duration-300",
-                  isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                )}>
-                  Sair
-                </span>
-              </button>
-            </li>
-          </ul>
-        </div>
-      </aside>
-    </div>
+              {/* Logout */}
+              <li>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleLogout}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                        "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                      )}
+                    >
+                      <LogOut size={20} className="shrink-0" />
+                      <span className={cn(
+                        "whitespace-nowrap transition-all duration-300",
+                        isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                      )}>
+                        Sair
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  {!isHovered && (
+                    <TooltipContent side="right" className="font-medium">
+                      Sair
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </TooltipProvider>
   );
 };
