@@ -336,29 +336,31 @@ export const ChatArea = ({
                         key={message.id}
                         className={cn(
                           'flex w-full group',
-                          message.from_me ? 'justify-end' : 'justify-start'
+                          message.from_me ? 'justify-end pl-12 sm:pl-20' : 'justify-start pr-12 sm:pr-20'
                         )}
                       >
-                        <div className="flex items-center gap-1">
-                          {/* Reply button - only show for received messages on hover */}
-                          {!message.from_me && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleReply(message)}
-                            >
-                              <Reply className="h-3 w-3" />
-                            </Button>
-                          )}
+                        <div className={cn(
+                          'flex items-center gap-1',
+                          message.from_me ? 'flex-row-reverse' : 'flex-row'
+                        )}>
+                          {/* Reply button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            onClick={() => handleReply(message)}
+                          >
+                            <Reply className="h-3 w-3" />
+                          </Button>
                           
                           <div
                             className={cn(
-                              'relative max-w-[85%] sm:max-w-[75%] rounded-lg px-3 py-2 shadow-md',
+                              'relative rounded-lg px-3 py-2 shadow-md min-w-[80px]',
                               message.from_me
                                 ? 'bg-primary text-primary-foreground rounded-tr-none'
                                 : 'bg-card text-card-foreground rounded-tl-none border border-border'
                             )}
+                            style={{ maxWidth: 'min(90%, 520px)' }}
                           >
                             {/* Quoted message preview */}
                             {quotedMessage && (
@@ -389,18 +391,6 @@ export const ChatArea = ({
                               {getStatusIcon(message.status, message.from_me)}
                             </div>
                           </div>
-                          
-                          {/* Reply button - only show for sent messages on hover */}
-                          {message.from_me && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleReply(message)}
-                            >
-                              <Reply className="h-3 w-3" />
-                            </Button>
-                          )}
                         </div>
                       </div>
                     );
@@ -411,7 +401,7 @@ export const ChatArea = ({
             
             {/* Typing indicator */}
             {isTyping && (
-              <div className="flex justify-start">
+              <div className="flex justify-start pr-20">
                 <div className="bg-card rounded-lg px-4 py-3 shadow-md border border-border">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
