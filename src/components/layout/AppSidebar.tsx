@@ -5,12 +5,12 @@ import {
   BarChart3, 
   MessageSquare, 
   Crown, 
-  
   LogOut,
   ChevronDown,
   FileSearch,
   Send,
   MapPin,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,6 +76,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: MessageSquare,
       onClick: isFreePlan ? onWhatsAppClick : undefined,
       active: currentPath === "/whatsapp"
+    },
+    { 
+      title: "Chat", 
+      url: "/chat", 
+      icon: MessageCircle,
+      active: currentPath === "/chat"
     },
   ];
 
@@ -270,6 +276,29 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   </span>
                 </Link>
               )}
+            </li>
+
+            {/* Chat */}
+            <li>
+              <Link
+                to={mainNavItems[2].url}
+                className={cn(
+                  "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
+                  mainNavItems[2].active 
+                    ? "bg-primary/20 text-primary font-medium" 
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
+              >
+                <MessageCircle size={20} className="shrink-0" />
+                <span 
+                  className={cn(
+                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
+                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                  )}
+                >
+                  {mainNavItems[2].title}
+                </span>
+              </Link>
             </li>
           </ul>
         </nav>

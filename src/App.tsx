@@ -27,6 +27,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutFailed from "./pages/CheckoutFailed";
 import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute>
+                    <Chat />
                   </ProtectedRoute>
                 } 
               />
