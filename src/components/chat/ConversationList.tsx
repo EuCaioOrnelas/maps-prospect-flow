@@ -7,10 +7,11 @@ import { cn } from '@/lib/utils';
 import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
 import type { Conversation } from '@/hooks/useChat';
 
 interface ConversationListProps {
@@ -38,6 +39,69 @@ export const ConversationList = ({
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
+  const [fetchingAvatars, setFetchingAvatars] = useState<Set<string>>(new Set());
+
+  // Fetch avatar from WhatsApp for conversations without one
+  const fetchAvatarFromWhatsApp = useCallback(async (conversation: Conversation) => {
+    if (!conversation.whatsapp_numbers?.id || fetchingAvatars.has(conversation.id)) {
+      return;
+    }
+
+    setFetchingAvatars(prev => new Set(prev).add(conversation.id));
+
+    try {
+      // Get instance name for this WhatsApp number
+      const { data: numberData } = await supabase
+        .from('whatsapp_numbers')
+        .select('instance_name')
+        .eq('id', conversation.whatsapp_number_id)
+        .single();
+
+      if (!numberData?.instance_name) return;
+
+      const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
+        body: {
+          conversationId: conversation.id,
+          instanceName: numberData.instance_name,
+          phone: conversation.phone,
+        },
+      });
+
+      if (!error && data?.avatarUrl) {
+        setAvatarCache(prev => ({
+          ...prev,
+          [conversation.id]: data.avatarUrl,
+        }));
+      }
+    } catch (e) {
+      console.log('Failed to fetch avatar:', e);
+    } finally {
+      setFetchingAvatars(prev => {
+        const next = new Set(prev);
+        next.delete(conversation.id);
+        return next;
+      });
+    }
+  }, [fetchingAvatars]);
+
+  // Auto-fetch avatars for conversations without one
+  useEffect(() => {
+    const allConversations = [...conversations, ...archivedConversations];
+    const conversationsWithoutAvatar = allConversations.filter(
+      conv => !conv.contacts?.avatar_url && !avatarCache[conv.id] && !fetchingAvatars.has(conv.id)
+    );
+
+    // Limit to 3 concurrent fetches
+    conversationsWithoutAvatar.slice(0, 3).forEach(conv => {
+      fetchAvatarFromWhatsApp(conv);
+    });
+  }, [conversations, archivedConversations, avatarCache, fetchingAvatars, fetchAvatarFromWhatsApp]);
+
+  // Get avatar URL - from contacts or cache
+  const getAvatarUrl = (conversation: Conversation) => {
+    return conversation.contacts?.avatar_url || avatarCache[conversation.id] || undefined;
+  };
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return '';
@@ -65,13 +129,25 @@ export const ConversationList = ({
   };
 
   const formatPhoneNumber = (phone: string) => {
-    if (phone.length === 13) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
+    // Normalize phone to just digits
+    const digits = phone.replace(/\D/g, '');
+    
+    // Brazilian format: +55 (XX) XXXXX-XXXX or +55 (XX) XXXX-XXXX
+    if (digits.length === 13 && digits.startsWith('55')) {
+      return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
     }
-    if (phone.length === 12) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 8)}-${phone.slice(8)}`;
+    if (digits.length === 12 && digits.startsWith('55')) {
+      return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
     }
-    return phone;
+    // International format with country code
+    if (digits.length >= 11) {
+      const countryCode = digits.slice(0, 2);
+      const areaCode = digits.slice(2, 4);
+      const rest = digits.slice(4);
+      return `+${countryCode} (${areaCode}) ${rest}`;
+    }
+    // Default: show with + prefix
+    return `+${digits}`;
   };
 
   const getInitials = (name: string) => {
@@ -165,7 +241,7 @@ export const ConversationList = ({
                     className="flex items-center gap-3 flex-1 min-w-0"
                   >
                     <Avatar className="h-12 w-12 shrink-0">
-                      <AvatarImage src={conversation.contacts?.avatar_url || undefined} />
+                      <AvatarImage src={getAvatarUrl(conversation)} />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {getInitials(displayName)}
                       </AvatarFallback>
