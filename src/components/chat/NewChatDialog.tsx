@@ -16,11 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Phone, MessageSquare, AlertTriangle, Send } from 'lucide-react';
+import { Phone, MessageSquare, AlertTriangle, Send, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { Link } from 'react-router-dom';
 import { CountryCodeSelect } from './CountryCodeSelect';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NewChatDialogProps {
   open: boolean;
@@ -42,8 +43,11 @@ export const NewChatDialog = ({
   const [initialMessage, setInitialMessage] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(defaultWhatsAppNumberId || '');
   const [isStarting, setIsStarting] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{ valid: boolean; message: string } | null>(null);
 
   const connectedNumbers = numbers.filter((n) => n.is_connected);
+  const fullPhone = `${countryCode}${phone}`;
 
   // Update selected number when default changes
   useEffect(() => {
@@ -51,6 +55,54 @@ export const NewChatDialog = ({
       setSelectedNumber(defaultWhatsAppNumberId);
     }
   }, [defaultWhatsAppNumberId]);
+
+  // Reset validation when phone or country code changes
+  useEffect(() => {
+    setValidationResult(null);
+  }, [phone, countryCode]);
+
+  const validateNumber = async () => {
+    if (!phone.trim() || phone.length < 10) {
+      toast.error('Digite um número válido com DDD');
+      return;
+    }
+
+    if (!selectedNumber) {
+      toast.error('Selecione um número de WhatsApp primeiro');
+      return;
+    }
+
+    setIsValidating(true);
+    setValidationResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-validate-number', {
+        body: {
+          phone: fullPhone,
+          whatsappNumberId: selectedNumber,
+        },
+      });
+
+      if (error) throw error;
+
+      setValidationResult({
+        valid: data.valid,
+        message: data.message || (data.valid ? 'Número válido' : 'Número inválido'),
+      });
+
+      if (!data.valid) {
+        toast.error(data.message || 'Este número não está registrado no WhatsApp');
+      } else {
+        toast.success('Número válido no WhatsApp!');
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+      toast.error('Erro ao validar número');
+      setValidationResult({ valid: false, message: 'Erro ao validar' });
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,8 +117,37 @@ export const NewChatDialog = ({
       return;
     }
 
-    // Combine country code with phone number
-    const fullPhone = `${countryCode}${phone}`;
+    // If not validated yet, validate first
+    if (!validationResult) {
+      setIsValidating(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('chat-validate-number', {
+          body: {
+            phone: fullPhone,
+            whatsappNumberId: selectedNumber,
+          },
+        });
+
+        if (error) throw error;
+
+        if (!data.valid) {
+          toast.error(data.message || 'Este número não está registrado no WhatsApp');
+          setValidationResult({ valid: false, message: data.message });
+          setIsValidating(false);
+          return;
+        }
+
+        setValidationResult({ valid: true, message: 'Número válido' });
+      } catch (error) {
+        console.error('Validation error:', error);
+        // Continue anyway if validation fails
+      } finally {
+        setIsValidating(false);
+      }
+    } else if (!validationResult.valid) {
+      toast.error('O número informado não está registrado no WhatsApp');
+      return;
+    }
 
     setIsStarting(true);
     try {
@@ -81,6 +162,7 @@ export const NewChatDialog = ({
       setPhone('');
       setContactName('');
       setInitialMessage('');
+      setValidationResult(null);
     } catch (error) {
       toast.error('Erro ao iniciar conversa');
     } finally {
@@ -159,14 +241,49 @@ export const NewChatDialog = ({
                     value={phone}
                     onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                     placeholder="11999999999"
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     maxLength={12}
                   />
+                  {validationResult && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {validationResult.valid ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                  )}
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={validateNumber}
+                  disabled={isValidating || !phone.trim() || !selectedNumber}
+                  className="shrink-0"
+                >
+                  {isValidating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Validar'
+                  )}
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                DDD + número (ex: 11999999999)
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  DDD + número (ex: 11999999999)
+                </p>
+                {phone.length >= 10 && (
+                  <p className="text-xs text-muted-foreground">
+                    +{fullPhone}
+                  </p>
+                )}
+              </div>
+              {validationResult && (
+                <p className={`text-xs ${validationResult.valid ? 'text-green-600' : 'text-red-500'}`}>
+                  {validationResult.message}
+                </p>
+              )}
             </div>
 
             {/* Contact Name (Optional) */}
@@ -209,10 +326,13 @@ export const NewChatDialog = ({
               <Button 
                 type="submit" 
                 className="flex-1 gap-2"
-                disabled={isStarting || !phone.trim() || !selectedNumber}
+                disabled={isStarting || isValidating || !phone.trim() || !selectedNumber}
               >
-                {isStarting ? (
-                  'Iniciando...'
+                {isStarting || isValidating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isValidating ? 'Validando...' : 'Iniciando...'}
+                  </>
                 ) : initialMessage.trim() ? (
                   <>
                     <Send className="h-4 w-4" />
