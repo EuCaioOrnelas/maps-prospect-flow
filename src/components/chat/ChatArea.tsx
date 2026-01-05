@@ -138,18 +138,23 @@ export const ChatArea = ({
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string, fromMe: boolean) => {
+    if (!fromMe) return null;
+    
     switch (status) {
       case 'pending':
-        return <Clock className="h-3 w-3 text-muted-foreground" />;
+        return <Clock className="h-3 w-3 text-black/60" />;
       case 'sent':
-        return <Check className="h-3 w-3 text-muted-foreground" />;
+        // Um check = enviado para o servidor
+        return <Check className="h-3 w-3 text-black/60" />;
       case 'delivered':
-        return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
+        // Dois checks = entregue ao destinatário
+        return <CheckCheck className="h-3 w-3 text-black/60" />;
       case 'read':
-        return <CheckCheck className="h-3 w-3 text-blue-400" />;
+        // Dois checks azuis = lido pelo destinatário
+        return <CheckCheck className="h-3 w-3 text-blue-500" />;
       default:
-        return null;
+        return <Check className="h-3 w-3 text-black/60" />;
     }
   };
 
@@ -200,7 +205,7 @@ export const ChatArea = ({
 
   if (!conversation) {
     return (
-      <div className="h-full flex items-center justify-center bg-muted/30">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center text-muted-foreground">
           <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <Send className="h-10 w-10 text-muted-foreground/50" />
@@ -297,8 +302,14 @@ export const ChatArea = ({
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-hidden relative bg-background">
+      {/* Messages area with subtle pattern background */}
+      <div 
+        className="flex-1 overflow-hidden relative"
+        style={{
+          backgroundColor: 'hsl(var(--background))',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      >
         <ScrollArea className="h-full p-4" ref={scrollRef}>
           <div className="space-y-4 pb-2">
             {messageGroups.map((group) => (
@@ -366,10 +377,13 @@ export const ChatArea = ({
                             {renderMessageContent(message)}
 
                             <div className="flex items-center justify-end gap-1 mt-1">
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className={cn(
+                                "text-[10px]",
+                                message.from_me ? "text-black/60" : "text-muted-foreground"
+                              )}>
                                 {format(new Date(message.created_at), 'HH:mm')}
                               </span>
-                              {message.from_me && getStatusIcon(message.status)}
+                              {getStatusIcon(message.status, message.from_me)}
                             </div>
                           </div>
                           
@@ -451,7 +465,7 @@ export const ChatArea = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite uma mensagem..."
-            className="flex-1 bg-[#2a3942] border-none text-white placeholder:text-gray-400"
+            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground"
             disabled={isSending}
           />
           

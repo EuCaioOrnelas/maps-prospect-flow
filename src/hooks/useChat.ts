@@ -339,11 +339,16 @@ export const useChat = (selectedNumberId?: string | null) => {
     await fetchMessages(conversation.id);
   }, [fetchMessages]);
 
-  // Initial load
+  // Initial load with immediate fetch
   useEffect(() => {
-    fetchConversations();
-    fetchArchivedConversations();
-  }, [fetchConversations, fetchArchivedConversations]);
+    if (!user) return;
+    
+    setIsLoading(true);
+    Promise.all([
+      fetchConversations(),
+      fetchArchivedConversations()
+    ]).finally(() => setIsLoading(false));
+  }, [user, selectedNumberId]);
 
   // Realtime subscription for messages
   useEffect(() => {
