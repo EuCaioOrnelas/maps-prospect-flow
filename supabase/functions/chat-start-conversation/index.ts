@@ -188,8 +188,8 @@ async function sendInitialMessage(
   try {
     console.log('Sending initial message to:', phoneNumber);
     
-    // Format phone number for Evolution API
-    const formattedPhone = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
+    // Phone number should already include country code from frontend
+    const formattedPhone = phoneNumber;
     
     // Send message via Evolution API
     const response = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
