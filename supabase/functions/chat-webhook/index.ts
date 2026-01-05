@@ -236,37 +236,57 @@ serve(async (req) => {
       console.log('Conversation updated, message processing complete');
     }
 
-    // Handle message status updates
-    if (event === 'messages.update' || event === 'messages_update') {
-      console.log('Processing messages.update event');
+    // Handle message status updates - support multiple event name formats
+    if (event === 'messages.update' || event === 'messages_update' || event === 'message.update' || event === 'messageupdate') {
+      console.log('=== PROCESSING MESSAGE STATUS UPDATE ===');
+      console.log('Raw data:', JSON.stringify(data));
+      
       const updates = Array.isArray(data) ? data : [data];
       
       for (const update of updates) {
-        const messageId = update?.key?.id || update?.id;
-        const statusCode = update?.update?.status ?? update?.status;
+        console.log('Processing update item:', JSON.stringify(update));
+        
+        // Handle different payload structures from Evolution API v1 and v2
+        const messageId = update?.key?.id || update?.id || update?.messageId;
+        const statusCode = update?.update?.status ?? update?.status ?? update?.ack;
+        
+        console.log('Extracted messageId:', messageId, 'statusCode:', statusCode);
         
         if (messageId && statusCode !== undefined) {
-          // Map status codes: 0=pending, 1=sent, 2=delivered, 3=read, 4=played, 5=read
+          // Map status codes to our status values
           let statusText = 'sent';
-          switch (statusCode) {
-            case 0: statusText = 'pending'; break;
-            case 1: statusText = 'sent'; break;
-            case 2: statusText = 'delivered'; break;
-            case 3: statusText = 'read'; break;
-            case 4: statusText = 'read'; break; // played = read for audio
-            case 5: statusText = 'read'; break;
+          const numStatus = Number(statusCode);
+          
+          // Handle string status values too
+          if (typeof statusCode === 'string') {
+            statusText = statusCode.toLowerCase();
+          } else {
+            switch (numStatus) {
+              case 0: statusText = 'pending'; break;
+              case 1: statusText = 'sent'; break;
+              case 2: statusText = 'delivered'; break;
+              case 3: statusText = 'read'; break;
+              case 4: statusText = 'read'; break; // played = read for audio
+              case 5: statusText = 'read'; break;
+              default: statusText = 'sent';
+            }
           }
           
           console.log('Updating message status:', messageId, 'to:', statusText);
           
-          const { error: updateErr } = await supabase
+          const { error: updateErr, data: updatedRows } = await supabase
             .from('messages')
             .update({ status: statusText, updated_at: new Date().toISOString() })
-            .eq('message_id', messageId);
+            .eq('message_id', messageId)
+            .select();
 
           if (updateErr) {
             console.error('Error updating message status:', updateErr);
+          } else {
+            console.log('Updated rows:', updatedRows?.length);
           }
+        } else {
+          console.log('Could not extract messageId or statusCode from update');
         }
       }
     }
