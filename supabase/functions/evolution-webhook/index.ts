@@ -188,22 +188,32 @@ serve(async (req) => {
               try {
                 const profilePicture = await fetchProfilePicture(instance, rawPhone);
                 if (profilePicture) {
+                  console.log('Got profile picture URL:', profilePicture);
+                  
+                  // Update contact if exists
                   await updateContactAvatar(whatsappNumber.user_id, rawPhone, profilePicture);
                   
-                  // Also try to update the conversation contact avatar if no contact linked
-                  const { data: contact } = await supabase
+                  // Also check for contact by normalized phone
+                  const { data: contactByPhone } = await supabase
                     .from('contacts')
                     .select('id')
                     .eq('user_id', whatsappNumber.user_id)
-                    .eq('phone', rawPhone)
-                    .single();
+                    .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone}`)
+                    .limit(1);
                     
-                  if (contact) {
+                  if (contactByPhone && contactByPhone.length > 0) {
+                    // Update conversation with contact_id
                     await supabase
                       .from('conversations')
-                      .update({ contact_id: contact.id })
+                      .update({ contact_id: contactByPhone[0].id })
                       .eq('id', conversationId)
                       .is('contact_id', null);
+                      
+                    // Update avatar on contact
+                    await supabase
+                      .from('contacts')
+                      .update({ avatar_url: profilePicture, updated_at: new Date().toISOString() })
+                      .eq('id', contactByPhone[0].id);
                   }
                 }
               } catch (e) {
