@@ -16,6 +16,8 @@ import {
   Plus,
   Type,
   ArrowLeft,
+  X,
+  Reply,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -34,7 +36,8 @@ interface ChatAreaProps {
   conversation: Conversation | null;
   messages: Message[];
   isSending: boolean;
-  onSendMessage: (content: string) => void;
+  isTyping?: boolean;
+  onSendMessage: (content: string, quotedMessageId?: string) => void;
   onOpenContactInfo: () => void;
   onBack?: () => void;
 }
@@ -50,12 +53,14 @@ export const ChatArea = ({
   conversation,
   messages,
   isSending,
+  isTyping = false,
   onSendMessage,
   onOpenContactInfo,
   onBack,
 }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState('');
-  const [fontSizeIndex, setFontSizeIndex] = useState(1); // Default to 'Normal'
+  const [fontSizeIndex, setFontSizeIndex] = useState(1);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -74,8 +79,23 @@ export const ChatArea = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isSending) return;
-    onSendMessage(inputValue);
+    onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
+    setReplyingTo(null);
+  };
+
+  const handleReply = (message: Message) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+  };
+
+  const getQuotedMessage = (quotedId: string | null) => {
+    if (!quotedId) return null;
+    return messages.find(m => m.id === quotedId || m.message_id === quotedId);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -277,20 +297,20 @@ export const ChatArea = ({
         </div>
       </div>
 
-      {/* Messages - WhatsApp-like background */}
+      {/* Messages - Dark WhatsApp-like background */}
       <div 
-        className="flex-1 overflow-hidden relative bg-[#efeae2] dark:bg-[#0b141a]"
+        className="flex-1 overflow-hidden relative bg-[#0b141a]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239C92AC' fill-opacity='0.05'/%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.02'/%3E%3C/svg%3E")`,
         }}
       >
         <ScrollArea className="h-full p-4" ref={scrollRef}>
-          <div className="space-y-4 max-w-3xl mx-auto pb-2">
+          <div className="space-y-4 pb-2">
             {messageGroups.map((group) => (
               <div key={group.date}>
                 {/* Date separator */}
                 <div className="flex items-center justify-center my-4">
-                  <span className="px-3 py-1 text-xs bg-card/90 backdrop-blur-sm rounded-lg text-muted-foreground shadow-sm">
+                  <span className="px-3 py-1 text-xs bg-[#1f2c34] rounded-lg text-gray-400 shadow-sm">
                     {group.date === format(new Date(), 'dd/MM/yyyy')
                       ? 'Hoje'
                       : group.date}
@@ -299,60 +319,126 @@ export const ChatArea = ({
 
                 {/* Messages */}
                 <div className="space-y-1">
-                  {group.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        'flex w-full',
-                        message.from_me ? 'justify-end pl-12' : 'justify-start pr-12'
-                      )}
-                    >
+                  {group.messages.map((message) => {
+                    const quotedMessage = getQuotedMessage(message.quoted_message_id);
+                    
+                    return (
                       <div
+                        key={message.id}
                         className={cn(
-                          'relative max-w-[85%] sm:max-w-[70%] rounded-lg px-3 py-2 shadow-md',
-                          message.from_me
-                            ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-foreground rounded-tr-none'
-                            : 'bg-card text-foreground rounded-tl-none'
+                          'flex w-full group',
+                          message.from_me ? 'justify-end' : 'justify-start'
                         )}
                       >
-                        {/* Message tail */}
-                        <div
-                          className={cn(
-                            'absolute top-0 w-3 h-3',
-                            message.from_me
-                              ? 'right-0 -mr-2 border-l-8 border-l-[#d9fdd3] dark:border-l-[#005c4b] border-t-8 border-t-transparent border-b-8 border-b-transparent'
-                              : 'left-0 -ml-2 border-r-8 border-r-card border-t-8 border-t-transparent border-b-8 border-b-transparent'
+                        <div className="flex items-center gap-1">
+                          {/* Reply button - only show for received messages on hover */}
+                          {!message.from_me && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleReply(message)}
+                            >
+                              <Reply className="h-3 w-3" />
+                            </Button>
                           )}
-                          style={{ 
-                            clipPath: message.from_me 
-                              ? 'polygon(0 0, 100% 0, 0 100%)' 
-                              : 'polygon(100% 0, 0 0, 100% 100%)'
-                          }}
-                        />
+                          
+                          <div
+                            className={cn(
+                              'relative max-w-[85%] sm:max-w-[75%] rounded-lg px-3 py-2 shadow-md',
+                              message.from_me
+                                ? 'bg-[#005c4b] text-white rounded-tr-none'
+                                : 'bg-[#1f2c34] text-white rounded-tl-none'
+                            )}
+                          >
+                            {/* Quoted message preview */}
+                            {quotedMessage && (
+                              <div className={cn(
+                                'mb-2 p-2 rounded border-l-4 text-xs',
+                                message.from_me 
+                                  ? 'bg-[#004a3f] border-emerald-400' 
+                                  : 'bg-[#2a3942] border-gray-500'
+                              )}>
+                                <p className="font-medium text-emerald-300">
+                                  {quotedMessage.from_me ? 'Você' : displayName}
+                                </p>
+                                <p className="text-gray-300 line-clamp-2">
+                                  {quotedMessage.content || '[Mídia]'}
+                                </p>
+                              </div>
+                            )}
 
-                        {renderMessageContent(message)}
+                            {renderMessageContent(message)}
 
-                        <div className={cn(
-                          'flex items-center justify-end gap-1 mt-1',
-                          message.from_me ? 'text-muted-foreground' : 'text-muted-foreground'
-                        )}>
-                          <span className="text-[10px]">
-                            {format(new Date(message.created_at), 'HH:mm')}
-                          </span>
-                          {message.from_me && getStatusIcon(message.status)}
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              <span className="text-[10px] text-gray-400">
+                                {format(new Date(message.created_at), 'HH:mm')}
+                              </span>
+                              {message.from_me && getStatusIcon(message.status)}
+                            </div>
+                          </div>
+                          
+                          {/* Reply button - only show for sent messages on hover */}
+                          {message.from_me && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleReply(message)}
+                            >
+                              <Reply className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
+            
+            {/* Typing indicator */}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-[#1f2c34] rounded-lg px-4 py-3 shadow-md">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </div>
 
+      {/* Reply preview */}
+      {replyingTo && (
+        <div className="px-3 pt-2 bg-[#1f2c34] border-t border-border">
+          <div className="flex items-center gap-2 p-2 bg-[#0b141a] rounded-lg">
+            <div className="flex-1 border-l-4 border-emerald-500 pl-2">
+              <p className="text-xs font-medium text-emerald-400">
+                {replyingTo.from_me ? 'Você' : displayName}
+              </p>
+              <p className="text-xs text-gray-400 line-clamp-1">
+                {replyingTo.content || '[Mídia]'}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={cancelReply}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
-      <div className="p-3 border-t border-border bg-card shrink-0">
+      <div className="p-3 border-t border-border bg-[#1f2c34] shrink-0">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <EmojiPicker 
             onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
@@ -370,7 +456,7 @@ export const ChatArea = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite uma mensagem..."
-            className="flex-1 bg-muted/50"
+            className="flex-1 bg-[#2a3942] border-none text-white placeholder:text-gray-400"
             disabled={isSending}
           />
           
@@ -378,7 +464,7 @@ export const ChatArea = ({
             type="submit" 
             size="icon" 
             disabled={!inputValue.trim() || isSending}
-            className="rounded-full"
+            className="rounded-full bg-emerald-600 hover:bg-emerald-700"
           >
             <Send className="h-5 w-5" />
           </Button>
