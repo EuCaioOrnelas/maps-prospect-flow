@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { useWhatsAppNumbers, PLAN_LIMITS } from '@/hooks/useWhatsAppNumbers';
+import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
@@ -10,16 +11,19 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2 } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { WhatsAppNumber } from '@/hooks/useWhatsAppNumbers';
 
 const Chat = () => {
   const { profile } = useAuth();
   const { numbers, loading: loadingNumbers, fetchNumbers } = useWhatsAppNumbers();
+  const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
+  const [notificationRequested, setNotificationRequested] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
   
   const {
@@ -84,6 +88,16 @@ const Chat = () => {
   const handleConnect = (numberId: string) => {
     setSelectedNumberId(numberId);
     setShowNumbersManager(false);
+  };
+
+  const handleRequestNotifications = async () => {
+    const granted = await requestPermission();
+    setNotificationRequested(true);
+    if (granted) {
+      toast.success('Notificações ativadas!');
+    } else {
+      toast.error('Permissão de notificações negada');
+    }
   };
 
   return (
@@ -204,6 +218,36 @@ const Chat = () => {
                   
                   {/* Actions */}
                   <div className="flex items-center gap-2">
+                    {/* Notification Toggle */}
+                    {notificationsSupported && permission !== 'granted' && !notificationRequested && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleRequestNotifications}
+                            >
+                              <BellOff className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ativar notificações</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {notificationsSupported && permission === 'granted' && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="sm" variant="ghost" className="text-green-500">
+                              <Bell className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Notificações ativadas</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    
                     {/* New Chat Button */}
                     <Button
                       size="sm"
