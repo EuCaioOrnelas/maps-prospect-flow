@@ -187,70 +187,78 @@ serve(async (req) => {
       console.error('Error updating instance_name:', updateError);
     }
 
-    // Configure webhook for chat messages automatically
-    try {
-      const webhookUrl = `${SUPABASE_URL}/functions/v1/chat-webhook`;
-      console.log(`Configuring webhook for instance ${instanceName}: ${webhookUrl}`);
-      
-      const webhookResponse = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
+    // Configure webhook for chat messages - try multiple endpoints
+    const webhookUrl = `${SUPABASE_URL}/functions/v1/chat-webhook`;
+    console.log(`Configuring webhook for instance ${instanceName}: ${webhookUrl}`);
+    
+    let webhookConfigured = false;
+    const webhookEndpoints = [
+      {
+        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY,
-        },
-        body: JSON.stringify({
+        body: {
           url: webhookUrl,
           webhook_by_events: false,
           webhook_base64: true,
-          events: [
-            "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE", 
-            "CONNECTION_UPDATE",
-            "QRCODE_UPDATED",
-            "SEND_MESSAGE"
-          ]
-        }),
-      });
-
-      if (webhookResponse.ok) {
-        const webhookResult = await webhookResponse.json();
-        console.log('Webhook configured successfully for instance:', instanceName, JSON.stringify(webhookResult));
-      } else {
-        const webhookError = await webhookResponse.text();
-        console.error('Failed to configure webhook:', webhookError);
-        
-        // Try alternative webhook endpoint
-        console.log('Trying alternative webhook endpoint...');
-        const altResponse = await fetch(`${EVOLUTION_API_URL}/webhook/instance/${instanceName}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY,
-          },
-          body: JSON.stringify({
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+        }
+      },
+      {
+        url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
+        method: 'POST',
+        body: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+        }
+      },
+      {
+        url: `${EVOLUTION_API_URL}/instance/settings`,
+        method: 'POST',
+        body: {
+          instanceName: instanceName,
+          webhook: {
             enabled: true,
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: [
-              "MESSAGES_UPSERT",
-              "MESSAGES_UPDATE",
-              "CONNECTION_UPDATE", 
-              "QRCODE_UPDATED",
-              "SEND_MESSAGE"
-            ]
-          }),
-        });
-        
-        if (altResponse.ok) {
-          console.log('Webhook configured via alternative endpoint');
-        } else {
-          console.error('Alternative webhook config also failed:', await altResponse.text());
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
         }
       }
-    } catch (webhookError) {
-      console.error('Error configuring webhook:', webhookError);
-      // Don't fail the whole request if webhook config fails
+    ];
+
+    for (const endpoint of webhookEndpoints) {
+      if (webhookConfigured) break;
+      
+      try {
+        console.log(`Trying webhook: ${endpoint.method} ${endpoint.url}`);
+        
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY,
+          },
+          body: JSON.stringify(endpoint.body),
+        });
+
+        const responseText = await response.text();
+        console.log(`Response: ${response.status} - ${responseText.substring(0, 200)}`);
+
+        if (response.ok || response.status === 201) {
+          console.log('Webhook configured successfully via:', endpoint.url);
+          webhookConfigured = true;
+        }
+      } catch (e) {
+        console.log(`Endpoint ${endpoint.url} failed:`, e);
+      }
+    }
+
+    if (!webhookConfigured) {
+      console.error('Failed to configure webhook on all endpoints');
     }
 
     return new Response(JSON.stringify({
