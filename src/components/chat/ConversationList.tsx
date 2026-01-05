@@ -4,13 +4,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2, X, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import type { Conversation } from '@/hooks/useChat';
 
@@ -24,6 +26,7 @@ interface ConversationListProps {
   onArchive: (conversationId: string) => void;
   onUnarchive: (conversationId: string) => void;
   onDelete: (conversationId: string) => void;
+  onBulkDelete: (conversationIds: string[], deleteContacts: boolean) => Promise<void>;
 }
 
 export const ConversationList = ({
@@ -36,11 +39,60 @@ export const ConversationList = ({
   onArchive,
   onUnarchive,
   onDelete,
+  onBulkDelete,
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
   const [fetchingAvatars, setFetchingAvatars] = useState<Set<string>>(new Set());
+  
+  // Selection mode state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteContacts, setDeleteContacts] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Exit selection mode when tab changes
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, [activeTab]);
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === filteredConversations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredConversations.map(c => c.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setIsDeleting(true);
+    try {
+      await onBulkDelete(Array.from(selectedIds), deleteContacts);
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+      setShowDeleteDialog(false);
+      setDeleteContacts(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch avatar from WhatsApp for conversations without one
   const fetchAvatarFromWhatsApp = useCallback(async (conversation: Conversation) => {
@@ -180,9 +232,71 @@ export const ConversationList = ({
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">Conversas</h2>
-          <Button size="icon" variant="ghost" onClick={onNewChat}>
-            <Plus className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {selectionMode ? (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={selectAll}
+                        className="h-8 w-8"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {selectedIds.size === filteredConversations.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button 
+                  size="sm" 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={selectedIds.size === 0}
+                  className="h-8"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {selectedIds.size}
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => setSelectionMode(true)}
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Excluir conversas</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button size="icon" variant="ghost" onClick={onNewChat} className="h-8 w-8">
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -215,6 +329,16 @@ export const ConversationList = ({
         </Tabs>
       </div>
 
+      {/* Selection Mode Info */}
+      {selectionMode && (
+        <div className="px-4 py-2 bg-muted/50 border-b border-border text-sm text-muted-foreground">
+          {selectedIds.size === 0 
+            ? 'Clique nas conversas para selecionar'
+            : `${selectedIds.size} conversa(s) selecionada(s)`
+          }
+        </div>
+      )}
+
       {/* Conversation List */}
       <ScrollArea className="flex-1">
         <div className="divide-y divide-border">
@@ -225,19 +349,28 @@ export const ConversationList = ({
           ) : (
             filteredConversations.map((conversation) => {
               const displayName = getDisplayName(conversation);
-              const isSelected = selectedConversation?.id === conversation.id;
+              const isConvSelected = selectedConversation?.id === conversation.id;
               const isSaved = isContactSaved(conversation);
+              const isChecked = selectedIds.has(conversation.id);
 
               return (
                 <div
                   key={conversation.id}
                   className={cn(
                     'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 group',
-                    isSelected && 'bg-primary/10'
+                    isConvSelected && !selectionMode && 'bg-primary/10',
+                    isChecked && selectionMode && 'bg-primary/10'
                   )}
                 >
+                  {selectionMode && (
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => toggleSelection(conversation.id)}
+                      className="shrink-0"
+                    />
+                  )}
                   <button
-                    onClick={() => onSelect(conversation)}
+                    onClick={() => selectionMode ? toggleSelection(conversation.id) : onSelect(conversation)}
                     className="flex items-center gap-3 flex-1 min-w-0"
                   >
                     <Avatar className="h-12 w-12 shrink-0">
@@ -253,30 +386,32 @@ export const ConversationList = ({
                           <span className="font-medium text-foreground truncate max-w-[140px]">
                             {displayName}
                           </span>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="shrink-0">
-                                  {isSaved ? (
-                                    <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                                  ) : (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSaveContact(conversation);
-                                      }}
-                                      className="hover:text-primary transition-colors"
-                                    >
-                                      <UserPlus className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                                    </button>
-                                  )}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {isSaved ? 'Contato salvo' : 'Salvar contato'}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          {!selectionMode && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="shrink-0">
+                                    {isSaved ? (
+                                      <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                                    ) : (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onSaveContact(conversation);
+                                        }}
+                                        className="hover:text-primary transition-colors"
+                                      >
+                                        <UserPlus className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                                      </button>
+                                    )}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {isSaved ? 'Contato salvo' : 'Salvar contato'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap ml-auto">
                           {formatTime(conversation.last_message_at)}
@@ -295,50 +430,84 @@ export const ConversationList = ({
                     </div>
                   </button>
 
-                  {/* Actions Menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {!isSaved && (
-                        <DropdownMenuItem onClick={() => onSaveContact(conversation)}>
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Salvar contato
+                  {/* Actions Menu - only show when not in selection mode */}
+                  {!selectionMode && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {!isSaved && (
+                          <DropdownMenuItem onClick={() => onSaveContact(conversation)}>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Salvar contato
+                          </DropdownMenuItem>
+                        )}
+                        {activeTab === 'active' ? (
+                          <DropdownMenuItem onClick={() => onArchive(conversation.id)}>
+                            <Archive className="h-4 w-4 mr-2" />
+                            Arquivar conversa
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => onUnarchive(conversation.id)}>
+                            <ArchiveRestore className="h-4 w-4 mr-2" />
+                            Desarquivar conversa
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => onDelete(conversation.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Deletar conversa
                         </DropdownMenuItem>
-                      )}
-                      {activeTab === 'active' ? (
-                        <DropdownMenuItem onClick={() => onArchive(conversation.id)}>
-                          <Archive className="h-4 w-4 mr-2" />
-                          Arquivar conversa
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => onUnarchive(conversation.id)}>
-                          <ArchiveRestore className="h-4 w-4 mr-2" />
-                          Desarquivar conversa
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem 
-                        onClick={() => onDelete(conversation.id)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Deletar conversa
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               );
             })
           )}
         </div>
       </ScrollArea>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} conversa(s)?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>Esta ação não pode ser desfeita. Todas as mensagens serão excluídas permanentemente.</p>
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <Checkbox
+                  id="deleteContacts"
+                  checked={deleteContacts}
+                  onCheckedChange={(checked) => setDeleteContacts(checked === true)}
+                />
+                <label htmlFor="deleteContacts" className="text-sm cursor-pointer">
+                  Excluir também os contatos salvos associados
+                </label>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

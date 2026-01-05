@@ -208,6 +208,61 @@ export const useChat = (selectedNumberId?: string | null) => {
     await fetchArchivedConversations();
   }, [user, selectedConversation, fetchConversations, fetchArchivedConversations]);
 
+  // Bulk delete conversations and optionally their contacts
+  const bulkDeleteConversations = useCallback(async (conversationIds: string[], deleteContacts: boolean = false) => {
+    if (!user || conversationIds.length === 0) return;
+
+    // Get conversations with their contact_ids before deletion
+    const { data: conversationsToDelete } = await supabase
+      .from('conversations')
+      .select('id, contact_id')
+      .in('id', conversationIds)
+      .eq('user_id', user.id);
+
+    const contactIdsToDelete = deleteContacts && conversationsToDelete
+      ? conversationsToDelete.filter(c => c.contact_id).map(c => c.contact_id!)
+      : [];
+
+    // Delete all messages for these conversations
+    for (const convId of conversationIds) {
+      await supabase.from('messages').delete().eq('conversation_id', convId);
+    }
+
+    // Delete the conversations
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .in('id', conversationIds)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error bulk deleting conversations:', error);
+      throw error;
+    }
+
+    // Delete contacts if requested
+    if (deleteContacts && contactIdsToDelete.length > 0) {
+      const { error: contactError } = await supabase
+        .from('contacts')
+        .delete()
+        .in('id', contactIdsToDelete)
+        .eq('user_id', user.id);
+
+      if (contactError) {
+        console.error('Error deleting contacts:', contactError);
+      }
+    }
+
+    // Clear selection if any deleted conversation was selected
+    if (selectedConversation && conversationIds.includes(selectedConversation.id)) {
+      setSelectedConversation(null);
+      setMessages([]);
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+  }, [user, selectedConversation, fetchConversations, fetchArchivedConversations]);
+
   // Link contact to conversation
   const linkContactToConversation = useCallback(async (conversationId: string, contactId: string) => {
     if (!user) return;
@@ -577,6 +632,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
+    bulkDeleteConversations,
     linkContactToConversation,
     setSelectedConversation,
     mergeDuplicateConversations,
