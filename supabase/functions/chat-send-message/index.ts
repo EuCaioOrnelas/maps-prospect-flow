@@ -39,7 +39,7 @@ serve(async (req) => {
       });
     }
 
-    const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename } = await req.json();
+    const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename, quotedMessageId } = await req.json();
 
     // Get conversation and whatsapp number
     const { data: conversation, error: convError } = await supabase
@@ -56,6 +56,24 @@ serve(async (req) => {
       });
     }
 
+    // Get quoted message if provided
+    let quotedMessageInfo = null;
+    if (quotedMessageId) {
+      const { data: quotedMsg } = await supabase
+        .from('messages')
+        .select('message_id')
+        .eq('id', quotedMessageId)
+        .single();
+      
+      if (quotedMsg?.message_id) {
+        quotedMessageInfo = {
+          key: {
+            id: quotedMsg.message_id,
+          },
+        };
+      }
+    }
+
     const instanceName = conversation.whatsapp_numbers.instance_name;
     let apiEndpoint = '';
     let messageBody: Record<string, unknown> = {};
@@ -67,6 +85,11 @@ serve(async (req) => {
         number: conversation.phone,
         text: content,
       };
+      
+      // Add quoted message if provided
+      if (quotedMessageInfo) {
+        messageBody.quoted = quotedMessageInfo;
+      }
     } else if (messageType === 'image') {
       apiEndpoint = `${evolutionApiUrl}/message/sendMedia/${instanceName}`;
       messageBody = {
@@ -131,6 +154,7 @@ serve(async (req) => {
         content: content,
         media_url: mediaUrl || null,
         media_filename: mediaFilename || null,
+        quoted_message_id: quotedMessageId || null,
         status: 'sent',
       })
       .select()

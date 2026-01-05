@@ -251,32 +251,56 @@ export const useChat = (selectedNumberId?: string | null) => {
       .eq('id', conversationId);
   }, [user]);
 
-  // Send message
-  const sendMessage = useCallback(async (content: string, messageType: string = 'text') => {
+  // Send message with optimistic update
+  const sendMessage = useCallback(async (content: string, messageType: string = 'text', quotedMessageId?: string) => {
     if (!user || !selectedConversation || !content.trim()) return;
 
+    // Create optimistic message
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      user_id: user.id,
+      message_id: null,
+      remote_jid: selectedConversation.remote_jid,
+      from_me: true,
+      message_type: messageType,
+      content: content.trim(),
+      media_url: null,
+      media_mimetype: null,
+      media_filename: null,
+      quoted_message_id: quotedMessageId || null,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage]);
     setIsSending(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke('chat-send-message', {
         body: {
           conversationId: selectedConversation.id,
           content: content.trim(),
           messageType,
+          quotedMessageId,
         },
       });
 
       if (response.error) {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
         throw new Error(response.error.message);
       }
 
-      // Refresh messages
+      // Refresh messages to get the real message with proper ID and status
       await fetchMessages(selectedConversation.id);
       await fetchConversations();
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
       throw error;
     } finally {
       setIsSending(false);

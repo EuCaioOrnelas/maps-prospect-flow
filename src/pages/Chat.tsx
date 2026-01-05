@@ -72,9 +72,9 @@ const Chat = () => {
     setSelectedConversation(null);
   };
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, quotedMessageId?: string) => {
     try {
-      await sendMessage(content);
+      await sendMessage(content, 'text', quotedMessageId);
     } catch (error) {
       toast.error('Erro ao enviar mensagem');
     }
@@ -368,6 +368,7 @@ const Chat = () => {
                             isSending={isSending}
                             onSendMessage={handleSendMessage}
                             onOpenContactInfo={() => setShowContactInfo(true)}
+                            onBack={() => setSelectedConversation(null)}
                           />
                         </div>
 
