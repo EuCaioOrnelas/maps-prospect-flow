@@ -93,19 +93,12 @@ serve(async (req) => {
     if (action === 'reconfigure') {
       console.log('Reconfiguring webhook...');
 
+      // Evolution API v2 uses different endpoint patterns depending on server version
+      // Try multiple formats with the REQUIRED fields for each
       const setEndpoints = [
+        // Format 1: Evolution API v2.x with 'enabled' at root
         {
           url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
-          method: 'POST',
-          body: {
-            url: webhookUrl,
-            webhook_by_events: false,
-            webhook_base64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
-          }
-        },
-        {
-          url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
           method: 'POST',
           body: {
             enabled: true,
@@ -115,11 +108,47 @@ serve(async (req) => {
             events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
           }
         },
+        // Format 2: Evolution API v2.x alternate naming
         {
-          url: `${EVOLUTION_API_URL}/instance/settings`,
+          url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
           method: 'POST',
           body: {
-            instanceName: instanceName,
+            enabled: true,
+            url: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        },
+        // Format 3: Evolution API v1 style
+        {
+          url: `${EVOLUTION_API_URL}/instance/webhook/${instanceName}`,
+          method: 'PUT',
+          body: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        },
+        // Format 4: Direct webhook endpoint with PUT
+        {
+          url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
+          method: 'PUT',
+          body: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        },
+        // Format 5: Settings update with webhook nested
+        {
+          url: `${EVOLUTION_API_URL}/settings/${instanceName}`,
+          method: 'PUT',
+          body: {
             webhook: {
               enabled: true,
               url: webhookUrl,
@@ -151,7 +180,8 @@ serve(async (req) => {
           if (res.ok || res.status === 201) {
             results.reconfigureSuccess = true;
             results.reconfigureResponse = text;
-            console.log('Webhook configured successfully!');
+            results.successfulEndpoint = ep.url;
+            console.log('Webhook configured successfully via:', ep.url);
             break;
           }
         } catch (e) {

@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2 } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
 import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
@@ -16,12 +17,14 @@ interface ContactInfoPanelProps {
   conversation: Conversation | null;
   onClose: () => void;
   onContactUpdated: () => void;
+  onOpenNumbersManager?: () => void;
 }
 
 export const ContactInfoPanel = ({
   conversation,
   onClose,
   onContactUpdated,
+  onOpenNumbersManager,
 }: ContactInfoPanelProps) => {
   const { createContact, updateContact, getContactByPhone } = useContacts();
   const [contact, setContact] = useState<Contact | null>(null);
@@ -313,40 +316,56 @@ export const ContactInfoPanel = ({
       </ScrollArea>
 
       {/* Actions */}
-      {(isEditing || contact) && (
-        <div className="p-4 border-t border-border">
-          {isEditing ? (
-            <div className="flex gap-2">
+      <div className="p-4 border-t border-border space-y-3">
+        {/* Manage Numbers Button */}
+        {onOpenNumbersManager && (
+          <Button 
+            variant="outline" 
+            className="w-full gap-2"
+            onClick={onOpenNumbersManager}
+          >
+            <Settings2 className="h-4 w-4" />
+            Gerenciar Números Conectados
+          </Button>
+        )}
+        
+        {/* Contact Actions */}
+        {(isEditing || contact) && (
+          <>
+            {onOpenNumbersManager && <Separator />}
+            {isEditing ? (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setIsEditing(false);
+                    loadContact();
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            ) : (
               <Button 
                 variant="outline" 
-                className="flex-1"
-                onClick={() => {
-                  setIsEditing(false);
-                  loadContact();
-                }}
+                className="w-full"
+                onClick={() => setIsEditing(true)}
               >
-                Cancelar
+                Editar Contato
               </Button>
-              <Button 
-                className="flex-1"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Salvar
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => setIsEditing(true)}
-            >
-              Editar Contato
-            </Button>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
