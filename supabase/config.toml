@@ -68,3 +68,12 @@ verify_jwt = false
 
 [functions.chat-validate-number]
 verify_jwt = false
+
+[functions.evolution-reconnect]
+verify_jwt = false
+
+[functions.evolution-sync-messages]
+verify_jwt = false
+
+[functions.evolution-fetch-avatar]
+verify_jwt = false

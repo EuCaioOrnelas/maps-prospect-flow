@@ -39,35 +39,69 @@ serve(async (req) => {
 
     console.log(`Checking status for instance: ${instanceName}`);
 
-    // Check connection status
-    const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
-    });
+    // Check connection status with retry logic
+    let statusResponse: Response | null = null;
+    let retryCount = 0;
+    const maxRetries = 2;
 
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text();
-      console.error('Evolution API error:', errorText);
+    while (retryCount <= maxRetries) {
+      try {
+        statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
+          method: 'GET',
+          headers: {
+            'apikey': EVOLUTION_API_KEY,
+          },
+        });
+
+        if (statusResponse.ok) break;
+        retryCount++;
+        if (retryCount <= maxRetries) {
+          console.log(`Retry ${retryCount}/${maxRetries} for status check...`);
+          await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+        }
+      } catch (e) {
+        console.error(`Fetch error attempt ${retryCount}:`, e);
+        retryCount++;
+        if (retryCount <= maxRetries) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+
+    if (!statusResponse || !statusResponse.ok) {
+      const errorText = statusResponse ? await statusResponse.text() : 'No response';
+      console.error('Evolution API error after retries:', errorText);
       
-      // Se a API retornar erro, provavelmente a instância não existe mais ou está desconectada
-      // Atualizar o banco para refletir isso
-      await supabase
-        .from('whatsapp_numbers')
-        .update({ 
-          is_connected: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', numberId)
-        .eq('user_id', user.id);
+      // Don't immediately mark as disconnected - could be temporary API issue
+      // Only update if we're confident the instance doesn't exist
+      if (errorText.includes('not found') || errorText.includes('not exists')) {
+        await supabase
+          .from('whatsapp_numbers')
+          .update({ 
+            is_connected: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', numberId)
+          .eq('user_id', user.id);
 
+        return new Response(JSON.stringify({
+          success: true,
+          connected: false,
+          state: 'disconnected',
+          phoneNumber: null,
+          error: 'Instance not found'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // For other errors, return uncertain state without updating DB
       return new Response(JSON.stringify({
-        success: true,
-        connected: false,
-        state: 'disconnected',
+        success: false,
+        connected: null, // Uncertain
+        state: 'unknown',
         phoneNumber: null,
-        error: 'Instance not found or disconnected'
+        error: 'Could not determine connection state - API temporarily unavailable'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
