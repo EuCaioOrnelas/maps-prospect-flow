@@ -79,23 +79,42 @@ serve(async (req) => {
     }
 
     // Check if contact exists
-    const { data: existingContact } = await supabase
-      .from('contacts')
-      .select('id, name')
-      .eq('user_id', user.id)
-      .eq('phone', cleanPhone)
-      .single();
+    let existingContact = null;
+    try {
+      const { data: contactData } = await supabase
+        .from('contacts')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('phone', cleanPhone)
+        .single();
+      existingContact = contactData;
+    } catch (e) {
+      // Contact not found, which is fine
+      console.log('No existing contact found for phone:', cleanPhone);
+    }
 
-    // Create new conversation
+    // Create new conversation - explicitly handle null values
+    const contactId = existingContact?.id && existingContact.id !== 'null' ? existingContact.id : null;
+    const contactNameValue = existingContact?.name || contactName || null;
+
+    console.log('Creating conversation with:', {
+      user_id: user.id,
+      whatsapp_number_id: whatsappNumberId,
+      contact_id: contactId,
+      remote_jid: remoteJid,
+      phone: cleanPhone,
+      contact_name: contactNameValue,
+    });
+
     const { data: newConv, error: convError } = await supabase
       .from('conversations')
       .insert({
         user_id: user.id,
         whatsapp_number_id: whatsappNumberId,
-        contact_id: existingContact?.id || null,
+        contact_id: contactId,
         remote_jid: remoteJid,
         phone: cleanPhone,
-        contact_name: existingContact?.name || contactName || null,
+        contact_name: contactNameValue,
       })
       .select('*')
       .single();
