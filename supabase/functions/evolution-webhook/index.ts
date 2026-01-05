@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -24,11 +26,199 @@ serve(async (req) => {
     const instance = payload.instance;
     const data = payload.data;
 
+    // Helper function to fetch profile picture from Evolution API
+    async function fetchProfilePicture(instanceName: string, phone: string): Promise<string | null> {
+      try {
+        const response = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY!,
+          },
+          body: JSON.stringify({ number: phone }),
+        });
+
+        if (!response.ok) {
+          console.log(`Failed to fetch profile picture for ${phone}:`, response.status);
+          return null;
+        }
+
+        const result = await response.json();
+        console.log('Profile picture result:', JSON.stringify(result));
+        return result.profilePictureUrl || result.picture || null;
+      } catch (error) {
+        console.error('Error fetching profile picture:', error);
+        return null;
+      }
+    }
+
+    // Helper function to update or create contact with profile picture
+    async function updateContactAvatar(userId: string, phone: string, avatarUrl: string) {
+      // Check if contact exists
+      const { data: existingContact } = await supabase
+        .from('contacts')
+        .select('id, avatar_url')
+        .eq('user_id', userId)
+        .eq('phone', phone)
+        .single();
+
+      if (existingContact) {
+        // Only update if avatar is different or empty
+        if (!existingContact.avatar_url || existingContact.avatar_url !== avatarUrl) {
+          const { error } = await supabase
+            .from('contacts')
+            .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+            .eq('id', existingContact.id);
+
+          if (error) {
+            console.error('Error updating contact avatar:', error);
+          } else {
+            console.log(`Updated avatar for contact ${phone}`);
+          }
+        }
+      }
+    }
+
     // Handle different webhook events
     switch (event) {
       case 'messages.upsert':
-        // Message received or sent status
-        console.log('Message upsert:', data);
+        // Message received or sent
+        console.log('Message upsert:', JSON.stringify(data));
+        
+        if (data?.key && data?.message) {
+          const messageKey = data.key;
+          const messageData = data.message;
+          const remoteJid = messageKey.remoteJid;
+          const fromMe = messageKey.fromMe;
+          const messageId = messageKey.id;
+          
+          // Extract phone number from remoteJid
+          const phone = remoteJid.split('@')[0];
+          
+          // Get the WhatsApp number (instance) info
+          const { data: whatsappNumber } = await supabase
+            .from('whatsapp_numbers')
+            .select('id, user_id')
+            .eq('instance_name', instance)
+            .single();
+          
+          if (whatsappNumber) {
+            // If message is received (not from me), try to fetch profile picture
+            if (!fromMe && phone) {
+              const profilePicture = await fetchProfilePicture(instance, phone);
+              if (profilePicture) {
+                await updateContactAvatar(whatsappNumber.user_id, phone, profilePicture);
+              }
+            }
+
+            // Get or create conversation
+            let conversationId: string;
+            const { data: existingConv } = await supabase
+              .from('conversations')
+              .select('id')
+              .eq('remote_jid', remoteJid)
+              .eq('whatsapp_number_id', whatsappNumber.id)
+              .single();
+            
+            if (existingConv) {
+              conversationId = existingConv.id;
+            } else {
+              // Create new conversation
+              const { data: newConv, error: convError } = await supabase
+                .from('conversations')
+                .insert({
+                  user_id: whatsappNumber.user_id,
+                  whatsapp_number_id: whatsappNumber.id,
+                  remote_jid: remoteJid,
+                  phone: phone,
+                  contact_name: data.pushName || null,
+                })
+                .select('id')
+                .single();
+              
+              if (convError || !newConv) {
+                console.error('Error creating conversation:', convError);
+                break;
+              }
+              conversationId = newConv.id;
+            }
+
+            // Extract message content based on type
+            let messageType = 'text';
+            let content = '';
+            let mediaUrl = null;
+            let mediaFilename = null;
+            let mediaMimetype = null;
+
+            if (messageData.conversation) {
+              content = messageData.conversation;
+            } else if (messageData.extendedTextMessage?.text) {
+              content = messageData.extendedTextMessage.text;
+            } else if (messageData.imageMessage) {
+              messageType = 'image';
+              content = messageData.imageMessage.caption || '';
+              mediaUrl = messageData.imageMessage.url;
+              mediaMimetype = messageData.imageMessage.mimetype;
+            } else if (messageData.videoMessage) {
+              messageType = 'video';
+              content = messageData.videoMessage.caption || '';
+              mediaUrl = messageData.videoMessage.url;
+              mediaMimetype = messageData.videoMessage.mimetype;
+            } else if (messageData.audioMessage) {
+              messageType = 'audio';
+              mediaUrl = messageData.audioMessage.url;
+              mediaMimetype = messageData.audioMessage.mimetype;
+            } else if (messageData.documentMessage) {
+              messageType = 'document';
+              mediaUrl = messageData.documentMessage.url;
+              mediaFilename = messageData.documentMessage.fileName;
+              mediaMimetype = messageData.documentMessage.mimetype;
+            }
+
+            // Check if message already exists
+            const { data: existingMsg } = await supabase
+              .from('messages')
+              .select('id')
+              .eq('message_id', messageId)
+              .single();
+
+            if (!existingMsg) {
+              // Insert the message
+              const { error: msgError } = await supabase
+                .from('messages')
+                .insert({
+                  conversation_id: conversationId,
+                  user_id: whatsappNumber.user_id,
+                  message_id: messageId,
+                  remote_jid: remoteJid,
+                  from_me: fromMe,
+                  message_type: messageType,
+                  content: content,
+                  media_url: mediaUrl,
+                  media_filename: mediaFilename,
+                  media_mimetype: mediaMimetype,
+                  status: fromMe ? 'sent' : 'received',
+                });
+
+              if (msgError) {
+                console.error('Error inserting message:', msgError);
+              } else {
+                console.log('Message inserted successfully');
+              }
+
+              // Update conversation
+              await supabase
+                .from('conversations')
+                .update({
+                  last_message: content || `[${messageType}]`,
+                  last_message_at: new Date().toISOString(),
+                  unread_count: fromMe ? 0 : supabase.rpc('increment', { x: 1 }),
+                  contact_name: data.pushName || undefined,
+                })
+                .eq('id', conversationId);
+            }
+          }
+        }
         break;
 
       case 'messages.update':
@@ -37,13 +227,29 @@ serve(async (req) => {
         
         if (data?.key?.id && data?.update?.status) {
           const messageId = data.key.id;
-          const status = data.update.status;
+          const statusCode = data.update.status;
           
-          // Log the delivery status
+          // Map status codes to our status values
+          let status = 'sent';
+          switch (statusCode) {
+            case 0: status = 'pending'; break;
+            case 1: status = 'sent'; break;
+            case 2: status = 'delivered'; break;
+            case 3: status = 'read'; break;
+            case 4: status = 'played'; break;
+          }
+          
           console.log(`Message ${messageId} status: ${status}`);
           
-          // You can store message status in a separate table if needed
-          // Status values: PENDING, SERVER_ACK, DELIVERY_ACK, READ, PLAYED
+          // Update message status in database
+          const { error } = await supabase
+            .from('messages')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('message_id', messageId);
+          
+          if (error) {
+            console.error('Error updating message status:', error);
+          }
         }
         break;
 
@@ -58,19 +264,40 @@ serve(async (req) => {
           console.log(`Instance ${instanceName} connection state: ${state}`);
           
           // Update the whatsapp_numbers table based on connection state
-          if (state === 'close' || state === 'connecting') {
-            // Find and update the number by matching instance name pattern
-            // Instance names are like: wiizeprospect_userid_timestamp_random
-            const { error } = await supabase
-              .from('whatsapp_numbers')
-              .update({ 
-                is_connected: state === 'open',
-                updated_at: new Date().toISOString()
-              })
-              .like('name', `%${instanceName}%`);
-            
-            if (error) {
-              console.error('Error updating connection status:', error);
+          const isConnected = state === 'open';
+          const { error } = await supabase
+            .from('whatsapp_numbers')
+            .update({ 
+              is_connected: isConnected,
+              updated_at: new Date().toISOString()
+            })
+            .eq('instance_name', instanceName);
+          
+          if (error) {
+            console.error('Error updating connection status:', error);
+          } else {
+            console.log(`Updated connection status for ${instanceName}: ${isConnected}`);
+          }
+        }
+        break;
+
+      case 'contacts.upsert':
+        // Contact was added or updated - good time to fetch profile picture
+        console.log('Contact upsert:', data);
+        
+        if (Array.isArray(data) && data.length > 0) {
+          const { data: whatsappNumber } = await supabase
+            .from('whatsapp_numbers')
+            .select('id, user_id')
+            .eq('instance_name', instance)
+            .single();
+          
+          if (whatsappNumber) {
+            for (const contact of data) {
+              const phone = contact.id?.split('@')[0];
+              if (phone && contact.profilePictureUrl) {
+                await updateContactAvatar(whatsappNumber.user_id, phone, contact.profilePictureUrl);
+              }
             }
           }
         }
