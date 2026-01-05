@@ -14,7 +14,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ const Chat = () => {
   const [notificationRequested, setNotificationRequested] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
   const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
+  const [syncingWebhook, setSyncingWebhook] = useState(false);
   
   const {
     conversations,
@@ -135,6 +136,31 @@ const Chat = () => {
       toast.success('Notificações ativadas!');
     } else {
       toast.error('Permissão de notificações negada');
+    }
+  };
+
+  const handleManualWebhookSync = async () => {
+    const selectedNumber = connectedNumbers.find(n => n.id === selectedNumberId);
+    if (!selectedNumber?.instance_name) return;
+
+    setSyncingWebhook(true);
+    try {
+      const response = await supabase.functions.invoke('test-webhook', {
+        body: { instanceName: selectedNumber.instance_name, action: 'reconfigure' },
+      });
+      
+      if (response.data?.reconfigureSuccess) {
+        toast.success('Webhook reconfigurado! Mensagens devem chegar agora.');
+        setWebhookSyncedFor(null); // Force re-sync
+      } else {
+        toast.error('Não foi possível reconfigurar. Tente desconectar e reconectar o WhatsApp.');
+      }
+      console.log('Webhook sync result:', response.data);
+    } catch (error) {
+      console.error('Webhook sync error:', error);
+      toast.error('Erro ao sincronizar webhook');
+    } finally {
+      setSyncingWebhook(false);
     }
   };
 
@@ -350,6 +376,23 @@ const Chat = () => {
                       <Plus className="h-4 w-4" />
                       <span className="hidden sm:inline">Nova Conversa</span>
                     </Button>
+                    
+                    {/* Sync Webhook Button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleManualWebhookSync}
+                            disabled={syncingWebhook}
+                          >
+                            <RefreshCw className={`h-4 w-4 ${syncingWebhook ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Sincronizar mensagens</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     
                     {/* Manage Numbers Button */}
                     <Button
