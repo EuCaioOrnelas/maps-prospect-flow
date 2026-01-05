@@ -28,6 +28,8 @@ interface NewChatDialogProps {
   onOpenChange: (open: boolean) => void;
   onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => Promise<any>;
   defaultWhatsAppNumberId?: string;
+  existingConversations?: Array<{ id: string; phone: string; whatsapp_number_id: string }>;
+  onSelectExistingConversation?: (conversationId: string, initialMessage?: string) => void;
 }
 
 export const NewChatDialog = ({
@@ -35,6 +37,8 @@ export const NewChatDialog = ({
   onOpenChange,
   onStartConversation,
   defaultWhatsAppNumberId,
+  existingConversations = [],
+  onSelectExistingConversation,
 }: NewChatDialogProps) => {
   const { numbers, loading } = useWhatsAppNumbers();
   const [countryCode, setCountryCode] = useState('55');
@@ -46,8 +50,19 @@ export const NewChatDialog = ({
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{ valid: boolean; message: string } | null>(null);
 
+  const [existingConversationFound, setExistingConversationFound] = useState<{ id: string; phone: string } | null>(null);
+
   const connectedNumbers = numbers.filter((n) => n.is_connected);
   const fullPhone = `${countryCode}${phone}`;
+
+  // Check if phone already exists in conversations (normalize by last 10-11 digits)
+  const findExistingConversation = (phoneToCheck: string) => {
+    const normalizedPhone = phoneToCheck.replace(/\D/g, '').slice(-11);
+    return existingConversations.find(conv => {
+      const convNormalized = conv.phone.replace(/\D/g, '').slice(-11);
+      return convNormalized === normalizedPhone && conv.whatsapp_number_id === selectedNumber;
+    });
+  };
 
   // Update selected number when default changes
   useEffect(() => {
@@ -56,10 +71,18 @@ export const NewChatDialog = ({
     }
   }, [defaultWhatsAppNumberId]);
 
-  // Reset validation when phone or country code changes
+  // Reset validation and check for existing conversation when phone or country code changes
   useEffect(() => {
     setValidationResult(null);
-  }, [phone, countryCode]);
+    setExistingConversationFound(null);
+    
+    if (phone.length >= 10 && selectedNumber) {
+      const existing = findExistingConversation(fullPhone);
+      if (existing) {
+        setExistingConversationFound(existing);
+      }
+    }
+  }, [phone, countryCode, selectedNumber, existingConversations]);
 
   const validateNumber = async () => {
     if (!phone.trim() || phone.length < 10) {
@@ -117,6 +140,26 @@ export const NewChatDialog = ({
       return;
     }
 
+    // Check if conversation already exists - if so, use existing
+    if (existingConversationFound && onSelectExistingConversation) {
+      setIsStarting(true);
+      try {
+        await onSelectExistingConversation(existingConversationFound.id, initialMessage.trim() || undefined);
+        toast.success(initialMessage.trim() ? 'Mensagem enviada!' : 'Conversa selecionada!');
+        onOpenChange(false);
+        setPhone('');
+        setContactName('');
+        setInitialMessage('');
+        setValidationResult(null);
+        setExistingConversationFound(null);
+      } catch (error) {
+        toast.error('Erro ao enviar mensagem');
+      } finally {
+        setIsStarting(false);
+      }
+      return;
+    }
+
     // If not validated yet, validate first
     if (!validationResult) {
       setIsValidating(true);
@@ -163,6 +206,7 @@ export const NewChatDialog = ({
       setContactName('');
       setInitialMessage('');
       setValidationResult(null);
+      setExistingConversationFound(null);
     } catch (error) {
       toast.error('Erro ao iniciar conversa');
     } finally {
@@ -279,7 +323,12 @@ export const NewChatDialog = ({
                   </p>
                 )}
               </div>
-              {validationResult && (
+              {existingConversationFound && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  ⚠️ Já existe uma conversa com este número. A mensagem será enviada para a conversa existente.
+                </p>
+              )}
+              {validationResult && !existingConversationFound && (
                 <p className={`text-xs ${validationResult.valid ? 'text-green-600' : 'text-red-500'}`}>
                   {validationResult.message}
                 </p>
