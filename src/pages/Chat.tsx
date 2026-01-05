@@ -214,16 +214,16 @@ const Chat = () => {
                       <span className="hidden sm:inline">Nova Conversa</span>
                     </Button>
                     
-                    {/* Status Indicator */}
-                    {selectedNumberId && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <span className="text-xs font-medium text-green-500">Online</span>
-                      </div>
-                    )}
+                    {/* Manage Numbers Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowNumbersManager(true)}
+                      className="gap-2"
+                    >
+                      <Settings2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Gerenciar</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -282,17 +282,6 @@ const Chat = () => {
           onOpenChange={setShowNewChatDialog}
           onStartConversation={handleStartConversation}
           defaultWhatsAppNumberId={selectedNumberId || undefined}
-        />
-
-        {/* Numbers Manager - reusing from WhatsApp campaigns */}
-        <NumbersManager
-          numbers={numbers}
-          onNumbersChange={handleNumbersChange}
-          maxNumbers={maxNumbers}
-          onConnect={handleConnect}
-          forceOpen={showNumbersManager}
-          onClose={() => setShowNumbersManager(false)}
-          hideButtons={true}
         />
 
         {/* Numbers Manager - reusing from WhatsApp campaigns */}
