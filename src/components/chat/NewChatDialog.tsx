@@ -23,18 +23,27 @@ interface NewChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string) => Promise<void>;
+  defaultWhatsAppNumberId?: string;
 }
 
 export const NewChatDialog = ({
   open,
   onOpenChange,
   onStartConversation,
+  defaultWhatsAppNumberId,
 }: NewChatDialogProps) => {
   const { numbers, loading } = useWhatsAppNumbers();
   const [phone, setPhone] = useState('');
   const [contactName, setContactName] = useState('');
-  const [selectedNumber, setSelectedNumber] = useState('');
+  const [selectedNumber, setSelectedNumber] = useState(defaultWhatsAppNumberId || '');
   const [isStarting, setIsStarting] = useState(false);
+
+  // Update selected number when default changes
+  useState(() => {
+    if (defaultWhatsAppNumberId) {
+      setSelectedNumber(defaultWhatsAppNumberId);
+    }
+  });
 
   const connectedNumbers = numbers.filter((n) => n.is_connected);
 
