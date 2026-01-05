@@ -64,12 +64,13 @@ export interface Contact {
 export const useChat = (selectedNumberId?: string | null) => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [archivedConversations, setArchivedConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
 
-  // Fetch conversations filtered by selected number
+  // Fetch active conversations filtered by selected number
   const fetchConversations = useCallback(async () => {
     if (!user) return;
 
@@ -98,6 +99,96 @@ export const useChat = (selectedNumberId?: string | null) => {
     setConversations(data || []);
     setIsLoading(false);
   }, [user, selectedNumberId]);
+
+  // Fetch archived conversations
+  const fetchArchivedConversations = useCallback(async () => {
+    if (!user) return;
+
+    let query = supabase
+      .from('conversations')
+      .select(`
+        *,
+        contacts (id, name, avatar_url),
+        whatsapp_numbers (id, name, phone_number)
+      `)
+      .eq('user_id', user.id)
+      .eq('is_archived', true);
+
+    if (selectedNumberId) {
+      query = query.eq('whatsapp_number_id', selectedNumberId);
+    }
+
+    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: false });
+
+    if (error) {
+      console.error('Error fetching archived conversations:', error);
+      return;
+    }
+
+    setArchivedConversations(data || []);
+  }, [user, selectedNumberId]);
+
+  // Archive a conversation
+  const archiveConversation = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('conversations')
+      .update({ is_archived: true })
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error archiving conversation:', error);
+      throw error;
+    }
+
+    // If the archived conversation is selected, clear selection
+    if (selectedConversation?.id === conversationId) {
+      setSelectedConversation(null);
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+  }, [user, selectedConversation, fetchConversations, fetchArchivedConversations]);
+
+  // Unarchive a conversation
+  const unarchiveConversation = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('conversations')
+      .update({ is_archived: false })
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error unarchiving conversation:', error);
+      throw error;
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+  }, [user, fetchConversations, fetchArchivedConversations]);
+
+  // Link contact to conversation
+  const linkContactToConversation = useCallback(async (conversationId: string, contactId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('conversations')
+      .update({ contact_id: contactId })
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error linking contact to conversation:', error);
+      throw error;
+    }
+
+    await fetchConversations();
+    await fetchArchivedConversations();
+  }, [user, fetchConversations, fetchArchivedConversations]);
 
   // Fetch messages for a conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
@@ -190,7 +281,8 @@ export const useChat = (selectedNumberId?: string | null) => {
   // Initial load
   useEffect(() => {
     fetchConversations();
-  }, [fetchConversations]);
+    fetchArchivedConversations();
+  }, [fetchConversations, fetchArchivedConversations]);
 
   // Realtime subscription for messages
   useEffect(() => {
@@ -251,6 +343,7 @@ export const useChat = (selectedNumberId?: string | null) => {
 
   return {
     conversations,
+    archivedConversations,
     messages,
     selectedConversation,
     isLoading,
@@ -259,6 +352,10 @@ export const useChat = (selectedNumberId?: string | null) => {
     sendMessage,
     startConversation,
     fetchConversations,
+    fetchArchivedConversations,
+    archiveConversation,
+    unarchiveConversation,
+    linkContactToConversation,
     setSelectedConversation,
   };
 };

@@ -4,27 +4,38 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserX } from 'lucide-react';
+import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Conversation } from '@/hooks/useChat';
 
 interface ConversationListProps {
   conversations: Conversation[];
+  archivedConversations: Conversation[];
   selectedConversation: Conversation | null;
   onSelect: (conversation: Conversation) => void;
   onNewChat: () => void;
+  onSaveContact: (conversation: Conversation) => void;
+  onArchive: (conversationId: string) => void;
+  onUnarchive: (conversationId: string) => void;
 }
 
 export const ConversationList = ({
   conversations,
+  archivedConversations,
   selectedConversation,
   onSelect,
   onNewChat,
+  onSaveContact,
+  onArchive,
+  onUnarchive,
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return '';
@@ -76,7 +87,9 @@ export const ConversationList = ({
     return !!(conversation.contact_id && conversation.contacts?.name);
   };
 
-  const filteredConversations = conversations.filter((conv) => {
+  const currentConversations = activeTab === 'active' ? conversations : archivedConversations;
+
+  const filteredConversations = currentConversations.filter((conv) => {
     const name = getDisplayName(conv).toLowerCase();
     const phone = conv.phone.toLowerCase();
     const lastMessage = (conv.last_message || '').toLowerCase();
@@ -94,7 +107,7 @@ export const ConversationList = ({
             <Plus className="h-5 w-5" />
           </Button>
         </div>
-        <div className="relative">
+        <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar conversa..."
@@ -103,6 +116,26 @@ export const ConversationList = ({
             className="pl-9 bg-muted/50"
           />
         </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archived')}>
+          <TabsList className="w-full">
+            <TabsTrigger value="active" className="flex-1 gap-1.5">
+              Ativas
+              {conversations.length > 0 && (
+                <Badge variant="secondary" className="h-5 min-w-5 text-xs">
+                  {conversations.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="flex-1 gap-1.5">
+              Arquivadas
+              {archivedConversations.length > 0 && (
+                <Badge variant="secondary" className="h-5 min-w-5 text-xs">
+                  {archivedConversations.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Conversation List */}
@@ -110,68 +143,113 @@ export const ConversationList = ({
         <div className="divide-y divide-border">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              <p>Nenhuma conversa encontrada</p>
+              <p>{activeTab === 'active' ? 'Nenhuma conversa ativa' : 'Nenhuma conversa arquivada'}</p>
             </div>
           ) : (
             filteredConversations.map((conversation) => {
               const displayName = getDisplayName(conversation);
               const isSelected = selectedConversation?.id === conversation.id;
+              const isSaved = isContactSaved(conversation);
 
               return (
-                <button
+                <div
                   key={conversation.id}
-                  onClick={() => onSelect(conversation)}
                   className={cn(
-                    'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50',
+                    'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 group',
                     isSelected && 'bg-primary/10'
                   )}
                 >
-                  <Avatar className="h-12 w-12 shrink-0">
-                    <AvatarImage src={conversation.contacts?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {getInitials(displayName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <button
+                    onClick={() => onSelect(conversation)}
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
+                    <Avatar className="h-12 w-12 shrink-0">
+                      <AvatarImage src={conversation.contacts?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getInitials(displayName)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-medium text-foreground truncate">
-                          {displayName}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-medium text-foreground truncate">
+                            {displayName}
+                          </span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="shrink-0">
+                                  {isSaved ? (
+                                    <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                                  ) : (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSaveContact(conversation);
+                                      }}
+                                      className="hover:text-primary transition-colors"
+                                    >
+                                      <UserPlus className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                                    </button>
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {isSaved ? 'Contato salvo' : 'Salvar contato'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {formatTime(conversation.last_message_at)}
                         </span>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="shrink-0">
-                                {isContactSaved(conversation) ? (
-                                  <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                                ) : (
-                                  <UserX className="h-3.5 w-3.5 text-muted-foreground" />
-                                )}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {isContactSaved(conversation) ? 'Contato salvo' : 'Contato não salvo'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {formatTime(conversation.last_message_at)}
-                      </span>
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className="text-sm text-muted-foreground truncate">
+                          {conversation.last_message || 'Nenhuma mensagem'}
+                        </p>
+                        {conversation.unread_count > 0 && (
+                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs">
+                            {conversation.unread_count}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <p className="text-sm text-muted-foreground truncate">
-                        {conversation.last_message || 'Nenhuma mensagem'}
-                      </p>
-                      {conversation.unread_count > 0 && (
-                        <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs">
-                          {conversation.unread_count}
-                        </Badge>
+                  </button>
+
+                  {/* Actions Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {!isSaved && (
+                        <DropdownMenuItem onClick={() => onSaveContact(conversation)}>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Salvar contato
+                        </DropdownMenuItem>
                       )}
-                    </div>
-                  </div>
-                </button>
+                      {activeTab === 'active' ? (
+                        <DropdownMenuItem onClick={() => onArchive(conversation.id)}>
+                          <Archive className="h-4 w-4 mr-2" />
+                          Arquivar conversa
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => onUnarchive(conversation.id)}>
+                          <ArchiveRestore className="h-4 w-4 mr-2" />
+                          Desarquivar conversa
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               );
             })
           )}
