@@ -112,8 +112,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     onClick={item.onClick}
                     className={cn(
                       "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-primary/20 text-primary font-medium"
+                      item.active 
+                        ? "bg-primary/20 text-primary font-medium" 
+                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     <item.icon size={20} className="shrink-0" />
@@ -129,8 +130,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     to={item.url}
                     className={cn(
                       "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-primary/20 text-primary font-medium"
+                      item.active 
+                        ? "bg-primary/20 text-primary font-medium" 
+                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     <item.icon size={20} className="shrink-0" />
@@ -156,8 +158,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   to={item.url}
                   className={cn(
                     "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                    "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                    item.active && "bg-primary/20 text-primary font-medium",
+                    item.active 
+                      ? "bg-primary/20 text-primary font-medium" 
+                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                     item.highlight && !item.active && "text-primary hover:text-primary"
                   )}
                 >
@@ -178,8 +181,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 to="/profile"
                 className={cn(
                   "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
-                  "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                  currentPath === "/profile" && "bg-primary/20 text-primary font-medium"
+                  currentPath === "/profile" 
+                    ? "bg-primary/20 text-primary font-medium" 
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
