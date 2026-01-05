@@ -111,14 +111,22 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   <button
                     onClick={item.onClick}
                     className={cn(
-                      "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
+                      "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 relative group",
+                      !item.active && "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5",
+                      item.active && "bg-gradient-to-r from-primary/20 to-primary/5 text-primary"
                     )}
                   >
-                    <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
+                    {item.active && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                    )}
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200",
+                      item.active ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "group-hover:bg-white/10"
+                    )}>
+                      <item.icon size={18} className="shrink-0" />
+                    </div>
                     <span className={cn(
-                      "whitespace-nowrap transition-all duration-300",
+                      "whitespace-nowrap font-medium transition-all duration-300",
                       isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                     )}>
                       {item.title}
@@ -128,14 +136,22 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   <Link
                     to={item.url}
                     className={cn(
-                      "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
+                      "flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 relative group",
+                      !item.active && "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5",
+                      item.active && "bg-gradient-to-r from-primary/20 to-primary/5 text-primary"
                     )}
                   >
-                    <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
+                    {item.active && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                    )}
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200",
+                      item.active ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "group-hover:bg-white/10"
+                    )}>
+                      <item.icon size={18} className="shrink-0" />
+                    </div>
                     <span className={cn(
-                      "whitespace-nowrap transition-all duration-300",
+                      "whitespace-nowrap font-medium transition-all duration-300",
                       isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                     )}>
                       {item.title}
@@ -155,15 +171,24 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <Link
                   to={item.url}
                   className={cn(
-                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
-                    "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                    item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm",
-                    item.highlight && !item.active && "text-primary hover:text-primary"
+                    "flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 relative group",
+                    !item.active && "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5",
+                    item.active && "bg-gradient-to-r from-primary/20 to-primary/5 text-primary",
+                    item.highlight && !item.active && "text-amber-400 hover:text-amber-300"
                   )}
                 >
-                  <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
+                  {item.active && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                  )}
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200",
+                    item.active ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : 
+                    item.highlight ? "bg-amber-400/20 group-hover:bg-amber-400/30" : "group-hover:bg-white/10"
+                  )}>
+                    <item.icon size={18} className="shrink-0" />
+                  </div>
                   <span className={cn(
-                    "whitespace-nowrap transition-all duration-300",
+                    "whitespace-nowrap font-medium transition-all duration-300",
                     isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                   )}>
                     {item.title}
@@ -177,19 +202,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to="/profile"
                 className={cn(
-                  "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
-                  "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                  currentPath === "/profile" && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
+                  "flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 relative group",
+                  currentPath !== "/profile" && "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5",
+                  currentPath === "/profile" && "bg-gradient-to-r from-primary/20 to-primary/5 text-primary"
                 )}
               >
-                <Avatar className={cn("h-6 w-6 shrink-0 border transition-transform duration-200", currentPath === "/profile" ? "border-primary scale-110" : "border-sidebar-border")}>
+                {currentPath === "/profile" && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                )}
+                <Avatar className={cn(
+                  "h-8 w-8 shrink-0 transition-all duration-200 ring-2 ring-offset-2 ring-offset-sidebar",
+                  currentPath === "/profile" ? "ring-primary" : "ring-transparent group-hover:ring-white/20"
+                )}>
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <span className={cn(
-                  "whitespace-nowrap transition-all duration-300 truncate",
+                  "whitespace-nowrap font-medium transition-all duration-300 truncate",
                   isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                 )}>
                   {profile?.name || 'Meu Perfil'}
