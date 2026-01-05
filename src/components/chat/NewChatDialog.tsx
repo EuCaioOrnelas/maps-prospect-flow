@@ -5,8 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -16,15 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
+import { Phone, MessageSquare, AlertTriangle, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { MessageSquare, Phone, AlertTriangle, Send } from 'lucide-react';
+import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { Link } from 'react-router-dom';
+import { CountryCodeSelect } from './CountryCodeSelect';
 
 interface NewChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => Promise<void>;
+  onStartConversation: (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => Promise<any>;
   defaultWhatsAppNumberId?: string;
 }
 
@@ -35,6 +36,7 @@ export const NewChatDialog = ({
   defaultWhatsAppNumberId,
 }: NewChatDialogProps) => {
   const { numbers, loading } = useWhatsAppNumbers();
+  const [countryCode, setCountryCode] = useState('55');
   const [phone, setPhone] = useState('');
   const [contactName, setContactName] = useState('');
   const [initialMessage, setInitialMessage] = useState('');
@@ -63,10 +65,13 @@ export const NewChatDialog = ({
       return;
     }
 
+    // Combine country code with phone number
+    const fullPhone = `${countryCode}${phone}`;
+
     setIsStarting(true);
     try {
       await onStartConversation(
-        phone, 
+        fullPhone, 
         selectedNumber, 
         contactName || undefined,
         initialMessage.trim() || undefined
@@ -139,73 +144,82 @@ export const NewChatDialog = ({
               </Select>
             </div>
 
-            {/* Phone Input */}
+            {/* Phone Input with Country Code */}
             <div className="space-y-2">
               <Label htmlFor="phone">Número do Contato</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-                  placeholder="5511999999999"
-                  className="pl-9"
-                  maxLength={15}
+              <div className="flex gap-2">
+                <CountryCodeSelect 
+                  value={countryCode} 
+                  onValueChange={setCountryCode} 
                 />
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                    placeholder="11999999999"
+                    className="pl-9"
+                    maxLength={12}
+                  />
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Digite o número com código do país (55 para Brasil)
+                DDD + número (ex: 11999999999)
               </p>
             </div>
 
-            {/* Contact Name (optional) */}
+            {/* Contact Name (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="contactName">Nome do Contato (opcional)</Label>
+              <Label htmlFor="contactName">Nome do Contato (Opcional)</Label>
               <Input
                 id="contactName"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                placeholder="Nome para identificar o contato"
+                placeholder="Ex: João Silva"
+                maxLength={100}
               />
             </div>
 
-            {/* Initial Message (optional) */}
+            {/* Initial Message (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="initialMessage" className="flex items-center gap-2">
-                <Send className="h-3.5 w-3.5" />
-                Mensagem Inicial (opcional)
-              </Label>
+              <Label htmlFor="initialMessage">Mensagem Inicial (Opcional)</Label>
               <Textarea
                 id="initialMessage"
                 value={initialMessage}
                 onChange={(e) => setInitialMessage(e.target.value)}
                 placeholder="Digite uma mensagem para enviar ao iniciar a conversa..."
                 className="min-h-[80px] resize-none"
+                maxLength={1000}
               />
               <p className="text-xs text-muted-foreground">
-                A mensagem será enviada automaticamente ao criar a conversa
+                Esta mensagem será enviada automaticamente ao criar a conversa
               </p>
             </div>
 
-            {/* Submit */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
+            <div className="flex gap-2 pt-2">
+              <Button 
+                type="button" 
+                variant="outline" 
                 onClick={() => onOpenChange(false)}
+                className="flex-1"
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={isStarting || !selectedNumber || !phone.trim()}
-                className="gap-2"
+              <Button 
+                type="submit" 
+                className="flex-1 gap-2"
+                disabled={isStarting || !phone.trim() || !selectedNumber}
               >
-                {isStarting ? 'Iniciando...' : (
+                {isStarting ? (
+                  'Iniciando...'
+                ) : initialMessage.trim() ? (
                   <>
-                    {initialMessage.trim() ? <Send className="h-4 w-4" /> : null}
-                    {initialMessage.trim() ? 'Enviar e Iniciar' : 'Iniciar Conversa'}
+                    <Send className="h-4 w-4" />
+                    Enviar Mensagem
                   </>
+                ) : (
+                  'Iniciar Conversa'
                 )}
               </Button>
             </div>
