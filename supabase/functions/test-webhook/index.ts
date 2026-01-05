@@ -92,10 +92,23 @@ Deno.serve(async (req) => {
     if (action === 'reconfigure') {
       console.log('Reconfiguring webhook...');
 
-      // Evolution API v2 uses different endpoint patterns depending on server version
-      // Try multiple formats with the REQUIRED fields for each
+      // Evolution API requires webhook config nested under "webhook" property
       const setEndpoints = [
-        // Format 1: Evolution API v2.x with 'enabled' at root
+        // Format 1: webhook/set with nested webhook object (required by most Evolution API versions)
+        {
+          url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+          method: 'POST',
+          body: {
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: true,
+              events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            }
+          }
+        },
+        // Format 2: Direct properties (some API versions)
         {
           url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
           method: 'POST',
@@ -107,43 +120,35 @@ Deno.serve(async (req) => {
             events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
           }
         },
-        // Format 2: Evolution API v2.x alternate naming
+        // Format 3: webhook/instance with nested
         {
-          url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+          url: `${EVOLUTION_API_URL}/webhook/instance/${instanceName}`,
           method: 'POST',
           body: {
-            enabled: true,
-            url: webhookUrl,
-            webhook_by_events: false,
-            webhook_base64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: true,
+              events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            }
           }
         },
-        // Format 3: Evolution API v1 style
-        {
-          url: `${EVOLUTION_API_URL}/instance/webhook/${instanceName}`,
-          method: 'PUT',
-          body: {
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
-          }
-        },
-        // Format 4: Direct webhook endpoint with PUT
+        // Format 4: PUT to webhook endpoint
         {
           url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
           method: 'PUT',
           body: {
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: true,
+              events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            }
           }
         },
-        // Format 5: Settings update with webhook nested
+        // Format 5: settings endpoint
         {
           url: `${EVOLUTION_API_URL}/settings/${instanceName}`,
           method: 'PUT',
