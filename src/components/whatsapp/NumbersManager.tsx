@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,9 @@ import {
   Settings2,
   AlertTriangle,
   PartyPopper,
-  Pencil
+  Pencil,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +66,8 @@ export const NumbersManager = ({
   hideButtons = false
 }: NumbersManagerProps) => {
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -114,6 +118,20 @@ export const NumbersManager = ({
   const hasMassMessagingAccess = ['start', 'growth', 'scale'].includes(userPlan);
   const connectedNumbers = numbers.filter(n => n.is_connected);
   const hasConnectedNumber = connectedNumbers.length > 0;
+
+  // Pagination logic
+  const totalPages = Math.ceil(numbers.length / ITEMS_PER_PAGE);
+  const paginatedNumbers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return numbers.slice(start, start + ITEMS_PER_PAGE);
+  }, [numbers, currentPage, ITEMS_PER_PAGE]);
+
+  // Reset to page 1 when numbers change
+  useEffect(() => {
+    if (currentPage > Math.ceil(numbers.length / ITEMS_PER_PAGE)) {
+      setCurrentPage(1);
+    }
+  }, [numbers.length, currentPage, ITEMS_PER_PAGE]);
 
   // Generate unique instance name
   const generateInstanceName = useCallback(() => {
@@ -690,7 +708,7 @@ export const NumbersManager = ({
               </div>
             ) : (
               <>
-                {numbers.map((number) => {
+                {paginatedNumbers.map((number) => {
                   const isAtLimit = number.daily_sent_count >= DAILY_LIMIT_PER_NUMBER;
                   const usagePercent = (number.daily_sent_count / DAILY_LIMIT_PER_NUMBER) * 100;
                   
@@ -779,6 +797,35 @@ export const NumbersManager = ({
                     </div>
                   );
                 })}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-xs text-muted-foreground">
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {numbers.length < maxNumbers && (
                   <Button 

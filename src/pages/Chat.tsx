@@ -176,29 +176,44 @@ const Chat = () => {
               </div>
             ) : (
               <>
-                <div className="h-14 px-4 border-b border-border bg-card/50 flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Número:</span>
-                  <Select value={selectedNumberId || ''} onValueChange={handleNumberChange}>
-                    <SelectTrigger className="w-[280px]">
-                      <SelectValue placeholder="Selecione um número" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {connectedNumbers.map((number) => (
-                        <SelectItem key={number.id} value={number.id}>
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4 text-green-500" />
-                            <span>{number.name}</span>
-                            {number.phone_number && (
-                              <span className="text-muted-foreground text-xs">
-                                ({number.phone_number})
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="h-14 px-4 border-b border-border bg-card/50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Número:</span>
+                    <Select value={selectedNumberId || ''} onValueChange={handleNumberChange}>
+                      <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Selecione um número" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {connectedNumbers.map((number) => (
+                          <SelectItem key={number.id} value={number.id}>
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-green-500" />
+                              <span>{number.name}</span>
+                              {number.phone_number && (
+                                <span className="text-muted-foreground text-xs">
+                                  ({number.phone_number})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Status Indicator */}
+                  {selectedNumberId && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs font-medium text-green-500">Online</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Main Chat Content */}
