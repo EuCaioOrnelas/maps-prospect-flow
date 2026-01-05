@@ -14,7 +14,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ const Chat = () => {
   const [showNumbersManager, setShowNumbersManager] = useState(false);
   const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
   const [syncingWebhook, setSyncingWebhook] = useState(false);
+  const [mergingConversations, setMergingConversations] = useState(false);
   
   const {
     conversations,
@@ -48,6 +49,7 @@ const Chat = () => {
     deleteConversation,
     linkContactToConversation,
     setSelectedConversation,
+    mergeDuplicateConversations,
   } = useChat(selectedNumberId);
 
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -180,6 +182,23 @@ const Chat = () => {
       toast.error('Erro ao sincronizar webhook');
     } finally {
       setSyncingWebhook(false);
+    }
+  };
+
+  const handleMergeDuplicates = async () => {
+    setMergingConversations(true);
+    try {
+      const result = await mergeDuplicateConversations();
+      if (result.deleted > 0) {
+        toast.success(`${result.deleted} conversas duplicadas mescladas com sucesso!`);
+      } else {
+        toast.info('Nenhuma conversa duplicada encontrada.');
+      }
+    } catch (error) {
+      console.error('Error merging conversations:', error);
+      toast.error('Erro ao mesclar conversas duplicadas');
+    } finally {
+      setMergingConversations(false);
     }
   };
 
@@ -396,6 +415,23 @@ const Chat = () => {
                       <span className="hidden sm:inline">Nova Conversa</span>
                     </Button>
                     
+                    {/* Merge Duplicates Button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleMergeDuplicates}
+                            disabled={mergingConversations}
+                          >
+                            <GitMerge className={`h-4 w-4 ${mergingConversations ? 'animate-pulse' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Mesclar conversas duplicadas</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
                     {/* Sync Webhook Button */}
                     <TooltipProvider>
                       <Tooltip>
@@ -459,6 +495,7 @@ const Chat = () => {
                             onSendMessage={handleSendMessage}
                             onOpenContactInfo={() => setShowContactInfo(true)}
                             onBack={() => setSelectedConversation(null)}
+                            onSaveContact={handleSaveContact}
                           />
                         </div>
 
