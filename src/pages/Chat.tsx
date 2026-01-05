@@ -47,6 +47,7 @@ const Chat = () => {
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
+    bulkDeleteConversations,
     linkContactToConversation,
     setSelectedConversation,
     mergeDuplicateConversations,
@@ -482,6 +483,15 @@ const Chat = () => {
                           onArchive={handleArchive}
                           onUnarchive={handleUnarchive}
                           onDelete={handleDelete}
+                          onBulkDelete={async (ids, deleteContacts) => {
+                            try {
+                              await bulkDeleteConversations(ids, deleteContacts);
+                              toast.success(`${ids.length} conversa(s) excluída(s) com sucesso`);
+                            } catch (error) {
+                              toast.error('Erro ao excluir conversas');
+                              throw error;
+                            }
+                          }}
                         />
                       </div>
 
