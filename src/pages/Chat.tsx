@@ -3,18 +3,20 @@ import { useChat, Conversation } from '@/hooks/useChat';
 import { useWhatsAppNumbers, PLAN_LIMITS } from '@/hooks/useWhatsAppNumbers';
 import { useContacts } from '@/hooks/useContacts';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
+import { useConnectionMonitor } from '@/hooks/useConnectionMonitor';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { SaveContactDialog } from '@/components/chat/SaveContactDialog';
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
+import { ReconnectDialog } from '@/components/whatsapp/ReconnectDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge, Download } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -23,7 +25,7 @@ import type { WhatsAppNumber } from '@/hooks/useWhatsAppNumbers';
 
 const Chat = () => {
   const { profile } = useAuth();
-  const { numbers, loading: loadingNumbers, fetchNumbers } = useWhatsAppNumbers();
+  const { numbers, loading: loadingNumbers, fetchNumbers, setNumbers } = useWhatsAppNumbers();
   const { createContact } = useContacts();
   const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
@@ -32,6 +34,7 @@ const Chat = () => {
   const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
   const [syncingWebhook, setSyncingWebhook] = useState(false);
   const [mergingConversations, setMergingConversations] = useState(false);
+  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
   
   const {
     conversations,
@@ -57,6 +60,26 @@ const Chat = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showSaveContactDialog, setShowSaveContactDialog] = useState(false);
   const [conversationToSave, setConversationToSave] = useState<Conversation | null>(null);
+
+  // Connection monitor for auto-reconnect
+  const { 
+    reconnectState, 
+    isSyncing, 
+    triggerSync, 
+    clearReconnectState 
+  } = useConnectionMonitor({
+    numbers,
+    onNumbersChange: (updated) => setNumbers(updated),
+    enabled: true,
+    checkIntervalMs: 30000, // Check every 30 seconds
+  });
+
+  // Show reconnect dialog when needed
+  useEffect(() => {
+    if (reconnectState?.needsQR) {
+      setShowReconnectDialog(true);
+    }
+  }, [reconnectState]);
 
   // Get connected numbers only
   const connectedNumbers = numbers.filter(n => n.is_connected);
@@ -181,6 +204,18 @@ const Chat = () => {
     } catch (error) {
       console.error('Webhook sync error:', error);
       toast.error('Erro ao sincronizar webhook');
+    } finally {
+      setSyncingWebhook(false);
+    }
+  };
+
+  // Handle sync messages from server
+  const handleSyncMessages = async () => {
+    if (!selectedNumberId) return;
+    
+    setSyncingWebhook(true);
+    try {
+      await triggerSync(selectedNumberId);
     } finally {
       setSyncingWebhook(false);
     }
@@ -446,7 +481,24 @@ const Chat = () => {
                             <RefreshCw className={`h-4 w-4 ${syncingWebhook ? 'animate-spin' : ''}`} />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Sincronizar mensagens</TooltipContent>
+                        <TooltipContent>Sincronizar webhook</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    {/* Sync Messages Button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleSyncMessages}
+                            disabled={isSyncing || syncingWebhook}
+                          >
+                            <Download className={`h-4 w-4 ${isSyncing ? 'animate-pulse' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Recuperar mensagens do WhatsApp</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     
@@ -561,6 +613,27 @@ const Chat = () => {
           onClose={() => setShowNumbersManager(false)}
           hideButtons={true}
         />
+
+        {/* Reconnect Dialog */}
+        {reconnectState && (
+          <ReconnectDialog
+            open={showReconnectDialog}
+            onOpenChange={(open) => {
+              setShowReconnectDialog(open);
+              if (!open) clearReconnectState();
+            }}
+            numberId={reconnectState.numberId}
+            instanceName={reconnectState.instanceName}
+            numberName={numbers.find(n => n.id === reconnectState.numberId)?.name || 'WhatsApp'}
+            qrCode={reconnectState.qrCode}
+            onReconnected={() => {
+              fetchNumbers();
+              fetchConversations();
+              setShowReconnectDialog(false);
+              clearReconnectState();
+            }}
+          />
+        )}
       </div>
     </>
   );

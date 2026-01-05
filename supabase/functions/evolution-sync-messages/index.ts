@@ -1,0 +1,258 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      throw new Error('Evolution API credentials not configured');
+    }
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Invalid user token');
+    }
+
+    const { instanceName, numberId, lastSyncAt } = await req.json();
+
+    console.log(`Syncing messages for instance: ${instanceName}, since: ${lastSyncAt}`);
+
+    // Get the whatsapp_number to verify ownership
+    const { data: whatsappNumber, error: numberError } = await supabase
+      .from('whatsapp_numbers')
+      .select('*')
+      .eq('id', numberId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (numberError || !whatsappNumber) {
+      throw new Error('WhatsApp number not found');
+    }
+
+    // Fetch recent chats from Evolution API
+    const chatsResponse = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!chatsResponse.ok) {
+      console.error('Failed to fetch chats:', await chatsResponse.text());
+      throw new Error('Failed to fetch chats from Evolution API');
+    }
+
+    const chats = await chatsResponse.json();
+    console.log(`Found ${chats?.length || 0} chats`);
+
+    let syncedMessages = 0;
+    let syncedConversations = 0;
+
+    // Process each chat
+    for (const chat of (chats || [])) {
+      const remoteJid = chat.id || chat.remoteJid;
+      if (!remoteJid || remoteJid.includes('@g.us')) continue; // Skip groups
+
+      // Extract phone from JID
+      const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      if (!phone || phone.length < 8) continue;
+
+      // Check if conversation exists
+      let { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id, updated_at')
+        .eq('whatsapp_number_id', numberId)
+        .eq('remote_jid', remoteJid)
+        .single();
+
+      let conversationId: string;
+
+      if (!existingConversation) {
+        // Create new conversation
+        const { data: newConversation, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: user.id,
+            whatsapp_number_id: numberId,
+            remote_jid: remoteJid,
+            phone: phone,
+            contact_name: chat.name || chat.pushName || null,
+          })
+          .select()
+          .single();
+
+        if (convError) {
+          console.error('Error creating conversation:', convError);
+          continue;
+        }
+
+        conversationId = newConversation.id;
+        syncedConversations++;
+      } else {
+        conversationId = existingConversation.id;
+      }
+
+      // Fetch messages for this chat
+      try {
+        const messagesResponse = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY,
+          },
+          body: JSON.stringify({
+            where: {
+              key: {
+                remoteJid: remoteJid
+              }
+            },
+            limit: 50
+          }),
+        });
+
+        if (messagesResponse.ok) {
+          const messages = await messagesResponse.json();
+          console.log(`Found ${messages?.length || 0} messages for ${remoteJid}`);
+
+          for (const msg of (messages || [])) {
+            const messageId = msg.key?.id;
+            if (!messageId) continue;
+
+            // Check if message already exists
+            const { data: existingMsg } = await supabase
+              .from('messages')
+              .select('id')
+              .eq('message_id', messageId)
+              .single();
+
+            if (existingMsg) continue; // Skip existing messages
+
+            // Extract message content
+            let content = '';
+            let messageType = 'text';
+
+            if (msg.message?.conversation) {
+              content = msg.message.conversation;
+            } else if (msg.message?.extendedTextMessage?.text) {
+              content = msg.message.extendedTextMessage.text;
+            } else if (msg.message?.imageMessage) {
+              messageType = 'image';
+              content = msg.message.imageMessage.caption || '[Imagem]';
+            } else if (msg.message?.audioMessage) {
+              messageType = 'audio';
+              content = '[Áudio]';
+            } else if (msg.message?.videoMessage) {
+              messageType = 'video';
+              content = msg.message.videoMessage.caption || '[Vídeo]';
+            } else if (msg.message?.documentMessage) {
+              messageType = 'document';
+              content = msg.message.documentMessage.fileName || '[Documento]';
+            }
+
+            if (!content && messageType === 'text') continue;
+
+            // Insert message
+            const { error: insertError } = await supabase
+              .from('messages')
+              .insert({
+                user_id: user.id,
+                conversation_id: conversationId,
+                remote_jid: remoteJid,
+                message_id: messageId,
+                from_me: msg.key?.fromMe || false,
+                content: content,
+                message_type: messageType,
+                status: 'delivered',
+                created_at: msg.messageTimestamp 
+                  ? new Date(parseInt(msg.messageTimestamp) * 1000).toISOString()
+                  : new Date().toISOString()
+              });
+
+            if (!insertError) {
+              syncedMessages++;
+            }
+          }
+
+          // Update conversation with last message
+          if (messages && messages.length > 0) {
+            const lastMsg = messages[0];
+            let lastContent = '';
+            
+            if (lastMsg.message?.conversation) {
+              lastContent = lastMsg.message.conversation;
+            } else if (lastMsg.message?.extendedTextMessage?.text) {
+              lastContent = lastMsg.message.extendedTextMessage.text;
+            } else {
+              lastContent = '[Mídia]';
+            }
+
+            await supabase
+              .from('conversations')
+              .update({
+                last_message: lastContent.substring(0, 200),
+                last_message_at: lastMsg.messageTimestamp 
+                  ? new Date(parseInt(lastMsg.messageTimestamp) * 1000).toISOString()
+                  : new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', conversationId);
+          }
+        }
+      } catch (e) {
+        console.error(`Error fetching messages for ${remoteJid}:`, e);
+      }
+    }
+
+    // Update number sync timestamp
+    await supabase
+      .from('whatsapp_numbers')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', numberId);
+
+    console.log(`Sync complete: ${syncedConversations} conversations, ${syncedMessages} messages`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      syncedConversations,
+      syncedMessages,
+      message: `Sincronizado: ${syncedConversations} conversas, ${syncedMessages} mensagens`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error: unknown) {
+    console.error('Error in evolution-sync-messages:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      success: false,
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
