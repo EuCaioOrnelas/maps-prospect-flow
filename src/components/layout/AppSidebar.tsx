@@ -92,7 +92,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "h-full bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
+          "h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
+          "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
           isHovered ? "w-56" : "w-14"
         )}
       >
@@ -110,15 +111,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   <button
                     onClick={item.onClick}
                     className={cn(
-                      "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors",
-                      "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                      "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                      item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
                     )}
                   >
-                    <item.icon size={20} className="shrink-0" />
+                    <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
                     <span className={cn(
-                      "whitespace-nowrap transition-opacity duration-200",
-                      isHovered ? "opacity-100" : "opacity-0"
+                      "whitespace-nowrap transition-all duration-300",
+                      isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                     )}>
                       {item.title}
                     </span>
@@ -127,15 +128,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   <Link
                     to={item.url}
                     className={cn(
-                      "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors",
-                      "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                      item.active && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                      "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                      "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                      item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
                     )}
                   >
-                    <item.icon size={20} className="shrink-0" />
+                    <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
                     <span className={cn(
-                      "whitespace-nowrap transition-opacity duration-200",
-                      isHovered ? "opacity-100" : "opacity-0"
+                      "whitespace-nowrap transition-all duration-300",
+                      isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                     )}>
                       {item.title}
                     </span>
@@ -149,21 +150,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         {/* Bottom navigation */}
         <div className="py-4 px-2 border-t border-sidebar-border">
           <ul className="space-y-1">
-            {bottomNavItems.map((item) => (
+              {bottomNavItems.map((item) => (
               <li key={item.title}>
                 <Link
                   to={item.url}
                   className={cn(
-                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors",
-                    "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                    item.active && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                    item.highlight && "text-primary hover:text-primary"
+                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
+                    "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                    item.active && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm",
+                    item.highlight && !item.active && "text-primary hover:text-primary"
                   )}
                 >
-                  <item.icon size={20} className="shrink-0" />
+                  <item.icon size={20} className={cn("shrink-0 transition-transform duration-200", item.active && "scale-110")} />
                   <span className={cn(
-                    "whitespace-nowrap transition-opacity duration-200",
-                    isHovered ? "opacity-100" : "opacity-0"
+                    "whitespace-nowrap transition-all duration-300",
+                    isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                   )}>
                     {item.title}
                   </span>
@@ -176,20 +177,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to="/profile"
                 className={cn(
-                  "flex items-center gap-3 px-2 py-2 rounded-lg transition-colors",
-                  "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                  currentPath === "/profile" && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                  "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200",
+                  "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                  currentPath === "/profile" && "bg-primary/15 text-primary font-medium border-l-2 border-primary shadow-sm"
                 )}
               >
-                <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border">
+                <Avatar className={cn("h-6 w-6 shrink-0 border transition-transform duration-200", currentPath === "/profile" ? "border-primary scale-110" : "border-sidebar-border")}>
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <span className={cn(
-                  "whitespace-nowrap transition-opacity duration-200 truncate",
-                  isHovered ? "opacity-100" : "opacity-0"
+                  "whitespace-nowrap transition-all duration-300 truncate",
+                  isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                 )}>
                   {profile?.name || 'Meu Perfil'}
                 </span>
@@ -201,14 +202,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <button
                 onClick={handleLogout}
                 className={cn(
-                  "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors",
+                  "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all duration-200",
                   "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                 )}
               >
                 <LogOut size={20} className="shrink-0" />
                 <span className={cn(
-                  "whitespace-nowrap transition-opacity duration-200",
-                  isHovered ? "opacity-100" : "opacity-0"
+                  "whitespace-nowrap transition-all duration-300",
+                  isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
                 )}>
                   Sair
                 </span>
