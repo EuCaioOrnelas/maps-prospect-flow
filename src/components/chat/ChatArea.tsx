@@ -11,15 +11,12 @@ import {
   Check, 
   CheckCheck, 
   Clock,
-  Image as ImageIcon,
-  FileText,
-  Mic,
-  Video,
   MoreVertical,
 } from 'lucide-react';
 import type { Conversation, Message } from '@/hooks/useChat';
 import { MediaUploader } from './MediaUploader';
 import { EmojiPicker } from './EmojiPicker';
+import { MediaPreview } from './MediaPreview';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -102,19 +99,30 @@ export const ChatArea = ({
     }
   };
 
-  const getMessageTypeIcon = (type: string) => {
-    switch (type) {
-      case 'image':
-        return <ImageIcon className="h-4 w-4" />;
-      case 'video':
-        return <Video className="h-4 w-4" />;
-      case 'audio':
-        return <Mic className="h-4 w-4" />;
-      case 'document':
-        return <FileText className="h-4 w-4" />;
-      default:
-        return null;
+  const renderMessageContent = (message: Message) => {
+    // If message has media URL, render media preview
+    if (message.media_url && message.message_type !== 'text') {
+      return (
+        <MediaPreview
+          type={message.message_type as 'image' | 'video' | 'audio' | 'document'}
+          url={message.media_url}
+          filename={message.media_filename || undefined}
+          caption={message.content || undefined}
+          fromMe={message.from_me}
+        />
+      );
     }
+
+    // Text message
+    if (message.content) {
+      return (
+        <p className="text-sm whitespace-pre-wrap break-words">
+          {message.content}
+        </p>
+      );
+    }
+
+    return null;
   };
 
   const groupMessagesByDate = () => {
@@ -212,18 +220,7 @@ export const ChatArea = ({
                           : 'bg-card border border-border'
                       )}
                     >
-                      {message.message_type !== 'text' && (
-                        <div className="flex items-center gap-2 mb-1 text-xs opacity-70">
-                          {getMessageTypeIcon(message.message_type)}
-                          <span className="capitalize">{message.message_type}</span>
-                        </div>
-                      )}
-                      
-                      {message.content && (
-                        <p className="text-sm whitespace-pre-wrap break-words">
-                          {message.content}
-                        </p>
-                      )}
+                      {renderMessageContent(message)}
 
                       <div className={cn(
                         'flex items-center justify-end gap-1 mt-1 text-xs',
