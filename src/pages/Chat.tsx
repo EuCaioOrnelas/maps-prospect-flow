@@ -121,6 +121,24 @@ const Chat = () => {
     }
   };
 
+  // Handle selecting an existing conversation and optionally sending a message
+  const handleSelectExistingConversation = async (conversationId: string, initialMessage?: string) => {
+    const existingConv = [...conversations, ...archivedConversations].find(c => c.id === conversationId);
+    if (existingConv) {
+      await selectConversation(existingConv);
+      
+      // If there's an initial message, send it
+      if (initialMessage) {
+        try {
+          await sendMessage(initialMessage, 'text');
+        } catch (error) {
+          toast.error('Erro ao enviar mensagem');
+          throw error;
+        }
+      }
+    }
+  };
+
   const handleNumbersChange = (updatedNumbers: WhatsAppNumber[]) => {
     fetchNumbers();
   };
@@ -470,6 +488,12 @@ const Chat = () => {
           onOpenChange={setShowNewChatDialog}
           onStartConversation={handleStartConversation}
           defaultWhatsAppNumberId={selectedNumberId || undefined}
+          existingConversations={[...conversations, ...archivedConversations].map(c => ({
+            id: c.id,
+            phone: c.phone,
+            whatsapp_number_id: c.whatsapp_number_id,
+          }))}
+          onSelectExistingConversation={handleSelectExistingConversation}
         />
 
         {/* Save Contact Dialog */}
