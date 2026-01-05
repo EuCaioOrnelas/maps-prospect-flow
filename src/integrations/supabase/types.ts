@@ -50,6 +50,114 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          avatar_url: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          origin: string | null
+          phone: string
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          origin?: string | null
+          phone: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          origin?: string | null
+          phone?: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          contact_id: string | null
+          contact_name: string | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          last_message: string | null
+          last_message_at: string | null
+          phone: string
+          remote_jid: string
+          unread_count: number
+          updated_at: string
+          user_id: string
+          whatsapp_number_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message?: string | null
+          last_message_at?: string | null
+          phone: string
+          remote_jid: string
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+          whatsapp_number_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message?: string | null
+          last_message_at?: string | null
+          phone?: string
+          remote_jid?: string
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp_number_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       landing_page_events: {
         Row: {
           created_at: string
@@ -114,6 +222,68 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          from_me: boolean
+          id: string
+          media_filename: string | null
+          media_mimetype: string | null
+          media_url: string | null
+          message_id: string | null
+          message_type: string
+          quoted_message_id: string | null
+          remote_jid: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          from_me?: boolean
+          id?: string
+          media_filename?: string | null
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          message_type?: string
+          quoted_message_id?: string | null
+          remote_jid: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          from_me?: boolean
+          id?: string
+          media_filename?: string | null
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          message_type?: string
+          quoted_message_id?: string | null
+          remote_jid?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

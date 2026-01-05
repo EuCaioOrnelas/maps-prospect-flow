@@ -50,3 +50,12 @@ verify_jwt = false
 
 [functions.get-stripe-mrr]
 verify_jwt = false
+
+[functions.chat-webhook]
+verify_jwt = false
+
+[functions.chat-send-message]
+verify_jwt = false
+
+[functions.chat-start-conversation]
+verify_jwt = false
