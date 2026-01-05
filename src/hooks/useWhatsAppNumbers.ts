@@ -12,7 +12,7 @@ export interface WhatsAppNumber {
   last_sent_at: string | null;
 }
 
-const PLAN_LIMITS: Record<string, number> = {
+export const PLAN_LIMITS: Record<string, number> = {
   free: 1, // Free trial users get 1 number
   start: 2,
   growth: 5,

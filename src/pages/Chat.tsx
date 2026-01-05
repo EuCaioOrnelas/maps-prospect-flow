@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
-import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
+import { useWhatsAppNumbers, PLAN_LIMITS } from '@/hooks/useWhatsAppNumbers';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
+import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2 } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import type { WhatsAppNumber } from '@/hooks/useWhatsAppNumbers';
 
 const Chat = () => {
   const { profile } = useAuth();
-  const { numbers, loading: loadingNumbers } = useWhatsAppNumbers();
+  const { numbers, loading: loadingNumbers, fetchNumbers } = useWhatsAppNumbers();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
+  const [showNumbersManager, setShowNumbersManager] = useState(false);
   
   const {
     conversations,
@@ -36,6 +40,10 @@ const Chat = () => {
 
   // Get connected numbers only
   const connectedNumbers = numbers.filter(n => n.is_connected);
+  
+  // Get plan limits
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const maxNumbers = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS] || 1;
 
   // Auto-select first connected number
   useEffect(() => {
@@ -69,6 +77,15 @@ const Chat = () => {
     }
   };
 
+  const handleNumbersChange = (updatedNumbers: WhatsAppNumber[]) => {
+    fetchNumbers();
+  };
+
+  const handleConnect = (numberId: string) => {
+    setSelectedNumberId(numberId);
+    setShowNumbersManager(false);
+  };
+
   return (
     <>
       <SEO
@@ -94,11 +111,66 @@ const Chat = () => {
               </div>
             ) : connectedNumbers.length === 0 ? (
               <div className="flex-1 flex items-center justify-center p-8">
-                <div className="text-center space-y-4">
-                  <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground/50" />
-                  <h2 className="text-xl font-semibold text-foreground">Nenhum número conectado</h2>
-                  <p className="text-muted-foreground max-w-md">
-                    Para usar o chat, conecte um número WhatsApp na página de Disparos.
+                <div className="max-w-md w-full text-center space-y-6">
+                  {/* Icon */}
+                  <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MessageSquare className="w-10 h-10 text-primary" />
+                  </div>
+                  
+                  {/* Title and Description */}
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-bold text-foreground">
+                      Nenhum número conectado
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Para usar o chat, conecte seu WhatsApp escaneando o QR Code com seu celular.
+                    </p>
+                  </div>
+                  
+                  {/* Steps */}
+                  <div className="bg-card border border-border rounded-xl p-6 text-left space-y-4">
+                    <h3 className="font-semibold text-foreground text-sm">Como conectar:</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          1
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Clique no botão abaixo para adicionar um novo número
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          2
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Abra o WhatsApp no seu celular e vá em <strong>Configurações → Dispositivos conectados</strong>
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          3
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Escaneie o QR Code que aparecerá na tela
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* CTA Button */}
+                  <Button 
+                    onClick={() => setShowNumbersManager(true)}
+                    size="lg"
+                    className="w-full gap-2 h-12 text-base"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Conectar WhatsApp
+                  </Button>
+                  
+                  {/* Security Note */}
+                  <p className="text-xs text-muted-foreground">
+                    🔒 Sua conexão é segura e criptografada. Você pode desconectar a qualquer momento.
                   </p>
                 </div>
               </div>
@@ -187,6 +259,17 @@ const Chat = () => {
             defaultWhatsAppNumberId={selectedNumberId}
           />
         )}
+
+        {/* Numbers Manager - reusing from WhatsApp campaigns */}
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={handleNumbersChange}
+          maxNumbers={maxNumbers}
+          onConnect={handleConnect}
+          forceOpen={showNumbersManager}
+          onClose={() => setShowNumbersManager(false)}
+          hideButtons={true}
+        />
       </div>
     </>
   );
