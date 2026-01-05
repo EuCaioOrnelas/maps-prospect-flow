@@ -450,6 +450,7 @@ const Chat = () => {
                               conversation={selectedConversation}
                               onClose={() => setShowContactInfo(false)}
                               onContactUpdated={fetchConversations}
+                              onOpenNumbersManager={() => setShowNumbersManager(true)}
                             />
                           </div>
                         )}
