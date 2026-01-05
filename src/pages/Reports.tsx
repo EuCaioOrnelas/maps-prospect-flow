@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Dialog,
@@ -20,7 +19,6 @@ import {
   Users, 
   Search, 
   Calendar,
-  ArrowLeft,
   Download,
   Filter,
   Link as LinkIcon,
@@ -55,6 +53,8 @@ import {
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 interface SearchHistoryItem {
   id: string;
@@ -93,7 +93,7 @@ const Reports = () => {
   const [generatedLink, setGeneratedLink] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -561,52 +561,43 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-50 bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                  <ArrowLeft size={18} />
-                </Button>
-              </Link>
-              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-            </div>
-            
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-28 sm:w-40 h-8 sm:h-9 text-xs sm:text-sm">
-                  <Filter size={14} className="mr-1 sm:mr-2 flex-shrink-0" />
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todo período</SelectItem>
-                  <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                  <SelectItem value="30days">Últimos 30 dias</SelectItem>
-                  <SelectItem value="90days">Últimos 90 dias</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
-                <Download size={16} />
-                <span className="hidden sm:inline">Exportar</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Sidebar - Desktop only */}
+      <AppSidebar profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8" ref={reportRef}>
-        <div className="max-w-7xl mx-auto">
-          {/* Page Title */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="font-display text-3xl font-bold mb-2">Relatórios de Prospecção</h1>
-            <p className="text-muted-foreground">
+      {/* Header */}
+      <AppHeader profile={profile} />
+
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20" ref={reportRef}>
+        {/* Page Header with filters */}
+        <div className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">Relatórios de Prospecção</h1>
+            <p className="text-muted-foreground text-sm">
               Acompanhe suas métricas e performance de prospecção
             </p>
           </div>
-
+          
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-28 sm:w-40 h-8 sm:h-9 text-xs sm:text-sm">
+                <Filter size={14} className="mr-1 sm:mr-2 flex-shrink-0" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo período</SelectItem>
+                <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                <SelectItem value="30days">Últimos 30 dias</SelectItem>
+                <SelectItem value="90days">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
+              <Download size={16} />
+              <span className="hidden sm:inline">Exportar</span>
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto">
           {/* Stats Cards with staggered animation */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[

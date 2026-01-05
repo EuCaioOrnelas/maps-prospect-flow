@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/Logo";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -18,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { 
-  ArrowLeft, 
   MessageSquare,
   TrendingUp,
   Users,
@@ -60,6 +58,8 @@ import {
 } from "recharts";
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 interface Campaign {
   id: string;
@@ -101,7 +101,7 @@ const WhatsAppReports = () => {
   const [generatedLink, setGeneratedLink] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -308,30 +308,13 @@ const WhatsAppReports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/whatsapp">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft size={20} />
-                </Button>
-              </Link>
-              <Logo size="md" mobileSize="sm" mobileInitialsOnly />
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-                <BarChart3 size={16} className="text-primary" />
-                <span>Relatório de Campanhas</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Sidebar - Desktop only */}
+      <AppSidebar profile={profile} />
 
-      <main className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <AppHeader profile={profile} />
+
+      <main className="container mx-auto px-4 py-8 lg:pl-20">
         <div className="max-w-6xl mx-auto">
           {/* Header with filter */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
@@ -339,7 +322,7 @@ const WhatsAppReports = () => {
               <h1 className="font-display text-2xl font-bold mb-1">
                 Relatório de Campanhas
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Acompanhe o desempenho dos seus disparos
               </p>
             </div>
