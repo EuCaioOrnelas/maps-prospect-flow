@@ -193,18 +193,23 @@ serve(async (req) => {
     
     let webhookConfigured = false;
     const webhookEndpoints = [
+      // Format 1: webhook/set with nested webhook object (most common for Evolution API)
       {
         url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
-          url: webhookUrl,
-          webhook_by_events: false,
-          webhook_base64: true,
-          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
         }
       },
+      // Format 2: Direct properties
       {
-        url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
+        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
           enabled: true,
@@ -214,6 +219,7 @@ serve(async (req) => {
           events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
         }
       },
+      // Format 3: instance/settings
       {
         url: `${EVOLUTION_API_URL}/instance/settings`,
         method: 'POST',
