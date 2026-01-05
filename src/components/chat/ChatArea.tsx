@@ -8,8 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { 
   Send, 
-  Paperclip, 
-  Smile, 
   Check, 
   CheckCheck, 
   Clock,
@@ -18,10 +16,10 @@ import {
   Mic,
   Video,
   MoreVertical,
-  Phone,
-  Info
 } from 'lucide-react';
 import type { Conversation, Message } from '@/hooks/useChat';
+import { MediaUploader } from './MediaUploader';
+import { EmojiPicker } from './EmojiPicker';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -176,13 +174,7 @@ export const ChatArea = ({
         </button>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon">
-            <Phone className="h-5 w-5" />
-          </Button>
           <Button variant="ghost" size="icon" onClick={onOpenContactInfo}>
-            <Info className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
             <MoreVertical className="h-5 w-5" />
           </Button>
         </div>
@@ -254,12 +246,15 @@ export const ChatArea = ({
       {/* Input */}
       <div className="p-4 border-t border-border bg-card">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="icon" disabled>
-            <Smile className="h-5 w-5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" disabled>
-            <Paperclip className="h-5 w-5" />
-          </Button>
+          <EmojiPicker 
+            onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
+            disabled={isSending}
+          />
+          <MediaUploader 
+            conversationId={conversation.id}
+            onMediaSent={() => {}}
+            disabled={isSending}
+          />
           
           <Input
             ref={inputRef}
