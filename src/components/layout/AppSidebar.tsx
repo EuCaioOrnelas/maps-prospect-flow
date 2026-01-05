@@ -112,8 +112,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           {/* Main navigation */}
           <nav className="flex-1 py-4 px-2">
             <ul className="space-y-1">
-              {mainNavItems.map((item) => (
-                <li key={item.title}>
+              {mainNavItems.map((item, index) => (
+                <li 
+                  key={item.title}
+                  className="transition-all duration-300"
+                  style={{
+                    transitionDelay: isHovered ? `${index * 50}ms` : '0ms',
+                    transform: isHovered ? 'translateX(0)' : 'translateX(0)',
+                  }}
+                >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       {item.onClick ? (
@@ -127,10 +134,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           )}
                         >
                           <item.icon size={20} className="shrink-0" />
-                          <span className={cn(
-                            "whitespace-nowrap transition-all duration-300",
-                            isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                          )}>
+                          <span 
+                            className="whitespace-nowrap transition-all duration-300"
+                            style={{
+                              opacity: isHovered ? 1 : 0,
+                              transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
+                              transitionDelay: isHovered ? `${index * 50 + 100}ms` : '0ms',
+                            }}
+                          >
                             {item.title}
                           </span>
                         </button>
@@ -145,10 +156,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           )}
                         >
                           <item.icon size={20} className="shrink-0" />
-                          <span className={cn(
-                            "whitespace-nowrap transition-all duration-300",
-                            isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                          )}>
+                          <span 
+                            className="whitespace-nowrap transition-all duration-300"
+                            style={{
+                              opacity: isHovered ? 1 : 0,
+                              transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
+                              transitionDelay: isHovered ? `${index * 50 + 100}ms` : '0ms',
+                            }}
+                          >
                             {item.title}
                           </span>
                         </Link>
@@ -168,8 +183,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           {/* Bottom navigation */}
           <div className="py-4 px-2 border-t border-sidebar-border">
             <ul className="space-y-1">
-                {bottomNavItems.map((item) => (
-                <li key={item.title}>
+                {bottomNavItems.map((item, index) => (
+                <li 
+                  key={item.title}
+                  className="transition-all duration-300"
+                  style={{
+                    transitionDelay: isHovered ? `${(index + mainNavItems.length) * 50}ms` : '0ms',
+                  }}
+                >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
@@ -183,10 +204,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <item.icon size={20} className="shrink-0" />
-                        <span className={cn(
-                          "whitespace-nowrap transition-all duration-300",
-                          isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                        )}>
+                        <span 
+                          className="whitespace-nowrap transition-all duration-300"
+                          style={{
+                            opacity: isHovered ? 1 : 0,
+                            transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
+                            transitionDelay: isHovered ? `${(index + mainNavItems.length) * 50 + 100}ms` : '0ms',
+                          }}
+                        >
                           {item.title}
                         </span>
                       </Link>
@@ -201,7 +226,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               ))}
               
               {/* Profile */}
-              <li>
+              <li
+                className="transition-all duration-300"
+                style={{
+                  transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length) * 50}ms` : '0ms',
+                }}
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
@@ -219,10 +249,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className={cn(
-                        "whitespace-nowrap transition-all duration-300 truncate",
-                        isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                      )}>
+                      <span 
+                        className="whitespace-nowrap transition-all duration-300 truncate"
+                        style={{
+                          opacity: isHovered ? 1 : 0,
+                          transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
+                          transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length) * 50 + 100}ms` : '0ms',
+                        }}
+                      >
                         {profile?.name || 'Meu Perfil'}
                       </span>
                     </Link>
@@ -236,7 +270,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
 
               {/* Logout */}
-              <li>
+              <li
+                className="transition-all duration-300"
+                style={{
+                  transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length + 1) * 50}ms` : '0ms',
+                }}
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
@@ -247,10 +286,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       )}
                     >
                       <LogOut size={20} className="shrink-0" />
-                      <span className={cn(
-                        "whitespace-nowrap transition-all duration-300",
-                        isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                      )}>
+                      <span 
+                        className="whitespace-nowrap transition-all duration-300"
+                        style={{
+                          opacity: isHovered ? 1 : 0,
+                          transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
+                          transitionDelay: isHovered ? `${(bottomNavItems.length + mainNavItems.length + 1) * 50 + 100}ms` : '0ms',
+                        }}
+                      >
                         Sair
                       </span>
                     </button>
