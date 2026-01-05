@@ -187,6 +187,41 @@ serve(async (req) => {
       console.error('Error updating instance_name:', updateError);
     }
 
+    // Configure webhook for chat messages automatically
+    try {
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/chat-webhook`;
+      console.log(`Configuring webhook for instance ${instanceName}: ${webhookUrl}`);
+      
+      const webhookResponse = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({
+          url: webhookUrl,
+          webhook_by_events: false,
+          webhook_base64: true,
+          events: [
+            "MESSAGES_UPSERT",
+            "MESSAGES_UPDATE",
+            "CONNECTION_UPDATE",
+            "QRCODE_UPDATED"
+          ]
+        }),
+      });
+
+      if (webhookResponse.ok) {
+        console.log('Webhook configured successfully for instance:', instanceName);
+      } else {
+        const webhookError = await webhookResponse.text();
+        console.error('Failed to configure webhook:', webhookError);
+      }
+    } catch (webhookError) {
+      console.error('Error configuring webhook:', webhookError);
+      // Don't fail the whole request if webhook config fails
+    }
+
     return new Response(JSON.stringify({
       success: true,
       instance: instanceData,

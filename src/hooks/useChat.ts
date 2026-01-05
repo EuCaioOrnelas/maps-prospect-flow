@@ -61,7 +61,7 @@ export interface Contact {
   updated_at: string;
 }
 
-export const useChat = () => {
+export const useChat = (selectedNumberId?: string | null) => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -69,11 +69,11 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
 
-  // Fetch conversations
+  // Fetch conversations filtered by selected number
   const fetchConversations = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('conversations')
       .select(`
         *,
@@ -81,8 +81,14 @@ export const useChat = () => {
         whatsapp_numbers (id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .eq('is_archived', false)
-      .order('last_message_at', { ascending: false, nullsFirst: false });
+      .eq('is_archived', false);
+
+    // Filter by selected WhatsApp number if provided
+    if (selectedNumberId) {
+      query = query.eq('whatsapp_number_id', selectedNumberId);
+    }
+
+    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: false });
 
     if (error) {
       console.error('Error fetching conversations:', error);
@@ -91,7 +97,7 @@ export const useChat = () => {
 
     setConversations(data || []);
     setIsLoading(false);
-  }, [user]);
+  }, [user, selectedNumberId]);
 
   // Fetch messages for a conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
