@@ -47,44 +47,23 @@ serve(async (req) => {
     
     let webhookConfigured = false;
     let responseData = null;
+    let successEndpoint = null;
 
-    // Evolution API v2 format - POST to /webhook/set/{instance}
+    // Try multiple endpoint formats - matching exactly what evolution-create-instance uses
     const endpoints = [
-      { 
+      // Primary format used in evolution-create-instance
+      {
         url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
           url: webhookUrl,
           webhook_by_events: false,
           webhook_base64: true,
-          events: [
-            "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE", 
-            "CONNECTION_UPDATE",
-            "QRCODE_UPDATED",
-            "SEND_MESSAGE"
-          ]
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
         }
       },
+      // Alternative format with enabled flag
       {
-        // Alternative v1 format
-        url: `${EVOLUTION_API_URL}/instance/setWebhook/${instanceName}`,
-        method: 'POST',
-        body: {
-          webhook: webhookUrl,
-          webhookByEvents: false,
-          webhookBase64: true,
-          events: [
-            "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE",
-            "CONNECTION_UPDATE", 
-            "QRCODE_UPDATED",
-            "SEND_MESSAGE"
-          ]
-        }
-      },
-      {
-        // Another v2 format variant
         url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
         method: 'POST',
         body: {
@@ -92,13 +71,63 @@ serve(async (req) => {
           url: webhookUrl,
           webhookByEvents: false,
           webhookBase64: true,
-          events: [
-            "MESSAGES_UPSERT",
-            "MESSAGES_UPDATE",
-            "CONNECTION_UPDATE",
-            "QRCODE_UPDATED", 
-            "SEND_MESSAGE"
-          ]
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+        }
+      },
+      // Settings endpoint with instanceName in body
+      {
+        url: `${EVOLUTION_API_URL}/instance/settings`,
+        method: 'POST',
+        body: {
+          instanceName: instanceName,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        }
+      },
+      // PUT variant of settings
+      {
+        url: `${EVOLUTION_API_URL}/instance/settings`,
+        method: 'PUT',
+        body: {
+          instanceName: instanceName,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        }
+      },
+      // Settings with instanceName in URL
+      {
+        url: `${EVOLUTION_API_URL}/settings/${instanceName}`,
+        method: 'POST',
+        body: {
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          }
+        }
+      },
+      // Global webhook config endpoint
+      {
+        url: `${EVOLUTION_API_URL}/webhook/instance/${instanceName}`,
+        method: 'POST',
+        body: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
         }
       }
     ];
@@ -108,6 +137,7 @@ serve(async (req) => {
       
       try {
         console.log(`Trying webhook endpoint: ${endpoint.method} ${endpoint.url}`);
+        console.log(`Payload: ${JSON.stringify(endpoint.body)}`);
         
         const response = await fetch(endpoint.url, {
           method: endpoint.method,
@@ -119,7 +149,7 @@ serve(async (req) => {
         });
 
         const responseText = await response.text();
-        console.log(`Response status: ${response.status}, body: ${responseText}`);
+        console.log(`Response status: ${response.status}, body: ${responseText.substring(0, 300)}`);
 
         if (response.ok || response.status === 201) {
           try {
@@ -127,8 +157,9 @@ serve(async (req) => {
           } catch {
             responseData = { raw: responseText };
           }
-          console.log('Webhook configured successfully:', JSON.stringify(responseData));
+          console.log('Webhook configured successfully via:', endpoint.url);
           webhookConfigured = true;
+          successEndpoint = endpoint.url;
         }
       } catch (e) {
         console.log(`Endpoint ${endpoint.url} failed:`, e);
@@ -140,7 +171,9 @@ serve(async (req) => {
     const findEndpoints = [
       `${EVOLUTION_API_URL}/webhook/find/${instanceName}`,
       `${EVOLUTION_API_URL}/instance/fetchWebhook/${instanceName}`,
-      `${EVOLUTION_API_URL}/webhook/${instanceName}`
+      `${EVOLUTION_API_URL}/webhook/${instanceName}`,
+      `${EVOLUTION_API_URL}/settings/${instanceName}`,
+      `${EVOLUTION_API_URL}/instance/settings/${instanceName}`
     ];
 
     for (const findUrl of findEndpoints) {
@@ -154,7 +187,7 @@ serve(async (req) => {
         
         if (findResponse.ok) {
           currentConfig = await findResponse.json();
-          console.log('Current webhook config:', JSON.stringify(currentConfig));
+          console.log('Current webhook config from', findUrl, ':', JSON.stringify(currentConfig));
           break;
         }
       } catch (e) {
@@ -165,9 +198,12 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: webhookConfigured,
       webhookUrl: webhookUrl,
+      successEndpoint: successEndpoint,
       currentConfig: currentConfig,
       responseData: responseData,
-      message: webhookConfigured ? 'Webhook reconfigured successfully' : 'Failed to reconfigure webhook - check Evolution API version'
+      message: webhookConfigured 
+        ? 'Webhook sincronizado com sucesso!' 
+        : 'Webhook não pôde ser reconfigurado. Tente desconectar e reconectar o número.'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
