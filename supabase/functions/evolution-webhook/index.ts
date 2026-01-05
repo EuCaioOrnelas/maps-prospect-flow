@@ -99,8 +99,10 @@ serve(async (req) => {
           const fromMe = messageKey.fromMe;
           const messageId = messageKey.id;
           
-          // Extract phone number from remoteJid
-          const phone = remoteJid.split('@')[0];
+          // Extract phone number from remoteJid - normalize to digits only
+          const rawPhone = remoteJid.split('@')[0];
+          // Remove any non-digit characters for matching
+          const normalizedPhone = rawPhone.replace(/\D/g, '');
           
           // Get the WhatsApp number (instance) info
           const { data: whatsappNumber } = await supabase
@@ -110,9 +112,11 @@ serve(async (req) => {
             .single();
           
           if (whatsappNumber) {
-            // Get or create conversation first
-            let conversationId: string;
-            const { data: existingConv } = await supabase
+            // Get or create conversation - try multiple matching strategies
+            let conversationId: string | null = null;
+            
+            // Strategy 1: Match by exact remote_jid
+            let { data: existingConv } = await supabase
               .from('conversations')
               .select('id')
               .eq('remote_jid', remoteJid)
@@ -121,15 +125,52 @@ serve(async (req) => {
             
             if (existingConv) {
               conversationId = existingConv.id;
-            } else {
-              // Create new conversation
+              console.log('Found conversation by exact remote_jid match');
+            }
+            
+            // Strategy 2: Match by normalized phone number (last 10-11 digits)
+            if (!conversationId && normalizedPhone.length >= 10) {
+              // Get last 10-11 digits for matching (without country code)
+              const phoneToMatch = normalizedPhone.slice(-11);
+              
+              const { data: convsByPhone } = await supabase
+                .from('conversations')
+                .select('id, phone, remote_jid')
+                .eq('whatsapp_number_id', whatsappNumber.id);
+              
+              if (convsByPhone && convsByPhone.length > 0) {
+                // Find conversation where phone ends with same digits
+                const matchingConv = convsByPhone.find(c => {
+                  const convPhone = c.phone.replace(/\D/g, '');
+                  return convPhone.slice(-11) === phoneToMatch || 
+                         convPhone.slice(-10) === phoneToMatch.slice(-10) ||
+                         phoneToMatch.endsWith(convPhone.slice(-10)) ||
+                         convPhone.endsWith(phoneToMatch.slice(-10));
+                });
+                
+                if (matchingConv) {
+                  conversationId = matchingConv.id;
+                  console.log('Found conversation by phone number match:', matchingConv.phone);
+                  
+                  // Update the remote_jid to the new one for future matches
+                  await supabase
+                    .from('conversations')
+                    .update({ remote_jid: remoteJid, updated_at: new Date().toISOString() })
+                    .eq('id', conversationId);
+                }
+              }
+            }
+            
+            // Strategy 3: Create new conversation if not found
+            if (!conversationId) {
+              console.log('Creating new conversation for:', remoteJid);
               const { data: newConv, error: convError } = await supabase
                 .from('conversations')
                 .insert({
                   user_id: whatsappNumber.user_id,
                   whatsapp_number_id: whatsappNumber.id,
                   remote_jid: remoteJid,
-                  phone: phone,
+                  phone: rawPhone,
                   contact_name: data.pushName || null,
                 })
                 .select('id')
@@ -143,18 +184,18 @@ serve(async (req) => {
             }
 
             // If message is received (not from me), try to fetch profile picture
-            if (!fromMe && phone) {
+            if (!fromMe && rawPhone) {
               try {
-                const profilePicture = await fetchProfilePicture(instance, phone);
+                const profilePicture = await fetchProfilePicture(instance, rawPhone);
                 if (profilePicture) {
-                  await updateContactAvatar(whatsappNumber.user_id, phone, profilePicture);
+                  await updateContactAvatar(whatsappNumber.user_id, rawPhone, profilePicture);
                   
                   // Also try to update the conversation contact avatar if no contact linked
                   const { data: contact } = await supabase
                     .from('contacts')
                     .select('id')
                     .eq('user_id', whatsappNumber.user_id)
-                    .eq('phone', phone)
+                    .eq('phone', rawPhone)
                     .single();
                     
                   if (contact) {

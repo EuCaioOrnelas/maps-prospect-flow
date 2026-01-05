@@ -313,8 +313,8 @@ export const ChatArea = ({
             opacity: 0.04,
           }}
         />
-        <ScrollArea className="h-full p-4 relative z-10" ref={scrollRef}>
-          <div className="space-y-4 pb-2">
+        <ScrollArea className="h-full relative z-10" ref={scrollRef}>
+          <div className="space-y-4 p-4 pb-2">
             {messageGroups.map((group) => (
               <div key={group.date}>
                 {/* Date separator */}
@@ -336,7 +336,7 @@ export const ChatArea = ({
                         key={message.id}
                         className={cn(
                           'flex w-full group',
-                          message.from_me ? 'justify-end pl-12 sm:pl-20' : 'justify-start pr-12 sm:pr-20'
+                          message.from_me ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16'
                         )}
                       >
                         <div className={cn(
@@ -360,7 +360,7 @@ export const ChatArea = ({
                                 ? 'bg-primary text-primary-foreground rounded-tr-none'
                                 : 'bg-card text-card-foreground rounded-tl-none border border-border'
                             )}
-                            style={{ maxWidth: 'min(90%, 520px)' }}
+                            style={{ maxWidth: 'min(85%, 480px)' }}
                           >
                             {/* Quoted message preview */}
                             {quotedMessage && (
