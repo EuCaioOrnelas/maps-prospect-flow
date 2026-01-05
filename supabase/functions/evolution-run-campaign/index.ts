@@ -273,10 +273,87 @@ serve(async (req) => {
             });
 
             if (sendResponse.ok) {
+              const sendResult = await sendResponse.json();
               sentCount++;
               dailySentCount++;
               consecutiveFailures = 0; // Reset on success
               console.log(`Message sent to ${formattedPhone} (${sentCount}/${leads.length})`);
+
+              // Create conversation and message in database for chat sync
+              try {
+                const remoteJid = `${formattedPhone}@s.whatsapp.net`;
+                
+                // Get or create conversation
+                let conversationId: string;
+                const { data: existingConv } = await supabase
+                  .from('conversations')
+                  .select('id')
+                  .eq('whatsapp_number_id', numberId)
+                  .eq('remote_jid', remoteJid)
+                  .single();
+
+                if (existingConv) {
+                  conversationId = existingConv.id;
+                } else {
+                  // Check if contact exists
+                  const { data: existingContact } = await supabase
+                    .from('contacts')
+                    .select('id, name')
+                    .eq('user_id', user.id)
+                    .eq('phone', formattedPhone)
+                    .single();
+
+                  // Create new conversation
+                  const { data: newConv, error: convError } = await supabase
+                    .from('conversations')
+                    .insert({
+                      user_id: user.id,
+                      whatsapp_number_id: numberId,
+                      contact_id: existingContact?.id || null,
+                      remote_jid: remoteJid,
+                      phone: formattedPhone,
+                      contact_name: existingContact?.name || lead.name || null,
+                    })
+                    .select('id')
+                    .single();
+
+                  if (convError) {
+                    console.error('Error creating conversation:', convError);
+                  } else {
+                    conversationId = newConv.id;
+                  }
+                }
+
+                // Insert message
+                if (conversationId!) {
+                  const messageId = sendResult?.key?.id || `campaign_${campaignId}_${Date.now()}`;
+                  
+                  await supabase
+                    .from('messages')
+                    .insert({
+                      conversation_id: conversationId,
+                      user_id: user.id,
+                      message_id: messageId,
+                      remote_jid: remoteJid,
+                      from_me: true,
+                      message_type: 'text',
+                      content: personalizedMessage,
+                      status: 'sent',
+                    });
+
+                  // Update conversation with last message
+                  await supabase
+                    .from('conversations')
+                    .update({
+                      last_message: personalizedMessage.substring(0, 100),
+                      last_message_at: new Date().toISOString(),
+                    })
+                    .eq('id', conversationId);
+                }
+              } catch (syncError) {
+                console.error('Error syncing message to chat:', syncError);
+                // Don't fail the campaign if sync fails
+              }
             } else {
               const errorText = await sendResponse.text();
               console.error(`Failed to send to ${formattedPhone}:`, errorText);
