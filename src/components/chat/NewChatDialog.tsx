@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { toast } from 'sonner';
-import { MessageSquare, Phone } from 'lucide-react';
+import { MessageSquare, Phone, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface NewChatDialogProps {
   open: boolean;
@@ -38,14 +39,14 @@ export const NewChatDialog = ({
   const [selectedNumber, setSelectedNumber] = useState(defaultWhatsAppNumberId || '');
   const [isStarting, setIsStarting] = useState(false);
 
+  const connectedNumbers = numbers.filter((n) => n.is_connected);
+
   // Update selected number when default changes
-  useState(() => {
+  useEffect(() => {
     if (defaultWhatsAppNumberId) {
       setSelectedNumber(defaultWhatsAppNumberId);
     }
-  });
-
-  const connectedNumbers = numbers.filter((n) => n.is_connected);
+  }, [defaultWhatsAppNumberId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +68,6 @@ export const NewChatDialog = ({
       onOpenChange(false);
       setPhone('');
       setContactName('');
-      setSelectedNumber('');
     } catch (error) {
       toast.error('Erro ao iniciar conversa');
     } finally {
@@ -90,15 +90,33 @@ export const NewChatDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* WhatsApp Number Selection */}
-          <div className="space-y-2">
-            <Label>Número de WhatsApp</Label>
-            {connectedNumbers.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
-                Nenhum número conectado. Conecte um número na página de Disparos.
-              </div>
-            ) : (
+        {connectedNumbers.length === 0 ? (
+          <div className="py-6 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-amber-500" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground">
+                Nenhum número conectado
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Para iniciar conversas, você precisa conectar um número de WhatsApp primeiro.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center pt-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button asChild>
+                <Link to="/whatsapp">Conectar WhatsApp</Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* WhatsApp Number Selection */}
+            <div className="space-y-2">
+              <Label>Número de WhatsApp</Label>
               <Select value={selectedNumber} onValueChange={setSelectedNumber}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um número" />
@@ -111,56 +129,56 @@ export const NewChatDialog = ({
                   ))}
                 </SelectContent>
               </Select>
-            )}
-          </div>
+            </div>
 
-          {/* Phone Input */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">Número do Contato</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* Phone Input */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Número do Contato</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                  placeholder="5511999999999"
+                  className="pl-9"
+                  maxLength={15}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Digite o número com código do país (55 para Brasil)
+              </p>
+            </div>
+
+            {/* Contact Name (optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="contactName">Nome do Contato (opcional)</Label>
               <Input
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-                placeholder="5511999999999"
-                className="pl-9"
-                maxLength={15}
+                id="contactName"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="Nome para identificar o contato"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Digite o número com código do país (55 para Brasil)
-            </p>
-          </div>
 
-          {/* Contact Name (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="contactName">Nome do Contato (opcional)</Label>
-            <Input
-              id="contactName"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              placeholder="Nome para identificar o contato"
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isStarting || !selectedNumber || !phone.trim()}
-            >
-              {isStarting ? 'Iniciando...' : 'Iniciar Conversa'}
-            </Button>
-          </div>
-        </form>
+            {/* Submit */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isStarting || !selectedNumber || !phone.trim()}
+              >
+                {isStarting ? 'Iniciando...' : 'Iniciar Conversa'}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
