@@ -50,10 +50,22 @@ export const ContactInfoPanel = ({
     
     setIsFetchingAvatar(true);
     try {
+      // Get instance name for this WhatsApp number
+      const { data: numberData } = await supabase
+        .from('whatsapp_numbers')
+        .select('instance_name')
+        .eq('id', conversation.whatsapp_number_id)
+        .single();
+
+      if (!numberData?.instance_name) {
+        setIsFetchingAvatar(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
         body: {
           conversationId: conversation.id,
-          instanceName: `instance_${conversation.whatsapp_number_id}`,
+          instanceName: numberData.instance_name,
           phone: conversation.phone,
         },
       });
