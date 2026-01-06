@@ -34,7 +34,10 @@ const Chat = () => {
   const { quickReplies } = useQuickReplies();
   const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
   const { isTyping } = useTypingIndicator();
-  const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
+  const [selectedNumberId, setSelectedNumberId] = useState<string | null>(() => {
+    // Restore from localStorage on initial load
+    return localStorage.getItem('chat_selected_number_id');
+  });
   const [notificationRequested, setNotificationRequested] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
   const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
@@ -96,9 +99,19 @@ const Chat = () => {
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const maxNumbers = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS] || 1;
 
-  // Auto-select first connected number only if there's just one
+  // Auto-select number: restore from localStorage or fallback to first connected
   useEffect(() => {
-    if (connectedNumbers.length === 1 && !selectedNumberId) {
+    if (connectedNumbers.length === 0) return;
+    
+    const savedNumberId = localStorage.getItem('chat_selected_number_id');
+    
+    // Check if saved number still exists and is connected
+    const savedNumberExists = savedNumberId && connectedNumbers.some(n => n.id === savedNumberId);
+    
+    if (savedNumberExists && !selectedNumberId) {
+      setSelectedNumberId(savedNumberId);
+    } else if (!savedNumberExists && !selectedNumberId) {
+      // Fallback to first connected number
       setSelectedNumberId(connectedNumbers[0].id);
     }
   }, [connectedNumbers, selectedNumberId]);
@@ -129,10 +142,18 @@ const Chat = () => {
     syncWebhook();
   }, [selectedNumberId, connectedNumbers, webhookSyncedFor]);
 
-  // Clear selected conversation when changing number
+  // Clear selected conversation when changing number and persist to localStorage
   const handleNumberChange = (numberId: string) => {
-    setSelectedNumberId(numberId || null);
+    const newId = numberId || null;
+    setSelectedNumberId(newId);
     setSelectedConversation(null);
+    
+    // Persist selection to localStorage
+    if (newId) {
+      localStorage.setItem('chat_selected_number_id', newId);
+    } else {
+      localStorage.removeItem('chat_selected_number_id');
+    }
   };
 
   const handleSendMessage = async (content: string, quotedMessageId?: string) => {
