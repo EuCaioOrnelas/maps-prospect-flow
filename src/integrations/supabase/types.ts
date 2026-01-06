@@ -978,6 +978,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      get_phone_key: { Args: { phone_input: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -987,6 +988,10 @@ export type Database = {
       }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
+      normalize_brazilian_phone: {
+        Args: { phone_input: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
