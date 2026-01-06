@@ -342,7 +342,7 @@ export const ConversationList = ({
                   size="sm"
                   onClick={() => onFilterChange(option.value)}
                   className={cn(
-                    "shrink-0 gap-1.5 h-8 px-3 rounded-full transition-all duration-200",
+                    "shrink-0 gap-1.5 h-8 px-3 rounded-full transition-all duration-200 shadow-none",
                     isActive && "bg-primary text-primary-foreground",
                     !isActive && "bg-muted/50 hover:bg-muted border-0"
                   )}
