@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
@@ -20,13 +20,13 @@ interface MediaPreviewProps {
   fromMe?: boolean;
 }
 
-export const MediaPreview = ({ type, url, filename, caption, fromMe }: MediaPreviewProps) => {
+const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPreviewProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename || 'download';
@@ -34,7 +34,7 @@ export const MediaPreview = ({ type, url, filename, caption, fromMe }: MediaPrev
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [url, filename]);
 
   if (type === 'image') {
     return (
@@ -234,3 +234,5 @@ export const MediaPreview = ({ type, url, filename, caption, fromMe }: MediaPrev
 
   return null;
 };
+
+export const MediaPreview = memo(MediaPreviewComponent);

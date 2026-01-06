@@ -1,20 +1,17 @@
-import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserPlus, MoreVertical, Trash2, X, Check, User, MessageCircle, Users, UserX } from 'lucide-react';
+import { Search, Plus, Trash2, X, Check, MessageCircle, Users, UserX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import type { Conversation } from '@/hooks/useChat';
 import type { ConversationFilter } from '@/hooks/useChat';
+import { ConversationItem } from './ConversationItem';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -163,74 +160,40 @@ const ConversationListComponent = ({
     }
   }, [fetchingAvatars]);
 
-  // Auto-fetch avatars for all conversations without one
+  // Auto-fetch avatars for visible conversations without one (debounced)
   useEffect(() => {
-    const conversationsWithoutAvatar = conversations.filter(
-      conv => !conv.contacts?.avatar_url && !avatarCache[conv.id] && !fetchingAvatars.has(conv.id)
-    );
+    // Only fetch avatars after initial render settles
+    const timeoutId = setTimeout(() => {
+      const conversationsWithoutAvatar = conversations.filter(
+        conv => !conv.contacts?.avatar_url && !avatarCache[conv.id] && !fetchingAvatars.has(conv.id)
+      );
 
-    // Fetch avatars for all conversations (5 at a time for better performance)
-    conversationsWithoutAvatar.slice(0, 5).forEach(conv => {
-      fetchAvatarFromWhatsApp(conv);
-    });
-  }, [conversations, avatarCache, fetchingAvatars, fetchAvatarFromWhatsApp]);
+      // Fetch avatars for max 3 conversations at a time for better performance
+      conversationsWithoutAvatar.slice(0, 3).forEach(conv => {
+        fetchAvatarFromWhatsApp(conv);
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [conversations.length]); // Only re-run when conversations count changes
 
   // Get avatar URL - from contacts or cache
-  const getAvatarUrl = (conversation: Conversation) => {
+  const getAvatarUrl = useCallback((conversation: Conversation) => {
     return conversation.contacts?.avatar_url || avatarCache[conversation.id] || undefined;
-  };
+  }, [avatarCache]);
 
-  const formatTime = (dateString: string | null) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    
-    if (isToday(date)) {
-      return format(date, 'HH:mm');
-    }
-    if (isYesterday(date)) {
-      return 'Ontem';
-    }
-    if (isThisWeek(date)) {
-      return format(date, 'EEEE', { locale: ptBR });
-    }
-    return format(date, 'dd/MM/yyyy');
-  };
+  // Check if contact is saved (has an associated contact with a name)
+  const isContactSaved = useCallback((conversation: Conversation) => {
+    return !!(conversation.contact_id && conversation.contacts?.name);
+  }, []);
 
-  const getDisplayName = (conversation: Conversation) => {
-    // Only show name if contact is actually saved (has contact_id AND contacts.name)
+  // Helper to get display name for search
+  const getDisplayName = useCallback((conversation: Conversation) => {
     if (conversation.contact_id && conversation.contacts?.name) {
       return conversation.contacts.name;
     }
-    // Otherwise always show the phone number
-    return formatPhoneNumber(conversation.phone);
-  };
-
-  const formatPhoneNumber = (phone: string) => {
-    // Normalize phone to just digits
-    const digits = phone.replace(/\D/g, '');
-    
-    // Brazilian format: +55 (XX) XXXXX-XXXX or +55 (XX) XXXX-XXXX
-    if (digits.length === 13 && digits.startsWith('55')) {
-      return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-    }
-    if (digits.length === 12 && digits.startsWith('55')) {
-      return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
-    }
-    // International format with country code
-    if (digits.length >= 11) {
-      const countryCode = digits.slice(0, 2);
-      const areaCode = digits.slice(2, 4);
-      const rest = digits.slice(4);
-      return `+${countryCode} (${areaCode}) ${rest}`;
-    }
-    // Default: show with + prefix
-    return `+${digits}`;
-  };
-
-  // Check if contact is saved (has an associated contact with a name)
-  const isContactSaved = (conversation: Conversation) => {
-    return !!(conversation.contact_id && conversation.contacts?.name);
-  };
+    return conversation.phone;
+  }, []);
 
   // Memoize filtered conversations to avoid recalculating on every render
   const filteredConversations = useMemo(() => {
@@ -241,7 +204,7 @@ const ConversationListComponent = ({
       const lastMessage = (conv.last_message || '').toLowerCase();
       return name.includes(searchLower) || phone.includes(searchLower) || lastMessage.includes(searchLower);
     });
-  }, [conversations, search]);
+  }, [conversations, search, getDisplayName]);
 
   // Memoize unread count
   const unreadCount = useMemo(() => 
@@ -396,121 +359,21 @@ const ConversationListComponent = ({
               </p>
             </div>
           ) : (
-            filteredConversations.map((conversation) => {
-              const displayName = getDisplayName(conversation);
-              const isConvSelected = selectedConversation?.id === conversation.id;
-              const isSaved = isContactSaved(conversation);
-              const isChecked = selectedIds.has(conversation.id);
-
-              return (
-                <div
-                  key={conversation.id}
-                  className={cn(
-                    'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 group rounded-lg',
-                    isConvSelected && !selectionMode && 'bg-primary/10',
-                    isChecked && selectionMode && 'bg-primary/10'
-                  )}
-                >
-                  {selectionMode && (
-                    <Checkbox
-                      checked={isChecked}
-                      onCheckedChange={() => toggleSelection(conversation.id)}
-                      className="shrink-0"
-                    />
-                  )}
-                  <button
-                    onClick={() => selectionMode ? toggleSelection(conversation.id) : onSelect(conversation)}
-                    className="flex items-center gap-3 flex-1 min-w-0"
-                  >
-                    <Avatar className="h-12 w-12 shrink-0">
-                      <AvatarImage src={getAvatarUrl(conversation)} />
-                      <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
-                        <User className="h-6 w-6" />
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="flex-1 min-w-0 overflow-hidden text-left">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="font-medium text-foreground truncate flex-1 text-left">
-                            {displayName}
-                          </span>
-                          {!selectionMode && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="shrink-0">
-                                    {isSaved ? (
-                                      <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                                    ) : (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onSaveContact(conversation);
-                                        }}
-                                        className="hover:text-primary transition-colors"
-                                      >
-                                        <UserPlus className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                                      </button>
-                                    )}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {isSaved ? 'Contato salvo' : 'Salvar contato'}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                          {formatTime(conversation.last_message_at)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-sm text-muted-foreground truncate flex-1 min-w-0 text-left">
-                          {conversation.last_message || 'Nenhuma mensagem'}
-                        </p>
-                        {conversation.unread_count > 0 && (
-                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs">
-                            {conversation.unread_count}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Actions Menu - only show when not in selection mode */}
-                  {!selectionMode && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {!isSaved && (
-                          <DropdownMenuItem onClick={() => onSaveContact(conversation)}>
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Salvar contato
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => onDelete(conversation.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Deletar conversa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              );
-            })
+            filteredConversations.map((conversation) => (
+              <ConversationItem
+                key={conversation.id}
+                conversation={conversation}
+                isSelected={selectedConversation?.id === conversation.id}
+                isSaved={isContactSaved(conversation)}
+                isChecked={selectedIds.has(conversation.id)}
+                selectionMode={selectionMode}
+                avatarUrl={getAvatarUrl(conversation)}
+                onSelect={onSelect}
+                onToggleSelection={toggleSelection}
+                onSaveContact={onSaveContact}
+                onDelete={onDelete}
+              />
+            ))
           )}
         </div>
       </ScrollArea>
