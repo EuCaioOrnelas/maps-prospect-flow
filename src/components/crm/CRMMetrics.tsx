@@ -1,6 +1,6 @@
-import { type Lead, type PipelineStage, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
+import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, MessageCircle, TrendingUp, DollarSign, Target, CheckCircle } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Target, CheckCircle } from 'lucide-react';
 
 interface CRMMetricsProps {
   leads: Lead[];
@@ -11,16 +11,14 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   const totalLeads = leads.length;
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
   
-  const repliedLeads = leads.filter(lead => 
-    lead.whatsapp_status === 'replied' || lead.whatsapp_status === 'in_conversation'
-  ).length;
+  // Only count leads where the user actually sent a message
+  const leadsWithMessageSent = leads.filter(lead => lead.last_message_sent_at);
   
-  const messageSentLeads = leads.filter(lead => 
-    lead.whatsapp_status !== 'never_contacted'
-  ).length;
+  // Only count as replied if user sent message AND lead responded
+  const repliedLeads = leadsWithMessageSent.filter(lead => lead.last_response_at).length;
   
-  const responseRate = messageSentLeads > 0 
-    ? Math.round((repliedLeads / messageSentLeads) * 100) 
+  const responseRate = leadsWithMessageSent.length > 0 
+    ? Math.round((repliedLeads / leadsWithMessageSent.length) * 100) 
     : 0;
 
   // Find the "won" and "lost" stages (by name pattern)
@@ -54,15 +52,9 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
       bgColor: 'bg-blue-100',
     },
     {
-      label: 'Mensagens Enviadas',
-      value: messageSentLeads,
-      icon: MessageCircle,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
       label: 'Taxa de Resposta',
       value: `${responseRate}%`,
+      subtitle: `${repliedLeads}/${leadsWithMessageSent.length} responderam`,
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
@@ -91,7 +83,7 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {metrics.map((metric) => (
         <Card key={metric.label} className="border-border/50">
           <CardContent className="p-4">
@@ -102,6 +94,9 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
               <div>
                 <p className="text-2xl font-bold">{metric.value}</p>
                 <p className="text-xs text-muted-foreground">{metric.label}</p>
+                {'subtitle' in metric && metric.subtitle && (
+                  <p className="text-[10px] text-muted-foreground/70">{metric.subtitle}</p>
+                )}
               </div>
             </div>
           </CardContent>
