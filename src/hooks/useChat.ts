@@ -288,7 +288,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, [user]);
 
-  // Send message with optimistic update
+  // Send message with optimistic update - NO refetch, rely on realtime
   const sendMessage = useCallback(async (
     content: string, 
     messageType: string = 'text', 
@@ -299,6 +299,8 @@ export const useChat = (selectedNumberId?: string | null) => {
     if (!user || !selectedConversation) return;
     if (!content.trim() && !mediaUrl) return;
 
+    const now = new Date().toISOString();
+    
     // Create optimistic message
     const optimisticMessage: Message = {
       id: `temp-${Date.now()}`,
@@ -314,12 +316,24 @@ export const useChat = (selectedNumberId?: string | null) => {
       media_filename: mediaFilename || null,
       quoted_message_id: quotedMessageId || null,
       status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     };
 
     // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
+    
+    // Optimistically update conversation list
+    setConversations(prev => prev.map(c => 
+      c.id === selectedConversation.id 
+        ? { ...c, last_message: content.trim() || `[${messageType}]`, last_message_at: now }
+        : c
+    ).sort((a, b) => {
+      const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+      const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+      return dateB - dateA;
+    }));
+
     setIsSending(true);
 
     try {
@@ -340,9 +354,12 @@ export const useChat = (selectedNumberId?: string | null) => {
         throw new Error(response.error.message);
       }
 
-      // Refresh messages to get the real message with proper ID and status
-      await fetchMessages(selectedConversation.id);
-      await fetchConversations();
+      // Update optimistic message status to 'sent' - real message will come via realtime
+      setMessages(prev => prev.map(m => 
+        m.id === optimisticMessage.id 
+          ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+          : m
+      ));
     } catch (error) {
       console.error('Error sending message:', error);
       // Remove optimistic message on error
@@ -351,7 +368,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     } finally {
       setIsSending(false);
     }
-  }, [user, selectedConversation, fetchMessages, fetchConversations]);
+  }, [user, selectedConversation]);
 
   // Start new conversation
   const startConversation = useCallback(async (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => {
@@ -534,21 +551,21 @@ export const useChat = (selectedNumberId?: string | null) => {
   const selectedConversationRef = useRef<Conversation | null>(null);
   selectedConversationRef.current = selectedConversation;
 
-  // Realtime subscription for messages - using ref to avoid dependency issues
+  // Realtime subscription for messages - optimized with user filter
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('messages-realtime')
+      .channel(`messages-${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('New message received:', payload);
           const newMessage = payload.new as Message;
           
           // Add new message if it's for the selected conversation
@@ -557,7 +574,7 @@ export const useChat = (selectedNumberId?: string | null) => {
               // Check if message already exists (avoid duplicates from optimistic updates)
               const exists = prev.some(m => 
                 m.id === newMessage.id || 
-                m.message_id === newMessage.message_id ||
+                (m.message_id && m.message_id === newMessage.message_id) ||
                 (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
               );
               
@@ -566,7 +583,7 @@ export const useChat = (selectedNumberId?: string | null) => {
                 return prev.map(m => 
                   (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
                     ? newMessage
-                    : m
+                    : m.id === newMessage.id ? newMessage : m
                 );
               }
               
@@ -574,8 +591,27 @@ export const useChat = (selectedNumberId?: string | null) => {
             });
           }
           
-          // Refresh conversations to update last message (debounced)
-          fetchConversations();
+          // Update conversation locally instead of refetching
+          setConversations(prev => {
+            const updated = prev.map(c => 
+              c.id === newMessage.conversation_id
+                ? { 
+                    ...c, 
+                    last_message: newMessage.content || `[${newMessage.message_type}]`,
+                    last_message_at: newMessage.created_at,
+                    unread_count: !newMessage.from_me && selectedConversationRef.current?.id !== c.id 
+                      ? c.unread_count + 1 
+                      : c.unread_count
+                  }
+                : c
+            );
+            // Sort by most recent
+            return updated.sort((a, b) => {
+              const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+              const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+              return dateB - dateA;
+            });
+          });
         }
       )
       .on(
@@ -584,6 +620,7 @@ export const useChat = (selectedNumberId?: string | null) => {
           event: 'UPDATE',
           schema: 'public',
           table: 'messages',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           const updatedMessage = payload.new as Message;
@@ -591,7 +628,7 @@ export const useChat = (selectedNumberId?: string | null) => {
           // Update message status in real-time
           setMessages(prev => 
             prev.map(m => 
-              (m.id === updatedMessage.id || m.message_id === updatedMessage.message_id)
+              (m.id === updatedMessage.id || (m.message_id && m.message_id === updatedMessage.message_id))
                 ? { ...m, status: updatedMessage.status }
                 : m
             )
@@ -603,23 +640,42 @@ export const useChat = (selectedNumberId?: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchConversations]);
+  }, [user]);
 
-  // Realtime subscription for conversations
+  // Realtime subscription for conversations - only for new conversations
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('conversations-realtime')
+      .channel(`conversations-${user.id}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'conversations',
+          filter: `user_id=eq.${user.id}`,
         },
-        async () => {
-          await fetchConversations();
+        (payload) => {
+          // Add new conversation to the list
+          const newConv = payload.new as Conversation;
+          setConversations(prev => {
+            if (prev.some(c => c.id === newConv.id)) return prev;
+            return [newConv, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          setConversations(prev => prev.filter(c => c.id !== deletedId));
         }
       )
       .subscribe();
@@ -627,7 +683,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchConversations]);
+  }, [user]);
 
   return {
     conversations,
