@@ -630,10 +630,13 @@ const ChatAreaComponent = ({
                                   url: m.media_url || '',
                                   caption: isPlaceholder ? undefined : (m.content || undefined),
                                   filename: m.media_filename || undefined,
+                                  messageId: m.id,
                                 };
                               })}
                               fromMe={item.fromMe}
                               onForward={handleForwardFromGallery}
+                              onReply={() => handleReply(firstMessage)}
+                              onDelete={(forEveryone) => handleDelete(firstMessage, forEveryone)}
                             />
                             <div className="flex items-center justify-end gap-1 mt-1">
                               <span className={cn(

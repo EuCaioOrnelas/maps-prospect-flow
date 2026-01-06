@@ -78,6 +78,7 @@ const MessageActionsMenuComponent = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align={fromMe ? "end" : "start"} 
+        side="top"
         className="w-48 bg-popover border border-border shadow-lg z-50"
       >
         <DropdownMenuItem onClick={onReply} className="gap-2 cursor-pointer">
