@@ -80,8 +80,28 @@ export const ChatArea = ({
   const [matchedQuickReply, setMatchedQuickReply] = useState<QuickReply | null>(null);
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
   const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clear highlight after animation
+  useEffect(() => {
+    if (highlightedMessageId) {
+      const timer = setTimeout(() => {
+        setHighlightedMessageId(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedMessageId]);
+
+  // Scroll to message and highlight
+  const scrollToMessage = (messageId: string) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(messageId);
+    }
+  };
 
   // Detect quick reply tag in input
   useEffect(() => {
@@ -454,16 +474,7 @@ export const ChatArea = ({
       {showMessageSearch && (
         <MessageSearch
           messages={messages}
-          onSelectMessage={(messageId) => {
-            setShowMessageSearch(false);
-            // Scroll to message
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement) {
-              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              messageElement.classList.add('bg-primary/20');
-              setTimeout(() => messageElement.classList.remove('bg-primary/20'), 2000);
-            }
-          }}
+          onSelectMessage={scrollToMessage}
           onClose={() => setShowMessageSearch(false)}
         />
       )}
@@ -501,8 +512,9 @@ export const ChatArea = ({
                         key={message.id}
                         id={`message-${message.id}`}
                         className={cn(
-                          'flex w-full group transition-colors duration-500',
-                          message.from_me ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16'
+                          'flex w-full group transition-all duration-500',
+                          message.from_me ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16',
+                          highlightedMessageId === message.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
                         )}
                       >
                         <div className={cn(

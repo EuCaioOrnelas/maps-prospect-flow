@@ -209,7 +209,10 @@ export const MessageSearch = ({ messages, onSelectMessage, onClose }: MessageSea
               {filteredMessages.map((message) => (
                 <button
                   key={message.id}
-                  onClick={() => onSelectMessage(message.id)}
+                  onClick={() => {
+                    onSelectMessage(message.id);
+                    onClose();
+                  }}
                   className="w-full p-3 text-left rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
