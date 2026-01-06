@@ -8,12 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2, User } from 'lucide-react';
+import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2, User, RefreshCw, Image } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
 import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
-
 interface ContactInfoPanelProps {
   conversation: Conversation | null;
   onClose: () => void;
@@ -34,7 +33,7 @@ export const ContactInfoPanel = ({
   const [newTag, setNewTag] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
-
+  const [isRedownloadingMedia, setIsRedownloadingMedia] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -172,6 +171,33 @@ export const ContactInfoPanel = ({
       ...prev,
       tags: prev.tags.filter((t) => t !== tag),
     }));
+  };
+
+  const handleRedownloadMedia = async () => {
+    if (!conversation) return;
+    
+    setIsRedownloadingMedia(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('redownload-media', {
+        body: {
+          conversationId: conversation.id,
+          limit: 50,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.processed > 0) {
+        toast.success(`${data.success} mídias recuperadas de ${data.processed} processadas`);
+      } else {
+        toast.info('Nenhuma mídia para recuperar nesta conversa');
+      }
+    } catch (err) {
+      console.error('Error redownloading media:', err);
+      toast.error('Erro ao recuperar mídias');
+    } finally {
+      setIsRedownloadingMedia(false);
+    }
   };
 
   const formatPhoneNumber = (phone: string) => {
@@ -374,6 +400,21 @@ export const ContactInfoPanel = ({
 
       {/* Actions */}
       <div className="p-4 border-t border-border space-y-3">
+        {/* Media Recovery Button */}
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={handleRedownloadMedia}
+          disabled={isRedownloadingMedia}
+        >
+          {isRedownloadingMedia ? (
+            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Image className="h-4 w-4 mr-2" />
+          )}
+          Recuperar Mídias
+        </Button>
+
         {/* Contact Actions */}
         {(isEditing || contact) && (
           <>
