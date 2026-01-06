@@ -138,7 +138,21 @@ serve(async (req) => {
     console.log('Evolution API response:', JSON.stringify(evolutionData));
 
     if (!evolutionResponse.ok) {
-      throw new Error(evolutionData.message || 'Failed to send message');
+      // Check for specific error messages
+      let errorMessage = 'Failed to send message';
+      
+      if (evolutionData.response?.message) {
+        const msgInfo = evolutionData.response.message[0];
+        if (msgInfo?.exists === false) {
+          errorMessage = `Número ${msgInfo.number} não existe no WhatsApp`;
+        } else if (typeof evolutionData.response.message === 'string') {
+          errorMessage = evolutionData.response.message;
+        }
+      } else if (evolutionData.message) {
+        errorMessage = evolutionData.message;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     // Insert message into database
