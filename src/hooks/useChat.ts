@@ -642,7 +642,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     };
   }, [user]);
 
-  // Realtime subscription for conversations - only for new conversations
+  // Realtime subscription for conversations - INSERT, UPDATE and DELETE for multi-device sync
   useEffect(() => {
     if (!user) return;
 
@@ -662,6 +662,32 @@ export const useChat = (selectedNumberId?: string | null) => {
           setConversations(prev => {
             if (prev.some(c => c.id === newConv.id)) return prev;
             return [newConv, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Sync conversation updates across devices
+          const updatedConv = payload.new as Conversation;
+          setConversations(prev => {
+            const updated = prev.map(c => 
+              c.id === updatedConv.id 
+                ? { ...c, ...updatedConv }
+                : c
+            );
+            // Sort by most recent
+            return updated.sort((a, b) => {
+              const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+              const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+              return dateB - dateA;
+            });
           });
         }
       )
