@@ -199,8 +199,12 @@ serve(async (req) => {
         });
       }
 
-      const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '');
-      console.log('[WEBHOOK] Phone:', phone);
+      // Extract raw phone and normalize - @lid uses internal ID, extract actual phone
+      const rawPhone = remoteJid.split('@')[0];
+      const normalizedPhone = rawPhone.replace(/\D/g, '');
+      // For matching, use last 10-11 digits (without country code variations)
+      const phoneToMatch = normalizedPhone.slice(-11);
+      console.log('[WEBHOOK] Raw phone:', rawPhone, 'Normalized:', normalizedPhone, 'Match pattern:', phoneToMatch);
 
       // Extract content
       let content = '';
@@ -267,27 +271,73 @@ serve(async (req) => {
 
       console.log('[WEBHOOK] Type:', messageType, 'Content:', content?.substring(0, 100));
 
-      // Find or create conversation
-      const { data: conv } = await supabase
+      // Find or create conversation - use phone matching to merge @lid and @s.whatsapp.net
+      let conversationId: string | null = null;
+      let existingConv = null;
+
+      // Strategy 1: Match by exact remote_jid
+      const { data: exactMatch } = await supabase
         .from('conversations')
         .select('*')
         .eq('whatsapp_number_id', whatsappNumber.id)
         .eq('remote_jid', remoteJid)
         .single();
 
-      let conversationId: string;
+      if (exactMatch) {
+        existingConv = exactMatch;
+        conversationId = exactMatch.id;
+        console.log('[WEBHOOK] Found by exact remote_jid:', conversationId);
+      }
 
-      if (conv) {
-        conversationId = conv.id;
-        console.log('[WEBHOOK] Existing conversation:', conversationId);
-      } else {
+      // Strategy 2: Match by phone number (handles @lid -> same phone as @s.whatsapp.net)
+      if (!conversationId && phoneToMatch.length >= 10) {
+        const { data: allConvs } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('whatsapp_number_id', whatsappNumber.id);
+
+        if (allConvs && allConvs.length > 0) {
+          const matchingConv = allConvs.find(c => {
+            const convPhone = c.phone.replace(/\D/g, '');
+            const convNormalized = convPhone.slice(-11);
+            // Match by last 10-11 digits
+            return convNormalized === phoneToMatch ||
+                   convNormalized.slice(-10) === phoneToMatch.slice(-10) ||
+                   phoneToMatch.endsWith(convNormalized.slice(-10)) ||
+                   convNormalized.endsWith(phoneToMatch.slice(-10));
+          });
+
+          if (matchingConv) {
+            existingConv = matchingConv;
+            conversationId = matchingConv.id;
+            console.log('[WEBHOOK] Found by phone match:', matchingConv.phone, '-> merging with', rawPhone);
+
+            // Update remote_jid to the current one for future exact matches
+            // Prefer @s.whatsapp.net over @lid for the canonical remote_jid
+            const newRemoteJid = remoteJid.includes('@lid') ? matchingConv.remote_jid : remoteJid;
+            if (newRemoteJid !== matchingConv.remote_jid || normalizedPhone !== matchingConv.phone) {
+              await supabase
+                .from('conversations')
+                .update({ 
+                  remote_jid: newRemoteJid,
+                  phone: normalizedPhone,
+                  updated_at: new Date().toISOString() 
+                })
+                .eq('id', conversationId);
+            }
+          }
+        }
+      }
+
+      // Strategy 3: Create new conversation
+      if (!conversationId) {
         const { data: newConv, error: convErr } = await supabase
           .from('conversations')
           .insert({
             user_id: whatsappNumber.user_id,
             whatsapp_number_id: whatsappNumber.id,
             remote_jid: remoteJid,
-            phone: phone,
+            phone: normalizedPhone,
             contact_name: pushName || null,
             last_message: content?.substring(0, 100),
             last_message_at: new Date().toISOString(),
@@ -346,7 +396,7 @@ serve(async (req) => {
       console.log('[WEBHOOK] Message inserted:', inserted.id);
 
       // Update conversation
-      const currentConv = conv || { unread_count: 0, contact_name: null };
+      const currentConv = existingConv || { unread_count: 0, contact_name: null };
       await supabase
         .from('conversations')
         .update({

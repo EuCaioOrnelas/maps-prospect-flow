@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.evolution-fetch-avatar]
 verify_jwt = false
+
+[functions.redownload-media]
+verify_jwt = false
+
+[functions.merge-conversations]
+verify_jwt = false
