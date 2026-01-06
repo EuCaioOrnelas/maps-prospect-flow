@@ -1,16 +1,16 @@
 import { memo, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   Check, 
   CheckCheck, 
   Clock,
-  Reply,
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
 import { LinkPreview } from './LinkPreview';
+import { MessageActionsMenu } from './MessageActionsMenu';
+
 interface MessageBubbleProps {
   message: Message;
   quotedMessage: Message | null;
@@ -18,6 +18,9 @@ interface MessageBubbleProps {
   fontSize: string;
   isHighlighted: boolean;
   onReply: (message: Message) => void;
+  onForward?: (message: Message) => void;
+  onDelete?: (message: Message, forEveryone: boolean) => void;
+  onEdit?: (message: Message) => void;
 }
 
 const getStatusIcon = (status: string, fromMe: boolean) => {
@@ -44,10 +47,25 @@ const MessageBubbleComponent = ({
   fontSize,
   isHighlighted,
   onReply,
+  onForward,
+  onDelete,
+  onEdit,
 }: MessageBubbleProps) => {
   const handleReply = useCallback(() => {
     onReply(message);
   }, [message, onReply]);
+
+  const handleForward = useCallback(() => {
+    onForward?.(message);
+  }, [message, onForward]);
+
+  const handleDelete = useCallback((forEveryone: boolean) => {
+    onDelete?.(message, forEveryone);
+  }, [message, onDelete]);
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(message);
+  }, [message, onEdit]);
 
   // Extract URLs from message content
   const extractedUrls = useMemo(() => {
@@ -141,17 +159,19 @@ const MessageBubbleComponent = ({
       )}
     >
       <div className={cn(
-        'flex items-center gap-1',
+        'flex items-start gap-1',
         message.from_me ? 'flex-row-reverse' : 'flex-row'
       )}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-          onClick={handleReply}
-        >
-          <Reply className="h-3 w-3" />
-        </Button>
+        {/* Action menu - positioned at top */}
+        <MessageActionsMenu
+          message={message}
+          fromMe={message.from_me}
+          onReply={handleReply}
+          onForward={handleForward}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          className="mt-2"
+        />
         
         <div
           className={cn(

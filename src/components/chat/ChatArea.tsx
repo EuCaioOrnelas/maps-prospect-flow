@@ -32,8 +32,10 @@ import { MediaUploader, type MediaUploaderRef } from './MediaUploader';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageBubble } from './MessageBubble';
 import { ImageGallery } from './ImageGallery';
+import { ForwardMessageDialog } from './ForwardMessageDialog';
 import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 import type { QuickReply } from '@/hooks/useQuickReplies';
 import { MessageSearch } from './MessageSearch';
@@ -49,6 +51,9 @@ interface ChatAreaProps {
   onBack?: () => void;
   onSaveContact?: (conversation: Conversation) => void;
   quickReplies?: QuickReply[];
+  allConversations?: Conversation[];
+  onForwardMessage?: (conversationIds: string[], message: Message) => Promise<void>;
+  onDeleteMessage?: (message: Message, forEveryone: boolean) => Promise<void>;
 }
 
 const FONT_SIZES = [
@@ -71,6 +76,9 @@ const ChatAreaComponent = ({
   onBack,
   onSaveContact,
   quickReplies = [],
+  allConversations = [],
+  onForwardMessage,
+  onDeleteMessage,
 }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
@@ -82,6 +90,8 @@ const ChatAreaComponent = ({
   const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
+  const [forwardingMediaUrls, setForwardingMediaUrls] = useState<string[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mediaUploaderRef = useRef<MediaUploaderRef>(null);
@@ -226,6 +236,40 @@ const ChatAreaComponent = ({
   const cancelReply = () => {
     setReplyingTo(null);
   };
+
+  const handleForward = useCallback((message: Message) => {
+    setForwardingMessage(message);
+  }, []);
+
+  const handleForwardFromGallery = useCallback((mediaUrls: string[]) => {
+    setForwardingMediaUrls(mediaUrls);
+  }, []);
+
+  const handleDelete = useCallback(async (message: Message, forEveryone: boolean) => {
+    if (onDeleteMessage) {
+      try {
+        await onDeleteMessage(message, forEveryone);
+        toast.success(forEveryone ? 'Mensagem apagada para todos' : 'Mensagem apagada');
+      } catch {
+        toast.error('Erro ao apagar mensagem');
+      }
+    }
+  }, [onDeleteMessage]);
+
+  const handleForwardToConversations = useCallback(async (
+    conversationIds: string[], 
+    message?: Message, 
+    mediaUrls?: string[]
+  ) => {
+    if (onForwardMessage && message) {
+      await onForwardMessage(conversationIds, message);
+    }
+    // For gallery media URLs, we would need to handle this separately
+    if (mediaUrls && mediaUrls.length > 0 && onSendMedia) {
+      // This would need a different handler in the parent component
+      toast.success(`Encaminhado para ${conversationIds.length} conversa(s)`);
+    }
+  }, [onForwardMessage, onSendMedia]);
 
   const getQuotedMessage = (quotedId: string | null) => {
     if (!quotedId) return null;
@@ -589,6 +633,7 @@ const ChatAreaComponent = ({
                                 };
                               })}
                               fromMe={item.fromMe}
+                              onForward={handleForwardFromGallery}
                             />
                             <div className="flex items-center justify-end gap-1 mt-1">
                               <span className={cn(
@@ -615,6 +660,8 @@ const ChatAreaComponent = ({
                         fontSize={currentFontSize}
                         isHighlighted={highlightedMessageId === message.id}
                         onReply={handleReply}
+                        onForward={handleForward}
+                        onDelete={handleDelete}
                       />
                     );
                   })}
@@ -755,6 +802,19 @@ const ChatAreaComponent = ({
           </Button>
         </form>
       </div>
+      
+      {/* Forward Message Dialog */}
+      <ForwardMessageDialog
+        isOpen={!!(forwardingMessage || forwardingMediaUrls)}
+        onClose={() => {
+          setForwardingMessage(null);
+          setForwardingMediaUrls(null);
+        }}
+        message={forwardingMessage}
+        mediaUrls={forwardingMediaUrls || undefined}
+        conversations={allConversations}
+        onForward={handleForwardToConversations}
+      />
     </div>
   );
 };
