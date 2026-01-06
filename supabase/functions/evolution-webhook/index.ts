@@ -193,8 +193,22 @@ serve(async (req) => {
           const fromMe = messageKey.fromMe;
           const messageId = messageKey.id;
           
-          // Extract phone number from remoteJid - normalize to digits only
+          // Extract phone number from remoteJid
           const rawPhone = remoteJid.split('@')[0];
+          const jidType = remoteJid.split('@')[1]; // s.whatsapp.net, lid, g.us, etc
+          
+          // IGNORE LIDs (LinkedIn IDs) - only process real phone numbers
+          if (jidType === 'lid' || remoteJid.includes('@lid')) {
+            console.log('Ignoring LID message:', remoteJid);
+            break;
+          }
+          
+          // Ignore group messages
+          if (jidType === 'g.us' || remoteJid.includes('@g.us')) {
+            console.log('Ignoring group message:', remoteJid);
+            break;
+          }
+          
           // Remove any non-digit characters for matching
           const normalizedPhone = rawPhone.replace(/\D/g, '');
           
