@@ -65,18 +65,31 @@ serve(async (req) => {
 
       if (chatsResponse.ok) {
         const chatsData = await chatsResponse.json();
-        // Handle different response formats
-        chats = Array.isArray(chatsData) ? chatsData : (chatsData?.chats || chatsData?.data || []);
+        console.log('Chats API response type:', typeof chatsData);
+        // Handle different response formats - ensure we always get an array
+        if (Array.isArray(chatsData)) {
+          chats = chatsData;
+        } else if (chatsData && typeof chatsData === 'object') {
+          if (Array.isArray(chatsData.chats)) {
+            chats = chatsData.chats;
+          } else if (Array.isArray(chatsData.data)) {
+            chats = chatsData.data;
+          } else {
+            console.log('Unexpected chats format, using empty array');
+            chats = [];
+          }
+        } else {
+          chats = [];
+        }
         console.log(`Found ${chats.length} chats`);
       } else {
         const errorText = await chatsResponse.text();
         console.error('Failed to fetch chats:', chatsResponse.status, errorText);
-        // Continue with empty chats instead of throwing
-        console.log('Continuing with existing conversations only');
+        throw new Error('Failed to fetch chats from Evolution API');
       }
     } catch (chatError) {
       console.error('Error fetching chats from Evolution API:', chatError);
-      // Continue with empty chats
+      throw chatError;
     }
 
     let syncedMessages = 0;
@@ -146,10 +159,22 @@ serve(async (req) => {
 
         if (messagesResponse.ok) {
           const messagesData = await messagesResponse.json();
-          // Handle different response formats from Evolution API
-          const messages = Array.isArray(messagesData) 
-            ? messagesData 
-            : (messagesData?.messages || messagesData?.data || []);
+          console.log(`Messages API response type for ${remoteJid}:`, typeof messagesData);
+          
+          // Handle different response formats from Evolution API - ensure we always get an array
+          let messages: any[] = [];
+          if (Array.isArray(messagesData)) {
+            messages = messagesData;
+          } else if (messagesData && typeof messagesData === 'object') {
+            if (Array.isArray(messagesData.messages)) {
+              messages = messagesData.messages;
+            } else if (Array.isArray(messagesData.data)) {
+              messages = messagesData.data;
+            } else {
+              console.log(`Unexpected messages format for ${remoteJid}, using empty array`);
+              messages = [];
+            }
+          }
           console.log(`Found ${messages.length} messages for ${remoteJid}`);
 
           for (const msg of messages) {
