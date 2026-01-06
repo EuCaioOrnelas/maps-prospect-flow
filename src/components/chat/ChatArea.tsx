@@ -18,6 +18,10 @@ import {
   User,
   Search,
   Upload,
+  Mic,
+  FileText,
+  Image as ImageIcon,
+  Video,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,6 +37,7 @@ import { EmojiPicker } from './EmojiPicker';
 import { MessageBubble } from './MessageBubble';
 import { ImageGallery } from './ImageGallery';
 import { ForwardMessageDialog } from './ForwardMessageDialog';
+import { MessageActionsMenu } from './MessageActionsMenu';
 import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -613,38 +618,51 @@ const ChatAreaComponent = ({
                             highlightedMessageId === firstMessage.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
                           )}
                         >
-                          <div
-                            className={cn(
-                              'relative rounded-lg p-2 shadow-md',
-                              item.fromMe
-                                ? 'bg-primary text-primary-foreground rounded-tr-none'
-                                : 'bg-card text-card-foreground rounded-tl-none border border-border'
-                            )}
-                            style={{ maxWidth: 'min(85%, 300px)' }}
-                          >
-                            <ImageGallery
-                              images={item.messages.map(m => {
-                                // Filter out placeholder content like [image], [audio], etc.
-                                const isPlaceholder = m.content && /^\[(image|audio|video|document|sticker)\]$/i.test(m.content.trim());
-                                return {
-                                  url: m.media_url || '',
-                                  caption: isPlaceholder ? undefined : (m.content || undefined),
-                                  filename: m.media_filename || undefined,
-                                  messageId: m.id,
-                                };
-                              })}
+                          <div className={cn(
+                            'flex items-start gap-1',
+                            item.fromMe ? 'flex-row-reverse' : 'flex-row'
+                          )}>
+                            {/* Action menu - outside the card */}
+                            <MessageActionsMenu
+                              message={firstMessage}
                               fromMe={item.fromMe}
-                              onForward={handleForwardFromGallery}
                               onReply={() => handleReply(firstMessage)}
+                              onForward={() => handleForward(firstMessage)}
                               onDelete={(forEveryone) => handleDelete(firstMessage, forEveryone)}
+                              className="mt-2"
                             />
-                            <div className="flex items-center justify-end gap-1 mt-1">
-                              <span className={cn(
-                                "text-[10px]",
-                                item.fromMe ? "text-black/60" : "text-muted-foreground"
-                              )}>
-                                {format(new Date(item.messages[item.messages.length - 1].created_at), 'HH:mm')}
-                              </span>
+                            
+                            <div
+                              className={cn(
+                                'relative rounded-lg p-2 shadow-md',
+                                item.fromMe
+                                  ? 'bg-primary text-primary-foreground rounded-tr-none'
+                                  : 'bg-card text-card-foreground rounded-tl-none border border-border'
+                              )}
+                              style={{ maxWidth: 'min(85%, 300px)' }}
+                            >
+                              <ImageGallery
+                                images={item.messages.map(m => {
+                                  // Filter out placeholder content like [image], [audio], etc.
+                                  const isPlaceholder = m.content && /^\[(image|audio|video|document|sticker)\]$/i.test(m.content.trim());
+                                  return {
+                                    url: m.media_url || '',
+                                    caption: isPlaceholder ? undefined : (m.content || undefined),
+                                    filename: m.media_filename || undefined,
+                                    messageId: m.id,
+                                  };
+                                })}
+                                fromMe={item.fromMe}
+                                onForward={handleForwardFromGallery}
+                              />
+                              <div className="flex items-center justify-end gap-1 mt-1">
+                                <span className={cn(
+                                  "text-[10px]",
+                                  item.fromMe ? "text-black/60" : "text-muted-foreground"
+                                )}>
+                                  {format(new Date(item.messages[item.messages.length - 1].created_at), 'HH:mm')}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -690,20 +708,84 @@ const ChatAreaComponent = ({
 
       {/* Reply preview */}
       {replyingTo && (
-        <div className="px-3 pt-2 bg-card border-t border-border">
-          <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-            <div className="flex-1 border-l-4 border-primary pl-2">
-              <p className="text-xs font-medium text-primary">
-                {replyingTo.from_me ? 'Você' : displayName}
-              </p>
-              <p className="text-xs text-muted-foreground line-clamp-1">
-                {replyingTo.content || '[Mídia]'}
+        <div className="px-3 pt-3 pb-3 bg-card border-t border-border">
+          <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+            {/* Media thumbnail preview */}
+            {replyingTo.message_type === 'image' && replyingTo.media_url && (
+              <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-background">
+                <img 
+                  src={replyingTo.media_url} 
+                  alt="Preview" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            {(replyingTo.message_type === 'audio' || replyingTo.message_type === 'ptt') && (
+              <div className="w-12 h-12 rounded-md shrink-0 bg-primary/10 flex items-center justify-center">
+                <Mic className="h-5 w-5 text-primary" />
+              </div>
+            )}
+            {replyingTo.message_type === 'video' && replyingTo.media_url && (
+              <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-background relative">
+                <video 
+                  src={replyingTo.media_url} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <div className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center">
+                    <div className="w-0 h-0 border-l-[6px] border-l-primary border-y-[4px] border-y-transparent ml-0.5" />
+                  </div>
+                </div>
+              </div>
+            )}
+            {replyingTo.message_type === 'document' && (
+              <div className="w-12 h-12 rounded-md shrink-0 bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+            )}
+            
+            <div className="flex-1 border-l-4 border-primary pl-3 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-primary">
+                  {replyingTo.from_me ? 'Você' : displayName}
+                </p>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {format(new Date(replyingTo.created_at), 'HH:mm')}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">
+                {replyingTo.message_type === 'image' && !replyingTo.content && (
+                  <span className="flex items-center gap-1">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Foto
+                  </span>
+                )}
+                {(replyingTo.message_type === 'audio' || replyingTo.message_type === 'ptt') && (
+                  <span className="flex items-center gap-1">
+                    <Mic className="h-3.5 w-3.5" />
+                    Mensagem de voz
+                  </span>
+                )}
+                {replyingTo.message_type === 'video' && !replyingTo.content && (
+                  <span className="flex items-center gap-1">
+                    <Video className="h-3.5 w-3.5" />
+                    Vídeo
+                  </span>
+                )}
+                {replyingTo.message_type === 'document' && (
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-3.5 w-3.5" />
+                    {replyingTo.media_filename || 'Documento'}
+                  </span>
+                )}
+                {replyingTo.content && replyingTo.message_type === 'text' && replyingTo.content}
+                {replyingTo.content && replyingTo.message_type !== 'text' && !['audio', 'ptt'].includes(replyingTo.message_type) && replyingTo.content}
               </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-7 w-7 shrink-0"
               onClick={cancelReply}
             >
               <X className="h-4 w-4" />
