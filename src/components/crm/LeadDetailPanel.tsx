@@ -43,6 +43,15 @@ interface LeadDetailPanelProps {
   onFetchActivities: (leadId: string) => Promise<LeadActivity[]>;
 }
 
+// Format phone number for display
+const formatPhoneNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length >= 11 && digits.startsWith('55')) {
+    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  return `+${digits}`;
+};
+
 export const LeadDetailPanel = ({
   lead,
   stages,
@@ -152,9 +161,14 @@ export const LeadDetailPanel = ({
     <div className="w-96 bg-card border-l border-border h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="font-semibold text-lg truncate">
-          {lead.company_name || lead.contact_name || lead.phone}
-        </h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-lg truncate">
+            {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
+          </h2>
+          {(lead.contact_name && lead.company_name) && (
+            <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
+          )}
+        </div>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>

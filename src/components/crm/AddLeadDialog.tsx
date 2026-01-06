@@ -102,6 +102,9 @@ export const AddLeadDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Adicionar Lead</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Você pode começar apenas com o número. O nome será preenchido conforme a conversa evoluir.
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,6 +118,9 @@ export const AddLeadDialog = ({
                 placeholder="5511999999999"
                 required
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                O telefone é o identificador único do lead
+              </p>
             </div>
 
             <div>

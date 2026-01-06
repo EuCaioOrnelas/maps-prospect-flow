@@ -20,7 +20,19 @@ export const LeadCard = ({
   onDragEnd,
   isSelected,
 }: LeadCardProps) => {
-  const displayName = lead.company_name || lead.contact_name || lead.phone;
+  // Phone is the primary identifier - name is just a visual label
+  const formatPhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length >= 11 && digits.startsWith('55')) {
+      return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+    }
+    return `+${digits}`;
+  };
+  
+  const displayName = lead.contact_name || lead.company_name || formatPhone(lead.phone);
+  const subtitle = lead.company_name && lead.contact_name 
+    ? lead.company_name 
+    : (lead.company_name || lead.contact_name ? null : null);
   const hasLocation = lead.city || lead.region;
 
   return (
@@ -44,10 +56,10 @@ export const LeadCard = ({
           <h4 className="font-medium text-sm text-foreground truncate">
             {displayName}
           </h4>
-          {lead.company_name && lead.contact_name && (
+          {subtitle && (
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-              <User className="w-3 h-3" />
-              <span className="truncate">{lead.contact_name}</span>
+              <Building2 className="w-3 h-3" />
+              <span className="truncate">{subtitle}</span>
             </p>
           )}
         </div>
