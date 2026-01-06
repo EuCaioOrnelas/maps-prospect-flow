@@ -254,9 +254,13 @@ const ChatAreaComponent = ({
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
     setReplyingTo(null);
-    // Reset textarea height
+    // Reset textarea height and keep focus
     if (inputRef.current) {
       inputRef.current.style.height = '40px';
+      // Keep focus on input after sending
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 
