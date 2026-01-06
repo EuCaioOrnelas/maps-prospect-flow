@@ -249,6 +249,10 @@ const ChatAreaComponent = ({
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
     setReplyingTo(null);
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = '40px';
+    }
   };
 
   const handleReply = (message: Message) => {
