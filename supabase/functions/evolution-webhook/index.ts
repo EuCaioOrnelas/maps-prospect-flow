@@ -189,22 +189,31 @@ serve(async (req) => {
         if (data?.key && data?.message) {
           const messageKey = data.key;
           const messageData = data.message;
-          const remoteJid = messageKey.remoteJid;
+          let remoteJid = messageKey.remoteJid;
           const fromMe = messageKey.fromMe;
           const messageId = messageKey.id;
           
-          // Extract phone number from remoteJid
-          const rawPhone = remoteJid.split('@')[0];
+          // Check for LID format and use remoteJidAlt if available
           const jidType = remoteJid.split('@')[1]; // s.whatsapp.net, lid, g.us, etc
           
-          // IGNORE LIDs (LinkedIn IDs) - only process real phone numbers
           if (jidType === 'lid' || remoteJid.includes('@lid')) {
-            console.log('Ignoring LID message:', remoteJid);
-            break;
+            // LID messages have the real phone number in remoteJidAlt
+            const altJid = messageKey.remoteJidAlt;
+            if (altJid && altJid.includes('@s.whatsapp.net')) {
+              console.log('Converting LID to real JID:', remoteJid, '->', altJid);
+              remoteJid = altJid;
+            } else {
+              console.log('Ignoring LID message without valid alt:', remoteJid);
+              break;
+            }
           }
           
+          // Extract phone number from remoteJid (now normalized)
+          const rawPhone = remoteJid.split('@')[0];
+          const currentJidType = remoteJid.split('@')[1];
+          
           // Ignore group messages
-          if (jidType === 'g.us' || remoteJid.includes('@g.us')) {
+          if (currentJidType === 'g.us' || remoteJid.includes('@g.us')) {
             console.log('Ignoring group message:', remoteJid);
             break;
           }
