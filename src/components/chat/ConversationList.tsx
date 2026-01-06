@@ -380,10 +380,10 @@ export const ConversationList = ({
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex-1 min-w-0 overflow-hidden text-left">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="font-medium text-foreground truncate flex-1">
+                          <span className="font-medium text-foreground truncate flex-1 text-left">
                             {displayName}
                           </span>
                           {!selectionMode && (
