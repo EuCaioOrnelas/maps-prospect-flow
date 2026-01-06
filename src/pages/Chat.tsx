@@ -617,7 +617,7 @@ const Chat = () => {
                 </div>
 
                 {/* Main Chat Content */}
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex min-h-0 overflow-hidden">
                   {isLoading ? (
                     <div className="flex-1 flex items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -649,9 +649,9 @@ const Chat = () => {
                       </div>
 
                       {/* Chat Area */}
-                      <div className={`flex-1 flex flex-col ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
-                        <div className="flex-1 flex">
-                          <div className="flex-1">
+                      <div className={`flex-1 flex flex-col min-h-0 ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
+                        <div className="flex-1 flex min-h-0 overflow-hidden">
+                          <div className="flex-1 min-h-0 flex flex-col">
                             <ChatArea
                               conversation={selectedConversation}
                               messages={messages}

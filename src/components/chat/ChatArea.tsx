@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -61,7 +61,9 @@ const FONT_SIZES = [
   { label: 'Muito grande', value: 'text-lg' },
 ];
 
-export const ChatArea = ({
+import { memo } from 'react';
+
+const ChatAreaComponent = ({
   conversation,
   messages,
   isSending,
@@ -369,7 +371,8 @@ export const ChatArea = ({
     return null;
   };
 
-  const groupMessagesByDate = () => {
+  // Memoize message grouping to avoid recalculating on every render
+  const messageGroups = useMemo(() => {
     const groups: { date: string; messages: Message[] }[] = [];
     let currentDate = '';
 
@@ -384,7 +387,7 @@ export const ChatArea = ({
     });
 
     return groups;
-  };
+  }, [messages]);
 
   if (!conversation) {
     return (
@@ -401,7 +404,6 @@ export const ChatArea = ({
   }
 
   const displayName = getDisplayName();
-  const messageGroups = groupMessagesByDate();
 
   return (
     <div 
@@ -535,7 +537,7 @@ export const ChatArea = ({
       )}
 
       {/* Messages area with background image */}
-      <div className="flex-1 overflow-hidden relative bg-background">
+      <div className="flex-1 min-h-0 overflow-hidden relative bg-background">
         {/* Background image layer with grayscale filter and low opacity */}
         <div 
           className="absolute inset-0 bg-cover bg-center grayscale"
@@ -768,3 +770,6 @@ export const ChatArea = ({
     </div>
   );
 };
+
+// Memoize the entire component to prevent unnecessary re-renders
+export const ChatArea = memo(ChatAreaComponent);
