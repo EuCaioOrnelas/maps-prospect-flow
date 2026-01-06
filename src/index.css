@@ -15,7 +15,7 @@
     --popover: 220 18% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 142 70% 45%;
+    --primary: 158 64% 32%;
     --primary-foreground: 0 0% 100%;
     
     /* WhatsApp message colors - exact #10231C */
@@ -29,46 +29,46 @@
     --muted: 220 14% 15%;
     --muted-foreground: 215 20% 55%;
 
-    --accent: 160 84% 39%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 158 64% 32%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 14% 16%;
     --input: 220 14% 16%;
-    --ring: 160 84% 39%;
+    --ring: 158 64% 32%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(175 84% 32%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 64% 32%) 0%, hsl(170 60% 28%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(220 20% 4%) 0%, hsl(220 18% 8%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 18% 6%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(160 84% 39% / 0.15) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(158 64% 32% / 0.15) 0%, transparent 70%);
     
-    --shadow-glow: 0 0 60px hsl(160 84% 39% / 0.2);
+    --shadow-glow: 0 0 60px hsl(158 64% 32% / 0.2);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
-    --shadow-button: 0 4px 16px hsl(160 84% 39% / 0.3);
+    --shadow-button: 0 4px 16px hsl(158 64% 32% / 0.3);
 
     /* Sidebar */
     --sidebar-background: 220 18% 6%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 220 20% 4%;
+    --sidebar-primary: 158 64% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 14% 16%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 158 64% 32%;
 
     /* Status colors */
-    --success: 160 84% 39%;
+    --success: 158 64% 32%;
     --warning: 45 93% 47%;
     --info: 200 98% 39%;
 
     /* Chart colors - vibrant colors for dark theme */
-    --chart-1: 160 84% 39%;
-    --chart-2: 173 80% 40%;
+    --chart-1: 158 64% 32%;
+    --chart-2: 170 60% 35%;
     --chart-3: 262 83% 58%;
     --chart-4: 340 75% 55%;
     --chart-5: 43 96% 56%;
