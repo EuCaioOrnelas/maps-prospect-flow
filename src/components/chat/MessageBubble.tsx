@@ -29,15 +29,15 @@ const getStatusIcon = (status: string, fromMe: boolean) => {
   
   switch (status) {
     case 'pending':
-      return <Clock className="h-3 w-3 text-muted-foreground/60" />;
+      return <Clock className="h-3 w-3 text-white/60" />;
     case 'sent':
-      return <Check className="h-3 w-3 text-muted-foreground/60" />;
+      return <Check className="h-3 w-3 text-white/60" />;
     case 'delivered':
-      return <CheckCheck className="h-3 w-3 text-muted-foreground/60" />;
+      return <CheckCheck className="h-3 w-3 text-white/60" />;
     case 'read':
-      return <CheckCheck className="h-3 w-3 text-[#53bdeb]" />;
+      return <CheckCheck className="h-3 w-3 text-whatsapp-read" />;
     default:
-      return <Check className="h-3 w-3 text-muted-foreground/60" />;
+      return <Check className="h-3 w-3 text-white/60" />;
   }
 };
 
@@ -187,7 +187,7 @@ const MessageBubbleComponent = ({
           className={cn(
             'relative rounded-lg px-3 py-2 shadow-md min-w-[140px]',
             message.from_me
-              ? 'bg-primary text-primary-foreground rounded-tr-none'
+              ? 'bg-whatsapp-outgoing text-whatsapp-outgoing-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
         >
@@ -213,7 +213,7 @@ const MessageBubbleComponent = ({
             {isEdited && (
               <span className={cn(
                 "text-[10px] flex items-center gap-0.5",
-                message.from_me ? "text-black/50" : "text-muted-foreground"
+                message.from_me ? "text-white/70" : "text-muted-foreground"
               )}>
                 <Pencil className="h-2.5 w-2.5" />
                 editado
@@ -221,7 +221,7 @@ const MessageBubbleComponent = ({
             )}
             <span className={cn(
               "text-[10px]",
-              message.from_me ? "text-black/60" : "text-muted-foreground"
+              message.from_me ? "text-white/70" : "text-muted-foreground"
             )}>
               {format(new Date(message.created_at), 'HH:mm')}
             </span>
