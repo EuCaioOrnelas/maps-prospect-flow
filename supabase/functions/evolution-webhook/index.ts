@@ -71,6 +71,9 @@ serve(async (req) => {
           return null;
         }
 
+        // Clean mimetype - remove codec params like "audio/ogg; codecs=opus" -> "audio/ogg"
+        const cleanMimetype = mimetype.split(';')[0].trim();
+        
         // Determine file extension from mimetype
         const extMap: Record<string, string> = {
           'image/jpeg': 'jpg',
@@ -83,10 +86,11 @@ serve(async (req) => {
           'audio/mpeg': 'mp3',
           'audio/mp4': 'm4a',
           'audio/aac': 'aac',
+          'audio/webm': 'webm',
           'application/pdf': 'pdf',
         };
         
-        const ext = extMap[mimetype] || mimetype.split('/')[1] || 'bin';
+        const ext = extMap[cleanMimetype] || cleanMimetype.split('/')[1] || 'bin';
         const filename = `${userId}/${Date.now()}_${messageId.substring(0, 8)}.${ext}`;
         
         // Decode base64 and upload to Supabase Storage
@@ -95,7 +99,7 @@ serve(async (req) => {
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('chat-media')
           .upload(filename, fileData, {
-            contentType: mimetype,
+            contentType: cleanMimetype,
             upsert: false,
           });
 
