@@ -82,10 +82,15 @@ export const ContactInfoPanel = ({
 
   useEffect(() => {
     if (conversation) {
+      // Set initial avatar from conversation contacts
+      const initialAvatar = conversation.contacts?.avatar_url || null;
+      setAvatarUrl(initialAvatar);
+      
+      // Load contact data (may update avatar if contact has one)
       loadContact();
-      // Reset and fetch avatar
-      setAvatarUrl(conversation.contacts?.avatar_url || null);
-      if (!conversation.contacts?.avatar_url) {
+      
+      // Fetch avatar from WhatsApp if none available
+      if (!initialAvatar) {
         fetchAvatarFromWhatsApp();
       }
     }
@@ -98,7 +103,10 @@ export const ContactInfoPanel = ({
     
     if (existingContact) {
       setContact(existingContact);
-      setAvatarUrl(existingContact.avatar_url || null);
+      // Use existing contact avatar or keep current fetched avatar
+      if (existingContact.avatar_url) {
+        setAvatarUrl(existingContact.avatar_url);
+      }
       setFormData({
         name: existingContact.name || '',
         email: existingContact.email || '',
@@ -117,7 +125,7 @@ export const ContactInfoPanel = ({
         notes: '',
         tags: [],
       });
-      // Try to fetch avatar if no contact exists
+      // Try to fetch avatar if no contact exists and no avatar yet
       if (!avatarUrl) {
         fetchAvatarFromWhatsApp();
       }
@@ -205,7 +213,7 @@ export const ContactInfoPanel = ({
           {/* Avatar and Name */}
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-20 w-20 mb-3">
-              <AvatarImage src={avatarUrl || contact?.avatar_url || undefined} />
+              <AvatarImage src={avatarUrl || contact?.avatar_url || conversation.contacts?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
                 <User className="h-10 w-10" />
               </AvatarFallback>

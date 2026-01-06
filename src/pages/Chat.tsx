@@ -320,6 +320,20 @@ const Chat = () => {
 
       if (contact) {
         await linkContactToConversation(conversationToSave.id, contact.id);
+        
+        // Update selected conversation to reflect the saved contact
+        if (selectedConversation?.id === conversationToSave.id) {
+          setSelectedConversation({
+            ...selectedConversation,
+            contact_id: contact.id,
+            contacts: {
+              id: contact.id,
+              name: contact.name,
+              avatar_url: contact.avatar_url,
+            },
+          });
+        }
+        
         toast.success('Contato salvo com sucesso!');
       }
     } catch (error) {
