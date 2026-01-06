@@ -5,12 +5,11 @@ import { KanbanBoard } from '@/components/crm/KanbanBoard';
 import { LeadDetailPanel } from '@/components/crm/LeadDetailPanel';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
-import { AddLeadDialog } from '@/components/crm/AddLeadDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, X } from 'lucide-react';
+import { Users, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -33,7 +32,6 @@ export default function CRM() {
     fetchActivities,
   } = useCRM();
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [filters, setFilters] = useState<CRMFiltersState>({
     search: '',
     stage: '',
@@ -137,19 +135,6 @@ export default function CRM() {
     navigate(`/chat?conversation=${conversationId}`);
   };
 
-  const handleAddLead = async (leadData: {
-    phone: string;
-    company_name?: string;
-    contact_name?: string;
-    category?: string;
-    city?: string;
-    region?: string;
-    website?: string;
-    pipeline_stage_id?: string;
-    estimated_value?: number;
-  }) => {
-    return await createLead(leadData);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,10 +164,6 @@ export default function CRM() {
                   </div>
                 </div>
 
-                <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Novo Lead
-                </Button>
               </div>
 
               {/* Metrics */}
@@ -260,12 +241,6 @@ export default function CRM() {
         </div>
       </main>
 
-      <AddLeadDialog 
-        open={isAddDialogOpen} 
-        onOpenChange={setIsAddDialogOpen}
-        stages={stages}
-        onAddLead={handleAddLead}
-      />
     </div>
   );
 }
