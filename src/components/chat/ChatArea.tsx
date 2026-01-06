@@ -210,6 +210,14 @@ export const ChatArea = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      
+      // If quick reply is matched, send it
+      if (matchedQuickReply) {
+        sendQuickReply(matchedQuickReply);
+        return;
+      }
+      
+      // Otherwise send normal message
       handleSubmit(e);
     }
   };
@@ -586,8 +594,9 @@ export const ChatArea = ({
                   (matchedQuickReply.audio_url ? ' Áudio' : '')}
               </p>
             </div>
-            <div className="text-xs text-primary font-medium">
-              Clique para enviar
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-xs text-primary font-medium">Enter para enviar</span>
+              <span className="text-[10px] text-muted-foreground">ou clique</span>
             </div>
           </div>
         </div>
