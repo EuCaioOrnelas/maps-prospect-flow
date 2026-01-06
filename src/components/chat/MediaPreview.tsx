@@ -3,15 +3,15 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
   Play, 
-  Pause, 
   Download, 
   FileText, 
   X,
-  Volume2,
-  Mic
+  Mic,
+  ZoomIn
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AudioWaveformPlayer } from './AudioWaveformPlayer';
+import { ZoomableImage } from './ZoomableImage';
 interface MediaPreviewProps {
   type: 'image' | 'video' | 'audio' | 'document';
   url?: string;
@@ -23,7 +23,6 @@ interface MediaPreviewProps {
 const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPreviewProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
   const handleDownload = useCallback(() => {
     const link = document.createElement('a');
     link.href = url;
@@ -87,7 +86,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
           )}
         </div>
 
-        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setIsZoomed(false); }}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none [&>button]:hidden overflow-hidden">
             <button 
               onClick={() => setIsOpen(false)}
@@ -95,28 +94,13 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
             >
               <X className="h-5 w-5 text-white" />
             </button>
-            <div 
-              className={cn(
-                "flex items-center justify-center min-h-[50vh] overflow-auto",
-                isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
-              )}
-              onDoubleClick={() => setIsZoomed(!isZoomed)}
-            >
-              <img 
-                src={url} 
-                alt={filename || 'Image'} 
-                className={cn(
-                  "transition-transform duration-200",
-                  isZoomed 
-                    ? "max-w-none w-auto h-auto" 
-                    : "max-w-full max-h-[80vh] object-contain"
-                )}
-                style={isZoomed ? { transform: 'scale(2)', transformOrigin: 'center center' } : undefined}
-              />
-            </div>
+            
+            <ZoomableImage src={url!} alt={filename || 'Image'} />
+            
             <div className="absolute bottom-4 right-4 flex gap-2">
-              <div className="text-white/60 text-xs bg-black/50 px-2 py-1 rounded">
-                Duplo clique para zoom
+              <div className="text-white/60 text-xs bg-black/50 px-2 py-1 rounded flex items-center gap-1">
+                <ZoomIn className="h-3 w-3" />
+                Pinça ou duplo toque
               </div>
               <Button 
                 variant="secondary" 
