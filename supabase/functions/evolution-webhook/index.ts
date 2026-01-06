@@ -245,10 +245,12 @@ serve(async (req) => {
               console.log('Found conversation by exact remote_jid match');
             }
             
-            // Strategy 2: Match by normalized phone number (last 10-11 digits)
+            // Strategy 2: Match by normalized phone number (Brazilian format handling)
             if (!conversationId && normalizedPhone.length >= 10) {
-              // Get last 10-11 digits for matching (without country code)
+              // For Brazilian numbers, handle the 9th digit variation
+              // 55 44 9 91236180 vs 55 44 91236180
               const phoneToMatch = normalizedPhone.slice(-11);
+              const phoneToMatch8 = normalizedPhone.slice(-8); // Last 8 digits (most unique part)
               
               const { data: convsByPhone } = await supabase
                 .from('conversations')
@@ -256,18 +258,40 @@ serve(async (req) => {
                 .eq('whatsapp_number_id', whatsappNumber.id);
               
               if (convsByPhone && convsByPhone.length > 0) {
-                // Find conversation where phone ends with same digits
+                // Find conversation where phone matches (considering 9th digit variations)
                 const matchingConv = convsByPhone.find(c => {
                   const convPhone = c.phone.replace(/\D/g, '');
-                  return convPhone.slice(-11) === phoneToMatch || 
-                         convPhone.slice(-10) === phoneToMatch.slice(-10) ||
-                         phoneToMatch.endsWith(convPhone.slice(-10)) ||
-                         convPhone.endsWith(phoneToMatch.slice(-10));
+                  const convLast8 = convPhone.slice(-8);
+                  const convLast11 = convPhone.slice(-11);
+                  
+                  // Exact match on last 11 digits
+                  if (convLast11 === phoneToMatch) return true;
+                  
+                  // Match on last 8 digits (ignores 9th digit and area code variations)
+                  if (convLast8 === phoneToMatch8) return true;
+                  
+                  // Brazilian mobile: compare without the 9th digit
+                  // 9XXXXXXXX -> XXXXXXXX
+                  const removeBrazilian9 = (p: string) => {
+                    const last9 = p.slice(-9);
+                    if (last9.startsWith('9')) {
+                      return p.slice(0, -9) + last9.slice(1);
+                    }
+                    return p;
+                  };
+                  
+                  const normalizedConv = removeBrazilian9(convPhone);
+                  const normalizedNew = removeBrazilian9(normalizedPhone);
+                  
+                  // Compare last 10 digits after removing the Brazilian 9
+                  if (normalizedConv.slice(-10) === normalizedNew.slice(-10)) return true;
+                  
+                  return false;
                 });
                 
                 if (matchingConv) {
                   conversationId = matchingConv.id;
-                  console.log('Found conversation by phone number match:', matchingConv.phone);
+                  console.log('Found conversation by phone number match:', matchingConv.phone, '-> new:', rawPhone);
                   
                   // Update the remote_jid to the new one for future matches
                   await supabase
