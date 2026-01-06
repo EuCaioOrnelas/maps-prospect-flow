@@ -494,11 +494,13 @@ serve(async (req) => {
               }
             }
 
-            // Check if message already exists
+            // Check if message already exists IN THIS CONVERSATION
+            // We check by conversation_id because the same message_id can exist in multiple instances
             const { data: existingMsg } = await supabase
               .from('messages')
               .select('id')
               .eq('message_id', messageId)
+              .eq('conversation_id', conversationId)
               .single();
 
             if (!existingMsg) {
