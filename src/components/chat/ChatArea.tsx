@@ -99,6 +99,11 @@ const ChatAreaComponent = ({
   const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
   const [forwardingMediaUrls, setForwardingMediaUrls] = useState<string[] | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -316,6 +321,109 @@ const ChatAreaComponent = ({
       // Otherwise send normal message
       handleSubmit(e);
     }
+  };
+
+  // Audio recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
+        
+        // Upload and send the audio
+        await uploadAndSendAudio(file);
+        
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (error) {
+      console.error('Recording error:', error);
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setMediaRecorder(null);
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setMediaRecorder(null);
+      setIsRecording(false);
+      setRecordingTime(0);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  const uploadAndSendAudio = async (file: File) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      const fileName = `${user.id}/${Date.now()}.webm`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-media')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-media')
+        .getPublicUrl(fileName);
+
+      const response = await supabase.functions.invoke('chat-send-message', {
+        body: {
+          conversationId: conversation?.id,
+          content: '',
+          messageType: 'audio',
+          mediaUrl: publicUrl,
+          mediaFilename: file.name,
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast.success('Áudio enviado!');
+    } catch (error) {
+      console.error('Audio upload error:', error);
+      toast.error('Erro ao enviar áudio');
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const increaseFontSize = () => {
@@ -893,55 +1001,105 @@ const ChatAreaComponent = ({
 
       {/* Input */}
       <div className="p-3 border-t border-border bg-card shrink-0">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
-          <EmojiPicker 
-            onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
-            disabled={isSending || sendingQuickReply}
-          />
-          <MediaUploader 
-            ref={mediaUploaderRef}
-            conversationId={conversation.id}
-            onMediaSent={() => {}}
-            disabled={isSending || sendingQuickReply}
-          />
-          
-          <Textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-              // Auto-resize
-              const target = e.target;
-              target.style.height = 'auto';
-              const lineHeight = 24; // approx line height
-              const minHeight = 40;
-              const maxHeight = minHeight * 6; // 6x original height
-              const newHeight = Math.min(Math.max(target.scrollHeight, minHeight), maxHeight);
-              target.style.height = `${newHeight}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e as unknown as React.FormEvent);
-              } else {
-                handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>);
-              }
-            }}
-            placeholder="Digite uma mensagem ou /tag..."
-            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-muted-foreground/40 focus-visible:ring-offset-0"
-            disabled={isSending || sendingQuickReply}
-            rows={1}
-          />
-          
-          <Button 
-            type="submit" 
-            size="icon" 
-            disabled={!inputValue.trim() || isSending || sendingQuickReply}
-            className="rounded-full bg-emerald-600 hover:bg-emerald-700 shrink-0"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-        </form>
+        {isRecording ? (
+          <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={cancelRecording}
+              className="rounded-full text-destructive hover:bg-destructive/10"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-medium text-foreground">
+                {formatRecordingTime(recordingTime)}
+              </span>
+              <div className="flex-1 flex items-center gap-1">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-primary rounded-full animate-pulse"
+                    style={{
+                      height: `${Math.random() * 16 + 8}px`,
+                      animationDelay: `${i * 50}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <Button
+              size="icon"
+              onClick={stopRecording}
+              className="rounded-full bg-primary hover:bg-primary/90"
+            >
+              <Send className="h-5 w-5" />
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex items-end gap-2">
+            <EmojiPicker 
+              onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
+              disabled={isSending || sendingQuickReply}
+            />
+            <MediaUploader 
+              ref={mediaUploaderRef}
+              conversationId={conversation.id}
+              onMediaSent={() => {}}
+              disabled={isSending || sendingQuickReply}
+            />
+            
+            <Textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                // Auto-resize
+                const target = e.target;
+                target.style.height = 'auto';
+                const lineHeight = 24; // approx line height
+                const minHeight = 40;
+                const maxHeight = minHeight * 6; // 6x original height
+                const newHeight = Math.min(Math.max(target.scrollHeight, minHeight), maxHeight);
+                target.style.height = `${newHeight}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e as unknown as React.FormEvent);
+                } else {
+                  handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>);
+                }
+              }}
+              placeholder="Digite uma mensagem ou /tag..."
+              className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-muted-foreground/40 focus-visible:ring-offset-0"
+              disabled={isSending || sendingQuickReply}
+              rows={1}
+            />
+            
+            {inputValue.trim() ? (
+              <Button 
+                type="submit" 
+                size="icon" 
+                disabled={isSending || sendingQuickReply}
+                className="rounded-full bg-primary hover:bg-primary/90 shrink-0"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            ) : (
+              <Button 
+                type="button"
+                size="icon" 
+                onClick={startRecording}
+                disabled={isSending || sendingQuickReply}
+                className="rounded-full bg-primary hover:bg-primary/90 shrink-0"
+              >
+                <Mic className="h-5 w-5" />
+              </Button>
+            )}
+          </form>
+        )}
       </div>
       
       {/* Forward Message Dialog */}
