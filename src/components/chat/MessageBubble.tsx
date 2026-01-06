@@ -62,10 +62,33 @@ const MessageBubbleComponent = ({
       );
     }
 
-    if (message.content) {
+  if (message.content) {
+      // Regex to detect URLs
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const parts = message.content.split(urlRegex);
+      
       return (
         <p className={cn('whitespace-pre-wrap break-words', fontSize)}>
-          {message.content}
+          {parts.map((part, index) => {
+            if (urlRegex.test(part)) {
+              return (
+                <a
+                  key={index}
+                  href={part}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    'underline hover:opacity-80 transition-opacity',
+                    message.from_me ? 'text-primary-foreground' : 'text-primary'
+                  )}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {part}
+                </a>
+              );
+            }
+            return part;
+          })}
         </p>
       );
     }
