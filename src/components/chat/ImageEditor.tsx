@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ function centerAspectCrop(
   );
 }
 
-export const ImageEditor = ({ imageSrc, onSave, onCancel }: ImageEditorProps) => {
+const ImageEditorComponent = ({ imageSrc, onSave, onCancel }: ImageEditorProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [rotation, setRotation] = useState(0);
@@ -336,3 +336,5 @@ export const ImageEditor = ({ imageSrc, onSave, onCancel }: ImageEditorProps) =>
     </div>
   );
 };
+
+export const ImageEditor = memo(ImageEditorComponent);

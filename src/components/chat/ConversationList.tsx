@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Search, Plus, UserCheck, UserPlus, MoreVertical, Trash2, X, Check, User, MessageCircle, Users, UserX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,7 +36,7 @@ const FILTER_OPTIONS: { value: ConversationFilter; label: string; icon: React.El
   { value: 'non_contacts', label: 'Não contatos', icon: UserX },
 ];
 
-export const ConversationList = ({
+const ConversationListComponent = ({
   conversations,
   selectedConversation,
   onSelect,
@@ -232,19 +232,25 @@ export const ConversationList = ({
     return !!(conversation.contact_id && conversation.contacts?.name);
   };
 
-  const filteredConversations = conversations.filter((conv) => {
-    const name = getDisplayName(conv).toLowerCase();
-    const phone = conv.phone.toLowerCase();
-    const lastMessage = (conv.last_message || '').toLowerCase();
+  // Memoize filtered conversations to avoid recalculating on every render
+  const filteredConversations = useMemo(() => {
     const searchLower = search.toLowerCase();
-    return name.includes(searchLower) || phone.includes(searchLower) || lastMessage.includes(searchLower);
-  });
+    return conversations.filter((conv) => {
+      const name = getDisplayName(conv).toLowerCase();
+      const phone = conv.phone.toLowerCase();
+      const lastMessage = (conv.last_message || '').toLowerCase();
+      return name.includes(searchLower) || phone.includes(searchLower) || lastMessage.includes(searchLower);
+    });
+  }, [conversations, search]);
 
-  // Count unread
-  const unreadCount = conversations.filter(c => c.unread_count > 0).length;
+  // Memoize unread count
+  const unreadCount = useMemo(() => 
+    conversations.filter(c => c.unread_count > 0).length, 
+    [conversations]
+  );
 
   return (
-    <div className="h-full flex flex-col border-r border-border bg-card">
+    <div className="h-full flex flex-col border-r border-border bg-card overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
@@ -543,3 +549,6 @@ export const ConversationList = ({
     </div>
   );
 };
+
+// Memoize the entire component to prevent unnecessary re-renders
+export const ConversationList = memo(ConversationListComponent);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -71,9 +71,14 @@ export const useChat = (selectedNumberId?: string | null) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [conversationFilter, setConversationFilter] = useState<ConversationFilter>('all');
+  
+  // Refs for debouncing and preventing excessive refetches
+  const fetchConversationsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchRef = useRef<number>(0);
+  const MIN_FETCH_INTERVAL = 1000; // Minimum 1 second between fetches
 
   // Fetch all conversations filtered by selected number
-  const fetchConversations = useCallback(async () => {
+  const fetchConversationsInternal = useCallback(async () => {
     if (!user) return;
 
     let query = supabase
@@ -100,7 +105,27 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     setConversations(data || []);
     setIsLoading(false);
+    lastFetchRef.current = Date.now();
   }, [user, selectedNumberId]);
+
+  // Debounced fetch to prevent excessive calls
+  const fetchConversations = useCallback(async () => {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchRef.current;
+    
+    // If called too soon, debounce it
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      if (fetchConversationsTimeoutRef.current) {
+        clearTimeout(fetchConversationsTimeoutRef.current);
+      }
+      fetchConversationsTimeoutRef.current = setTimeout(() => {
+        fetchConversationsInternal();
+      }, MIN_FETCH_INTERVAL - timeSinceLastFetch);
+      return;
+    }
+    
+    await fetchConversationsInternal();
+  }, [fetchConversationsInternal]);
 
   // Get filtered conversations based on current filter
   const getFilteredConversations = useCallback(() => {
@@ -465,10 +490,21 @@ export const useChat = (selectedNumberId?: string | null) => {
     if (!user) return;
     
     setIsLoading(true);
-    fetchConversations().finally(() => setIsLoading(false));
-  }, [user, selectedNumberId]);
+    fetchConversationsInternal().finally(() => setIsLoading(false));
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (fetchConversationsTimeoutRef.current) {
+        clearTimeout(fetchConversationsTimeoutRef.current);
+      }
+    };
+  }, [user, selectedNumberId, fetchConversationsInternal]);
 
-  // Realtime subscription for messages
+  // Use refs to avoid recreating subscriptions
+  const selectedConversationRef = useRef<Conversation | null>(null);
+  selectedConversationRef.current = selectedConversation;
+
+  // Realtime subscription for messages - using ref to avoid dependency issues
   useEffect(() => {
     if (!user) return;
 
@@ -486,7 +522,7 @@ export const useChat = (selectedNumberId?: string | null) => {
           const newMessage = payload.new as Message;
           
           // Add new message if it's for the selected conversation
-          if (selectedConversation && newMessage.conversation_id === selectedConversation.id) {
+          if (selectedConversationRef.current && newMessage.conversation_id === selectedConversationRef.current.id) {
             setMessages(prev => {
               // Check if message already exists (avoid duplicates from optimistic updates)
               const exists = prev.some(m => 
@@ -508,7 +544,7 @@ export const useChat = (selectedNumberId?: string | null) => {
             });
           }
           
-          // Refresh conversations to update last message
+          // Refresh conversations to update last message (debounced)
           fetchConversations();
         }
       )
@@ -520,7 +556,6 @@ export const useChat = (selectedNumberId?: string | null) => {
           table: 'messages',
         },
         (payload) => {
-          console.log('Message updated:', payload);
           const updatedMessage = payload.new as Message;
           
           // Update message status in real-time
@@ -538,7 +573,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, selectedConversation, fetchConversations]);
+  }, [user, fetchConversations]);
 
   // Realtime subscription for conversations
   useEffect(() => {
