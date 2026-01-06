@@ -87,15 +87,12 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none [&>button]:hidden overflow-hidden">
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-            >
-              <X className="h-5 w-5 text-white" />
-            </button>
-            
-            <ZoomableImage src={url!} alt={filename || 'Image'} />
+          <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-0 bg-black/95 border-none [&>button]:hidden overflow-hidden">
+            <ZoomableImage 
+              src={url!} 
+              alt={filename || 'Image'} 
+              onClose={() => setIsOpen(false)}
+            />
             
             <div className="absolute bottom-4 right-4 flex gap-2">
               <div className="text-white/60 text-xs bg-black/50 px-2 py-1 rounded flex items-center gap-1">
