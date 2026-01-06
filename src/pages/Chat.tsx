@@ -530,22 +530,11 @@ const Chat = () => {
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Número:</span>
-                    <Select value={selectedNumberId || 'all'} onValueChange={(value) => handleNumberChange(value === 'all' ? '' : value)}>
+                    <Select value={selectedNumberId || ''} onValueChange={(value) => handleNumberChange(value)}>
                       <SelectTrigger className="w-[280px]">
                         <SelectValue placeholder="Selecione um número" />
                       </SelectTrigger>
                       <SelectContent>
-                        {connectedNumbers.length > 1 && (
-                          <SelectItem value="all">
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4 text-primary" />
-                              <span>Todos os números</span>
-                              <span className="text-muted-foreground text-xs">
-                                ({connectedNumbers.length})
-                              </span>
-                            </div>
-                          </SelectItem>
-                        )}
                         {connectedNumbers.map((number) => (
                           <SelectItem key={number.id} value={number.id}>
                             <div className="flex items-center gap-2">
