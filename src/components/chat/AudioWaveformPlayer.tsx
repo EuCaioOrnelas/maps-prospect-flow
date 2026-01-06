@@ -180,7 +180,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
 
   return (
     <div className={cn(
-      "flex items-center gap-2.5 px-2.5 py-2 rounded-2xl w-full max-w-[260px]",
+      "flex items-center gap-2.5 px-2.5 py-2 rounded-2xl w-full min-w-[200px] max-w-[320px]",
       fromMe ? "bg-primary-foreground/10" : "bg-muted"
     )}>
       <audio ref={audioRef} src={url} preload="metadata" />

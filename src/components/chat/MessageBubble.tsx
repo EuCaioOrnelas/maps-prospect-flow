@@ -28,15 +28,15 @@ const getStatusIcon = (status: string, fromMe: boolean) => {
   
   switch (status) {
     case 'pending':
-      return <Clock className="h-3 w-3 text-black/60" />;
+      return <Clock className="h-3 w-3 text-muted-foreground/60" />;
     case 'sent':
-      return <Check className="h-3 w-3 text-black/60" />;
+      return <Check className="h-3 w-3 text-muted-foreground/60" />;
     case 'delivered':
-      return <CheckCheck className="h-3 w-3 text-black/60" />;
+      return <CheckCheck className="h-3 w-3 text-muted-foreground/60" />;
     case 'read':
-      return <CheckCheck className="h-3 w-3 text-blue-500" />;
+      return <CheckCheck className="h-3 w-3 text-[#53bdeb]" />;
     default:
-      return <Check className="h-3 w-3 text-black/60" />;
+      return <Check className="h-3 w-3 text-muted-foreground/60" />;
   }
 };
 
@@ -175,12 +175,12 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md min-w-[80px]',
+            'relative rounded-lg px-3 py-2 shadow-md min-w-[120px]',
             message.from_me
               ? 'bg-primary text-primary-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
-          style={{ maxWidth: 'min(85%, 480px)' }}
+          style={{ maxWidth: 'min(85%, 520px)', minWidth: '180px' }}
         >
           {quotedMessage && (
             <div className={cn(

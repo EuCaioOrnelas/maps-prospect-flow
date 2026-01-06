@@ -58,7 +58,10 @@ const MessageActionsMenuComponent = ({
     }
   };
 
-  const canEdit = fromMe && message.message_type === 'text' && message.content;
+  // Check if message can be edited (within 15 minutes)
+  const messageAge = Date.now() - new Date(message.created_at).getTime();
+  const fifteenMinutesMs = 15 * 60 * 1000;
+  const canEdit = fromMe && message.message_type === 'text' && message.content && messageAge < fifteenMinutesMs;
   const canCopy = message.content || message.media_url;
 
   return (
