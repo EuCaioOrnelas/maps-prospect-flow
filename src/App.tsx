@@ -29,6 +29,7 @@ import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
+import CRM from "./pages/CRM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -131,6 +132,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ChatSettings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/crm" 
+                element={
+                  <ProtectedRoute>
+                    <CRM />
                   </ProtectedRoute>
                 } 
               />

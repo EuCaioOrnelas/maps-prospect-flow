@@ -263,7 +263,7 @@ export const useCRM = () => {
       user_id: user.id,
       activity_type: activityType,
       description,
-      metadata: metadata || {},
+      metadata: (metadata || {}) as Record<string, string | number | boolean | null>,
     }]);
   };
 
