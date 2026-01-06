@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Images,
+  Forward,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +20,10 @@ interface ImageItem {
 interface ImageGalleryProps {
   images: ImageItem[];
   fromMe?: boolean;
+  onForward?: (mediaUrls: string[]) => void;
 }
 
-const ImageGalleryComponent = ({ images, fromMe }: ImageGalleryProps) => {
+const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
@@ -52,6 +54,18 @@ const ImageGalleryComponent = ({ images, fromMe }: ImageGalleryProps) => {
       }, idx * 300);
     });
   }, [validImages, handleDownload]);
+
+  const handleForwardCurrent = useCallback(() => {
+    if (onForward && validImages[currentIndex]) {
+      onForward([validImages[currentIndex].url]);
+    }
+  }, [onForward, validImages, currentIndex]);
+
+  const handleForwardAll = useCallback(() => {
+    if (onForward && validImages.length > 0) {
+      onForward(validImages.map(img => img.url));
+    }
+  }, [onForward, validImages]);
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : validImages.length - 1));
@@ -207,27 +221,56 @@ const ImageGalleryComponent = ({ images, fromMe }: ImageGalleryProps) => {
           </div>
           
           {/* Bottom actions */}
-          <div className="absolute bottom-4 right-4 flex gap-2">
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={() => handleDownload(validImages[currentIndex]?.url, validImages[currentIndex]?.filename)}
-              className="bg-black/50 hover:bg-black/70 text-white border-none"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Baixar
-            </Button>
-            {validImages.length > 1 && (
+          <div className="absolute bottom-4 left-4 right-4 flex justify-between">
+            {/* Forward actions - left side */}
+            {onForward && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={handleForwardCurrent}
+                  className="bg-black/50 hover:bg-black/70 text-white border-none"
+                >
+                  <Forward className="h-4 w-4 mr-2" />
+                  Encaminhar
+                </Button>
+                {validImages.length > 1 && (
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleForwardAll}
+                    className="bg-black/50 hover:bg-black/70 text-white border-none"
+                  >
+                    <Forward className="h-4 w-4 mr-2" />
+                    Encaminhar todas ({validImages.length})
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {/* Download actions - right side */}
+            <div className="flex gap-2 ml-auto">
               <Button 
                 variant="secondary" 
                 size="sm" 
-                onClick={handleDownloadAll}
+                onClick={() => handleDownload(validImages[currentIndex]?.url, validImages[currentIndex]?.filename)}
                 className="bg-black/50 hover:bg-black/70 text-white border-none"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Baixar todas ({validImages.length})
+                Baixar
               </Button>
-            )}
+              {validImages.length > 1 && (
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={handleDownloadAll}
+                  className="bg-black/50 hover:bg-black/70 text-white border-none"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar todas ({validImages.length})
+                </Button>
+              )}
+            </div>
           </div>
           
           {/* Thumbnail strip */}
