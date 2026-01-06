@@ -223,6 +223,182 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          lead_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          ai_score: number | null
+          category: string | null
+          city: string | null
+          company_name: string | null
+          contact_id: string | null
+          contact_name: string | null
+          conversation_id: string | null
+          created_at: string
+          estimated_value: number | null
+          google_maps_link: string | null
+          id: string
+          last_message_sent: string | null
+          last_message_sent_at: string | null
+          last_response: string | null
+          last_response_at: string | null
+          origin: string | null
+          phone: string
+          pipeline_stage_id: string | null
+          prospected_at: string | null
+          region: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          website: string | null
+          whatsapp_status: string | null
+        }
+        Insert: {
+          ai_score?: number | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          estimated_value?: number | null
+          google_maps_link?: string | null
+          id?: string
+          last_message_sent?: string | null
+          last_message_sent_at?: string | null
+          last_response?: string | null
+          last_response_at?: string | null
+          origin?: string | null
+          phone: string
+          pipeline_stage_id?: string | null
+          prospected_at?: string | null
+          region?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+          whatsapp_status?: string | null
+        }
+        Update: {
+          ai_score?: number | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          estimated_value?: number | null
+          google_maps_link?: string | null
+          id?: string
+          last_message_sent?: string | null
+          last_message_sent_at?: string | null
+          last_response?: string | null
+          last_response_at?: string | null
+          origin?: string | null
+          phone?: string
+          pipeline_stage_id?: string | null
+          prospected_at?: string | null
+          region?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          whatsapp_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_pipeline_stage_id_fkey"
+            columns: ["pipeline_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string | null
@@ -284,6 +460,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pipeline_stages: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
