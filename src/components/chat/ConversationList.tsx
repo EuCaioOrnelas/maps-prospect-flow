@@ -326,43 +326,45 @@ export const ConversationList = ({
         </div>
         
         {/* Filter Chips - WhatsApp Style */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {FILTER_OPTIONS.map((option) => {
-            const isActive = filter === option.value;
-            const count = option.value === 'unread' ? unreadCount : 
-                         option.value === 'all' ? totalConversations : 
-                         option.value === 'contacts' ? conversations.filter(c => c.contact_id && c.contacts?.name).length :
-                         conversations.filter(c => !c.contact_id || !c.contacts?.name).length;
-            
-            return (
-              <Button
-                key={option.value}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterChange(option.value)}
-                className={cn(
-                  "shrink-0 gap-1.5 h-8 px-3 rounded-full",
-                  isActive && "bg-primary text-primary-foreground",
-                  !isActive && "bg-muted/50 hover:bg-muted border-0"
-                )}
-              >
-                <option.icon className="h-3.5 w-3.5" />
-                <span>{option.label}</span>
-                {count > 0 && (
-                  <Badge 
-                    variant={isActive ? "secondary" : "outline"} 
-                    className={cn(
-                      "h-5 min-w-5 text-xs px-1.5",
-                      isActive && "bg-primary-foreground/20 text-primary-foreground border-0"
-                    )}
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </Button>
-            );
-          })}
-        </div>
+        <ScrollArea className="w-full">
+          <div className="flex gap-2 pb-1">
+            {FILTER_OPTIONS.map((option) => {
+              const isActive = filter === option.value;
+              const count = option.value === 'unread' ? unreadCount : 
+                           option.value === 'all' ? totalConversations : 
+                           option.value === 'contacts' ? conversations.filter(c => c.contact_id && c.contacts?.name).length :
+                           conversations.filter(c => !c.contact_id || !c.contacts?.name).length;
+              
+              return (
+                <Button
+                  key={option.value}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterChange(option.value)}
+                  className={cn(
+                    "shrink-0 gap-1.5 h-8 px-3 rounded-full",
+                    isActive && "bg-primary text-primary-foreground",
+                    !isActive && "bg-muted/50 hover:bg-muted border-0"
+                  )}
+                >
+                  <option.icon className="h-3.5 w-3.5" />
+                  <span>{option.label}</span>
+                  {count > 0 && (
+                    <Badge 
+                      variant={isActive ? "secondary" : "outline"} 
+                      className={cn(
+                        "h-5 min-w-5 text-xs px-1.5",
+                        isActive && "bg-primary-foreground/20 text-primary-foreground border-0"
+                      )}
+                    >
+                      {count}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Selection Mode Info */}
@@ -376,8 +378,8 @@ export const ConversationList = ({
       )}
 
       {/* Conversation List */}
-      <ScrollArea className="flex-1">
-        <div className="divide-y divide-border">
+      <ScrollArea className="flex-1 [&_[data-radix-scroll-area-viewport]]:!overflow-x-hidden [&_[data-radix-scroll-area-scrollbar]]:bg-muted/50 [&_[data-radix-scroll-area-thumb]]:bg-primary/30">
+        <div className="p-2 space-y-1">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <p>
@@ -398,7 +400,7 @@ export const ConversationList = ({
                 <div
                   key={conversation.id}
                   className={cn(
-                    'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 group',
+                    'w-full p-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 group rounded-lg',
                     isConvSelected && !selectionMode && 'bg-primary/10',
                     isChecked && selectionMode && 'bg-primary/10'
                   )}
