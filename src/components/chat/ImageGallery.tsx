@@ -126,7 +126,7 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
 
   return (
     <>
-      <div className="rounded-lg overflow-hidden w-[280px]">
+      <div className="rounded-lg overflow-hidden w-full">
         <div className={cn("grid gap-0.5", getGridClass())}>
           {validImages.slice(0, 4).map((img, idx) => (
             <div 

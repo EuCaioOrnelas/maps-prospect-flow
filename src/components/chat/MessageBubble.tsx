@@ -5,6 +5,7 @@ import {
   Check, 
   CheckCheck, 
   Clock,
+  Pencil,
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
@@ -149,17 +150,25 @@ const MessageBubbleComponent = ({
     return null;
   };
 
+  // Check if message was edited (updated_at is different from created_at by more than 2 seconds)
+  const isEdited = useMemo(() => {
+    if (!message.updated_at || !message.created_at) return false;
+    const created = new Date(message.created_at).getTime();
+    const updated = new Date(message.updated_at).getTime();
+    return updated - created > 2000; // More than 2 seconds difference
+  }, [message.created_at, message.updated_at]);
+
   return (
     <div
       id={`message-${message.id}`}
       className={cn(
         'flex w-full group transition-all duration-500',
-        message.from_me ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16',
+        message.from_me ? 'justify-end' : 'justify-start',
         isHighlighted && 'animate-pulse bg-primary/10 rounded-lg py-1'
       )}
     >
       <div className={cn(
-        'flex items-start gap-1',
+        'flex items-start gap-1 max-w-[45%]',
         message.from_me ? 'flex-row-reverse' : 'flex-row'
       )}>
         {/* Action menu - positioned at top */}
@@ -175,12 +184,11 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md min-w-[120px]',
+            'relative rounded-lg px-3 py-2 shadow-md w-full',
             message.from_me
               ? 'bg-primary text-primary-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
-          style={{ maxWidth: 'min(85%, 320px)', minWidth: '200px' }}
         >
           {quotedMessage && (
             <div className={cn(
@@ -201,6 +209,15 @@ const MessageBubbleComponent = ({
           {renderContent()}
 
           <div className="flex items-center justify-end gap-1 mt-1">
+            {isEdited && (
+              <span className={cn(
+                "text-[10px] flex items-center gap-0.5",
+                message.from_me ? "text-black/50" : "text-muted-foreground"
+              )}>
+                <Pencil className="h-2.5 w-2.5" />
+                editado
+              </span>
+            )}
             <span className={cn(
               "text-[10px]",
               message.from_me ? "text-black/60" : "text-muted-foreground"

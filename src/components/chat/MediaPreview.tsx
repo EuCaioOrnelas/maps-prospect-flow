@@ -70,7 +70,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-[280px]"
+          className="cursor-pointer rounded-lg overflow-hidden w-full"
           onClick={() => setIsOpen(true)}
         >
           <img 
@@ -151,7 +151,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-[280px] relative group"
+          className="cursor-pointer rounded-lg overflow-hidden w-full relative group"
           onClick={() => setIsOpen(true)}
         >
           <video 
@@ -230,7 +230,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
       <button 
         onClick={handleDownload}
         className={cn(
-          "flex items-center gap-3 p-3 rounded-lg w-[280px] hover:opacity-80 transition-opacity",
+          "flex items-center gap-3 p-3 rounded-lg w-full hover:opacity-80 transition-opacity",
           fromMe ? "bg-primary-foreground/10" : "bg-muted"
         )}
       >
