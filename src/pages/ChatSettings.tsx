@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuickReplies, QuickReply } from '@/hooks/useQuickReplies';
+import { supabase } from '@/integrations/supabase/client';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { SEO } from '@/components/SEO';
@@ -26,6 +27,11 @@ import {
   Mic,
   Settings,
   Loader2,
+  Upload,
+  X,
+  Play,
+  Pause,
+  Square,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -36,12 +42,25 @@ const ChatSettings = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReply, setEditingReply] = useState<QuickReply | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
     tag: '',
     name: '',
     text_content: '',
+    image_url: '',
+    audio_url: '',
     delay_seconds: 0,
   });
 
@@ -50,9 +69,13 @@ const ChatSettings = () => {
       tag: '',
       name: '',
       text_content: '',
+      image_url: '',
+      audio_url: '',
       delay_seconds: 0,
     });
     setEditingReply(null);
+    setAudioPreviewUrl(null);
+    setIsPlayingAudio(false);
   };
 
   const handleOpenDialog = (reply?: QuickReply) => {
@@ -62,8 +85,13 @@ const ChatSettings = () => {
         tag: reply.tag,
         name: reply.name,
         text_content: reply.text_content || '',
+        image_url: reply.image_url || '',
+        audio_url: reply.audio_url || '',
         delay_seconds: reply.delay_seconds || 0,
       });
+      if (reply.audio_url) {
+        setAudioPreviewUrl(reply.audio_url);
+      }
     } else {
       resetForm();
     }
@@ -73,6 +101,151 @@ const ChatSettings = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
+  };
+
+  const uploadToStorage = async (file: File, folder: string): Promise<string> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Não autenticado');
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${folder}/${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('chat-media')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('chat-media')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione apenas arquivos de imagem');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const publicUrl = await uploadToStorage(file, 'quick-replies');
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success('Imagem carregada!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Erro ao carregar imagem');
+    } finally {
+      setIsUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Selecione apenas arquivos de áudio');
+      return;
+    }
+
+    setIsUploadingAudio(true);
+    try {
+      const publicUrl = await uploadToStorage(file, 'quick-replies');
+      setFormData({ ...formData, audio_url: publicUrl });
+      setAudioPreviewUrl(publicUrl);
+      toast.success('Áudio carregado!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Erro ao carregar áudio');
+    } finally {
+      setIsUploadingAudio(false);
+      if (audioInputRef.current) audioInputRef.current.value = '';
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
+        
+        setIsUploadingAudio(true);
+        try {
+          const publicUrl = await uploadToStorage(file, 'quick-replies');
+          setFormData(prev => ({ ...prev, audio_url: publicUrl }));
+          setAudioPreviewUrl(publicUrl);
+          toast.success('Áudio gravado e salvo!');
+        } catch (error) {
+          console.error('Upload error:', error);
+          toast.error('Erro ao salvar áudio');
+        } finally {
+          setIsUploadingAudio(false);
+        }
+        
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Recording error:', error);
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+    }
+  };
+
+  const toggleAudioPlayback = () => {
+    if (!audioPreviewUrl) return;
+    
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new Audio(audioPreviewUrl);
+      audioPlayerRef.current.onended = () => setIsPlayingAudio(false);
+    }
+    
+    if (isPlayingAudio) {
+      audioPlayerRef.current.pause();
+      setIsPlayingAudio(false);
+    } else {
+      audioPlayerRef.current.play();
+      setIsPlayingAudio(true);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData({ ...formData, image_url: '' });
+  };
+
+  const removeAudio = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    setFormData({ ...formData, audio_url: '' });
+    setAudioPreviewUrl(null);
+    setIsPlayingAudio(false);
   };
 
   const handleSubmit = async () => {
@@ -86,8 +259,8 @@ const ChatSettings = () => {
       return;
     }
 
-    if (!formData.text_content) {
-      toast.error('Adicione o conteúdo da mensagem');
+    if (!formData.text_content && !formData.image_url && !formData.audio_url) {
+      toast.error('Adicione pelo menos um tipo de conteúdo (texto, imagem ou áudio)');
       return;
     }
 
@@ -98,8 +271,8 @@ const ChatSettings = () => {
           tag: formData.tag,
           name: formData.name,
           text_content: formData.text_content || null,
-          audio_url: null,
-          image_url: null,
+          audio_url: formData.audio_url || null,
+          image_url: formData.image_url || null,
           delay_seconds: formData.delay_seconds,
         });
         toast.success('Resposta rápida atualizada!');
@@ -108,8 +281,8 @@ const ChatSettings = () => {
           tag: formData.tag,
           name: formData.name,
           text_content: formData.text_content || null,
-          audio_url: null,
-          image_url: null,
+          audio_url: formData.audio_url || null,
+          image_url: formData.image_url || null,
           delay_seconds: formData.delay_seconds,
         });
         toast.success('Resposta rápida criada!');
@@ -258,8 +431,130 @@ const ChatSettings = () => {
                               placeholder="Olá! Como posso ajudá-lo hoje?"
                               value={formData.text_content}
                               onChange={(e) => setFormData({ ...formData, text_content: e.target.value })}
-                              rows={4}
+                              rows={3}
                             />
+                          </div>
+
+                          {/* Image Upload */}
+                          <div className="space-y-2">
+                            <Label>Imagem (opcional)</Label>
+                            <input
+                              ref={imageInputRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleImageUpload}
+                            />
+                            {formData.image_url ? (
+                              <div className="relative inline-block">
+                                <img 
+                                  src={formData.image_url} 
+                                  alt="Preview" 
+                                  className="w-24 h-24 object-cover rounded-lg border border-border"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute -top-2 -right-2 w-6 h-6"
+                                  onClick={removeImage}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => imageInputRef.current?.click()}
+                                disabled={isUploadingImage}
+                              >
+                                {isUploadingImage ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Upload className="w-4 h-4" />
+                                )}
+                                Carregar Imagem
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Audio Upload/Record */}
+                          <div className="space-y-2">
+                            <Label>Áudio (opcional)</Label>
+                            <input
+                              ref={audioInputRef}
+                              type="file"
+                              accept="audio/*"
+                              className="hidden"
+                              onChange={handleAudioUpload}
+                            />
+                            {formData.audio_url ? (
+                              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="shrink-0"
+                                  onClick={toggleAudioPlayback}
+                                >
+                                  {isPlayingAudio ? (
+                                    <Pause className="w-4 h-4" />
+                                  ) : (
+                                    <Play className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <div className="flex-1 h-1 bg-primary/30 rounded-full">
+                                  <div className="h-full w-1/3 bg-primary rounded-full" />
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="shrink-0 text-destructive hover:text-destructive"
+                                  onClick={removeAudio}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="gap-2"
+                                  onClick={() => audioInputRef.current?.click()}
+                                  disabled={isUploadingAudio || isRecording}
+                                >
+                                  {isUploadingAudio ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-4 h-4" />
+                                  )}
+                                  Carregar
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant={isRecording ? "destructive" : "outline"}
+                                  className="gap-2"
+                                  onClick={isRecording ? stopRecording : startRecording}
+                                  disabled={isUploadingAudio}
+                                >
+                                  {isRecording ? (
+                                    <>
+                                      <Square className="w-4 h-4" />
+                                      Parar
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Mic className="w-4 h-4" />
+                                      Gravar
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            )}
                           </div>
 
                           <div className="space-y-2">

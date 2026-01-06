@@ -249,8 +249,15 @@ export const useChat = (selectedNumberId?: string | null) => {
   }, [user]);
 
   // Send message with optimistic update
-  const sendMessage = useCallback(async (content: string, messageType: string = 'text', quotedMessageId?: string) => {
-    if (!user || !selectedConversation || !content.trim()) return;
+  const sendMessage = useCallback(async (
+    content: string, 
+    messageType: string = 'text', 
+    quotedMessageId?: string,
+    mediaUrl?: string,
+    mediaFilename?: string
+  ) => {
+    if (!user || !selectedConversation) return;
+    if (!content.trim() && !mediaUrl) return;
 
     // Create optimistic message
     const optimisticMessage: Message = {
@@ -262,9 +269,9 @@ export const useChat = (selectedNumberId?: string | null) => {
       from_me: true,
       message_type: messageType,
       content: content.trim(),
-      media_url: null,
+      media_url: mediaUrl || null,
       media_mimetype: null,
-      media_filename: null,
+      media_filename: mediaFilename || null,
       quoted_message_id: quotedMessageId || null,
       status: 'pending',
       created_at: new Date().toISOString(),
@@ -282,6 +289,8 @@ export const useChat = (selectedNumberId?: string | null) => {
           content: content.trim(),
           messageType,
           quotedMessageId,
+          mediaUrl,
+          mediaFilename,
         },
       });
 
