@@ -141,6 +141,14 @@ const Chat = () => {
     }
   };
 
+  const handleSendMedia = async (mediaUrl: string, messageType: 'image' | 'audio', caption?: string) => {
+    try {
+      await sendMessage(caption || '', messageType, undefined, mediaUrl);
+    } catch (error) {
+      toast.error('Erro ao enviar mídia');
+    }
+  };
+
   const handleStartConversation = async (
     phone: string,
     whatsappNumberId: string,
@@ -647,6 +655,7 @@ const Chat = () => {
                           <QuickRepliesBar
                             quickReplies={quickReplies}
                             onSend={(content) => handleSendMessage(content)}
+                            onSendMedia={handleSendMedia}
                             isSending={isSending}
                           />
                         )}
