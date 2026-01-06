@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,6 +33,7 @@ import { MediaUploader } from './MediaUploader';
 import { EmojiPicker } from './EmojiPicker';
 import { MediaPreview } from './MediaPreview';
 import chatBackground from '@/assets/chat-background.png';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -65,8 +66,51 @@ export const ChatArea = ({
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch avatar from WhatsApp when conversation changes
+  const fetchAvatarFromWhatsApp = useCallback(async () => {
+    if (!conversation || isFetchingAvatar) return;
+    
+    // If already has avatar from contact, use it
+    if (conversation.contacts?.avatar_url) {
+      setAvatarUrl(conversation.contacts.avatar_url);
+      return;
+    }
+
+    setIsFetchingAvatar(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
+        body: {
+          conversationId: conversation.id,
+          instanceName: conversation.whatsapp_numbers?.id ? `instance_${conversation.whatsapp_number_id}` : null,
+          phone: conversation.phone,
+        },
+      });
+
+      if (!error && data?.avatarUrl) {
+        setAvatarUrl(data.avatarUrl);
+      }
+    } catch (err) {
+      console.error('Error fetching avatar:', err);
+    } finally {
+      setIsFetchingAvatar(false);
+    }
+  }, [conversation, isFetchingAvatar]);
+
+  useEffect(() => {
+    if (conversation) {
+      // Reset avatar when conversation changes
+      setAvatarUrl(conversation.contacts?.avatar_url || null);
+      // Try to fetch from WhatsApp if no avatar
+      if (!conversation.contacts?.avatar_url) {
+        fetchAvatarFromWhatsApp();
+      }
+    }
+  }, [conversation?.id]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -250,7 +294,7 @@ export const ChatArea = ({
             className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -ml-2 transition-colors"
           >
             <Avatar className="h-10 w-10">
-              <AvatarImage src={conversation.contacts?.avatar_url || undefined} />
+              <AvatarImage src={avatarUrl || conversation.contacts?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary">
                 {getInitials(displayName)}
               </AvatarFallback>

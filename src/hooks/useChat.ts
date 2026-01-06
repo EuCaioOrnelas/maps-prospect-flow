@@ -82,7 +82,8 @@ export const useChat = (selectedNumberId?: string | null) => {
         whatsapp_numbers (id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .eq('is_archived', false);
+      .eq('is_archived', false)
+      .not('last_message_at', 'is', null); // Only show conversations with messages
 
     // Filter by selected WhatsApp number if provided
     if (selectedNumberId) {
@@ -112,7 +113,8 @@ export const useChat = (selectedNumberId?: string | null) => {
         whatsapp_numbers (id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .eq('is_archived', true);
+      .eq('is_archived', true)
+      .not('last_message_at', 'is', null); // Only show conversations with messages
 
     if (selectedNumberId) {
       query = query.eq('whatsapp_number_id', selectedNumberId);
