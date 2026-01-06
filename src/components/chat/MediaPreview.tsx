@@ -70,16 +70,18 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-full"
+          className="cursor-pointer rounded-lg overflow-hidden w-full max-w-[280px]"
           onClick={() => setIsOpen(true)}
         >
-          <img 
-            src={url} 
-            alt={filename || 'Image'} 
-            className="w-full h-auto max-h-[300px] object-cover rounded-lg hover:opacity-90 transition-opacity"
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
+          <div className="relative w-full h-[200px] rounded-lg overflow-hidden">
+            <img 
+              src={url} 
+              alt={filename || 'Image'} 
+              className="absolute inset-0 w-full h-full object-cover hover:opacity-90 transition-opacity"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          </div>
           {caption && (
             <p className="text-sm mt-2 whitespace-pre-wrap break-words">{caption}</p>
           )}

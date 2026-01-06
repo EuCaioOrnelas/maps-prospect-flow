@@ -380,6 +380,21 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, [user, fetchConversations]);
 
+  // Normalize phone number for comparison - handles different formats
+  const normalizePhoneForMerge = useCallback((phone: string): string => {
+    // Remove all non-digits
+    const digits = phone.replace(/\D/g, '');
+    
+    // Brazilian numbers: if has 11 digits and starts with DDD (2 digits) + 9, keep all
+    // If has 10 digits (old format without 9), add the 9 after DDD
+    // Get last 8-9 digits (the actual phone number without DDD variations)
+    
+    // For comparison, use last 8 digits which is the "core" of the number
+    // This handles: (44) 9123-6180, (44) 99123-6180, (44) 991236180 as same
+    const last8 = digits.slice(-8);
+    return last8;
+  }, []);
+
   // Merge duplicate conversations based on normalized phone number
   const mergeDuplicateConversations = useCallback(async () => {
     if (!user) return { merged: 0, deleted: 0 };
@@ -396,11 +411,11 @@ export const useChat = (selectedNumberId?: string | null) => {
       throw error;
     }
 
-    // Group by normalized phone (last 10-11 digits) and whatsapp_number_id
+    // Group by normalized phone (last 8 digits - core number) and whatsapp_number_id
     const phoneGroups: Record<string, typeof allConversations> = {};
     
     allConversations.forEach(conv => {
-      const normalizedPhone = conv.phone.replace(/\D/g, '').slice(-11);
+      const normalizedPhone = normalizePhoneForMerge(conv.phone);
       const key = `${normalizedPhone}_${conv.whatsapp_number_id}`;
       
       if (!phoneGroups[key]) {
@@ -492,7 +507,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     await fetchConversations();
 
     return { merged: mergedCount, deleted: deletedCount };
-  }, [user, fetchConversations]);
+  }, [user, fetchConversations, normalizePhoneForMerge]);
 
   // Select conversation
   const selectConversation = useCallback(async (conversation: Conversation) => {
