@@ -326,8 +326,8 @@ export const ConversationList = ({
         </div>
         
         {/* Filter Chips - WhatsApp Style */}
-        <ScrollArea className="w-full">
-          <div className="flex gap-2 pb-1">
+        <div className="overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-secondary/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full">
+          <div className="flex gap-2 min-w-max">
             {FILTER_OPTIONS.map((option) => {
               const isActive = filter === option.value;
               const count = option.value === 'unread' ? unreadCount : 
@@ -364,7 +364,7 @@ export const ConversationList = ({
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Selection Mode Info */}

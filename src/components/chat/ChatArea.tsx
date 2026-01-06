@@ -20,6 +20,7 @@ import {
   Reply,
   UserPlus,
   User,
+  Search,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 
 import type { QuickReply } from '@/hooks/useQuickReplies';
+import { MessageSearch } from './MessageSearch';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -77,6 +79,7 @@ export const ChatArea = ({
   const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
   const [matchedQuickReply, setMatchedQuickReply] = useState<QuickReply | null>(null);
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -393,6 +396,9 @@ export const ChatArea = ({
         </div>
 
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setShowMessageSearch(true)}>
+            <Search className="h-5 w-5" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -402,6 +408,10 @@ export const ChatArea = ({
             <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
               <DropdownMenuLabel>Opções</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowMessageSearch(true)}>
+                <Search className="h-4 w-4 mr-2" />
+                Buscar mensagens
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onOpenContactInfo}>
                 Ver informações do contato
               </DropdownMenuItem>
@@ -440,6 +450,24 @@ export const ChatArea = ({
         </div>
       </div>
 
+      {/* Message Search Modal */}
+      {showMessageSearch && (
+        <MessageSearch
+          messages={messages}
+          onSelectMessage={(messageId) => {
+            setShowMessageSearch(false);
+            // Scroll to message
+            const messageElement = document.getElementById(`message-${messageId}`);
+            if (messageElement) {
+              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              messageElement.classList.add('bg-primary/20');
+              setTimeout(() => messageElement.classList.remove('bg-primary/20'), 2000);
+            }
+          }}
+          onClose={() => setShowMessageSearch(false)}
+        />
+      )}
+
       {/* Messages area with background image */}
       <div className="flex-1 overflow-hidden relative bg-background">
         {/* Background image layer with grayscale filter and low opacity */}
@@ -471,8 +499,9 @@ export const ChatArea = ({
                     return (
                       <div
                         key={message.id}
+                        id={`message-${message.id}`}
                         className={cn(
-                          'flex w-full group',
+                          'flex w-full group transition-colors duration-500',
                           message.from_me ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16'
                         )}
                       >
@@ -578,7 +607,7 @@ export const ChatArea = ({
 
       {/* Quick Reply Match Preview */}
       {matchedQuickReply && (
-        <div className="px-3 pt-2 bg-card border-t border-border">
+        <div className="px-3 py-3 bg-card border-t border-border">
           <div 
             className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
             onClick={() => sendQuickReply(matchedQuickReply)}
