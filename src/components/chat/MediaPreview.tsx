@@ -76,7 +76,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
           <img 
             src={url} 
             alt={filename || 'Image'} 
-            className="w-full h-auto object-cover rounded-lg hover:opacity-90 transition-opacity"
+            className="w-full h-auto max-h-[300px] object-cover rounded-lg hover:opacity-90 transition-opacity"
             loading="lazy"
             onError={() => setImageError(true)}
           />

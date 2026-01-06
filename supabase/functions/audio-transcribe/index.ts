@@ -17,27 +17,49 @@ serve(async (req) => {
       throw new Error("Audio URL is required");
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    console.log("Fetching audio from:", audioUrl);
 
     // Fetch the audio file
     const audioResponse = await fetch(audioUrl);
     if (!audioResponse.ok) {
+      console.error("Failed to fetch audio:", audioResponse.status, audioResponse.statusText);
       throw new Error("Failed to fetch audio file");
     }
 
     const audioBuffer = await audioResponse.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer))
-    );
+    const uint8Array = new Uint8Array(audioBuffer);
+    
+    // Convert to base64 in chunks to avoid stack overflow
+    let base64Audio = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      base64Audio += String.fromCharCode(...chunk);
+    }
+    base64Audio = btoa(base64Audio);
 
-    // Use Gemini for audio transcription
+    console.log("Audio fetched and encoded, size:", base64Audio.length);
+
+    // Determine audio format from URL or content-type
+    const contentType = audioResponse.headers.get('content-type') || '';
+    let audioFormat = 'ogg'; // Default to ogg since WhatsApp uses ogg/opus
+    
+    if (contentType.includes('mp3') || audioUrl.includes('.mp3')) {
+      audioFormat = 'mp3';
+    } else if (contentType.includes('wav') || audioUrl.includes('.wav')) {
+      audioFormat = 'wav';
+    } else if (contentType.includes('ogg') || audioUrl.includes('.ogg') || contentType.includes('opus')) {
+      audioFormat = 'ogg';
+    } else if (contentType.includes('mp4') || audioUrl.includes('.mp4') || contentType.includes('m4a')) {
+      audioFormat = 'mp4';
+    }
+
+    console.log("Detected audio format:", audioFormat, "Content-Type:", contentType);
+
+    // Use Gemini for audio transcription with file API approach
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -68,7 +90,7 @@ Rules:
                 type: "input_audio",
                 input_audio: {
                   data: base64Audio,
-                  format: "mp3"
+                  format: audioFormat
                 }
               }
             ]
@@ -78,6 +100,9 @@ Rules:
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
@@ -90,12 +115,12 @@ Rules:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("Failed to transcribe audio");
+      throw new Error(`Failed to transcribe audio: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
+    console.log("Transcription result:", JSON.stringify(result).slice(0, 500));
+    
     const transcription = result.choices?.[0]?.message?.content || "[Transcrição não disponível]";
 
     return new Response(JSON.stringify({ transcription }), {
