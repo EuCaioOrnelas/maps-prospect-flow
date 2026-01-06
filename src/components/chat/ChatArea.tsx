@@ -928,7 +928,7 @@ const ChatAreaComponent = ({
               }
             }}
             placeholder="Digite uma mensagem ou /tag..."
-            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2"
+            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0"
             disabled={isSending || sendingQuickReply}
             rows={1}
           />
