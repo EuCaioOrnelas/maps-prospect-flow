@@ -162,14 +162,14 @@ const MessageBubbleComponent = ({
     <div
       id={`message-${message.id}`}
       className={cn(
-        'flex w-full group transition-all duration-500 px-2',
+        'flex w-full group transition-all duration-500 px-3',
         message.from_me ? 'justify-end' : 'justify-start',
         isHighlighted && 'animate-pulse bg-primary/10 rounded-lg py-1'
       )}
     >
       <div className={cn(
         'flex items-start gap-1',
-        message.from_me ? 'flex-row-reverse ml-auto' : 'flex-row mr-auto',
+        message.from_me ? 'flex-row-reverse' : 'flex-row',
         message.message_type === 'audio' ? 'max-w-[60%]' : 'max-w-[45%]'
       )}>
         {/* Action menu - positioned at top */}

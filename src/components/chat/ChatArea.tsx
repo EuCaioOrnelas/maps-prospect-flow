@@ -635,14 +635,14 @@ const ChatAreaComponent = ({
                           key={`gallery-${firstMessage.id}`}
                           id={`message-${firstMessage.id}`}
                           className={cn(
-                            'flex w-full group transition-all duration-500 px-2',
+                            'flex w-full group transition-all duration-500 px-3',
                             item.fromMe ? 'justify-end' : 'justify-start',
                             highlightedMessageId === firstMessage.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
                           )}
                         >
                           <div className={cn(
                             'flex items-start gap-1 max-w-[45%]',
-                            item.fromMe ? 'flex-row-reverse ml-auto' : 'flex-row mr-auto'
+                            item.fromMe ? 'flex-row-reverse' : 'flex-row'
                           )}>
                             {/* Action menu - outside the card */}
                             <MessageActionsMenu
