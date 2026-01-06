@@ -319,6 +319,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website: string | null
+          whatsapp_number_id: string | null
           whatsapp_status: string | null
         }
         Insert: {
@@ -346,6 +347,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website?: string | null
+          whatsapp_number_id?: string | null
           whatsapp_status?: string | null
         }
         Update: {
@@ -373,6 +375,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website?: string | null
+          whatsapp_number_id?: string | null
           whatsapp_status?: string | null
         }
         Relationships: [
@@ -395,6 +398,13 @@ export type Database = {
             columns: ["pipeline_stage_id"]
             isOneToOne: false
             referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
             referencedColumns: ["id"]
           },
         ]
