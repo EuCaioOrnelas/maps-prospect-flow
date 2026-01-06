@@ -23,6 +23,7 @@ interface MediaPreviewProps {
 const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPreviewProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const handleDownload = useCallback(() => {
     const link = document.createElement('a');
     link.href = url;
@@ -72,7 +73,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
           className="cursor-pointer rounded-lg overflow-hidden w-full"
           onClick={() => setIsOpen(true)}
         >
-          <div className="max-h-[500px] overflow-hidden rounded-lg">
+          <div className="max-h-[350px] overflow-hidden rounded-lg">
             <img 
               src={url} 
               alt={filename || 'Image'} 
@@ -86,22 +87,37 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
           )}
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:hidden">
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setIsZoomed(false); }}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none [&>button]:hidden overflow-hidden">
             <button 
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
             >
               <X className="h-5 w-5 text-white" />
             </button>
-            <div className="flex items-center justify-center min-h-[50vh]">
+            <div 
+              className={cn(
+                "flex items-center justify-center min-h-[50vh] overflow-auto",
+                isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+              )}
+              onDoubleClick={() => setIsZoomed(!isZoomed)}
+            >
               <img 
                 src={url} 
                 alt={filename || 'Image'} 
-                className="max-w-full max-h-[80vh] object-contain"
+                className={cn(
+                  "transition-transform duration-200",
+                  isZoomed 
+                    ? "max-w-none w-auto h-auto" 
+                    : "max-w-full max-h-[80vh] object-contain"
+                )}
+                style={isZoomed ? { transform: 'scale(2)', transformOrigin: 'center center' } : undefined}
               />
             </div>
-            <div className="absolute bottom-4 right-4">
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <div className="text-white/60 text-xs bg-black/50 px-2 py-1 rounded">
+                Duplo clique para zoom
+              </div>
               <Button 
                 variant="secondary" 
                 size="sm" 
