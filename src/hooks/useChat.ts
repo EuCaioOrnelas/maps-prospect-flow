@@ -82,15 +82,14 @@ export const useChat = (selectedNumberId?: string | null) => {
         whatsapp_numbers (id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .eq('is_archived', false)
-      .not('last_message_at', 'is', null); // Only show conversations with messages
+      .eq('is_archived', false);
 
     // Filter by selected WhatsApp number if provided
     if (selectedNumberId) {
       query = query.eq('whatsapp_number_id', selectedNumberId);
     }
 
-    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: false });
+    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: true });
 
     if (error) {
       console.error('Error fetching conversations:', error);
@@ -113,14 +112,13 @@ export const useChat = (selectedNumberId?: string | null) => {
         whatsapp_numbers (id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .eq('is_archived', true)
-      .not('last_message_at', 'is', null); // Only show conversations with messages
+      .eq('is_archived', true);
 
     if (selectedNumberId) {
       query = query.eq('whatsapp_number_id', selectedNumberId);
     }
 
-    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: false });
+    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: true });
 
     if (error) {
       console.error('Error fetching archived conversations:', error);

@@ -35,6 +35,8 @@ const Chat = () => {
   const [syncingWebhook, setSyncingWebhook] = useState(false);
   const [mergingConversations, setMergingConversations] = useState(false);
   const [showReconnectDialog, setShowReconnectDialog] = useState(false);
+  const [initialSyncLoading, setInitialSyncLoading] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<{ conversations: number; messages: number } | null>(null);
   
   const {
     conversations,
@@ -88,9 +90,9 @@ const Chat = () => {
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const maxNumbers = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS] || 1;
 
-  // Auto-select first connected number and sync webhook
+  // Auto-select first connected number only if there's just one
   useEffect(() => {
-    if (connectedNumbers.length > 0 && !selectedNumberId) {
+    if (connectedNumbers.length === 1 && !selectedNumberId) {
       setSelectedNumberId(connectedNumbers[0].id);
     }
   }, [connectedNumbers, selectedNumberId]);
@@ -123,7 +125,7 @@ const Chat = () => {
 
   // Clear selected conversation when changing number
   const handleNumberChange = (numberId: string) => {
-    setSelectedNumberId(numberId);
+    setSelectedNumberId(numberId || null);
     setSelectedConversation(null);
   };
 
@@ -169,9 +171,57 @@ const Chat = () => {
     fetchNumbers();
   };
 
-  const handleConnect = (numberId: string) => {
+  const handleConnect = async (numberId: string, shouldSync?: boolean) => {
     setSelectedNumberId(numberId);
     setShowNumbersManager(false);
+    
+    // If this is a new connection, sync messages first
+    if (shouldSync) {
+      setInitialSyncLoading(true);
+      setSyncProgress(null);
+      
+      // Fetch the number from database to ensure we have latest data
+      const { data: numberData } = await supabase
+        .from('whatsapp_numbers')
+        .select('instance_name')
+        .eq('id', numberId)
+        .single();
+      
+      if (numberData?.instance_name) {
+        try {
+          const response = await supabase.functions.invoke('evolution-sync-messages', {
+            body: { 
+              instanceName: numberData.instance_name,
+              numberId: numberId,
+              lastSyncAt: new Date().toISOString()
+            },
+          });
+
+          if (response.data?.success) {
+            setSyncProgress({
+              conversations: response.data.syncedConversations || 0,
+              messages: response.data.syncedMessages || 0,
+            });
+            
+            // Refresh conversations
+            await fetchConversations();
+            
+            toast.success(`Sincronizado: ${response.data.syncedConversations || 0} conversas, ${response.data.syncedMessages || 0} mensagens`);
+          }
+        } catch (err) {
+          console.error('Error syncing messages:', err);
+          toast.error('Erro ao sincronizar mensagens');
+        }
+      }
+      
+      // Small delay to show results
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setInitialSyncLoading(false);
+      setSyncProgress(null);
+      
+      // Refresh numbers list
+      await fetchNumbers();
+    }
   };
 
   const handleRequestNotifications = async () => {
@@ -311,8 +361,40 @@ const Chat = () => {
 
           {/* Chat Layout */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Number Selector Header */}
-            {loadingNumbers ? (
+            {/* Initial Sync Loading Screen */}
+            {initialSyncLoading ? (
+              <div className="flex-1 flex items-center justify-center p-8">
+                <div className="max-w-md w-full text-center space-y-6">
+                  <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Download className="w-10 h-10 text-primary animate-bounce" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-bold text-foreground">
+                      Sincronizando conversas...
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Estamos carregando suas conversas do WhatsApp. Isso pode levar alguns segundos.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    
+                    {syncProgress && (
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <p>✓ {syncProgress.conversations} conversas encontradas</p>
+                        <p>✓ {syncProgress.messages} mensagens sincronizadas</p>
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-muted-foreground">
+                      Aguarde, você será redirecionado automaticamente...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : loadingNumbers ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
@@ -387,11 +469,22 @@ const Chat = () => {
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Número:</span>
-                    <Select value={selectedNumberId || ''} onValueChange={handleNumberChange}>
+                    <Select value={selectedNumberId || 'all'} onValueChange={(value) => handleNumberChange(value === 'all' ? '' : value)}>
                       <SelectTrigger className="w-[280px]">
                         <SelectValue placeholder="Selecione um número" />
                       </SelectTrigger>
                       <SelectContent>
+                        {connectedNumbers.length > 1 && (
+                          <SelectItem value="all">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-primary" />
+                              <span>Todos os números</span>
+                              <span className="text-muted-foreground text-xs">
+                                ({connectedNumbers.length})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        )}
                         {connectedNumbers.map((number) => (
                           <SelectItem key={number.id} value={number.id}>
                             <div className="flex items-center gap-2">

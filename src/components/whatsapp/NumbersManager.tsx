@@ -48,7 +48,7 @@ interface NumbersManagerProps {
   numbers: WhatsAppNumber[];
   onNumbersChange: (numbers: WhatsAppNumber[]) => void;
   maxNumbers: number;
-  onConnect: (numberId: string) => void;
+  onConnect: (numberId: string, shouldSync?: boolean) => void;
   forceOpen?: boolean;
   onClose?: () => void;
   hideButtons?: boolean;
@@ -249,11 +249,11 @@ export const NumbersManager = ({
             // Add to local state
             onNumbersChange([...numbers, newNumber]);
             
-            // Wait for animation then close
+            // Wait for animation then close and trigger sync
             setTimeout(() => {
               setShowSuccessAnimation(false);
               setConnectDialogOpen(false);
-              onConnect(newNumber.id);
+              onConnect(newNumber.id, true); // Pass true to trigger sync
               
               // Reset all states
               setPendingNumberName(null);
