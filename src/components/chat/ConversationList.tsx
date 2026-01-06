@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef, CSSProperties, ReactElement } from 'react';
+import { List } from 'react-window';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Search, Plus, Trash2, X, Check, MessageCircle, Users, UserX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,130 @@ const FILTER_OPTIONS: { value: ConversationFilter; label: string; icon: React.El
   { value: 'contacts', label: 'Contatos', icon: Users },
   { value: 'non_contacts', label: 'Não contatos', icon: UserX },
 ];
+
+const CONVERSATION_ITEM_HEIGHT = 76;
+
+interface VirtualizedRowProps {
+  conversations: Conversation[];
+  selectedConversationId: string | null;
+  selectedIds: Set<string>;
+  selectionMode: boolean;
+  isContactSaved: (conversation: Conversation) => boolean;
+  getAvatarUrl: (conversation: Conversation) => string | undefined;
+  onSelect: (conversation: Conversation) => void;
+  toggleSelection: (id: string) => void;
+  onSaveContact: (conversation: Conversation) => void;
+  onDelete: (conversationId: string) => void;
+}
+
+const RowComponent = ({
+  ariaAttributes,
+  index,
+  style,
+  conversations,
+  selectedConversationId,
+  selectedIds,
+  selectionMode,
+  isContactSaved,
+  getAvatarUrl,
+  onSelect,
+  toggleSelection,
+  onSaveContact,
+  onDelete,
+}: {
+  ariaAttributes: { "aria-posinset": number; "aria-setsize": number; role: "listitem" };
+  index: number;
+  style: CSSProperties;
+} & VirtualizedRowProps): ReactElement => {
+  const conversation = conversations[index];
+  return (
+    <div style={style} className="px-2" {...ariaAttributes}>
+      <ConversationItem
+        conversation={conversation}
+        isSelected={selectedConversationId === conversation.id}
+        isSaved={isContactSaved(conversation)}
+        isChecked={selectedIds.has(conversation.id)}
+        selectionMode={selectionMode}
+        avatarUrl={getAvatarUrl(conversation)}
+        onSelect={onSelect}
+        onToggleSelection={toggleSelection}
+        onSaveContact={onSaveContact}
+        onDelete={onDelete}
+      />
+    </div>
+  );
+};
+
+interface VirtualizedConversationListProps {
+  conversations: Conversation[];
+  selectedConversation: Conversation | null;
+  selectedIds: Set<string>;
+  selectionMode: boolean;
+  isContactSaved: (conversation: Conversation) => boolean;
+  getAvatarUrl: (conversation: Conversation) => string | undefined;
+  onSelect: (conversation: Conversation) => void;
+  toggleSelection: (id: string) => void;
+  onSaveContact: (conversation: Conversation) => void;
+  onDelete: (conversationId: string) => void;
+}
+
+const VirtualizedConversationList = memo(({
+  conversations,
+  selectedConversation,
+  selectedIds,
+  selectionMode,
+  isContactSaved,
+  getAvatarUrl,
+  onSelect,
+  toggleSelection,
+  onSaveContact,
+  onDelete,
+}: VirtualizedConversationListProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState(400);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        setListHeight(containerRef.current.clientHeight);
+      }
+    };
+
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const rowProps = useMemo(() => ({
+    conversations,
+    selectedConversationId: selectedConversation?.id || null,
+    selectedIds,
+    selectionMode,
+    isContactSaved,
+    getAvatarUrl,
+    onSelect,
+    toggleSelection,
+    onSaveContact,
+    onDelete,
+  }), [conversations, selectedConversation?.id, selectedIds, selectionMode, isContactSaved, getAvatarUrl, onSelect, toggleSelection, onSaveContact, onDelete]);
+
+  return (
+    <div ref={containerRef} className="h-full">
+      <List
+        rowComponent={RowComponent}
+        rowCount={conversations.length}
+        rowHeight={CONVERSATION_ITEM_HEIGHT}
+        rowProps={rowProps}
+        overscanCount={5}
+        style={{ height: listHeight, width: '100%' }}
+      />
+    </div>
+  );
+});
 
 const ConversationListComponent = ({
   conversations,
@@ -346,37 +470,32 @@ const ConversationListComponent = ({
         </div>
       )}
 
-      {/* Conversation List */}
-      <ScrollArea className="flex-1 [&_[data-radix-scroll-area-viewport]]:!overflow-x-hidden [&_[data-radix-scroll-area-scrollbar]]:bg-muted/50 [&_[data-radix-scroll-area-thumb]]:bg-primary/30">
-        <div className="p-2 space-y-1">
-          {filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <p>
-                {filter === 'unread' ? 'Nenhuma mensagem não lida' : 
-                 filter === 'contacts' ? 'Nenhum contato salvo' :
-                 filter === 'non_contacts' ? 'Todas as conversas são de contatos salvos' :
-                 'Nenhuma conversa'}
-              </p>
-            </div>
-          ) : (
-            filteredConversations.map((conversation) => (
-              <ConversationItem
-                key={conversation.id}
-                conversation={conversation}
-                isSelected={selectedConversation?.id === conversation.id}
-                isSaved={isContactSaved(conversation)}
-                isChecked={selectedIds.has(conversation.id)}
-                selectionMode={selectionMode}
-                avatarUrl={getAvatarUrl(conversation)}
-                onSelect={onSelect}
-                onToggleSelection={toggleSelection}
-                onSaveContact={onSaveContact}
-                onDelete={onDelete}
-              />
-            ))
-          )}
-        </div>
-      </ScrollArea>
+      {/* Conversation List - Virtualized */}
+      <div className="flex-1 min-h-0">
+        {filteredConversations.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">
+            <p>
+              {filter === 'unread' ? 'Nenhuma mensagem não lida' : 
+               filter === 'contacts' ? 'Nenhum contato salvo' :
+               filter === 'non_contacts' ? 'Todas as conversas são de contatos salvos' :
+               'Nenhuma conversa'}
+            </p>
+          </div>
+        ) : (
+          <VirtualizedConversationList
+            conversations={filteredConversations}
+            selectedConversation={selectedConversation}
+            selectedIds={selectedIds}
+            selectionMode={selectionMode}
+            isContactSaved={isContactSaved}
+            getAvatarUrl={getAvatarUrl}
+            onSelect={onSelect}
+            toggleSelection={toggleSelection}
+            onSaveContact={onSaveContact}
+            onDelete={onDelete}
+          />
+        )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
