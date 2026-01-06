@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
-
+import { LinkPreview } from './LinkPreview';
 interface MessageBubbleProps {
   message: Message;
   quotedMessage: Message | null;
@@ -49,6 +49,14 @@ const MessageBubbleComponent = ({
     onReply(message);
   }, [message, onReply]);
 
+  // Extract URLs from message content
+  const extractedUrls = useMemo(() => {
+    if (!message.content || message.media_url) return [];
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = message.content.match(urlRegex);
+    return matches ? [...new Set(matches)] : [];
+  }, [message.content, message.media_url]);
+
   const renderContent = () => {
     if (message.media_url && message.message_type !== 'text') {
       return (
@@ -68,28 +76,33 @@ const MessageBubbleComponent = ({
       const parts = message.content.split(urlRegex);
       
       return (
-        <p className={cn('whitespace-pre-wrap break-words', fontSize)}>
-          {parts.map((part, index) => {
-            if (urlRegex.test(part)) {
-              return (
-                <a
-                  key={index}
-                  href={part}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    'underline hover:opacity-80 transition-opacity',
-                    message.from_me ? 'text-primary-foreground' : 'text-primary'
-                  )}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {part}
-                </a>
-              );
-            }
-            return part;
-          })}
-        </p>
+        <>
+          <p className={cn('whitespace-pre-wrap break-words', fontSize)}>
+            {parts.map((part, index) => {
+              if (urlRegex.test(part)) {
+                return (
+                  <a
+                    key={index}
+                    href={part}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'underline hover:opacity-80 transition-opacity',
+                      message.from_me ? 'text-primary-foreground' : 'text-primary'
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {part}
+                  </a>
+                );
+              }
+              return part;
+            })}
+          </p>
+          {extractedUrls.slice(0, 1).map((url) => (
+            <LinkPreview key={url} url={url} fromMe={message.from_me} />
+          ))}
+        </>
       );
     }
 
