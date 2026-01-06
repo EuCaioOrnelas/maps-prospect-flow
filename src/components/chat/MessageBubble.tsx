@@ -184,7 +184,7 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md w-full',
+            'relative rounded-lg px-3 py-2 shadow-md min-w-[140px]',
             message.from_me
               ? 'bg-primary text-primary-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'

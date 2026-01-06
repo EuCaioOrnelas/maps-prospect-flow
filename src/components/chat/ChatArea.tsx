@@ -656,7 +656,7 @@ const ChatAreaComponent = ({
                             
                             <div
                               className={cn(
-                                'relative rounded-lg p-2 shadow-md w-full',
+                                'relative rounded-lg p-2 shadow-md min-w-[140px]',
                                 item.fromMe
                                   ? 'bg-primary text-primary-foreground rounded-tr-none'
                                   : 'bg-card text-card-foreground rounded-tl-none border border-border'
