@@ -579,11 +579,15 @@ const ChatAreaComponent = ({
                             style={{ maxWidth: 'min(85%, 300px)' }}
                           >
                             <ImageGallery
-                              images={item.messages.map(m => ({
-                                url: m.media_url || '',
-                                caption: m.content || undefined,
-                                filename: m.media_filename || undefined,
-                              }))}
+                              images={item.messages.map(m => {
+                                // Filter out placeholder content like [image], [audio], etc.
+                                const isPlaceholder = m.content && /^\[(image|audio|video|document|sticker)\]$/i.test(m.content.trim());
+                                return {
+                                  url: m.media_url || '',
+                                  caption: isPlaceholder ? undefined : (m.content || undefined),
+                                  filename: m.media_filename || undefined,
+                                };
+                              })}
                               fromMe={item.fromMe}
                             />
                             <div className="flex items-center justify-end gap-1 mt-1">
