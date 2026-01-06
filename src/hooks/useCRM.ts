@@ -37,8 +37,15 @@ export interface Lead {
   whatsapp_status: WhatsAppStatus;
   contact_id: string | null;
   conversation_id: string | null;
+  whatsapp_number_id: string | null;
   created_at: string;
   updated_at: string;
+  // Joined data
+  whatsapp_number?: {
+    id: string;
+    name: string;
+    phone_number: string | null;
+  } | null;
 }
 
 export interface LeadNote {
@@ -149,13 +156,16 @@ export const useCRM = () => {
     setStages(data || []);
   };
 
-  // Fetch leads
+  // Fetch leads with whatsapp_number info
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
       .from('leads')
-      .select('*')
+      .select(`
+        *,
+        whatsapp_number:whatsapp_numbers(id, name, phone_number)
+      `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
