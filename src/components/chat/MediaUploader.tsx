@@ -6,10 +6,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { Paperclip, Image, FileText, Video, Mic, X, Loader2, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Paperclip, Image, FileText, Video, Mic, X, Loader2, Send, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ImageEditor } from './ImageEditor';
 
 interface MediaUploaderProps {
   conversationId: string;
@@ -27,6 +28,80 @@ export interface MediaUploaderRef {
   handleDroppedFiles: (files: FileList) => void;
 }
 
+// Image compression settings
+const MAX_IMAGE_SIZE = 1024 * 1024; // 1MB
+const MAX_IMAGE_DIMENSION = 1920;
+const COMPRESSION_QUALITY = 0.8;
+
+// Compress image if needed
+const compressImage = async (file: File): Promise<File> => {
+  // Only compress images
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') {
+    return file;
+  }
+
+  // If already small enough, return as is
+  if (file.size <= MAX_IMAGE_SIZE) {
+    return file;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let width = img.naturalWidth;
+      let height = img.naturalHeight;
+
+      // Calculate new dimensions maintaining aspect ratio
+      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
+          width = MAX_IMAGE_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
+          height = MAX_IMAGE_DIMENSION;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            console.log(`Compressed image from ${(file.size / 1024).toFixed(1)}KB to ${(blob.size / 1024).toFixed(1)}KB`);
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        },
+        'image/jpeg',
+        COMPRESSION_QUALITY
+      );
+
+      URL.revokeObjectURL(img.src);
+    };
+
+    img.onerror = () => {
+      resolve(file);
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({ conversationId, onMediaSent, disabled }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -35,6 +110,7 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [caption, setCaption] = useState('');
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentType, setCurrentType] = useState<'image' | 'video' | 'document'>('image');
@@ -94,17 +170,20 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
   const uploadFile = async (file: File, messageType: string, captionText?: string) => {
     setIsUploading(true);
     try {
+      // Compress image if needed
+      const fileToUpload = await compressImage(file);
+      
       // Get user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
       // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
+      const fileExt = fileToUpload.name.split('.').pop() || (messageType === 'image' ? 'jpg' : 'bin');
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat-media')
-        .upload(fileName, file);
+        .upload(fileName, fileToUpload);
 
       if (uploadError) throw uploadError;
 
@@ -121,7 +200,7 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
           content: captionText || '',
           messageType,
           mediaUrl: publicUrl,
-          mediaFilename: file.name,
+          mediaFilename: fileToUpload.name,
         },
       });
 
@@ -217,6 +296,30 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     }
   };
 
+  // Handle edited image save
+  const handleEditedImageSave = (blob: Blob) => {
+    const editedFile = new File([blob], `edited_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    const preview = URL.createObjectURL(blob);
+    
+    // Replace the current file with edited version
+    if (editingImageIndex !== null) {
+      const oldFile = selectedFiles[editingImageIndex];
+      if (oldFile.preview) {
+        URL.revokeObjectURL(oldFile.preview);
+      }
+      
+      const newFiles = [...selectedFiles];
+      newFiles[editingImageIndex] = {
+        file: editedFile,
+        type: 'image',
+        preview,
+      };
+      setSelectedFiles(newFiles);
+    }
+    
+    setEditingImageIndex(null);
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -262,6 +365,17 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
 
   const currentFile = selectedFiles[currentFileIndex];
 
+  // Show image editor if editing
+  if (editingImageIndex !== null && selectedFiles[editingImageIndex]?.preview) {
+    return (
+      <ImageEditor
+        imageSrc={selectedFiles[editingImageIndex].preview!}
+        onSave={handleEditedImageSave}
+        onCancel={() => setEditingImageIndex(null)}
+      />
+    );
+  }
+
   // File Preview Modal
   if (selectedFiles.length > 0 && currentFile) {
     return (
@@ -288,7 +402,18 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
               </p>
             )}
           </div>
-          <div className="w-10" /> {/* Spacer */}
+          {/* Edit button for images */}
+          {currentFile.type === 'image' ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditingImageIndex(currentFileIndex)}
+            >
+              <Pencil className="h-5 w-5" />
+            </Button>
+          ) : (
+            <div className="w-10" />
+          )}
         </div>
 
         {/* Preview Area */}
