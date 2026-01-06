@@ -40,17 +40,17 @@ const Chat = () => {
   
   const {
     conversations,
-    archivedConversations,
     messages,
     selectedConversation,
     isLoading,
     isSending,
+    conversationFilter,
+    setConversationFilter,
+    getFilteredConversations,
     selectConversation,
     sendMessage,
     startConversation,
     fetchConversations,
-    archiveConversation,
-    unarchiveConversation,
     deleteConversation,
     bulkDeleteConversations,
     linkContactToConversation,
@@ -151,7 +151,7 @@ const Chat = () => {
 
   // Handle selecting an existing conversation and optionally sending a message
   const handleSelectExistingConversation = async (conversationId: string, initialMessage?: string) => {
-    const existingConv = [...conversations, ...archivedConversations].find(c => c.id === conversationId);
+    const existingConv = conversations.find(c => c.id === conversationId);
     if (existingConv) {
       await selectConversation(existingConv);
       
@@ -313,24 +313,6 @@ const Chat = () => {
     } catch (error) {
       toast.error('Erro ao salvar contato');
       throw error;
-    }
-  };
-
-  const handleArchive = async (conversationId: string) => {
-    try {
-      await archiveConversation(conversationId);
-      toast.success('Conversa arquivada');
-    } catch (error) {
-      toast.error('Erro ao arquivar conversa');
-    }
-  };
-
-  const handleUnarchive = async (conversationId: string) => {
-    try {
-      await unarchiveConversation(conversationId);
-      toast.success('Conversa desarquivada');
-    } catch (error) {
-      toast.error('Erro ao desarquivar conversa');
     }
   };
 
@@ -619,14 +601,11 @@ const Chat = () => {
                       {/* Conversation List - Hidden on mobile when chat selected */}
                       <div className={`w-full sm:w-80 lg:w-96 shrink-0 ${selectedConversation ? 'hidden sm:block' : ''}`}>
                         <ConversationList
-                          conversations={conversations}
-                          archivedConversations={archivedConversations}
+                          conversations={getFilteredConversations()}
                           selectedConversation={selectedConversation}
                           onSelect={selectConversation}
                           onNewChat={() => setShowNewChatDialog(true)}
                           onSaveContact={handleSaveContact}
-                          onArchive={handleArchive}
-                          onUnarchive={handleUnarchive}
                           onDelete={handleDelete}
                           onBulkDelete={async (ids, deleteContacts) => {
                             try {
@@ -637,6 +616,9 @@ const Chat = () => {
                               throw error;
                             }
                           }}
+                          filter={conversationFilter}
+                          onFilterChange={setConversationFilter}
+                          totalConversations={conversations.length}
                         />
                       </div>
 
@@ -680,7 +662,7 @@ const Chat = () => {
           onOpenChange={setShowNewChatDialog}
           onStartConversation={handleStartConversation}
           defaultWhatsAppNumberId={selectedNumberId || undefined}
-          existingConversations={[...conversations, ...archivedConversations].map(c => ({
+          existingConversations={conversations.map(c => ({
             id: c.id,
             phone: c.phone,
             whatsapp_number_id: c.whatsapp_number_id,
