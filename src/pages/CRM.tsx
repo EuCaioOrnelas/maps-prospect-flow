@@ -40,6 +40,22 @@ export default function CRM() {
     whatsappStatus: '',
     tags: [],
     origin: '',
+    whatsappNumberId: '',
+  });
+
+  // Fetch WhatsApp numbers for filter
+  const { data: whatsappNumbers = [] } = useQuery({
+    queryKey: ['whatsapp-numbers', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, name, phone_number')
+        .eq('user_id', user.id)
+        .order('name');
+      return data || [];
+    },
+    enabled: !!user,
   });
 
   // Fetch user profile for sidebar
@@ -99,6 +115,11 @@ export default function CRM() {
     if (filters.tags.length > 0) {
       const hasMatchingTag = filters.tags.some(tag => lead.tags?.includes(tag));
       if (!hasMatchingTag) return false;
+    }
+
+    // WhatsApp number filter
+    if (filters.whatsappNumberId && lead.whatsapp_number_id !== filters.whatsappNumberId) {
+      return false;
     }
 
     return true;
@@ -174,6 +195,7 @@ export default function CRM() {
                   filters={filters}
                   onFiltersChange={setFilters}
                   availableTags={availableTags}
+                  whatsappNumbers={whatsappNumbers}
                 />
               </div>
             </div>

@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Search, Filter, X, SlidersHorizontal } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Smartphone } from 'lucide-react';
 
 export interface CRMFiltersState {
   search: string;
@@ -23,6 +23,13 @@ export interface CRMFiltersState {
   whatsappStatus: string;
   tags: string[];
   origin: string;
+  whatsappNumberId: string;
+}
+
+interface WhatsAppNumber {
+  id: string;
+  name: string;
+  phone_number: string | null;
 }
 
 interface CRMFiltersProps {
@@ -30,6 +37,7 @@ interface CRMFiltersProps {
   filters: CRMFiltersState;
   onFiltersChange: (filters: CRMFiltersState) => void;
   availableTags: string[];
+  whatsappNumbers: WhatsAppNumber[];
 }
 
 export const CRMFilters = ({
@@ -37,6 +45,7 @@ export const CRMFilters = ({
   filters,
   onFiltersChange,
   availableTags,
+  whatsappNumbers,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -44,6 +53,7 @@ export const CRMFilters = ({
     filters.stage,
     filters.whatsappStatus,
     filters.origin,
+    filters.whatsappNumberId,
     ...filters.tags,
   ].filter(Boolean).length;
 
@@ -61,6 +71,7 @@ export const CRMFilters = ({
       whatsappStatus: '',
       tags: [],
       origin: '',
+      whatsappNumberId: '',
     });
   };
 
@@ -149,6 +160,39 @@ export const CRMFilters = ({
                 </Button>
               )}
             </div>
+
+            {/* WhatsApp Number Filter */}
+            {whatsappNumbers.length > 0 && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  <div className="flex items-center gap-1">
+                    <Smartphone className="w-3 h-3" />
+                    Número WhatsApp
+                  </div>
+                </label>
+                <Select
+                  value={filters.whatsappNumberId}
+                  onValueChange={(value) => updateFilter('whatsappNumberId', value === 'all' ? '' : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os números" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os números</SelectItem>
+                    {whatsappNumbers.map((number) => (
+                      <SelectItem key={number.id} value={number.id}>
+                        {number.name}
+                        {number.phone_number && (
+                          <span className="text-muted-foreground ml-1">
+                            ({number.phone_number})
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Origin Filter */}
             <div>
