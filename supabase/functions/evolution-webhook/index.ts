@@ -551,6 +551,40 @@ serve(async (req) => {
         console.log('Message sent:', data);
         break;
 
+      case 'presence.update':
+      case 'presenceupdate':
+        // Typing indicator from contact
+        console.log('Presence update:', JSON.stringify(data));
+        
+        if (data?.remoteJid && data?.participant !== undefined) {
+          const remoteJid = data.remoteJid;
+          const isTyping = data.presence === 'composing';
+          
+          // Get the WhatsApp number info
+          const { data: whatsappNumber } = await supabase
+            .from('whatsapp_numbers')
+            .select('id, user_id')
+            .eq('instance_name', instance)
+            .single();
+          
+          if (whatsappNumber) {
+            // Broadcast typing status via Supabase Realtime
+            const channel = supabase.channel(`typing:${whatsappNumber.user_id}`);
+            await channel.send({
+              type: 'broadcast',
+              event: 'typing',
+              payload: {
+                remote_jid: remoteJid,
+                is_typing: isTyping,
+                whatsapp_number_id: whatsappNumber.id,
+              },
+            });
+            await supabase.removeChannel(channel);
+            console.log('Broadcasted typing status:', { remoteJid, isTyping });
+          }
+        }
+        break;
+
       default:
         console.log('Unknown event:', event);
     }

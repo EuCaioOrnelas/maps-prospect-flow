@@ -6,6 +6,7 @@ import { useContacts } from '@/hooks/useContacts';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useConnectionMonitor } from '@/hooks/useConnectionMonitor';
 import { useQuickReplies } from '@/hooks/useQuickReplies';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
@@ -32,6 +33,7 @@ const Chat = () => {
   const { createContact } = useContacts();
   const { quickReplies } = useQuickReplies();
   const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
+  const { isTyping } = useTypingIndicator();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [notificationRequested, setNotificationRequested] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
@@ -721,6 +723,7 @@ const Chat = () => {
                               conversation={selectedConversation}
                               messages={messages}
                               isSending={isSending}
+                              isTyping={selectedConversation ? isTyping(selectedConversation.remote_jid) : false}
                               onSendMessage={handleSendMessage}
                               onSendMedia={handleSendMedia}
                               onOpenContactInfo={() => setShowContactInfo(true)}
