@@ -355,7 +355,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
       {/* Transcription display */}
       {showTranscription && transcription && (
         <div className={cn(
-          "mt-1 px-3 py-2 rounded-xl text-sm",
+          "mt-1 px-3 py-2 rounded-xl text-sm max-w-[280px]",
           fromMe ? "bg-primary-foreground/5 text-primary-foreground/90" : "bg-muted/50 text-foreground/90"
         )}>
           <p className="whitespace-pre-wrap break-words leading-relaxed">{transcription}</p>
