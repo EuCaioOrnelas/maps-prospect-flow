@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Se
 import { useContacts } from '@/hooks/useContacts';
 import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ContactInfoPanelProps {
   conversation: Conversation | null;
@@ -31,6 +32,8 @@ export const ContactInfoPanel = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -41,11 +44,40 @@ export const ContactInfoPanel = ({
     tags: [] as string[],
   });
 
+  // Fetch avatar from WhatsApp
+  const fetchAvatarFromWhatsApp = useCallback(async () => {
+    if (!conversation || isFetchingAvatar) return;
+    
+    setIsFetchingAvatar(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
+        body: {
+          conversationId: conversation.id,
+          instanceName: `instance_${conversation.whatsapp_number_id}`,
+          phone: conversation.phone,
+        },
+      });
+
+      if (!error && data?.avatarUrl) {
+        setAvatarUrl(data.avatarUrl);
+      }
+    } catch (err) {
+      console.error('Error fetching avatar:', err);
+    } finally {
+      setIsFetchingAvatar(false);
+    }
+  }, [conversation, isFetchingAvatar]);
+
   useEffect(() => {
     if (conversation) {
       loadContact();
+      // Reset and fetch avatar
+      setAvatarUrl(conversation.contacts?.avatar_url || null);
+      if (!conversation.contacts?.avatar_url) {
+        fetchAvatarFromWhatsApp();
+      }
     }
-  }, [conversation]);
+  }, [conversation?.id]);
 
   const loadContact = async () => {
     if (!conversation) return;
@@ -54,6 +86,7 @@ export const ContactInfoPanel = ({
     
     if (existingContact) {
       setContact(existingContact);
+      setAvatarUrl(existingContact.avatar_url || null);
       setFormData({
         name: existingContact.name || '',
         email: existingContact.email || '',
@@ -72,6 +105,10 @@ export const ContactInfoPanel = ({
         notes: '',
         tags: [],
       });
+      // Try to fetch avatar if no contact exists
+      if (!avatarUrl) {
+        fetchAvatarFromWhatsApp();
+      }
     }
   };
 
@@ -156,7 +193,7 @@ export const ContactInfoPanel = ({
           {/* Avatar and Name */}
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-20 w-20 mb-3">
-              <AvatarImage src={contact?.avatar_url || undefined} />
+              <AvatarImage src={avatarUrl || contact?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-xl">
                 {getInitials(displayName)}
               </AvatarFallback>
