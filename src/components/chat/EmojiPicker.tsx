@@ -38,9 +38,9 @@ export const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
-        <div className="border-b p-2">
-          <ScrollArea className="w-full">
-            <div className="flex gap-1">
+        <div className="border-b p-2 overflow-hidden">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1 w-max">
               {Object.keys(EMOJI_CATEGORIES).map((category) => (
                 <button
                   key={category}
@@ -55,7 +55,7 @@ export const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
                 </button>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </div>
         <ScrollArea className="h-48 p-2">
           <div className="grid grid-cols-8 gap-1">
