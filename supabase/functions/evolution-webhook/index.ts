@@ -226,17 +226,24 @@ serve(async (req) => {
           const fromMe = messageKey.fromMe;
           const messageId = messageKey.id;
           
-          // Check for LID format and use remoteJidAlt if available
+          // Check for LID format and resolve to real phone number
           const jidType = remoteJid.split('@')[1]; // s.whatsapp.net, lid, g.us, etc
           
           if (jidType === 'lid' || remoteJid.includes('@lid')) {
-            // LID messages have the real phone number in remoteJidAlt
+            // LID messages need special handling to get the real phone number
+            // Priority: remoteJidAlt > sender (from payload root)
             const altJid = messageKey.remoteJidAlt;
+            const senderJid = payload.sender; // The actual sender's phone from payload root
+            
             if (altJid && altJid.includes('@s.whatsapp.net')) {
-              console.log('Converting LID to real JID:', remoteJid, '->', altJid);
+              console.log('Converting LID to real JID via remoteJidAlt:', remoteJid, '->', altJid);
               remoteJid = altJid;
+            } else if (senderJid && senderJid.includes('@s.whatsapp.net') && !fromMe) {
+              // For received messages, the sender field in payload root has the real phone
+              console.log('Converting LID to real JID via sender:', remoteJid, '->', senderJid);
+              remoteJid = senderJid;
             } else {
-              console.log('Ignoring LID message without valid alt:', remoteJid);
+              console.log('Ignoring LID message without valid alt or sender:', remoteJid, 'altJid:', altJid, 'sender:', senderJid);
               break;
             }
           }
