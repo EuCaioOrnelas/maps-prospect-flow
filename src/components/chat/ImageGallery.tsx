@@ -126,7 +126,7 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
 
   return (
     <>
-      <div className="rounded-lg overflow-hidden w-full min-w-[200px] max-w-[320px]">
+      <div className="rounded-lg overflow-hidden w-[280px]">
         <div className={cn("grid gap-0.5", getGridClass())}>
           {validImages.slice(0, 4).map((img, idx) => (
             <div 
@@ -176,7 +176,7 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
 
       {/* Full screen gallery dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-5xl p-0 bg-black/95 border-none">
+        <DialogContent className="max-w-5xl p-0 bg-black/95 border-none [&>button]:hidden">
           <button 
             onClick={() => setIsOpen(false)}
             className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
