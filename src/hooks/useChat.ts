@@ -266,11 +266,26 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     setMessages(data || []);
 
-    // Mark as read
+    // Mark conversation as read
     await supabase
       .from('conversations')
       .update({ unread_count: 0 })
       .eq('id', conversationId);
+
+    // Mark all received messages as "read" (auto read confirmation)
+    const unreadReceivedMessages = data?.filter(m => !m.from_me && m.status !== 'read') || [];
+    if (unreadReceivedMessages.length > 0) {
+      const messageIds = unreadReceivedMessages.map(m => m.id);
+      await supabase
+        .from('messages')
+        .update({ status: 'read' })
+        .in('id', messageIds);
+      
+      // Update local state immediately
+      setMessages(prev => prev.map(m => 
+        messageIds.includes(m.id) ? { ...m, status: 'read' } : m
+      ));
+    }
   }, [user]);
 
   // Send message with optimistic update
