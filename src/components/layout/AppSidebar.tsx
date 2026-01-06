@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Search, 
   BarChart3, 
-  MessageSquare, 
   Crown, 
   LogOut,
   ChevronDown,
@@ -11,6 +10,7 @@ import {
   Send,
   MapPin,
   MessageCircle,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,7 +73,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     { 
       title: "Disparos", 
       url: isFreePlan ? "#" : "/whatsapp", 
-      icon: MessageSquare,
+      icon: Megaphone,
       onClick: isFreePlan ? onWhatsAppClick : undefined,
       active: currentPath === "/whatsapp"
     },
@@ -245,7 +245,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
-                  <MessageSquare size={20} className="shrink-0" />
+                  <Megaphone size={20} className="shrink-0" />
                   <span 
                     className={cn(
                       "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
@@ -265,7 +265,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
-                  <MessageSquare size={20} className="shrink-0" />
+                  <Megaphone size={20} className="shrink-0" />
                   <span 
                     className={cn(
                       "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",

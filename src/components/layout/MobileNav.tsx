@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, BarChart3, MessageSquare, Crown, Clock, AlertCircle, MessageCircle } from "lucide-react";
+import { Menu, X, BarChart3, Megaphone, Crown, Clock, AlertCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -107,13 +107,13 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                       onWhatsAppClick?.();
                     }}
                   >
-                    <MessageSquare size={16} />
+                    <Megaphone size={16} />
                     Disparos em Massa
                   </Button>
                 ) : (
                   <Link to="/whatsapp" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                      <MessageSquare size={16} />
+                      <Megaphone size={16} />
                       Disparos em Massa
                     </Button>
                   </Link>

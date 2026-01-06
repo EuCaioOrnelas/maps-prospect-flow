@@ -66,13 +66,61 @@ serve(async (req) => {
     const cleanPhone = phone.replace(/\D/g, '');
     const remoteJid = `${cleanPhone}@s.whatsapp.net`;
 
-    // Check if conversation already exists
-    const { data: existingConv } = await supabase
+    // Normalize phone for matching (handle Brazilian 9th digit issue)
+    const normalizedPhoneForMatch = cleanPhone.slice(-11);
+    const phoneWithout9 = cleanPhone.length === 13 && cleanPhone[4] === '9' 
+      ? cleanPhone.slice(0, 4) + cleanPhone.slice(5) 
+      : cleanPhone;
+    const phoneWith9 = cleanPhone.length === 12 && cleanPhone[2] !== '9'
+      ? cleanPhone.slice(0, 4) + '9' + cleanPhone.slice(4)
+      : cleanPhone;
+
+    // Check if conversation already exists - try multiple matching strategies
+    let existingConv = null;
+    
+    // Strategy 1: Match by exact remote_jid
+    const { data: exactMatch } = await supabase
       .from('conversations')
       .select('*')
       .eq('whatsapp_number_id', whatsappNumberId)
       .eq('remote_jid', remoteJid)
       .single();
+    
+    if (exactMatch) {
+      existingConv = exactMatch;
+    }
+    
+    // Strategy 2: Match by normalized phone number (last 10-11 digits)
+    if (!existingConv) {
+      const { data: allConvs } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('whatsapp_number_id', whatsappNumberId);
+      
+      if (allConvs && allConvs.length > 0) {
+        const matchingConv = allConvs.find(c => {
+          const convPhone = c.phone.replace(/\D/g, '');
+          const convNormalized = convPhone.slice(-11);
+          
+          // Check various matching patterns for Brazilian 9th digit issue
+          return convNormalized === normalizedPhoneForMatch ||
+                 convPhone === phoneWithout9 ||
+                 convPhone === phoneWith9 ||
+                 convNormalized.slice(-10) === normalizedPhoneForMatch.slice(-10);
+        });
+        
+        if (matchingConv) {
+          existingConv = matchingConv;
+          console.log('Found existing conversation by phone normalization:', matchingConv.phone);
+          
+          // Update the remote_jid to the new one for future matches
+          await supabase
+            .from('conversations')
+            .update({ remote_jid: remoteJid, phone: cleanPhone, updated_at: new Date().toISOString() })
+            .eq('id', matchingConv.id);
+        }
+      }
+    }
 
     if (existingConv) {
       // If conversation exists and there's an initial message, send it
