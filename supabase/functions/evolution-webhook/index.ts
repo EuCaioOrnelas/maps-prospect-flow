@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +31,95 @@ serve(async (req) => {
     const data = payload.data;
     
     console.log('Raw event:', rawEvent, '-> Normalized:', event);
+
+    // Helper function to download media from Evolution API and upload to Supabase Storage
+    async function downloadAndStoreMedia(
+      instanceName: string,
+      messageId: string,
+      mediaType: string,
+      userId: string
+    ): Promise<{ url: string; mimetype: string } | null> {
+      try {
+        console.log(`Downloading media for message ${messageId} from instance ${instanceName}`);
+        
+        // Use Evolution API to get base64 media
+        const response = await fetch(`${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY!,
+          },
+          body: JSON.stringify({
+            message: { key: { id: messageId } },
+            convertToMp4: mediaType === 'video',
+          }),
+        });
+
+        if (!response.ok) {
+          console.log(`Failed to download media for ${messageId}:`, response.status);
+          return null;
+        }
+
+        const result = await response.json();
+        console.log('Media download result keys:', Object.keys(result));
+        
+        const base64Data = result.base64 || result.data;
+        const mimetype = result.mimetype || result.mediaType || `${mediaType}/unknown`;
+        
+        if (!base64Data) {
+          console.log('No base64 data in response');
+          return null;
+        }
+
+        // Determine file extension from mimetype
+        const extMap: Record<string, string> = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/webp': 'webp',
+          'image/gif': 'gif',
+          'video/mp4': 'mp4',
+          'video/3gpp': '3gp',
+          'audio/ogg': 'ogg',
+          'audio/mpeg': 'mp3',
+          'audio/mp4': 'm4a',
+          'audio/aac': 'aac',
+          'application/pdf': 'pdf',
+        };
+        
+        const ext = extMap[mimetype] || mimetype.split('/')[1] || 'bin';
+        const filename = `${userId}/${Date.now()}_${messageId.substring(0, 8)}.${ext}`;
+        
+        // Decode base64 and upload to Supabase Storage
+        const fileData = base64Decode(base64Data);
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('chat-media')
+          .upload(filename, fileData, {
+            contentType: mimetype,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Error uploading media to storage:', uploadError);
+          return null;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('chat-media')
+          .getPublicUrl(filename);
+
+        console.log('Media uploaded successfully:', urlData.publicUrl);
+        
+        return {
+          url: urlData.publicUrl,
+          mimetype: mimetype,
+        };
+      } catch (error) {
+        console.error('Error downloading/storing media:', error);
+        return null;
+      }
+    }
 
     // Helper function to fetch profile picture from Evolution API
     async function fetchProfilePicture(instanceName: string, phone: string): Promise<string | null> {
@@ -224,9 +314,10 @@ serve(async (req) => {
             // Extract message content based on type
             let messageType = 'text';
             let content = '';
-            let mediaUrl = null;
-            let mediaFilename = null;
-            let mediaMimetype = null;
+            let mediaUrl: string | null = null;
+            let mediaFilename: string | null = null;
+            let mediaMimetype: string | null = null;
+            let hasMedia = false;
 
             if (messageData.conversation) {
               content = messageData.conversation;
@@ -235,22 +326,41 @@ serve(async (req) => {
             } else if (messageData.imageMessage) {
               messageType = 'image';
               content = messageData.imageMessage.caption || '';
-              mediaUrl = messageData.imageMessage.url;
               mediaMimetype = messageData.imageMessage.mimetype;
+              hasMedia = true;
             } else if (messageData.videoMessage) {
               messageType = 'video';
               content = messageData.videoMessage.caption || '';
-              mediaUrl = messageData.videoMessage.url;
               mediaMimetype = messageData.videoMessage.mimetype;
+              hasMedia = true;
             } else if (messageData.audioMessage) {
               messageType = 'audio';
-              mediaUrl = messageData.audioMessage.url;
               mediaMimetype = messageData.audioMessage.mimetype;
+              hasMedia = true;
             } else if (messageData.documentMessage) {
               messageType = 'document';
-              mediaUrl = messageData.documentMessage.url;
               mediaFilename = messageData.documentMessage.fileName;
               mediaMimetype = messageData.documentMessage.mimetype;
+              hasMedia = true;
+            }
+
+            // If message has media, download it and store in Supabase Storage
+            if (hasMedia) {
+              console.log(`Message has ${messageType} media, downloading...`);
+              const storedMedia = await downloadAndStoreMedia(
+                instance,
+                messageId,
+                messageType,
+                whatsappNumber.user_id
+              );
+              
+              if (storedMedia) {
+                mediaUrl = storedMedia.url;
+                mediaMimetype = storedMedia.mimetype;
+                console.log(`Media stored at: ${mediaUrl}`);
+              } else {
+                console.log('Failed to download media, message will be saved without media URL');
+              }
             }
 
             // Check if message already exists
@@ -271,7 +381,7 @@ serve(async (req) => {
                   remote_jid: remoteJid,
                   from_me: fromMe,
                   message_type: messageType,
-                  content: content,
+                  content: content || (hasMedia ? `[${messageType}]` : ''),
                   media_url: mediaUrl,
                   media_filename: mediaFilename,
                   media_mimetype: mediaMimetype,

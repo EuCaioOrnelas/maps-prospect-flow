@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,8 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+  const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
   
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('[WEBHOOK] Missing Supabase credentials');
@@ -24,6 +27,87 @@ serve(async (req) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Helper function to download media from Evolution API and upload to Supabase Storage
+  async function downloadAndStoreMedia(
+    instanceName: string,
+    messageId: string,
+    mediaType: string,
+    userId: string
+  ): Promise<{ url: string; mimetype: string } | null> {
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      console.log('[WEBHOOK] Evolution API not configured, skipping media download');
+      return null;
+    }
+
+    try {
+      console.log(`[WEBHOOK] Downloading media for message ${messageId}`);
+      
+      const response = await fetch(`${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({
+          message: { key: { id: messageId } },
+          convertToMp4: mediaType === 'video',
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(`[WEBHOOK] Failed to download media: ${response.status}`);
+        return null;
+      }
+
+      const result = await response.json();
+      const base64Data = result.base64 || result.data;
+      const mimetype = result.mimetype || result.mediaType || `${mediaType}/unknown`;
+      
+      if (!base64Data) {
+        console.log('[WEBHOOK] No base64 data in response');
+        return null;
+      }
+
+      const extMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'video/mp4': 'mp4',
+        'audio/ogg': 'ogg',
+        'audio/mpeg': 'mp3',
+        'audio/ogg; codecs=opus': 'ogg',
+        'application/pdf': 'pdf',
+      };
+      
+      const ext = extMap[mimetype] || mimetype.split('/')[1]?.split(';')[0] || 'bin';
+      const filename = `${userId}/${Date.now()}_${messageId.substring(0, 8)}.${ext}`;
+      
+      const fileData = base64Decode(base64Data);
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-media')
+        .upload(filename, fileData, {
+          contentType: mimetype.split(';')[0],
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('[WEBHOOK] Error uploading media:', uploadError);
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('chat-media')
+        .getPublicUrl(filename);
+
+      console.log('[WEBHOOK] Media stored:', urlData.publicUrl);
+      return { url: urlData.publicUrl, mimetype: mimetype };
+    } catch (error) {
+      console.error('[WEBHOOK] Error downloading media:', error);
+      return null;
+    }
+  }
 
   try {
     // Get raw body
@@ -115,7 +199,7 @@ serve(async (req) => {
         });
       }
 
-      const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '');
       console.log('[WEBHOOK] Phone:', phone);
 
       // Extract content
@@ -124,6 +208,7 @@ serve(async (req) => {
       let mediaUrl: string | null = null;
       let mediaMimetype: string | null = null;
       let mediaFilename: string | null = null;
+      let hasMedia = false;
 
       if (msg.conversation) {
         content = msg.conversation;
@@ -132,24 +217,24 @@ serve(async (req) => {
       } else if (msg.imageMessage) {
         messageType = 'image';
         content = msg.imageMessage.caption || '[Imagem]';
-        mediaUrl = msg.imageMessage.url || null;
         mediaMimetype = msg.imageMessage.mimetype || null;
+        hasMedia = true;
       } else if (msg.audioMessage) {
         messageType = 'audio';
         content = '[Áudio]';
-        mediaUrl = msg.audioMessage.url || null;
         mediaMimetype = msg.audioMessage.mimetype || null;
+        hasMedia = true;
       } else if (msg.videoMessage) {
         messageType = 'video';
         content = msg.videoMessage.caption || '[Vídeo]';
-        mediaUrl = msg.videoMessage.url || null;
         mediaMimetype = msg.videoMessage.mimetype || null;
+        hasMedia = true;
       } else if (msg.documentMessage) {
         messageType = 'document';
         content = msg.documentMessage.fileName || '[Documento]';
-        mediaUrl = msg.documentMessage.url || null;
         mediaMimetype = msg.documentMessage.mimetype || null;
         mediaFilename = msg.documentMessage.fileName || null;
+        hasMedia = true;
       } else if (msg.stickerMessage) {
         messageType = 'sticker';
         content = '[Sticker]';
@@ -159,6 +244,25 @@ serve(async (req) => {
         content = data.content;
       } else if (data?.body) {
         content = data.body;
+      }
+
+      // If message has media, download and store it
+      if (hasMedia && messageId) {
+        console.log(`[WEBHOOK] Message has ${messageType} media, downloading...`);
+        const storedMedia = await downloadAndStoreMedia(
+          instance,
+          messageId,
+          messageType,
+          whatsappNumber.user_id
+        );
+        
+        if (storedMedia) {
+          mediaUrl = storedMedia.url;
+          mediaMimetype = storedMedia.mimetype;
+          console.log(`[WEBHOOK] Media stored at: ${mediaUrl}`);
+        } else {
+          console.log('[WEBHOOK] Failed to download media, will store without URL');
+        }
       }
 
       console.log('[WEBHOOK] Type:', messageType, 'Content:', content?.substring(0, 100));
