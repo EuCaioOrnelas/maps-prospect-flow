@@ -231,20 +231,56 @@ serve(async (req) => {
           
           if (jidType === 'lid' || remoteJid.includes('@lid')) {
             // LID messages need special handling to get the real phone number
-            // Priority: remoteJidAlt > sender (from payload root)
             const altJid = messageKey.remoteJidAlt;
             const senderJid = payload.sender; // The actual sender's phone from payload root
             
-            if (altJid && altJid.includes('@s.whatsapp.net')) {
-              console.log('Converting LID to real JID via remoteJidAlt:', remoteJid, '->', altJid);
-              remoteJid = altJid;
-            } else if (senderJid && senderJid.includes('@s.whatsapp.net') && !fromMe) {
-              // For received messages, the sender field in payload root has the real phone
-              console.log('Converting LID to real JID via sender:', remoteJid, '->', senderJid);
-              remoteJid = senderJid;
+            // For fromMe messages with LID:
+            // - If senderJid matches the instance's own number, this is the original message
+            // - If senderJid doesn't match, this is a duplicate from another instance - IGNORE
+            if (fromMe) {
+              // Get the instance's phone number to compare
+              const { data: instanceNumber } = await supabase
+                .from('whatsapp_numbers')
+                .select('phone_number')
+                .eq('instance_name', instance)
+                .single();
+              
+              const instancePhone = instanceNumber?.phone_number?.replace(/\D/g, '') || '';
+              const senderPhone = senderJid?.replace(/\D/g, '').replace('@swhatsappnet', '') || '';
+              
+              // Check if this message was sent from THIS instance
+              const senderLast8 = senderPhone.slice(-8);
+              const instanceLast8 = instancePhone.slice(-8);
+              
+              if (instanceLast8 && senderLast8 && instanceLast8 !== senderLast8) {
+                // This is a message sent from ANOTHER connected number, not this instance
+                // The message will be processed by the other instance as fromMe=true
+                console.log('Ignoring cross-instance sent message. Instance:', instancePhone, 'Sender:', senderPhone);
+                break;
+              }
+              
+              // For sent messages, altJid contains the recipient
+              if (altJid && altJid.includes('@s.whatsapp.net')) {
+                console.log('Converting LID to real JID for sent message:', remoteJid, '->', altJid);
+                remoteJid = altJid;
+              } else {
+                console.log('Ignoring sent LID message without valid recipient:', remoteJid, 'altJid:', altJid);
+                break;
+              }
             } else {
-              console.log('Ignoring LID message without valid alt or sender:', remoteJid, 'altJid:', altJid, 'sender:', senderJid);
-              break;
+              // For received messages (fromMe=false):
+              // altJid should have the sender's real phone number
+              if (altJid && altJid.includes('@s.whatsapp.net')) {
+                console.log('Converting LID to real JID for received message:', remoteJid, '->', altJid);
+                remoteJid = altJid;
+              } else if (senderJid && senderJid.includes('@s.whatsapp.net')) {
+                // Fallback to sender field from payload root
+                console.log('Converting LID to real JID via sender fallback:', remoteJid, '->', senderJid);
+                remoteJid = senderJid;
+              } else {
+                console.log('Ignoring received LID message without valid source:', remoteJid, 'altJid:', altJid, 'sender:', senderJid);
+                break;
+              }
             }
           }
           
