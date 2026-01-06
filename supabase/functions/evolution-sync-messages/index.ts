@@ -54,6 +54,9 @@ serve(async (req) => {
     // Fetch recent chats from Evolution API
     let chats: any[] = [];
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      
       const chatsResponse = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
         method: 'POST',
         headers: {
@@ -61,7 +64,10 @@ serve(async (req) => {
           'apikey': EVOLUTION_API_KEY,
         },
         body: JSON.stringify({}),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (chatsResponse.ok) {
         const chatsData = await chatsResponse.json();
@@ -85,11 +91,29 @@ serve(async (req) => {
       } else {
         const errorText = await chatsResponse.text();
         console.error('Failed to fetch chats:', chatsResponse.status, errorText);
-        throw new Error('Failed to fetch chats from Evolution API');
+        // Return success with 0 synced instead of failing completely
+        return new Response(JSON.stringify({
+          success: true,
+          syncedConversations: 0,
+          syncedMessages: 0,
+          message: `API temporariamente indisponível. Tente novamente em alguns segundos.`,
+          warning: `Evolution API returned ${chatsResponse.status}`
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     } catch (chatError) {
       console.error('Error fetching chats from Evolution API:', chatError);
-      throw chatError;
+      // Return success with warning instead of failing
+      return new Response(JSON.stringify({
+        success: true,
+        syncedConversations: 0,
+        syncedMessages: 0,
+        message: 'Sincronização pendente - API ocupada',
+        warning: String(chatError)
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     let syncedMessages = 0;
