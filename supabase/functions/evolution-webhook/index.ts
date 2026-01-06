@@ -32,7 +32,40 @@ serve(async (req) => {
     
     console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
-    // Helper function to download media from Evolution API and upload to Supabase Storage
+    // Helper function to normalize Brazilian phone numbers (add 9 for mobile)
+    function normalizeBrazilianPhone(phone: string): string {
+      // Remove all non-digits
+      let cleanPhone = phone.replace(/\D/g, '');
+      
+      // If it's too short or a LID, return as-is
+      if (cleanPhone.length < 10 || phone.includes('@lid')) {
+        return phone;
+      }
+      
+      // Remove country code 55 if present
+      let hasCountryCode = false;
+      if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
+        hasCountryCode = true;
+        cleanPhone = cleanPhone.slice(2);
+      }
+      
+      // Now we should have DDD + number (10 or 11 digits)
+      // Brazilian mobile numbers should be 11 digits (DDD + 9 + 8 digits)
+      if (cleanPhone.length === 10) {
+        const ddd = cleanPhone.slice(0, 2);
+        const numberPart = cleanPhone.slice(2);
+        
+        // Check if it's a mobile number (starts with 6, 7, 8, 9 after DDD)
+        if (['6', '7', '8', '9'].includes(numberPart[0])) {
+          // Add the 9 prefix for mobile numbers
+          cleanPhone = ddd + '9' + numberPart;
+        }
+      }
+      
+      // Re-add country code
+      return '55' + cleanPhone;
+    }
+
     async function downloadAndStoreMedia(
       instanceName: string,
       messageId: string,
@@ -304,14 +337,18 @@ serve(async (req) => {
             
             // Strategy 3: Create new conversation if not found
             if (!conversationId) {
-              console.log('Creating new conversation for:', remoteJid);
+              // Normalize Brazilian phone numbers before storing
+              const normalizedPhoneForStorage = normalizeBrazilianPhone(rawPhone);
+              const normalizedRemoteJid = normalizedPhoneForStorage + '@s.whatsapp.net';
+              
+              console.log('Creating new conversation for:', rawPhone, '-> normalized:', normalizedPhoneForStorage);
               const { data: newConv, error: convError } = await supabase
                 .from('conversations')
                 .insert({
                   user_id: whatsappNumber.user_id,
                   whatsapp_number_id: whatsappNumber.id,
-                  remote_jid: remoteJid,
-                  phone: rawPhone,
+                  remote_jid: normalizedRemoteJid,
+                  phone: normalizedPhoneForStorage,
                   contact_name: data.pushName || null,
                 })
                 .select('id')
