@@ -558,18 +558,30 @@ const ChatSettings = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="delay">Delay de envio (segundos)</Label>
-                            <Input
-                              id="delay"
-                              type="number"
-                              min="0"
-                              max="60"
-                              placeholder="0"
-                              value={formData.delay_seconds}
-                              onChange={(e) => setFormData({ ...formData, delay_seconds: parseInt(e.target.value) || 0 })}
-                            />
+                            <Label htmlFor="delay">Delay de envio</Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                id="delay"
+                                type="number"
+                                min="0"
+                                max="60"
+                                placeholder="0"
+                                value={formData.delay_seconds === 0 ? '' : formData.delay_seconds}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setFormData({ ...formData, delay_seconds: value === '' ? 0 : parseInt(value) || 0 });
+                                }}
+                                className="w-24"
+                              />
+                              <span className="text-sm text-muted-foreground">segundos</span>
+                            </div>
+                            {formData.delay_seconds > 0 && (
+                              <p className="text-xs text-primary font-medium">
+                                ⏱️ A mensagem será enviada {formData.delay_seconds} segundo{formData.delay_seconds > 1 ? 's' : ''} após confirmação
+                              </p>
+                            )}
                             <p className="text-xs text-muted-foreground">
-                              Tempo de espera antes de enviar a mensagem (0 = envio imediato)
+                              Deixe vazio ou 0 para envio imediato
                             </p>
                           </div>
                         </div>

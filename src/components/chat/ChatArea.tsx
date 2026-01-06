@@ -36,15 +36,19 @@ import { MediaPreview } from './MediaPreview';
 import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 
+import type { QuickReply } from '@/hooks/useQuickReplies';
+
 interface ChatAreaProps {
   conversation: Conversation | null;
   messages: Message[];
   isSending: boolean;
   isTyping?: boolean;
   onSendMessage: (content: string, quotedMessageId?: string) => void;
+  onSendMedia?: (mediaUrl: string, messageType: 'image' | 'audio', caption?: string) => void;
   onOpenContactInfo: () => void;
   onBack?: () => void;
   onSaveContact?: (conversation: Conversation) => void;
+  quickReplies?: QuickReply[];
 }
 
 const FONT_SIZES = [
@@ -60,17 +64,61 @@ export const ChatArea = ({
   isSending,
   isTyping = false,
   onSendMessage,
+  onSendMedia,
   onOpenContactInfo,
   onBack,
   onSaveContact,
+  quickReplies = [],
 }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
+  const [matchedQuickReply, setMatchedQuickReply] = useState<QuickReply | null>(null);
+  const [sendingQuickReply, setSendingQuickReply] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Detect quick reply tag in input
+  useEffect(() => {
+    if (inputValue.startsWith('/') && quickReplies.length > 0) {
+      const matched = quickReplies.find(qr => 
+        qr.tag.toLowerCase() === inputValue.toLowerCase()
+      );
+      setMatchedQuickReply(matched || null);
+    } else {
+      setMatchedQuickReply(null);
+    }
+  }, [inputValue, quickReplies]);
+
+  // Send quick reply content
+  const sendQuickReply = async (reply: QuickReply) => {
+    setSendingQuickReply(true);
+    setInputValue('');
+    setMatchedQuickReply(null);
+    
+    try {
+      // Send text if exists
+      if (reply.text_content) {
+        onSendMessage(reply.text_content);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Send image if exists
+      if (reply.image_url && onSendMedia) {
+        onSendMedia(reply.image_url, 'image', '');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Send audio if exists
+      if (reply.audio_url && onSendMedia) {
+        onSendMedia(reply.audio_url, 'audio');
+      }
+    } finally {
+      setSendingQuickReply(false);
+    }
+  };
 
   // Fetch avatar from WhatsApp when conversation changes
   const fetchAvatarFromWhatsApp = useCallback(async () => {
@@ -520,17 +568,75 @@ export const ChatArea = ({
         </div>
       )}
 
+      {/* Quick Reply Match Preview */}
+      {matchedQuickReply && (
+        <div className="px-3 pt-2 bg-card border-t border-border">
+          <div 
+            className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+            onClick={() => sendQuickReply(matchedQuickReply)}
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <Send className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm text-foreground">{matchedQuickReply.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {matchedQuickReply.text_content || 
+                  (matchedQuickReply.image_url ? 'Imagem' : '') + 
+                  (matchedQuickReply.audio_url ? ' Áudio' : '')}
+              </p>
+            </div>
+            <div className="text-xs text-primary font-medium">
+              Clique para enviar
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Replies Bar */}
+      {quickReplies.length > 0 && !matchedQuickReply && (
+        <div className="px-3 py-2 border-t border-border bg-muted/30">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {quickReplies.map((reply) => (
+              <button
+                key={reply.id}
+                onClick={() => setInputValue(reply.tag)}
+                disabled={isSending || sendingQuickReply}
+                className={cn(
+                  "shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
+                  "bg-background border border-border shadow-sm",
+                  "hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                {reply.audio_url ? (
+                  <span className="w-4 h-4 flex items-center justify-center">🎤</span>
+                ) : reply.image_url ? (
+                  <span className="w-4 h-4 flex items-center justify-center">🖼️</span>
+                ) : (
+                  <span className="w-4 h-4 flex items-center justify-center">💬</span>
+                )}
+                <span className="max-w-[100px] truncate">{reply.name}</span>
+                {reply.delay_seconds > 0 && (
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-3 border-t border-border bg-card shrink-0">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <EmojiPicker 
             onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
-            disabled={isSending}
+            disabled={isSending || sendingQuickReply}
           />
           <MediaUploader 
             conversationId={conversation.id}
             onMediaSent={() => {}}
-            disabled={isSending}
+            disabled={isSending || sendingQuickReply}
           />
           
           <Input
@@ -538,15 +644,15 @@ export const ChatArea = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Digite uma mensagem..."
+            placeholder="Digite uma mensagem ou /tag..."
             className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground"
-            disabled={isSending}
+            disabled={isSending || sendingQuickReply}
           />
           
           <Button 
             type="submit" 
             size="icon" 
-            disabled={!inputValue.trim() || isSending}
+            disabled={!inputValue.trim() || isSending || sendingQuickReply}
             className="rounded-full bg-emerald-600 hover:bg-emerald-700"
           >
             <Send className="h-5 w-5" />

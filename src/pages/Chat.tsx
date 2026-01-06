@@ -11,7 +11,7 @@ import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { SaveContactDialog } from '@/components/chat/SaveContactDialog';
-import { QuickRepliesBar } from '@/components/chat/QuickRepliesBar';
+
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { ReconnectDialog } from '@/components/whatsapp/ReconnectDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -650,16 +650,6 @@ const Chat = () => {
 
                       {/* Chat Area */}
                       <div className={`flex-1 flex flex-col ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
-                        {/* Quick Replies Bar - Only show when conversation selected */}
-                        {selectedConversation && quickReplies.length > 0 && (
-                          <QuickRepliesBar
-                            quickReplies={quickReplies}
-                            onSend={(content) => handleSendMessage(content)}
-                            onSendMedia={handleSendMedia}
-                            isSending={isSending}
-                          />
-                        )}
-                        
                         <div className="flex-1 flex">
                           <div className="flex-1">
                             <ChatArea
@@ -667,9 +657,11 @@ const Chat = () => {
                               messages={messages}
                               isSending={isSending}
                               onSendMessage={handleSendMessage}
+                              onSendMedia={handleSendMedia}
                               onOpenContactInfo={() => setShowContactInfo(true)}
                               onBack={() => setSelectedConversation(null)}
                               onSaveContact={handleSaveContact}
+                              quickReplies={quickReplies}
                             />
                           </div>
 

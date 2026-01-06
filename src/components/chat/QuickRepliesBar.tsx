@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Zap, Clock, Send, Loader2, Image, Mic, MessageSquare } from 'lucide-react';
@@ -83,36 +82,39 @@ export const QuickRepliesBar = ({ quickReplies, onSend, onSendMedia, isSending }
 
   if (quickReplies.length === 0) return null;
 
+  const getReplyIcon = (reply: QuickReply) => {
+    if (reply.audio_url) return Mic;
+    if (reply.image_url) return Image;
+    return MessageSquare;
+  };
+
   return (
     <>
-      <div className="px-4 py-2 border-b border-border bg-card/50">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs font-medium text-muted-foreground">Respostas Rápidas</span>
-        </div>
+      <div className="px-3 py-2 border-t border-border bg-muted/30">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2">
-            {quickReplies.map((reply) => (
-              <Button
-                key={reply.id}
-                variant="outline"
-                size="sm"
-                onClick={() => handleClick(reply)}
-                disabled={isSending}
-                className={cn(
-                  "shrink-0 gap-1.5 h-8 text-xs",
-                  "hover:bg-primary/10 hover:border-primary/30"
-                )}
-              >
-                <Badge variant="secondary" className="font-mono text-[10px] px-1 py-0">
-                  {reply.tag}
-                </Badge>
-                <span className="max-w-[100px] truncate">{reply.name}</span>
-                {reply.delay_seconds > 0 && (
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                )}
-              </Button>
-            ))}
+            {quickReplies.map((reply) => {
+              const IconComponent = getReplyIcon(reply);
+              return (
+                <Button
+                  key={reply.id}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleClick(reply)}
+                  disabled={isSending}
+                  className={cn(
+                    "shrink-0 gap-2 h-8 text-xs font-medium",
+                    "bg-background hover:bg-primary/10 hover:text-primary border border-border shadow-sm"
+                  )}
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span className="max-w-[120px] truncate">{reply.name}</span>
+                  {reply.delay_seconds > 0 && (
+                    <Clock className="w-3 h-3 text-muted-foreground" />
+                  )}
+                </Button>
+              );
+            })}
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -135,10 +137,10 @@ export const QuickRepliesBar = ({ quickReplies, onSend, onSendMedia, isSending }
           {selectedReply && (
             <div className="space-y-3 py-4">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">
+                <span className="font-medium text-lg">{selectedReply.name}</span>
+                <span className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
                   {selectedReply.tag}
-                </Badge>
-                <span className="font-medium">{selectedReply.name}</span>
+                </span>
               </div>
               
               {selectedReply.text_content && (

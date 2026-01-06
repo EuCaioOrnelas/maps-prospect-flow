@@ -49,8 +49,28 @@ export const ConversationList = ({
   totalConversations,
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
-  const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
   const [fetchingAvatars, setFetchingAvatars] = useState<Set<string>>(new Set());
+  
+  // Use sessionStorage for avatar cache to persist across navigation
+  const [avatarCache, setAvatarCache] = useState<Record<string, string>>(() => {
+    try {
+      const cached = sessionStorage.getItem('chat-avatar-cache');
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Persist avatar cache to sessionStorage
+  useEffect(() => {
+    if (Object.keys(avatarCache).length > 0) {
+      try {
+        sessionStorage.setItem('chat-avatar-cache', JSON.stringify(avatarCache));
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  }, [avatarCache]);
   
   // Selection mode state
   const [selectionMode, setSelectionMode] = useState(false);
