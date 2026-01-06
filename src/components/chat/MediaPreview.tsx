@@ -23,6 +23,7 @@ interface MediaPreviewProps {
 const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPreviewProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isTallImage, setIsTallImage] = useState(false);
   const handleDownload = useCallback(() => {
     const link = document.createElement('a');
     link.href = url;
@@ -67,19 +68,34 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
       );
     }
 
+    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      // Consider image "tall" if height is more than 1.5x the width
+      setIsTallImage(img.naturalHeight > img.naturalWidth * 1.5);
+    };
+
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-full"
+          className="cursor-pointer rounded-lg overflow-hidden w-full relative group"
           onClick={() => setIsOpen(true)}
         >
-          <img 
-            src={url} 
-            alt={filename || 'Image'} 
-            className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
+          <div className="relative max-h-[400px] overflow-hidden rounded-lg">
+            <img 
+              src={url} 
+              alt={filename || 'Image'} 
+              className="w-full h-auto hover:opacity-90 transition-opacity"
+              style={isTallImage ? { maxHeight: '400px', objectFit: 'cover', objectPosition: 'top' } : undefined}
+              loading="lazy"
+              onError={() => setImageError(true)}
+              onLoad={handleImageLoad}
+            />
+            {isTallImage && (
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2 pointer-events-none">
+                <span className="text-white text-xs font-medium">Clique para ver completo</span>
+              </div>
+            )}
+          </div>
           {caption && (
             <p className="text-sm mt-2 whitespace-pre-wrap break-words">{caption}</p>
           )}
