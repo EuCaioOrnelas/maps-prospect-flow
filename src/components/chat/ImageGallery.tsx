@@ -8,20 +8,8 @@ import {
   ChevronRight,
   Images,
   Forward,
-  ChevronDown,
-  Reply,
-  Copy,
-  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
 
 interface ImageItem {
   url: string;
@@ -34,26 +22,12 @@ interface ImageGalleryProps {
   images: ImageItem[];
   fromMe?: boolean;
   onForward?: (mediaUrls: string[]) => void;
-  onReply?: () => void;
-  onDelete?: (forEveryone: boolean) => void;
 }
 
-const ImageGalleryComponent = ({ images, fromMe, onForward, onReply, onDelete }: ImageGalleryProps) => {
+const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-
-  const handleCopy = useCallback(async () => {
-    const currentImage = images[0];
-    if (currentImage?.url) {
-      try {
-        await navigator.clipboard.writeText(currentImage.url);
-        toast.success('Link da imagem copiado');
-      } catch {
-        toast.error('Erro ao copiar');
-      }
-    }
-  }, [images]);
 
   const validImages = images.filter((img, idx) => {
     const isValidUrl = img.url && img.url.length > 0 && !img.url.includes('mmg.whatsapp.net') && !img.url.includes('.enc');
@@ -152,69 +126,7 @@ const ImageGalleryComponent = ({ images, fromMe, onForward, onReply, onDelete }:
 
   return (
     <>
-      <div className="rounded-lg overflow-hidden max-w-[280px] relative group">
-        {/* Action Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={cn(
-                "absolute top-1 right-1 z-10 h-6 w-6 rounded-full flex items-center justify-center",
-                "opacity-0 group-hover:opacity-100 transition-opacity",
-                "bg-black/40 hover:bg-black/60"
-              )}
-            >
-              <ChevronDown className="h-4 w-4 text-white" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align={fromMe ? "end" : "start"} 
-            side="top"
-            className="w-48 bg-popover border border-border shadow-lg z-50"
-          >
-            {onReply && (
-              <DropdownMenuItem onClick={onReply} className="gap-2 cursor-pointer">
-                <Reply className="h-4 w-4" />
-                Responder
-              </DropdownMenuItem>
-            )}
-            
-            <DropdownMenuItem onClick={handleCopy} className="gap-2 cursor-pointer">
-              <Copy className="h-4 w-4" />
-              Copiar link
-            </DropdownMenuItem>
-            
-            {onForward && (
-              <DropdownMenuItem onClick={() => onForward(validImages.map(img => img.url))} className="gap-2 cursor-pointer">
-                <Forward className="h-4 w-4" />
-                Encaminhar {validImages.length > 1 ? `(${validImages.length})` : ''}
-              </DropdownMenuItem>
-            )}
-            
-            {onDelete && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => onDelete(false)} 
-                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Apagar para mim
-                </DropdownMenuItem>
-                
-                {fromMe && (
-                  <DropdownMenuItem 
-                    onClick={() => onDelete(true)} 
-                    className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Apagar para todos
-                  </DropdownMenuItem>
-                )}
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+      <div className="rounded-lg overflow-hidden max-w-[280px]">
         <div className={cn("grid gap-0.5", getGridClass())}>
           {validImages.slice(0, 4).map((img, idx) => (
             <div 

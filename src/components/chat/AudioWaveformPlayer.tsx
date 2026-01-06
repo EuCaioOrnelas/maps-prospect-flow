@@ -13,7 +13,7 @@ interface AudioWaveformPlayerProps {
   fromMe: boolean;
 }
 
-const BARS_COUNT = 32;
+const BARS_COUNT = 24;
 const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2];
 
 const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps) => {
@@ -180,7 +180,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
 
   return (
     <div className={cn(
-      "flex items-center gap-3 px-3 py-2 rounded-2xl min-w-[260px] max-w-[320px]",
+      "flex items-center gap-2.5 px-2.5 py-2 rounded-2xl w-full max-w-[260px]",
       fromMe ? "bg-primary-foreground/10" : "bg-muted"
     )}>
       <audio ref={audioRef} src={url} preload="metadata" />
@@ -190,7 +190,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
         onClick={togglePlay}
         disabled={isLoading}
         className={cn(
-          "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95",
+          "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95",
           fromMe 
             ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90" 
             : "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -198,9 +198,9 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
         )}
       >
         {isPlaying ? (
-          <Pause className="h-5 w-5" />
+          <Pause className="h-4 w-4" />
         ) : (
-          <Play className="h-5 w-5 ml-0.5" />
+          <Play className="h-4 w-4 ml-0.5" />
         )}
       </button>
       
@@ -208,7 +208,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
       <div className="flex-1 flex flex-col gap-1.5 min-w-0">
         {/* Waveform */}
         <div 
-          className="flex items-center gap-[2px] h-7 cursor-pointer"
+          className="flex items-center gap-[1.5px] h-6 cursor-pointer"
           onClick={handleWaveformClick}
         >
           {waveformData.length > 0 ? (
@@ -220,7 +220,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
                 <div
                   key={index}
                   className={cn(
-                    "w-[2.5px] rounded-full transition-colors duration-75",
+                    "w-[2px] rounded-full transition-colors duration-75",
                     isPlayed
                       ? fromMe ? "bg-primary-foreground" : "bg-primary"
                       : fromMe ? "bg-primary-foreground/35" : "bg-primary/35"
@@ -235,7 +235,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
               <div
                 key={index}
                 className={cn(
-                  "w-[2.5px] rounded-full animate-pulse",
+                  "w-[2px] rounded-full animate-pulse",
                   fromMe ? "bg-primary-foreground/30" : "bg-primary/30"
                 )}
                 style={{ height: `${20 + Math.random() * 60}%` }}
