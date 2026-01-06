@@ -5,9 +5,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Paperclip, Image, FileText, Video, Mic, X, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Paperclip, Image, FileText, Video, Mic, X, Loader2, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface MediaUploaderProps {
   conversationId: string;
@@ -15,11 +17,19 @@ interface MediaUploaderProps {
   disabled?: boolean;
 }
 
+interface SelectedFile {
+  file: File;
+  type: 'image' | 'video' | 'document' | 'audio';
+  preview?: string;
+}
+
 export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUploaderProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  const [caption, setCaption] = useState('');
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentType, setCurrentType] = useState<'image' | 'video' | 'document'>('image');
@@ -43,7 +53,7 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
     }
   };
 
-  const uploadFile = async (file: File, messageType: string) => {
+  const uploadFile = async (file: File, messageType: string, captionText?: string) => {
     setIsUploading(true);
     try {
       // Get user
@@ -70,7 +80,7 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
       const response = await supabase.functions.invoke('chat-send-message', {
         body: {
           conversationId,
-          content: '',
+          content: captionText || '',
           messageType,
           mediaUrl: publicUrl,
           mediaFilename: file.name,
@@ -93,10 +103,43 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
     const file = e.target.files?.[0];
     if (!file) return;
     
-    await uploadFile(file, currentType);
+    // Create preview for images and videos
+    let preview: string | undefined;
+    if (currentType === 'image' || currentType === 'video') {
+      preview = URL.createObjectURL(file);
+    }
+    
+    setSelectedFile({
+      file,
+      type: currentType,
+      preview,
+    });
+    setCaption('');
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleSendFile = async () => {
+    if (!selectedFile) return;
+    
+    await uploadFile(selectedFile.file, selectedFile.type, caption);
+    
+    // Cleanup preview URL
+    if (selectedFile.preview) {
+      URL.revokeObjectURL(selectedFile.preview);
+    }
+    setSelectedFile(null);
+    setCaption('');
+  };
+
+  const handleCancelFile = () => {
+    if (selectedFile?.preview) {
+      URL.revokeObjectURL(selectedFile.preview);
+    }
+    setSelectedFile(null);
+    setCaption('');
   };
 
   const startRecording = async () => {
@@ -112,7 +155,14 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
       recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const file = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
-        await uploadFile(file, 'audio');
+        
+        // Show audio preview
+        setSelectedFile({
+          file,
+          type: 'audio',
+          preview: URL.createObjectURL(audioBlob),
+        });
+        
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -134,6 +184,106 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
     }
   };
 
+  // File Preview Modal
+  if (selectedFile) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCancelFile}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <span className="font-medium text-foreground">
+            {selectedFile.type === 'image' && 'Imagem'}
+            {selectedFile.type === 'video' && 'Vídeo'}
+            {selectedFile.type === 'document' && 'Documento'}
+            {selectedFile.type === 'audio' && 'Áudio'}
+          </span>
+          <div className="w-10" /> {/* Spacer */}
+        </div>
+
+        {/* Preview Area */}
+        <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+          {selectedFile.type === 'image' && selectedFile.preview && (
+            <img 
+              src={selectedFile.preview} 
+              alt="Preview" 
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+          )}
+          
+          {selectedFile.type === 'video' && selectedFile.preview && (
+            <video 
+              src={selectedFile.preview}
+              controls
+              className="max-w-full max-h-full rounded-lg"
+            />
+          )}
+          
+          {selectedFile.type === 'audio' && selectedFile.preview && (
+            <div className="flex flex-col items-center gap-4 p-8 bg-card rounded-xl border border-border">
+              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
+                <Mic className="h-12 w-12 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">{selectedFile.file.name}</p>
+              <audio src={selectedFile.preview} controls className="w-64" />
+            </div>
+          )}
+          
+          {selectedFile.type === 'document' && (
+            <div className="flex flex-col items-center gap-4 p-8 bg-card rounded-xl border border-border">
+              <div className="w-24 h-24 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                <FileText className="h-12 w-12 text-orange-500" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-foreground">{selectedFile.file.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(selectedFile.file.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer with caption and send */}
+        <div className="p-4 border-t border-border bg-card">
+          <div className="flex items-center gap-3">
+            <Input
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Adicionar legenda..."
+              className="flex-1 bg-muted border-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isUploading) {
+                  e.preventDefault();
+                  handleSendFile();
+                }
+              }}
+            />
+            <Button
+              onClick={handleSendFile}
+              disabled={isUploading}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-700 h-10 w-10 p-0"
+            >
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Pressione Enter ou clique para enviar
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (isRecording) {
     return (
       <div className="flex items-center gap-2">
@@ -145,7 +295,15 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
           type="button"
           variant="ghost"
           size="icon"
-          onClick={stopRecording}
+          onClick={() => {
+            if (mediaRecorder) {
+              mediaRecorder.stop();
+              setMediaRecorder(null);
+              setIsRecording(false);
+              // Cleanup without sending
+              audioChunksRef.current = [];
+            }
+          }}
           className="text-destructive hover:text-destructive"
         >
           <X className="h-5 w-5" />
@@ -156,7 +314,7 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
           onClick={stopRecording}
           className="bg-primary"
         >
-          Enviar
+          Parar
         </Button>
       </div>
     );
