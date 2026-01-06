@@ -58,17 +58,33 @@ const MessageBubbleComponent = ({
   }, [message.content, message.media_url]);
 
   const renderContent = () => {
-    if (message.media_url && message.message_type !== 'text') {
-      // Get caption, excluding placeholder text like [image], [audio], etc.
-      const placeholderPattern = /^\[(image|audio|video|document|sticker|ptt)\]$/i;
+    // Check if this is a media message type (not text)
+    const isMediaType = ['image', 'video', 'audio', 'ptt', 'document', 'sticker'].includes(message.message_type);
+    const placeholderPattern = /^\[(image|audio|video|document|sticker|ptt)\]$/i;
+    const isPlaceholderContent = message.content && placeholderPattern.test(message.content.trim());
+    
+    // Render media preview for media types (with or without URL)
+    if (isMediaType || isPlaceholderContent) {
       const caption = message.content && !placeholderPattern.test(message.content.trim()) 
         ? message.content 
         : undefined;
       
+      // Determine the media type from message_type or from placeholder content
+      let mediaType = message.message_type as 'image' | 'video' | 'audio' | 'document';
+      if (message.message_type === 'ptt') {
+        mediaType = 'audio';
+      } else if (isPlaceholderContent && message.message_type === 'text') {
+        // Extract type from placeholder like [audio]
+        const match = message.content?.match(/^\[(image|audio|video|document|sticker|ptt)\]$/i);
+        if (match) {
+          mediaType = match[1].toLowerCase() === 'ptt' ? 'audio' : match[1].toLowerCase() as 'image' | 'video' | 'audio' | 'document';
+        }
+      }
+      
       return (
         <MediaPreview
-          type={message.message_type as 'image' | 'video' | 'audio' | 'document'}
-          url={message.media_url}
+          type={mediaType}
+          url={message.media_url || undefined}
           filename={message.media_filename || undefined}
           caption={caption}
           fromMe={message.from_me}
@@ -76,7 +92,7 @@ const MessageBubbleComponent = ({
       );
     }
 
-  if (message.content) {
+    if (message.content) {
       // Regex to detect URLs
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       const parts = message.content.split(urlRegex);

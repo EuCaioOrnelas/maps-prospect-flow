@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { AudioWaveformPlayer } from './AudioWaveformPlayer';
 interface MediaPreviewProps {
   type: 'image' | 'video' | 'audio' | 'document';
-  url: string;
+  url?: string;
   filename?: string;
   caption?: string;
   fromMe?: boolean;
@@ -33,8 +33,8 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     document.body.removeChild(link);
   }, [url, filename]);
 
-  // Check if URL is valid (not a temporary WhatsApp URL)
-  const isValidUrl = url && !url.includes('mmg.whatsapp.net') && !url.includes('.enc');
+  // Check if URL is valid (not a temporary WhatsApp URL or undefined)
+  const isValidUrl = url && url.length > 0 && !url.includes('mmg.whatsapp.net') && !url.includes('.enc');
 
   if (type === 'image') {
     if (!isValidUrl || imageError) {
