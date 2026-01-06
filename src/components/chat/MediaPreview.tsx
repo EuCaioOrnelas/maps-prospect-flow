@@ -25,6 +25,8 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [audioError, setAudioError] = useState(false);
 
   const handleDownload = useCallback(() => {
     const link = document.createElement('a');
@@ -36,7 +38,40 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     document.body.removeChild(link);
   }, [url, filename]);
 
+  // Check if URL is valid (not a temporary WhatsApp URL)
+  const isValidUrl = url && !url.includes('mmg.whatsapp.net') && !url.includes('.enc');
+
   if (type === 'image') {
+    if (!isValidUrl || imageError) {
+      return (
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-lg min-w-[200px]",
+          fromMe ? "bg-primary-foreground/10" : "bg-muted"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+            fromMe ? "bg-primary-foreground/20" : "bg-primary/10"
+          )}>
+            <FileText className={cn("h-5 w-5", fromMe ? "text-primary-foreground" : "text-primary")} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className={cn(
+              "text-sm font-medium",
+              fromMe ? "text-primary-foreground" : "text-foreground"
+            )}>
+              [Imagem não disponível]
+            </p>
+            <p className={cn(
+              "text-xs",
+              fromMe ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              Mídia expirada
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <div 
@@ -48,6 +83,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
             alt={filename || 'Image'} 
             className="w-full h-auto object-cover rounded-lg hover:opacity-90 transition-opacity"
             loading="lazy"
+            onError={() => setImageError(true)}
           />
           {caption && (
             <p className="text-sm mt-2 whitespace-pre-wrap break-words">{caption}</p>
@@ -87,6 +123,36 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
   }
 
   if (type === 'video') {
+    if (!isValidUrl) {
+      return (
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-lg min-w-[200px]",
+          fromMe ? "bg-primary-foreground/10" : "bg-muted"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+            fromMe ? "bg-primary-foreground/20" : "bg-primary/10"
+          )}>
+            <Play className={cn("h-5 w-5", fromMe ? "text-primary-foreground" : "text-primary")} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className={cn(
+              "text-sm font-medium",
+              fromMe ? "text-primary-foreground" : "text-foreground"
+            )}>
+              [Vídeo não disponível]
+            </p>
+            <p className={cn(
+              "text-xs",
+              fromMe ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              Mídia expirada
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <div 
@@ -131,6 +197,36 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
   }
 
   if (type === 'audio') {
+    if (!isValidUrl || audioError) {
+      return (
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-lg min-w-[200px]",
+          fromMe ? "bg-primary-foreground/10" : "bg-muted"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+            fromMe ? "bg-primary-foreground/20" : "bg-primary/10"
+          )}>
+            <Volume2 className={cn("h-5 w-5", fromMe ? "text-primary-foreground" : "text-primary")} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className={cn(
+              "text-sm font-medium",
+              fromMe ? "text-primary-foreground" : "text-foreground"
+            )}>
+              [Áudio não disponível]
+            </p>
+            <p className={cn(
+              "text-xs",
+              fromMe ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              Mídia expirada
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={cn(
         "flex items-center gap-3 p-2 rounded-lg min-w-[200px]",
@@ -143,7 +239,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
               if (isPlaying) {
                 audio.pause();
               } else {
-                audio.play();
+                audio.play().catch(() => setAudioError(true));
               }
               setIsPlaying(!isPlaying);
             }
@@ -181,6 +277,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
               setIsPlaying(false);
               setAudioProgress(0);
             }}
+            onError={() => setAudioError(true)}
           />
         </div>
 
