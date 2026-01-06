@@ -307,7 +307,14 @@ const Chat = () => {
     setShowSaveContactDialog(true);
   };
 
-  const handleSaveContactSubmit = async (data: { name: string; email?: string; company?: string; notes?: string }) => {
+  const handleSaveContactSubmit = async (data: { 
+    name: string; 
+    email?: string; 
+    company?: string; 
+    notes?: string;
+    createLead?: boolean;
+    category?: string;
+  }) => {
     if (!conversationToSave) return;
 
     try {
@@ -336,7 +343,67 @@ const Chat = () => {
           });
         }
         
-        toast.success('Contato salvo com sucesso!');
+        // Create lead in CRM if requested
+        if (data.createLead && profile) {
+          // Get the first pipeline stage (Prospectado)
+          const { data: stages } = await supabase
+            .from('pipeline_stages')
+            .select('id')
+            .eq('user_id', profile.id)
+            .order('position', { ascending: true })
+            .limit(1);
+          
+          // Determine whatsapp_status based on conversation history
+          let whatsappStatus = 'in_conversation';
+          
+          const { data: existingLead } = await supabase
+            .from('leads')
+            .select('id')
+            .eq('phone', conversationToSave.phone)
+            .eq('user_id', profile.id)
+            .single();
+          
+          if (!existingLead) {
+            const { error: leadError } = await supabase
+              .from('leads')
+              .insert({
+                user_id: profile.id,
+                phone: conversationToSave.phone,
+                contact_name: data.name,
+                company_name: data.company || null,
+                category: data.category || null,
+                origin: 'chat',
+                pipeline_stage_id: stages?.[0]?.id || null,
+                contact_id: contact.id,
+                conversation_id: conversationToSave.id,
+                whatsapp_status: whatsappStatus,
+                last_response: conversationToSave.last_message,
+                last_response_at: conversationToSave.last_message_at,
+              });
+
+            if (leadError) {
+              console.error('Error creating lead:', leadError);
+              toast.error('Contato salvo, mas erro ao criar lead no CRM');
+            } else {
+              toast.success('Contato e lead salvos com sucesso!');
+            }
+          } else {
+            // Update existing lead with contact_id
+            await supabase
+              .from('leads')
+              .update({ 
+                contact_id: contact.id,
+                conversation_id: conversationToSave.id,
+                contact_name: data.name,
+                company_name: data.company || null,
+              })
+              .eq('id', existingLead.id);
+            
+            toast.success('Contato salvo e lead atualizado!');
+          }
+        } else {
+          toast.success('Contato salvo com sucesso!');
+        }
       }
     } catch (error) {
       toast.error('Erro ao salvar contato');

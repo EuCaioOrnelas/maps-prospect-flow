@@ -423,7 +423,7 @@ serve(async (req) => {
                 updateData.contact_name = data.pushName;
               }
               
-              // If message is from lead, increment unread count
+              // If message is from lead (not from me), increment unread count and update lead status
               if (!fromMe) {
                 const { data: conv } = await supabase
                   .from('conversations')
@@ -432,6 +432,82 @@ serve(async (req) => {
                   .single();
                 
                 updateData.unread_count = (conv?.unread_count || 0) + 1;
+                
+                // ===== AUTO-MOVE LEAD TO "RESPONDEU" STAGE =====
+                // Find lead by phone or conversation_id
+                const { data: existingLead } = await supabase
+                  .from('leads')
+                  .select('id, pipeline_stage_id, whatsapp_status')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},conversation_id.eq.${conversationId}`)
+                  .limit(1)
+                  .single();
+                
+                if (existingLead) {
+                  console.log('Found lead to update:', existingLead.id);
+                  
+                  // Get the "Respondeu" stage (position 2)
+                  const { data: respondeuStage } = await supabase
+                    .from('pipeline_stages')
+                    .select('id, position')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('name', 'Respondeu')
+                    .single();
+                  
+                  // Only move to "Respondeu" if current stage is earlier (position < 2)
+                  // Get current stage position
+                  let shouldMoveToRespondeu = false;
+                  if (existingLead.pipeline_stage_id && respondeuStage) {
+                    const { data: currentStage } = await supabase
+                      .from('pipeline_stages')
+                      .select('position')
+                      .eq('id', existingLead.pipeline_stage_id)
+                      .single();
+                    
+                    // Move only if current position is less than Respondeu position (before it in pipeline)
+                    if (currentStage && currentStage.position < respondeuStage.position) {
+                      shouldMoveToRespondeu = true;
+                    }
+                  } else if (respondeuStage) {
+                    // No current stage, move to Respondeu
+                    shouldMoveToRespondeu = true;
+                  }
+                  
+                  const leadUpdate: Record<string, unknown> = {
+                    whatsapp_status: 'replied',
+                    last_response: content || `[${messageType}]`,
+                    last_response_at: new Date().toISOString(),
+                    conversation_id: conversationId,
+                    updated_at: new Date().toISOString(),
+                  };
+                  
+                  if (shouldMoveToRespondeu && respondeuStage) {
+                    leadUpdate.pipeline_stage_id = respondeuStage.id;
+                    console.log(`Moving lead ${existingLead.id} to Respondeu stage`);
+                  }
+                  
+                  const { error: leadUpdateError } = await supabase
+                    .from('leads')
+                    .update(leadUpdate)
+                    .eq('id', existingLead.id);
+                  
+                  if (leadUpdateError) {
+                    console.error('Error updating lead:', leadUpdateError);
+                  } else {
+                    console.log('Lead updated with response data');
+                    
+                    // Log activity for the stage change
+                    if (shouldMoveToRespondeu) {
+                      await supabase.from('lead_activities').insert({
+                        lead_id: existingLead.id,
+                        user_id: whatsappNumber.user_id,
+                        activity_type: 'stage_changed',
+                        description: 'Movido automaticamente para Respondeu (recebeu resposta)',
+                        metadata: { automatic: true, trigger: 'webhook_response' },
+                      });
+                    }
+                  }
+                }
               }
               
               await supabase
