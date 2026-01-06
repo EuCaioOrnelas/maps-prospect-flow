@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.audio-transcribe]
 verify_jwt = false
+
+[functions.evolution-send-read-receipt]
+verify_jwt = false

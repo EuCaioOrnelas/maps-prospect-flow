@@ -512,11 +512,37 @@ export const useChat = (selectedNumberId?: string | null) => {
     return { merged: mergedCount, deleted: deletedCount };
   }, [user, fetchConversations, normalizePhoneForMerge]);
 
+  // Send read receipt when opening a conversation
+  const sendReadReceipt = useCallback(async (conversationId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('evolution-send-read-receipt', {
+        body: { conversationId },
+      });
+
+      if (response.error) {
+        console.error('Error sending read receipt:', response.error);
+      } else {
+        console.log('Read receipt sent:', response.data);
+      }
+    } catch (error) {
+      console.error('Error sending read receipt:', error);
+    }
+  }, []);
+
   // Select conversation
   const selectConversation = useCallback(async (conversation: Conversation) => {
     setSelectedConversation(conversation);
     await fetchMessages(conversation.id);
-  }, [fetchMessages]);
+    
+    // Send read receipt only if there are unread messages
+    if (conversation.unread_count > 0) {
+      // Send in background, don't block UI
+      sendReadReceipt(conversation.id);
+    }
+  }, [fetchMessages, sendReadReceipt]);
 
   // Initial load with immediate fetch
   useEffect(() => {
