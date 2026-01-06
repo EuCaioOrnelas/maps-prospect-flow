@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.merge-conversations]
 verify_jwt = false
+
+[functions.audio-transcribe]
+verify_jwt = false
