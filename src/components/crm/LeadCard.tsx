@@ -1,6 +1,6 @@
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Building2, User, Phone, MapPin, Tag, MessageCircle } from 'lucide-react';
+import { Building2, Phone, MapPin, MessageCircle, Smartphone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -78,8 +78,18 @@ export const LeadCard = ({
       {/* Phone */}
       <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
         <Phone className="w-3 h-3" />
-        <span>{lead.phone}</span>
+        <span>{formatPhone(lead.phone)}</span>
       </div>
+
+      {/* WhatsApp Number (connected number) */}
+      {lead.whatsapp_number && (
+        <div className="flex items-center gap-1 text-xs text-primary/70 mb-2">
+          <Smartphone className="w-3 h-3" />
+          <span className="truncate" title={lead.whatsapp_number.phone_number || lead.whatsapp_number.name}>
+            {lead.whatsapp_number.name}
+          </span>
+        </div>
+      )}
 
       {/* Location */}
       {hasLocation && (
