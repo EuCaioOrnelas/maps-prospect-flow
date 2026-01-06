@@ -65,6 +65,29 @@ const getDisplayName = (conversation: Conversation) => {
   return formatPhoneNumber(conversation.phone);
 };
 
+const formatLastMessage = (message: string | null): string => {
+  if (!message) return 'Sem mensagens';
+  
+  // Map placeholder patterns to friendly names
+  const mediaPatterns: Record<string, string> = {
+    '[image]': '📷 Imagem',
+    '[audio]': '🎵 Áudio',
+    '[video]': '🎬 Vídeo',
+    '[document]': '📄 Documento',
+    '[sticker]': '🏷️ Figurinha',
+    '[ptt]': '🎤 Áudio',
+  };
+  
+  const lowerMessage = message.toLowerCase().trim();
+  for (const [pattern, replacement] of Object.entries(mediaPatterns)) {
+    if (lowerMessage === pattern) {
+      return replacement;
+    }
+  }
+  
+  return message;
+};
+
 const ConversationItemComponent = ({
   conversation,
   isSelected,
@@ -163,7 +186,7 @@ const ConversationItemComponent = ({
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-sm text-muted-foreground truncate flex-1 text-left">
-              {conversation.last_message || 'Sem mensagens'}
+              {formatLastMessage(conversation.last_message)}
             </p>
             {conversation.unread_count > 0 && (
               <Badge className="bg-primary text-primary-foreground shrink-0 h-5 min-w-5 flex items-center justify-center text-xs">

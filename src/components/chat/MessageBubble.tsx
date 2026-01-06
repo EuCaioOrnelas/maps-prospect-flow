@@ -59,12 +59,18 @@ const MessageBubbleComponent = ({
 
   const renderContent = () => {
     if (message.media_url && message.message_type !== 'text') {
+      // Get caption, excluding placeholder text like [image], [audio], etc.
+      const placeholderPattern = /^\[(image|audio|video|document|sticker|ptt)\]$/i;
+      const caption = message.content && !placeholderPattern.test(message.content.trim()) 
+        ? message.content 
+        : undefined;
+      
       return (
         <MediaPreview
           type={message.message_type as 'image' | 'video' | 'audio' | 'document'}
           url={message.media_url}
           filename={message.media_filename || undefined}
-          caption={message.content || undefined}
+          caption={caption}
           fromMe={message.from_me}
         />
       );
