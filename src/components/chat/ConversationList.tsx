@@ -4,45 +4,51 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2, X, Check, User } from 'lucide-react';
+import { Search, Plus, UserCheck, UserPlus, MoreVertical, Trash2, X, Check, User, MessageCircle, Users, UserX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import type { Conversation } from '@/hooks/useChat';
+import type { ConversationFilter } from '@/hooks/useChat';
 
 interface ConversationListProps {
   conversations: Conversation[];
-  archivedConversations: Conversation[];
   selectedConversation: Conversation | null;
   onSelect: (conversation: Conversation) => void;
   onNewChat: () => void;
   onSaveContact: (conversation: Conversation) => void;
-  onArchive: (conversationId: string) => void;
-  onUnarchive: (conversationId: string) => void;
   onDelete: (conversationId: string) => void;
   onBulkDelete: (conversationIds: string[], deleteContacts: boolean) => Promise<void>;
+  filter: ConversationFilter;
+  onFilterChange: (filter: ConversationFilter) => void;
+  totalConversations: number;
 }
+
+const FILTER_OPTIONS: { value: ConversationFilter; label: string; icon: React.ElementType }[] = [
+  { value: 'all', label: 'Todas', icon: MessageCircle },
+  { value: 'unread', label: 'Não lidas', icon: MessageCircle },
+  { value: 'contacts', label: 'Contatos', icon: Users },
+  { value: 'non_contacts', label: 'Não contatos', icon: UserX },
+];
 
 export const ConversationList = ({
   conversations,
-  archivedConversations,
   selectedConversation,
   onSelect,
   onNewChat,
   onSaveContact,
-  onArchive,
-  onUnarchive,
   onDelete,
   onBulkDelete,
+  filter,
+  onFilterChange,
+  totalConversations,
 }: ConversationListProps) => {
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
   const [fetchingAvatars, setFetchingAvatars] = useState<Set<string>>(new Set());
   
@@ -53,11 +59,11 @@ export const ConversationList = ({
   const [deleteContacts, setDeleteContacts] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Exit selection mode when tab changes
+  // Exit selection mode when filter changes
   useEffect(() => {
     setSelectionMode(false);
     setSelectedIds(new Set());
-  }, [activeTab]);
+  }, [filter]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => {
@@ -137,18 +143,17 @@ export const ConversationList = ({
     }
   }, [fetchingAvatars]);
 
-  // Auto-fetch avatars for conversations without one
+  // Auto-fetch avatars for all conversations without one
   useEffect(() => {
-    const allConversations = [...conversations, ...archivedConversations];
-    const conversationsWithoutAvatar = allConversations.filter(
+    const conversationsWithoutAvatar = conversations.filter(
       conv => !conv.contacts?.avatar_url && !avatarCache[conv.id] && !fetchingAvatars.has(conv.id)
     );
 
-    // Limit to 3 concurrent fetches
-    conversationsWithoutAvatar.slice(0, 3).forEach(conv => {
+    // Fetch avatars for all conversations (5 at a time for better performance)
+    conversationsWithoutAvatar.slice(0, 5).forEach(conv => {
       fetchAvatarFromWhatsApp(conv);
     });
-  }, [conversations, archivedConversations, avatarCache, fetchingAvatars, fetchAvatarFromWhatsApp]);
+  }, [conversations, avatarCache, fetchingAvatars, fetchAvatarFromWhatsApp]);
 
   // Get avatar URL - from contacts or cache
   const getAvatarUrl = (conversation: Conversation) => {
@@ -202,29 +207,21 @@ export const ConversationList = ({
     return `+${digits}`;
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Check if contact is saved (has an associated contact with a name)
   const isContactSaved = (conversation: Conversation) => {
     return !!(conversation.contact_id && conversation.contacts?.name);
   };
 
-  const currentConversations = activeTab === 'active' ? conversations : archivedConversations;
-
-  const filteredConversations = currentConversations.filter((conv) => {
+  const filteredConversations = conversations.filter((conv) => {
     const name = getDisplayName(conv).toLowerCase();
     const phone = conv.phone.toLowerCase();
     const lastMessage = (conv.last_message || '').toLowerCase();
     const searchLower = search.toLowerCase();
     return name.includes(searchLower) || phone.includes(searchLower) || lastMessage.includes(searchLower);
   });
+
+  // Count unread
+  const unreadCount = conversations.filter(c => c.unread_count > 0).length;
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card">
@@ -307,26 +304,45 @@ export const ConversationList = ({
             className="pl-9 bg-muted/50"
           />
         </div>
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archived')}>
-          <TabsList className="w-full">
-            <TabsTrigger value="active" className="flex-1 gap-1.5">
-              Ativas
-              {conversations.length > 0 && (
-                <Badge variant="secondary" className="h-5 min-w-5 text-xs">
-                  {conversations.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="archived" className="flex-1 gap-1.5">
-              Arquivadas
-              {archivedConversations.length > 0 && (
-                <Badge variant="secondary" className="h-5 min-w-5 text-xs">
-                  {archivedConversations.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        
+        {/* Filter Chips - WhatsApp Style */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {FILTER_OPTIONS.map((option) => {
+            const isActive = filter === option.value;
+            const count = option.value === 'unread' ? unreadCount : 
+                         option.value === 'all' ? totalConversations : 
+                         option.value === 'contacts' ? conversations.filter(c => c.contact_id && c.contacts?.name).length :
+                         conversations.filter(c => !c.contact_id || !c.contacts?.name).length;
+            
+            return (
+              <Button
+                key={option.value}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterChange(option.value)}
+                className={cn(
+                  "shrink-0 gap-1.5 h-8 px-3 rounded-full",
+                  isActive && "bg-primary text-primary-foreground",
+                  !isActive && "bg-muted/50 hover:bg-muted border-0"
+                )}
+              >
+                <option.icon className="h-3.5 w-3.5" />
+                <span>{option.label}</span>
+                {count > 0 && (
+                  <Badge 
+                    variant={isActive ? "secondary" : "outline"} 
+                    className={cn(
+                      "h-5 min-w-5 text-xs px-1.5",
+                      isActive && "bg-primary-foreground/20 text-primary-foreground border-0"
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                )}
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Selection Mode Info */}
@@ -344,7 +360,12 @@ export const ConversationList = ({
         <div className="divide-y divide-border">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              <p>{activeTab === 'active' ? 'Nenhuma conversa ativa' : 'Nenhuma conversa arquivada'}</p>
+              <p>
+                {filter === 'unread' ? 'Nenhuma mensagem não lida' : 
+                 filter === 'contacts' ? 'Nenhum contato salvo' :
+                 filter === 'non_contacts' ? 'Todas as conversas são de contatos salvos' :
+                 'Nenhuma conversa'}
+              </p>
             </div>
           ) : (
             filteredConversations.map((conversation) => {
@@ -447,17 +468,6 @@ export const ConversationList = ({
                           <DropdownMenuItem onClick={() => onSaveContact(conversation)}>
                             <UserPlus className="h-4 w-4 mr-2" />
                             Salvar contato
-                          </DropdownMenuItem>
-                        )}
-                        {activeTab === 'active' ? (
-                          <DropdownMenuItem onClick={() => onArchive(conversation.id)}>
-                            <Archive className="h-4 w-4 mr-2" />
-                            Arquivar conversa
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => onUnarchive(conversation.id)}>
-                            <ArchiveRestore className="h-4 w-4 mr-2" />
-                            Desarquivar conversa
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem 
