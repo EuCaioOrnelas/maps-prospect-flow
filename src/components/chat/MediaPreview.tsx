@@ -70,7 +70,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-full min-w-[200px] max-w-[320px]"
+          className="cursor-pointer rounded-lg overflow-hidden w-[280px]"
           onClick={() => setIsOpen(true)}
         >
           <img 
@@ -86,7 +86,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-4xl p-0 bg-black/95 border-none">
+          <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:hidden">
             <button 
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
@@ -151,7 +151,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden w-full min-w-[200px] max-w-[320px] relative group"
+          className="cursor-pointer rounded-lg overflow-hidden w-[280px] relative group"
           onClick={() => setIsOpen(true)}
         >
           <video 
@@ -170,7 +170,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-4xl p-0 bg-black/95 border-none">
+          <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:hidden">
             <button 
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
@@ -230,7 +230,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
       <button 
         onClick={handleDownload}
         className={cn(
-          "flex items-center gap-3 p-3 rounded-lg w-full min-w-[200px] max-w-[320px] hover:opacity-80 transition-opacity",
+          "flex items-center gap-3 p-3 rounded-lg w-[280px] hover:opacity-80 transition-opacity",
           fromMe ? "bg-primary-foreground/10" : "bg-muted"
         )}
       >

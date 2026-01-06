@@ -180,7 +180,7 @@ const MessageBubbleComponent = ({
               ? 'bg-primary text-primary-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
-          style={{ maxWidth: 'min(85%, 520px)', minWidth: '180px' }}
+          style={{ maxWidth: 'min(85%, 320px)', minWidth: '200px' }}
         >
           {quotedMessage && (
             <div className={cn(
