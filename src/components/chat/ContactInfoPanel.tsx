@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2 } from 'lucide-react';
+import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2, User } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
 import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
@@ -194,8 +194,8 @@ export const ContactInfoPanel = ({
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-20 w-20 mb-3">
               <AvatarImage src={avatarUrl || contact?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                {getInitials(displayName)}
+              <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
+                <User className="h-10 w-10" />
               </AvatarFallback>
             </Avatar>
             
@@ -354,22 +354,9 @@ export const ContactInfoPanel = ({
 
       {/* Actions */}
       <div className="p-4 border-t border-border space-y-3">
-        {/* Manage Numbers Button */}
-        {onOpenNumbersManager && (
-          <Button 
-            variant="outline" 
-            className="w-full gap-2"
-            onClick={onOpenNumbersManager}
-          >
-            <Settings2 className="h-4 w-4" />
-            Gerenciar Números Conectados
-          </Button>
-        )}
-        
         {/* Contact Actions */}
         {(isEditing || contact) && (
           <>
-            {onOpenNumbersManager && <Separator />}
             {isEditing ? (
               <div className="flex gap-2">
                 <Button 

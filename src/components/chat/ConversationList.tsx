@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2, X, Check } from 'lucide-react';
+import { Search, Plus, UserCheck, UserPlus, MoreVertical, Archive, ArchiveRestore, Trash2, X, Check, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
@@ -375,15 +375,15 @@ export const ConversationList = ({
                   >
                     <Avatar className="h-12 w-12 shrink-0">
                       <AvatarImage src={getAvatarUrl(conversation)} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(displayName)}
+                      <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
+                        <User className="h-6 w-6" />
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 min-w-0 overflow-hidden">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="font-medium text-foreground truncate max-w-[140px]">
+                          <span className="font-medium text-foreground truncate flex-1">
                             {displayName}
                           </span>
                           {!selectionMode && (
@@ -413,16 +413,16 @@ export const ConversationList = ({
                             </TooltipProvider>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-auto">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                           {formatTime(conversation.last_message_at)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-sm text-muted-foreground truncate flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground truncate flex-1 min-w-0 text-left">
                           {conversation.last_message || 'Nenhuma mensagem'}
                         </p>
                         {conversation.unread_count > 0 && (
-                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs ml-auto">
+                          <Badge variant="default" className="shrink-0 h-5 min-w-5 flex items-center justify-center rounded-full text-xs">
                             {conversation.unread_count}
                           </Badge>
                         )}
