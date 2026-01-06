@@ -22,6 +22,7 @@ import {
   FileText,
   Image as ImageIcon,
   Video,
+  ArrowDown,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -97,7 +98,9 @@ const ChatAreaComponent = ({
   const [isDragging, setIsDragging] = useState(false);
   const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
   const [forwardingMediaUrls, setForwardingMediaUrls] = useState<string[] | null>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mediaUploaderRef = useRef<MediaUploaderRef>(null);
 
@@ -213,11 +216,26 @@ const ChatAreaComponent = ({
     }
   }, [conversation?.id]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, []);
+
+  // Auto-scroll to bottom when messages change or on initial load
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Handle scroll to show/hide scroll-to-bottom button
+  const handleScroll = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      setShowScrollButton(distanceFromBottom > 200);
+    }
+  }, []);
 
   useEffect(() => {
     if (conversation && inputRef.current) {
@@ -590,7 +608,11 @@ const ChatAreaComponent = ({
             opacity: 0.04,
           }}
         />
-        <ScrollArea className="h-full relative z-10" ref={scrollRef}>
+        <div 
+          ref={scrollContainerRef}
+          className="h-full overflow-y-auto relative z-10"
+          onScroll={handleScroll}
+        >
           <div className="space-y-4 p-4 pb-2">
             {messageGroups.map((group) => (
               <div key={group.date}>
@@ -604,7 +626,7 @@ const ChatAreaComponent = ({
                 </div>
 
                 {/* Messages */}
-                <div className="space-y-1">
+                <div className="space-y-1 px-3">
                   {group.groupedMessages.map((item, idx) => {
                     if (item.type === 'image-group') {
                       const firstMessage = item.messages[0];
@@ -614,12 +636,12 @@ const ChatAreaComponent = ({
                           id={`message-${firstMessage.id}`}
                           className={cn(
                             'flex w-full group transition-all duration-500',
-                            item.fromMe ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16',
+                            item.fromMe ? 'justify-end' : 'justify-start',
                             highlightedMessageId === firstMessage.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
                           )}
                         >
                           <div className={cn(
-                            'flex items-start gap-1',
+                            'flex items-start gap-1 max-w-[45%]',
                             item.fromMe ? 'flex-row-reverse' : 'flex-row'
                           )}>
                             {/* Action menu - outside the card */}
@@ -634,12 +656,11 @@ const ChatAreaComponent = ({
                             
                             <div
                               className={cn(
-                                'relative rounded-lg p-2 shadow-md',
+                                'relative rounded-lg p-2 shadow-md w-full',
                                 item.fromMe
                                   ? 'bg-primary text-primary-foreground rounded-tr-none'
                                   : 'bg-card text-card-foreground rounded-tl-none border border-border'
                               )}
-                              style={{ maxWidth: 'min(85%, 300px)' }}
                             >
                               <ImageGallery
                                 images={item.messages.map(m => {
@@ -703,7 +724,17 @@ const ChatAreaComponent = ({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
+        
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 right-4 z-20 w-10 h-10 rounded-full bg-card border border-border shadow-lg flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <ArrowDown className="h-5 w-5 text-muted-foreground" />
+          </button>
+        )}
       </div>
 
       {/* Reply preview */}
