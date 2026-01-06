@@ -21,6 +21,7 @@ import {
   UserPlus,
   User,
   Search,
+  Upload,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Conversation, Message } from '@/hooks/useChat';
-import { MediaUploader } from './MediaUploader';
+import { MediaUploader, type MediaUploaderRef } from './MediaUploader';
 import { EmojiPicker } from './EmojiPicker';
 import { MediaPreview } from './MediaPreview';
 import chatBackground from '@/assets/chat-background.png';
@@ -81,8 +82,10 @@ export const ChatArea = ({
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
   const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mediaUploaderRef = useRef<MediaUploaderRef>(null);
 
   // Clear highlight after animation
   useEffect(() => {
@@ -257,6 +260,40 @@ export const ChatArea = ({
     }
   };
 
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging false if leaving the main container
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0 && mediaUploaderRef.current) {
+      mediaUploaderRef.current.handleDroppedFiles(files);
+    }
+  }, []);
+
   const isContactSaved = () => {
     return !!(conversation?.contact_id && conversation?.contacts?.name);
   };
@@ -367,7 +404,25 @@ export const ChatArea = ({
   const messageGroups = groupMessagesByDate();
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div 
+      className="h-full flex flex-col bg-background relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-primary/10 backdrop-blur-sm flex items-center justify-center border-4 border-dashed border-primary rounded-lg m-2">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+              <Upload className="h-10 w-10 text-primary" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground">Solte os arquivos aqui</h3>
+            <p className="text-sm text-muted-foreground">Imagens, vídeos ou documentos</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-2">
@@ -684,6 +739,7 @@ export const ChatArea = ({
             disabled={isSending || sendingQuickReply}
           />
           <MediaUploader 
+            ref={mediaUploaderRef}
             conversationId={conversation.id}
             onMediaSent={() => {}}
             disabled={isSending || sendingQuickReply}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { Paperclip, Image, FileText, Video, Mic, X, Loader2, Send } from 'lucide-react';
+import { Paperclip, Image, FileText, Video, Mic, X, Loader2, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -23,21 +23,59 @@ interface SelectedFile {
   preview?: string;
 }
 
-export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUploaderProps) => {
+export interface MediaUploaderRef {
+  handleDroppedFiles: (files: FileList) => void;
+}
+
+export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({ conversationId, onMediaSent, disabled }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [caption, setCaption] = useState('');
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentType, setCurrentType] = useState<'image' | 'video' | 'document'>('image');
 
+  // Get file type from mime or extension
+  const getFileType = (file: File): 'image' | 'video' | 'document' | 'audio' => {
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type.startsWith('video/')) return 'video';
+    if (file.type.startsWith('audio/')) return 'audio';
+    return 'document';
+  };
+
+  // Process dropped or selected files
+  const processFiles = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const newSelectedFiles: SelectedFile[] = fileArray.map(file => {
+      const type = getFileType(file);
+      let preview: string | undefined;
+      if (type === 'image' || type === 'video' || type === 'audio') {
+        preview = URL.createObjectURL(file);
+      }
+      return { file, type, preview };
+    });
+    
+    setSelectedFiles(newSelectedFiles);
+    setCurrentFileIndex(0);
+    setCaption('');
+  };
+
+  // Expose method to parent via ref
+  useImperativeHandle(ref, () => ({
+    handleDroppedFiles: (files: FileList) => {
+      processFiles(files);
+    }
+  }));
+
   const handleFileSelect = (type: 'image' | 'video' | 'document') => {
     setCurrentType(type);
     setIsOpen(false);
     if (fileInputRef.current) {
+      fileInputRef.current.multiple = true; // Enable multiple selection
       switch (type) {
         case 'image':
           fileInputRef.current.accept = 'image/*';
@@ -100,46 +138,83 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     
-    // Create preview for images and videos
-    let preview: string | undefined;
-    if (currentType === 'image' || currentType === 'video') {
-      preview = URL.createObjectURL(file);
-    }
-    
-    setSelectedFile({
-      file,
-      type: currentType,
-      preview,
-    });
-    setCaption('');
+    processFiles(files);
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleSendFile = async () => {
-    if (!selectedFile) return;
+  const handleSendCurrentFile = async () => {
+    if (selectedFiles.length === 0) return;
     
-    await uploadFile(selectedFile.file, selectedFile.type, caption);
+    const currentFile = selectedFiles[currentFileIndex];
+    await uploadFile(currentFile.file, currentFile.type, caption);
+    
+    // Remove sent file from list
+    const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
     
     // Cleanup preview URL
-    if (selectedFile.preview) {
-      URL.revokeObjectURL(selectedFile.preview);
+    if (currentFile.preview) {
+      URL.revokeObjectURL(currentFile.preview);
     }
-    setSelectedFile(null);
+    
+    if (newFiles.length > 0) {
+      setSelectedFiles(newFiles);
+      setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
+      setCaption('');
+    } else {
+      setSelectedFiles([]);
+      setCurrentFileIndex(0);
+      setCaption('');
+    }
+  };
+
+  const handleSendAllFiles = async () => {
+    if (selectedFiles.length === 0) return;
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const captionToUse = i === currentFileIndex ? caption : '';
+      await uploadFile(file.file, file.type, captionToUse);
+      
+      if (file.preview) {
+        URL.revokeObjectURL(file.preview);
+      }
+    }
+    
+    setSelectedFiles([]);
+    setCurrentFileIndex(0);
     setCaption('');
   };
 
   const handleCancelFile = () => {
-    if (selectedFile?.preview) {
-      URL.revokeObjectURL(selectedFile.preview);
-    }
-    setSelectedFile(null);
+    selectedFiles.forEach(file => {
+      if (file.preview) {
+        URL.revokeObjectURL(file.preview);
+      }
+    });
+    setSelectedFiles([]);
+    setCurrentFileIndex(0);
     setCaption('');
+  };
+
+  const handleRemoveFile = (index: number) => {
+    const file = selectedFiles[index];
+    if (file.preview) {
+      URL.revokeObjectURL(file.preview);
+    }
+    
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    if (newFiles.length === 0) {
+      handleCancelFile();
+    } else {
+      setSelectedFiles(newFiles);
+      setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
+    }
   };
 
   const startRecording = async () => {
@@ -157,11 +232,12 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
         const file = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
         
         // Show audio preview
-        setSelectedFile({
+        setSelectedFiles([{
           file,
           type: 'audio',
           preview: URL.createObjectURL(audioBlob),
-        });
+        }]);
+        setCurrentFileIndex(0);
         
         stream.getTracks().forEach(track => track.stop());
       };
@@ -184,8 +260,10 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
     }
   };
 
+  const currentFile = selectedFiles[currentFileIndex];
+
   // File Preview Modal
-  if (selectedFile) {
+  if (selectedFiles.length > 0 && currentFile) {
     return (
       <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
         {/* Header */}
@@ -197,57 +275,135 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
           >
             <X className="h-5 w-5" />
           </Button>
-          <span className="font-medium text-foreground">
-            {selectedFile.type === 'image' && 'Imagem'}
-            {selectedFile.type === 'video' && 'Vídeo'}
-            {selectedFile.type === 'document' && 'Documento'}
-            {selectedFile.type === 'audio' && 'Áudio'}
-          </span>
+          <div className="text-center">
+            <span className="font-medium text-foreground">
+              {currentFile.type === 'image' && 'Imagem'}
+              {currentFile.type === 'video' && 'Vídeo'}
+              {currentFile.type === 'document' && 'Documento'}
+              {currentFile.type === 'audio' && 'Áudio'}
+            </span>
+            {selectedFiles.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                {currentFileIndex + 1} de {selectedFiles.length}
+              </p>
+            )}
+          </div>
           <div className="w-10" /> {/* Spacer */}
         </div>
 
         {/* Preview Area */}
-        <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
-          {selectedFile.type === 'image' && selectedFile.preview && (
+        <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
+          {/* Navigation arrows for multiple files */}
+          {selectedFiles.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 hover:bg-background z-10"
+                onClick={() => setCurrentFileIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentFileIndex === 0}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 hover:bg-background z-10"
+                onClick={() => setCurrentFileIndex(prev => Math.min(selectedFiles.length - 1, prev + 1))}
+                disabled={currentFileIndex === selectedFiles.length - 1}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          )}
+
+          {currentFile.type === 'image' && currentFile.preview && (
             <img 
-              src={selectedFile.preview} 
+              src={currentFile.preview} 
               alt="Preview" 
               className="max-w-full max-h-full object-contain rounded-lg"
             />
           )}
           
-          {selectedFile.type === 'video' && selectedFile.preview && (
+          {currentFile.type === 'video' && currentFile.preview && (
             <video 
-              src={selectedFile.preview}
+              src={currentFile.preview}
               controls
               className="max-w-full max-h-full rounded-lg"
             />
           )}
           
-          {selectedFile.type === 'audio' && selectedFile.preview && (
+          {currentFile.type === 'audio' && currentFile.preview && (
             <div className="flex flex-col items-center gap-4 p-8 bg-card rounded-xl border border-border">
               <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
                 <Mic className="h-12 w-12 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">{selectedFile.file.name}</p>
-              <audio src={selectedFile.preview} controls className="w-64" />
+              <p className="text-sm text-muted-foreground">{currentFile.file.name}</p>
+              <audio src={currentFile.preview} controls className="w-64" />
             </div>
           )}
           
-          {selectedFile.type === 'document' && (
+          {currentFile.type === 'document' && (
             <div className="flex flex-col items-center gap-4 p-8 bg-card rounded-xl border border-border">
               <div className="w-24 h-24 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <FileText className="h-12 w-12 text-orange-500" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-foreground">{selectedFile.file.name}</p>
+                <p className="font-medium text-foreground">{currentFile.file.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {(selectedFile.file.size / 1024).toFixed(1)} KB
+                  {(currentFile.file.size / 1024).toFixed(1)} KB
                 </p>
               </div>
             </div>
           )}
         </div>
+
+        {/* Thumbnails bar for multiple files */}
+        {selectedFiles.length > 1 && (
+          <div className="px-4 py-2 border-t border-border bg-muted/30">
+            <div className="flex gap-2 overflow-x-auto justify-center">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "relative shrink-0 w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 transition-all",
+                    index === currentFileIndex 
+                      ? "border-primary ring-2 ring-primary/20" 
+                      : "border-transparent hover:border-muted-foreground/50"
+                  )}
+                  onClick={() => setCurrentFileIndex(index)}
+                >
+                  {file.type === 'image' && file.preview ? (
+                    <img src={file.preview} alt="" className="w-full h-full object-cover" />
+                  ) : file.type === 'video' && file.preview ? (
+                    <div className="w-full h-full bg-purple-500/20 flex items-center justify-center">
+                      <Video className="h-6 w-6 text-purple-500" />
+                    </div>
+                  ) : file.type === 'audio' ? (
+                    <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                      <Mic className="h-6 w-6 text-primary" />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full bg-orange-500/20 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-orange-500" />
+                    </div>
+                  )}
+                  
+                  {/* Remove button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFile(index);
+                    }}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 shadow-sm"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer with caption and send */}
         <div className="p-4 border-t border-border bg-card">
@@ -260,24 +416,46 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isUploading) {
                   e.preventDefault();
-                  handleSendFile();
+                  if (selectedFiles.length === 1) {
+                    handleSendCurrentFile();
+                  }
                 }
               }}
             />
-            <Button
-              onClick={handleSendFile}
-              disabled={isUploading}
-              className="rounded-full bg-emerald-600 hover:bg-emerald-700 h-10 w-10 p-0"
-            >
-              {isUploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
+            {selectedFiles.length === 1 ? (
+              <Button
+                onClick={handleSendCurrentFile}
+                disabled={isUploading}
+                className="rounded-full bg-emerald-600 hover:bg-emerald-700 h-10 w-10 p-0"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSendAllFiles}
+                disabled={isUploading}
+                className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Enviar todos ({selectedFiles.length})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            Pressione Enter ou clique para enviar
+            {selectedFiles.length === 1 
+              ? 'Pressione Enter ou clique para enviar'
+              : 'Clique para enviar todos os arquivos de uma vez'
+            }
           </p>
         </div>
       </div>
@@ -378,4 +556,6 @@ export const MediaUploader = ({ conversationId, onMediaSent, disabled }: MediaUp
       </Popover>
     </>
   );
-};
+});
+
+MediaUploader.displayName = 'MediaUploader';
