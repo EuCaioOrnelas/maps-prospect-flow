@@ -4,14 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, UserPlus, Target } from 'lucide-react';
 import type { Conversation } from '@/hooks/useChat';
 
 interface SaveContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   conversation: Conversation | null;
-  onSave: (data: { name: string; email?: string; company?: string; notes?: string }) => Promise<void>;
+  onSave: (data: { 
+    name: string; 
+    email?: string; 
+    company?: string; 
+    notes?: string;
+    createLead?: boolean;
+    category?: string;
+  }) => Promise<void>;
 }
 
 export const SaveContactDialog = ({
@@ -24,6 +32,8 @@ export const SaveContactDialog = ({
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
   const [notes, setNotes] = useState('');
+  const [createLead, setCreateLead] = useState(true);
+  const [category, setCategory] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleOpen = (isOpen: boolean) => {
@@ -32,6 +42,8 @@ export const SaveContactDialog = ({
       setEmail('');
       setCompany('');
       setNotes('');
+      setCreateLead(true);
+      setCategory('');
     }
     onOpenChange(isOpen);
   };
@@ -47,6 +59,8 @@ export const SaveContactDialog = ({
         email: email.trim() || undefined,
         company: company.trim() || undefined,
         notes: notes.trim() || undefined,
+        createLead,
+        category: category.trim() || undefined,
       });
       onOpenChange(false);
     } finally {
@@ -123,6 +137,32 @@ export const SaveContactDialog = ({
               placeholder="Notas sobre o contato..."
               rows={3}
             />
+          </div>
+
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="createLead"
+                checked={createLead}
+                onCheckedChange={(checked) => setCreateLead(checked as boolean)}
+              />
+              <Label htmlFor="createLead" className="flex items-center gap-2 cursor-pointer">
+                <Target className="h-4 w-4 text-primary" />
+                Criar lead no CRM
+              </Label>
+            </div>
+            
+            {createLead && (
+              <div className="mt-3 space-y-2">
+                <Label htmlFor="category">Categoria/Nicho (opcional)</Label>
+                <Input
+                  id="category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Ex: Restaurante, Clínica, Loja..."
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
