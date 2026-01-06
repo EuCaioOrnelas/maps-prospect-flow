@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useChat, Conversation } from '@/hooks/useChat';
 import { useWhatsAppNumbers, PLAN_LIMITS } from '@/hooks/useWhatsAppNumbers';
 import { useContacts } from '@/hooks/useContacts';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useConnectionMonitor } from '@/hooks/useConnectionMonitor';
+import { useQuickReplies } from '@/hooks/useQuickReplies';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ContactInfoPanel } from '@/components/chat/ContactInfoPanel';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { SaveContactDialog } from '@/components/chat/SaveContactDialog';
+import { QuickRepliesBar } from '@/components/chat/QuickRepliesBar';
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { ReconnectDialog } from '@/components/whatsapp/ReconnectDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -16,7 +19,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge, Download } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge, Download, Settings } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -27,6 +30,7 @@ const Chat = () => {
   const { profile } = useAuth();
   const { numbers, loading: loadingNumbers, fetchNumbers, setNumbers } = useWhatsAppNumbers();
   const { createContact } = useContacts();
+  const { quickReplies } = useQuickReplies();
   const { isSupported: notificationsSupported, permission, requestPermission } = useChatNotifications();
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [notificationRequested, setNotificationRequested] = useState(false);
@@ -587,6 +591,20 @@ const Chat = () => {
                       <Settings2 className="h-4 w-4" />
                       <span className="hidden sm:inline">Gerenciar</span>
                     </Button>
+                    
+                    {/* Chat Settings Button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link to="/chat/settings">
+                            <Button size="sm" variant="ghost">
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>Configurações do Chat</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
 
@@ -623,30 +641,41 @@ const Chat = () => {
                       </div>
 
                       {/* Chat Area */}
-                      <div className={`flex-1 ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
-                        <div className="flex-1">
-                          <ChatArea
-                            conversation={selectedConversation}
-                            messages={messages}
+                      <div className={`flex-1 flex flex-col ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
+                        {/* Quick Replies Bar - Only show when conversation selected */}
+                        {selectedConversation && quickReplies.length > 0 && (
+                          <QuickRepliesBar
+                            quickReplies={quickReplies}
+                            onSend={(content) => handleSendMessage(content)}
                             isSending={isSending}
-                            onSendMessage={handleSendMessage}
-                            onOpenContactInfo={() => setShowContactInfo(true)}
-                            onBack={() => setSelectedConversation(null)}
-                            onSaveContact={handleSaveContact}
                           />
-                        </div>
-
-                        {/* Contact Info Panel - Desktop only */}
-                        {showContactInfo && selectedConversation && (
-                          <div className="hidden lg:block">
-                            <ContactInfoPanel
+                        )}
+                        
+                        <div className="flex-1 flex">
+                          <div className="flex-1">
+                            <ChatArea
                               conversation={selectedConversation}
-                              onClose={() => setShowContactInfo(false)}
-                              onContactUpdated={fetchConversations}
-                              onOpenNumbersManager={() => setShowNumbersManager(true)}
+                              messages={messages}
+                              isSending={isSending}
+                              onSendMessage={handleSendMessage}
+                              onOpenContactInfo={() => setShowContactInfo(true)}
+                              onBack={() => setSelectedConversation(null)}
+                              onSaveContact={handleSaveContact}
                             />
                           </div>
-                        )}
+
+                          {/* Contact Info Panel - Desktop only */}
+                          {showContactInfo && selectedConversation && (
+                            <div className="hidden lg:block">
+                              <ContactInfoPanel
+                                conversation={selectedConversation}
+                                onClose={() => setShowContactInfo(false)}
+                                onContactUpdated={fetchConversations}
+                                onOpenNumbersManager={() => setShowNumbersManager(true)}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </>
                   )}

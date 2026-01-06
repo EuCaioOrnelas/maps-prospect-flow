@@ -342,6 +342,45 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_replies: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          delay_seconds: number | null
+          id: string
+          image_url: string | null
+          name: string
+          tag: string
+          text_content: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          delay_seconds?: number | null
+          id?: string
+          image_url?: string | null
+          name: string
+          tag: string
+          text_content?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          delay_seconds?: number | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          tag?: string
+          text_content?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string
