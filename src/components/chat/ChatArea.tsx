@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -101,7 +101,7 @@ const ChatAreaComponent = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaUploaderRef = useRef<MediaUploaderRef>(null);
 
   // Clear highlight after animation
@@ -886,7 +886,7 @@ const ChatAreaComponent = ({
 
       {/* Input */}
       <div className="p-3 border-t border-border bg-card shrink-0">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
           <EmojiPicker 
             onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
             disabled={isSending || sendingQuickReply}
@@ -898,21 +898,39 @@ const ChatAreaComponent = ({
             disabled={isSending || sendingQuickReply}
           />
           
-          <Input
+          <Textarea
             ref={inputRef}
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              // Auto-resize
+              const target = e.target;
+              target.style.height = 'auto';
+              const lineHeight = 24; // approx line height
+              const minHeight = 40;
+              const maxHeight = minHeight * 6; // 6x original height
+              const newHeight = Math.min(Math.max(target.scrollHeight, minHeight), maxHeight);
+              target.style.height = `${newHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e as unknown as React.FormEvent);
+              } else {
+                handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>);
+              }
+            }}
             placeholder="Digite uma mensagem ou /tag..."
-            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground"
+            className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2"
             disabled={isSending || sendingQuickReply}
+            rows={1}
           />
           
           <Button 
             type="submit" 
             size="icon" 
             disabled={!inputValue.trim() || isSending || sendingQuickReply}
-            className="rounded-full bg-emerald-600 hover:bg-emerald-700"
+            className="rounded-full bg-emerald-600 hover:bg-emerald-700 shrink-0"
           >
             <Send className="h-5 w-5" />
           </Button>
