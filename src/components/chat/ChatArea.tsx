@@ -31,6 +31,7 @@ import type { Conversation, Message } from '@/hooks/useChat';
 import { MediaUploader, type MediaUploaderRef } from './MediaUploader';
 import { EmojiPicker } from './EmojiPicker';
 import { MessageBubble } from './MessageBubble';
+import { ImageGallery } from './ImageGallery';
 import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -321,19 +322,63 @@ const ChatAreaComponent = ({
 
   const currentFontSize = FONT_SIZES[fontSizeIndex].value;
 
+  // Helper type for grouped messages
+  type MessageOrImageGroup = 
+    | { type: 'message'; message: Message }
+    | { type: 'image-group'; messages: Message[]; fromMe: boolean };
+
   // Memoize message grouping to avoid recalculating on every render
   const messageGroups = useMemo(() => {
-    const groups: { date: string; messages: Message[] }[] = [];
+    const groups: { date: string; messages: Message[]; groupedMessages: MessageOrImageGroup[] }[] = [];
     let currentDate = '';
 
     messages.forEach((message) => {
       const messageDate = format(new Date(message.created_at), 'dd/MM/yyyy');
       if (messageDate !== currentDate) {
         currentDate = messageDate;
-        groups.push({ date: messageDate, messages: [message] });
+        groups.push({ date: messageDate, messages: [message], groupedMessages: [] });
       } else {
         groups[groups.length - 1].messages.push(message);
       }
+    });
+
+    // Now process each date group to combine consecutive images
+    groups.forEach(group => {
+      const grouped: MessageOrImageGroup[] = [];
+      let imageBuffer: Message[] = [];
+      let lastFromMe: boolean | null = null;
+
+      const flushImageBuffer = () => {
+        if (imageBuffer.length > 1) {
+          grouped.push({ type: 'image-group', messages: [...imageBuffer], fromMe: lastFromMe ?? false });
+        } else if (imageBuffer.length === 1) {
+          grouped.push({ type: 'message', message: imageBuffer[0] });
+        }
+        imageBuffer = [];
+      };
+
+      group.messages.forEach((msg) => {
+        const isImage = msg.message_type === 'image' && msg.media_url;
+        
+        if (isImage) {
+          // If switching sender or starting fresh, flush the buffer first
+          if (lastFromMe !== null && lastFromMe !== msg.from_me) {
+            flushImageBuffer();
+          }
+          imageBuffer.push(msg);
+          lastFromMe = msg.from_me;
+        } else {
+          // Not an image - flush any buffered images first
+          flushImageBuffer();
+          lastFromMe = null;
+          grouped.push({ type: 'message', message: msg });
+        }
+      });
+      
+      // Flush any remaining images
+      flushImageBuffer();
+      
+      group.groupedMessages = grouped;
     });
 
     return groups;
@@ -511,7 +556,50 @@ const ChatAreaComponent = ({
 
                 {/* Messages */}
                 <div className="space-y-1">
-                  {group.messages.map((message) => {
+                  {group.groupedMessages.map((item, idx) => {
+                    if (item.type === 'image-group') {
+                      const firstMessage = item.messages[0];
+                      return (
+                        <div
+                          key={`gallery-${firstMessage.id}`}
+                          id={`message-${firstMessage.id}`}
+                          className={cn(
+                            'flex w-full group transition-all duration-500',
+                            item.fromMe ? 'justify-end pl-8 sm:pl-16' : 'justify-start pr-8 sm:pr-16',
+                            highlightedMessageId === firstMessage.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'relative rounded-lg p-2 shadow-md',
+                              item.fromMe
+                                ? 'bg-primary text-primary-foreground rounded-tr-none'
+                                : 'bg-card text-card-foreground rounded-tl-none border border-border'
+                            )}
+                            style={{ maxWidth: 'min(85%, 300px)' }}
+                          >
+                            <ImageGallery
+                              images={item.messages.map(m => ({
+                                url: m.media_url || '',
+                                caption: m.content || undefined,
+                                filename: m.media_filename || undefined,
+                              }))}
+                              fromMe={item.fromMe}
+                            />
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              <span className={cn(
+                                "text-[10px]",
+                                item.fromMe ? "text-black/60" : "text-muted-foreground"
+                              )}>
+                                {format(new Date(item.messages[item.messages.length - 1].created_at), 'HH:mm')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    const message = item.message;
                     const quotedMessage = getQuotedMessage(message.quoted_message_id);
                     
                     return (
