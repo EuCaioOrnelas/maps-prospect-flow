@@ -52,22 +52,32 @@ serve(async (req) => {
     }
 
     // Fetch recent chats from Evolution API
-    const chatsResponse = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY,
-      },
-      body: JSON.stringify({}),
-    });
+    let chats: any[] = [];
+    try {
+      const chatsResponse = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({}),
+      });
 
-    if (!chatsResponse.ok) {
-      console.error('Failed to fetch chats:', await chatsResponse.text());
-      throw new Error('Failed to fetch chats from Evolution API');
+      if (chatsResponse.ok) {
+        const chatsData = await chatsResponse.json();
+        // Handle different response formats
+        chats = Array.isArray(chatsData) ? chatsData : (chatsData?.chats || chatsData?.data || []);
+        console.log(`Found ${chats.length} chats`);
+      } else {
+        const errorText = await chatsResponse.text();
+        console.error('Failed to fetch chats:', chatsResponse.status, errorText);
+        // Continue with empty chats instead of throwing
+        console.log('Continuing with existing conversations only');
+      }
+    } catch (chatError) {
+      console.error('Error fetching chats from Evolution API:', chatError);
+      // Continue with empty chats
     }
-
-    const chats = await chatsResponse.json();
-    console.log(`Found ${chats?.length || 0} chats`);
 
     let syncedMessages = 0;
     let syncedConversations = 0;
@@ -135,10 +145,14 @@ serve(async (req) => {
         });
 
         if (messagesResponse.ok) {
-          const messages = await messagesResponse.json();
-          console.log(`Found ${messages?.length || 0} messages for ${remoteJid}`);
+          const messagesData = await messagesResponse.json();
+          // Handle different response formats from Evolution API
+          const messages = Array.isArray(messagesData) 
+            ? messagesData 
+            : (messagesData?.messages || messagesData?.data || []);
+          console.log(`Found ${messages.length} messages for ${remoteJid}`);
 
-          for (const msg of (messages || [])) {
+          for (const msg of messages) {
             const messageId = msg.key?.id;
             if (!messageId) continue;
 
