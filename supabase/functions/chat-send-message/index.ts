@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Declare EdgeRuntime for background tasks
+declare const EdgeRuntime: {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -41,37 +46,41 @@ serve(async (req) => {
 
     const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename, quotedMessageId } = await req.json();
 
-    // Get conversation and whatsapp number
-    const { data: conversation, error: convError } = await supabase
+    // Parallel fetch: conversation and quoted message (if needed)
+    const conversationPromise = supabase
       .from('conversations')
       .select('*, whatsapp_numbers!inner(instance_name)')
       .eq('id', conversationId)
       .eq('user_id', user.id)
       .single();
 
-    if (convError || !conversation) {
+    const quotedMsgPromise = quotedMessageId 
+      ? supabase
+          .from('messages')
+          .select('message_id')
+          .eq('id', quotedMessageId)
+          .single()
+      : Promise.resolve({ data: null });
+
+    const [convResult, quotedResult] = await Promise.all([conversationPromise, quotedMsgPromise]);
+
+    if (convResult.error || !convResult.data) {
       return new Response(JSON.stringify({ error: 'Conversation not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Get quoted message if provided
+    const conversation = convResult.data;
+    
+    // Build quoted message info
     let quotedMessageInfo = null;
-    if (quotedMessageId) {
-      const { data: quotedMsg } = await supabase
-        .from('messages')
-        .select('message_id')
-        .eq('id', quotedMessageId)
-        .single();
-      
-      if (quotedMsg?.message_id) {
-        quotedMessageInfo = {
-          key: {
-            id: quotedMsg.message_id,
-          },
-        };
-      }
+    if (quotedResult.data?.message_id) {
+      quotedMessageInfo = {
+        key: {
+          id: quotedResult.data.message_id,
+        },
+      };
     }
 
     const instanceName = conversation.whatsapp_numbers.instance_name;
@@ -86,7 +95,6 @@ serve(async (req) => {
         text: content,
       };
       
-      // Add quoted message if provided
       if (quotedMessageInfo) {
         messageBody.quoted = quotedMessageInfo;
       }
@@ -122,7 +130,7 @@ serve(async (req) => {
       };
     }
 
-    console.log('Sending message to Evolution API:', apiEndpoint, JSON.stringify(messageBody));
+    console.log('Sending message to Evolution API:', apiEndpoint);
 
     // Send message via Evolution API
     const evolutionResponse = await fetch(apiEndpoint, {
@@ -135,10 +143,8 @@ serve(async (req) => {
     });
 
     const evolutionData = await evolutionResponse.json();
-    console.log('Evolution API response:', JSON.stringify(evolutionData));
 
     if (!evolutionResponse.ok) {
-      // Check for specific error messages
       let errorMessage = 'Failed to send message';
       
       if (evolutionData.response?.message) {
@@ -155,40 +161,50 @@ serve(async (req) => {
       throw new Error(errorMessage);
     }
 
-    // Insert message into database
-    const { data: message, error: msgError } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        user_id: user.id,
-        message_id: evolutionData.key?.id,
-        remote_jid: conversation.remote_jid,
-        from_me: true,
-        message_type: messageType,
-        content: content,
-        media_url: mediaUrl || null,
-        media_filename: mediaFilename || null,
-        quoted_message_id: quotedMessageId || null,
-        status: 'sent',
-      })
-      .select()
-      .single();
+    // Return response immediately, save to DB in background
+    const messageId = evolutionData.key?.id;
+    
+    // Background task: Insert message and update conversation
+    EdgeRuntime.waitUntil((async () => {
+      try {
+        // Insert message into database
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            user_id: user.id,
+            message_id: messageId,
+            remote_jid: conversation.remote_jid,
+            from_me: true,
+            message_type: messageType,
+            content: content,
+            media_url: mediaUrl || null,
+            media_filename: mediaFilename || null,
+            quoted_message_id: quotedMessageId || null,
+            status: 'sent',
+          });
 
-    if (msgError) {
-      console.error('Error inserting message:', msgError);
-      throw msgError;
-    }
+        if (msgError) {
+          console.error('Error inserting message:', msgError);
+        }
 
-    // Update conversation
-    await supabase
-      .from('conversations')
-      .update({
-        last_message: content || `[${messageType}]`,
-        last_message_at: new Date().toISOString(),
-      })
-      .eq('id', conversationId);
+        // Update conversation
+        await supabase
+          .from('conversations')
+          .update({
+            last_message: content || `[${messageType}]`,
+            last_message_at: new Date().toISOString(),
+          })
+          .eq('id', conversationId);
+      } catch (e) {
+        console.error('Background task error:', e);
+      }
+    })());
 
-    return new Response(JSON.stringify({ success: true, message }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: { message_id: messageId }
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
