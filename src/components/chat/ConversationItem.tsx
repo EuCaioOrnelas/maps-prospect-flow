@@ -2,7 +2,7 @@ import { memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { UserCheck, UserPlus, MoreVertical, Trash2, User } from 'lucide-react';
+import { UserCheck, UserPlus, MoreVertical, Trash2, User, Pin, PinOff } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +22,7 @@ interface ConversationItemProps {
   onToggleSelection: (id: string) => void;
   onSaveContact: (conversation: Conversation) => void;
   onDelete: (id: string) => void;
+  onTogglePin?: (conversation: Conversation) => void;
 }
 
 const formatTime = (dateString: string | null) => {
@@ -99,8 +100,10 @@ const ConversationItemComponent = ({
   onToggleSelection,
   onSaveContact,
   onDelete,
+  onTogglePin,
 }: ConversationItemProps) => {
   const displayName = getDisplayName(conversation);
+  const isPinned = !!conversation.pinned_at;
   
   const handleClick = useCallback(() => {
     if (selectionMode) {
@@ -123,6 +126,11 @@ const ConversationItemComponent = ({
   const handleToggle = useCallback(() => {
     onToggleSelection(conversation.id);
   }, [conversation.id, onToggleSelection]);
+
+  const handlePin = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTogglePin?.(conversation);
+  }, [conversation, onTogglePin]);
 
   return (
     <div
@@ -211,6 +219,19 @@ const ConversationItemComponent = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handlePin}>
+              {isPinned ? (
+                <>
+                  <PinOff className="h-4 w-4 mr-2" />
+                  Desafixar
+                </>
+              ) : (
+                <>
+                  <Pin className="h-4 w-4 mr-2" />
+                  Fixar no topo
+                </>
+              )}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDelete}
               className="text-destructive focus:text-destructive"
@@ -231,6 +252,7 @@ export const ConversationItem = memo(ConversationItemComponent, (prevProps, next
     prevProps.conversation.last_message === nextProps.conversation.last_message &&
     prevProps.conversation.unread_count === nextProps.conversation.unread_count &&
     prevProps.conversation.last_message_at === nextProps.conversation.last_message_at &&
+    prevProps.conversation.pinned_at === nextProps.conversation.pinned_at &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isSaved === nextProps.isSaved &&
     prevProps.isChecked === nextProps.isChecked &&

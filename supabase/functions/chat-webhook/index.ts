@@ -214,6 +214,7 @@ serve(async (req) => {
       let mediaFilename: string | null = null;
       let hasMedia = false;
       let quotedMessageId: string | null = null;
+      let interactive: Record<string, unknown> | null = null;
 
       // Extract quoted message ID (contextInfo contains reply info)
       const contextInfo = msg.extendedTextMessage?.contextInfo || 
@@ -221,6 +222,7 @@ serve(async (req) => {
                           msg.videoMessage?.contextInfo ||
                           msg.audioMessage?.contextInfo ||
                           msg.documentMessage?.contextInfo ||
+                          msg.interactiveMessage?.contextInfo ||
                           data?.contextInfo;
       
       if (contextInfo?.stanzaId) {
@@ -256,6 +258,62 @@ serve(async (req) => {
       } else if (msg.stickerMessage) {
         messageType = 'sticker';
         content = '[Sticker]';
+      } else if (msg.interactiveMessage) {
+        // Handle interactive messages (bots with buttons/lists)
+        messageType = 'interactive';
+        const interactiveMsg = msg.interactiveMessage;
+        
+        // Extract header/body/footer
+        const header = interactiveMsg.header;
+        const body = interactiveMsg.body;
+        const footer = interactiveMsg.footer;
+        
+        // Build content from parts
+        const contentParts: string[] = [];
+        if (header?.title) contentParts.push(header.title);
+        if (header?.subtitle) contentParts.push(header.subtitle);
+        if (body?.text) contentParts.push(body.text);
+        if (footer?.text) contentParts.push(footer.text);
+        
+        content = contentParts.join('\n\n') || '[Mensagem interativa]';
+        
+        // Store full interactive data
+        interactive = {
+          type: interactiveMsg.nativeFlowMessage ? 'flow' : 
+                interactiveMsg.collectionMessage ? 'collection' : 
+                interactiveMsg.shopStorefrontMessage ? 'storefront' : 'generic',
+          header: header || null,
+          body: body || null,
+          footer: footer || null,
+          nativeFlowMessage: interactiveMsg.nativeFlowMessage || null,
+          collectionMessage: interactiveMsg.collectionMessage || null,
+          shopStorefrontMessage: interactiveMsg.shopStorefrontMessage || null,
+        };
+        
+        console.log('[WEBHOOK] Interactive message detected:', JSON.stringify(interactive).slice(0, 500));
+      } else if (msg.buttonsMessage) {
+        // Legacy buttons message
+        messageType = 'buttons';
+        content = msg.buttonsMessage.contentText || 
+                  msg.buttonsMessage.text || 
+                  '[Mensagem com botões]';
+        interactive = {
+          type: 'buttons',
+          buttons: msg.buttonsMessage.buttons || [],
+          headerType: msg.buttonsMessage.headerType,
+        };
+      } else if (msg.listMessage) {
+        // List message
+        messageType = 'list';
+        content = msg.listMessage.description || 
+                  msg.listMessage.title ||
+                  '[Mensagem de lista]';
+        interactive = {
+          type: 'list',
+          title: msg.listMessage.title,
+          buttonText: msg.listMessage.buttonText,
+          sections: msg.listMessage.sections || [],
+        };
       } else if (msg.buttonResponseMessage) {
         // Handle button response messages
         messageType = 'text';
@@ -274,18 +332,6 @@ serve(async (req) => {
         content = msg.templateButtonReplyMessage.selectedDisplayText ||
                   msg.templateButtonReplyMessage.selectedId ||
                   '[Resposta de template]';
-      } else if (msg.buttonsMessage) {
-        // Handle outgoing buttons message
-        messageType = 'text';
-        content = msg.buttonsMessage.contentText || 
-                  msg.buttonsMessage.headerType === 1 ? msg.buttonsMessage.text : 
-                  '[Mensagem com botões]';
-      } else if (msg.listMessage) {
-        // Handle outgoing list message
-        messageType = 'text';
-        content = msg.listMessage.description || 
-                  msg.listMessage.title ||
-                  '[Mensagem de lista]';
       } else if (data?.text) {
         content = data.text;
       } else if (data?.content) {
@@ -428,6 +474,7 @@ serve(async (req) => {
           media_mimetype: mediaMimetype,
           media_filename: mediaFilename,
           quoted_message_id: quotedMessageId,
+          interactive: interactive,
           status: fromMe ? 'sent' : 'received',
         })
         .select()

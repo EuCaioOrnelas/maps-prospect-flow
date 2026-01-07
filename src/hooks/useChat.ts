@@ -14,6 +14,7 @@ export interface Conversation {
   last_message_at: string | null;
   unread_count: number;
   is_archived: boolean;
+  pinned_at: string | null;
   created_at: string;
   updated_at: string;
   contacts?: {
@@ -41,6 +42,7 @@ export interface Message {
   media_mimetype: string | null;
   media_filename: string | null;
   quoted_message_id: string | null;
+  interactive?: unknown;
   status: string;
   created_at: string;
   updated_at: string;
@@ -95,8 +97,10 @@ export const useChat = (selectedNumberId?: string | null) => {
       query = query.eq('whatsapp_number_id', selectedNumberId);
     }
 
-    // Order by most recent first (nulls last for better UX)
-    const { data, error } = await query.order('last_message_at', { ascending: false, nullsFirst: false });
+    // Order by pinned first, then most recent
+    const { data, error } = await query
+      .order('pinned_at', { ascending: false, nullsFirst: true })
+      .order('last_message_at', { ascending: false, nullsFirst: false });
 
     if (error) {
       console.error('Error fetching conversations:', error);
@@ -243,6 +247,24 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     if (error) {
       console.error('Error linking contact to conversation:', error);
+      throw error;
+    }
+
+    await fetchConversations();
+  }, [user, fetchConversations]);
+
+  // Pin/unpin a conversation
+  const togglePinConversation = useCallback(async (conversationId: string, isPinned: boolean) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('conversations')
+      .update({ pinned_at: isPinned ? null : new Date().toISOString() })
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error toggling pin:', error);
       throw error;
     }
 
@@ -741,5 +763,6 @@ export const useChat = (selectedNumberId?: string | null) => {
     linkContactToConversation,
     setSelectedConversation,
     mergeDuplicateConversations,
+    togglePinConversation,
   };
 };
