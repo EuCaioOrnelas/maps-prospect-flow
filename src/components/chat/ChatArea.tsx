@@ -23,6 +23,9 @@ import {
   Image as ImageIcon,
   Video,
   ArrowDown,
+  CheckSquare,
+  Share2,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -102,6 +105,10 @@ const ChatAreaComponent = ({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  // Multi-select state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -302,20 +309,91 @@ const ChatAreaComponent = ({
     }
   }, [onDeleteMessage]);
 
+  // Multi-select functions
+  const toggleSelectionMode = useCallback(() => {
+    setIsSelectionMode(prev => !prev);
+    setSelectedMessages(new Set());
+  }, []);
+
+  const handleSelectMessage = useCallback((message: Message) => {
+    setSelectedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(message.id)) {
+        newSet.delete(message.id);
+      } else {
+        newSet.add(message.id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllMessages = useCallback(() => {
+    const allIds = messages.map(m => m.id);
+    setSelectedMessages(new Set(allIds));
+  }, [messages]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedMessages(new Set());
+  }, []);
+
+  const handleBulkForward = useCallback(() => {
+    // Get selected messages sorted by date
+    const selectedMsgs = messages
+      .filter(m => selectedMessages.has(m.id))
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    
+    if (selectedMsgs.length === 0) return;
+    
+    // For now, forward the first message (we'll need to update ForwardMessageDialog to handle multiple)
+    setForwardingMessage(selectedMsgs[0]);
+    // Store all selected messages for bulk forwarding
+    setSelectedMessages(new Set(selectedMsgs.map(m => m.id)));
+  }, [messages, selectedMessages]);
+
+  const handleBulkDelete = useCallback(async (forEveryone: boolean) => {
+    if (!onDeleteMessage || selectedMessages.size === 0) return;
+    
+    const selectedMsgs = messages.filter(m => selectedMessages.has(m.id));
+    
+    try {
+      for (const msg of selectedMsgs) {
+        await onDeleteMessage(msg, forEveryone);
+      }
+      toast.success(`${selectedMsgs.length} mensagem(ns) apagada(s)`);
+      setIsSelectionMode(false);
+      setSelectedMessages(new Set());
+    } catch {
+      toast.error('Erro ao apagar mensagens');
+    }
+  }, [messages, selectedMessages, onDeleteMessage]);
+
   const handleForwardToConversations = useCallback(async (
     conversationIds: string[], 
     message?: Message, 
     mediaUrls?: string[]
   ) => {
-    if (onForwardMessage && message) {
-      await onForwardMessage(conversationIds, message);
+    if (onForwardMessage) {
+      // If in selection mode with multiple messages, forward all selected
+      if (isSelectionMode && selectedMessages.size > 0) {
+        const selectedMsgs = messages
+          .filter(m => selectedMessages.has(m.id))
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        
+        for (const msg of selectedMsgs) {
+          await onForwardMessage(conversationIds, msg);
+        }
+        toast.success(`${selectedMsgs.length} mensagem(ns) encaminhada(s) para ${conversationIds.length} conversa(s)`);
+        setIsSelectionMode(false);
+        setSelectedMessages(new Set());
+      } else if (message) {
+        await onForwardMessage(conversationIds, message);
+      }
     }
     // For gallery media URLs, we would need to handle this separately
     if (mediaUrls && mediaUrls.length > 0 && onSendMedia) {
-      // This would need a different handler in the parent component
       toast.success(`Encaminhado para ${conversationIds.length} conversa(s)`);
     }
-  }, [onForwardMessage, onSendMedia]);
+  }, [onForwardMessage, onSendMedia, isSelectionMode, selectedMessages, messages]);
 
   const getQuotedMessage = (quotedId: string | null) => {
     if (!quotedId) return null;
@@ -661,6 +739,14 @@ const ChatAreaComponent = ({
         </div>
 
         <div className="flex items-center gap-1">
+          <Button 
+            variant={isSelectionMode ? "default" : "ghost"} 
+            size="icon" 
+            onClick={toggleSelectionMode}
+            title="Selecionar mensagens"
+          >
+            <CheckSquare className="h-5 w-5" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setShowMessageSearch(true)}>
             <Search className="h-5 w-5" />
           </Button>
@@ -673,6 +759,10 @@ const ChatAreaComponent = ({
             <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
               <DropdownMenuLabel>Opções</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleSelectionMode}>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                {isSelectionMode ? 'Cancelar seleção' : 'Selecionar mensagens'}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowMessageSearch(true)}>
                 <Search className="h-4 w-4 mr-2" />
                 Buscar mensagens
@@ -827,9 +917,12 @@ const ChatAreaComponent = ({
                         displayName={displayName}
                         fontSize={currentFontSize}
                         isHighlighted={highlightedMessageId === message.id}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedMessages.has(message.id)}
                         onReply={handleReply}
                         onForward={handleForward}
                         onDelete={handleDelete}
+                        onSelect={handleSelectMessage}
                       />
                     );
                   })}
@@ -866,8 +959,75 @@ const ChatAreaComponent = ({
         )}
       </div>
 
+      {/* Selection action bar */}
+      {isSelectionMode && (
+        <div className="px-3 py-2 bg-card border-t border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSelectionMode}
+              className="gap-1"
+            >
+              <X className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {selectedMessages.size} selecionada(s)
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={selectAllMessages}
+              className="text-xs"
+            >
+              Selecionar todas
+            </Button>
+            {selectedMessages.size > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBulkForward}
+                  className="gap-1"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Encaminhar
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Apagar
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleBulkDelete(false)}>
+                      Apagar para mim
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleBulkDelete(true)}
+                      className="text-destructive"
+                    >
+                      Apagar para todos
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Reply preview */}
-      {replyingTo && (
+      {replyingTo && !isSelectionMode && (
         <div className="px-3 pt-3 pb-3 bg-card border-t border-border">
           <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
             {/* Media thumbnail preview */}
@@ -1013,7 +1173,8 @@ const ChatAreaComponent = ({
         </div>
       )}
 
-      {/* Input */}
+      {/* Input - hide in selection mode */}
+      {!isSelectionMode && (
       <div className="p-3 border-t border-border bg-card shrink-0">
         {isRecording ? (
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
@@ -1115,6 +1276,7 @@ const ChatAreaComponent = ({
           </form>
         )}
       </div>
+      )}
       
       {/* Forward Message Dialog */}
       <ForwardMessageDialog
