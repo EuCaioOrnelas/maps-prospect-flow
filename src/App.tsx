@@ -29,7 +29,7 @@ import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
-import CRM from "./pages/CRM";
+import CRMComingSoon from "./pages/CRMComingSoon";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -139,7 +139,7 @@ const App = () => (
                 path="/crm" 
                 element={
                   <ProtectedRoute>
-                    <CRM />
+                    <CRMComingSoon />
                   </ProtectedRoute>
                 } 
               />
