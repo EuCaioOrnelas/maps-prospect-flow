@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,16 +28,9 @@ serve(async (req) => {
     }
 
     const audioBuffer = await audioResponse.arrayBuffer();
-    const uint8Array = new Uint8Array(audioBuffer);
     
-    // Convert to base64 in chunks to avoid stack overflow
-    let base64Audio = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      base64Audio += String.fromCharCode(...chunk);
-    }
-    base64Audio = btoa(base64Audio);
+    // Use Deno's base64 encoding to prevent stack overflow on large files
+    const base64Audio = base64Encode(audioBuffer);
 
     console.log("Audio fetched and encoded, size:", base64Audio.length);
 
@@ -52,11 +46,13 @@ serve(async (req) => {
       audioFormat = 'ogg';
     } else if (contentType.includes('mp4') || audioUrl.includes('.mp4') || contentType.includes('m4a')) {
       audioFormat = 'mp4';
+    } else if (contentType.includes('webm') || audioUrl.includes('.webm')) {
+      audioFormat = 'webm';
     }
 
     console.log("Detected audio format:", audioFormat, "Content-Type:", contentType);
 
-    // Use Gemini for audio transcription with file API approach
+    // Use Gemini for audio transcription
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {

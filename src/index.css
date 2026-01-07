@@ -18,10 +18,13 @@
     --primary: 158 72% 38%;
     --primary-foreground: 0 0% 100%;
     
-    /* WhatsApp message colors - exact #10231C */
-    --whatsapp-outgoing: 158 37% 10%;
+    /* WhatsApp message colors - darker green #0a1510 */
+    --whatsapp-outgoing: 158 37% 6%;
     --whatsapp-outgoing-foreground: 0 0% 100%;
     --whatsapp-read: 199 89% 48%;
+    
+    /* Quote bubble inside messages - darker than outgoing */
+    --whatsapp-quote: 158 37% 4%;
 
     --secondary: 220 16% 12%;
     --secondary-foreground: 210 40% 98%;

@@ -227,13 +227,19 @@ const MessageBubbleComponent = ({
             <div className={cn(
               'mb-2 p-2 rounded border-l-4 text-xs',
               message.from_me 
-                ? 'bg-primary/80 border-primary-foreground/50' 
-                : 'bg-muted border-muted-foreground/50'
+                ? 'bg-[hsl(158,37%,6%)] border-primary/70' 
+                : 'bg-muted/80 border-primary/50'
             )}>
-              <p className="font-medium text-primary">
+              <p className={cn(
+                "font-semibold",
+                message.from_me ? "text-primary" : "text-primary"
+              )}>
                 {quotedMessage.from_me ? 'Você' : displayName}
               </p>
-              <p className="text-muted-foreground line-clamp-2">
+              <p className={cn(
+                "line-clamp-2 mt-0.5",
+                message.from_me ? "text-white/70" : "text-muted-foreground"
+              )}>
                 {quotedMessage.content || '[Mídia]'}
               </p>
             </div>

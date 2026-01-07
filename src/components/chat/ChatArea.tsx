@@ -63,6 +63,7 @@ interface ChatAreaProps {
   allConversations?: Conversation[];
   onForwardMessage?: (conversationIds: string[], message: Message) => Promise<void>;
   onDeleteMessage?: (message: Message, forEveryone: boolean) => Promise<void>;
+  onCloseConversation?: () => void;
 }
 
 const FONT_SIZES = [
@@ -88,6 +89,7 @@ const ChatAreaComponent = ({
   allConversations = [],
   onForwardMessage,
   onDeleteMessage,
+  onCloseConversation,
 }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
@@ -563,6 +565,52 @@ const ChatAreaComponent = ({
       mediaUploaderRef.current.handleDroppedFiles(files);
     }
   }, []);
+
+  // Handle paste for images (Ctrl+V)
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0 && mediaUploaderRef.current) {
+      e.preventDefault();
+      mediaUploaderRef.current.handleDroppedFiles(imageFiles);
+    }
+  }, []);
+
+  // Handle ESC key to close conversation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && conversation && onCloseConversation) {
+        // If in selection mode, exit selection mode first
+        if (isSelectionMode) {
+          setIsSelectionMode(false);
+          setSelectedMessages(new Set());
+          return;
+        }
+        // If replying, cancel reply first
+        if (replyingTo) {
+          setReplyingTo(null);
+          return;
+        }
+        // Otherwise close the conversation
+        onCloseConversation();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [conversation, onCloseConversation, isSelectionMode, replyingTo]);
 
   const isContactSaved = () => {
     return !!(conversation?.contact_id && conversation?.contacts?.name);
@@ -1247,6 +1295,7 @@ const ChatAreaComponent = ({
                   handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>);
                 }
               }}
+              onPaste={handlePaste}
               placeholder="Digite uma mensagem ou /tag..."
               className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-muted-foreground/40 focus-visible:ring-offset-0"
               disabled={isSending || sendingQuickReply}
