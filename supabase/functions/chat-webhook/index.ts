@@ -455,6 +455,69 @@ serve(async (req) => {
     }
 
     // ============================================
+    // HANDLE MESSAGE DELETIONS (from mobile)
+    // ============================================
+    if (normalizedEvent.includes('messagesdelete') || normalizedEvent.includes('messagedelete') || normalizedEvent.includes('messagerevoked')) {
+      console.log('[WEBHOOK] Processing MESSAGE DELETE');
+
+      // Handle both single and array of message IDs
+      const messageIds = Array.isArray(data) 
+        ? data.map((d: any) => d?.key?.id || d?.id || d?.messageId).filter(Boolean)
+        : [data?.key?.id || data?.id || data?.messageId].filter(Boolean);
+
+      console.log('[WEBHOOK] Message IDs to delete:', messageIds);
+
+      for (const msgId of messageIds) {
+        if (!msgId) continue;
+
+        // Find and delete the message
+        const { data: existingMsg } = await supabase
+          .from('messages')
+          .select('id, conversation_id')
+          .eq('message_id', msgId)
+          .eq('user_id', whatsappNumber.user_id)
+          .maybeSingle();
+
+        if (existingMsg) {
+          console.log('[WEBHOOK] Deleting message:', existingMsg.id);
+          
+          await supabase
+            .from('messages')
+            .delete()
+            .eq('id', existingMsg.id);
+
+          // Update conversation's last message if needed
+          const { data: lastMsg } = await supabase
+            .from('messages')
+            .select('content, message_type, created_at')
+            .eq('conversation_id', existingMsg.conversation_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (lastMsg) {
+            await supabase
+              .from('conversations')
+              .update({
+                last_message: lastMsg.content?.substring(0, 100) || `[${lastMsg.message_type}]`,
+                last_message_at: lastMsg.created_at,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingMsg.conversation_id);
+          }
+
+          console.log('[WEBHOOK] Message deleted successfully');
+        } else {
+          console.log('[WEBHOOK] Message not found for deletion:', msgId);
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ============================================
     // HANDLE CONNECTION UPDATES
     // ============================================
     if (normalizedEvent.includes('connectionupdate')) {
