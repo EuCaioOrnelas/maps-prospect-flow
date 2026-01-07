@@ -11,6 +11,7 @@ import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
 import { LinkPreview } from './LinkPreview';
 import { MessageActionsMenu } from './MessageActionsMenu';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface MessageBubbleProps {
   message: Message;
@@ -18,10 +19,13 @@ interface MessageBubbleProps {
   displayName: string;
   fontSize: string;
   isHighlighted: boolean;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
   onReply: (message: Message) => void;
   onForward?: (message: Message) => void;
   onDelete?: (message: Message, forEveryone: boolean) => void;
   onEdit?: (message: Message) => void;
+  onSelect?: (message: Message) => void;
 }
 
 const getStatusIcon = (status: string, fromMe: boolean) => {
@@ -47,10 +51,13 @@ const MessageBubbleComponent = ({
   displayName,
   fontSize,
   isHighlighted,
+  isSelectionMode = false,
+  isSelected = false,
   onReply,
   onForward,
   onDelete,
   onEdit,
+  onSelect,
 }: MessageBubbleProps) => {
   const handleReply = useCallback(() => {
     onReply(message);
@@ -158,30 +165,55 @@ const MessageBubbleComponent = ({
     return updated - created > 2000; // More than 2 seconds difference
   }, [message.created_at, message.updated_at]);
 
+  const handleClick = useCallback(() => {
+    if (isSelectionMode && onSelect) {
+      onSelect(message);
+    }
+  }, [isSelectionMode, message, onSelect]);
+
   return (
     <div
       id={`message-${message.id}`}
+      onClick={handleClick}
       className={cn(
         'flex w-full group transition-all duration-500 px-3',
         message.from_me ? 'justify-end' : 'justify-start',
-        isHighlighted && 'animate-pulse bg-primary/10 rounded-lg py-1'
+        isHighlighted && 'animate-pulse bg-primary/10 rounded-lg py-1',
+        isSelectionMode && 'cursor-pointer',
+        isSelected && 'bg-primary/10 rounded-lg py-1'
       )}
     >
+      {/* Selection checkbox */}
+      {isSelectionMode && (
+        <div className={cn(
+          "flex items-center mr-2",
+          message.from_me && "order-last ml-2 mr-0"
+        )}>
+          <Checkbox 
+            checked={isSelected}
+            onCheckedChange={() => onSelect?.(message)}
+            className="h-5 w-5"
+          />
+        </div>
+      )}
+      
       <div className={cn(
         'flex items-start gap-1',
         message.from_me ? 'flex-row-reverse' : 'flex-row',
         message.message_type === 'audio' ? 'max-w-[60%]' : 'max-w-[45%]'
       )}>
-        {/* Action menu - positioned at top */}
-        <MessageActionsMenu
-          message={message}
-          fromMe={message.from_me}
-          onReply={handleReply}
-          onForward={handleForward}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          className="mt-2"
-        />
+        {/* Action menu - positioned at top (hide in selection mode) */}
+        {!isSelectionMode && (
+          <MessageActionsMenu
+            message={message}
+            fromMe={message.from_me}
+            onReply={handleReply}
+            onForward={handleForward}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            className="mt-2"
+          />
+        )}
         
         <div
           className={cn(
@@ -241,6 +273,8 @@ export const MessageBubble = memo(MessageBubbleComponent, (prevProps, nextProps)
     prevProps.message.content === nextProps.message.content &&
     prevProps.fontSize === nextProps.fontSize &&
     prevProps.isHighlighted === nextProps.isHighlighted &&
-    prevProps.quotedMessage?.id === nextProps.quotedMessage?.id
+    prevProps.quotedMessage?.id === nextProps.quotedMessage?.id &&
+    prevProps.isSelectionMode === nextProps.isSelectionMode &&
+    prevProps.isSelected === nextProps.isSelected
   );
 });
