@@ -1079,6 +1079,20 @@ const ChatAreaComponent = ({
                   handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>);
                 }
               }}
+              onBlur={(e) => {
+                // Refocus unless user clicked on an interactive element outside the form
+                const relatedTarget = e.relatedTarget as HTMLElement;
+                const isInteractiveElement = relatedTarget?.closest('button, a, input, textarea, [role="button"], [tabindex]');
+                const isOutsideForm = !relatedTarget?.closest('form');
+                
+                // Only refocus if blur was caused by form submission (no related target) 
+                // or if clicking within the form area
+                if (!relatedTarget || (!isInteractiveElement && !isOutsideForm)) {
+                  setTimeout(() => {
+                    inputRef.current?.focus();
+                  }, 0);
+                }
+              }}
               placeholder="Digite uma mensagem ou /tag..."
               className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-muted-foreground/40 focus-visible:ring-offset-0"
               disabled={isSending || sendingQuickReply}
