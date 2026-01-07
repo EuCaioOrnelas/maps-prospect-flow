@@ -251,16 +251,22 @@ const ChatAreaComponent = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isSending) return;
+    
+    const currentInputRef = inputRef.current;
+    
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
     setReplyingTo(null);
-    // Reset textarea height and keep focus
-    if (inputRef.current) {
-      inputRef.current.style.height = '40px';
-      // Keep focus on input after sending
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
+    
+    // Reset textarea height and keep focus immediately
+    if (currentInputRef) {
+      currentInputRef.style.height = '40px';
+      // Prevent blur and maintain focus
+      currentInputRef.focus();
+      // Also ensure focus after React re-render
+      requestAnimationFrame(() => {
+        currentInputRef?.focus();
+      });
     }
   };
 
