@@ -467,25 +467,27 @@ const Chat = () => {
   // Handle deleting a message
   const handleDeleteMessage = async (message: Message, forEveryone: boolean) => {
     try {
-      // Delete from local database
-      await supabase
-        .from('messages')
-        .delete()
-        .eq('id', message.id);
-      
-      // If deleting for everyone and message was sent by us, could call Evolution API
-      // For now, just delete locally
-      
-      // Refresh messages
-      if (selectedConversation) {
-        const { data } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', selectedConversation.id)
-          .order('created_at', { ascending: true });
-        
-        // This would need to be handled by the hook, but for now we just trigger a refresh
+      // Call edge function to delete (handles both local DB and Evolution API)
+      const { error } = await supabase.functions.invoke('evolution-delete-message', {
+        body: {
+          messageId: message.message_id,
+          messageDbId: message.id,
+          remoteJid: message.remote_jid,
+          whatsappNumberId: selectedConversation?.whatsapp_number_id,
+          forEveryone: forEveryone && message.from_me, // Only can delete for everyone if sent by us
+        },
+      });
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        throw error;
       }
+
+      // Re-select conversation to refresh messages
+      if (selectedConversation) {
+        await selectConversation(selectedConversation);
+      }
+      
     } catch (error) {
       console.error('Error deleting message:', error);
       throw error;
