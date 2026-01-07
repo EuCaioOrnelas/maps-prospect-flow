@@ -105,6 +105,7 @@ export type Database = {
           last_message: string | null
           last_message_at: string | null
           phone: string
+          pinned_at: string | null
           remote_jid: string
           unread_count: number
           updated_at: string
@@ -120,6 +121,7 @@ export type Database = {
           last_message?: string | null
           last_message_at?: string | null
           phone: string
+          pinned_at?: string | null
           remote_jid: string
           unread_count?: number
           updated_at?: string
@@ -135,6 +137,7 @@ export type Database = {
           last_message?: string | null
           last_message_at?: string | null
           phone?: string
+          pinned_at?: string | null
           remote_jid?: string
           unread_count?: number
           updated_at?: string
@@ -416,6 +419,7 @@ export type Database = {
           created_at: string
           from_me: boolean
           id: string
+          interactive: Json | null
           media_filename: string | null
           media_mimetype: string | null
           media_url: string | null
@@ -433,6 +437,7 @@ export type Database = {
           created_at?: string
           from_me?: boolean
           id?: string
+          interactive?: Json | null
           media_filename?: string | null
           media_mimetype?: string | null
           media_url?: string | null
@@ -450,6 +455,7 @@ export type Database = {
           created_at?: string
           from_me?: boolean
           id?: string
+          interactive?: Json | null
           media_filename?: string | null
           media_mimetype?: string | null
           media_url?: string | null

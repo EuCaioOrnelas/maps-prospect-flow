@@ -11,6 +11,7 @@ import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
 import { LinkPreview } from './LinkPreview';
 import { MessageActionsMenu } from './MessageActionsMenu';
+import { InteractiveMessage } from './InteractiveMessage';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface MessageBubbleProps {
@@ -84,6 +85,25 @@ const MessageBubbleComponent = ({
   }, [message.content, message.media_url]);
 
   const renderContent = () => {
+    // Check if this is an interactive message (bot buttons/lists)
+    const isInteractive = ['interactive', 'buttons', 'list'].includes(message.message_type);
+    if (isInteractive && message.interactive) {
+      return (
+        <>
+          <InteractiveMessage 
+            interactive={message.interactive as Record<string, unknown>} 
+            fromMe={message.from_me} 
+          />
+          {/* Also show text content if available */}
+          {message.content && !message.content.startsWith('[') && (
+            <p className={cn('whitespace-pre-wrap break-words mt-2', fontSize)}>
+              {message.content}
+            </p>
+          )}
+        </>
+      );
+    }
+
     // Check if this is a media message type (not text)
     const isMediaType = ['image', 'video', 'audio', 'ptt', 'document', 'sticker'].includes(message.message_type);
     const placeholderPattern = /^\[(image|audio|video|document|sticker|ptt)\]$/i;

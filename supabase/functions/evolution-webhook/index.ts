@@ -449,6 +449,7 @@ serve(async (req) => {
             let mediaFilename: string | null = null;
             let mediaMimetype: string | null = null;
             let hasMedia = false;
+            let interactive: Record<string, unknown> | null = null;
 
             if (messageData.conversation) {
               content = messageData.conversation;
@@ -473,6 +474,80 @@ serve(async (req) => {
               mediaFilename = messageData.documentMessage.fileName;
               mediaMimetype = messageData.documentMessage.mimetype;
               hasMedia = true;
+            } else if (messageData.interactiveMessage) {
+              // Handle interactive messages (bots with buttons/lists)
+              messageType = 'interactive';
+              const interactiveMsg = messageData.interactiveMessage;
+              
+              // Extract header text (usually the main content)
+              const header = interactiveMsg.header;
+              const body = interactiveMsg.body;
+              const footer = interactiveMsg.footer;
+              
+              // Build content from parts
+              const contentParts: string[] = [];
+              if (header?.title) contentParts.push(header.title);
+              if (header?.subtitle) contentParts.push(header.subtitle);
+              if (body?.text) contentParts.push(body.text);
+              if (footer?.text) contentParts.push(footer.text);
+              
+              content = contentParts.join('\n\n') || '[Mensagem interativa]';
+              
+              // Store full interactive data
+              interactive = {
+                type: interactiveMsg.nativeFlowMessage ? 'flow' : 
+                      interactiveMsg.collectionMessage ? 'collection' : 
+                      interactiveMsg.shopStorefrontMessage ? 'storefront' : 'generic',
+                header: header || null,
+                body: body || null,
+                footer: footer || null,
+                nativeFlowMessage: interactiveMsg.nativeFlowMessage || null,
+                collectionMessage: interactiveMsg.collectionMessage || null,
+                shopStorefrontMessage: interactiveMsg.shopStorefrontMessage || null,
+              };
+              
+              console.log('Interactive message detected:', JSON.stringify(interactive).slice(0, 500));
+            } else if (messageData.buttonsMessage) {
+              // Legacy buttons message
+              messageType = 'buttons';
+              content = messageData.buttonsMessage.contentText || 
+                        messageData.buttonsMessage.text || 
+                        '[Mensagem com botões]';
+              interactive = {
+                type: 'buttons',
+                buttons: messageData.buttonsMessage.buttons || [],
+                headerType: messageData.buttonsMessage.headerType,
+              };
+            } else if (messageData.listMessage) {
+              // List message
+              messageType = 'list';
+              content = messageData.listMessage.description || 
+                        messageData.listMessage.title || 
+                        '[Mensagem de lista]';
+              interactive = {
+                type: 'list',
+                title: messageData.listMessage.title,
+                buttonText: messageData.listMessage.buttonText,
+                sections: messageData.listMessage.sections || [],
+              };
+            } else if (messageData.buttonResponseMessage) {
+              // Response to buttons
+              messageType = 'text';
+              content = messageData.buttonResponseMessage.selectedDisplayText || 
+                        messageData.buttonResponseMessage.selectedButtonId || 
+                        '[Resposta de botão]';
+            } else if (messageData.listResponseMessage) {
+              // Response to list
+              messageType = 'text';
+              content = messageData.listResponseMessage.title || 
+                        messageData.listResponseMessage.singleSelectReply?.selectedRowId ||
+                        '[Resposta de lista]';
+            } else if (messageData.templateButtonReplyMessage) {
+              // Template button reply
+              messageType = 'text';
+              content = messageData.templateButtonReplyMessage.selectedDisplayText ||
+                        messageData.templateButtonReplyMessage.selectedId ||
+                        '[Resposta de template]';
             }
 
             // If message has media, download it and store in Supabase Storage
@@ -518,6 +593,7 @@ serve(async (req) => {
                   media_url: mediaUrl,
                   media_filename: mediaFilename,
                   media_mimetype: mediaMimetype,
+                  interactive: interactive,
                   status: fromMe ? 'sent' : 'received',
                 });
 
