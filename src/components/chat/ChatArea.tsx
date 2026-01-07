@@ -252,22 +252,19 @@ const ChatAreaComponent = ({
     e.preventDefault();
     if (!inputValue.trim() || isSending) return;
     
-    const currentInputRef = inputRef.current;
-    
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
     setReplyingTo(null);
     
-    // Reset textarea height and keep focus immediately
-    if (currentInputRef) {
-      currentInputRef.style.height = '40px';
-      // Prevent blur and maintain focus
-      currentInputRef.focus();
-      // Also ensure focus after React re-render
-      requestAnimationFrame(() => {
-        currentInputRef?.focus();
-      });
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = '40px';
     }
+    
+    // Focus after React re-render completes (button changes from Send to Mic)
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   };
 
   const handleReply = (message: Message) => {
