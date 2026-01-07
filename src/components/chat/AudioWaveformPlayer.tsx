@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback } from 'react';
+import { useState, useRef, useEffect, memo, useCallback, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Play, Pause, Mic, FileText, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -9,6 +9,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Global audio management - only one audio plays at a time
+let currentPlayingAudio: HTMLAudioElement | null = null;
+let currentPlayingUrl: string | null = null;
+
+const pauseCurrentAudio = () => {
+  if (currentPlayingAudio) {
+    currentPlayingAudio.pause();
+    currentPlayingAudio = null;
+    currentPlayingUrl = null;
+  }
+};
 
 interface AudioWaveformPlayerProps {
   url: string;
@@ -118,17 +130,42 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
     };
   }, []);
 
+  // Listen for this audio being paused externally
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handlePause = () => {
+      if (currentPlayingUrl !== url) {
+        setIsPlaying(false);
+      }
+    };
+
+    audio.addEventListener('pause', handlePause);
+    return () => audio.removeEventListener('pause', handlePause);
+  }, [url]);
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
       audio.pause();
+      currentPlayingAudio = null;
+      currentPlayingUrl = null;
     } else {
+      // Pause any other playing audio first
+      if (currentPlayingAudio && currentPlayingAudio !== audio) {
+        currentPlayingAudio.pause();
+      }
+      
+      // Set this as current and play
+      currentPlayingAudio = audio;
+      currentPlayingUrl = url;
       audio.play().catch(() => setError(true));
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+  }, [isPlaying, url]);
 
   const handleSpeedChange = useCallback((speed: number) => {
     const audio = audioRef.current;

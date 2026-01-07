@@ -812,6 +812,7 @@ const Chat = () => {
                               allConversations={conversations}
                               onForwardMessage={handleForwardMessage}
                               onDeleteMessage={handleDeleteMessage}
+                              onCloseConversation={() => setSelectedConversation(null)}
                             />
                           </div>
 

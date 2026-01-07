@@ -25,7 +25,7 @@ interface SelectedFile {
 }
 
 export interface MediaUploaderRef {
-  handleDroppedFiles: (files: FileList) => void;
+  handleDroppedFiles: (files: FileList | File[]) => void;
 }
 
 // Image compression settings
@@ -142,7 +142,7 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
 
   // Expose method to parent via ref
   useImperativeHandle(ref, () => ({
-    handleDroppedFiles: (files: FileList) => {
+    handleDroppedFiles: (files: FileList | File[]) => {
       processFiles(files);
     }
   }));

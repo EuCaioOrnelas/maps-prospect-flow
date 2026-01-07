@@ -213,6 +213,20 @@ serve(async (req) => {
       let mediaMimetype: string | null = null;
       let mediaFilename: string | null = null;
       let hasMedia = false;
+      let quotedMessageId: string | null = null;
+
+      // Extract quoted message ID (contextInfo contains reply info)
+      const contextInfo = msg.extendedTextMessage?.contextInfo || 
+                          msg.imageMessage?.contextInfo ||
+                          msg.videoMessage?.contextInfo ||
+                          msg.audioMessage?.contextInfo ||
+                          msg.documentMessage?.contextInfo ||
+                          data?.contextInfo;
+      
+      if (contextInfo?.stanzaId) {
+        quotedMessageId = contextInfo.stanzaId;
+        console.log('[WEBHOOK] Message is a reply to:', quotedMessageId);
+      }
 
       if (msg.conversation) {
         content = msg.conversation;
@@ -242,6 +256,36 @@ serve(async (req) => {
       } else if (msg.stickerMessage) {
         messageType = 'sticker';
         content = '[Sticker]';
+      } else if (msg.buttonResponseMessage) {
+        // Handle button response messages
+        messageType = 'text';
+        content = msg.buttonResponseMessage.selectedDisplayText || 
+                  msg.buttonResponseMessage.selectedButtonId || 
+                  '[Resposta de botão]';
+      } else if (msg.listResponseMessage) {
+        // Handle list response messages
+        messageType = 'text';
+        content = msg.listResponseMessage.title || 
+                  msg.listResponseMessage.singleSelectReply?.selectedRowId ||
+                  '[Resposta de lista]';
+      } else if (msg.templateButtonReplyMessage) {
+        // Handle template button replies
+        messageType = 'text';
+        content = msg.templateButtonReplyMessage.selectedDisplayText ||
+                  msg.templateButtonReplyMessage.selectedId ||
+                  '[Resposta de template]';
+      } else if (msg.buttonsMessage) {
+        // Handle outgoing buttons message
+        messageType = 'text';
+        content = msg.buttonsMessage.contentText || 
+                  msg.buttonsMessage.headerType === 1 ? msg.buttonsMessage.text : 
+                  '[Mensagem com botões]';
+      } else if (msg.listMessage) {
+        // Handle outgoing list message
+        messageType = 'text';
+        content = msg.listMessage.description || 
+                  msg.listMessage.title ||
+                  '[Mensagem de lista]';
       } else if (data?.text) {
         content = data.text;
       } else if (data?.content) {
@@ -383,6 +427,7 @@ serve(async (req) => {
           media_url: mediaUrl,
           media_mimetype: mediaMimetype,
           media_filename: mediaFilename,
+          quoted_message_id: quotedMessageId,
           status: fromMe ? 'sent' : 'received',
         })
         .select()
