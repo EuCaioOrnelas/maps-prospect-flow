@@ -13,6 +13,7 @@ import { LinkPreview } from './LinkPreview';
 import { MessageActionsMenu } from './MessageActionsMenu';
 import { InteractiveMessage } from './InteractiveMessage';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MessageFormatter } from './MessageFormatter';
 
 interface MessageBubbleProps {
   message: Message;
@@ -96,9 +97,13 @@ const MessageBubbleComponent = ({
           />
           {/* Also show text content if available */}
           {message.content && !message.content.startsWith('[') && (
-            <p className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere] mt-2', fontSize)}>
-              {message.content}
-            </p>
+            <div className="mt-2">
+              <MessageFormatter 
+                content={message.content} 
+                fromMe={message.from_me} 
+                fontSize={fontSize}
+              />
+            </div>
           )}
         </>
       );
@@ -139,35 +144,18 @@ const MessageBubbleComponent = ({
     }
 
     if (message.content) {
-      // Regex to detect URLs
+      // Check if content has URLs
       const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const parts = message.content.split(urlRegex);
+      const hasUrls = urlRegex.test(message.content);
       
       return (
         <>
-          <p className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere]', fontSize)}>
-            {parts.map((part, index) => {
-              if (urlRegex.test(part)) {
-                return (
-                  <a
-                    key={index}
-                    href={part}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      'underline hover:opacity-80 transition-opacity',
-                      message.from_me ? 'text-primary-foreground' : 'text-primary'
-                    )}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {part}
-                  </a>
-                );
-              }
-              return part;
-            })}
-          </p>
-          {extractedUrls.slice(0, 1).map((url) => (
+          <MessageFormatter 
+            content={message.content} 
+            fromMe={message.from_me} 
+            fontSize={fontSize}
+          />
+          {hasUrls && extractedUrls.slice(0, 1).map((url) => (
             <LinkPreview key={url} url={url} fromMe={message.from_me} />
           ))}
         </>
@@ -203,11 +191,11 @@ const MessageBubbleComponent = ({
         isSelected && 'bg-primary/10 rounded-lg py-1'
       )}
     >
-      {/* Selection checkbox */}
+      {/* Selection checkbox - fixed position */}
       {isSelectionMode && (
         <div className={cn(
-          "flex items-center mr-2",
-          message.from_me && "order-last ml-2 mr-0"
+          "flex items-center shrink-0",
+          message.from_me ? "order-last ml-2" : "mr-2"
         )}>
           <Checkbox 
             checked={isSelected}
@@ -217,8 +205,9 @@ const MessageBubbleComponent = ({
         </div>
       )}
       
+      {/* Message container - fixed max-width, aligned to edge */}
       <div className={cn(
-        'flex items-start gap-1 min-w-0 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
+        'flex items-start gap-1 min-w-0 w-auto max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
         message.from_me ? 'flex-row-reverse' : 'flex-row',
       )}>
         {/* Action menu - positioned at top (hide in selection mode) */}

@@ -791,7 +791,10 @@ const Chat = () => {
                             }
                           }}
                           onTogglePin={(conversation) => togglePinConversation(conversation.id, !!conversation.pinned_at)}
-                          onMarkUnread={(conversation) => markAsUnread(conversation.id)}
+                          onMarkUnread={(conversation) => {
+                            markAsUnread(conversation.id);
+                            toast.success('Conversa marcada como não lida');
+                          }}
                           filter={conversationFilter}
                           onFilterChange={setConversationFilter}
                           totalConversations={conversations.length}

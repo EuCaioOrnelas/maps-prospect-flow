@@ -904,8 +904,9 @@ const ChatAreaComponent = ({
                             highlightedMessageId === firstMessage.id && 'animate-pulse bg-primary/10 rounded-lg py-1'
                           )}
                         >
+                          {/* Message container - fixed max-width, aligned to edge */}
                           <div className={cn(
-                            'flex items-start gap-1 min-w-0 max-w-[45%]',
+                            'flex items-start gap-1 min-w-0 w-auto max-w-[45%]',
                             item.fromMe ? 'flex-row-reverse' : 'flex-row'
                           )}>
                             {/* Action menu - outside the card */}

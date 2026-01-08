@@ -271,9 +271,14 @@ export const useChat = (selectedNumberId?: string | null) => {
     await fetchConversations();
   }, [user, fetchConversations]);
 
-  // Mark conversation as unread
+  // Mark conversation as unread (local only - doesn't affect WhatsApp)
   const markAsUnread = useCallback(async (conversationId: string) => {
     if (!user) return;
+
+    // Optimistically update UI
+    setConversations(prev => prev.map(c => 
+      c.id === conversationId ? { ...c, unread_count: 1 } : c
+    ));
 
     const { error } = await supabase
       .from('conversations')
@@ -283,11 +288,13 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     if (error) {
       console.error('Error marking as unread:', error);
+      // Revert optimistic update
+      setConversations(prev => prev.map(c => 
+        c.id === conversationId ? { ...c, unread_count: 0 } : c
+      ));
       throw error;
     }
-
-    await fetchConversations();
-  }, [user, fetchConversations]);
+  }, [user]);
 
   // Fetch messages for a conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
