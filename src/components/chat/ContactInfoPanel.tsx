@@ -20,6 +20,7 @@ interface ContactInfoPanelProps {
   onClose: () => void;
   onContactUpdated: () => void;
   onOpenNumbersManager?: () => void;
+  onStartConversation?: (phone: string) => void;
 }
 
 export const ContactInfoPanel = ({
@@ -27,6 +28,7 @@ export const ContactInfoPanel = ({
   onClose,
   onContactUpdated,
   onOpenNumbersManager,
+  onStartConversation,
 }: ContactInfoPanelProps) => {
   const { createContact, updateContact, getContactByPhone } = useContacts();
   const [contact, setContact] = useState<Contact | null>(null);
@@ -295,7 +297,8 @@ export const ContactInfoPanel = ({
             <div className="border-t border-border pt-4">
               <GroupParticipantsList 
                 instanceName={instanceName} 
-                groupJid={conversation.remote_jid} 
+                groupJid={conversation.remote_jid}
+                onStartConversation={onStartConversation}
               />
             </div>
           )}

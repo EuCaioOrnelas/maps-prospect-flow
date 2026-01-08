@@ -16,6 +16,7 @@ import {
   X,
   UserPlus,
   User,
+  Users,
   Search,
   Upload,
   Mic,
@@ -623,6 +624,10 @@ const ChatAreaComponent = ({
 
   const getDisplayName = () => {
     if (!conversation) return '';
+    // For groups, show group name
+    if (conversation.is_group) {
+      return conversation.group_name || `Grupo ${conversation.phone.slice(-6)}`;
+    }
     // Only show name if contact is saved with a name
     if (conversation.contacts?.name) return conversation.contacts.name;
     if (conversation.contact_name) return conversation.contact_name;
@@ -761,18 +766,21 @@ const ChatAreaComponent = ({
             onClick={onOpenContactInfo}
             className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -ml-2 transition-colors"
           >
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={avatarUrl || conversation.contacts?.avatar_url || undefined} />
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarImage src={conversation.is_group ? (conversation.avatar_url || undefined) : (avatarUrl || conversation.contacts?.avatar_url || undefined)} />
               <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
-                <User className="h-5 w-5" />
+                {conversation.is_group ? <Users className="h-5 w-5" /> : <User className="h-5 w-5" />}
               </AvatarFallback>
             </Avatar>
-            <div className="text-left">
-              <p className="font-medium text-foreground">{displayName}</p>
-              {isContactSaved() && (
-                <p className="text-xs text-muted-foreground">
+            <div className="text-left min-w-0 flex-1">
+              <p className="font-medium text-foreground truncate max-w-[150px] sm:max-w-[250px] md:max-w-[300px]">{displayName}</p>
+              {!conversation.is_group && isContactSaved() && (
+                <p className="text-xs text-muted-foreground truncate">
                   {formatPhoneNumber(conversation.phone)}
                 </p>
+              )}
+              {conversation.is_group && (
+                <p className="text-xs text-muted-foreground">Toque para ver participantes</p>
               )}
             </div>
           </button>
