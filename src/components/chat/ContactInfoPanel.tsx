@@ -270,25 +270,13 @@ export const ContactInfoPanel = ({
                 className="text-center font-semibold"
               />
             ) : (
-              <h4 className="font-semibold text-lg text-foreground">{displayName}</h4>
+              <h4 className="font-semibold text-lg text-foreground max-w-full break-words px-2">{displayName}</h4>
             )}
             
             {!conversation.is_group && (
               <p className="text-sm text-muted-foreground mt-1">
                 {formatPhoneNumber(conversation.phone)}
               </p>
-            )}
-            
-            {!conversation.is_group && !contact && !isEditing && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-3"
-                onClick={() => setIsEditing(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Salvar Contato
-              </Button>
             )}
           </div>
 
@@ -445,38 +433,53 @@ export const ContactInfoPanel = ({
           Recuperar Mídias
         </Button>
 
-        {/* Contact Actions */}
-        {(isEditing || contact) && (
+        {/* Contact Actions - only for non-groups */}
+        {!conversation.is_group && (
           <>
-            {isEditing ? (
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => {
-                    setIsEditing(false);
-                    loadContact();
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar
-                </Button>
-              </div>
-            ) : (
+            {!contact && !isEditing && (
               <Button 
                 variant="outline" 
                 className="w-full"
                 onClick={() => setIsEditing(true)}
               >
-                Editar Contato
+                <Plus className="h-4 w-4 mr-2" />
+                Salvar Contato
               </Button>
+            )}
+            
+            {(isEditing || contact) && (
+              <>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => {
+                        setIsEditing(false);
+                        loadContact();
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      className="flex-1"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Editar Contato
+                  </Button>
+                )}
+              </>
             )}
           </>
         )}
