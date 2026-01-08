@@ -332,7 +332,11 @@ const Chat = () => {
       }
 
       if (response.data?.success) {
-        toast.success(`${response.data.syncedConversations || 0} grupos sincronizados!`);
+        const groupsFound = response.data?.groupsFound ?? 0;
+        const groupsCreated = response.data?.groupsCreated ?? response.data?.syncedConversations ?? 0;
+        const groupsUpdated = response.data?.groupsUpdated ?? 0;
+
+        toast.success(`Grupos: ${groupsFound} encontrados • ${groupsCreated} novos • ${groupsUpdated} atualizados`);
         await fetchConversations();
       } else {
         toast.error('Erro ao sincronizar grupos');
