@@ -65,6 +65,7 @@ const Chat = () => {
     linkContactToConversation,
     setSelectedConversation,
     mergeDuplicateConversations,
+    togglePinConversation,
   } = useChat(selectedNumberId);
 
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -788,6 +789,7 @@ const Chat = () => {
                               throw error;
                             }
                           }}
+                          onTogglePin={(conversation) => togglePinConversation(conversation.id, !!conversation.pinned_at)}
                           filter={conversationFilter}
                           onFilterChange={setConversationFilter}
                           totalConversations={conversations.length}
