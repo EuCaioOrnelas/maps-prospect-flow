@@ -141,10 +141,12 @@ export const useChat = (selectedNumberId?: string | null) => {
     switch (conversationFilter) {
       case 'unread':
         return conversations.filter(c => c.unread_count > 0);
+      case 'groups':
+        return conversations.filter(c => c.is_group === true);
       case 'contacts':
-        return conversations.filter(c => c.contact_id && c.contacts?.name);
+        return conversations.filter(c => !c.is_group && c.contact_id && c.contacts?.name);
       case 'non_contacts':
-        return conversations.filter(c => !c.contact_id || !c.contacts?.name);
+        return conversations.filter(c => !c.is_group && (!c.contact_id || !c.contacts?.name));
       default:
         return conversations;
     }
