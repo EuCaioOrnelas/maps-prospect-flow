@@ -12,7 +12,8 @@ import {
   CalendarClock,
   RefreshCw,
   WifiOff,
-  Timer
+  Timer,
+  X
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import { format } from "date-fns";
@@ -35,6 +36,7 @@ interface ActiveCampaignsProps {
   dailyLimit: number;
   onResume: (campaign: Campaign) => void;
   onPause: (campaign: Campaign) => void;
+  onCancel?: (campaign: Campaign) => void;
 }
 
 export const ActiveCampaigns = ({ 
@@ -42,11 +44,13 @@ export const ActiveCampaigns = ({
   usedToday, 
   dailyLimit, 
   onResume,
-  onPause
+  onPause,
+  onCancel
 }: ActiveCampaignsProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [retryingCampaignId, setRetryingCampaignId] = useState<string | null>(null);
+  const [cancellingCampaignId, setCancellingCampaignId] = useState<string | null>(null);
   const [showReconnectDialog, setShowReconnectDialog] = useState(false);
   const [disconnectedCampaign, setDisconnectedCampaign] = useState<Campaign | null>(null);
 
@@ -168,6 +172,32 @@ export const ActiveCampaigns = ({
       });
     } finally {
       setRetryingCampaignId(null);
+    }
+  };
+
+  // Cancel a scheduled campaign
+  const handleCancelCampaign = async (campaign: Campaign) => {
+    setCancellingCampaignId(campaign.id);
+    try {
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', campaign.id);
+      
+      toast({
+        title: "Campanha cancelada",
+        description: "A campanha agendada foi cancelada com sucesso.",
+      });
+      
+      if (onCancel) onCancel(campaign);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar a campanha",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingCampaignId(null);
     }
   };
 
@@ -315,6 +345,21 @@ export const ActiveCampaigns = ({
                   </div>
 
                   <div className="flex-shrink-0 flex items-center gap-2">
+                    {/* Cancel button for scheduled campaigns */}
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleCancelCampaign(campaign)}
+                      disabled={cancellingCampaignId === campaign.id}
+                      className="gap-1"
+                    >
+                      {cancellingCampaignId === campaign.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <X size={14} />
+                      )}
+                      Cancelar
+                    </Button>
                     {hasPauseReason && (
                       <Button 
                         variant="default" 
