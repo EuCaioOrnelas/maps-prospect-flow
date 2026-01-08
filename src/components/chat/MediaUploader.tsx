@@ -227,83 +227,97 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     }
   };
 
-  const handleSendCurrentFile = () => {
+  const handleSendCurrentFile = async () => {
     if (selectedFiles.length === 0 || isUploading) return;
     
     const fileToSend = selectedFiles[currentFileIndex];
     const captionToUse = caption;
     
-    // Remove sent file from list
-    const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
+    // Show loading state in modal
+    setIsUploading(true);
+    setUploadProgress('Enviando...');
     
-    if (newFiles.length > 0) {
-      setSelectedFiles(newFiles);
-      setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
-      setCaption('');
-    } else {
-      setSelectedFiles([]);
-      setCurrentFileIndex(0);
-      setCaption('');
-    }
-    
-    // Show toast and send in background
-    const toastId = toast.loading('Enviando arquivo...');
-    
-    uploadFile(fileToSend.file, fileToSend.type, captionToUse).then(success => {
+    try {
+      const success = await uploadFile(fileToSend.file, fileToSend.type, captionToUse);
+      
       // Cleanup preview URL
       if (fileToSend.preview) {
         URL.revokeObjectURL(fileToSend.preview);
       }
       
       if (success) {
-        toast.success('Arquivo enviado!', { id: toastId });
+        // Remove sent file from list
+        const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
+        
+        if (newFiles.length > 0) {
+          setSelectedFiles(newFiles);
+          setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
+          setCaption('');
+        } else {
+          setSelectedFiles([]);
+          setCurrentFileIndex(0);
+          setCaption('');
+        }
+        
+        toast.success('Arquivo enviado!');
         onMediaSent();
       } else {
-        toast.error('Falha ao enviar arquivo', { id: toastId });
+        toast.error('Falha ao enviar arquivo');
       }
-    });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
+    }
   };
 
-  const handleSendAllFiles = () => {
+  const handleSendAllFiles = async () => {
     if (selectedFiles.length === 0 || isUploading) return;
     
     const filesToSend = [...selectedFiles];
     const captionToUse = caption;
     const totalFiles = filesToSend.length;
     
-    // Clear state immediately
-    setSelectedFiles([]);
-    setCurrentFileIndex(0);
-    setCaption('');
+    // Show loading state in modal
+    setIsUploading(true);
     
-    // Show toast and send in background
-    const toastId = toast.loading(`Enviando ${totalFiles} arquivo${totalFiles > 1 ? 's' : ''}...`);
-    
-    Promise.all(
-      filesToSend.map((file, i) => {
+    try {
+      let successCount = 0;
+      
+      for (let i = 0; i < filesToSend.length; i++) {
+        const file = filesToSend[i];
+        setUploadProgress(`Enviando ${i + 1} de ${totalFiles}...`);
+        
         const cap = i === 0 ? captionToUse : '';
-        return uploadFile(file.file, file.type, cap).finally(() => {
-          // Cleanup preview URL
-          if (file.preview) {
-            URL.revokeObjectURL(file.preview);
-          }
-        });
-      })
-    ).then(results => {
-      const successCount = results.filter(Boolean).length;
+        const success = await uploadFile(file.file, file.type, cap);
+        
+        if (success) successCount++;
+        
+        // Cleanup preview URL
+        if (file.preview) {
+          URL.revokeObjectURL(file.preview);
+        }
+      }
+      
+      // Clear state after all uploads
+      setSelectedFiles([]);
+      setCurrentFileIndex(0);
+      setCaption('');
       
       if (successCount === totalFiles) {
-        toast.success(`${totalFiles} arquivo${totalFiles > 1 ? 's' : ''} enviado${totalFiles > 1 ? 's' : ''}!`, { id: toastId });
+        toast.success(`${totalFiles} arquivo${totalFiles > 1 ? 's' : ''} enviado${totalFiles > 1 ? 's' : ''}!`);
       } else if (successCount > 0) {
-        toast.warning(`${successCount} de ${totalFiles} enviados`, { id: toastId });
+        toast.warning(`${successCount} de ${totalFiles} enviados`);
       } else {
-        toast.error('Falha ao enviar arquivos', { id: toastId });
+        toast.error('Falha ao enviar arquivos');
       }
       
       if (successCount > 0) {
         onMediaSent();
       }
-    });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
+    }
   };
 
   const handleCancelFile = () => {
