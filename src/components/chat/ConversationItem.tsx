@@ -208,7 +208,8 @@ const ConversationItemComponent = ({
               {formatLastMessage(conversation.last_message)}
             </p>
             {conversation.unread_count > 0 && (
-              <Badge className="bg-primary text-primary-foreground shrink-0 h-5 min-w-5 flex items-center justify-center text-xs">
+              <Badge className="bg-primary text-primary-foreground shrink-0 h-5 min-w-5 flex items-center gap-1 justify-center text-xs px-1.5">
+                <MailOpen className="h-3 w-3" />
                 {conversation.unread_count}
               </Badge>
             )}

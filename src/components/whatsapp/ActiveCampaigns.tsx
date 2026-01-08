@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Play,
@@ -8,11 +9,25 @@ import {
   MessageSquare,
   Shield,
   Zap,
-  CalendarClock
+  CalendarClock,
+  RefreshCw,
+  WifiOff,
+  Timer
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 interface ActiveCampaignsProps {
   campaigns: Campaign[];
@@ -29,6 +44,12 @@ export const ActiveCampaigns = ({
   onResume,
   onPause
 }: ActiveCampaignsProps) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [retryingCampaignId, setRetryingCampaignId] = useState<string | null>(null);
+  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
+  const [disconnectedCampaign, setDisconnectedCampaign] = useState<Campaign | null>(null);
+
   const activeCampaigns = campaigns.filter(c => 
     c.status === 'running' || c.status === 'paused' || c.status === 'scheduled'
   );
@@ -37,8 +58,124 @@ export const ActiveCampaigns = ({
     c.status === 'paused' && (c as any).paused_at_limit
   );
 
+  const scheduledCampaigns = activeCampaigns.filter(c => c.status === 'scheduled');
+  const runningOrPausedCampaigns = activeCampaigns.filter(c => 
+    c.status === 'running' || c.status === 'paused'
+  );
+
   const remainingToday = dailyLimit - usedToday;
   const limitReached = remainingToday <= 0;
+
+  // Calculate estimated time for a campaign
+  const calculateEstimatedTime = (campaign: Campaign) => {
+    const remaining = campaign.total_leads - campaign.sent_count - campaign.failed_count;
+    if (remaining <= 0) return null;
+    
+    // Average delay (assuming 40-60 seconds range = ~50 seconds average)
+    const avgDelaySeconds = campaign.delay_seconds + 10;
+    const totalSeconds = remaining * avgDelaySeconds;
+    
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `~${hours}h ${mins}min`;
+    }
+    return `~${mins}min`;
+  };
+
+  // Retry a failed/paused campaign
+  const handleRetryCampaign = async (campaign: Campaign) => {
+    setRetryingCampaignId(campaign.id);
+    
+    try {
+      // Check if the number is connected
+      const { data: numberData, error: numberError } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, instance_name, is_connected')
+        .eq('id', campaign.whatsapp_number_id)
+        .single();
+
+      if (numberError || !numberData) {
+        toast({
+          title: "Erro",
+          description: "Número não encontrado. Configure um novo número.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!numberData.is_connected) {
+        setDisconnectedCampaign(campaign);
+        setShowReconnectDialog(true);
+        return;
+      }
+
+      // Update campaign to running and trigger edge function
+      const { error: updateError } = await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'running',
+          started_at: new Date().toISOString(),
+          pause_reason: null,
+          paused_at_limit: false
+        })
+        .eq('id', campaign.id);
+
+      if (updateError) throw updateError;
+
+      // Parse leads and messages
+      let leads = campaign.leads;
+      let messages = campaign.messages;
+
+      // Invoke the run campaign function
+      const { error: runError } = await supabase.functions.invoke('evolution-run-campaign', {
+        body: {
+          campaignId: campaign.id,
+          numberId: campaign.whatsapp_number_id,
+          instanceName: numberData.instance_name,
+          leads: leads,
+          messages: messages,
+          delaySecondsMin: campaign.delay_seconds,
+          delaySecondsMax: campaign.delay_seconds + 20
+        }
+      });
+
+      if (runError) {
+        toast({
+          title: "Erro ao iniciar",
+          description: runError.message,
+          variant: "destructive",
+        });
+        
+        // Revert status
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ status: 'paused', pause_reason: runError.message })
+          .eq('id', campaign.id);
+      } else {
+        toast({
+          title: "Campanha reiniciada!",
+          description: "Os disparos foram retomados com sucesso.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error retrying campaign:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível reiniciar a campanha",
+        variant: "destructive",
+      });
+    } finally {
+      setRetryingCampaignId(null);
+    }
+  };
+
+  const handleGoToReconnect = () => {
+    setShowReconnectDialog(false);
+    // Scroll to numbers manager or open it
+    navigate('/whatsapp', { state: { openNumbersManager: true } });
+  };
 
   if (activeCampaigns.length === 0 && !limitReached) return null;
 
@@ -105,20 +242,123 @@ export const ActiveCampaigns = ({
         </div>
       )}
 
-      {/* Active Campaigns List */}
-      {activeCampaigns.length > 0 && (
+      {/* Scheduled Campaigns */}
+      {scheduledCampaigns.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <CalendarClock size={16} className="text-blue-500" />
+            Campanhas Agendadas ({scheduledCampaigns.length})
+          </h3>
+          
+          {scheduledCampaigns.map((campaign) => {
+            const estimatedTime = calculateEstimatedTime(campaign);
+            const hasPauseReason = !!campaign.pause_reason;
+            const needsReconnect = campaign.pause_reason?.includes('desconectado') || 
+                                   campaign.pause_reason?.includes('WhatsApp');
+
+            return (
+              <div 
+                key={campaign.id}
+                className={`glass rounded-xl p-4 border-l-4 ${
+                  hasPauseReason ? 'border-l-amber-500' : 'border-l-blue-500'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-medium truncate">{campaign.name}</h4>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        hasPauseReason 
+                          ? 'bg-amber-500/20 text-amber-600' 
+                          : 'bg-blue-500/20 text-blue-500'
+                      }`}>
+                        {hasPauseReason ? 'Atenção Necessária' : 'Agendada'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center gap-1">
+                        <Users size={14} />
+                        <span>{campaign.total_leads} leads</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageSquare size={14} />
+                        <span>{campaign.messages.length} variações</span>
+                      </div>
+                      {campaign.scheduled_at && (
+                        <div className="flex items-center gap-1 text-blue-500">
+                          <CalendarClock size={14} />
+                          <span>
+                            {format(new Date(campaign.scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                      )}
+                      {estimatedTime && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Timer size={14} />
+                          <span>Duração: {estimatedTime}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pause reason / error message */}
+                    {hasPauseReason && (
+                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg">
+                        {needsReconnect ? (
+                          <WifiOff size={14} />
+                        ) : (
+                          <AlertTriangle size={14} />
+                        )}
+                        <span>{campaign.pause_reason}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    {hasPauseReason && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => handleRetryCampaign(campaign)}
+                        disabled={retryingCampaignId === campaign.id}
+                        className="gap-1"
+                      >
+                        {retryingCampaignId === campaign.id ? (
+                          <>
+                            <RefreshCw size={14} className="animate-spin" />
+                            Iniciando...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw size={14} />
+                            Tentar Novamente
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Running/Paused Campaigns */}
+      {runningOrPausedCampaigns.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-semibold flex items-center gap-2">
             <Play size={16} className="text-primary" />
-            Campanhas Ativas ({activeCampaigns.length})
+            Em Andamento ({runningOrPausedCampaigns.length})
           </h3>
           
-          {activeCampaigns.map((campaign) => {
-            const isPausedByLimit = campaign.status === 'paused' && (campaign as any).paused_at_limit;
-            const isScheduled = campaign.status === 'scheduled';
+          {runningOrPausedCampaigns.map((campaign) => {
+            const isPausedByLimit = campaign.status === 'paused' && campaign.paused_at_limit;
             const progress = campaign.total_leads > 0 
               ? Math.round((campaign.sent_count / campaign.total_leads) * 100) 
               : 0;
+            const estimatedTime = calculateEstimatedTime(campaign);
+            const hasPauseReason = !!campaign.pause_reason && !isPausedByLimit;
 
             return (
               <div 
@@ -126,11 +366,9 @@ export const ActiveCampaigns = ({
                 className={`glass rounded-xl p-4 border-l-4 ${
                   isPausedByLimit 
                     ? 'border-l-destructive' 
-                    : isScheduled 
-                      ? 'border-l-blue-500' 
-                      : campaign.status === 'running' 
-                        ? 'border-l-primary' 
-                        : 'border-l-yellow-500'
+                    : campaign.status === 'running' 
+                      ? 'border-l-primary' 
+                      : 'border-l-yellow-500'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -140,14 +378,11 @@ export const ActiveCampaigns = ({
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         isPausedByLimit 
                           ? 'bg-destructive/20 text-destructive' 
-                          : isScheduled
-                            ? 'bg-blue-500/20 text-blue-500'
-                            : campaign.status === 'running' 
-                              ? 'bg-primary/20 text-primary' 
-                              : 'bg-yellow-500/20 text-yellow-500'
+                          : campaign.status === 'running' 
+                            ? 'bg-primary/20 text-primary' 
+                            : 'bg-yellow-500/20 text-yellow-500'
                       }`}>
                         {isPausedByLimit ? 'Limite Atingido' : 
-                         isScheduled ? 'Agendada' :
                          campaign.status === 'running' ? 'Em Andamento' : 'Pausada'}
                       </span>
                     </div>
@@ -161,12 +396,10 @@ export const ActiveCampaigns = ({
                         <MessageSquare size={14} />
                         <span>{campaign.messages.length} variações</span>
                       </div>
-                      {isScheduled && (campaign as any).scheduled_at && (
-                        <div className="flex items-center gap-1 text-blue-500">
-                          <CalendarClock size={14} />
-                          <span>
-                            {format(new Date((campaign as any).scheduled_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                          </span>
+                      {estimatedTime && campaign.status === 'running' && (
+                        <div className="flex items-center gap-1 text-primary">
+                          <Timer size={14} />
+                          <span>Restante: {estimatedTime}</span>
                         </div>
                       )}
                     </div>
@@ -181,21 +414,29 @@ export const ActiveCampaigns = ({
                     <p className="text-xs text-muted-foreground mt-1">
                       {progress}% concluído
                     </p>
+
+                    {/* Pause reason */}
+                    {hasPauseReason && (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg">
+                        <AlertTriangle size={14} />
+                        <span>{campaign.pause_reason}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {!isScheduled && (
-                    <div className="flex-shrink-0">
-                      {campaign.status === 'running' ? (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => onPause(campaign)}
-                          className="gap-1"
-                        >
-                          <Pause size={14} />
-                          Pausar
-                        </Button>
-                      ) : !isPausedByLimit && (
+                  <div className="flex-shrink-0 flex flex-col gap-2">
+                    {campaign.status === 'running' ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => onPause(campaign)}
+                        className="gap-1"
+                      >
+                        <Pause size={14} />
+                        Pausar
+                      </Button>
+                    ) : !isPausedByLimit && (
+                      <>
                         <Button 
                           variant="default" 
                           size="sm"
@@ -206,9 +447,25 @@ export const ActiveCampaigns = ({
                           <Play size={14} />
                           Retomar
                         </Button>
-                      )}
-                    </div>
-                  )}
+                        {hasPauseReason && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleRetryCampaign(campaign)}
+                            disabled={retryingCampaignId === campaign.id}
+                            className="gap-1"
+                          >
+                            {retryingCampaignId === campaign.id ? (
+                              <RefreshCw size={14} className="animate-spin" />
+                            ) : (
+                              <RefreshCw size={14} />
+                            )}
+                            Reiniciar
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {isPausedByLimit && (
@@ -222,6 +479,44 @@ export const ActiveCampaigns = ({
           })}
         </div>
       )}
+
+      {/* Estimated time summary for all campaigns */}
+      {activeCampaigns.length > 0 && (
+        <div className="glass rounded-xl p-4 bg-muted/30">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Timer size={16} className="text-primary" />
+            <span>
+              <strong className="text-foreground">Tempo médio por disparo:</strong> {activeCampaigns[0]?.delay_seconds || 40}-{(activeCampaigns[0]?.delay_seconds || 40) + 20}s
+              {" • "}
+              Campanhas são processadas automaticamente em segundo plano.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Reconnect Dialog */}
+      <Dialog open={showReconnectDialog} onOpenChange={setShowReconnectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <WifiOff className="h-5 w-5 text-destructive" />
+              WhatsApp Desconectado
+            </DialogTitle>
+            <DialogDescription>
+              O número WhatsApp associado a esta campanha está desconectado. 
+              Para iniciar os disparos, você precisa reconectar o número primeiro.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReconnectDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleGoToReconnect}>
+              Ir para Reconectar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
