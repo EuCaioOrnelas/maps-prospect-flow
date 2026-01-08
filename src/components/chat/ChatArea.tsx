@@ -872,6 +872,7 @@ const ChatAreaComponent = ({
           messages={messages}
           onSelectMessage={scrollToMessage}
           onClose={() => setShowMessageSearch(false)}
+          isGroup={conversation?.is_group || false}
         />
       )}
 
