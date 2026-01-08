@@ -398,6 +398,13 @@ export const useChat = (selectedNumberId?: string | null) => {
         ? { ...c, last_message: content.trim() || `[${messageType}]`, last_message_at: now }
         : c
     ).sort((a, b) => {
+      // Pinned first
+      if (a.pinned_at && !b.pinned_at) return -1;
+      if (!a.pinned_at && b.pinned_at) return 1;
+      if (a.pinned_at && b.pinned_at) {
+        return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+      }
+      // Then by last_message_at
       const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
       const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
       return dateB - dateA;
@@ -700,8 +707,15 @@ export const useChat = (selectedNumberId?: string | null) => {
                   }
                 : c
             );
-            // Sort by most recent
+            // Sort: pinned first, then by most recent
             return updated.sort((a, b) => {
+              // Pinned conversations first
+              if (a.pinned_at && !b.pinned_at) return -1;
+              if (!a.pinned_at && b.pinned_at) return 1;
+              if (a.pinned_at && b.pinned_at) {
+                return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+              }
+              // Then by last_message_at
               const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
               const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
               return dateB - dateA;
@@ -752,11 +766,22 @@ export const useChat = (selectedNumberId?: string | null) => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          // Add new conversation to the list
+          // Add new conversation to the list and sort
           const newConv = payload.new as Conversation;
           setConversations(prev => {
             if (prev.some(c => c.id === newConv.id)) return prev;
-            return [newConv, ...prev];
+            const updated = [...prev, newConv];
+            // Sort: pinned first, then by most recent
+            return updated.sort((a, b) => {
+              if (a.pinned_at && !b.pinned_at) return -1;
+              if (!a.pinned_at && b.pinned_at) return 1;
+              if (a.pinned_at && b.pinned_at) {
+                return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+              }
+              const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+              const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+              return dateB - dateA;
+            });
           });
         }
       )
@@ -777,8 +802,15 @@ export const useChat = (selectedNumberId?: string | null) => {
                 ? { ...c, ...updatedConv }
                 : c
             );
-            // Sort by most recent
+            // Sort: pinned first, then by most recent
             return updated.sort((a, b) => {
+              // Pinned conversations first
+              if (a.pinned_at && !b.pinned_at) return -1;
+              if (!a.pinned_at && b.pinned_at) return 1;
+              if (a.pinned_at && b.pinned_at) {
+                return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+              }
+              // Then by last_message_at
               const dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
               const dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
               return dateB - dateA;
