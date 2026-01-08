@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Cache duration in hours (avatars rarely change)
+const CACHE_DURATION_HOURS = 24 * 7; // 7 days
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,9 +58,36 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Fetching avatar for phone ${phone} from instance ${instanceName}`);
+    // Normalize phone for cache lookup
+    const normalizedPhone = phone.replace(/\D/g, '');
+    
+    console.log(`Fetching avatar for phone ${normalizedPhone} from instance ${instanceName}`);
 
-    // Fetch profile picture from Evolution API
+    // Step 1: Check database cache first
+    const cacheExpiry = new Date();
+    cacheExpiry.setHours(cacheExpiry.getHours() - CACHE_DURATION_HOURS);
+
+    const { data: cachedAvatar } = await supabase
+      .from('group_member_avatars')
+      .select('avatar_url, updated_at')
+      .eq('user_id', user.id)
+      .eq('phone', normalizedPhone)
+      .single();
+
+    // Return cached avatar if it exists and is still fresh
+    if (cachedAvatar?.avatar_url) {
+      const cacheDate = new Date(cachedAvatar.updated_at);
+      if (cacheDate > cacheExpiry) {
+        console.log(`Returning cached avatar for ${normalizedPhone}`);
+        return new Response(JSON.stringify({ avatarUrl: cachedAvatar.avatar_url, cached: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Step 2: Fetch from Evolution API if not cached or cache expired
+    console.log(`Cache miss for ${normalizedPhone}, fetching from Evolution API`);
+    
     const response = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
       method: 'POST',
       headers: {
@@ -69,7 +99,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.log(`Failed to fetch profile picture: ${response.status}`);
-      return new Response(JSON.stringify({ avatarUrl: null }), {
+      return new Response(JSON.stringify({ avatarUrl: cachedAvatar?.avatar_url || null }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -79,8 +109,32 @@ serve(async (req) => {
     
     const avatarUrl = result.profilePictureUrl || result.picture || result.url || null;
 
+    // Step 3: Cache the avatar in database
+    if (avatarUrl) {
+      // Upsert the cache entry
+      const { error: upsertError } = await supabase
+        .from('group_member_avatars')
+        .upsert(
+          {
+            user_id: user.id,
+            phone: normalizedPhone,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id,phone',
+          }
+        );
+
+      if (upsertError) {
+        console.error('Error caching avatar:', upsertError);
+      } else {
+        console.log(`Cached avatar for ${normalizedPhone}`);
+      }
+    }
+
+    // Also update conversation's contact if applicable
     if (avatarUrl && conversationId) {
-      // Update the conversation's contact if it has one
       const { data: conversation } = await supabase
         .from('conversations')
         .select('contact_id')
@@ -95,7 +149,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ avatarUrl }), {
+    return new Response(JSON.stringify({ avatarUrl, cached: false }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

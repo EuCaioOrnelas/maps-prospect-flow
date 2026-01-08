@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Cache for member avatars to avoid repeated API calls
-const avatarCache = new Map<string, string | null>();
+// In-memory cache for session (fast lookup before DB check)
+const memoryCache = new Map<string, string | null>();
 const pendingRequests = new Map<string, Promise<string | null>>();
 
 export function useGroupMemberAvatar(
@@ -20,17 +20,18 @@ export function useGroupMemberAvatar(
     }
 
     // Extract phone number from sender JID
-    const phone = senderJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+    const phone = senderJid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '');
     if (!phone || phone.length < 8) {
       setAvatarUrl(null);
       return;
     }
 
-    const cacheKey = `${instanceName}:${phone}`;
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const cacheKey = `${instanceName}:${normalizedPhone}`;
 
-    // Check cache first
-    if (avatarCache.has(cacheKey)) {
-      setAvatarUrl(avatarCache.get(cacheKey) || null);
+    // Check memory cache first (fastest)
+    if (memoryCache.has(cacheKey)) {
+      setAvatarUrl(memoryCache.get(cacheKey) || null);
       return;
     }
 
@@ -42,23 +43,36 @@ export function useGroupMemberAvatar(
       return;
     }
 
-    // Fetch avatar from API
+    // Fetch avatar (will check DB cache first, then API)
     const fetchAvatar = async (): Promise<string | null> => {
       setIsLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return null;
 
+        // First check local DB cache for faster response
+        const { data: cachedData } = await supabase
+          .from('group_member_avatars')
+          .select('avatar_url')
+          .eq('phone', normalizedPhone)
+          .maybeSingle();
+
+        if (cachedData?.avatar_url) {
+          memoryCache.set(cacheKey, cachedData.avatar_url);
+          return cachedData.avatar_url;
+        }
+
+        // If not in DB cache, call edge function (which will also cache it)
         const response = await supabase.functions.invoke('evolution-fetch-avatar', {
-          body: { instanceName, phone },
+          body: { instanceName, phone: normalizedPhone },
         });
 
         const url = response.data?.avatarUrl || null;
-        avatarCache.set(cacheKey, url);
+        memoryCache.set(cacheKey, url);
         return url;
       } catch (error) {
         console.error('Error fetching group member avatar:', error);
-        avatarCache.set(cacheKey, null);
+        memoryCache.set(cacheKey, null);
         return null;
       } finally {
         setIsLoading(false);
