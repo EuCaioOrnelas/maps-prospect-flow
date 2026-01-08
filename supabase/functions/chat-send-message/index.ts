@@ -134,9 +134,10 @@ serve(async (req) => {
       };
     }
 
-    console.log('Sending message to Evolution API:', apiEndpoint);
-
-    // Send message via Evolution API
+    // Send message via Evolution API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    
     const evolutionResponse = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
@@ -144,8 +145,10 @@ serve(async (req) => {
         'apikey': evolutionApiKey,
       },
       body: JSON.stringify(messageBody),
+      signal: controller.signal,
     });
-
+    
+    clearTimeout(timeoutId);
     const evolutionData = await evolutionResponse.json();
 
     if (!evolutionResponse.ok) {

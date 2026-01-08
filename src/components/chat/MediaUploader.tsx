@@ -150,21 +150,25 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
   const handleFileSelect = (type: 'image' | 'video' | 'document') => {
     setCurrentType(type);
     setIsOpen(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.multiple = true; // Enable multiple selection
-      switch (type) {
-        case 'image':
-          fileInputRef.current.accept = 'image/*';
-          break;
-        case 'video':
-          fileInputRef.current.accept = 'video/*';
-          break;
-        case 'document':
-          fileInputRef.current.accept = '.pdf,.doc,.docx,.xls,.xlsx,.txt';
-          break;
+    
+    // Use setTimeout to ensure the popover is fully closed before triggering file input
+    setTimeout(() => {
+      if (fileInputRef.current) {
+        fileInputRef.current.multiple = true;
+        switch (type) {
+          case 'image':
+            fileInputRef.current.accept = 'image/*';
+            break;
+          case 'video':
+            fileInputRef.current.accept = 'video/*';
+            break;
+          case 'document':
+            fileInputRef.current.accept = '.pdf,.doc,.docx,.xls,.xlsx,.txt';
+            break;
+        }
+        fileInputRef.current.click();
       }
-      fileInputRef.current.click();
-    }
+    }, 50);
   };
 
   const uploadFile = async (file: File, messageType: string, captionText?: string): Promise<boolean> => {
@@ -658,28 +662,48 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
         <PopoverContent className="w-48 p-2" align="start">
           <div className="space-y-1">
             <button
-              onClick={() => handleFileSelect('image')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleFileSelect('image');
+              }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left"
             >
               <Image className="h-5 w-5 text-blue-500" />
               <span className="text-sm">Imagem</span>
             </button>
             <button
-              onClick={() => handleFileSelect('video')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleFileSelect('video');
+              }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left"
             >
               <Video className="h-5 w-5 text-purple-500" />
               <span className="text-sm">Vídeo</span>
             </button>
             <button
-              onClick={() => handleFileSelect('document')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleFileSelect('document');
+              }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left"
             >
               <FileText className="h-5 w-5 text-orange-500" />
               <span className="text-sm">Documento</span>
             </button>
             <button
-              onClick={startRecording}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                startRecording();
+              }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left"
             >
               <Mic className="h-5 w-5 text-green-500" />
