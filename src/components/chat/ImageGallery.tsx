@@ -127,7 +127,11 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
   return (
     <>
       <div className="rounded-lg overflow-hidden w-full max-w-[220px]">
-        <div className={cn("grid gap-0.5", getGridClass())}>
+        <div className={cn(
+          "grid gap-0.5 rounded-lg overflow-hidden",
+          getGridClass(),
+          fromMe ? "bg-whatsapp-outgoing" : "bg-card"
+        )}>
           {validImages.slice(0, 4).map((img, idx) => (
             <div 
               key={idx}
