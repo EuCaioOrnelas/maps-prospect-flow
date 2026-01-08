@@ -15,11 +15,25 @@ interface MessageSearchProps {
   messages: Message[];
   onSelectMessage: (messageId: string) => void;
   onClose: () => void;
+  isGroup?: boolean;
 }
 
 type MediaFilter = 'all' | 'text' | 'image' | 'audio' | 'document';
 
-export const MessageSearch = ({ messages, onSelectMessage, onClose }: MessageSearchProps) => {
+// Format sender phone for groups
+const formatSenderPhone = (phone: string | null): string => {
+  if (!phone) return 'Desconhecido';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length >= 11 && digits.startsWith('55')) {
+    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length >= 10) {
+    return `+${digits}`;
+  }
+  return phone;
+};
+
+export const MessageSearch = ({ messages, onSelectMessage, onClose, isGroup = false }: MessageSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -228,7 +242,11 @@ export const MessageSearch = ({ messages, onSelectMessage, onClose }: MessageSea
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className="text-xs font-medium text-primary">
-                          {message.from_me ? 'Você' : 'Contato'}
+                          {message.from_me 
+                            ? 'Você' 
+                            : isGroup 
+                              ? (message.sender_name || formatSenderPhone(message.sender_jid)) 
+                              : 'Contato'}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                           {format(new Date(message.created_at), "dd/MM/yyyy 'às' HH:mm")}
