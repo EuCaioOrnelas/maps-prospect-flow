@@ -144,6 +144,8 @@ const App = () => (
                 } 
               />
               <Route path="/shared-report/:reportId" element={<SharedReport />} />
+              {/* Explicit 404 route */}
+              <Route path="/404" element={<NotFound />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
