@@ -185,19 +185,28 @@ serve(async (req) => {
       const messageId = key.id || data?.id || data?.messageId || '';
       const fromMe = key.fromMe ?? data?.fromMe ?? false;
       const pushName = data?.pushName || data?.push_name || '';
+      
+      // Check if it's a group message
+      const isGroup = remoteJid.includes('@g.us');
+      
+      // Extract sender info for group messages
+      let senderJid: string | null = null;
+      let senderName: string | null = pushName || null;
+      
+      if (isGroup && !fromMe) {
+        senderJid = key.participant || data?.participant || null;
+        if (senderJid) {
+          // Clean the sender jid to get just the phone part
+          senderJid = senderJid.split('@')[0];
+        }
+      }
 
       console.log('[WEBHOOK] remoteJid:', remoteJid);
       console.log('[WEBHOOK] messageId:', messageId);
       console.log('[WEBHOOK] fromMe:', fromMe);
       console.log('[WEBHOOK] pushName:', pushName);
-
-      // Skip groups
-      if (remoteJid.includes('@g.us')) {
-        console.log('[WEBHOOK] Skipping group');
-        return new Response(JSON.stringify({ ok: true, ignored: 'group' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      console.log('[WEBHOOK] isGroup:', isGroup);
+      console.log('[WEBHOOK] senderJid:', senderJid);
 
       // Extract raw phone and normalize - @lid uses internal ID, extract actual phone
       const rawPhone = remoteJid.split('@')[0];
@@ -421,14 +430,20 @@ serve(async (req) => {
 
       // Strategy 3: Create new conversation
       if (!conversationId) {
+        // For groups, extract the group name from data
+        const groupName = isGroup ? (data?.groupName || data?.subject || pushName || null) : null;
+        const phoneForStorage = isGroup ? rawPhone : normalizedPhone;
+        
         const { data: newConv, error: convErr } = await supabase
           .from('conversations')
           .insert({
             user_id: whatsappNumber.user_id,
             whatsapp_number_id: whatsappNumber.id,
             remote_jid: remoteJid,
-            phone: normalizedPhone,
-            contact_name: pushName || null,
+            phone: phoneForStorage,
+            contact_name: isGroup ? null : (pushName || null),
+            is_group: isGroup,
+            group_name: groupName,
             last_message: content?.substring(0, 100),
             last_message_at: new Date().toISOString(),
             unread_count: fromMe ? 0 : 1,
@@ -441,7 +456,7 @@ serve(async (req) => {
           throw convErr;
         }
         conversationId = newConv.id;
-        console.log('[WEBHOOK] Created conversation:', conversationId);
+        console.log('[WEBHOOK] Created conversation:', conversationId, 'is_group:', isGroup);
       }
 
       // Check duplicate
@@ -475,6 +490,8 @@ serve(async (req) => {
           media_filename: mediaFilename,
           quoted_message_id: quotedMessageId,
           interactive: interactive,
+          sender_jid: senderJid,
+          sender_name: senderName,
           status: fromMe ? 'sent' : 'received',
         })
         .select()
