@@ -660,6 +660,53 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, []);
 
+  // Edit a message
+  const editMessage = useCallback(async (messageId: string, newContent: string) => {
+    if (!user) return;
+    
+    // Find the message to update
+    const message = messages.find(m => m.id === messageId);
+    if (!message || !message.from_me) {
+      throw new Error('Mensagem não encontrada ou não pode ser editada');
+    }
+    
+    // Check if message is within 15 minutes
+    const messageAge = Date.now() - new Date(message.created_at).getTime();
+    const fifteenMinutesMs = 15 * 60 * 1000;
+    if (messageAge > fifteenMinutesMs) {
+      throw new Error('Mensagens só podem ser editadas em até 15 minutos');
+    }
+    
+    // Optimistically update UI
+    setMessages(prev => prev.map(m => 
+      m.id === messageId 
+        ? { ...m, content: newContent, updated_at: new Date().toISOString() } 
+        : m
+    ));
+    
+    try {
+      // Update in database
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: newContent, updated_at: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      // TODO: Call WhatsApp API to edit message if needed
+      // For now, just update locally
+      
+    } catch (error) {
+      // Revert optimistic update
+      setMessages(prev => prev.map(m => 
+        m.id === messageId ? message : m
+      ));
+      console.error('Error editing message:', error);
+      throw error;
+    }
+  }, [user, messages]);
+
   // Select conversation - instantly switch, then load messages
   const selectConversation = useCallback(async (conversation: Conversation) => {
     // Immediately update UI - clear messages and set new conversation
@@ -919,5 +966,6 @@ export const useChat = (selectedNumberId?: string | null) => {
     mergeDuplicateConversations,
     togglePinConversation,
     markAsUnread,
+    editMessage,
   };
 };

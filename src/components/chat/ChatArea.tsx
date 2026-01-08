@@ -43,9 +43,11 @@ import { MessageBubble } from './MessageBubble';
 import { ImageGallery } from './ImageGallery';
 import { ForwardMessageDialog } from './ForwardMessageDialog';
 import { MessageActionsMenu } from './MessageActionsMenu';
+import { EditMessageDialog } from './EditMessageDialog';
 import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useChatDrafts } from '@/hooks/useChatDrafts';
 
 import type { QuickReply } from '@/hooks/useQuickReplies';
 import { MessageSearch } from './MessageSearch';
@@ -65,6 +67,7 @@ interface ChatAreaProps {
   allConversations?: Conversation[];
   onForwardMessage?: (conversationIds: string[], message: Message) => Promise<void>;
   onDeleteMessage?: (message: Message, forEveryone: boolean) => Promise<void>;
+  onEditMessage?: (messageId: string, newContent: string) => Promise<void>;
   onCloseConversation?: () => void;
 }
 
@@ -92,8 +95,11 @@ const ChatAreaComponent = ({
   allConversations = [],
   onForwardMessage,
   onDeleteMessage,
+  onEditMessage,
   onCloseConversation,
 }: ChatAreaProps) => {
+  // Draft system - persists input per conversation
+  const { draft, saveDraft, clearDraft } = useChatDrafts(conversation?.id || null);
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -114,6 +120,8 @@ const ChatAreaComponent = ({
   // Multi-select state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  // Edit message state
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -259,11 +267,15 @@ const ChatAreaComponent = ({
     }
   }, []);
 
+  // Load draft when conversation changes
   useEffect(() => {
-    if (conversation && inputRef.current) {
-      inputRef.current.focus();
+    if (conversation) {
+      setInputValue(draft);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
-  }, [conversation]);
+  }, [conversation?.id, draft]);
 
   // Refocus input when quick reply sending completes
   useEffect(() => {
@@ -278,6 +290,7 @@ const ChatAreaComponent = ({
     
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
+    clearDraft(); // Clear draft when message is sent
     setReplyingTo(null);
     
     // Reset textarea height
@@ -316,6 +329,18 @@ const ChatAreaComponent = ({
       }
     }
   }, [onDeleteMessage]);
+
+  // Handle edit message
+  const handleEdit = useCallback((message: Message) => {
+    setEditingMessage(message);
+  }, []);
+
+  const handleSaveEdit = useCallback(async (messageId: string, newContent: string) => {
+    if (onEditMessage) {
+      await onEditMessage(messageId, newContent);
+      setEditingMessage(null);
+    }
+  }, [onEditMessage]);
 
   // Multi-select functions
   const toggleSelectionMode = useCallback(() => {
@@ -988,6 +1013,7 @@ const ChatAreaComponent = ({
                         onReply={handleReply}
                         onForward={handleForward}
                         onDelete={handleDelete}
+                        onEdit={handleEdit}
                         onSelect={handleSelectMessage}
                       />
                     );
@@ -1295,7 +1321,9 @@ const ChatAreaComponent = ({
               ref={inputRef}
               value={inputValue}
               onChange={(e) => {
-                setInputValue(e.target.value);
+                const newValue = e.target.value;
+                setInputValue(newValue);
+                saveDraft(newValue); // Save draft on every change
                 // Auto-resize
                 const target = e.target;
                 target.style.height = 'auto';
@@ -1356,6 +1384,14 @@ const ChatAreaComponent = ({
         mediaUrls={forwardingMediaUrls || undefined}
         conversations={allConversations}
         onForward={handleForwardToConversations}
+      />
+      
+      {/* Edit Message Dialog */}
+      <EditMessageDialog
+        message={editingMessage}
+        isOpen={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        onSave={handleSaveEdit}
       />
     </div>
   );

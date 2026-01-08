@@ -68,6 +68,7 @@ const Chat = () => {
     mergeDuplicateConversations,
     togglePinConversation,
     markAsUnread,
+    editMessage,
   } = useChat(selectedNumberId);
 
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -550,6 +551,17 @@ const Chat = () => {
     }
   };
 
+  // Handle editing a message
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    try {
+      await editMessage(messageId, newContent);
+      toast.success('Mensagem editada com sucesso');
+    } catch (error) {
+      toast.error('Erro ao editar mensagem');
+      throw error;
+    }
+  };
+
   return (
     <>
       <SEO
@@ -891,6 +903,7 @@ const Chat = () => {
                               allConversations={conversations}
                               onForwardMessage={handleForwardMessage}
                               onDeleteMessage={handleDeleteMessage}
+                              onEditMessage={handleEditMessage}
                               onCloseConversation={() => setSelectedConversation(null)}
                             />
                           </div>
