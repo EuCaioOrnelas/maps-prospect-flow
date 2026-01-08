@@ -119,14 +119,21 @@ serve(async (req) => {
     let syncedMessages = 0;
     let syncedConversations = 0;
 
-    // Process each chat
+    // Process each chat (including groups)
     for (const chat of (chats || [])) {
       const remoteJid = chat.id || chat.remoteJid;
-      if (!remoteJid || remoteJid.includes('@g.us')) continue; // Skip groups
+      if (!remoteJid) continue;
+      
+      const isGroup = remoteJid.includes('@g.us');
 
-      // Extract phone from JID
-      const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      // Extract phone from JID (for groups, use the group JID as identifier)
+      const phone = isGroup 
+        ? remoteJid.replace('@g.us', '') 
+        : remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
       if (!phone || phone.length < 8) continue;
+      
+      // Get group name for group chats
+      const groupName = isGroup ? (chat.name || chat.subject || null) : null;
 
       // Check if conversation exists
       let { data: existingConversation } = await supabase
@@ -147,7 +154,9 @@ serve(async (req) => {
             whatsapp_number_id: numberId,
             remote_jid: remoteJid,
             phone: phone,
-            contact_name: chat.name || chat.pushName || null,
+            contact_name: isGroup ? null : (chat.name || chat.pushName || null),
+            is_group: isGroup,
+            group_name: groupName,
           })
           .select()
           .single();
@@ -238,6 +247,14 @@ serve(async (req) => {
 
             if (!content && messageType === 'text') continue;
 
+            // Extract sender info for group messages
+            let senderJid = null;
+            let senderName = null;
+            if (isGroup && !msg.key?.fromMe) {
+              senderJid = msg.key?.participant || null;
+              senderName = msg.pushName || null;
+            }
+
             // Insert message
             const { error: insertError } = await supabase
               .from('messages')
@@ -250,6 +267,8 @@ serve(async (req) => {
                 content: content,
                 message_type: messageType,
                 status: 'delivered',
+                sender_jid: senderJid,
+                sender_name: senderName,
                 created_at: msg.messageTimestamp 
                   ? new Date(parseInt(msg.messageTimestamp) * 1000).toISOString()
                   : new Date().toISOString()
