@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.fetch-link-preview]
 verify_jwt = false
+
+[functions.evolution-get-group-participants]
+verify_jwt = false
