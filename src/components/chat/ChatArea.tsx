@@ -263,16 +263,16 @@ const ChatAreaComponent = ({
     }
   }, [conversation]);
 
-  // Refocus input when sending completes (disabled becomes false again)
+  // Refocus input when quick reply sending completes
   useEffect(() => {
-    if (!isSending && !sendingQuickReply && inputRef.current) {
+    if (!sendingQuickReply && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isSending, sendingQuickReply]);
+  }, [sendingQuickReply]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isSending) return;
+    if (!inputValue.trim()) return;
     
     onSendMessage(inputValue, replyingTo?.id);
     setInputValue('');
@@ -283,10 +283,8 @@ const ChatAreaComponent = ({
       inputRef.current.style.height = '40px';
     }
     
-    // Focus after React re-render completes (button changes from Send to Mic)
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
+    // Keep focus on input for continuous typing
+    inputRef.current?.focus();
   };
 
   const handleReply = (message: Message) => {
@@ -1213,7 +1211,7 @@ const ChatAreaComponent = ({
               <button
                 key={reply.id}
                 onClick={() => setInputValue(reply.tag)}
-                disabled={isSending || sendingQuickReply}
+                disabled={sendingQuickReply}
                 className={cn(
                   "shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
                   "bg-background border border-border shadow-sm",
@@ -1281,13 +1279,13 @@ const ChatAreaComponent = ({
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
             <EmojiPicker 
               onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
-              disabled={isSending || sendingQuickReply}
+              disabled={sendingQuickReply}
             />
             <MediaUploader 
               ref={mediaUploaderRef}
               conversationId={conversation.id}
               onMediaSent={() => {}}
-              disabled={isSending || sendingQuickReply}
+              disabled={sendingQuickReply}
             />
             
             <Textarea
@@ -1315,7 +1313,7 @@ const ChatAreaComponent = ({
               onPaste={handlePaste}
               placeholder="Digite uma mensagem ou /tag..."
               className="flex-1 bg-muted border-none text-foreground placeholder:text-muted-foreground min-h-[40px] max-h-[240px] resize-none overflow-y-auto py-2 focus-visible:ring-1 focus-visible:ring-muted-foreground/40 focus-visible:ring-offset-0"
-              disabled={isSending || sendingQuickReply}
+              disabled={sendingQuickReply}
               rows={1}
             />
             
@@ -1323,7 +1321,7 @@ const ChatAreaComponent = ({
               <Button 
                 type="submit" 
                 size="icon" 
-                disabled={isSending || sendingQuickReply}
+                disabled={sendingQuickReply}
                 className="rounded-full bg-primary hover:bg-primary/90 shrink-0"
               >
                 <Send className="h-5 w-5" />
@@ -1333,7 +1331,7 @@ const ChatAreaComponent = ({
                 type="button"
                 size="icon" 
                 onClick={startRecording}
-                disabled={isSending || sendingQuickReply}
+                disabled={sendingQuickReply}
                 className="rounded-full bg-primary hover:bg-primary/90 shrink-0"
               >
                 <Mic className="h-5 w-5" />
