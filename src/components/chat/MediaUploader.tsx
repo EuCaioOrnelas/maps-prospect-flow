@@ -225,11 +225,11 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
   const handleSendCurrentFile = async () => {
     if (selectedFiles.length === 0) return;
     
-    setIsUploading(true);
+    // Capture the current file to send
     const currentFile = selectedFiles[currentFileIndex];
-    const success = await uploadFile(currentFile.file, currentFile.type, caption);
+    const captionToUse = caption;
     
-    // Remove sent file from list
+    // Remove sent file from list immediately
     const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
     
     // Cleanup preview URL
@@ -242,31 +242,28 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
       setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
       setCaption('');
     } else {
+      // Close everything immediately
       setSelectedFiles([]);
       setCurrentFileIndex(0);
       setCaption('');
+      setIsOpen(false);
     }
+    
+    // Send in background
+    const success = await uploadFile(currentFile.file, currentFile.type, captionToUse);
     
     if (success) {
       toast.success('Mídia enviada!');
       onMediaSent();
     }
-    setIsUploading(false);
   };
 
   const handleSendAllFiles = async () => {
     if (selectedFiles.length === 0) return;
     
-    setIsUploading(true);
-    
-    // Prepare all files for parallel upload
-    const uploadPromises = selectedFiles.map((file, i) => {
-      const captionToUse = i === currentFileIndex ? caption : '';
-      return uploadFile(file.file, file.type, captionToUse);
-    });
-    
-    // Execute all uploads in parallel
-    const results = await Promise.all(uploadPromises);
+    // Capture files to send and immediately close the modal
+    const filesToSend = [...selectedFiles];
+    const captionToUse = caption;
     
     // Cleanup preview URLs
     selectedFiles.forEach(file => {
@@ -275,16 +272,31 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
       }
     });
     
+    // Clear state immediately so user can send more files
+    setSelectedFiles([]);
+    setCurrentFileIndex(0);
+    setCaption('');
+    setIsOpen(false);
+    
+    // Send all files in the background (parallel)
+    const uploadPromises = filesToSend.map((file, i) => {
+      const cap = i === 0 ? captionToUse : '';
+      return uploadFile(file.file, file.type, cap);
+    });
+    
+    // Execute all uploads in parallel
+    const results = await Promise.all(uploadPromises);
+    
     const successCount = results.filter(Boolean).length;
+    const failCount = results.length - successCount;
+    
     if (successCount > 0) {
       toast.success(`${successCount} arquivo(s) enviado(s)!`);
       onMediaSent();
     }
-    
-    setSelectedFiles([]);
-    setCurrentFileIndex(0);
-    setCaption('');
-    setIsUploading(false);
+    if (failCount > 0) {
+      toast.error(`${failCount} arquivo(s) falharam`);
+    }
   };
 
   const handleCancelFile = () => {

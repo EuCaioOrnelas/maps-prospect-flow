@@ -719,22 +719,45 @@ export const useChat = (selectedNumberId?: string | null) => {
           // Add new message if it's for the selected conversation
           if (selectedConversationRef.current && newMessage.conversation_id === selectedConversationRef.current.id) {
             setMessages(prev => {
-              // Check if message already exists (avoid duplicates from optimistic updates)
-              const exists = prev.some(m => 
-                m.id === newMessage.id || 
-                (m.message_id && m.message_id === newMessage.message_id) ||
-                (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
-              );
-              
-              if (exists) {
-                // Replace temp message with real one
-                return prev.map(m => 
-                  (m.id.startsWith('temp-') && m.content === newMessage.content && m.from_me === newMessage.from_me)
-                    ? newMessage
-                    : m.id === newMessage.id ? newMessage : m
-                );
+              // Check if message already exists by ID or message_id
+              const existsByRealId = prev.some(m => m.id === newMessage.id);
+              if (existsByRealId) {
+                // Update existing message
+                return prev.map(m => m.id === newMessage.id ? newMessage : m);
               }
               
+              // Check if we have a temp message that matches by message_id
+              const tempMessageIndex = prev.findIndex(m => 
+                m.id.startsWith('temp-') && 
+                newMessage.message_id && 
+                m.message_id === newMessage.message_id
+              );
+              
+              if (tempMessageIndex >= 0) {
+                // Replace temp message with real one
+                const updated = [...prev];
+                updated[tempMessageIndex] = newMessage;
+                return updated;
+              }
+              
+              // Check if we have a temp message that matches by created_at proximity and content/type
+              // This handles the case where message_id is not set yet
+              const tempByContent = prev.findIndex(m => 
+                m.id.startsWith('temp-') && 
+                m.from_me === newMessage.from_me &&
+                m.message_type === newMessage.message_type &&
+                ((m.content === newMessage.content) || (m.media_url && newMessage.media_url)) &&
+                Math.abs(new Date(m.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 30000 // Within 30 seconds
+              );
+              
+              if (tempByContent >= 0) {
+                // Replace temp message with real one
+                const updated = [...prev];
+                updated[tempByContent] = newMessage;
+                return updated;
+              }
+              
+              // This is a new message (e.g., received from contact)
               return [...prev, newMessage];
             });
           }
