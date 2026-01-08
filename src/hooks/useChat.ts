@@ -372,54 +372,47 @@ export const useChat = (selectedNumberId?: string | null) => {
   }, [user]);
 
 
-  // Process message queue - sends up to 5 messages concurrently
+  // Process message queue - sends ONE message at a time, in order
   const processMessageQueue = useCallback(async () => {
-    if (processingQueueRef.current || messageQueueRef.current.length === 0) return;
-    processingQueueRef.current = true;
-
-    try {
-      // Take up to 5 messages to send concurrently
-      const batch = messageQueueRef.current.splice(0, 5);
+    if (processingQueueRef.current) return;
+    
+    while (messageQueueRef.current.length > 0) {
+      processingQueueRef.current = true;
+      const msg = messageQueueRef.current.shift()!;
       
-      await Promise.all(batch.map(async (msg) => {
-        try {
-          const response = await supabase.functions.invoke('chat-send-message', {
-            body: {
-              conversationId: msg.conversationId,
-              content: msg.content,
-              messageType: msg.messageType,
-              quotedMessageId: msg.quotedMessageId,
-              mediaUrl: msg.mediaUrl,
-              mediaFilename: msg.mediaFilename,
-            },
-          });
+      try {
+        const response = await supabase.functions.invoke('chat-send-message', {
+          body: {
+            conversationId: msg.conversationId,
+            content: msg.content,
+            messageType: msg.messageType,
+            quotedMessageId: msg.quotedMessageId,
+            mediaUrl: msg.mediaUrl,
+            mediaFilename: msg.mediaFilename,
+          },
+        });
 
-          if (response.error) {
-            console.error('Error sending message:', response.error);
-            setMessages(prev => prev.map(m => 
-              m.id === msg.id ? { ...m, status: 'failed' } : m
-            ));
-          } else {
-            setMessages(prev => prev.map(m => 
-              m.id === msg.id 
-                ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
-                : m
-            ));
-          }
-        } catch (error) {
-          console.error('Error sending message:', error);
+        if (response.error) {
+          console.error('Error sending message:', response.error);
           setMessages(prev => prev.map(m => 
             m.id === msg.id ? { ...m, status: 'failed' } : m
           ));
+        } else {
+          setMessages(prev => prev.map(m => 
+            m.id === msg.id 
+              ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+              : m
+          ));
         }
-      }));
-    } finally {
-      processingQueueRef.current = false;
-      // Process remaining messages if any
-      if (messageQueueRef.current.length > 0) {
-        processMessageQueue();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        setMessages(prev => prev.map(m => 
+          m.id === msg.id ? { ...m, status: 'failed' } : m
+        ));
       }
     }
+    
+    processingQueueRef.current = false;
   }, []);
 
   // Send a message using optimized queue

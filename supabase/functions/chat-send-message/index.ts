@@ -33,18 +33,21 @@ serve(async (req) => {
       });
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    // Parse body first while auth is being checked (parallel)
+    const bodyPromise = req.json();
+    const authPromise = supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    
+    const [body, authResult] = await Promise.all([bodyPromise, authPromise]);
 
-    if (authError || !user) {
+    if (authResult.error || !authResult.data.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename, quotedMessageId } = await req.json();
+    const user = authResult.data.user;
+    const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename, quotedMessageId } = body;
 
     // Parallel fetch: conversation and quoted message (if needed)
     const conversationPromise = supabase
