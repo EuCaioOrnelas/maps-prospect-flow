@@ -13,6 +13,7 @@ export interface Conversation {
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number;
+  manually_marked_unread: boolean;
   is_archived: boolean;
   pinned_at: string | null;
   is_group: boolean;
@@ -279,14 +280,14 @@ export const useChat = (selectedNumberId?: string | null) => {
   const markAsUnread = useCallback(async (conversationId: string) => {
     if (!user) return;
 
-    // Optimistically update UI
+    // Optimistically update UI - set manually_marked_unread to true and unread_count to 1
     setConversations(prev => prev.map(c => 
-      c.id === conversationId ? { ...c, unread_count: 1 } : c
+      c.id === conversationId ? { ...c, unread_count: 1, manually_marked_unread: true } : c
     ));
 
     const { error } = await supabase
       .from('conversations')
-      .update({ unread_count: 1 })
+      .update({ unread_count: 1, manually_marked_unread: true })
       .eq('id', conversationId)
       .eq('user_id', user.id);
 
@@ -294,7 +295,7 @@ export const useChat = (selectedNumberId?: string | null) => {
       console.error('Error marking as unread:', error);
       // Revert optimistic update
       setConversations(prev => prev.map(c => 
-        c.id === conversationId ? { ...c, unread_count: 0 } : c
+        c.id === conversationId ? { ...c, unread_count: 0, manually_marked_unread: false } : c
       ));
       throw error;
     }
@@ -319,9 +320,10 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     // Mark conversation as read (only updates unread count in our database)
     // This does NOT send read receipts to the contact - that's handled separately
+    // Also reset manually_marked_unread flag
     await supabase
       .from('conversations')
-      .update({ unread_count: 0 })
+      .update({ unread_count: 0, manually_marked_unread: false })
       .eq('id', conversationId);
   }, [user]);
 

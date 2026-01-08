@@ -8,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2, User, RefreshCw, Image } from 'lucide-react';
+import { X, Save, Trash2, Plus, Building, Mail, MapPin, Tag, FileText, Phone, Settings2, User, RefreshCw, Image, Users } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
 import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
+import { GroupParticipantsList } from './GroupParticipantsList';
+
 interface ContactInfoPanelProps {
   conversation: Conversation | null;
   onClose: () => void;
@@ -32,6 +34,7 @@ export const ContactInfoPanel = ({
   const [isSaving, setIsSaving] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [instanceName, setInstanceName] = useState<string | null>(null);
   const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
   const [isRedownloadingMedia, setIsRedownloadingMedia] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,7 +46,7 @@ export const ContactInfoPanel = ({
     tags: [] as string[],
   });
 
-  // Fetch avatar from WhatsApp
+  // Fetch avatar from WhatsApp and get instance name
   const fetchAvatarFromWhatsApp = useCallback(async () => {
     if (!conversation || isFetchingAvatar) return;
     
@@ -60,17 +63,23 @@ export const ContactInfoPanel = ({
         setIsFetchingAvatar(false);
         return;
       }
+      
+      // Store instance name for group participants
+      setInstanceName(numberData.instance_name);
 
-      const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
-        body: {
-          conversationId: conversation.id,
-          instanceName: numberData.instance_name,
-          phone: conversation.phone,
-        },
-      });
+      // Only fetch avatar for non-group conversations
+      if (!conversation.is_group) {
+        const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
+          body: {
+            conversationId: conversation.id,
+            instanceName: numberData.instance_name,
+            phone: conversation.phone,
+          },
+        });
 
-      if (!error && data?.avatarUrl) {
-        setAvatarUrl(data.avatarUrl);
+        if (!error && data?.avatarUrl) {
+          setAvatarUrl(data.avatarUrl);
+        }
       }
     } catch (err) {
       console.error('Error fetching avatar:', err);
@@ -211,6 +220,10 @@ export const ContactInfoPanel = ({
   };
 
   const getDisplayName = () => {
+    // For groups, show group name
+    if (conversation?.is_group) {
+      return conversation.group_name || `Grupo ${conversation.phone.slice(-6)}`;
+    }
     if (formData.name) return formData.name;
     if (conversation?.contact_name) return conversation.contact_name;
     return 'Contato Desconhecido';
@@ -228,7 +241,9 @@ export const ContactInfoPanel = ({
     <div className="h-full flex flex-col border-l border-border bg-card w-80">
       {/* Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-border">
-        <h3 className="font-semibold text-foreground">Informações do Contato</h3>
+        <h3 className="font-semibold text-foreground">
+          {conversation.is_group ? 'Informações do Grupo' : 'Informações do Contato'}
+        </h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-5 w-5" />
         </Button>
@@ -239,13 +254,13 @@ export const ContactInfoPanel = ({
           {/* Avatar and Name */}
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-20 w-20 mb-3">
-              <AvatarImage src={avatarUrl || contact?.avatar_url || conversation.contacts?.avatar_url || undefined} />
+              <AvatarImage src={!conversation.is_group ? (avatarUrl || contact?.avatar_url || conversation.contacts?.avatar_url) : undefined} />
               <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
-                <User className="h-10 w-10" />
+                {conversation.is_group ? <Users className="h-10 w-10" /> : <User className="h-10 w-10" />}
               </AvatarFallback>
             </Avatar>
             
-            {isEditing ? (
+            {isEditing && !conversation.is_group ? (
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
@@ -256,11 +271,13 @@ export const ContactInfoPanel = ({
               <h4 className="font-semibold text-lg text-foreground">{displayName}</h4>
             )}
             
-            <p className="text-sm text-muted-foreground mt-1">
-              {formatPhoneNumber(conversation.phone)}
-            </p>
+            {!conversation.is_group && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {formatPhoneNumber(conversation.phone)}
+              </p>
+            )}
             
-            {!contact && !isEditing && (
+            {!conversation.is_group && !contact && !isEditing && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -273,8 +290,18 @@ export const ContactInfoPanel = ({
             )}
           </div>
 
-          {/* Contact Info */}
-          {(isEditing || contact) && (
+          {/* Group Participants */}
+          {conversation.is_group && instanceName && (
+            <div className="border-t border-border pt-4">
+              <GroupParticipantsList 
+                instanceName={instanceName} 
+                groupJid={conversation.remote_jid} 
+              />
+            </div>
+          )}
+
+          {/* Contact Info - only for non-groups */}
+          {!conversation.is_group && (isEditing || contact) && (
             <div className="space-y-4">
               {/* Email */}
               <div className="space-y-2">

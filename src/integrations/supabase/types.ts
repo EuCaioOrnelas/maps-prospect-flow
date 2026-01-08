@@ -106,6 +106,7 @@ export type Database = {
           is_group: boolean | null
           last_message: string | null
           last_message_at: string | null
+          manually_marked_unread: boolean | null
           phone: string
           pinned_at: string | null
           remote_jid: string
@@ -124,6 +125,7 @@ export type Database = {
           is_group?: boolean | null
           last_message?: string | null
           last_message_at?: string | null
+          manually_marked_unread?: boolean | null
           phone: string
           pinned_at?: string | null
           remote_jid: string
@@ -142,6 +144,7 @@ export type Database = {
           is_group?: boolean | null
           last_message?: string | null
           last_message_at?: string | null
+          manually_marked_unread?: boolean | null
           phone?: string
           pinned_at?: string | null
           remote_jid?: string

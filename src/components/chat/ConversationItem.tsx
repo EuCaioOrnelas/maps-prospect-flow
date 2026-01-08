@@ -214,7 +214,11 @@ const ConversationItemComponent = ({
             </p>
             {conversation.unread_count > 0 && (
               <Badge className="bg-primary text-primary-foreground shrink-0 h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
-                <MailOpen className="h-3.5 w-3.5" />
+                {conversation.manually_marked_unread ? (
+                  <MailOpen className="h-3.5 w-3.5" />
+                ) : (
+                  conversation.unread_count
+                )}
               </Badge>
             )}
           </div>
@@ -271,6 +275,7 @@ export const ConversationItem = memo(ConversationItemComponent, (prevProps, next
     prevProps.conversation.id === nextProps.conversation.id &&
     prevProps.conversation.last_message === nextProps.conversation.last_message &&
     prevProps.conversation.unread_count === nextProps.conversation.unread_count &&
+    prevProps.conversation.manually_marked_unread === nextProps.conversation.manually_marked_unread &&
     prevProps.conversation.last_message_at === nextProps.conversation.last_message_at &&
     prevProps.conversation.pinned_at === nextProps.conversation.pinned_at &&
     prevProps.isSelected === nextProps.isSelected &&
