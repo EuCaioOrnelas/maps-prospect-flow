@@ -2,7 +2,7 @@ import { memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { UserCheck, UserPlus, MoreVertical, Trash2, User, Pin, PinOff } from 'lucide-react';
+import { UserCheck, UserPlus, MoreVertical, Trash2, User, Pin, PinOff, MailOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +23,7 @@ interface ConversationItemProps {
   onSaveContact: (conversation: Conversation) => void;
   onDelete: (id: string) => void;
   onTogglePin?: (conversation: Conversation) => void;
+  onMarkUnread?: (conversation: Conversation) => void;
 }
 
 const formatTime = (dateString: string | null) => {
@@ -101,6 +102,7 @@ const ConversationItemComponent = ({
   onSaveContact,
   onDelete,
   onTogglePin,
+  onMarkUnread,
 }: ConversationItemProps) => {
   const displayName = getDisplayName(conversation);
   const isPinned = !!conversation.pinned_at;
@@ -132,6 +134,11 @@ const ConversationItemComponent = ({
     onTogglePin?.(conversation);
   }, [conversation, onTogglePin]);
 
+  const handleMarkUnread = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMarkUnread?.(conversation);
+  }, [conversation, onMarkUnread]);
+
   return (
     <div
       className={cn(
@@ -161,6 +168,10 @@ const ConversationItemComponent = ({
         <div className="flex-1 min-w-0 overflow-hidden text-left">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              {/* Pin indicator */}
+              {isPinned && (
+                <Pin className="h-3 w-3 text-primary shrink-0" />
+              )}
               <span className="font-medium text-foreground truncate flex-1 text-left">
                 {displayName}
               </span>
@@ -231,6 +242,10 @@ const ConversationItemComponent = ({
                   Fixar no topo
                 </>
               )}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleMarkUnread}>
+              <MailOpen className="h-4 w-4 mr-2" />
+              Marcar como não lida
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDelete}
