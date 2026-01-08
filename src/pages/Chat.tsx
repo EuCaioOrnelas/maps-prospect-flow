@@ -507,8 +507,14 @@ const Chat = () => {
     toast.success(`Mensagem encaminhada para ${conversationIds.length} conversa(s)`);
   };
 
+  // Track messages being deleted
+  const [deletingMessageIds, setDeletingMessageIds] = useState<Set<string>>(new Set());
+
   // Handle deleting a message
   const handleDeleteMessage = async (message: Message, forEveryone: boolean) => {
+    // Add to deleting set immediately for visual feedback
+    setDeletingMessageIds(prev => new Set(prev).add(message.id));
+    
     try {
       // Call edge function to delete (handles both local DB and Evolution API)
       const { error } = await supabase.functions.invoke('evolution-delete-message', {
@@ -534,6 +540,13 @@ const Chat = () => {
     } catch (error) {
       console.error('Error deleting message:', error);
       throw error;
+    } finally {
+      // Remove from deleting set
+      setDeletingMessageIds(prev => {
+        const next = new Set(prev);
+        next.delete(message.id);
+        return next;
+      });
     }
   };
 
@@ -868,6 +881,7 @@ const Chat = () => {
                               messages={messages}
                               isSending={isSending}
                               isTyping={selectedConversation ? isTyping(selectedConversation.remote_jid) : false}
+                              deletingMessageIds={deletingMessageIds}
                               onSendMessage={handleSendMessage}
                               onSendMedia={handleSendMedia}
                               onOpenContactInfo={() => setShowContactInfo(true)}

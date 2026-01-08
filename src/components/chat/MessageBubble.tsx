@@ -26,6 +26,7 @@ interface MessageBubbleProps {
   isHighlighted: boolean;
   isSelectionMode?: boolean;
   isSelected?: boolean;
+  isDeleting?: boolean;
   isGroup?: boolean;
   instanceName?: string | null;
   onReply: (message: Message) => void;
@@ -79,6 +80,7 @@ const MessageBubbleComponent = ({
   isHighlighted,
   isSelectionMode = false,
   isSelected = false,
+  isDeleting = false,
   isGroup = false,
   instanceName = null,
   onReply,
@@ -210,6 +212,29 @@ const MessageBubbleComponent = ({
       onSelect(message);
     }
   }, [isSelectionMode, message, onSelect]);
+
+  // Show deleting overlay
+  if (isDeleting) {
+    return (
+      <div
+        id={`message-${message.id}`}
+        className={cn(
+          'flex w-full px-3',
+          message.from_me ? 'justify-end' : 'justify-start',
+        )}
+      >
+        <div className={cn(
+          'relative rounded-lg px-3 py-2 shadow-md min-w-[100px] flex items-center justify-center gap-2',
+          message.from_me
+            ? 'bg-whatsapp-outgoing/50 text-whatsapp-outgoing-foreground rounded-tr-none'
+            : 'bg-card/50 text-card-foreground rounded-tl-none border border-border'
+        )}>
+          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs opacity-70">Apagando...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -347,6 +372,7 @@ export const MessageBubble = memo(MessageBubbleComponent, (prevProps, nextProps)
     prevProps.isHighlighted === nextProps.isHighlighted &&
     prevProps.quotedMessage?.id === nextProps.quotedMessage?.id &&
     prevProps.isSelectionMode === nextProps.isSelectionMode &&
-    prevProps.isSelected === nextProps.isSelected
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isDeleting === nextProps.isDeleting
   );
 });

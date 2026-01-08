@@ -55,6 +55,7 @@ interface ChatAreaProps {
   messages: Message[];
   isSending: boolean;
   isTyping?: boolean;
+  deletingMessageIds?: Set<string>;
   onSendMessage: (content: string, quotedMessageId?: string) => void;
   onSendMedia?: (mediaUrl: string, messageType: 'image' | 'audio', caption?: string) => void;
   onOpenContactInfo: () => void;
@@ -81,6 +82,7 @@ const ChatAreaComponent = ({
   messages,
   isSending,
   isTyping = false,
+  deletingMessageIds = new Set(),
   onSendMessage,
   onSendMedia,
   onOpenContactInfo,
@@ -980,6 +982,7 @@ const ChatAreaComponent = ({
                         isHighlighted={highlightedMessageId === message.id}
                         isSelectionMode={isSelectionMode}
                         isSelected={selectedMessages.has(message.id)}
+                        isDeleting={deletingMessageIds.has(message.id)}
                         isGroup={conversation?.is_group || false}
                         instanceName={instanceName}
                         onReply={handleReply}
