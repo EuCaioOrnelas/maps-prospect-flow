@@ -5,16 +5,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Shield, Users, MessageCircle, Phone, Copy, Search } from 'lucide-react';
+import { User, Shield, Users, MessageCircle, Phone, Copy, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useContacts } from '@/hooks/useContacts';
+import { cn } from '@/lib/utils';
 
 interface GroupParticipant {
   id: string;
   admin: boolean | null;
   name?: string;
   avatarUrl?: string;
+}
+
+interface SelectedParticipant {
+  id: string;
+  displayName: string;
+  phone: string | null;
 }
 
 interface GroupParticipantsListProps {
@@ -61,6 +68,7 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedParticipant, setSelectedParticipant] = useState<SelectedParticipant | null>(null);
   const { contacts } = useContacts();
 
   const contactNameByKey = useMemo(() => {
@@ -133,7 +141,7 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
         rawPhone.includes(query)
       );
     });
-  }, [participants, searchQuery, contacts]);
+  }, [participants, searchQuery, contactNameByKey]);
 
   const handleCopyPhone = (jid: string) => {
     const phone = getRawPhone(jid);
@@ -141,14 +149,34 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
     toast.success('Número copiado!');
   };
 
-  const handleStartConversation = (jid: string) => {
-    const phone = getRawPhone(jid);
+  const handleStartConversation = (phone: string) => {
     if (onStartConversation) {
       onStartConversation(phone);
     } else {
       navigator.clipboard.writeText(phone);
       toast.success('Número copiado! Use para iniciar uma conversa.');
     }
+    setSelectedParticipant(null);
+  };
+
+  const handleSelectParticipant = (participant: GroupParticipant) => {
+    const validPhone = isValidPhone(participant.id);
+    if (!validPhone) return;
+    
+    const formattedPhone = formatPhone(participant.id);
+    const contactName = getContactName(participant.id);
+    const displayName = contactName || participant.name || formattedPhone || 'Participante';
+    const rawPhone = getRawPhone(participant.id);
+    
+    setSelectedParticipant({
+      id: participant.id,
+      displayName,
+      phone: rawPhone,
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedParticipant(null);
   };
 
   if (isLoading) {
@@ -186,14 +214,14 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="space-y-3 flex flex-col">
+      <div className="flex items-center gap-2 text-muted-foreground shrink-0">
         <Users className="h-4 w-4 shrink-0" />
         <span className="text-sm font-medium">{participants.length} participantes</span>
       </div>
 
       {/* Search input */}
-      <div className="relative">
+      <div className="relative shrink-0">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={searchQuery}
@@ -203,7 +231,53 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
         />
       </div>
       
-      <ScrollArea className="h-[40vh] md:h-[280px]">
+      {/* Selected participant action bar */}
+      {selectedParticipant && (
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center gap-2 shrink-0 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm truncate">{selectedParticipant.displayName}</p>
+            {selectedParticipant.phone && (
+              <p className="text-xs text-muted-foreground">+{selectedParticipant.phone}</p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0 h-8 w-8 p-0"
+            onClick={() => {
+              if (selectedParticipant.phone) {
+                handleCopyPhone(selectedParticipant.id);
+              }
+            }}
+            title="Copiar número"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => {
+              if (selectedParticipant.phone) {
+                handleStartConversation(selectedParticipant.phone);
+              }
+            }}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Conversar</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0 h-8 w-8 p-0"
+            onClick={clearSelection}
+            title="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
+      <ScrollArea className="h-[35vh] md:h-[250px]">
         <div className="space-y-1 pr-3">
           {filteredParticipants.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -223,8 +297,11 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
               return (
                 <div
                   key={participant.id}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group cursor-pointer"
-                  onClick={() => validPhone && handleStartConversation(participant.id)}
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer",
+                    selectedParticipant?.id === participant.id && "bg-primary/10 ring-1 ring-primary/30"
+                  )}
+                  onClick={() => validPhone && handleSelectParticipant(participant)}
                 >
                   <Avatar className="h-9 w-9 shrink-0">
                     {participant.avatarUrl && (
@@ -236,59 +313,29 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-medium text-foreground text-sm truncate">
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <span className="font-medium text-foreground text-sm truncate flex-1">
                         {displayName}
                       </span>
                       {participant.admin && (
-                        <Badge variant="secondary" className="shrink-0 text-[10px] py-0 px-1 h-4">
+                        <Badge variant="secondary" className="shrink-0 text-[9px] py-0 px-1.5 h-4 whitespace-nowrap">
                           <Shield className="h-2.5 w-2.5 mr-0.5" />
                           Admin
                         </Badge>
                       )}
                     </div>
                     {showPhoneBelow && (
-                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
                         <Phone className="h-3 w-3 shrink-0" />
                         <span className="truncate">{formattedPhone}</span>
                       </p>
                     )}
                     {!validPhone && (
-                      <p className="text-xs text-muted-foreground/60 truncate">
+                      <p className="text-xs text-muted-foreground/60 truncate mt-0.5">
                         Número não disponível
                       </p>
                     )}
                   </div>
-
-                  {/* Action buttons - only for valid phones */}
-                  {validPhone && (
-                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyPhone(participant.id);
-                        }}
-                        title="Copiar número"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-primary hover:text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartConversation(participant.id);
-                        }}
-                        title="Enviar mensagem"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
               );
             })

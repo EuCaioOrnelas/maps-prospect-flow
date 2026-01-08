@@ -265,18 +265,43 @@ export const useChat = (selectedNumberId?: string | null) => {
   const togglePinConversation = useCallback(async (conversationId: string, isPinned: boolean) => {
     if (!user) return;
 
+    const newPinnedAt = isPinned ? null : new Date().toISOString();
+
+    // Optimistically update local state immediately and re-sort
+    setConversations(prev => {
+      const updated = prev.map(c =>
+        c.id === conversationId ? { ...c, pinned_at: newPinnedAt } : c
+      );
+      // Re-sort: pinned first (by pinned_at desc), then by last_message_at desc
+      return updated.sort((a, b) => {
+        // Both pinned - sort by pinned_at desc
+        if (a.pinned_at && b.pinned_at) {
+          return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+        }
+        // a is pinned, b is not
+        if (a.pinned_at && !b.pinned_at) return -1;
+        // b is pinned, a is not
+        if (!a.pinned_at && b.pinned_at) return 1;
+        // Neither pinned - sort by last_message_at desc
+        const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+        const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+        return bTime - aTime;
+      });
+    });
+
+    // Persist to database
     const { error } = await supabase
       .from('conversations')
-      .update({ pinned_at: isPinned ? null : new Date().toISOString() })
+      .update({ pinned_at: newPinnedAt })
       .eq('id', conversationId)
       .eq('user_id', user.id);
 
     if (error) {
       console.error('Error toggling pin:', error);
+      // Revert on error by refetching
+      await fetchConversations();
       throw error;
     }
-
-    await fetchConversations();
   }, [user, fetchConversations]);
 
   // Mark conversation as unread (local only - doesn't affect WhatsApp)
