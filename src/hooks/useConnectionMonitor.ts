@@ -32,6 +32,14 @@ export const useConnectionMonitor = ({
   const lastCheckRef = useRef<Record<string, number>>({});
   const reconnectAttemptsRef = useRef<Record<string, number>>({});
 
+  // Realtime payloads often come without full `old` data, so we keep our own last-known state
+  const lastKnownConnectedRef = useRef<Record<string, boolean>>({});
+
+  // Avoid spamming sync calls (which can degrade overall performance and slow sending)
+  const SYNC_COOLDOWN_MS = 30_000;
+  const lastSyncRef = useRef<Record<string, number>>({});
+  const syncInFlightRef = useRef<Record<string, boolean>>({});
+
   // Check connection status for a single number
   const checkConnectionStatus = useCallback(async (number: WhatsAppNumber): Promise<boolean | null> => {
     if (!number.instance_name) return false;
