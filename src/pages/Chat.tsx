@@ -889,6 +889,18 @@ const Chat = () => {
                                 onClose={() => setShowContactInfo(false)}
                                 onContactUpdated={fetchConversations}
                                 onOpenNumbersManager={() => setShowNumbersManager(true)}
+                                onStartConversation={(phone) => {
+                                  // Close the contact info panel
+                                  setShowContactInfo(false);
+                                  // Start a new conversation with the selected WhatsApp number
+                                  if (selectedNumberId) {
+                                    handleStartConversation(phone, selectedNumberId);
+                                  } else {
+                                    // If no number selected, open new chat dialog with the phone pre-filled
+                                    setShowNewChatDialog(true);
+                                    toast.info(`Número: ${phone}. Selecione o WhatsApp para iniciar.`);
+                                  }
+                                }}
                               />
                             </div>
                           )}
