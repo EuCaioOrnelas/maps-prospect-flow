@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User, Shield, Users, MessageCircle, Phone, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useContacts } from '@/hooks/useContacts';
 
 interface GroupParticipant {
   id: string;
@@ -50,6 +51,20 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
   const [participants, setParticipants] = useState<GroupParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { contacts } = useContacts();
+
+  // Get contact name by phone number
+  const getContactName = (jid: string): string | null => {
+    const phone = getRawPhone(jid);
+    if (!isValidPhone(jid)) return null;
+    
+    const contact = contacts.find(c => {
+      const contactPhone = c.phone?.replace(/\D/g, '');
+      return contactPhone === phone || contactPhone?.endsWith(phone) || phone.endsWith(contactPhone || '');
+    });
+    
+    return contact?.name || null;
+  };
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -145,11 +160,13 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
         <span className="text-sm font-medium">{participants.length} participantes</span>
       </div>
       
-      <ScrollArea className="max-h-64">
+      <ScrollArea className="h-[280px]">
         <div className="space-y-1 pr-3">
           {participants.map((participant) => {
             const validPhone = isValidPhone(participant.id);
             const formattedPhone = formatPhone(participant.id);
+            const contactName = getContactName(participant.id);
+            const displayName = contactName || participant.name || (validPhone ? formattedPhone : 'Participante');
             
             return (
               <div
@@ -165,10 +182,10 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
                   </AvatarFallback>
                 </Avatar>
                 
-                <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-medium text-foreground text-sm truncate">
-                      {participant.name || formattedPhone}
+                    <span className="font-medium text-foreground text-sm truncate max-w-[140px]">
+                      {displayName}
                     </span>
                     {participant.admin && (
                       <Badge variant="secondary" className="shrink-0 text-[10px] py-0 px-1 h-4">
@@ -177,10 +194,15 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
                       </Badge>
                     )}
                   </div>
-                  {participant.name && (
+                  {validPhone && (contactName || participant.name) && (
                     <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                       <Phone className="h-3 w-3 shrink-0" />
                       <span className="truncate">{formattedPhone}</span>
+                    </p>
+                  )}
+                  {!validPhone && (
+                    <p className="text-xs text-muted-foreground/60 truncate">
+                      Número não disponível
                     </p>
                   )}
                 </div>
