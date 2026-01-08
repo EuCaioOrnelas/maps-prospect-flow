@@ -96,7 +96,7 @@ const MessageBubbleComponent = ({
           />
           {/* Also show text content if available */}
           {message.content && !message.content.startsWith('[') && (
-            <p className={cn('whitespace-pre-wrap break-words mt-2', fontSize)}>
+            <p className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere] mt-2', fontSize)}>
               {message.content}
             </p>
           )}
@@ -145,7 +145,7 @@ const MessageBubbleComponent = ({
       
       return (
         <>
-          <p className={cn('whitespace-pre-wrap break-words', fontSize)}>
+          <p className={cn('whitespace-pre-wrap break-words [overflow-wrap:anywhere]', fontSize)}>
             {parts.map((part, index) => {
               if (urlRegex.test(part)) {
                 return (
@@ -218,7 +218,7 @@ const MessageBubbleComponent = ({
       )}
       
       <div className={cn(
-        'flex items-start gap-1 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
+        'flex items-start gap-1 min-w-0 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
         message.from_me ? 'flex-row-reverse' : 'flex-row',
       )}>
         {/* Action menu - positioned at top (hide in selection mode) */}
@@ -236,7 +236,7 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md min-w-[140px] max-w-full overflow-hidden',
+            'relative rounded-lg px-3 py-2 shadow-md min-w-0 max-w-full overflow-hidden',
             message.from_me
               ? 'bg-whatsapp-outgoing text-whatsapp-outgoing-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'

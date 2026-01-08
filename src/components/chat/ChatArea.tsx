@@ -874,7 +874,7 @@ const ChatAreaComponent = ({
         />
         <div 
           ref={scrollContainerRef}
-          className="h-full overflow-y-auto relative z-10"
+          className="h-full overflow-y-auto overflow-x-hidden relative z-10"
           onScroll={handleScroll}
         >
           <div className="space-y-4 p-4 pb-2">
@@ -905,7 +905,7 @@ const ChatAreaComponent = ({
                           )}
                         >
                           <div className={cn(
-                            'flex items-start gap-1 max-w-[45%]',
+                            'flex items-start gap-1 min-w-0 max-w-[45%]',
                             item.fromMe ? 'flex-row-reverse' : 'flex-row'
                           )}>
                             {/* Action menu - outside the card */}
@@ -920,7 +920,7 @@ const ChatAreaComponent = ({
                             
                             <div
                               className={cn(
-                                'relative rounded-lg p-2 shadow-md min-w-[140px]',
+                                'relative rounded-lg p-2 shadow-md min-w-0 max-w-full overflow-hidden',
                                 item.fromMe
                                   ? 'bg-primary text-primary-foreground rounded-tr-none'
                                   : 'bg-card text-card-foreground rounded-tl-none border border-border'
