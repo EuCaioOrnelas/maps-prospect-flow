@@ -86,6 +86,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data as Profile | null;
   };
 
+  // Check subscription status with Stripe and update profile if needed
+  const checkAndUpdateSubscription = async () => {
+    try {
+      console.log('[AuthContext] Checking subscription status...');
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('[AuthContext] Error checking subscription:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('[AuthContext] Subscription check result:', data);
+        
+        // If the subscription check returned a different plan, refresh the profile
+        if (data.plan && profile && data.plan !== profile.plan) {
+          console.log('[AuthContext] Plan changed from', profile.plan, 'to', data.plan, '- refreshing profile');
+          await refreshProfile();
+        } else if (data.plan && !profile) {
+          // Profile not loaded yet, fetch it
+          if (user) {
+            const newProfile = await fetchProfile(user.id);
+            setProfile(newProfile);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[AuthContext] Subscription check failed:', err);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       const profileData = await fetchProfile(user.id);
@@ -97,13 +128,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[AuthContext] Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
 
         // Fetch profile after auth state change using setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+            
+            // Check subscription after login or token refresh to ensure plan is up to date
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              console.log('[AuthContext] Triggering subscription check after', event);
+              // Small delay to ensure profile is set
+              setTimeout(() => {
+                checkAndUpdateSubscription();
+              }, 500);
+            }
           }, 0);
         } else {
           setProfile(null);
@@ -112,14 +154,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).then((data) => {
-          setProfile(data);
-          setLoading(false);
-        });
+        const data = await fetchProfile(session.user.id);
+        setProfile(data);
+        setLoading(false);
+        
+        // Check subscription on initial load
+        setTimeout(() => {
+          checkAndUpdateSubscription();
+        }, 500);
       } else {
         setLoading(false);
       }
