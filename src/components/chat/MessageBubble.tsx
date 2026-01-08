@@ -236,7 +236,7 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md min-w-[140px]',
+            'relative rounded-lg px-3 py-2 shadow-md min-w-[140px] max-w-full overflow-hidden',
             message.from_me
               ? 'bg-whatsapp-outgoing text-whatsapp-outgoing-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
