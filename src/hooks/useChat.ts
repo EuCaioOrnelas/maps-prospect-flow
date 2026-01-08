@@ -355,7 +355,69 @@ export const useChat = (selectedNumberId?: string | null) => {
       .eq('id', conversationId);
   }, [user]);
 
-  // Send a message directly without queue for faster sending
+  // Message queue for sending
+  const messageQueueRef = useRef<Array<{
+    id: string;
+    conversationId: string;
+    content: string;
+    messageType: string;
+    quotedMessageId?: string;
+    mediaUrl?: string;
+    mediaFilename?: string;
+  }>>([]);
+  const processingQueueRef = useRef(false);
+
+  // Process message queue - sends up to 5 messages concurrently
+  const processMessageQueue = useCallback(async () => {
+    if (processingQueueRef.current || messageQueueRef.current.length === 0) return;
+    processingQueueRef.current = true;
+
+    try {
+      // Take up to 5 messages to send concurrently
+      const batch = messageQueueRef.current.splice(0, 5);
+      
+      await Promise.all(batch.map(async (msg) => {
+        try {
+          const response = await supabase.functions.invoke('chat-send-message', {
+            body: {
+              conversationId: msg.conversationId,
+              content: msg.content,
+              messageType: msg.messageType,
+              quotedMessageId: msg.quotedMessageId,
+              mediaUrl: msg.mediaUrl,
+              mediaFilename: msg.mediaFilename,
+            },
+          });
+
+          if (response.error) {
+            console.error('Error sending message:', response.error);
+            setMessages(prev => prev.map(m => 
+              m.id === msg.id ? { ...m, status: 'failed' } : m
+            ));
+          } else {
+            setMessages(prev => prev.map(m => 
+              m.id === msg.id 
+                ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+                : m
+            ));
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+          setMessages(prev => prev.map(m => 
+            m.id === msg.id ? { ...m, status: 'failed' } : m
+          ));
+        }
+      }));
+    } finally {
+      processingQueueRef.current = false;
+      // Process remaining messages if any
+      if (messageQueueRef.current.length > 0) {
+        processMessageQueue();
+      }
+    }
+  }, []);
+
+  // Send a message using optimized queue
   const sendMessage = useCallback((
     content: string, 
     messageType: string = 'text', 
@@ -409,37 +471,20 @@ export const useChat = (selectedNumberId?: string | null) => {
       return dateB - dateA;
     }));
 
-    // Send immediately without queue (fire and forget pattern)
-    const conversationId = selectedConversation.id;
-    supabase.functions.invoke('chat-send-message', {
-      body: {
-        conversationId,
-        content: content.trim(),
-        messageType,
-        quotedMessageId: quotedMessageId || undefined,
-        mediaUrl: mediaUrl || undefined,
-        mediaFilename: mediaFilename || undefined,
-      },
-    }).then(response => {
-      if (response.error) {
-        console.error('Error sending message:', response.error);
-        setMessages(prev => prev.map(m => 
-          m.id === optimisticId ? { ...m, status: 'failed' } : m
-        ));
-      } else {
-        setMessages(prev => prev.map(m => 
-          m.id === optimisticId 
-            ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
-            : m
-        ));
-      }
-    }).catch(error => {
-      console.error('Error sending message:', error);
-      setMessages(prev => prev.map(m => 
-        m.id === optimisticId ? { ...m, status: 'failed' } : m
-      ));
+    // Add to queue and process immediately
+    messageQueueRef.current.push({
+      id: optimisticId,
+      conversationId: selectedConversation.id,
+      content: content.trim(),
+      messageType,
+      quotedMessageId,
+      mediaUrl,
+      mediaFilename,
     });
-  }, [user, selectedConversation]);
+    
+    // Start processing queue immediately
+    processMessageQueue();
+  }, [user, selectedConversation, processMessageQueue]);
 
   // Start new conversation
   const startConversation = useCallback(async (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => {
