@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.evolution-get-group-participants]
 verify_jwt = false
+
+[functions.cleanup-expired-avatars]
+verify_jwt = false
