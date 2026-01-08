@@ -152,7 +152,11 @@ serve(async (req) => {
       if (!remoteJid) continue;
 
       const isGroup = remoteJid.includes('@g.us');
-      if (isGroup) groupsFound++;
+      if (isGroup) {
+        groupsFound++;
+        // Log full chat object for debugging group name extraction
+        console.log('Group chat object:', JSON.stringify(chat, null, 2));
+      }
 
       // If syncGroupsOnly is true, skip non-group chats
       if (syncGroupsOnly && !isGroup) continue;
@@ -163,8 +167,37 @@ serve(async (req) => {
         : remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
       if (!phone || phone.length < 8) continue;
       
-      // Get group name for group chats
-      const groupName = isGroup ? (chat.name || chat.subject || null) : null;
+      // Get group name for group chats - try multiple possible properties
+      let groupName: string | null = null;
+      if (isGroup) {
+        groupName = chat.name || chat.subject || chat.groupName || chat.pushName || 
+                   chat.chatName || chat.displayName || chat.title ||
+                   (chat.groupMetadata?.subject) || (chat.metadata?.subject) || null;
+        console.log(`Group ${remoteJid} - extracted name: ${groupName}`);
+      }
+      
+      // Try to fetch group profile picture
+      let groupAvatarUrl: string | null = null;
+      if (isGroup && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+        try {
+          const avatarResponse = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': EVOLUTION_API_KEY,
+            },
+            body: JSON.stringify({ number: remoteJid }),
+          });
+          
+          if (avatarResponse.ok) {
+            const avatarData = await avatarResponse.json();
+            groupAvatarUrl = avatarData?.profilePictureUrl || avatarData?.url || avatarData?.picture || null;
+            console.log(`Group ${remoteJid} - avatar URL: ${groupAvatarUrl}`);
+          }
+        } catch (avatarError) {
+          console.error(`Error fetching group avatar for ${remoteJid}:`, avatarError);
+        }
+      }
 
       // Check if conversation exists
       const { data: existingConversation } = await supabase
