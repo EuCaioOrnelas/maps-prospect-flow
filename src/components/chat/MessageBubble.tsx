@@ -191,7 +191,7 @@ const MessageBubbleComponent = ({
         isSelected && 'bg-primary/10 rounded-lg py-1'
       )}
     >
-      {/* Selection checkbox - fixed position at the edge */}
+      {/* Selection checkbox for contact messages - left edge */}
       {isSelectionMode && !message.from_me && (
         <div className="flex items-center shrink-0 mr-2">
           <Checkbox 
@@ -202,22 +202,11 @@ const MessageBubbleComponent = ({
         </div>
       )}
       
-      {/* Message container - fixed max-width, always aligned to edge */}
+      {/* Message container - fixed alignment */}
       <div className={cn(
         'flex items-start gap-1 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
-        message.from_me ? 'flex-row-reverse ml-auto' : 'flex-row mr-auto',
+        message.from_me ? 'flex-row-reverse' : 'flex-row',
       )}>
-      
-      {/* Selection checkbox for user messages - at the right edge */}
-      {isSelectionMode && message.from_me && (
-        <div className="flex items-center shrink-0 ml-2 order-last">
-          <Checkbox 
-            checked={isSelected}
-            onCheckedChange={() => onSelect?.(message)}
-            className="h-5 w-5"
-          />
-        </div>
-      )}
         {/* Action menu - positioned at top (hide in selection mode) */}
         {!isSelectionMode && (
           <MessageActionsMenu
@@ -283,6 +272,17 @@ const MessageBubbleComponent = ({
           </div>
         </div>
       </div>
+      
+      {/* Selection checkbox for user messages - right edge */}
+      {isSelectionMode && message.from_me && (
+        <div className="flex items-center shrink-0 ml-2">
+          <Checkbox 
+            checked={isSelected}
+            onCheckedChange={() => onSelect?.(message)}
+            className="h-5 w-5"
+          />
+        </div>
+      )}
     </div>
   );
 };
