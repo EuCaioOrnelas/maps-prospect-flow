@@ -6,6 +6,7 @@ import {
   CheckCheck, 
   Clock,
   Pencil,
+  User,
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
@@ -14,6 +15,7 @@ import { MessageActionsMenu } from './MessageActionsMenu';
 import { InteractiveMessage } from './InteractiveMessage';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageFormatter } from './MessageFormatter';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface MessageBubbleProps {
   message: Message;
@@ -23,12 +25,26 @@ interface MessageBubbleProps {
   isHighlighted: boolean;
   isSelectionMode?: boolean;
   isSelected?: boolean;
+  isGroup?: boolean;
   onReply: (message: Message) => void;
   onForward?: (message: Message) => void;
   onDelete?: (message: Message, forEveryone: boolean) => void;
   onEdit?: (message: Message) => void;
   onSelect?: (message: Message) => void;
 }
+
+// Format sender phone for groups
+const formatSenderPhone = (phone: string | null): string => {
+  if (!phone) return 'Desconhecido';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length >= 11 && digits.startsWith('55')) {
+    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length >= 10) {
+    return `+${digits}`;
+  }
+  return phone;
+};
 
 const getStatusIcon = (status: string, fromMe: boolean) => {
   if (!fromMe) return null;
@@ -55,6 +71,7 @@ const MessageBubbleComponent = ({
   isHighlighted,
   isSelectionMode = false,
   isSelected = false,
+  isGroup = false,
   onReply,
   onForward,
   onDelete,
@@ -202,6 +219,15 @@ const MessageBubbleComponent = ({
         </div>
       )}
       
+      {/* Avatar for group messages - only for received messages */}
+      {isGroup && !message.from_me && (
+        <Avatar className="h-8 w-8 shrink-0 mr-1 mt-1">
+          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
+      
       {/* Message container - fixed alignment */}
       <div className={cn(
         'flex items-start gap-1 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
@@ -228,6 +254,12 @@ const MessageBubbleComponent = ({
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
         >
+          {/* Sender name for group messages */}
+          {isGroup && !message.from_me && (
+            <p className="text-xs font-semibold text-primary mb-1 truncate">
+              {message.sender_name || formatSenderPhone(message.sender_jid)}
+            </p>
+          )}
           {quotedMessage && (
             <div className={cn(
               'mb-2 p-2 rounded border-l-4 text-xs',
