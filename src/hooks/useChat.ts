@@ -97,9 +97,9 @@ export const useChat = (selectedNumberId?: string | null) => {
       query = query.eq('whatsapp_number_id', selectedNumberId);
     }
 
-    // Order by pinned first, then most recent
+    // Order by pinned first (non-null values first), then most recent
     const { data, error } = await query
-      .order('pinned_at', { ascending: false, nullsFirst: true })
+      .order('pinned_at', { ascending: false, nullsFirst: false })
       .order('last_message_at', { ascending: false, nullsFirst: false });
 
     if (error) {
@@ -265,6 +265,24 @@ export const useChat = (selectedNumberId?: string | null) => {
 
     if (error) {
       console.error('Error toggling pin:', error);
+      throw error;
+    }
+
+    await fetchConversations();
+  }, [user, fetchConversations]);
+
+  // Mark conversation as unread
+  const markAsUnread = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('conversations')
+      .update({ unread_count: 1 })
+      .eq('id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error marking as unread:', error);
       throw error;
     }
 
@@ -764,5 +782,6 @@ export const useChat = (selectedNumberId?: string | null) => {
     setSelectedConversation,
     mergeDuplicateConversations,
     togglePinConversation,
+    markAsUnread,
   };
 };

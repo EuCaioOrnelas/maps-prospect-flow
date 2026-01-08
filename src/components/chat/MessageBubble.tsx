@@ -218,9 +218,8 @@ const MessageBubbleComponent = ({
       )}
       
       <div className={cn(
-        'flex items-start gap-1',
+        'flex items-start gap-1 max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]',
         message.from_me ? 'flex-row-reverse' : 'flex-row',
-        message.message_type === 'audio' ? 'max-w-[60%]' : 'max-w-[45%]'
       )}>
         {/* Action menu - positioned at top (hide in selection mode) */}
         {!isSelectionMode && (

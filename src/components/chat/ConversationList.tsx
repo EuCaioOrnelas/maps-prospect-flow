@@ -22,6 +22,7 @@ interface ConversationListProps {
   onDelete: (conversationId: string) => void;
   onBulkDelete: (conversationIds: string[], deleteContacts: boolean) => Promise<void>;
   onTogglePin: (conversation: Conversation) => void;
+  onMarkUnread: (conversation: Conversation) => void;
   filter: ConversationFilter;
   onFilterChange: (filter: ConversationFilter) => void;
   totalConversations: number;
@@ -48,6 +49,7 @@ interface VirtualizedRowProps {
   onSaveContact: (conversation: Conversation) => void;
   onDelete: (conversationId: string) => void;
   onTogglePin: (conversation: Conversation) => void;
+  onMarkUnread: (conversation: Conversation) => void;
 }
 
 const RowComponent = ({
@@ -65,6 +67,7 @@ const RowComponent = ({
   onSaveContact,
   onDelete,
   onTogglePin,
+  onMarkUnread,
 }: {
   ariaAttributes: { "aria-posinset": number; "aria-setsize": number; role: "listitem" };
   index: number;
@@ -85,6 +88,7 @@ const RowComponent = ({
         onSaveContact={onSaveContact}
         onDelete={onDelete}
         onTogglePin={onTogglePin}
+        onMarkUnread={onMarkUnread}
       />
     </div>
   );
@@ -102,6 +106,7 @@ interface VirtualizedConversationListProps {
   onSaveContact: (conversation: Conversation) => void;
   onDelete: (conversationId: string) => void;
   onTogglePin: (conversation: Conversation) => void;
+  onMarkUnread: (conversation: Conversation) => void;
 }
 
 const VirtualizedConversationList = memo(({
@@ -116,6 +121,7 @@ const VirtualizedConversationList = memo(({
   onSaveContact,
   onDelete,
   onTogglePin,
+  onMarkUnread,
 }: VirtualizedConversationListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState(400);
@@ -148,7 +154,8 @@ const VirtualizedConversationList = memo(({
     onSaveContact,
     onDelete,
     onTogglePin,
-  }), [conversations, selectedConversation?.id, selectedIds, selectionMode, isContactSaved, getAvatarUrl, onSelect, toggleSelection, onSaveContact, onDelete, onTogglePin]);
+    onMarkUnread,
+  }), [conversations, selectedConversation?.id, selectedIds, selectionMode, isContactSaved, getAvatarUrl, onSelect, toggleSelection, onSaveContact, onDelete, onTogglePin, onMarkUnread]);
 
   return (
     <div ref={containerRef} className="h-full">
@@ -173,6 +180,7 @@ const ConversationListComponent = ({
   onDelete,
   onBulkDelete,
   onTogglePin,
+  onMarkUnread,
   filter,
   onFilterChange,
   totalConversations,
@@ -502,6 +510,7 @@ const ConversationListComponent = ({
             onSaveContact={onSaveContact}
             onDelete={onDelete}
             onTogglePin={onTogglePin}
+            onMarkUnread={onMarkUnread}
           />
         )}
       </div>

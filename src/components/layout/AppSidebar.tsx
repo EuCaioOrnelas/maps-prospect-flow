@@ -8,7 +8,6 @@ import {
   ChevronDown,
   FileSearch,
   Send,
-  MapPin,
   MessageCircle,
   Megaphone,
   Users,
@@ -16,6 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChatLogo } from "@/components/ChatLogo";
+import { useTotalUnread } from "@/hooks/useTotalUnread";
 
 interface AppSidebarProps {
   profile?: {
@@ -32,6 +33,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
+  const { totalUnread } = useTotalUnread();
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
@@ -137,19 +139,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       >
         {/* Logo area - fixed height and consistent padding */}
         <div className="h-14 min-h-[56px] flex items-center px-2.5 border-b border-sidebar-border">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="shrink-0 bg-primary rounded-xl p-1.5">
-              <MapPin className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span 
-              className={cn(
-                "font-display font-bold text-lg text-foreground whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-              )}
-            >
-              WiizeProspect
-            </span>
-          </div>
+          <ChatLogo 
+            unreadCount={totalUnread} 
+            size="sm" 
+            showText={isHovered}
+            className={cn(
+              "transition-all duration-300",
+              !isHovered && "[&>span]:opacity-0 [&>span]:max-w-0"
+            )}
+          />
         </div>
 
         {/* Main navigation */}
