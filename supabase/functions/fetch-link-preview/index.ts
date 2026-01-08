@@ -22,15 +22,52 @@ serve(async (req) => {
 
     console.log('Fetching preview for:', url);
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; LinkPreviewBot/1.0)',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    let response;
+    try {
+      response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      // Return minimal preview for unreachable sites
+      const urlObj = new URL(url);
+      return new Response(
+        JSON.stringify({
+          url,
+          title: urlObj.hostname,
+          description: null,
+          image: null,
+          siteName: urlObj.hostname,
+          favicon: `${urlObj.origin}/favicon.ico`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    // Handle non-OK responses gracefully (403, 404, etc.)
     if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.status}`);
+      const urlObj = new URL(url);
+      console.log(`URL returned ${response.status}, returning minimal preview`);
+      return new Response(
+        JSON.stringify({
+          url,
+          title: urlObj.hostname,
+          description: null,
+          image: null,
+          siteName: urlObj.hostname,
+          favicon: `${urlObj.origin}/favicon.ico`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const html = await response.text();
