@@ -13,7 +13,8 @@ import {
   RefreshCw,
   WifiOff,
   Timer,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import { format } from "date-fns";
@@ -37,6 +38,7 @@ interface ActiveCampaignsProps {
   onResume: (campaign: Campaign) => void;
   onPause: (campaign: Campaign) => void;
   onCancel?: (campaign: Campaign) => void;
+  onDelete?: (campaign: Campaign) => void;
 }
 
 export const ActiveCampaigns = ({ 
@@ -45,12 +47,14 @@ export const ActiveCampaigns = ({
   dailyLimit, 
   onResume,
   onPause,
-  onCancel
+  onCancel,
+  onDelete
 }: ActiveCampaignsProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [retryingCampaignId, setRetryingCampaignId] = useState<string | null>(null);
   const [cancellingCampaignId, setCancellingCampaignId] = useState<string | null>(null);
+  const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null);
   const [showReconnectDialog, setShowReconnectDialog] = useState(false);
   const [disconnectedCampaign, setDisconnectedCampaign] = useState<Campaign | null>(null);
 
@@ -201,6 +205,44 @@ export const ActiveCampaigns = ({
     }
   };
 
+  // Delete a campaign completely
+  const handleDeleteCampaign = async (campaign: Campaign) => {
+    setDeletingCampaignId(campaign.id);
+    try {
+      // First, cancel the campaign if it's running
+      if (campaign.status === 'running') {
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('id', campaign.id);
+        
+        // Wait a bit to ensure the campaign stops
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Then delete
+      await supabase
+        .from('whatsapp_campaigns')
+        .delete()
+        .eq('id', campaign.id);
+      
+      toast({
+        title: "Campanha excluída",
+        description: "A campanha foi excluída com sucesso.",
+      });
+      
+      if (onDelete) onDelete(campaign);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a campanha",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingCampaignId(null);
+    }
+  };
+
   const handleGoToReconnect = () => {
     setShowReconnectDialog(false);
     // Scroll to numbers manager or open it
@@ -345,6 +387,21 @@ export const ActiveCampaigns = ({
                   </div>
 
                   <div className="flex-shrink-0 flex items-center gap-2">
+                    {/* Delete button */}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteCampaign(campaign)}
+                      disabled={deletingCampaignId === campaign.id}
+                      className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      {deletingCampaignId === campaign.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                      Excluir
+                    </Button>
                     {/* Cancel button for scheduled campaigns */}
                     <Button 
                       variant="destructive" 
@@ -471,15 +528,31 @@ export const ActiveCampaigns = ({
 
                   <div className="flex-shrink-0 flex flex-col gap-2">
                     {campaign.status === 'running' ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => onPause(campaign)}
-                        className="gap-1"
-                      >
-                        <Pause size={14} />
-                        Pausar
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => onPause(campaign)}
+                          className="gap-1"
+                        >
+                          <Pause size={14} />
+                          Pausar
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteCampaign(campaign)}
+                          disabled={deletingCampaignId === campaign.id}
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {deletingCampaignId === campaign.id ? (
+                            <RefreshCw size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                          Excluir
+                        </Button>
+                      </>
                     ) : !isPausedByLimit && (
                       <>
                         <Button 
@@ -508,6 +581,20 @@ export const ActiveCampaigns = ({
                             Reiniciar
                           </Button>
                         )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteCampaign(campaign)}
+                          disabled={deletingCampaignId === campaign.id}
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {deletingCampaignId === campaign.id ? (
+                            <RefreshCw size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                          Excluir
+                        </Button>
                       </>
                     )}
                   </div>

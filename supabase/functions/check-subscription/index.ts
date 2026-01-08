@@ -76,17 +76,44 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Get current profile to check existing searches
-    const { data: currentProfile } = await supabaseClient
+    const { data: currentProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('searches_used, searches_limit, plan')
       .eq('id', user.id)
       .single();
 
+    if (profileError) {
+      logStep("Profile not found, creating minimal response");
+      return new Response(JSON.stringify({ 
+        subscribed: false, 
+        plan: "free",
+        searches_limit: PLAN_LIMITS["free"]
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, user is on free plan");
+      logStep("No customer found, user is on free plan - keeping current profile state");
+      
+      // If the current profile already has a plan set by webhook, trust it
+      // Only return free if profile is also on free
+      if (currentProfile.plan && currentProfile.plan !== "free") {
+        logStep("Profile has paid plan, returning that", { plan: currentProfile.plan });
+        return new Response(JSON.stringify({ 
+          subscribed: true, 
+          plan: currentProfile.plan,
+          searches_limit: currentProfile.searches_limit
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         subscribed: false, 
         plan: "free",
