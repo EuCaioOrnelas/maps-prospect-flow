@@ -14,7 +14,9 @@ import {
   WifiOff,
   Timer,
   X,
-  Trash2
+  Trash2,
+  HelpCircle,
+  Hourglass
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import { format } from "date-fns";
@@ -29,6 +31,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
 
 interface ActiveCampaignsProps {
@@ -59,13 +67,14 @@ export const ActiveCampaigns = ({
   const [disconnectedCampaign, setDisconnectedCampaign] = useState<Campaign | null>(null);
 
   const activeCampaigns = campaigns.filter(c => 
-    c.status === 'running' || c.status === 'paused' || c.status === 'scheduled'
+    c.status === 'running' || c.status === 'paused' || c.status === 'scheduled' || c.status === 'postponed'
   );
 
   const pausedByLimit = activeCampaigns.filter(c => 
     c.status === 'paused' && (c as any).paused_at_limit
   );
 
+  const postponedCampaigns = activeCampaigns.filter(c => c.status === 'postponed');
   const scheduledCampaigns = activeCampaigns.filter(c => c.status === 'scheduled');
   const runningOrPausedCampaigns = activeCampaigns.filter(c => 
     c.status === 'running' || c.status === 'paused'
@@ -438,6 +447,106 @@ export const ActiveCampaigns = ({
                         )}
                       </Button>
                     )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Postponed Campaigns */}
+      {postponedCampaigns.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Hourglass size={16} className="text-orange-500" />
+            Campanhas Adiadas ({postponedCampaigns.length})
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle size={14} className="text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>
+                    Essas campanhas estão aguardando outra campanha finalizar no mesmo número. 
+                    Elas iniciarão automaticamente assim que o número estiver disponível.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </h3>
+          
+          {postponedCampaigns.map((campaign) => {
+            const estimatedTime = calculateEstimatedTime(campaign);
+
+            return (
+              <div 
+                key={campaign.id}
+                className="glass rounded-xl p-4 border-l-4 border-l-orange-500"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-medium truncate">{campaign.name}</h4>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                        <Hourglass size={10} />
+                        Adiada
+                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle size={14} className="text-orange-500 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="font-medium mb-1">Por que está adiada?</p>
+                            <p className="text-sm">
+                              {campaign.pause_reason || 'Já existe uma campanha em andamento neste número WhatsApp. Esta campanha iniciará automaticamente assim que a atual for concluída.'}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center gap-1">
+                        <Users size={14} />
+                        <span>{campaign.total_leads} leads</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageSquare size={14} />
+                        <span>{campaign.messages.length} variações</span>
+                      </div>
+                      {estimatedTime && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Timer size={14} />
+                          <span>Duração: {estimatedTime}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reason message */}
+                    <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 bg-orange-500/10 px-3 py-2 rounded-lg">
+                      <Clock size={14} />
+                      <span>Iniciará automaticamente quando a campanha atual terminar</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    {/* Delete button */}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteCampaign(campaign)}
+                      disabled={deletingCampaignId === campaign.id}
+                      className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      {deletingCampaignId === campaign.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                      Excluir
+                    </Button>
                   </div>
                 </div>
               </div>
