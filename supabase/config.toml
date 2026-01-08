@@ -89,3 +89,12 @@ verify_jwt = false
 
 [functions.evolution-send-read-receipt]
 verify_jwt = false
+
+[functions.start-scheduled-campaigns]
+verify_jwt = false
+
+[functions.evolution-delete-message]
+verify_jwt = false
+
+[functions.fetch-link-preview]
+verify_jwt = false
