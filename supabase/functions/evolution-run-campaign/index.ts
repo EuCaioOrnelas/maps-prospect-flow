@@ -161,7 +161,7 @@ serve(async (req) => {
     const BATCH_SIZE = 20;
     const userId = user.id;
 
-    // Background task to run the campaign batch
+    // Background task to run the campaign
     const runCampaignBatch = async () => {
       const getRandomDelay = () => {
         return Math.floor(Math.random() * (delaySecondsMax - delaySecondsMin + 1)) + delaySecondsMin;
@@ -181,6 +181,12 @@ serve(async (req) => {
 
       let sentCount = campaignData.sent_count || 0;
       let failedCount = campaignData.failed_count || 0;
+      
+      // Calculate the correct starting index based on already processed leads
+      const processedCount = sentCount + failedCount;
+      const actualStartIndex = Math.max(startIndex, processedCount);
+      
+      console.log(`Campaign ${campaignId}: Already processed ${processedCount}, starting from index ${actualStartIndex}`);
 
       // Get daily count
       const { data: numberData } = await supabase
@@ -194,20 +200,20 @@ serve(async (req) => {
       let dailySentCount = lastSentDate === today ? (numberData?.daily_sent_count || 0) : 0;
       const DAILY_LIMIT = 200;
 
-      const endIndex = Math.min(startIndex + BATCH_SIZE, leads.length);
-      console.log(`Processing batch from ${startIndex} to ${endIndex - 1}`);
+      // Process ALL remaining leads in a single loop
+      for (let i = actualStartIndex; i < leads.length; i++) {
+        // Check if campaign was cancelled/paused every 5 messages
+        if (i % 5 === 0) {
+          const { data: statusCheck } = await supabase
+            .from('whatsapp_campaigns')
+            .select('status')
+            .eq('id', campaignId)
+            .single();
 
-      for (let i = startIndex; i < endIndex; i++) {
-        // Check if campaign was cancelled/paused
-        const { data: statusCheck } = await supabase
-          .from('whatsapp_campaigns')
-          .select('status')
-          .eq('id', campaignId)
-          .single();
-
-        if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
-          console.log(`Campaign ${campaignId} status changed to ${statusCheck?.status}, stopping batch.`);
-          return;
+          if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
+            console.log(`Campaign ${campaignId} status changed to ${statusCheck?.status}, stopping.`);
+            return;
+          }
         }
 
         // Check daily limit
@@ -381,250 +387,19 @@ serve(async (req) => {
           .eq('id', numberId);
       }
 
-      // Check if there are more leads to process
-      if (endIndex < leads.length) {
-        console.log(`Batch complete. ${leads.length - endIndex} leads remaining. Processing next batch...`);
-        
-        // Small delay between batches
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Re-check campaign status before continuing
-        const { data: statusRecheck } = await supabase
-          .from('whatsapp_campaigns')
-          .select('status')
-          .eq('id', campaignId)
-          .single();
+      // Campaign completed after all leads
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          sent_count: sentCount,
+          failed_count: failedCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', campaignId);
 
-        if (statusRecheck?.status !== 'running') {
-          console.log(`Campaign ${campaignId} no longer running (${statusRecheck?.status}), stopping.`);
-          return;
-        }
-        
-        // Continue processing in same function call instead of self-invoking
-        // This avoids timeout issues and authentication problems
-        for (let i = endIndex; i < leads.length; i++) {
-          // Check campaign status periodically
-          if (i % 5 === 0) {
-            const { data: periodicCheck } = await supabase
-              .from('whatsapp_campaigns')
-              .select('status')
-              .eq('id', campaignId)
-              .single();
-
-            if (!periodicCheck || periodicCheck.status === 'cancelled' || periodicCheck.status === 'paused') {
-              console.log(`Campaign ${campaignId} status changed to ${periodicCheck?.status}, stopping.`);
-              return;
-            }
-          }
-
-          // Re-check daily limit
-          const { data: currentNumber } = await supabase
-            .from('whatsapp_numbers')
-            .select('daily_sent_count, last_sent_at')
-            .eq('id', numberId)
-            .single();
-
-          const currentDate = new Date().toDateString();
-          const lastDate = currentNumber?.last_sent_at ? new Date(currentNumber.last_sent_at).toDateString() : null;
-          let currentDailyCount = lastDate === currentDate ? (currentNumber?.daily_sent_count || 0) : 0;
-
-          if (currentDailyCount >= DAILY_LIMIT) {
-            console.log('Daily limit reached during processing, pausing campaign');
-            
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(8, 0, 0, 0);
-
-            await supabase
-              .from('whatsapp_campaigns')
-              .update({ 
-                status: 'paused',
-                pause_reason: 'daily_limit',
-                paused_at_limit: true,
-                resume_at: tomorrow.toISOString(),
-                sent_count: sentCount,
-                failed_count: failedCount,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', campaignId);
-
-            return;
-          }
-
-          // Wait BEFORE sending
-          const delay = getRandomDelay();
-          console.log(`Waiting ${delay}s before message ${i + 1}`);
-          await new Promise(resolve => setTimeout(resolve, delay * 1000));
-
-          const lead = leads[i];
-          const phone = lead.phone || lead.telefone;
-          
-          if (!phone) {
-            failedCount++;
-            continue;
-          }
-
-          let formattedPhone = phone.replace(/\D/g, '');
-          if (!formattedPhone.startsWith('55')) {
-            formattedPhone = '55' + formattedPhone;
-          }
-
-          const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-          const personalizedMessage = randomMessage
-            .replace(/\{nome\}/gi, lead.name || 'Cliente')
-            .replace(/\{empresa\}/gi, lead.name || 'Empresa');
-
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            const sendResponse = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': EVOLUTION_API_KEY!,
-              },
-              body: JSON.stringify({
-                number: formattedPhone,
-                text: personalizedMessage,
-              }),
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            if (sendResponse.ok) {
-              const sendResult = await sendResponse.json();
-              sentCount++;
-              currentDailyCount++;
-              console.log(`Message sent to ${formattedPhone} (${sentCount}/${leads.length})`);
-
-              // Sync to chat
-              try {
-                const remoteJid = `${formattedPhone}@s.whatsapp.net`;
-                
-                const { data: existingConv } = await supabase
-                  .from('conversations')
-                  .select('id')
-                  .eq('whatsapp_number_id', numberId)
-                  .eq('remote_jid', remoteJid)
-                  .single();
-
-                let conversationId: string | undefined;
-
-                if (existingConv) {
-                  conversationId = existingConv.id;
-                } else {
-                  const { data: existingContact } = await supabase
-                    .from('contacts')
-                    .select('id, name')
-                    .eq('user_id', userId)
-                    .eq('phone', formattedPhone)
-                    .single();
-
-                  const { data: newConv } = await supabase
-                    .from('conversations')
-                    .insert({
-                      user_id: userId,
-                      whatsapp_number_id: numberId,
-                      contact_id: existingContact?.id || null,
-                      remote_jid: remoteJid,
-                      phone: formattedPhone,
-                      contact_name: existingContact?.name || lead.name || null,
-                    })
-                    .select('id')
-                    .single();
-
-                  if (newConv) {
-                    conversationId = newConv.id;
-                  }
-                }
-
-                if (conversationId) {
-                  const messageId = sendResult?.key?.id || `campaign_${campaignId}_${Date.now()}`;
-                  
-                  await supabase
-                    .from('messages')
-                    .insert({
-                      conversation_id: conversationId,
-                      user_id: userId,
-                      message_id: messageId,
-                      remote_jid: remoteJid,
-                      from_me: true,
-                      message_type: 'text',
-                      content: personalizedMessage,
-                      status: 'sent',
-                    });
-
-                  await supabase
-                    .from('conversations')
-                    .update({
-                      last_message: personalizedMessage.substring(0, 100),
-                      last_message_at: new Date().toISOString(),
-                    })
-                    .eq('id', conversationId);
-                }
-              } catch (syncError) {
-                console.error('Error syncing message:', syncError);
-              }
-            } else {
-              const errorText = await sendResponse.text();
-              console.error(`Failed to send to ${formattedPhone}:`, errorText);
-              failedCount++;
-            }
-          } catch (sendError) {
-            console.error(`Error sending to ${formattedPhone}:`, sendError);
-            failedCount++;
-          }
-
-          // Update progress every message
-          await supabase
-            .from('whatsapp_campaigns')
-            .update({ 
-              sent_count: sentCount,
-              failed_count: failedCount,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', campaignId);
-
-          await supabase
-            .from('whatsapp_numbers')
-            .update({ 
-              daily_sent_count: currentDailyCount,
-              last_sent_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', numberId);
-        }
-
-        // Campaign completed after all leads
-        await supabase
-          .from('whatsapp_campaigns')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            sent_count: sentCount,
-            failed_count: failedCount,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', campaignId);
-
-        console.log(`Campaign ${campaignId} completed: ${sentCount} sent, ${failedCount} failed`);
-      } else {
-        // Campaign completed (small batch)
-        await supabase
-          .from('whatsapp_campaigns')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            sent_count: sentCount,
-            failed_count: failedCount,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', campaignId);
-
-        console.log(`Campaign ${campaignId} completed: ${sentCount} sent, ${failedCount} failed`);
-      }
+      console.log(`Campaign ${campaignId} completed: ${sentCount} sent, ${failedCount} failed`);
     };
 
     // Start batch in background
