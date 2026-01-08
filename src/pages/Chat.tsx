@@ -20,7 +20,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge, Download, Settings } from 'lucide-react';
+import { Loader2, Phone, MessageSquare, Plus, Settings2, Bell, BellOff, RefreshCw, GitMerge, Download, Settings, UsersRound } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ const Chat = () => {
   const [webhookSyncedFor, setWebhookSyncedFor] = useState<string | null>(null);
   const [syncingWebhook, setSyncingWebhook] = useState(false);
   const [mergingConversations, setMergingConversations] = useState(false);
+  const [syncingGroups, setSyncingGroups] = useState(false);
   const [showReconnectDialog, setShowReconnectDialog] = useState(false);
   const [initialSyncLoading, setInitialSyncLoading] = useState(false);
   const [syncProgress, setSyncProgress] = useState<{ conversations: number; messages: number } | null>(null);
@@ -305,6 +306,42 @@ const Chat = () => {
       await triggerSync(selectedNumberId);
     } finally {
       setSyncingWebhook(false);
+    }
+  };
+
+  // Handle sync groups from WhatsApp
+  const handleSyncGroups = async () => {
+    const selectedNumber = connectedNumbers.find(n => n.id === selectedNumberId);
+    if (!selectedNumber?.instance_name) {
+      toast.error('Selecione um número conectado');
+      return;
+    }
+
+    setSyncingGroups(true);
+    try {
+      const response = await supabase.functions.invoke('evolution-sync-messages', {
+        body: { 
+          instanceName: selectedNumber.instance_name,
+          numberId: selectedNumberId,
+          syncGroupsOnly: true, // Flag to sync only groups
+        },
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      if (response.data?.success) {
+        toast.success(`${response.data.syncedConversations || 0} grupos sincronizados!`);
+        await fetchConversations();
+      } else {
+        toast.error('Erro ao sincronizar grupos');
+      }
+    } catch (error) {
+      console.error('Error syncing groups:', error);
+      toast.error('Erro ao sincronizar grupos');
+    } finally {
+      setSyncingGroups(false);
     }
   };
 
@@ -734,6 +771,23 @@ const Chat = () => {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Recuperar mensagens do WhatsApp</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    {/* Sync Groups Button */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleSyncGroups}
+                            disabled={syncingGroups}
+                          >
+                            <UsersRound className={`h-4 w-4 ${syncingGroups ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Sincronizar grupos do WhatsApp</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     
