@@ -167,8 +167,7 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     }
   };
 
-  const uploadFile = async (file: File, messageType: string, captionText?: string) => {
-    setIsUploading(true);
+  const uploadFile = async (file: File, messageType: string, captionText?: string): Promise<boolean> => {
     try {
       // Compress image if needed
       const fileToUpload = await compressImage(file);
@@ -179,7 +178,7 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
 
       // Upload to Supabase Storage
       const fileExt = fileToUpload.name.split('.').pop() || (messageType === 'image' ? 'jpg' : 'bin');
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat-media')
@@ -193,7 +192,6 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
         .getPublicUrl(fileName);
 
       // Send message with media
-      const { data: session } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke('chat-send-message', {
         body: {
           conversationId,
@@ -205,14 +203,11 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
       });
 
       if (response.error) throw response.error;
-
-      toast.success('Mídia enviada com sucesso!');
-      onMediaSent();
+      return true;
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Erro ao enviar mídia');
-    } finally {
-      setIsUploading(false);
+      toast.error(`Erro ao enviar: ${file.name}`);
+      return false;
     }
   };
 
@@ -230,8 +225,9 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
   const handleSendCurrentFile = async () => {
     if (selectedFiles.length === 0) return;
     
+    setIsUploading(true);
     const currentFile = selectedFiles[currentFileIndex];
-    await uploadFile(currentFile.file, currentFile.type, caption);
+    const success = await uploadFile(currentFile.file, currentFile.type, caption);
     
     // Remove sent file from list
     const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
@@ -250,24 +246,45 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
       setCurrentFileIndex(0);
       setCaption('');
     }
+    
+    if (success) {
+      toast.success('Mídia enviada!');
+      onMediaSent();
+    }
+    setIsUploading(false);
   };
 
   const handleSendAllFiles = async () => {
     if (selectedFiles.length === 0) return;
     
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
+    setIsUploading(true);
+    
+    // Prepare all files for parallel upload
+    const uploadPromises = selectedFiles.map((file, i) => {
       const captionToUse = i === currentFileIndex ? caption : '';
-      await uploadFile(file.file, file.type, captionToUse);
-      
+      return uploadFile(file.file, file.type, captionToUse);
+    });
+    
+    // Execute all uploads in parallel
+    const results = await Promise.all(uploadPromises);
+    
+    // Cleanup preview URLs
+    selectedFiles.forEach(file => {
       if (file.preview) {
         URL.revokeObjectURL(file.preview);
       }
+    });
+    
+    const successCount = results.filter(Boolean).length;
+    if (successCount > 0) {
+      toast.success(`${successCount} arquivo(s) enviado(s)!`);
+      onMediaSent();
     }
     
     setSelectedFiles([]);
     setCurrentFileIndex(0);
     setCaption('');
+    setIsUploading(false);
   };
 
   const handleCancelFile = () => {
