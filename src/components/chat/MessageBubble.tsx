@@ -53,7 +53,13 @@ const getStatusIcon = (status: string, fromMe: boolean) => {
   
   switch (status) {
     case 'pending':
-      return <Clock className="h-3 w-3 text-white/60" />;
+      return (
+        <div className="h-3 w-3 flex items-center justify-center">
+          <div className="h-2 w-2 border border-white/60 border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    case 'failed':
+      return <Clock className="h-3 w-3 text-destructive" />;
     case 'sent':
       return <Check className="h-3 w-3 text-white/60" />;
     case 'delivered':

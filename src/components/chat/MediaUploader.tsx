@@ -561,55 +561,43 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
 
         {/* Footer with caption and send */}
         <div className="p-4 border-t border-border bg-card">
-          <div className="flex items-center gap-3">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (selectedFiles.length === 1) {
+                handleSendCurrentFile();
+              } else {
+                handleSendAllFiles();
+              }
+            }}
+            className="flex items-center gap-3"
+          >
             <Input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Adicionar legenda..."
               className="flex-1 bg-muted border-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isUploading) {
-                  e.preventDefault();
-                  if (selectedFiles.length === 1) {
-                    handleSendCurrentFile();
-                  }
-                }
-              }}
+              autoFocus
             />
             {selectedFiles.length === 1 ? (
               <Button
-                onClick={handleSendCurrentFile}
-                disabled={isUploading}
+                type="submit"
                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 h-10 w-10 p-0"
               >
-                {isUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
+                <Send className="h-5 w-5" />
               </Button>
             ) : (
               <Button
-                onClick={handleSendAllFiles}
-                disabled={isUploading}
+                type="submit"
                 className="bg-emerald-600 hover:bg-emerald-700 gap-2"
               >
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Enviar todos ({selectedFiles.length})
-                  </>
-                )}
+                <Send className="h-4 w-4" />
+                Enviar todos ({selectedFiles.length})
               </Button>
             )}
-          </div>
+          </form>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            {selectedFiles.length === 1 
-              ? 'Pressione Enter ou clique para enviar'
-              : 'Clique para enviar todos os arquivos de uma vez'
-            }
+            Pressione Enter para enviar
           </p>
         </div>
       </div>
