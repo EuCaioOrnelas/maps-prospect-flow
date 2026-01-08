@@ -962,7 +962,7 @@ const ChatAreaComponent = ({
                               className={cn(
                                 'relative rounded-lg p-2 shadow-md min-w-0 max-w-full overflow-hidden',
                                 item.fromMe
-                                  ? 'bg-primary text-primary-foreground rounded-tr-none'
+                                  ? 'bg-whatsapp-outgoing text-whatsapp-outgoing-foreground rounded-tr-none'
                                   : 'bg-card text-card-foreground rounded-tl-none border border-border'
                               )}
                             >
@@ -983,7 +983,7 @@ const ChatAreaComponent = ({
                               <div className="flex items-center justify-end gap-1 mt-1">
                                 <span className={cn(
                                   "text-[10px]",
-                                  item.fromMe ? "text-black/60" : "text-muted-foreground"
+                                  item.fromMe ? "text-white/70" : "text-muted-foreground"
                                 )}>
                                   {format(new Date(item.messages[item.messages.length - 1].created_at), 'HH:mm')}
                                 </span>
