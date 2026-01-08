@@ -173,6 +173,33 @@ export type Database = {
           },
         ]
       }
+      group_member_avatars: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          phone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          phone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          phone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       landing_page_events: {
         Row: {
           created_at: string
