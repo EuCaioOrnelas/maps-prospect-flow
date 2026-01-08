@@ -38,9 +38,11 @@ export const CampaignScheduler = ({
 }: CampaignSchedulerProps) => {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // Allow today's date - set time to start of today
   const getMinDate = () => {
-    const now = new Date();
-    return now;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
   };
 
   const isValidSchedule = () => {
@@ -84,6 +86,13 @@ export const CampaignScheduler = ({
           onCheckedChange={onScheduleChange}
         />
       </div>
+
+      {/* Info about default being immediate */}
+      {!isScheduled && (
+        <p className="text-xs text-muted-foreground px-1">
+          Por padrão, campanhas são enviadas imediatamente. Ative o agendamento se preferir programar.
+        </p>
+      )}
 
       {isScheduled ? (
         <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-4">
