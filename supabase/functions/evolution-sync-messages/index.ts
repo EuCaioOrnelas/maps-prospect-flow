@@ -6,6 +6,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const asString = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+
+const extractRemoteJid = (chat: any): string | null => {
+  const candidates: unknown[] = [
+    chat?.remoteJid,
+    chat?.remote_jid,
+    chat?.jid,
+    chat?.key?.remoteJid,
+    chat?.id?._serialized,
+    chat?.chatId,
+    chat?.chat_id,
+    chat?.id,
+  ];
+
+  for (const c of candidates) {
+    const s = asString(c);
+    if (!s) continue;
+    // Remote JIDs usually contain '@' (e.g. @s.whatsapp.net, @g.us, @c.us, @lid)
+    if (s.includes('@')) return s;
+  }
+
+  return null;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -118,20 +142,24 @@ serve(async (req) => {
 
     let syncedMessages = 0;
     let syncedConversations = 0;
+    let groupsFound = 0;
+    let groupsCreated = 0;
+    let groupsUpdated = 0;
 
     // Process each chat (including groups)
     for (const chat of (chats || [])) {
-      const remoteJid = chat.id || chat.remoteJid;
+      const remoteJid = extractRemoteJid(chat);
       if (!remoteJid) continue;
-      
+
       const isGroup = remoteJid.includes('@g.us');
+      if (isGroup) groupsFound++;
 
       // If syncGroupsOnly is true, skip non-group chats
       if (syncGroupsOnly && !isGroup) continue;
 
       // Extract phone from JID (for groups, use the group JID as identifier)
-      const phone = isGroup 
-        ? remoteJid.replace('@g.us', '') 
+      const phone = isGroup
+        ? remoteJid.replace('@g.us', '')
         : remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
       if (!phone || phone.length < 8) continue;
       
@@ -139,9 +167,9 @@ serve(async (req) => {
       const groupName = isGroup ? (chat.name || chat.subject || null) : null;
 
       // Check if conversation exists
-      let { data: existingConversation } = await supabase
+      const { data: existingConversation } = await supabase
         .from('conversations')
-        .select('id, updated_at')
+        .select('id, is_group, group_name, phone')
         .eq('whatsapp_number_id', numberId)
         .eq('remote_jid', remoteJid)
         .single();
@@ -171,8 +199,28 @@ serve(async (req) => {
 
         conversationId = newConversation.id;
         syncedConversations++;
+        if (isGroup) groupsCreated++;
       } else {
         conversationId = existingConversation.id;
+
+        // Ensure existing conversations are correctly marked as groups
+        if (isGroup && (existingConversation.is_group !== true || existingConversation.group_name !== groupName || existingConversation.phone !== phone)) {
+          const { error: updateErr } = await supabase
+            .from('conversations')
+            .update({
+              is_group: true,
+              group_name: groupName,
+              phone: phone,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', conversationId);
+
+          if (!updateErr) {
+            groupsUpdated++;
+          } else {
+            console.error('Error updating existing group conversation:', updateErr);
+          }
+        }
       }
 
       // Fetch messages for this chat
@@ -324,6 +372,9 @@ serve(async (req) => {
       success: true,
       syncedConversations,
       syncedMessages,
+      groupsFound,
+      groupsCreated,
+      groupsUpdated,
       message: `Sincronizado: ${syncedConversations} conversas, ${syncedMessages} mensagens`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
