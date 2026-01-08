@@ -25,29 +25,44 @@ serve(async (req) => {
   try {
     console.log("[GET-STRIPE-MRR] Function started");
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    
+    // Create client with service role for admin checks
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, { 
+      auth: { persistSession: false } 
+    });
 
-    // Verify admin access
+    // Verify admin access using the user's token
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !userData.user) {
+      console.error("[GET-STRIPE-MRR] Auth error:", userError?.message);
       throw new Error("Unauthorized");
     }
 
-    // Check if user is admin
-    const { data: isAdmin } = await supabaseClient.rpc("is_current_user_admin");
-    if (!isAdmin) {
+    const userId = userData.user.id;
+    console.log("[GET-STRIPE-MRR] User authenticated:", userId);
+
+    // Check if user is admin via user_roles table directly
+    const { data: adminRole, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .single();
+
+    if (roleError || !adminRole) {
+      console.error("[GET-STRIPE-MRR] Admin check failed:", roleError?.message);
       throw new Error("Admin access required");
     }
+    
+    console.log("[GET-STRIPE-MRR] Admin verified");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
