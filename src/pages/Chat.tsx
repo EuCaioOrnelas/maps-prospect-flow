@@ -508,7 +508,7 @@ const Chat = () => {
         <AppSidebar profile={profile} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-14 flex flex-col h-screen">
+        <main className="flex-1 min-w-0 lg:pl-14 flex flex-col h-screen">
           {/* Mobile Nav */}
           <MobileNav profile={profile} />
 
@@ -765,7 +765,7 @@ const Chat = () => {
                 </div>
 
                 {/* Main Chat Content */}
-                <div className="flex-1 flex min-h-0 overflow-hidden">
+                <div className="flex-1 min-w-0 flex min-h-0 overflow-hidden">
                   {isLoading ? (
                     <div className="flex-1 flex items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -799,8 +799,8 @@ const Chat = () => {
                       </div>
 
                       {/* Chat Area */}
-                      <div className={`flex-1 flex flex-col min-h-0 ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
-                        <div className="flex-1 flex min-h-0 overflow-hidden">
+                      <div className={`flex-1 min-w-0 flex flex-col min-h-0 ${!selectedConversation ? 'hidden sm:flex' : 'flex'}`}>
+                        <div className="flex-1 min-w-0 flex min-h-0 overflow-hidden">
                           <div className="flex-1 min-h-0 flex flex-col">
                             <ChatArea
                               conversation={selectedConversation}
