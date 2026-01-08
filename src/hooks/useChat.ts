@@ -355,8 +355,81 @@ export const useChat = (selectedNumberId?: string | null) => {
       .eq('id', conversationId);
   }, [user]);
 
-  // Send message with optimistic update - NO refetch, rely on realtime
-  const sendMessage = useCallback(async (
+  // Message queue for concurrent sending
+  const messageQueueRef = useRef<Map<string, { optimisticId: string; status: 'pending' | 'sending' | 'sent' | 'failed' }>>(new Map());
+  const processingQueueRef = useRef(false);
+
+  // Process message queue - sends messages one by one but doesn't block input
+  const processMessageQueue = useCallback(async () => {
+    if (processingQueueRef.current || !user) return;
+    processingQueueRef.current = true;
+
+    try {
+      // Find next pending message
+      const pendingEntry = Array.from(messageQueueRef.current.entries()).find(
+        ([, value]) => value.status === 'pending'
+      );
+
+      if (!pendingEntry) {
+        processingQueueRef.current = false;
+        return;
+      }
+
+      const [queueId, queueItem] = pendingEntry;
+      queueItem.status = 'sending';
+
+      // Get message data from queue ID
+      const [conversationId, , content, messageType, quotedMessageId, mediaUrl, mediaFilename] = queueId.split('|||');
+
+      try {
+        const response = await supabase.functions.invoke('chat-send-message', {
+          body: {
+            conversationId,
+            content: content?.trim() || '',
+            messageType: messageType || 'text',
+            quotedMessageId: quotedMessageId || undefined,
+            mediaUrl: mediaUrl || undefined,
+            mediaFilename: mediaFilename || undefined,
+          },
+        });
+
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+
+        // Update optimistic message status to 'sent'
+        setMessages(prev => prev.map(m => 
+          m.id === queueItem.optimisticId 
+            ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+            : m
+        ));
+
+        queueItem.status = 'sent';
+        messageQueueRef.current.delete(queueId);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Mark message as failed
+        setMessages(prev => prev.map(m => 
+          m.id === queueItem.optimisticId 
+            ? { ...m, status: 'failed' }
+            : m
+        ));
+        queueItem.status = 'failed';
+        messageQueueRef.current.delete(queueId);
+      }
+    } finally {
+      processingQueueRef.current = false;
+      // Check if there are more messages to process
+      const hasPending = Array.from(messageQueueRef.current.values()).some(v => v.status === 'pending');
+      if (hasPending) {
+        // Process next message after a small delay
+        setTimeout(() => processMessageQueue(), 100);
+      }
+    }
+  }, [user]);
+
+  // Send a message - non-blocking, adds to queue
+  const sendMessage = useCallback((
     content: string, 
     messageType: string = 'text', 
     quotedMessageId?: string,
@@ -367,10 +440,11 @@ export const useChat = (selectedNumberId?: string | null) => {
     if (!content.trim() && !mediaUrl) return;
 
     const now = new Date().toISOString();
+    const optimisticId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     
     // Create optimistic message
     const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`,
+      id: optimisticId,
       conversation_id: selectedConversation.id,
       user_id: user.id,
       message_id: null,
@@ -410,41 +484,13 @@ export const useChat = (selectedNumberId?: string | null) => {
       return dateB - dateA;
     }));
 
-    setIsSending(true);
+    // Add to queue with unique key
+    const queueId = `${selectedConversation.id}|||${optimisticId}|||${content.trim()}|||${messageType}|||${quotedMessageId || ''}|||${mediaUrl || ''}|||${mediaFilename || ''}`;
+    messageQueueRef.current.set(queueId, { optimisticId, status: 'pending' });
 
-    try {
-      const response = await supabase.functions.invoke('chat-send-message', {
-        body: {
-          conversationId: selectedConversation.id,
-          content: content.trim(),
-          messageType,
-          quotedMessageId,
-          mediaUrl,
-          mediaFilename,
-        },
-      });
-
-      if (response.error) {
-        // Remove optimistic message on error
-        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
-        throw new Error(response.error.message);
-      }
-
-      // Update optimistic message status to 'sent' - real message will come via realtime
-      setMessages(prev => prev.map(m => 
-        m.id === optimisticMessage.id 
-          ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
-          : m
-      ));
-    } catch (error) {
-      console.error('Error sending message:', error);
-      // Remove optimistic message on error
-      setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
-      throw error;
-    } finally {
-      setIsSending(false);
-    }
-  }, [user, selectedConversation]);
+    // Start processing queue (non-blocking)
+    processMessageQueue();
+  }, [user, selectedConversation, processMessageQueue]);
 
   // Start new conversation
   const startConversation = useCallback(async (phone: string, whatsappNumberId: string, contactName?: string, initialMessage?: string) => {
