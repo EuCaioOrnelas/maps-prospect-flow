@@ -88,12 +88,12 @@ const Upgrade = () => {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
-  const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
   const isTrialExpired = searchParams.get("expired") === "true";
+  const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
 
   // Check for checkout result
   useEffect(() => {
@@ -107,24 +107,60 @@ const Upgrade = () => {
     }
   }, [searchParams, toast]);
 
-  // Check subscription status on mount and after checkout success
+  // Automatic subscription check - runs on mount and every 5 seconds if from checkout
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let hasUpdated = false;
+
     const checkSubscription = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
+        console.log("[Upgrade] Checking subscription status...");
         const response = await supabase.functions.invoke("check-subscription");
+        
         if (response.data && !response.error) {
-          await refreshProfile();
+          console.log("[Upgrade] Subscription check result:", response.data);
+          
+          // If plan changed from free to paid, show success toast
+          if (response.data.plan && response.data.plan !== "free" && currentPlan === "free" && !hasUpdated) {
+            hasUpdated = true;
+            await refreshProfile();
+            toast({
+              title: "🎉 Plano ativado!",
+              description: `Seu plano ${response.data.plan.toUpperCase()} está ativo. Aproveite todas as funcionalidades!`,
+            });
+            
+            // Clear interval after successful update
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          } else {
+            await refreshProfile();
+          }
         }
       } catch (error) {
-        console.error("Error checking subscription:", error);
+        console.error("[Upgrade] Error checking subscription:", error);
       }
     };
 
+    // Initial check
     checkSubscription();
-  }, [refreshProfile]);
+
+    // If coming from checkout, check every 5 seconds until plan is updated
+    if (isFromCheckout && currentPlan === "free") {
+      console.log("[Upgrade] Coming from checkout, starting automatic verification...");
+      intervalId = setInterval(checkSubscription, 5000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [refreshProfile, isFromCheckout, currentPlan, toast]);
 
   const getPlanOrder = (planName: string) => {
     const order: Record<string, number> = {
@@ -231,43 +267,6 @@ const Upgrade = () => {
     }
   };
 
-  // Force refresh subscription status
-  const handleRefreshSubscription = async () => {
-    setLoadingRefresh(true);
-    
-    try {
-      const response = await supabase.functions.invoke("check-subscription");
-      
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-      
-      await refreshProfile();
-      
-      if (response.data?.plan && response.data.plan !== "free") {
-        toast({
-          title: "Plano atualizado!",
-          description: `Seu plano ${response.data.plan.toUpperCase()} está ativo. Aproveite!`,
-        });
-      } else {
-        toast({
-          title: "Status verificado",
-          description: "Nenhuma assinatura ativa encontrada.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error("Refresh error:", error);
-      toast({
-        title: "Erro ao verificar",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingRefresh(false);
-    }
-  };
-
   const hasPaidPlan = currentPlan !== "free";
 
   return (
@@ -343,9 +342,9 @@ const Upgrade = () => {
           </p>
         </div>
 
-        {/* Manage Subscription Button for paid users OR Refresh button for anyone */}
-        <div className="flex justify-center gap-4 mb-8">
-          {hasPaidPlan && (
+        {/* Manage Subscription Button for paid users */}
+        {hasPaidPlan && (
+          <div className="flex justify-center mb-8">
             <Button
               variant="outline"
               onClick={handleManageSubscription}
@@ -359,23 +358,18 @@ const Upgrade = () => {
               )}
               Gerenciar Assinatura
             </Button>
-          )}
-          
-          {/* Button to check/refresh subscription status */}
-          <Button
-            variant="ghost"
-            onClick={handleRefreshSubscription}
-            disabled={loadingRefresh}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            {loadingRefresh ? (
+          </div>
+        )}
+
+        {/* Auto-checking indicator when coming from checkout */}
+        {isFromCheckout && currentPlan === "free" && (
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-4 py-2 rounded-full">
               <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <CreditCard size={16} />
-            )}
-            {loadingRefresh ? "Verificando..." : "Já comprei, verificar meu plano"}
-          </Button>
-        </div>
+              <span className="text-sm">Verificando pagamento automaticamente...</span>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, index) => {
