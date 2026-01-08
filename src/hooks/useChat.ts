@@ -85,6 +85,22 @@ export const useChat = (selectedNumberId?: string | null) => {
   const lastFetchRef = useRef<number>(0);
   const MIN_FETCH_INTERVAL = 1000; // Minimum 1 second between fetches
 
+  // Message queue refs - MUST be at top level of hook
+  const messageQueueRef = useRef<Array<{
+    id: string;
+    conversationId: string;
+    content: string;
+    messageType: string;
+    quotedMessageId?: string;
+    mediaUrl?: string;
+    mediaFilename?: string;
+  }>>([]);
+  const processingQueueRef = useRef(false);
+
+  // Ref for realtime subscriptions
+  const selectedConversationRef = useRef<Conversation | null>(null);
+  selectedConversationRef.current = selectedConversation;
+
   // Fetch all conversations filtered by selected number
   const fetchConversationsInternal = useCallback(async () => {
     if (!user) return;
@@ -355,17 +371,6 @@ export const useChat = (selectedNumberId?: string | null) => {
       .eq('id', conversationId);
   }, [user]);
 
-  // Message queue for sending
-  const messageQueueRef = useRef<Array<{
-    id: string;
-    conversationId: string;
-    content: string;
-    messageType: string;
-    quotedMessageId?: string;
-    mediaUrl?: string;
-    mediaFilename?: string;
-  }>>([]);
-  const processingQueueRef = useRef(false);
 
   // Process message queue - sends up to 5 messages concurrently
   const processMessageQueue = useCallback(async () => {
@@ -689,9 +694,6 @@ export const useChat = (selectedNumberId?: string | null) => {
     };
   }, [user, selectedNumberId, fetchConversationsInternal]);
 
-  // Use refs to avoid recreating subscriptions
-  const selectedConversationRef = useRef<Conversation | null>(null);
-  selectedConversationRef.current = selectedConversation;
 
   // Realtime subscription for messages - optimized with user filter
   useEffect(() => {
