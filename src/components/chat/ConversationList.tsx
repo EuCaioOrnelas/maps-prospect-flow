@@ -318,8 +318,12 @@ const ConversationListComponent = ({
     return () => clearTimeout(timeoutId);
   }, [conversations.length]); // Only re-run when conversations count changes
 
-  // Get avatar URL - from contacts or cache
+  // Get avatar URL - from conversation avatar_url (for groups), contacts or cache
   const getAvatarUrl = useCallback((conversation: Conversation) => {
+    // For groups, use the conversation's avatar_url first
+    if (conversation.is_group && conversation.avatar_url) {
+      return conversation.avatar_url;
+    }
     return conversation.contacts?.avatar_url || avatarCache[conversation.id] || undefined;
   }, [avatarCache]);
 

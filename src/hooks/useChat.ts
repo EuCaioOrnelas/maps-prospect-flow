@@ -18,6 +18,7 @@ export interface Conversation {
   pinned_at: string | null;
   is_group: boolean;
   group_name: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
   contacts?: {
