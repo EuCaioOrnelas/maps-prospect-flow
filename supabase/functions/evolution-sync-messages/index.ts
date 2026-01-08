@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -23,14 +22,13 @@ const extractRemoteJid = (chat: any): string | null => {
   for (const c of candidates) {
     const s = asString(c);
     if (!s) continue;
-    // Remote JIDs usually contain '@' (e.g. @s.whatsapp.net, @g.us, @c.us, @lid)
     if (s.includes('@')) return s;
   }
 
   return null;
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -79,7 +77,7 @@ serve(async (req) => {
     let chats: any[] = [];
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       const chatsResponse = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
         method: 'POST',
@@ -96,7 +94,6 @@ serve(async (req) => {
       if (chatsResponse.ok) {
         const chatsData = await chatsResponse.json();
         console.log('Chats API response type:', typeof chatsData);
-        // Handle different response formats - ensure we always get an array
         if (Array.isArray(chatsData)) {
           chats = chatsData;
         } else if (chatsData && typeof chatsData === 'object') {
@@ -115,7 +112,6 @@ serve(async (req) => {
       } else {
         const errorText = await chatsResponse.text();
         console.error('Failed to fetch chats:', chatsResponse.status, errorText);
-        // Return success with 0 synced instead of failing completely
         return new Response(JSON.stringify({
           success: true,
           syncedConversations: 0,
@@ -128,7 +124,6 @@ serve(async (req) => {
       }
     } catch (chatError) {
       console.error('Error fetching chats from Evolution API:', chatError);
-      // Return success with warning instead of failing
       return new Response(JSON.stringify({
         success: true,
         syncedConversations: 0,
@@ -146,7 +141,6 @@ serve(async (req) => {
     let groupsCreated = 0;
     let groupsUpdated = 0;
 
-    // Process each chat (including groups)
     for (const chat of (chats || [])) {
       const remoteJid = extractRemoteJid(chat);
       if (!remoteJid) continue;
@@ -154,20 +148,16 @@ serve(async (req) => {
       const isGroup = remoteJid.includes('@g.us');
       if (isGroup) {
         groupsFound++;
-        // Log full chat object for debugging group name extraction
         console.log('Group chat object:', JSON.stringify(chat, null, 2));
       }
 
-      // If syncGroupsOnly is true, skip non-group chats
       if (syncGroupsOnly && !isGroup) continue;
 
-      // Extract phone from JID (for groups, use the group JID as identifier)
       const phone = isGroup
         ? remoteJid.replace('@g.us', '')
         : remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
       if (!phone || phone.length < 8) continue;
       
-      // Get group name for group chats - try multiple possible properties
       let groupName: string | null = null;
       let groupAvatarUrl: string | null = null;
       
@@ -177,7 +167,6 @@ serve(async (req) => {
                    (chat.groupMetadata?.subject) || (chat.metadata?.subject) || null;
         console.log(`Group ${remoteJid} - initial name from chat object: ${groupName}`);
         
-        // If no name found, try to fetch group metadata from Evolution API
         if (!groupName && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
           try {
             const metadataResponse = await fetch(`${EVOLUTION_API_URL}/group/findGroupInfos/${instanceName}`, {
@@ -201,7 +190,6 @@ serve(async (req) => {
           }
         }
         
-        // Try to fetch group profile picture
         if (EVOLUTION_API_URL && EVOLUTION_API_KEY) {
           try {
             const avatarResponse = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
@@ -224,7 +212,6 @@ serve(async (req) => {
         }
       }
 
-      // Check if conversation exists
       const { data: existingConversation } = await supabase
         .from('conversations')
         .select('id, is_group, group_name, phone, avatar_url')
@@ -235,7 +222,6 @@ serve(async (req) => {
       let conversationId: string;
 
       if (!existingConversation) {
-        // Create new conversation
         const insertData: Record<string, unknown> = {
           user_id: user.id,
           whatsapp_number_id: numberId,
@@ -246,7 +232,6 @@ serve(async (req) => {
           group_name: groupName,
         };
         
-        // Add avatar_url if we have it for groups
         if (isGroup && groupAvatarUrl) {
           insertData.avatar_url = groupAvatarUrl;
         }
@@ -268,7 +253,6 @@ serve(async (req) => {
       } else {
         conversationId = existingConversation.id;
 
-        // Ensure existing conversations are correctly marked as groups with updated info
         const needsUpdate = isGroup && (
           existingConversation.is_group !== true || 
           (groupName && existingConversation.group_name !== groupName) || 
@@ -283,12 +267,10 @@ serve(async (req) => {
             updated_at: new Date().toISOString(),
           };
           
-          // Only update group_name if we have a new one
           if (groupName) {
             updateData.group_name = groupName;
           }
           
-          // Only update avatar_url if we have a new one
           if (groupAvatarUrl) {
             updateData.avatar_url = groupAvatarUrl;
           }
@@ -306,7 +288,6 @@ serve(async (req) => {
         }
       }
 
-      // Fetch messages for this chat
       try {
         const messagesResponse = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
           method: 'POST',
@@ -328,7 +309,6 @@ serve(async (req) => {
           const messagesData = await messagesResponse.json();
           console.log(`Messages API response type for ${remoteJid}:`, typeof messagesData);
           
-          // Handle different response formats from Evolution API - ensure we always get an array
           let messages: any[] = [];
           if (Array.isArray(messagesData)) {
             messages = messagesData;
@@ -348,16 +328,14 @@ serve(async (req) => {
             const messageId = msg.key?.id;
             if (!messageId) continue;
 
-            // Check if message already exists
             const { data: existingMsg } = await supabase
               .from('messages')
               .select('id')
               .eq('message_id', messageId)
               .single();
 
-            if (existingMsg) continue; // Skip existing messages
+            if (existingMsg) continue;
 
-            // Extract message content
             let content = '';
             let messageType = 'text';
 
@@ -381,7 +359,6 @@ serve(async (req) => {
 
             if (!content && messageType === 'text') continue;
 
-            // Extract sender info for group messages
             let senderJid = null;
             let senderName = null;
             if (isGroup && !msg.key?.fromMe) {
@@ -389,7 +366,6 @@ serve(async (req) => {
               senderName = msg.pushName || null;
             }
 
-            // Insert message
             const { error: insertError } = await supabase
               .from('messages')
               .insert({
@@ -413,7 +389,6 @@ serve(async (req) => {
             }
           }
 
-          // Update conversation with last message
           if (messages && messages.length > 0) {
             const lastMsg = messages[0];
             let lastContent = '';
@@ -443,7 +418,6 @@ serve(async (req) => {
       }
     }
 
-    // Update number sync timestamp
     await supabase
       .from('whatsapp_numbers')
       .update({ updated_at: new Date().toISOString() })
