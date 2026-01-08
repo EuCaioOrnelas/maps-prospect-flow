@@ -105,6 +105,7 @@ const compressImage = async (file: File): Promise<File> => {
 export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({ conversationId, onMediaSent, disabled }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
@@ -226,73 +227,85 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     }
   };
 
-  const handleSendCurrentFile = () => {
-    if (selectedFiles.length === 0) return;
+  const handleSendCurrentFile = async () => {
+    if (selectedFiles.length === 0 || isUploading) return;
     
-    // Capture the current file to send
     const fileToSend = selectedFiles[currentFileIndex];
     const captionToUse = caption;
     
-    // Remove sent file from list immediately
-    const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
+    // Show upload state
+    setIsUploading(true);
+    setUploadProgress('Enviando...');
     
-    // Cleanup preview URL
-    if (fileToSend.preview) {
-      URL.revokeObjectURL(fileToSend.preview);
-    }
-    
-    if (newFiles.length > 0) {
-      setSelectedFiles(newFiles);
-      setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
-      setCaption('');
-    } else {
-      // Close everything immediately
-      setSelectedFiles([]);
-      setCurrentFileIndex(0);
-      setCaption('');
-      setIsOpen(false);
-    }
-    
-    // Send in background (fire and forget - no await)
-    uploadFile(fileToSend.file, fileToSend.type, captionToUse).then(success => {
+    try {
+      const success = await uploadFile(fileToSend.file, fileToSend.type, captionToUse);
+      
+      // Cleanup preview URL
+      if (fileToSend.preview) {
+        URL.revokeObjectURL(fileToSend.preview);
+      }
+      
+      // Remove sent file from list
+      const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
+      
+      if (newFiles.length > 0) {
+        setSelectedFiles(newFiles);
+        setCurrentFileIndex(Math.min(currentFileIndex, newFiles.length - 1));
+        setCaption('');
+      } else {
+        setSelectedFiles([]);
+        setCurrentFileIndex(0);
+        setCaption('');
+      }
+      
       if (success) {
         onMediaSent();
       }
-    });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
+    }
   };
 
-  const handleSendAllFiles = () => {
-    if (selectedFiles.length === 0) return;
+  const handleSendAllFiles = async () => {
+    if (selectedFiles.length === 0 || isUploading) return;
     
-    // Capture files to send and immediately close the modal
     const filesToSend = [...selectedFiles];
     const captionToUse = caption;
     
-    // Cleanup preview URLs
-    selectedFiles.forEach(file => {
-      if (file.preview) {
-        URL.revokeObjectURL(file.preview);
-      }
-    });
+    // Show upload state
+    setIsUploading(true);
     
-    // Clear state immediately so user can send more files
-    setSelectedFiles([]);
-    setCurrentFileIndex(0);
-    setCaption('');
-    setIsOpen(false);
-    
-    // Send all files in the background (fire and forget - no await)
-    Promise.all(
-      filesToSend.map((file, i) => {
+    try {
+      let successCount = 0;
+      
+      for (let i = 0; i < filesToSend.length; i++) {
+        const file = filesToSend[i];
+        setUploadProgress(`Enviando ${i + 1} de ${filesToSend.length}...`);
+        
         const cap = i === 0 ? captionToUse : '';
-        return uploadFile(file.file, file.type, cap);
-      })
-    ).then(results => {
-      const successCount = results.filter(Boolean).length;
+        const success = await uploadFile(file.file, file.type, cap);
+        
+        if (success) successCount++;
+        
+        // Cleanup preview URL
+        if (file.preview) {
+          URL.revokeObjectURL(file.preview);
+        }
+      }
+      
+      // Clear state after all uploads
+      setSelectedFiles([]);
+      setCurrentFileIndex(0);
+      setCaption('');
+      
       if (successCount > 0) {
         onMediaSent();
       }
-    });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress('');
+    }
   };
 
   const handleCancelFile = () => {
@@ -557,43 +570,56 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
 
         {/* Footer with caption and send */}
         <div className="p-4 border-t border-border bg-card">
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (selectedFiles.length === 1) {
-                handleSendCurrentFile();
-              } else {
-                handleSendAllFiles();
-              }
-            }}
-            className="flex items-center gap-3"
-          >
+          <div className="flex items-center gap-3">
             <Input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Adicionar legenda..."
               className="flex-1 bg-muted border-none"
               autoFocus
+              disabled={isUploading}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (selectedFiles.length === 1) {
+                    handleSendCurrentFile();
+                  } else {
+                    handleSendAllFiles();
+                  }
+                }
+              }}
             />
             {selectedFiles.length === 1 ? (
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSendCurrentFile}
+                disabled={isUploading}
                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 h-10 w-10 p-0"
               >
-                <Send className="h-5 w-5" />
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSendAllFiles}
+                disabled={isUploading}
                 className="bg-emerald-600 hover:bg-emerald-700 gap-2"
               >
-                <Send className="h-4 w-4" />
-                Enviar todos ({selectedFiles.length})
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {isUploading ? uploadProgress : `Enviar todos (${selectedFiles.length})`}
               </Button>
             )}
-          </form>
+          </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            Pressione Enter para enviar
+            {isUploading ? uploadProgress : 'Pressione Enter para enviar'}
           </p>
         </div>
       </div>
