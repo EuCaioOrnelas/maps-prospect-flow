@@ -88,6 +88,7 @@ const Upgrade = () => {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
@@ -230,6 +231,43 @@ const Upgrade = () => {
     }
   };
 
+  // Force refresh subscription status
+  const handleRefreshSubscription = async () => {
+    setLoadingRefresh(true);
+    
+    try {
+      const response = await supabase.functions.invoke("check-subscription");
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      await refreshProfile();
+      
+      if (response.data?.plan && response.data.plan !== "free") {
+        toast({
+          title: "Plano atualizado!",
+          description: `Seu plano ${response.data.plan.toUpperCase()} está ativo. Aproveite!`,
+        });
+      } else {
+        toast({
+          title: "Status verificado",
+          description: "Nenhuma assinatura ativa encontrada.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Refresh error:", error);
+      toast({
+        title: "Erro ao verificar",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRefresh(false);
+    }
+  };
+
   const hasPaidPlan = currentPlan !== "free";
 
   return (
@@ -305,9 +343,9 @@ const Upgrade = () => {
           </p>
         </div>
 
-        {/* Manage Subscription Button for paid users */}
-        {hasPaidPlan && (
-          <div className="flex justify-center mb-8">
+        {/* Manage Subscription Button for paid users OR Refresh button for anyone */}
+        <div className="flex justify-center gap-4 mb-8">
+          {hasPaidPlan && (
             <Button
               variant="outline"
               onClick={handleManageSubscription}
@@ -321,8 +359,23 @@ const Upgrade = () => {
               )}
               Gerenciar Assinatura
             </Button>
-          </div>
-        )}
+          )}
+          
+          {/* Button to check/refresh subscription status */}
+          <Button
+            variant="ghost"
+            onClick={handleRefreshSubscription}
+            disabled={loadingRefresh}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            {loadingRefresh ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <CreditCard size={16} />
+            )}
+            {loadingRefresh ? "Verificando..." : "Já comprei, verificar meu plano"}
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, index) => {
