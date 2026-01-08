@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +11,7 @@ interface GroupParticipant {
   admin: boolean | null;
   name?: string;
   avatarUrl?: string;
+  lidId?: string;
 }
 
 serve(async (req) => {
@@ -89,31 +90,57 @@ serve(async (req) => {
     let participants: GroupParticipant[] = [];
     
     if (Array.isArray(result)) {
-      participants = result.map((p: any) => ({
-        id: p.id || p.jid || p.participant,
-        admin: p.admin || p.isAdmin || p.superAdmin || false,
-        name: p.name || p.pushName || null,
-      }));
+      participants = result.map((p: any) => {
+        const phoneJid = p.phoneNumber || p.phone_number || null;
+        const lidId = p.id || p.lid || null;
+        return {
+          id: phoneJid || p.id || p.jid || p.participant,
+          lidId: phoneJid ? lidId : undefined,
+          admin: !!(
+            p.admin === true ||
+            p.admin === 'admin' ||
+            p.admin === 'superadmin' ||
+            p.isAdmin ||
+            p.superAdmin
+          ),
+          name: p.name || p.pushName || null,
+          avatarUrl: p.imgUrl || p.avatarUrl || p.picture || null,
+        };
+      });
     } else if (result.participants && Array.isArray(result.participants)) {
-      participants = result.participants.map((p: any) => ({
-        id: p.id || p.jid || p.participant,
-        admin: p.admin === 'admin' || p.admin === 'superadmin' || p.isAdmin || p.superAdmin || false,
-        name: p.name || p.pushName || null,
-      }));
+      participants = result.participants.map((p: any) => {
+        const phoneJid = p.phoneNumber || p.phone_number || null;
+        const lidId = p.id || p.lid || null;
+        return {
+          id: phoneJid || p.id || p.jid || p.participant,
+          lidId: phoneJid ? lidId : undefined,
+          admin: !!(
+            p.admin === true ||
+            p.admin === 'admin' ||
+            p.admin === 'superadmin' ||
+            p.isAdmin ||
+            p.superAdmin
+          ),
+          name: p.name || p.pushName || null,
+          avatarUrl: p.imgUrl || p.avatarUrl || p.picture || null,
+        };
+      });
     }
 
     // Try to fetch avatars for participants (limit to first 20 to avoid rate limits)
     const participantsWithAvatars = await Promise.all(
       participants.slice(0, 20).map(async (participant) => {
         try {
-          const phone = participant.id.replace('@s.whatsapp.net', '').replace('@c.us', '');
+          const phoneDigits = participant.id.includes('@')
+            ? participant.id.split('@')[0]
+            : participant.id;
           const avatarResponse = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'apikey': EVOLUTION_API_KEY,
             },
-            body: JSON.stringify({ number: phone }),
+            body: JSON.stringify({ number: phoneDigits }),
           });
 
           if (avatarResponse.ok) {

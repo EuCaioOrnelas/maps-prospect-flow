@@ -270,7 +270,7 @@ export const ContactInfoPanel = ({
                 className="text-center font-semibold"
               />
             ) : (
-              <h4 className="font-semibold text-lg text-foreground max-w-full break-words px-2">{displayName}</h4>
+              <h4 className="font-semibold text-lg text-foreground w-full px-2 whitespace-normal break-words [overflow-wrap:anywhere] leading-snug">{displayName}</h4>
             )}
             
             {!conversation.is_group && (
