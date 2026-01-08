@@ -667,14 +667,17 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, []);
 
-  // Select conversation
+  // Select conversation - instantly switch, then load messages
   const selectConversation = useCallback(async (conversation: Conversation) => {
+    // Immediately update UI - clear messages and set new conversation
     setSelectedConversation(conversation);
-    await fetchMessages(conversation.id);
+    setMessages([]); // Clear messages instantly to show loading state
     
-    // Send read receipt only if there are unread messages
+    // Fetch messages in background
+    fetchMessages(conversation.id);
+    
+    // Send read receipt only if there are unread messages (fire and forget)
     if (conversation.unread_count > 0) {
-      // Send in background, don't block UI
       sendReadReceipt(conversation.id);
     }
   }, [fetchMessages, sendReadReceipt]);
