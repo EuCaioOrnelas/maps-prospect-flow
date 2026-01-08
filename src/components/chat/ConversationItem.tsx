@@ -2,7 +2,7 @@ import { memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { UserCheck, UserPlus, MoreVertical, Trash2, User, Pin, PinOff, MailOpen } from 'lucide-react';
+import { UserCheck, UserPlus, MoreVertical, Trash2, User, Pin, PinOff, MailOpen, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -61,6 +61,10 @@ const formatPhoneNumber = (phone: string) => {
 };
 
 const getDisplayName = (conversation: Conversation) => {
+  // For groups, use group_name or phone as group ID
+  if (conversation.is_group) {
+    return conversation.group_name || `Grupo ${conversation.phone.slice(-6)}`;
+  }
   if (conversation.contact_id && conversation.contacts?.name) {
     return conversation.contacts.name;
   }
@@ -161,7 +165,7 @@ const ConversationItemComponent = ({
         <Avatar className="h-12 w-12 shrink-0">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
-            <User className="h-6 w-6" />
+            {conversation.is_group ? <Users className="h-6 w-6" /> : <User className="h-6 w-6" />}
           </AvatarFallback>
         </Avatar>
 
@@ -175,7 +179,8 @@ const ConversationItemComponent = ({
               <span className="font-medium text-foreground truncate flex-1 text-left">
                 {displayName}
               </span>
-              {!selectionMode && (
+              {/* Save contact button - only for non-groups */}
+              {!selectionMode && !conversation.is_group && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -100,8 +100,10 @@ export type Database = {
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          group_name: string | null
           id: string
           is_archived: boolean
+          is_group: boolean | null
           last_message: string | null
           last_message_at: string | null
           phone: string
@@ -116,8 +118,10 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          group_name?: string | null
           id?: string
           is_archived?: boolean
+          is_group?: boolean | null
           last_message?: string | null
           last_message_at?: string | null
           phone: string
@@ -132,8 +136,10 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          group_name?: string | null
           id?: string
           is_archived?: boolean
+          is_group?: boolean | null
           last_message?: string | null
           last_message_at?: string | null
           phone?: string
@@ -427,6 +433,8 @@ export type Database = {
           message_type: string
           quoted_message_id: string | null
           remote_jid: string
+          sender_jid: string | null
+          sender_name: string | null
           status: string
           updated_at: string
           user_id: string
@@ -445,6 +453,8 @@ export type Database = {
           message_type?: string
           quoted_message_id?: string | null
           remote_jid: string
+          sender_jid?: string | null
+          sender_name?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -463,6 +473,8 @@ export type Database = {
           message_type?: string
           quoted_message_id?: string | null
           remote_jid?: string
+          sender_jid?: string | null
+          sender_name?: string | null
           status?: string
           updated_at?: string
           user_id?: string

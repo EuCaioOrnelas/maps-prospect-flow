@@ -15,6 +15,8 @@ export interface Conversation {
   unread_count: number;
   is_archived: boolean;
   pinned_at: string | null;
+  is_group: boolean;
+  group_name: string | null;
   created_at: string;
   updated_at: string;
   contacts?: {
@@ -43,6 +45,8 @@ export interface Message {
   media_filename: string | null;
   quoted_message_id: string | null;
   interactive?: unknown;
+  sender_jid: string | null;
+  sender_name: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -63,7 +67,7 @@ export interface Contact {
   updated_at: string;
 }
 
-export type ConversationFilter = 'all' | 'unread' | 'contacts' | 'non_contacts';
+export type ConversationFilter = 'all' | 'unread' | 'contacts' | 'non_contacts' | 'groups';
 
 export const useChat = (selectedNumberId?: string | null) => {
   const { user } = useAuth();
@@ -348,6 +352,8 @@ export const useChat = (selectedNumberId?: string | null) => {
       media_mimetype: null,
       media_filename: mediaFilename || null,
       quoted_message_id: quotedMessageId || null,
+      sender_jid: null,
+      sender_name: null,
       status: 'pending',
       created_at: now,
       updated_at: now,

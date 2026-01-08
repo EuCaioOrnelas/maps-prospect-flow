@@ -968,6 +968,7 @@ const ChatAreaComponent = ({
                         isHighlighted={highlightedMessageId === message.id}
                         isSelectionMode={isSelectionMode}
                         isSelected={selectedMessages.has(message.id)}
+                        isGroup={conversation?.is_group || false}
                         onReply={handleReply}
                         onForward={handleForward}
                         onDelete={handleDelete}

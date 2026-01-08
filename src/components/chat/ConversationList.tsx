@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, memo, useRef, CSSProperties,
 import { List } from 'react-window';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Search, Plus, Trash2, X, Check, MessageCircle, Users, UserX } from 'lucide-react';
+import { Search, Plus, Trash2, X, Check, MessageCircle, Users, UserX, UsersRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -31,6 +31,7 @@ interface ConversationListProps {
 const FILTER_OPTIONS: { value: ConversationFilter; label: string; icon: React.ElementType }[] = [
   { value: 'all', label: 'Todas', icon: MessageCircle },
   { value: 'unread', label: 'Não lidas', icon: MessageCircle },
+  { value: 'groups', label: 'Grupos', icon: UsersRound },
   { value: 'contacts', label: 'Contatos', icon: Users },
   { value: 'non_contacts', label: 'Não contatos', icon: UserX },
 ];
@@ -441,8 +442,9 @@ const ConversationListComponent = ({
               const isActive = filter === option.value;
               const count = option.value === 'unread' ? unreadCount : 
                            option.value === 'all' ? totalConversations : 
-                           option.value === 'contacts' ? conversations.filter(c => c.contact_id && c.contacts?.name).length :
-                           conversations.filter(c => !c.contact_id || !c.contacts?.name).length;
+                           option.value === 'groups' ? conversations.filter(c => c.is_group).length :
+                           option.value === 'contacts' ? conversations.filter(c => !c.is_group && c.contact_id && c.contacts?.name).length :
+                           conversations.filter(c => !c.is_group && (!c.contact_id || !c.contacts?.name)).length;
               
               return (
                 <Button

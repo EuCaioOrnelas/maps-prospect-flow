@@ -288,10 +288,20 @@ serve(async (req) => {
           const rawPhone = remoteJid.split('@')[0];
           const currentJidType = remoteJid.split('@')[1];
           
-          // Ignore group messages
-          if (currentJidType === 'g.us' || remoteJid.includes('@g.us')) {
-            console.log('Ignoring group message:', remoteJid);
-            break;
+          // Check if it's a group message
+          const isGroup = currentJidType === 'g.us' || remoteJid.includes('@g.us');
+          
+          // For groups, extract the sender's phone number
+          let senderJidForGroup: string | null = null;
+          let senderName: string | null = data.pushName || null;
+          
+          if (isGroup && !fromMe) {
+            // For group messages, the participant field contains the sender
+            senderJidForGroup = messageKey.participant || data.participant || null;
+            if (senderJidForGroup) {
+              // Clean the sender jid to get just the phone
+              senderJidForGroup = senderJidForGroup.split('@')[0];
+            }
           }
           
           // Remove any non-digit characters for matching
@@ -380,19 +390,24 @@ serve(async (req) => {
             
             // Strategy 3: Create new conversation if not found
             if (!conversationId) {
-              // Normalize Brazilian phone numbers before storing
-              const normalizedPhoneForStorage = normalizeBrazilianPhone(rawPhone);
-              const normalizedRemoteJid = normalizedPhoneForStorage + '@s.whatsapp.net';
+              // For groups, use the group jid directly; for individuals, normalize
+              const phoneForStorage = isGroup ? rawPhone : normalizeBrazilianPhone(rawPhone);
+              const jidForStorage = isGroup ? remoteJid : (phoneForStorage + '@s.whatsapp.net');
               
-              console.log('Creating new conversation for:', rawPhone, '-> normalized:', normalizedPhoneForStorage);
+              // For groups, try to get the group name from the data
+              const groupName = isGroup ? (data.pushName || data.subject || null) : null;
+              
+              console.log('Creating new conversation for:', rawPhone, '-> is_group:', isGroup, 'groupName:', groupName);
               const { data: newConv, error: convError } = await supabase
                 .from('conversations')
                 .insert({
                   user_id: whatsappNumber.user_id,
                   whatsapp_number_id: whatsappNumber.id,
-                  remote_jid: normalizedRemoteJid,
-                  phone: normalizedPhoneForStorage,
-                  contact_name: data.pushName || null,
+                  remote_jid: jidForStorage,
+                  phone: phoneForStorage,
+                  contact_name: isGroup ? null : (data.pushName || null),
+                  is_group: isGroup,
+                  group_name: groupName,
                 })
                 .select('id')
                 .single();
@@ -595,6 +610,8 @@ serve(async (req) => {
                   media_mimetype: mediaMimetype,
                   interactive: interactive,
                   status: fromMe ? 'sent' : 'received',
+                  sender_jid: isGroup ? senderJidForGroup : null,
+                  sender_name: isGroup ? senderName : null,
                 });
 
               if (msgError) {
