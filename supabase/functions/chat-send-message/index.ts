@@ -127,6 +127,7 @@ serve(async (req) => {
         mediatype: 'document',
         media: mediaUrl,
         fileName: mediaFilename || 'document',
+        caption: content || '',
       };
     }
 
