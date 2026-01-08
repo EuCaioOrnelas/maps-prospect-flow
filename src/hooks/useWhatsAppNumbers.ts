@@ -14,6 +14,7 @@ export interface WhatsAppNumber {
 
 export const PLAN_LIMITS: Record<string, number> = {
   free: 1, // Free trial users get 1 number
+  trial: 1, // Alias for free
   start: 2,
   growth: 5,
   scale: 10
@@ -63,8 +64,10 @@ export const useWhatsAppNumbers = () => {
   const { user, profile } = useAuth();
   
   const userPlan = profile?.plan?.toLowerCase() || 'free';
-  const maxNumbers = PLAN_LIMITS[userPlan] || 0;
-  const hasMassMessagingAccess = maxNumbers > 0;
+  // Ensure free users always have access to at least 1 number
+  const maxNumbers = PLAN_LIMITS[userPlan] || PLAN_LIMITS['free'];
+  // All plans have mass messaging access (free users can use 1 number with 400 message limit)
+  const hasMassMessagingAccess = true;
 
   const fetchNumbers = useCallback(async () => {
     if (!user) return;
