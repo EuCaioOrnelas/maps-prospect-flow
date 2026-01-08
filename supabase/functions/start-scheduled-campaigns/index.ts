@@ -6,6 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Normalize phone number
+function normalizePhone(phone: string): string {
+  let normalized = phone.replace(/\D/g, '');
+  if (!normalized.startsWith('55')) {
+    normalized = '55' + normalized;
+  }
+  return normalized;
+}
+
 // Check if instance is connected
 async function checkInstanceConnection(
   evolutionUrl: string, 
@@ -116,8 +125,8 @@ serve(async (req) => {
       throw fetchError;
     }
 
-    // Also find running campaigns that may need to continue (from batches)
-    const { data: runningCampaigns } = await supabase
+    // Also find postponed campaigns that may need to start
+    const { data: postponedCampaigns } = await supabase
       .from('whatsapp_campaigns')
       .select(`
         id, 
@@ -132,13 +141,60 @@ serve(async (req) => {
         failed_count,
         total_leads
       `)
+      .eq('status', 'postponed')
+      .order('created_at', { ascending: true });
+
+    // Find running campaigns
+    const { data: runningCampaigns } = await supabase
+      .from('whatsapp_campaigns')
+      .select(`
+        id, 
+        name, 
+        user_id, 
+        whatsapp_number_id,
+        leads,
+        messages,
+        delay_seconds,
+        scheduled_at,
+        sent_count,
+        failed_count,
+        total_leads,
+        updated_at
+      `)
       .eq('status', 'running');
 
-    console.log(`[start-scheduled-campaigns] Found ${scheduledCampaigns?.length || 0} scheduled, ${runningCampaigns?.length || 0} running`);
+    console.log(`[start-scheduled-campaigns] Found ${scheduledCampaigns?.length || 0} scheduled, ${postponedCampaigns?.length || 0} postponed, ${runningCampaigns?.length || 0} running`);
 
-    const allCampaigns = [...(scheduledCampaigns || []), ...(runningCampaigns || [])];
+    // Track which numbers have active campaigns
+    const numbersWithActiveCampaigns = new Set<string>();
+    
+    // Check running campaigns - if they're actually still active
+    for (const campaign of (runningCampaigns || [])) {
+      const lastUpdate = new Date(campaign.updated_at);
+      const diffMinutes = (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60);
+      
+      // If campaign was updated in the last 3 minutes, consider it active
+      if (diffMinutes < 3) {
+        numbersWithActiveCampaigns.add(campaign.whatsapp_number_id);
+        console.log(`[start-scheduled-campaigns] Number ${campaign.whatsapp_number_id} has active campaign: ${campaign.name}`);
+      } else {
+        // Campaign might be stale, check if it should be marked as failed
+        console.log(`[start-scheduled-campaigns] Campaign ${campaign.name} seems stale (last update ${diffMinutes.toFixed(1)} min ago)`);
+      }
+    }
 
-    if (allCampaigns.length === 0) {
+    // Process scheduled campaigns
+    const allToProcess = [...(scheduledCampaigns || [])];
+    
+    // Add postponed campaigns only if their number doesn't have an active campaign
+    for (const postponed of (postponedCampaigns || [])) {
+      if (!numbersWithActiveCampaigns.has(postponed.whatsapp_number_id)) {
+        allToProcess.push(postponed);
+        console.log(`[start-scheduled-campaigns] Adding postponed campaign ${postponed.name} to process queue`);
+      }
+    }
+
+    if (allToProcess.length === 0) {
       return new Response(
         JSON.stringify({ success: true, message: 'No campaigns to process', processedCount: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -147,8 +203,29 @@ serve(async (req) => {
 
     const results = [];
     
-    for (const campaign of allCampaigns) {
-      const isScheduled = campaign.scheduled_at !== undefined;
+    for (const campaign of allToProcess) {
+      // Skip if this number already has an active campaign in this run
+      if (numbersWithActiveCampaigns.has(campaign.whatsapp_number_id)) {
+        console.log(`[start-scheduled-campaigns] Skipping ${campaign.name} - number ${campaign.whatsapp_number_id} already processing`);
+        
+        // Mark as postponed if it's scheduled
+        if (campaign.scheduled_at) {
+          await supabase
+            .from('whatsapp_campaigns')
+            .update({ 
+              status: 'postponed',
+              pause_reason: 'Aguardando campanha anterior finalizar neste número'
+            })
+            .eq('id', campaign.id);
+        }
+        
+        results.push({ id: campaign.id, status: 'postponed', reason: 'Number busy' });
+        continue;
+      }
+
+      // Mark this number as busy
+      numbersWithActiveCampaigns.add(campaign.whatsapp_number_id);
+      
       console.log(`[start-scheduled-campaigns] Processing: ${campaign.name} (${campaign.id})`);
       
       // Get the WhatsApp number
@@ -166,6 +243,7 @@ serve(async (req) => {
           .update({ status: 'failed', pause_reason: 'Número WhatsApp não encontrado' })
           .eq('id', campaign.id);
         
+        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'failed', reason: 'Number not found' });
         continue;
       }
@@ -185,18 +263,12 @@ serve(async (req) => {
           .update({ is_connected: false, updated_at: new Date().toISOString() })
           .eq('id', numberData.id);
 
-        if (isScheduled) {
-          await supabase
-            .from('whatsapp_campaigns')
-            .update({ pause_reason: 'WhatsApp desconectado - reconecte para iniciar' })
-            .eq('id', campaign.id);
-        } else {
-          await supabase
-            .from('whatsapp_campaigns')
-            .update({ status: 'paused', pause_reason: 'Conexão perdida - reconecte o WhatsApp' })
-            .eq('id', campaign.id);
-        }
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ pause_reason: 'WhatsApp desconectado - reconecte para iniciar' })
+          .eq('id', campaign.id);
         
+        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'pending_connection' });
         continue;
       }
@@ -224,6 +296,7 @@ serve(async (req) => {
           })
           .eq('id', campaign.id);
         
+        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'paused', reason: 'Daily limit' });
         continue;
       }
@@ -247,27 +320,38 @@ serve(async (req) => {
           .update({ status: 'failed', pause_reason: 'Dados inválidos' })
           .eq('id', campaign.id);
         
+        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'failed', reason: 'Invalid data' });
         continue;
       }
 
-      // Start the campaign if scheduled
-      if (isScheduled) {
-        await supabase
-          .from('whatsapp_campaigns')
-          .update({ 
-            status: 'running',
-            started_at: now,
-            pause_reason: null
-          })
-          .eq('id', campaign.id);
-      }
+      // Start the campaign
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'running',
+          started_at: now,
+          pause_reason: null
+        })
+        .eq('id', campaign.id);
 
-      // Process up to 3 messages per cron run (to stay under time limits)
+      // Track messaged phones to prevent duplicates
+      const messagedPhones = new Set<string>();
+
+      // Process up to 3 messages per cron run per campaign
       const MESSAGES_PER_RUN = 3;
       let sentCount = campaign.sent_count || 0;
       let failedCount = campaign.failed_count || 0;
       const startIndex = sentCount + failedCount;
+
+      // Pre-load already messaged phones
+      for (let i = 0; i < startIndex; i++) {
+        const lead = leads[i];
+        const phone = lead?.phone || lead?.telefone;
+        if (phone) {
+          messagedPhones.add(normalizePhone(phone));
+        }
+      }
 
       for (let i = startIndex; i < Math.min(startIndex + MESSAGES_PER_RUN, leads.length); i++) {
         // Recheck if campaign was cancelled
@@ -309,11 +393,16 @@ serve(async (req) => {
           continue;
         }
 
-        let formattedPhone = phone.replace(/\D/g, '');
-        if (!formattedPhone.startsWith('55')) {
-          formattedPhone = '55' + formattedPhone;
+        const formattedPhone = normalizePhone(phone);
+
+        // Skip if already messaged
+        if (messagedPhones.has(formattedPhone)) {
+          console.log(`[start-scheduled-campaigns] Skipping duplicate phone ${formattedPhone}`);
+          failedCount++;
+          continue;
         }
 
+        // Select ONE random message
         const randomMessage = validMessages[Math.floor(Math.random() * validMessages.length)];
         const personalizedMessage = randomMessage
           .replace(/\{nome\}/gi, lead.name || 'Cliente')
@@ -332,10 +421,13 @@ serve(async (req) => {
           personalizedMessage
         );
 
+        // Mark as messaged regardless of result
+        messagedPhones.add(formattedPhone);
+
         if (sendResult.success) {
           sentCount++;
           dailySentCount++;
-          console.log(`[start-scheduled-campaigns] Sent to ${formattedPhone} (${sentCount}/${leads.length})`);
+          console.log(`[start-scheduled-campaigns] ✓ Sent to ${formattedPhone} (${sentCount}/${leads.length})`);
 
           // Sync to chat
           try {
@@ -389,7 +481,7 @@ serve(async (req) => {
             console.error('[start-scheduled-campaigns] Sync error:', syncError);
           }
         } else {
-          console.error(`[start-scheduled-campaigns] Failed to send to ${formattedPhone}:`, sendResult.error);
+          console.error(`[start-scheduled-campaigns] ✗ Failed to send to ${formattedPhone}:`, sendResult.error);
           failedCount++;
         }
 
@@ -417,6 +509,7 @@ serve(async (req) => {
           })
           .eq('id', campaign.id);
         
+        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'completed', sent: sentCount, failed: failedCount });
       } else {
         results.push({ id: campaign.id, status: 'in_progress', sent: sentCount, remaining: leads.length - sentCount - failedCount });

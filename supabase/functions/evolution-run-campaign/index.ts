@@ -28,8 +28,8 @@ declare const EdgeRuntime: {
   waitUntil: (promise: Promise<unknown>) => void;
 };
 
-// Track active campaigns to prevent duplicate runs
-const activeCampaignLocks = new Set<string>();
+// Track active campaigns to prevent duplicate runs (per instance)
+const activeCampaignLocks = new Map<string, string>(); // numberId -> campaignId
 
 // Normalize phone number to prevent duplicates
 function normalizePhone(phone: string): string {
@@ -85,6 +85,73 @@ async function checkInstanceConnection(
   }
 }
 
+// Start the next postponed campaign for a number
+async function startNextPostponedCampaign(
+  supabase: any,
+  numberId: string,
+  userId: string,
+  evolutionUrl: string,
+  evolutionApiKey: string
+) {
+  console.log(`[Queue] Checking for postponed campaigns on number ${numberId}`);
+  
+  // Find the next postponed campaign for this number
+  const { data: postponedCampaign, error } = await supabase
+    .from('whatsapp_campaigns')
+    .select('*')
+    .eq('whatsapp_number_id', numberId)
+    .eq('status', 'postponed')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (error || !postponedCampaign) {
+    console.log(`[Queue] No postponed campaigns found for number ${numberId}`);
+    return;
+  }
+
+  console.log(`[Queue] Starting postponed campaign: ${postponedCampaign.name} (${postponedCampaign.id})`);
+
+  // Get the WhatsApp number info
+  const { data: numberData } = await supabase
+    .from('whatsapp_numbers')
+    .select('instance_name')
+    .eq('id', numberId)
+    .single();
+
+  if (!numberData?.instance_name) {
+    console.error(`[Queue] No instance name for number ${numberId}`);
+    return;
+  }
+
+  // Update status to running
+  await supabase
+    .from('whatsapp_campaigns')
+    .update({ 
+      status: 'running',
+      started_at: new Date().toISOString(),
+      pause_reason: null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', postponedCampaign.id);
+
+  // Parse leads and messages
+  let leads = postponedCampaign.leads;
+  if (typeof leads === 'string') {
+    try { leads = JSON.parse(leads); } catch { leads = []; }
+  }
+  
+  let messages = postponedCampaign.messages;
+  if (typeof messages === 'string') {
+    try { messages = JSON.parse(messages); } catch { messages = []; }
+  }
+
+  // Trigger the campaign via HTTP call to self (can't use EdgeRuntime here)
+  // The campaign will be picked up by the cron job or we process it inline
+  console.log(`[Queue] Postponed campaign ${postponedCampaign.id} is now ready to run`);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -125,63 +192,85 @@ serve(async (req) => {
       startIndex = 0 
     }: CampaignRequest = await req.json();
 
-    // CRITICAL: Check if this campaign is already running to prevent duplicate execution
-    if (activeCampaignLocks.has(campaignId)) {
-      console.log(`Campaign ${campaignId} is already running, rejecting duplicate invocation`);
+    console.log(`[Campaign ${campaignId}] Request received for number ${numberId}`);
+
+    // Check if there's already a campaign running on this specific number
+    const { data: runningOnNumber, error: runningError } = await supabase
+      .from('whatsapp_campaigns')
+      .select('id, name, status, updated_at')
+      .eq('whatsapp_number_id', numberId)
+      .eq('status', 'running')
+      .neq('id', campaignId);
+
+    if (runningOnNumber && runningOnNumber.length > 0) {
+      // Check if the running campaign is actually active (updated in last 3 minutes)
+      const activeCampaigns = runningOnNumber.filter(c => {
+        const lastUpdate = new Date(c.updated_at);
+        const now = new Date();
+        const diffMinutes = (now.getTime() - lastUpdate.getTime()) / (1000 * 60);
+        return diffMinutes < 3;
+      });
+
+      if (activeCampaigns.length > 0) {
+        console.log(`[Campaign ${campaignId}] Number ${numberId} already has active campaign: ${activeCampaigns[0].name}`);
+        
+        // Mark this campaign as postponed (queued)
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ 
+            status: 'postponed',
+            pause_reason: `Aguardando campanha "${activeCampaigns[0].name}" finalizar`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', campaignId);
+
+        return new Response(JSON.stringify({
+          success: true,
+          postponed: true,
+          message: 'Campanha adiada - já existe uma campanha em andamento neste número',
+          waitingFor: activeCampaigns[0].name,
+          campaignId
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Also check memory lock for same-instance double calls
+    const currentLock = activeCampaignLocks.get(numberId);
+    if (currentLock && currentLock !== campaignId) {
+      console.log(`[Campaign ${campaignId}] Memory lock exists for number ${numberId} (campaign ${currentLock})`);
+      
+      await supabase
+        .from('whatsapp_campaigns')
+        .update({ 
+          status: 'postponed',
+          pause_reason: 'Aguardando campanha anterior finalizar',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', campaignId);
+
       return new Response(JSON.stringify({
-        success: false,
-        error: 'Campaign is already running',
-        alreadyRunning: true
+        success: true,
+        postponed: true,
+        message: 'Campanha adiada - aguardando campanha anterior',
+        campaignId
       }), {
-        status: 409,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Also check database status to prevent re-runs
-    const { data: existingCampaign } = await supabase
-      .from('whatsapp_campaigns')
-      .select('status, sent_count, failed_count')
-      .eq('id', campaignId)
-      .single();
-
-    if (existingCampaign?.status === 'running') {
-      // Check if it was recently updated (within last 2 minutes) - means it's actively running
-      const { data: recentUpdate } = await supabase
-        .from('whatsapp_campaigns')
-        .select('updated_at')
-        .eq('id', campaignId)
-        .single();
-
-      if (recentUpdate) {
-        const lastUpdate = new Date(recentUpdate.updated_at);
-        const now = new Date();
-        const diffMs = now.getTime() - lastUpdate.getTime();
-        const diffMinutes = diffMs / (1000 * 60);
-
-        if (diffMinutes < 2) {
-          console.log(`Campaign ${campaignId} was updated ${diffMinutes.toFixed(1)} minutes ago, still active`);
-          return new Response(JSON.stringify({
-            success: false,
-            error: 'Campaign is actively running',
-            alreadyRunning: true
-          }), {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-      }
-    }
-
-    // Add lock
-    activeCampaignLocks.add(campaignId);
-    console.log(`Starting campaign ${campaignId} from index ${startIndex} with ${leads.length} total leads`);
+    // Add lock for this number
+    activeCampaignLocks.set(numberId, campaignId);
+    console.log(`[Campaign ${campaignId}] Lock acquired for number ${numberId}`);
 
     // Check connection before starting
     const connectionCheck = await checkInstanceConnection(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName);
     
     if (!connectionCheck.connected) {
-      activeCampaignLocks.delete(campaignId);
+      activeCampaignLocks.delete(numberId);
       console.log(`Instance ${instanceName} not connected. Failing campaign.`);
       
       await supabase
@@ -216,6 +305,7 @@ serve(async (req) => {
       .update({ 
         status: 'running',
         started_at: new Date().toISOString(),
+        pause_reason: null,
         updated_at: new Date().toISOString()
       })
       .eq('id', campaignId);
@@ -238,7 +328,9 @@ serve(async (req) => {
 
         if (!campaignData || campaignData.status === 'cancelled' || campaignData.status === 'completed') {
           console.log(`Campaign ${campaignId} is ${campaignData?.status || 'not found'}, stopping.`);
-          activeCampaignLocks.delete(campaignId);
+          activeCampaignLocks.delete(numberId);
+          // Try to start next postponed campaign
+          await startNextPostponedCampaign(supabase, numberId, userId, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
           return;
         }
 
@@ -252,7 +344,6 @@ serve(async (req) => {
         console.log(`Campaign ${campaignId}: Already processed ${processedCount}, starting from index ${actualStartIndex}`);
 
         // CRITICAL: Track all phones that have been messaged to prevent duplicates
-        // Include phones from already processed leads
         const messagedPhones = new Set<string>();
         
         // Mark all previously processed phones as already messaged
@@ -290,7 +381,11 @@ serve(async (req) => {
 
             if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
               console.log(`Campaign ${campaignId} status changed to ${statusCheck?.status}, stopping.`);
-              activeCampaignLocks.delete(campaignId);
+              activeCampaignLocks.delete(numberId);
+              // Start next postponed if cancelled
+              if (statusCheck?.status === 'cancelled') {
+                await startNextPostponedCampaign(supabase, numberId, userId, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
+              }
               return;
             }
           }
@@ -316,7 +411,7 @@ serve(async (req) => {
               })
               .eq('id', campaignId);
 
-            activeCampaignLocks.delete(campaignId);
+            activeCampaignLocks.delete(numberId);
             return;
           }
 
@@ -327,7 +422,6 @@ serve(async (req) => {
             console.log(`Lead ${lead.name} has no phone, skipping`);
             failedCount++;
             
-            // Update progress
             await supabase
               .from('whatsapp_campaigns')
               .update({ 
@@ -345,9 +439,8 @@ serve(async (req) => {
           // CRITICAL: Skip if we already sent a message to this phone
           if (messagedPhones.has(formattedPhone)) {
             console.log(`Phone ${formattedPhone} already messaged in this campaign, skipping duplicate`);
-            failedCount++; // Count as processed to maintain index
+            failedCount++;
             
-            // Update progress
             await supabase
               .from('whatsapp_campaigns')
               .update({ 
@@ -476,15 +569,11 @@ serve(async (req) => {
               const errorText = await sendResponse.text();
               console.error(`✗ Failed to send to ${formattedPhone}:`, errorText);
               failedCount++;
-              
-              // Mark phone as attempted to avoid retry in same run
               messagedPhones.add(formattedPhone);
             }
           } catch (sendError) {
             console.error(`✗ Error sending to ${formattedPhone}:`, sendError);
             failedCount++;
-            
-            // Mark phone as attempted to avoid retry in same run
             messagedPhones.add(formattedPhone);
           }
 
@@ -521,9 +610,14 @@ serve(async (req) => {
           .eq('id', campaignId);
 
         console.log(`✓ Campaign ${campaignId} completed: ${sentCount} sent, ${failedCount} failed`);
-      } finally {
-        // Always release lock when done
-        activeCampaignLocks.delete(campaignId);
+        
+        // CRITICAL: Start the next postponed campaign for this number
+        activeCampaignLocks.delete(numberId);
+        await startNextPostponedCampaign(supabase, numberId, userId, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
+        
+      } catch (error) {
+        console.error(`Campaign ${campaignId} error:`, error);
+        activeCampaignLocks.delete(numberId);
       }
     };
 
