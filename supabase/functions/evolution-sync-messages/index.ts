@@ -35,9 +35,9 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, numberId, lastSyncAt } = await req.json();
+    const { instanceName, numberId, lastSyncAt, syncGroupsOnly } = await req.json();
 
-    console.log(`Syncing messages for instance: ${instanceName}, since: ${lastSyncAt}`);
+    console.log(`Syncing messages for instance: ${instanceName}, since: ${lastSyncAt}, groupsOnly: ${syncGroupsOnly}`);
 
     // Get the whatsapp_number to verify ownership
     const { data: whatsappNumber, error: numberError } = await supabase
@@ -125,6 +125,9 @@ serve(async (req) => {
       if (!remoteJid) continue;
       
       const isGroup = remoteJid.includes('@g.us');
+
+      // If syncGroupsOnly is true, skip non-group chats
+      if (syncGroupsOnly && !isGroup) continue;
 
       // Extract phone from JID (for groups, use the group JID as identifier)
       const phone = isGroup 
