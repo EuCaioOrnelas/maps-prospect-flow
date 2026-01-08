@@ -169,40 +169,65 @@ serve(async (req) => {
       
       // Get group name for group chats - try multiple possible properties
       let groupName: string | null = null;
+      let groupAvatarUrl: string | null = null;
+      
       if (isGroup) {
         groupName = chat.name || chat.subject || chat.groupName || chat.pushName || 
                    chat.chatName || chat.displayName || chat.title ||
                    (chat.groupMetadata?.subject) || (chat.metadata?.subject) || null;
-        console.log(`Group ${remoteJid} - extracted name: ${groupName}`);
-      }
-      
-      // Try to fetch group profile picture
-      let groupAvatarUrl: string | null = null;
-      if (isGroup && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
-        try {
-          const avatarResponse = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': EVOLUTION_API_KEY,
-            },
-            body: JSON.stringify({ number: remoteJid }),
-          });
-          
-          if (avatarResponse.ok) {
-            const avatarData = await avatarResponse.json();
-            groupAvatarUrl = avatarData?.profilePictureUrl || avatarData?.url || avatarData?.picture || null;
-            console.log(`Group ${remoteJid} - avatar URL: ${groupAvatarUrl}`);
+        console.log(`Group ${remoteJid} - initial name from chat object: ${groupName}`);
+        
+        // If no name found, try to fetch group metadata from Evolution API
+        if (!groupName && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+          try {
+            const metadataResponse = await fetch(`${EVOLUTION_API_URL}/group/findGroupInfos/${instanceName}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': EVOLUTION_API_KEY,
+              },
+              body: JSON.stringify({ groupJid: remoteJid }),
+            });
+            
+            if (metadataResponse.ok) {
+              const metadataData = await metadataResponse.json();
+              console.log('Group metadata response:', JSON.stringify(metadataData, null, 2));
+              groupName = metadataData?.subject || metadataData?.name || 
+                         metadataData?.groupMetadata?.subject || null;
+              console.log(`Group ${remoteJid} - name from metadata API: ${groupName}`);
+            }
+          } catch (metadataError) {
+            console.error(`Error fetching group metadata for ${remoteJid}:`, metadataError);
           }
-        } catch (avatarError) {
-          console.error(`Error fetching group avatar for ${remoteJid}:`, avatarError);
+        }
+        
+        // Try to fetch group profile picture
+        if (EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+          try {
+            const avatarResponse = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': EVOLUTION_API_KEY,
+              },
+              body: JSON.stringify({ number: remoteJid }),
+            });
+            
+            if (avatarResponse.ok) {
+              const avatarData = await avatarResponse.json();
+              groupAvatarUrl = avatarData?.profilePictureUrl || avatarData?.url || avatarData?.picture || null;
+              console.log(`Group ${remoteJid} - avatar URL: ${groupAvatarUrl}`);
+            }
+          } catch (avatarError) {
+            console.error(`Error fetching group avatar for ${remoteJid}:`, avatarError);
+          }
         }
       }
 
       // Check if conversation exists
       const { data: existingConversation } = await supabase
         .from('conversations')
-        .select('id, is_group, group_name, phone')
+        .select('id, is_group, group_name, phone, avatar_url')
         .eq('whatsapp_number_id', numberId)
         .eq('remote_jid', remoteJid)
         .single();
@@ -211,17 +236,24 @@ serve(async (req) => {
 
       if (!existingConversation) {
         // Create new conversation
+        const insertData: Record<string, unknown> = {
+          user_id: user.id,
+          whatsapp_number_id: numberId,
+          remote_jid: remoteJid,
+          phone: phone,
+          contact_name: isGroup ? null : (chat.name || chat.pushName || null),
+          is_group: isGroup,
+          group_name: groupName,
+        };
+        
+        // Add avatar_url if we have it for groups
+        if (isGroup && groupAvatarUrl) {
+          insertData.avatar_url = groupAvatarUrl;
+        }
+        
         const { data: newConversation, error: convError } = await supabase
           .from('conversations')
-          .insert({
-            user_id: user.id,
-            whatsapp_number_id: numberId,
-            remote_jid: remoteJid,
-            phone: phone,
-            contact_name: isGroup ? null : (chat.name || chat.pushName || null),
-            is_group: isGroup,
-            group_name: groupName,
-          })
+          .insert(insertData)
           .select()
           .single();
 
@@ -236,16 +268,34 @@ serve(async (req) => {
       } else {
         conversationId = existingConversation.id;
 
-        // Ensure existing conversations are correctly marked as groups
-        if (isGroup && (existingConversation.is_group !== true || existingConversation.group_name !== groupName || existingConversation.phone !== phone)) {
+        // Ensure existing conversations are correctly marked as groups with updated info
+        const needsUpdate = isGroup && (
+          existingConversation.is_group !== true || 
+          (groupName && existingConversation.group_name !== groupName) || 
+          existingConversation.phone !== phone ||
+          (groupAvatarUrl && existingConversation.avatar_url !== groupAvatarUrl)
+        );
+        
+        if (needsUpdate) {
+          const updateData: Record<string, unknown> = {
+            is_group: true,
+            phone: phone,
+            updated_at: new Date().toISOString(),
+          };
+          
+          // Only update group_name if we have a new one
+          if (groupName) {
+            updateData.group_name = groupName;
+          }
+          
+          // Only update avatar_url if we have a new one
+          if (groupAvatarUrl) {
+            updateData.avatar_url = groupAvatarUrl;
+          }
+          
           const { error: updateErr } = await supabase
             .from('conversations')
-            .update({
-              is_group: true,
-              group_name: groupName,
-              phone: phone,
-              updated_at: new Date().toISOString(),
-            })
+            .update(updateData)
             .eq('id', conversationId);
 
           if (!updateErr) {
