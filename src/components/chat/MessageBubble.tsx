@@ -15,7 +15,8 @@ import { MessageActionsMenu } from './MessageActionsMenu';
 import { InteractiveMessage } from './InteractiveMessage';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageFormatter } from './MessageFormatter';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useGroupMemberAvatar } from '@/hooks/useGroupMemberAvatar';
 
 interface MessageBubbleProps {
   message: Message;
@@ -26,6 +27,7 @@ interface MessageBubbleProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   isGroup?: boolean;
+  instanceName?: string | null;
   onReply: (message: Message) => void;
   onForward?: (message: Message) => void;
   onDelete?: (message: Message, forEveryone: boolean) => void;
@@ -72,12 +74,19 @@ const MessageBubbleComponent = ({
   isSelectionMode = false,
   isSelected = false,
   isGroup = false,
+  instanceName = null,
   onReply,
   onForward,
   onDelete,
   onEdit,
   onSelect,
 }: MessageBubbleProps) => {
+  // Fetch avatar for group member
+  const { avatarUrl: memberAvatarUrl } = useGroupMemberAvatar(
+    instanceName,
+    message.sender_jid,
+    isGroup && !message.from_me
+  );
   const handleReply = useCallback(() => {
     onReply(message);
   }, [message, onReply]);
@@ -222,6 +231,9 @@ const MessageBubbleComponent = ({
       {/* Avatar for group messages - only for received messages */}
       {isGroup && !message.from_me && (
         <Avatar className="h-8 w-8 shrink-0 mr-1 mt-1">
+          {memberAvatarUrl && (
+            <AvatarImage src={memberAvatarUrl} alt="Avatar" />
+          )}
           <AvatarFallback className="bg-primary/10 text-primary text-xs">
             <User className="h-4 w-4" />
           </AvatarFallback>

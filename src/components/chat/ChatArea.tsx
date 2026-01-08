@@ -95,6 +95,7 @@ const ChatAreaComponent = ({
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [instanceName, setInstanceName] = useState<string | null>(null);
   const [isFetchingAvatar, setIsFetchingAvatar] = useState(false);
   const [matchedQuickReply, setMatchedQuickReply] = useState<QuickReply | null>(null);
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
@@ -177,14 +178,13 @@ const ChatAreaComponent = ({
     }
   };
 
-  // Fetch avatar from WhatsApp when conversation changes
-  const fetchAvatarFromWhatsApp = useCallback(async () => {
+  // Fetch instance name and avatar from WhatsApp when conversation changes
+  const fetchInstanceAndAvatar = useCallback(async () => {
     if (!conversation || isFetchingAvatar) return;
     
     // If already has avatar from contact, use it
     if (conversation.contacts?.avatar_url) {
       setAvatarUrl(conversation.contacts.avatar_url);
-      return;
     }
 
     setIsFetchingAvatar(true);
@@ -200,17 +200,23 @@ const ChatAreaComponent = ({
         setIsFetchingAvatar(false);
         return;
       }
+      
+      // Store instance name for group member avatar lookups
+      setInstanceName(numberData.instance_name);
+      
+      // Only fetch conversation avatar for non-group chats
+      if (!conversation.is_group && !conversation.contacts?.avatar_url) {
+        const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
+          body: {
+            conversationId: conversation.id,
+            instanceName: numberData.instance_name,
+            phone: conversation.phone,
+          },
+        });
 
-      const { data, error } = await supabase.functions.invoke('evolution-fetch-avatar', {
-        body: {
-          conversationId: conversation.id,
-          instanceName: numberData.instance_name,
-          phone: conversation.phone,
-        },
-      });
-
-      if (!error && data?.avatarUrl) {
-        setAvatarUrl(data.avatarUrl);
+        if (!error && data?.avatarUrl) {
+          setAvatarUrl(data.avatarUrl);
+        }
       }
     } catch (err) {
       console.error('Error fetching avatar:', err);
@@ -221,12 +227,11 @@ const ChatAreaComponent = ({
 
   useEffect(() => {
     if (conversation) {
-      // Reset avatar when conversation changes
+      // Reset avatar and instance name when conversation changes
       setAvatarUrl(conversation.contacts?.avatar_url || null);
-      // Try to fetch from WhatsApp if no avatar
-      if (!conversation.contacts?.avatar_url) {
-        fetchAvatarFromWhatsApp();
-      }
+      setInstanceName(null);
+      // Fetch instance name and optionally avatar
+      fetchInstanceAndAvatar();
     }
   }, [conversation?.id]);
 
@@ -969,6 +974,7 @@ const ChatAreaComponent = ({
                         isSelectionMode={isSelectionMode}
                         isSelected={selectedMessages.has(message.id)}
                         isGroup={conversation?.is_group || false}
+                        instanceName={instanceName}
                         onReply={handleReply}
                         onForward={handleForward}
                         onDelete={handleDelete}
