@@ -222,19 +222,19 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     }
   };
 
-  const handleSendCurrentFile = async () => {
+  const handleSendCurrentFile = () => {
     if (selectedFiles.length === 0) return;
     
     // Capture the current file to send
-    const currentFile = selectedFiles[currentFileIndex];
+    const fileToSend = selectedFiles[currentFileIndex];
     const captionToUse = caption;
     
     // Remove sent file from list immediately
     const newFiles = selectedFiles.filter((_, index) => index !== currentFileIndex);
     
     // Cleanup preview URL
-    if (currentFile.preview) {
-      URL.revokeObjectURL(currentFile.preview);
+    if (fileToSend.preview) {
+      URL.revokeObjectURL(fileToSend.preview);
     }
     
     if (newFiles.length > 0) {
@@ -249,16 +249,15 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
       setIsOpen(false);
     }
     
-    // Send in background
-    const success = await uploadFile(currentFile.file, currentFile.type, captionToUse);
-    
-    if (success) {
-      toast.success('Mídia enviada!');
-      onMediaSent();
-    }
+    // Send in background (fire and forget - no await)
+    uploadFile(fileToSend.file, fileToSend.type, captionToUse).then(success => {
+      if (success) {
+        onMediaSent();
+      }
+    });
   };
 
-  const handleSendAllFiles = async () => {
+  const handleSendAllFiles = () => {
     if (selectedFiles.length === 0) return;
     
     // Capture files to send and immediately close the modal
@@ -278,25 +277,18 @@ export const MediaUploader = forwardRef<MediaUploaderRef, MediaUploaderProps>(({
     setCaption('');
     setIsOpen(false);
     
-    // Send all files in the background (parallel)
-    const uploadPromises = filesToSend.map((file, i) => {
-      const cap = i === 0 ? captionToUse : '';
-      return uploadFile(file.file, file.type, cap);
+    // Send all files in the background (fire and forget - no await)
+    Promise.all(
+      filesToSend.map((file, i) => {
+        const cap = i === 0 ? captionToUse : '';
+        return uploadFile(file.file, file.type, cap);
+      })
+    ).then(results => {
+      const successCount = results.filter(Boolean).length;
+      if (successCount > 0) {
+        onMediaSent();
+      }
     });
-    
-    // Execute all uploads in parallel
-    const results = await Promise.all(uploadPromises);
-    
-    const successCount = results.filter(Boolean).length;
-    const failCount = results.length - successCount;
-    
-    if (successCount > 0) {
-      toast.success(`${successCount} arquivo(s) enviado(s)!`);
-      onMediaSent();
-    }
-    if (failCount > 0) {
-      toast.error(`${failCount} arquivo(s) falharam`);
-    }
   };
 
   const handleCancelFile = () => {
