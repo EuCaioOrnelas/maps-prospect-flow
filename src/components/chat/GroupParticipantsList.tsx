@@ -23,41 +23,37 @@ interface GroupParticipantsListProps {
   onStartConversation?: (phone: string) => void;
 }
 
-const formatPhone = (jid: string): string => {
-  const phone = jid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '');
-  
-  // Check if it's a LID or invalid format (contains ':' or is too long/short)
-  if (phone.includes(':') || phone.length < 8 || phone.length > 15) {
-    return null as unknown as string; // Return null to indicate invalid
-  }
-  
+const digitsOnly = (value: string) => value.replace(/\D/g, '');
+
+const isLidJid = (jid: string) => jid.includes('@lid');
+
+const getRawPhone = (jid: string): string => {
+  const base = jid.includes('@') ? jid.split('@')[0] : jid;
+  return digitsOnly(base);
+};
+
+const getPhoneKey = (digits: string) => digits.slice(-8);
+
+const isValidPhone = (jid: string): boolean => {
+  if (isLidJid(jid)) return false;
+  const digits = getRawPhone(jid);
+  return digits.length >= 10 && digits.length <= 15;
+};
+
+const formatPhone = (jid: string): string | null => {
+  if (!isValidPhone(jid)) return null;
+
+  const phone = getRawPhone(jid);
+
   // Format Brazilian numbers
   if (phone.length >= 12 && phone.length <= 13 && phone.startsWith('55')) {
     const ddd = phone.slice(2, 4);
     const rest = phone.slice(4);
-    if (rest.length === 9) {
-      return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    } else if (rest.length === 8) {
-      return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
-    }
+    if (rest.length === 9) return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
   }
-  
-  // Generic international format
-  if (phone.length >= 10 && phone.length <= 15) {
-    return `+${phone}`;
-  }
-  
-  return null as unknown as string;
-};
 
-const getRawPhone = (jid: string): string => {
-  return jid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '');
-};
-
-const isValidPhone = (jid: string): boolean => {
-  const phone = getRawPhone(jid);
-  // LIDs contain ':' or have invalid length
-  return !phone.includes(':') && phone.length >= 10 && phone.length <= 15;
+  return `+${phone}`;
 };
 
 export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversation }: GroupParticipantsListProps) => {
@@ -67,17 +63,21 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
   const [searchQuery, setSearchQuery] = useState('');
   const { contacts } = useContacts();
 
-  // Get contact name by phone number
+  const contactNameByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of contacts) {
+      const digits = digitsOnly(c.phone ?? '');
+      if (digits.length < 8) continue;
+      if (c.name) map.set(getPhoneKey(digits), c.name);
+    }
+    return map;
+  }, [contacts]);
+
+  // Get contact name by phone number (match by last 8 digits)
   const getContactName = (jid: string): string | null => {
-    const phone = getRawPhone(jid);
     if (!isValidPhone(jid)) return null;
-    
-    const contact = contacts.find(c => {
-      const contactPhone = c.phone?.replace(/\D/g, '');
-      return contactPhone === phone || contactPhone?.endsWith(phone) || phone.endsWith(contactPhone || '');
-    });
-    
-    return contact?.name || null;
+    const key = getPhoneKey(getRawPhone(jid));
+    return contactNameByKey.get(key) ?? null;
   };
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
         />
       </div>
       
-      <ScrollArea className="h-[240px]">
+      <ScrollArea className="h-[40vh] md:h-[280px]">
         <div className="space-y-1 pr-3">
           {filteredParticipants.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -262,7 +262,7 @@ export const GroupParticipantsList = ({ instanceName, groupJid, onStartConversat
 
                   {/* Action buttons - only for valid phones */}
                   {validPhone && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"

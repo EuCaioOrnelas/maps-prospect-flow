@@ -786,7 +786,7 @@ const ChatAreaComponent = ({
           </button>
           
           {/* Save contact button - only show if not saved */}
-          {!isContactSaved() && onSaveContact && (
+          {!conversation.is_group && !isContactSaved() && onSaveContact && (
             <Button
               variant="ghost"
               size="sm"
