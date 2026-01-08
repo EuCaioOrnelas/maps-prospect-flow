@@ -359,71 +359,81 @@ export const useChat = (selectedNumberId?: string | null) => {
   const messageQueueRef = useRef<Map<string, { optimisticId: string; status: 'pending' | 'sending' | 'sent' | 'failed' }>>(new Map());
   const processingQueueRef = useRef(false);
 
-  // Process message queue - sends messages one by one but doesn't block input
+  // Process message queue - sends messages concurrently but controlled
   const processMessageQueue = useCallback(async () => {
     if (processingQueueRef.current || !user) return;
     processingQueueRef.current = true;
 
     try {
-      // Find next pending message
-      const pendingEntry = Array.from(messageQueueRef.current.entries()).find(
+      // Find all pending messages and process them
+      const pendingEntries = Array.from(messageQueueRef.current.entries()).filter(
         ([, value]) => value.status === 'pending'
       );
 
-      if (!pendingEntry) {
+      if (pendingEntries.length === 0) {
         processingQueueRef.current = false;
         return;
       }
 
-      const [queueId, queueItem] = pendingEntry;
-      queueItem.status = 'sending';
+      // Process up to 3 messages concurrently for speed
+      const batch = pendingEntries.slice(0, 3);
+      
+      await Promise.all(batch.map(async ([queueId, queueItem]) => {
+        queueItem.status = 'sending';
 
-      // Get message data from queue ID
-      const [conversationId, , content, messageType, quotedMessageId, mediaUrl, mediaFilename] = queueId.split('|||');
+        // Get message data from queue ID
+        const parts = queueId.split('|||');
+        const conversationId = parts[0];
+        const content = parts[2] || '';
+        const messageType = parts[3] || 'text';
+        const quotedMessageId = parts[4] || undefined;
+        const mediaUrl = parts[5] || undefined;
+        const mediaFilename = parts[6] || undefined;
 
-      try {
-        const response = await supabase.functions.invoke('chat-send-message', {
-          body: {
-            conversationId,
-            content: content?.trim() || '',
-            messageType: messageType || 'text',
-            quotedMessageId: quotedMessageId || undefined,
-            mediaUrl: mediaUrl || undefined,
-            mediaFilename: mediaFilename || undefined,
-          },
-        });
+        try {
+          const response = await supabase.functions.invoke('chat-send-message', {
+            body: {
+              conversationId,
+              content: content.trim(),
+              messageType,
+              quotedMessageId: quotedMessageId || undefined,
+              mediaUrl: mediaUrl || undefined,
+              mediaFilename: mediaFilename || undefined,
+            },
+          });
 
-        if (response.error) {
-          throw new Error(response.error.message);
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+
+          // Update optimistic message status to 'sent'
+          setMessages(prev => prev.map(m => 
+            m.id === queueItem.optimisticId 
+              ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+              : m
+          ));
+
+          queueItem.status = 'sent';
+          messageQueueRef.current.delete(queueId);
+        } catch (error) {
+          console.error('Error sending message:', error);
+          // Mark message as failed
+          setMessages(prev => prev.map(m => 
+            m.id === queueItem.optimisticId 
+              ? { ...m, status: 'failed' }
+              : m
+          ));
+          queueItem.status = 'failed';
+          messageQueueRef.current.delete(queueId);
         }
-
-        // Update optimistic message status to 'sent'
-        setMessages(prev => prev.map(m => 
-          m.id === queueItem.optimisticId 
-            ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
-            : m
-        ));
-
-        queueItem.status = 'sent';
-        messageQueueRef.current.delete(queueId);
-      } catch (error) {
-        console.error('Error sending message:', error);
-        // Mark message as failed
-        setMessages(prev => prev.map(m => 
-          m.id === queueItem.optimisticId 
-            ? { ...m, status: 'failed' }
-            : m
-        ));
-        queueItem.status = 'failed';
-        messageQueueRef.current.delete(queueId);
-      }
+      }));
     } finally {
       processingQueueRef.current = false;
       // Check if there are more messages to process
       const hasPending = Array.from(messageQueueRef.current.values()).some(v => v.status === 'pending');
       if (hasPending) {
-        // Process next message after a small delay
-        setTimeout(() => processMessageQueue(), 100);
+        // Process next batch immediately
+        setTimeout(() => processMessageQueue(), 50);
       }
     }
   }, [user]);
