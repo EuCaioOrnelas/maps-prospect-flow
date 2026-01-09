@@ -74,17 +74,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/dashboard"
     },
     { 
-      title: "CRM", 
-      url: "/crm", 
-      icon: Users,
-      active: currentPath === "/crm"
-    },
-    { 
       title: "Disparos", 
       url: isFreePlan ? "#" : "/whatsapp", 
       icon: Megaphone,
       onClick: isFreePlan ? onWhatsAppClick : undefined,
       active: currentPath === "/whatsapp"
+    },
+    { 
+      title: "CRM", 
+      url: "/crm", 
+      icon: Users,
+      active: currentPath === "/crm"
     },
     { 
       title: "Chat", 
@@ -240,13 +240,58 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </div>
             </li>
 
+            {/* Disparos */}
+            <li>
+              {mainNavItems[1].onClick ? (
+                <button
+                  onClick={mainNavItems[1].onClick}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
+                    mainNavItems[1].active 
+                      ? "bg-primary/20 text-primary font-medium" 
+                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <Megaphone size={20} className="shrink-0" />
+                  <span 
+                    className={cn(
+                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
+                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                    )}
+                  >
+                    {mainNavItems[1].title}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  to={mainNavItems[1].url}
+                  className={cn(
+                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
+                    mainNavItems[1].active 
+                      ? "bg-primary/20 text-primary font-medium" 
+                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <Megaphone size={20} className="shrink-0" />
+                  <span 
+                    className={cn(
+                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
+                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                    )}
+                  >
+                    {mainNavItems[1].title}
+                  </span>
+                </Link>
+              )}
+            </li>
+
             {/* CRM */}
             <li>
               <Link
-                to={mainNavItems[1].url}
+                to={mainNavItems[2].url}
                 className={cn(
                   "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
-                  mainNavItems[1].active 
+                  mainNavItems[2].active 
                     ? "bg-primary/20 text-primary font-medium" 
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
@@ -258,54 +303,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
                   )}
                 >
-                  {mainNavItems[1].title}
+                  {mainNavItems[2].title}
                 </span>
               </Link>
-            </li>
-
-            {/* Disparos */}
-            <li>
-              {mainNavItems[2].onClick ? (
-                <button
-                  onClick={mainNavItems[2].onClick}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
-                    mainNavItems[2].active 
-                      ? "bg-primary/20 text-primary font-medium" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                >
-                  <Megaphone size={20} className="shrink-0" />
-                  <span 
-                    className={cn(
-                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                    )}
-                  >
-                    {mainNavItems[2].title}
-                  </span>
-                </button>
-              ) : (
-                <Link
-                  to={mainNavItems[2].url}
-                  className={cn(
-                    "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
-                    mainNavItems[2].active 
-                      ? "bg-primary/20 text-primary font-medium" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                >
-                  <Megaphone size={20} className="shrink-0" />
-                  <span 
-                    className={cn(
-                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                    )}
-                  >
-                    {mainNavItems[2].title}
-                  </span>
-                </Link>
-              )}
             </li>
 
             {/* Chat */}
