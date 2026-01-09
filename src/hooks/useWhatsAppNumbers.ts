@@ -29,20 +29,33 @@ const MONTHLY_MESSAGE_LIMITS: Record<string, number> = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
+const SAO_PAULO_OFFSET_HOURS = -3; // UTC-3
 
-// Verifica se o último envio foi antes da meia-noite de hoje (reset às 00:00)
+// Get current time in São Paulo timezone
+const getSaoPauloTime = (): Date => {
+  const now = new Date();
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utcTime + (SAO_PAULO_OFFSET_HOURS * 3600000));
+};
+
+// Get midnight in São Paulo timezone as UTC
+const getSaoPauloMidnightUTC = (): Date => {
+  const spNow = getSaoPauloTime();
+  const spMidnight = new Date(spNow);
+  spMidnight.setHours(0, 0, 0, 0);
+  // Convert back to UTC
+  return new Date(spMidnight.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
+};
+
+// Verifica se o último envio foi antes da meia-noite de São Paulo (reset às 00:00 SP)
 const shouldResetCount = (lastSentAt: string | null, dailySentCount: number): boolean => {
   if (!lastSentAt || dailySentCount === 0) return false;
   
-  const now = new Date();
   const lastSent = new Date(lastSentAt);
+  const spMidnightUTC = getSaoPauloMidnightUTC();
   
-  // Cria a data do reset de hoje às 00:00
-  const todayReset = new Date(now);
-  todayReset.setHours(0, 0, 0, 0);
-  
-  // Reseta se o último envio foi antes da meia-noite de hoje
-  return lastSent < todayReset;
+  // Reseta se o último envio foi antes da meia-noite de São Paulo
+  return lastSent < spMidnightUTC;
 };
 
 // Verifica se um número está com reset pendente (contador não zerado quando deveria)
