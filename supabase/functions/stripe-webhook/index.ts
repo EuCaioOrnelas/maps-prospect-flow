@@ -177,8 +177,8 @@ serve(async (req) => {
             
             // Get subscription details from the session
             if (session.subscription) {
-              const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-              const priceId = subscription.items.data[0]?.price.id;
+              const newSubscription = await stripe.subscriptions.retrieve(session.subscription as string);
+              const priceId = newSubscription.items.data[0]?.price.id;
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
@@ -220,6 +220,30 @@ serve(async (req) => {
                 // Track purchase for landing page analytics
                 const amount = PLAN_PRICES[plan] || 0;
                 await trackPurchase(supabaseClient, profile.id, plan, amount);
+              }
+
+              // Cancel any OTHER active subscriptions for this customer (upgrade scenario)
+              // This ensures user only has one active subscription at a time
+              if (session.customer) {
+                const allSubs = await stripe.subscriptions.list({
+                  customer: session.customer as string,
+                  status: "active",
+                  limit: 10,
+                });
+
+                for (const sub of allSubs.data) {
+                  // Skip the subscription we just created
+                  if (sub.id === session.subscription) continue;
+
+                  logStep("Canceling old subscription after upgrade", {
+                    oldSubscriptionId: sub.id,
+                    newSubscriptionId: session.subscription,
+                  });
+
+                  await stripe.subscriptions.cancel(sub.id, {
+                    prorate: true,
+                  });
+                }
               }
             }
           } else {
