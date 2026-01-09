@@ -154,12 +154,12 @@ serve(async (req) => {
 
     // Consider only subscriptions that match our known plan prices
     const candidateSubs = subscriptions.data
-      .map((sub) => {
+      .map((sub: Stripe.Subscription) => {
         const priceId = sub.items.data[0]?.price?.id;
         const mappedPlan = priceId ? PRICE_TO_PLAN[priceId] : undefined;
         return { sub, priceId, mappedPlan };
       })
-      .filter((x) => !!x.mappedPlan);
+      .filter((x: { sub: Stripe.Subscription; priceId: string | undefined; mappedPlan: string | undefined }) => !!x.mappedPlan);
 
     const hasActiveSub = candidateSubs.length > 0;
     let plan = "free";
