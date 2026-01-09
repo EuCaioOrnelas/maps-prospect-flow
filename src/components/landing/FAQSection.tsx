@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     question: "Como funcionam os disparos em massa via WhatsApp?",
-    answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O limite é resetado automaticamente às 08:00h. Se atingir o limite, as campanhas são pausadas e retomadas no dia seguinte."
+    answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O limite é resetado automaticamente à meia-noite. Se atingir o limite, as campanhas são pausadas e retomadas no dia seguinte."
   },
   {
     question: "Quantos números WhatsApp posso conectar?",
