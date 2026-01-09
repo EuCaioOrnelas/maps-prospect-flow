@@ -640,7 +640,7 @@ const WhatsAppReports = () => {
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Suas campanhas respeitam o limite de <strong>200 disparos por número</strong> diários para garantir a segurança da sua conta. 
-                  Campanhas são automaticamente pausadas ao atingir o limite e retomadas no dia seguinte às <strong>08:00h</strong>.
+                  Campanhas são automaticamente pausadas ao atingir o limite e retomadas no dia seguinte à <strong>meia-noite</strong>.
                 </p>
               </div>
             </div>

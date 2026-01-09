@@ -725,7 +725,7 @@ const WhatsAppCampaign = () => {
                   <p className="text-sm font-medium text-destructive">Reset pendente</p>
                   <p className="text-xs text-muted-foreground">
                     O contador de disparos do número "{selectedNumber.name}" precisa ser resetado. 
-                    O reset ocorre automaticamente às 08:00. Aguarde o horário de reset para continuar os disparos.
+                    O reset ocorre automaticamente à meia-noite. Aguarde o horário de reset para continuar os disparos.
                   </p>
                 </div>
                 <Button 
