@@ -95,6 +95,42 @@ export type Database = {
           },
         ]
       }
+      campaign_processor_heartbeats: {
+        Row: {
+          action: string
+          campaigns_processed: number | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          messages_sent: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          action: string
+          campaigns_processed?: number | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          messages_sent?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          action?: string
+          campaigns_processed?: number | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          messages_sent?: number | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           avatar_url: string | null

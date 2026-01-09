@@ -568,6 +568,15 @@ Deno.serve(async (req) => {
     // Action: process-scheduled - Process scheduled campaigns that are due
     if (action === 'process-scheduled') {
       const now = new Date();
+      const heartbeatId = crypto.randomUUID();
+      
+      // Log heartbeat start
+      await supabase.from('campaign_processor_heartbeats').insert({
+        id: heartbeatId,
+        action: 'process-scheduled',
+        status: 'running',
+        started_at: now.toISOString()
+      });
       
       // Find scheduled campaigns that should start
       const { data: scheduledCampaigns } = await supabase
@@ -577,6 +586,13 @@ Deno.serve(async (req) => {
         .lte('scheduled_at', now.toISOString());
 
       if (!scheduledCampaigns || scheduledCampaigns.length === 0) {
+        // Update heartbeat as completed (no campaigns)
+        await supabase.from('campaign_processor_heartbeats').update({
+          status: 'completed',
+          campaigns_processed: 0,
+          completed_at: new Date().toISOString()
+        }).eq('id', heartbeatId);
+        
         return new Response(JSON.stringify({ 
           success: true, 
           message: 'No scheduled campaigns to process' 
@@ -613,6 +629,13 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Update heartbeat as completed
+      await supabase.from('campaign_processor_heartbeats').update({
+        status: 'completed',
+        campaigns_processed: scheduledCampaigns.length,
+        completed_at: new Date().toISOString()
+      }).eq('id', heartbeatId);
+
       return new Response(JSON.stringify({ success: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -620,6 +643,16 @@ Deno.serve(async (req) => {
 
     // Action: resume-paused - Resume campaigns paused due to daily limit
     if (action === 'resume-paused') {
+      const heartbeatId = crypto.randomUUID();
+      
+      // Log heartbeat start
+      await supabase.from('campaign_processor_heartbeats').insert({
+        id: heartbeatId,
+        action: 'resume-paused',
+        status: 'running',
+        started_at: new Date().toISOString()
+      });
+      
       const { data: pausedCampaigns } = await supabase
         .from('whatsapp_campaigns')
         .select('id, name, whatsapp_number_id, resume_at')
@@ -628,6 +661,12 @@ Deno.serve(async (req) => {
         .lte('resume_at', new Date().toISOString());
 
       if (!pausedCampaigns || pausedCampaigns.length === 0) {
+        await supabase.from('campaign_processor_heartbeats').update({
+          status: 'completed',
+          campaigns_processed: 0,
+          completed_at: new Date().toISOString()
+        }).eq('id', heartbeatId);
+        
         return new Response(JSON.stringify({ 
           success: true, 
           message: 'No paused campaigns to resume' 
@@ -664,6 +703,13 @@ Deno.serve(async (req) => {
           results.push({ id: campaign.id, name: campaign.name, status: 'error' });
         }
       }
+
+      // Update heartbeat
+      await supabase.from('campaign_processor_heartbeats').update({
+        status: 'completed',
+        campaigns_processed: pausedCampaigns.length,
+        completed_at: new Date().toISOString()
+      }).eq('id', heartbeatId);
 
       return new Response(JSON.stringify({ success: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
