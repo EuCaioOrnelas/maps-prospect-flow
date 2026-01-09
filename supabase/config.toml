@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.cleanup-expired-avatars]
 verify_jwt = false
+
+[functions.campaign-processor]
+verify_jwt = false

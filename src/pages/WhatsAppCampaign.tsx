@@ -206,9 +206,10 @@ const WhatsAppCampaign = () => {
         .insert({
           user_id: user.id,
           name,
-          status: scheduled ? 'scheduled' : 'running',
+          status: scheduled ? 'scheduled' : 'pending',
           total_leads: selectedLeads.length,
-          delay_seconds: delaySecondsMin, // Store minimum as base, max will be calculated
+          delay_seconds: delaySecondsMin,
+          delay_seconds_max: delaySecondsMax,
           pause_after_contacts: pauseAfterContacts,
           pause_minutes: pauseMinutes,
           enable_smart_pause: enableSmartPause,
@@ -216,12 +217,24 @@ const WhatsAppCampaign = () => {
           leads: selectedLeads as unknown as any,
           started_at: scheduled ? null : new Date().toISOString(),
           scheduled_at: scheduledAt,
-          whatsapp_number_id: selectedNumberId
+          whatsapp_number_id: selectedNumberId,
+          current_lead_index: 0
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // If scheduled, create a reservation for the balance
+      if (scheduled && scheduledAt && data) {
+        const scheduleDate = new Date(scheduledAt);
+        await supabase.from('campaign_daily_reservations').insert({
+          campaign_id: data.id,
+          whatsapp_number_id: selectedNumberId,
+          reserved_date: scheduleDate.toISOString().split('T')[0],
+          reserved_count: selectedLeads.length
+        });
+      }
 
       return data.id;
     } catch (err) {
@@ -353,16 +366,11 @@ const WhatsAppCampaign = () => {
 
       setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
 
-      // Call the edge function to start the campaign
-      const { data, error } = await supabase.functions.invoke('evolution-run-campaign', {
+      // Call the new campaign processor to start the campaign in background
+      const { data, error } = await supabase.functions.invoke('campaign-processor', {
         body: {
           campaignId,
-          numberId: selectedNumberId,
-          instanceName,
-          leads: selectedLeads,
-          messages: validMessages,
-          delaySecondsMin,
-          delaySecondsMax
+          action: 'start'
         }
       });
 
@@ -900,6 +908,8 @@ const WhatsAppCampaign = () => {
                   selectedNumberId={selectedNumberId}
                   onSelectNumber={setSelectedNumberId}
                   dailyLimit={dailyLimit}
+                  maxNumbers={maxNumbers}
+                  userPlan={profile?.plan || 'free'}
                 />
               )}
 
