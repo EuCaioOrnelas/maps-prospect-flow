@@ -107,10 +107,11 @@ const Upgrade = () => {
     }
   }, [searchParams, toast]);
 
-  // Automatic subscription check - runs on mount and every 5 seconds if from checkout
+  // Automatic subscription check - runs on mount and polls briefly after returning from checkout/portal
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    let hasUpdated = false;
+    let attempts = 0;
+    const maxAttempts = isFromCheckout ? 24 : 1; // up to 2 minutes after checkout
 
     const checkSubscription = async () => {
       try {
@@ -119,26 +120,18 @@ const Upgrade = () => {
 
         console.log("[Upgrade] Checking subscription status...");
         const response = await supabase.functions.invoke("check-subscription");
-        
+
         if (response.data && !response.error) {
           console.log("[Upgrade] Subscription check result:", response.data);
-          
-          // If plan changed from free to paid, show success toast
-          if (response.data.plan && response.data.plan !== "free" && currentPlan === "free" && !hasUpdated) {
-            hasUpdated = true;
-            await refreshProfile();
+          await refreshProfile();
+
+          // If the backend reports a different plan, stop polling and clear the checkout flag
+          if (isFromCheckout && response.data.plan && response.data.plan !== currentPlan) {
             toast({
-              title: "🎉 Plano ativado!",
-              description: `Seu plano ${response.data.plan.toUpperCase()} está ativo. Aproveite todas as funcionalidades!`,
+              title: "🎉 Plano atualizado!",
+              description: `Seu plano ${String(response.data.plan).toUpperCase()} está ativo.`,
             });
-            
-            // Clear interval after successful update
-            if (intervalId) {
-              clearInterval(intervalId);
-              intervalId = null;
-            }
-          } else {
-            await refreshProfile();
+            navigate("/upgrade", { replace: true });
           }
         }
       } catch (error) {
@@ -149,10 +142,16 @@ const Upgrade = () => {
     // Initial check
     checkSubscription();
 
-    // If coming from checkout, check every 5 seconds until plan is updated
-    if (isFromCheckout && currentPlan === "free") {
-      console.log("[Upgrade] Coming from checkout, starting automatic verification...");
-      intervalId = setInterval(checkSubscription, 5000);
+    if (isFromCheckout) {
+      intervalId = setInterval(() => {
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          if (intervalId) clearInterval(intervalId);
+          intervalId = null;
+          return;
+        }
+        checkSubscription();
+      }, 5000);
     }
 
     return () => {
@@ -160,7 +159,7 @@ const Upgrade = () => {
         clearInterval(intervalId);
       }
     };
-  }, [refreshProfile, isFromCheckout, currentPlan, toast]);
+  }, [refreshProfile, isFromCheckout, currentPlan, toast, navigate]);
 
   const getPlanOrder = (planName: string) => {
     const order: Record<string, number> = {

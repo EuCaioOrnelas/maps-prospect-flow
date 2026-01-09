@@ -86,31 +86,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data as Profile | null;
   };
 
-  // Check subscription status with Stripe and update profile if needed
-  const checkAndUpdateSubscription = async () => {
+  // Check subscription status and refresh the profile so UI updates automatically
+  // (especially after returning from checkout / customer portal).
+  const checkAndUpdateSubscription = async (userIdOverride?: string) => {
     try {
       console.log('[AuthContext] Checking subscription status...');
       const { data, error } = await supabase.functions.invoke('check-subscription');
-      
+
       if (error) {
         console.error('[AuthContext] Error checking subscription:', error);
         return;
       }
-      
+
       if (data) {
         console.log('[AuthContext] Subscription check result:', data);
-        
-        // If the subscription check returned a different plan, refresh the profile
-        if (data.plan && profile && data.plan !== profile.plan) {
-          console.log('[AuthContext] Plan changed from', profile.plan, 'to', data.plan, '- refreshing profile');
-          await refreshProfile();
-        } else if (data.plan && !profile) {
-          // Profile not loaded yet, fetch it
-          if (user) {
-            const newProfile = await fetchProfile(user.id);
-            setProfile(newProfile);
-          }
-        }
+      }
+
+      const targetUserId = userIdOverride ?? user?.id;
+      if (targetUserId) {
+        const updatedProfile = await fetchProfile(targetUserId);
+        setProfile(updatedProfile);
       }
     } catch (err) {
       console.error('[AuthContext] Subscription check failed:', err);
@@ -125,6 +120,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    const handleRefocus = async () => {
+      try {
+        // Only run when page becomes visible / focused
+        if (typeof document !== 'undefined' && document.visibilityState && document.visibilityState !== 'visible') {
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          checkAndUpdateSubscription(session.user.id);
+        }
+      } catch (e) {
+        console.error('[AuthContext] Refocus subscription check failed:', e);
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -137,13 +148,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
-            
+
             // Check subscription after login or token refresh to ensure plan is up to date
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               console.log('[AuthContext] Triggering subscription check after', event);
               // Small delay to ensure profile is set
               setTimeout(() => {
-                checkAndUpdateSubscription();
+                checkAndUpdateSubscription(session.user.id);
               }, 500);
             }
           }, 0);
@@ -161,17 +172,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const data = await fetchProfile(session.user.id);
         setProfile(data);
         setLoading(false);
-        
+
         // Check subscription on initial load
         setTimeout(() => {
-          checkAndUpdateSubscription();
+          checkAndUpdateSubscription(session.user.id);
         }, 500);
       } else {
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // When user comes back from Stripe, re-check automatically
+    window.addEventListener('focus', handleRefocus);
+    document.addEventListener('visibilitychange', handleRefocus);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('focus', handleRefocus);
+      document.removeEventListener('visibilitychange', handleRefocus);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {

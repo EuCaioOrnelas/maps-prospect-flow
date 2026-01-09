@@ -139,39 +139,78 @@ serve(async (req) => {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 10,
     });
-    
-    const hasActiveSub = subscriptions.data.length > 0;
+
+    const getPlanOrder = (planName: string) => {
+      const order: Record<string, number> = {
+        free: 0,
+        start: 1,
+        growth: 2,
+        scale: 3,
+      };
+      return order[planName] ?? 0;
+    };
+
+    // Consider only subscriptions that match our known plan prices
+    const candidateSubs = subscriptions.data
+      .map((sub) => {
+        const priceId = sub.items.data[0]?.price?.id;
+        const mappedPlan = priceId ? PRICE_TO_PLAN[priceId] : undefined;
+        return { sub, priceId, mappedPlan };
+      })
+      .filter((x) => !!x.mappedPlan);
+
+    const hasActiveSub = candidateSubs.length > 0;
     let plan = "free";
-    let subscriptionEnd = null;
+    let subscriptionEnd: string | null = null;
     let searchesLimit = PLAN_LIMITS["free"];
 
     if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
-      
+      // Pick the best plan (highest tier). If tie, pick the one with latest period end.
+      let best = candidateSubs[0];
+      for (const c of candidateSubs) {
+        const cOrder = getPlanOrder(c.mappedPlan as string);
+        const bestOrder = getPlanOrder(best.mappedPlan as string);
+
+        if (cOrder > bestOrder) {
+          best = c;
+          continue;
+        }
+
+        if (cOrder === bestOrder) {
+          const cEnd = typeof c.sub.current_period_end === 'number' ? c.sub.current_period_end : 0;
+          const bEnd = typeof best.sub.current_period_end === 'number' ? best.sub.current_period_end : 0;
+          if (cEnd > bEnd) best = c;
+        }
+      }
+
+      const subscription = best.sub;
+      const priceId = best.priceId as string;
+      plan = best.mappedPlan as string;
+      const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+
       // Safely handle subscription end date
       try {
         if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
           subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
         }
       } catch (dateError) {
-        logStep("Warning: Could not parse subscription end date", { 
-          current_period_end: subscription.current_period_end 
+        logStep("Warning: Could not parse subscription end date", {
+          current_period_end: subscription.current_period_end,
         });
       }
-      
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-      
-      // Get the price ID from the subscription
-      const priceId = subscription.items.data[0].price.id;
-      plan = PRICE_TO_PLAN[priceId] || "free";
-      const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
-      logStep("Determined plan from price", { priceId, plan });
+
+      logStep("Active subscription(s) found", {
+        activeCount: candidateSubs.length,
+        chosenSubscriptionId: subscription.id,
+        priceId,
+        plan,
+        endDate: subscriptionEnd,
+      });
 
       // Calculate new limit with carry-over if upgrading
       if (currentProfile) {
-        // Only calculate carry-over if this is a new subscription or upgrade
         if (currentProfile.plan !== plan || currentProfile.searches_limit < basePlanLimit) {
           const { newLimit, carryOver } = calculateNewSearchesLimit(
             currentProfile.searches_used,
@@ -179,16 +218,15 @@ serve(async (req) => {
             basePlanLimit
           );
           searchesLimit = newLimit;
-          
+
           logStep("Calculated new searches limit with carry-over", {
             currentSearchesUsed: currentProfile.searches_used,
             currentSearchesLimit: currentProfile.searches_limit,
             basePlanLimit,
             carryOver,
-            newLimit: searchesLimit
+            newLimit: searchesLimit,
           });
         } else {
-          // Keep existing limit if already on this plan
           searchesLimit = currentProfile.searches_limit;
         }
       } else {
@@ -198,9 +236,9 @@ serve(async (req) => {
       // Update user profile with new plan and limits
       const { error: updateError } = await supabaseClient
         .from('profiles')
-        .update({ 
+        .update({
           plan: plan,
-          searches_limit: searchesLimit
+          searches_limit: searchesLimit,
         })
         .eq('id', user.id);
 
@@ -211,13 +249,13 @@ serve(async (req) => {
       }
     } else {
       logStep("No active subscription found");
-      
+
       // Reset to free plan if no active subscription
       const { error: updateError } = await supabaseClient
         .from('profiles')
-        .update({ 
+        .update({
           plan: "free",
-          searches_limit: PLAN_LIMITS["free"]
+          searches_limit: PLAN_LIMITS["free"],
         })
         .eq('id', user.id);
 
