@@ -543,19 +543,28 @@ const WhatsAppCampaign = () => {
     try {
       await supabase
         .from('whatsapp_campaigns')
-        .update({ status: 'paused' })
+        .update({ 
+          status: 'paused',
+          pause_reason: 'manual',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', campaign.id);
 
       setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, status: 'paused' } : c
+        c.id === campaign.id ? { ...c, status: 'paused', pause_reason: 'manual' } : c
       ));
       
       toast({
         title: "Campanha pausada",
-        description: "A campanha foi pausada com sucesso",
+        description: "Clique em 'Retomar' para continuar os disparos a qualquer momento.",
       });
     } catch (err) {
       console.error('Error pausing campaign:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível pausar a campanha",
+        variant: "destructive",
+      });
     }
   };
 
@@ -563,10 +572,30 @@ const WhatsAppCampaign = () => {
     // Find the number associated with this campaign
     const campaignNumber = numbers.find(n => n.id === campaign.whatsapp_number_id);
     
-    if (campaignNumber && campaignNumber.daily_sent_count >= dailyLimit) {
+    if (!campaignNumber) {
+      toast({
+        title: "Erro",
+        description: "Número WhatsApp não encontrado para esta campanha",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if number is connected
+    if (!campaignNumber.is_connected) {
+      toast({
+        title: "WhatsApp desconectado",
+        description: `Reconecte o número "${campaignNumber.name}" antes de retomar`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check daily limit
+    if (campaignNumber.daily_sent_count >= dailyLimit) {
       toast({
         title: "Limite diário atingido",
-        description: `O número "${campaignNumber.name}" atingiu o limite de ${dailyLimit} disparos hoje`,
+        description: `O número "${campaignNumber.name}" atingiu o limite de ${dailyLimit} disparos hoje. A campanha será retomada automaticamente amanhã.`,
         variant: "destructive",
       });
       return;
@@ -578,20 +607,33 @@ const WhatsAppCampaign = () => {
         .update({ 
           status: 'running',
           paused_at_limit: false,
-          pause_reason: null
+          pause_reason: null,
+          resume_at: null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', campaign.id);
 
       setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, status: 'running', paused_at_limit: false } : c
+        c.id === campaign.id ? { 
+          ...c, 
+          status: 'running', 
+          paused_at_limit: false,
+          pause_reason: undefined,
+          resume_at: undefined
+        } : c
       ));
       
       toast({
         title: "Campanha retomada",
-        description: "Continuando os disparos...",
+        description: `Continuando os disparos. Saldo disponível: ${dailyLimit - campaignNumber.daily_sent_count} mensagens.`,
       });
     } catch (err) {
       console.error('Error resuming campaign:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível retomar a campanha",
+        variant: "destructive",
+      });
     }
   };
 

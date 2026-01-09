@@ -234,25 +234,35 @@ export const RealtimeMonitor = ({
           ? ((campaign.sent_count + campaign.failed_count) / campaign.total_leads) * 100 
           : 0;
         const isPausedByLimit = campaign.paused_at_limit;
+        const isPausedManually = campaign.pause_reason === 'manual';
+        const isPausedSmartPause = campaign.pause_reason === 'smart_pause';
 
         return (
           <div 
             key={campaign.id}
             className={`glass rounded-xl p-5 border-l-4 ${
-              isPausedByLimit ? 'border-l-destructive' : 'border-l-yellow-500'
+              isPausedByLimit ? 'border-l-destructive' : 
+              isPausedManually ? 'border-l-blue-500' : 'border-l-yellow-500'
             }`}
           >
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <Pause size={16} className={isPausedByLimit ? 'text-destructive' : 'text-yellow-500'} />
+                  <Pause size={16} className={
+                    isPausedByLimit ? 'text-destructive' : 
+                    isPausedManually ? 'text-blue-500' : 'text-yellow-500'
+                  } />
                   <h3 className="font-medium truncate">{campaign.name}</h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     isPausedByLimit 
                       ? 'bg-destructive/20 text-destructive' 
+                      : isPausedManually
+                      ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
                       : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
                   }`}>
-                    {isPausedByLimit ? 'Limite Diário' : 'Pausada'}
+                    {isPausedByLimit ? 'Limite Diário' : 
+                     isPausedManually ? 'Pausada Manualmente' :
+                     isPausedSmartPause ? 'Pausa Inteligente' : 'Pausada'}
                   </span>
                 </div>
                 
@@ -261,7 +271,7 @@ export const RealtimeMonitor = ({
                     <Smartphone size={14} />
                     <span>{getNumberName(campaign.whatsapp_number_id)}</span>
                   </div>
-                  {campaign.resume_at && (
+                  {campaign.resume_at && !isPausedManually && (
                     <>
                       <span>•</span>
                       <div className="flex items-center gap-1">
@@ -272,9 +282,16 @@ export const RealtimeMonitor = ({
                       </div>
                     </>
                   )}
+                  {isPausedManually && (
+                    <>
+                      <span>•</span>
+                      <span className="text-blue-500">Aguardando você retomar</span>
+                    </>
+                  )}
                 </div>
               </div>
 
+              {/* Show resume button for manually paused campaigns (and non-limit paused) */}
               {!isPausedByLimit && (
                 <div className="flex items-center gap-2">
                   <Button 
@@ -308,13 +325,21 @@ export const RealtimeMonitor = ({
                   <span className="text-green-500">{campaign.sent_count} enviadas</span>
                   <span>•</span>
                   <span className="text-destructive">{campaign.failed_count} falhas</span>
+                  <span>•</span>
+                  <span>{campaign.total_leads - campaign.sent_count - campaign.failed_count} restantes</span>
                 </div>
               </div>
             </div>
 
             {isPausedByLimit && campaign.pause_reason && (
               <div className="mt-3 pt-3 border-t border-border text-sm text-muted-foreground">
-                <p>Será retomada automaticamente quando o limite diário resetar.</p>
+                <p>Será retomada automaticamente quando o limite diário resetar às 00:00.</p>
+              </div>
+            )}
+
+            {isPausedManually && (
+              <div className="mt-3 pt-3 border-t border-border text-sm text-blue-500">
+                <p>Clique em "Retomar" para continuar os disparos de onde parou.</p>
               </div>
             )}
           </div>
