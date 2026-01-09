@@ -265,13 +265,9 @@ async function processSingleMessage(
     .replace(/\{nome\}/gi, lead.name || 'Cliente')
     .replace(/\{empresa\}/gi, lead.name || 'Empresa');
 
-  // Apply smart delay before sending
-  const delayMin = campaign.delay_seconds || 40;
-  const delayMax = campaign.delay_seconds_max || 60;
-  const delay = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-  
-  console.log(`Waiting ${delay}s before message ${currentIndex + 1}/${leads.length}`);
-  await new Promise(resolve => setTimeout(resolve, delay * 1000));
+  // NOTE: Delay is handled naturally by cron interval (1 min between executions)
+  // Each cron call sends ONE message, so ~1 min between messages
+  console.log(`Processing message ${currentIndex + 1}/${leads.length} to ${formattedPhone}`);
 
   // Re-check campaign status (might have been cancelled during delay)
   const { data: statusCheck } = await supabase
