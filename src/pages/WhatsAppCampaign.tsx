@@ -206,7 +206,7 @@ const WhatsAppCampaign = () => {
         .insert({
           user_id: user.id,
           name,
-          status: scheduled ? 'scheduled' : 'pending',
+          status: scheduled ? 'scheduled' : 'running',
           total_leads: selectedLeads.length,
           delay_seconds: delaySecondsMin,
           delay_seconds_max: delaySecondsMax,
@@ -366,33 +366,19 @@ const WhatsAppCampaign = () => {
 
       setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
 
-      // Call the new campaign processor to start the campaign in background
-      const { data, error } = await supabase.functions.invoke('campaign-processor', {
+      // Fire-and-forget: trigger the campaign processor without waiting
+      // The cron job will pick it up and continue processing
+      supabase.functions.invoke('campaign-processor', {
         body: {
           campaignId,
           action: 'start'
         }
+      }).catch(err => {
+        // Log but don't block - cron will pick up the campaign
+        console.log('Initial campaign trigger (cron will continue):', err?.message || 'triggered');
       });
-
-      if (error) {
-        console.error('Error starting campaign:', error);
-        
-        // If edge function fails, mark campaign as failed
-        await supabase
-          .from('whatsapp_campaigns')
-          .update({ status: 'failed', pause_reason: error.message })
-          .eq('id', campaignId);
-        
-        toast({
-          title: "Erro ao iniciar campanha",
-          description: error.message || "Ocorreu um erro ao iniciar a campanha",
-          variant: "destructive",
-        });
-        setIsStartingCampaign(false);
-        return;
-      }
       
-      // Success - Update trial messages sent for free trial users
+      // Update trial messages sent for free trial users
       if (isFreePlan && !isTrialExpired && user) {
         const newCount = trialMessagesUsed + selectedLeads.length;
         await supabase
@@ -411,14 +397,12 @@ const WhatsAppCampaign = () => {
       
       toast({
         title: "Campanha iniciada!",
-        description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
+        description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
       
-      // Reset form state
+      // Reset form state and redirect immediately
       handleNewCampaign();
       setIsStartingCampaign(false);
-      
-      // Redirect to active campaigns tab AFTER resetting form
       setActiveTab('active');
       
     } catch (err) {

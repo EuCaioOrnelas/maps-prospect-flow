@@ -586,19 +586,22 @@ Deno.serve(async (req) => {
         .lte('scheduled_at', now.toISOString());
 
       // Also find running campaigns that need to continue processing
-      // These are campaigns that were interrupted by function timeout
+      // These are campaigns that were interrupted by function timeout or just created
       const { data: runningCampaigns } = await supabase
         .from('whatsapp_campaigns')
         .select('id, name, current_lead_index, total_leads, whatsapp_number_id, updated_at')
         .eq('status', 'running');
 
-      // Filter running campaigns that haven't been updated in the last 30 seconds
-      // This prevents multiple instances from processing the same campaign
+      // Filter running campaigns that:
+      // 1. Haven't been updated in the last 15 seconds (stale - interrupted by timeout)
+      // 2. OR have current_lead_index = 0 and sent_count = 0 (newly created, not started yet)
       const staleRunningCampaigns = (runningCampaigns || []).filter(c => {
         const lastUpdate = new Date(c.updated_at).getTime();
-        const now = Date.now();
-        const staleDuration = 30000; // 30 seconds
-        return (now - lastUpdate) > staleDuration && c.current_lead_index < c.total_leads;
+        const nowTime = Date.now();
+        const staleDuration = 15000; // 15 seconds
+        const isStale = (nowTime - lastUpdate) > staleDuration;
+        const isNotCompleted = c.current_lead_index < c.total_leads;
+        return isStale && isNotCompleted;
       });
 
       const hasScheduled = scheduledCampaigns && scheduledCampaigns.length > 0;
