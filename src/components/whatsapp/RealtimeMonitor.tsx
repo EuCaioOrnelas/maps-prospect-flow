@@ -19,6 +19,7 @@ import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ProcessorHeartbeat } from "./ProcessorHeartbeat";
 
 interface RealtimeMonitorProps {
   campaigns: Campaign[];
@@ -101,9 +102,12 @@ export const RealtimeMonitor = ({
           </div>
           <h2 className="font-semibold">Monitoramento em Tempo Real</h2>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Wifi size={14} className="text-green-500" />
-          <span>Conectado</span>
+        <div className="flex items-center gap-4">
+          <ProcessorHeartbeat />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Wifi size={14} className="text-green-500" />
+            <span>Conectado</span>
+          </div>
         </div>
       </div>
 
