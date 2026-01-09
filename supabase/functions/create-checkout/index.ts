@@ -131,6 +131,33 @@ serve(async (req) => {
       }
     }
 
+    // If customer already has an active subscription, send them to the Customer Portal
+    // to avoid creating duplicate subscriptions (e.g. Start + Growth at the same time).
+    if (customerId) {
+      const activeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+
+      if (activeSubs.data.length > 0) {
+        logStep("Active subscription detected - redirecting to customer portal", {
+          customerId,
+          subscriptionId: activeSubs.data[0].id,
+        });
+
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${origin}/upgrade?checkout=success`,
+        });
+
+        return new Response(JSON.stringify({ url: portalSession.url }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
+
     // Build checkout session options
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       line_items: [
