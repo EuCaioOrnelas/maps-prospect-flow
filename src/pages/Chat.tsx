@@ -26,9 +26,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { WhatsAppNumber } from '@/hooks/useWhatsAppNumbers';
+import ChatComingSoon from './ChatComingSoon';
+
+// Emails com acesso ao Chat
+const CHAT_ALLOWED_EMAILS = [
+  'sonencorretora@hotmail.com',
+  'caiowiize@gmail.com'
+];
 
 const Chat = () => {
   const { profile } = useAuth();
+  
+  // Verificar se o usuário tem acesso ao chat
+  const hasChatAccess = profile?.email && CHAT_ALLOWED_EMAILS.includes(profile.email.toLowerCase());
+  
+  // Se não tem acesso, mostra a página "Em Breve"
+  if (!hasChatAccess) {
+    return <ChatComingSoon />;
+  }
   const { numbers, loading: loadingNumbers, fetchNumbers, setNumbers } = useWhatsAppNumbers();
   const { createContact } = useContacts();
   const { quickReplies } = useQuickReplies();
