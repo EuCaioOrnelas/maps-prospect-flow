@@ -388,35 +388,38 @@ const WhatsAppCampaign = () => {
           description: error.message || "Ocorreu um erro ao iniciar a campanha",
           variant: "destructive",
         });
-      } else {
-        // Update trial messages sent for free trial users
-        if (isFreePlan && !isTrialExpired && user) {
-          const newCount = trialMessagesUsed + selectedLeads.length;
-          await supabase
-            .from('profiles')
-            .update({ trial_messages_sent: newCount })
-            .eq('id', user.id);
-          
-          // Refresh profile to get updated count
-          await refreshProfile();
-          
-          // Check if limit reached after this campaign
-          if (newCount >= FREE_TRIAL_MESSAGE_LIMIT) {
-            setShowTrialLimitModal(true);
-          }
-        }
-        
-        toast({
-          title: "Campanha iniciada!",
-          description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
-        });
-        
-        // Redirect to active campaigns tab
-        setActiveTab('active');
+        setIsStartingCampaign(false);
+        return;
       }
-
-      // Reset form
+      
+      // Success - Update trial messages sent for free trial users
+      if (isFreePlan && !isTrialExpired && user) {
+        const newCount = trialMessagesUsed + selectedLeads.length;
+        await supabase
+          .from('profiles')
+          .update({ trial_messages_sent: newCount })
+          .eq('id', user.id);
+        
+        // Refresh profile to get updated count
+        await refreshProfile();
+        
+        // Check if limit reached after this campaign
+        if (newCount >= FREE_TRIAL_MESSAGE_LIMIT) {
+          setShowTrialLimitModal(true);
+        }
+      }
+      
+      toast({
+        title: "Campanha iniciada!",
+        description: `Enviando mensagens para ${selectedLeads.length} contatos via ${selectedNumber?.name}`,
+      });
+      
+      // Reset form state
       handleNewCampaign();
+      setIsStartingCampaign(false);
+      
+      // Redirect to active campaigns tab AFTER resetting form
+      setActiveTab('active');
       
     } catch (err) {
       console.error('Error in handleStartCampaign:', err);
@@ -425,7 +428,6 @@ const WhatsAppCampaign = () => {
         description: "Não foi possível iniciar a campanha",
         variant: "destructive",
       });
-    } finally {
       setIsStartingCampaign(false);
     }
   };
