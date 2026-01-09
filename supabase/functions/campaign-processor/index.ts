@@ -565,7 +565,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Action: process-scheduled - Process scheduled campaigns that are due
+    // Action: process-scheduled - Process scheduled campaigns AND running campaigns that need continuation
     if (action === 'process-scheduled') {
       const now = new Date();
       const heartbeatId = crypto.randomUUID();
@@ -585,7 +585,26 @@ Deno.serve(async (req) => {
         .eq('status', 'scheduled')
         .lte('scheduled_at', now.toISOString());
 
-      if (!scheduledCampaigns || scheduledCampaigns.length === 0) {
+      // Also find running campaigns that need to continue processing
+      // These are campaigns that were interrupted by function timeout
+      const { data: runningCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('id, name, current_lead_index, total_leads, whatsapp_number_id, updated_at')
+        .eq('status', 'running');
+
+      // Filter running campaigns that haven't been updated in the last 30 seconds
+      // This prevents multiple instances from processing the same campaign
+      const staleRunningCampaigns = (runningCampaigns || []).filter(c => {
+        const lastUpdate = new Date(c.updated_at).getTime();
+        const now = Date.now();
+        const staleDuration = 30000; // 30 seconds
+        return (now - lastUpdate) > staleDuration && c.current_lead_index < c.total_leads;
+      });
+
+      const hasScheduled = scheduledCampaigns && scheduledCampaigns.length > 0;
+      const hasStaleRunning = staleRunningCampaigns.length > 0;
+
+      if (!hasScheduled && !hasStaleRunning) {
         // Update heartbeat as completed (no campaigns)
         await supabase.from('campaign_processor_heartbeats').update({
           status: 'completed',
@@ -595,7 +614,7 @@ Deno.serve(async (req) => {
         
         return new Response(JSON.stringify({ 
           success: true, 
-          message: 'No scheduled campaigns to process' 
+          message: 'No campaigns to process' 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -603,7 +622,8 @@ Deno.serve(async (req) => {
 
       const results = [];
 
-      for (const campaign of scheduledCampaigns) {
+      // Process scheduled campaigns
+      for (const campaign of (scheduledCampaigns || [])) {
         // Remove reservation since campaign is starting
         await supabase.from('campaign_daily_reservations')
           .delete()
@@ -622,17 +642,41 @@ Deno.serve(async (req) => {
             body: JSON.stringify({ campaignId: campaign.id, action: 'start' })
           });
           
-          results.push({ id: campaign.id, name: campaign.name, status: 'started' });
+          results.push({ id: campaign.id, name: campaign.name, type: 'scheduled', status: 'started' });
         } catch (err) {
           console.error(`Error starting campaign ${campaign.id}:`, err);
-          results.push({ id: campaign.id, name: campaign.name, status: 'error' });
+          results.push({ id: campaign.id, name: campaign.name, type: 'scheduled', status: 'error' });
+        }
+      }
+
+      // Resume stale running campaigns
+      for (const campaign of staleRunningCampaigns) {
+        console.log(`Resuming stale running campaign ${campaign.id} (${campaign.name}) - index ${campaign.current_lead_index}/${campaign.total_leads}`);
+        
+        const resumeUrl = `${SUPABASE_URL}/functions/v1/campaign-processor`;
+        
+        try {
+          await fetch(resumeUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ campaignId: campaign.id, action: 'resume' })
+          });
+          
+          results.push({ id: campaign.id, name: campaign.name, type: 'running', status: 'resumed' });
+        } catch (err) {
+          console.error(`Error resuming campaign ${campaign.id}:`, err);
+          results.push({ id: campaign.id, name: campaign.name, type: 'running', status: 'error' });
         }
       }
 
       // Update heartbeat as completed
+      const totalProcessed = (scheduledCampaigns?.length || 0) + staleRunningCampaigns.length;
       await supabase.from('campaign_processor_heartbeats').update({
         status: 'completed',
-        campaigns_processed: scheduledCampaigns.length,
+        campaigns_processed: totalProcessed,
         completed_at: new Date().toISOString()
       }).eq('id', heartbeatId);
 
