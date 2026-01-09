@@ -12,11 +12,20 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Map price IDs to plan names
+// Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1SlykAK8CM0R6xMMOCM684rz": "start",
-  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
-  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
+  // Current prices
+  "price_1SlykAK8CM0R6xMMOCM684rz": "start",   // R$197/month
+  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",  // R$497/month
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",   // R$897/month
+  // Legacy prices - must be mapped for existing subscriptions
+  "price_1SXrv7K8CM0R6xMMo4FlSVIk": "start",   // R$67/year (legacy)
+  "price_1SXruNK8CM0R6xMMVD8Gksi4": "start",   // R$9.90/month (legacy)
+  "price_1SZj5bK8CM0R6xMMFocrHWkj": "start",   // R$29.90/month (legacy)
+  "price_1Sc1ehK8CM0R6xMMg1Z0kqCk": "start",   // R$39.90/month (legacy)
+  "price_1SZj4hK8CM0R6xMMSZjjoEkN": "growth",  // R$249.90/year (legacy)
+  "price_1SkEsEK8CM0R6xMM9Y1ip21w": "start",   // R$97/month (legacy)
+  "price_1SkEsoK8CM0R6xMMF72J3hAi": "growth",  // R$497/month (legacy)
 };
 
 // Map plan names to search limits
