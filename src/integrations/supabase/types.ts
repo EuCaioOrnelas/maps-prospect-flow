@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_daily_reservations: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          reserved_count: number
+          reserved_date: string
+          updated_at: string
+          whatsapp_number_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          reserved_count?: number
+          reserved_date: string
+          updated_at?: string
+          whatsapp_number_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          reserved_count?: number
+          reserved_date?: string
+          updated_at?: string
+          whatsapp_number_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_daily_reservations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_daily_reservations_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           avatar_url: string | null
@@ -888,7 +933,9 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          current_lead_index: number
           delay_seconds: number
+          delay_seconds_max: number
           enable_smart_pause: boolean
           failed_count: number
           id: string
@@ -912,7 +959,9 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          current_lead_index?: number
           delay_seconds?: number
+          delay_seconds_max?: number
           enable_smart_pause?: boolean
           failed_count?: number
           id?: string
@@ -936,7 +985,9 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          current_lead_index?: number
           delay_seconds?: number
+          delay_seconds_max?: number
           enable_smart_pause?: boolean
           failed_count?: number
           id?: string

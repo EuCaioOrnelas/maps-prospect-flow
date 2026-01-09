@@ -15,9 +15,9 @@ export interface WhatsAppNumber {
 export const PLAN_LIMITS: Record<string, number> = {
   free: 1, // Free trial users get 1 number
   trial: 1, // Alias for free
-  start: 2,
-  growth: 5,
-  scale: 10
+  start: 2, // Start plan: 2 numbers
+  growth: 5, // Growth plan: 5 numbers
+  scale: 10 // Scale plan: 10 numbers
 };
 
 // Limites mensais de disparos por plano

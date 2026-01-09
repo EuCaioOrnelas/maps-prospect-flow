@@ -16,7 +16,7 @@ import {
   Shuffle
 } from "lucide-react";
 import { CampaignScheduler } from "./CampaignScheduler";
-import { NumberSelector } from "./NumberSelector";
+import { NumberSelectorWithBalance } from "./NumberSelectorWithBalance";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
 interface CampaignSettingsProps {
@@ -47,6 +47,8 @@ interface CampaignSettingsProps {
   selectedNumberId?: string | null;
   onSelectNumber?: (numberId: string | null) => void;
   dailyLimit?: number;
+  maxNumbers?: number;
+  userPlan?: string;
 }
 
 export const CampaignSettings = ({
@@ -75,7 +77,9 @@ export const CampaignSettings = ({
   numbers = [],
   selectedNumberId = null,
   onSelectNumber,
-  dailyLimit = 200
+  dailyLimit = 200,
+  maxNumbers = 1,
+  userPlan = 'free'
 }: CampaignSettingsProps) => {
   
   const formatTime = (seconds: number) => {
@@ -297,11 +301,15 @@ export const CampaignSettings = ({
 
         {/* Number Selector */}
         {onSelectNumber && (
-          <NumberSelector
+          <NumberSelectorWithBalance
             numbers={numbers}
             selectedNumberId={selectedNumberId}
             onSelectNumber={onSelectNumber}
-            dailyLimit={dailyLimit}
+            leadsCount={totalLeads}
+            isScheduled={isScheduled}
+            scheduledDate={scheduledDate}
+            maxNumbers={maxNumbers}
+            userPlan={userPlan}
           />
         )}
 
