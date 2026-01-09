@@ -34,6 +34,7 @@ import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { NoConnectedNumbers } from "@/components/whatsapp/NoConnectedNumbers";
 import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
+import { useCampaignBalance } from "@/hooks/useCampaignBalance";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
@@ -161,6 +162,8 @@ const WhatsAppCampaign = () => {
     DAILY_LIMIT_PER_NUMBER
   } = useWhatsAppNumbers();
 
+  const { getBalanceForDate } = useCampaignBalance();
+
   const [showConnectModal, setShowConnectModal] = useState(false);
 
   const selectedNumber = numbers.find(n => n.id === selectedNumberId);
@@ -276,12 +279,28 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    // If scheduled, create the campaign and go back
+    // If scheduled, validate balance and create the campaign
     if (isScheduled) {
       if (!scheduledDate || !scheduledTime) {
         toast({
           title: "Data não selecionada",
           description: "Selecione uma data e horário para agendar",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate balance for the scheduled date
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const targetDate = new Date(scheduledDate);
+      targetDate.setHours(hours, minutes, 0, 0);
+      
+      const balanceInfo = await getBalanceForDate(selectedNumberId, targetDate, selectedLeads.length);
+      
+      if (!balanceInfo.canSend) {
+        toast({
+          title: "Saldo insuficiente",
+          description: `O número selecionado só tem ${balanceInfo.available} disparos disponíveis para esta data. Você precisa de ${selectedLeads.length}.`,
           variant: "destructive",
         });
         return;
@@ -297,6 +316,18 @@ const WhatsAppCampaign = () => {
       
       handleNewCampaign();
       setActiveTab('history');
+      return;
+    }
+
+    // Validate balance for immediate campaign (today)
+    const balanceInfo = await getBalanceForDate(selectedNumberId, new Date(), selectedLeads.length);
+    
+    if (!balanceInfo.canSend) {
+      toast({
+        title: "Limite diário excedido",
+        description: `O número selecionado só tem ${balanceInfo.available} disparos disponíveis hoje. Você precisa de ${selectedLeads.length}.`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -317,15 +348,6 @@ const WhatsAppCampaign = () => {
       toast({
         title: "WhatsApp não conectado",
         description: "Conecte o número selecionado antes de iniciar",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedLeads.length > (dailyLimit - usedToday)) {
-      toast({
-        title: "Limite diário excedido",
-        description: `O número ${selectedNumber?.name} só pode enviar mais ${dailyLimit - usedToday} mensagens hoje`,
         variant: "destructive",
       });
       return;
