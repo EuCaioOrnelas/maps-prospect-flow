@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
-const MAX_MESSAGES_PER_BATCH = 50; // Process up to 50 messages then re-invoke self
 
 interface Lead {
   name: string;
@@ -21,6 +20,16 @@ function normalizePhone(phone: string): string {
     normalized = '55' + normalized;
   }
   return normalized;
+}
+
+// Check if we should reset daily count (reset at midnight)
+function shouldResetDailyCount(lastSentAt: string | null): boolean {
+  if (!lastSentAt) return false;
+  const lastSent = new Date(lastSentAt);
+  const now = new Date();
+  const todayMidnight = new Date(now);
+  todayMidnight.setHours(0, 0, 0, 0);
+  return lastSent < todayMidnight;
 }
 
 // Check if instance is connected
@@ -86,7 +95,7 @@ async function sendMessage(
   }
 }
 
-// Get available daily balance for a number on a specific date
+// Get available daily balance for a number
 async function getAvailableBalance(
   supabase: any,
   numberId: string,
@@ -98,7 +107,6 @@ async function getAvailableBalance(
   let usedToday = 0;
   
   if (isToday) {
-    // For today, check actual daily_sent_count
     const { data: numberData } = await supabase
       .from('whatsapp_numbers')
       .select('daily_sent_count, last_sent_at')
@@ -106,11 +114,16 @@ async function getAvailableBalance(
       .single();
     
     if (numberData) {
-      const today = new Date().toDateString();
-      const lastSentDate = numberData.last_sent_at 
-        ? new Date(numberData.last_sent_at).toDateString() 
-        : null;
-      usedToday = lastSentDate === today ? (numberData.daily_sent_count || 0) : 0;
+      // Reset if last sent was before midnight
+      if (shouldResetDailyCount(numberData.last_sent_at)) {
+        usedToday = 0;
+        // Reset in database too
+        await supabase.from('whatsapp_numbers').update({ 
+          daily_sent_count: 0 
+        }).eq('id', numberId);
+      } else {
+        usedToday = numberData.daily_sent_count || 0;
+      }
     }
   }
   
@@ -127,6 +140,252 @@ async function getAvailableBalance(
   );
   
   return Math.max(0, DAILY_LIMIT_PER_NUMBER - usedToday - totalReserved);
+}
+
+// Process a single campaign - send ONE message and return
+async function processSingleMessage(
+  supabase: any,
+  evolutionUrl: string,
+  evolutionApiKey: string,
+  campaign: any,
+  numberData: any
+): Promise<{ processed: boolean; completed: boolean; error?: string }> {
+  
+  // Parse leads and messages
+  let leads: Lead[] = campaign.leads;
+  if (typeof leads === 'string') {
+    try { leads = JSON.parse(leads); } catch { leads = []; }
+  }
+
+  let messages: string[] = campaign.messages;
+  if (typeof messages === 'string') {
+    try { messages = JSON.parse(messages); } catch { messages = []; }
+  }
+
+  const validMessages = messages.filter(m => m?.trim());
+  if (!Array.isArray(leads) || leads.length === 0 || validMessages.length === 0) {
+    return { processed: false, completed: false, error: 'Invalid campaign data' };
+  }
+
+  const currentIndex = campaign.current_lead_index || 0;
+  let sentCount = campaign.sent_count || 0;
+  let failedCount = campaign.failed_count || 0;
+  
+  // Check if completed
+  if (currentIndex >= leads.length) {
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      sent_count: sentCount,
+      failed_count: failedCount
+    }).eq('id', campaign.id);
+
+    // Remove any reservations
+    await supabase.from('campaign_daily_reservations')
+      .delete()
+      .eq('campaign_id', campaign.id);
+
+    console.log(`✓ Campaign ${campaign.id} completed: ${sentCount} sent, ${failedCount} failed`);
+    return { processed: false, completed: true };
+  }
+
+  // Get and check daily count
+  let dailySentCount = numberData.daily_sent_count || 0;
+  
+  // Reset if last sent was before midnight
+  if (shouldResetDailyCount(numberData.last_sent_at)) {
+    dailySentCount = 0;
+    await supabase.from('whatsapp_numbers').update({ 
+      daily_sent_count: 0 
+    }).eq('id', numberData.id);
+  }
+
+  // Check daily limit
+  if (dailySentCount >= DAILY_LIMIT_PER_NUMBER) {
+    console.log(`Daily limit reached for number ${numberData.id}`);
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'paused',
+      pause_reason: 'daily_limit',
+      paused_at_limit: true,
+      resume_at: tomorrow.toISOString(),
+      current_lead_index: currentIndex,
+      sent_count: sentCount,
+      failed_count: failedCount,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+
+    return { processed: false, completed: false, error: 'Daily limit reached' };
+  }
+
+  // Smart pause check
+  if (campaign.enable_smart_pause && campaign.pause_after_contacts > 0) {
+    const messagesSinceLastPause = sentCount % campaign.pause_after_contacts;
+    if (messagesSinceLastPause === 0 && sentCount > 0) {
+      const pauseMs = (campaign.pause_minutes || 5) * 60 * 1000;
+      const resumeAt = new Date(Date.now() + pauseMs).toISOString();
+      
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'smart_pause',
+        resume_at: resumeAt,
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+      
+      console.log(`Smart pause activated for campaign ${campaign.id}, resume at ${resumeAt}`);
+      return { processed: false, completed: false };
+    }
+  }
+
+  // Get the lead to process
+  const lead = leads[currentIndex];
+  const phone = lead?.phone || lead?.telefone;
+  
+  if (!phone) {
+    // Skip invalid lead
+    failedCount++;
+    await supabase.from('whatsapp_campaigns').update({
+      current_lead_index: currentIndex + 1,
+      failed_count: failedCount,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+    
+    return { processed: true, completed: false };
+  }
+
+  const formattedPhone = normalizePhone(phone);
+
+  // Select ONE random message (never send multiple to same lead)
+  const randomMessage = validMessages[Math.floor(Math.random() * validMessages.length)];
+  const personalizedMessage = randomMessage
+    .replace(/\{nome\}/gi, lead.name || 'Cliente')
+    .replace(/\{empresa\}/gi, lead.name || 'Empresa');
+
+  // Apply smart delay before sending
+  const delayMin = campaign.delay_seconds || 40;
+  const delayMax = campaign.delay_seconds_max || 60;
+  const delay = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+  
+  console.log(`Waiting ${delay}s before message ${currentIndex + 1}/${leads.length}`);
+  await new Promise(resolve => setTimeout(resolve, delay * 1000));
+
+  // Re-check campaign status (might have been cancelled during delay)
+  const { data: statusCheck } = await supabase
+    .from('whatsapp_campaigns')
+    .select('status')
+    .eq('id', campaign.id)
+    .single();
+
+  if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
+    console.log(`Campaign ${campaign.id} status changed to ${statusCheck?.status}`);
+    return { processed: false, completed: false };
+  }
+
+  // Send the message
+  const result = await sendMessage(
+    evolutionUrl,
+    evolutionApiKey,
+    numberData.instance_name,
+    formattedPhone,
+    personalizedMessage
+  );
+
+  if (result.success) {
+    sentCount++;
+    dailySentCount++;
+    console.log(`✓ Sent to ${formattedPhone} (${sentCount}/${leads.length})`);
+
+    // Sync to chat
+    try {
+      const remoteJid = `${formattedPhone}@s.whatsapp.net`;
+      
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('whatsapp_number_id', numberData.id)
+        .eq('remote_jid', remoteJid)
+        .single();
+
+      let conversationId = existingConv?.id;
+      
+      if (!conversationId) {
+        const { data: newConv } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: campaign.user_id,
+            whatsapp_number_id: numberData.id,
+            remote_jid: remoteJid,
+            phone: formattedPhone,
+            contact_name: lead.name || null,
+          })
+          .select('id')
+          .single();
+        
+        conversationId = newConv?.id;
+      }
+
+      if (conversationId) {
+        await supabase.from('messages').insert({
+          conversation_id: conversationId,
+          user_id: campaign.user_id,
+          message_id: result.messageId || `campaign_${campaign.id}_${currentIndex}_${Date.now()}`,
+          remote_jid: remoteJid,
+          from_me: true,
+          message_type: 'text',
+          content: personalizedMessage,
+          status: 'sent',
+        });
+
+        await supabase.from('conversations').update({
+          last_message: personalizedMessage.substring(0, 100),
+          last_message_at: new Date().toISOString(),
+        }).eq('id', conversationId);
+      }
+    } catch (syncError) {
+      console.error('Sync error:', syncError);
+    }
+  } else {
+    console.error(`✗ Failed to send to ${formattedPhone}:`, result.error);
+    failedCount++;
+  }
+
+  // Update campaign progress
+  await supabase.from('whatsapp_campaigns').update({
+    current_lead_index: currentIndex + 1,
+    sent_count: sentCount,
+    failed_count: failedCount,
+    updated_at: new Date().toISOString()
+  }).eq('id', campaign.id);
+
+  // Update number daily count
+  await supabase.from('whatsapp_numbers').update({
+    daily_sent_count: dailySentCount,
+    last_sent_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }).eq('id', numberData.id);
+
+  // Check if now completed
+  if (currentIndex + 1 >= leads.length) {
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      sent_count: sentCount,
+      failed_count: failedCount
+    }).eq('id', campaign.id);
+
+    await supabase.from('campaign_daily_reservations')
+      .delete()
+      .eq('campaign_id', campaign.id);
+
+    console.log(`✓ Campaign ${campaign.id} completed: ${sentCount} sent, ${failedCount} failed`);
+    return { processed: true, completed: true };
+  }
+
+  return { processed: true, completed: false };
 }
 
 Deno.serve(async (req) => {
@@ -146,8 +405,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { campaignId, action } = body;
 
-    // Action: start - Start a new campaign or resume existing
-    if (action === 'start' || action === 'resume') {
+    // Action: start - Create/update campaign to running status
+    if (action === 'start') {
       if (!campaignId) {
         return new Response(JSON.stringify({ error: 'campaignId required' }), {
           status: 400,
@@ -155,7 +414,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get campaign data
+      // Get campaign
       const { data: campaign, error: campaignError } = await supabase
         .from('whatsapp_campaigns')
         .select('*')
@@ -165,16 +424,6 @@ Deno.serve(async (req) => {
       if (campaignError || !campaign) {
         return new Response(JSON.stringify({ error: 'Campaign not found' }), {
           status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Check if already completed/cancelled
-      if (campaign.status === 'completed' || campaign.status === 'cancelled') {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: `Campaign already ${campaign.status}` 
-        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -218,33 +467,8 @@ Deno.serve(async (req) => {
 
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'WhatsApp disconnected',
-          needsReconnect: true 
+          error: 'WhatsApp disconnected' 
         }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Parse leads and messages
-      let leads: Lead[] = campaign.leads;
-      if (typeof leads === 'string') {
-        try { leads = JSON.parse(leads); } catch { leads = []; }
-      }
-
-      let messages: string[] = campaign.messages;
-      if (typeof messages === 'string') {
-        try { messages = JSON.parse(messages); } catch { messages = []; }
-      }
-
-      const validMessages = messages.filter(m => m?.trim());
-      if (!Array.isArray(leads) || leads.length === 0 || validMessages.length === 0) {
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'failed',
-          pause_reason: 'Dados da campanha inválidos'
-        }).eq('id', campaignId);
-
-        return new Response(JSON.stringify({ error: 'Invalid campaign data' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -258,290 +482,160 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString()
       }).eq('id', campaignId);
 
-      // Get current progress
-      let currentIndex = campaign.current_lead_index || 0;
-      let sentCount = campaign.sent_count || 0;
-      let failedCount = campaign.failed_count || 0;
-      
-      // Get daily count
-      const today = new Date().toDateString();
-      const lastSentDate = numberData.last_sent_at 
-        ? new Date(numberData.last_sent_at).toDateString() 
-        : null;
-      let dailySentCount = lastSentDate === today 
-        ? (numberData.daily_sent_count || 0) 
-        : 0;
-
-      // Track messaged phones to prevent duplicates
-      const messagedPhones = new Set<string>();
-      
-      // Pre-load already processed phones
-      for (let i = 0; i < currentIndex; i++) {
-        const lead = leads[i];
-        const phone = lead?.phone || lead?.telefone;
-        if (phone) messagedPhones.add(normalizePhone(phone));
-      }
-
-      const delayMin = campaign.delay_seconds || 40;
-      const delayMax = campaign.delay_seconds_max || 60;
-      
-      let processedInBatch = 0;
-
-      // Process leads
-      for (let i = currentIndex; i < leads.length && processedInBatch < MAX_MESSAGES_PER_BATCH; i++) {
-        // Check if campaign was cancelled/paused
-        if (processedInBatch % 5 === 0 && processedInBatch > 0) {
-          const { data: statusCheck } = await supabase
-            .from('whatsapp_campaigns')
-            .select('status')
-            .eq('id', campaignId)
-            .single();
-
-          if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
-            console.log(`Campaign ${campaignId} status changed to ${statusCheck?.status}`);
-            return new Response(JSON.stringify({ 
-              success: true, 
-              message: `Campaign ${statusCheck?.status}`,
-              processed: processedInBatch
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-          }
-        }
-
-        // Check daily limit
-        if (dailySentCount >= DAILY_LIMIT_PER_NUMBER) {
-          console.log(`Daily limit reached for number ${numberData.id}`);
-          
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          tomorrow.setHours(8, 0, 0, 0);
-
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'daily_limit',
-            paused_at_limit: true,
-            resume_at: tomorrow.toISOString(),
-            current_lead_index: i,
-            sent_count: sentCount,
-            failed_count: failedCount,
-            updated_at: new Date().toISOString()
-          }).eq('id', campaignId);
-
-          return new Response(JSON.stringify({ 
-            success: true, 
-            message: 'Daily limit reached',
-            paused: true,
-            resumeAt: tomorrow.toISOString()
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        const lead = leads[i];
-        const phone = lead.phone || lead.telefone;
-        
-        if (!phone) {
-          failedCount++;
-          currentIndex = i + 1;
-          processedInBatch++;
-          continue;
-        }
-
-        const formattedPhone = normalizePhone(phone);
-
-        // Skip duplicates
-        if (messagedPhones.has(formattedPhone)) {
-          console.log(`Skipping duplicate phone ${formattedPhone}`);
-          failedCount++;
-          currentIndex = i + 1;
-          processedInBatch++;
-          continue;
-        }
-
-        // Random delay before sending
-        const delay = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-        console.log(`Waiting ${delay}s before message ${i + 1}/${leads.length}`);
-        await new Promise(resolve => setTimeout(resolve, delay * 1000));
-
-        // Select ONE random message
-        const randomMessage = validMessages[Math.floor(Math.random() * validMessages.length)];
-        const personalizedMessage = randomMessage
-          .replace(/\{nome\}/gi, lead.name || 'Cliente')
-          .replace(/\{empresa\}/gi, lead.name || 'Empresa');
-
-        // Send message
-        const result = await sendMessage(
-          EVOLUTION_API_URL,
-          EVOLUTION_API_KEY,
-          numberData.instance_name,
-          formattedPhone,
-          personalizedMessage
-        );
-
-        messagedPhones.add(formattedPhone);
-        currentIndex = i + 1;
-        processedInBatch++;
-
-        if (result.success) {
-          sentCount++;
-          dailySentCount++;
-          console.log(`✓ Sent to ${formattedPhone} (${sentCount}/${leads.length})`);
-
-          // Sync to chat
-          try {
-            const remoteJid = `${formattedPhone}@s.whatsapp.net`;
-            
-            let conversationId: string | undefined;
-            
-            const { data: existingConv } = await supabase
-              .from('conversations')
-              .select('id')
-              .eq('whatsapp_number_id', numberData.id)
-              .eq('remote_jid', remoteJid)
-              .single();
-
-            if (existingConv) {
-              conversationId = existingConv.id;
-            } else {
-              const { data: newConv } = await supabase
-                .from('conversations')
-                .insert({
-                  user_id: campaign.user_id,
-                  whatsapp_number_id: numberData.id,
-                  remote_jid: remoteJid,
-                  phone: formattedPhone,
-                  contact_name: lead.name || null,
-                })
-                .select('id')
-                .single();
-              
-              if (newConv) conversationId = newConv.id;
-            }
-
-            if (conversationId) {
-              await supabase.from('messages').insert({
-                conversation_id: conversationId,
-                user_id: campaign.user_id,
-                message_id: result.messageId || `campaign_${campaignId}_${i}_${Date.now()}`,
-                remote_jid: remoteJid,
-                from_me: true,
-                message_type: 'text',
-                content: personalizedMessage,
-                status: 'sent',
-              });
-
-              await supabase.from('conversations').update({
-                last_message: personalizedMessage.substring(0, 100),
-                last_message_at: new Date().toISOString(),
-              }).eq('id', conversationId);
-            }
-          } catch (syncError) {
-            console.error('Sync error:', syncError);
-          }
-        } else {
-          console.error(`✗ Failed to send to ${formattedPhone}:`, result.error);
-          failedCount++;
-        }
-
-        // Update progress periodically
-        if (processedInBatch % 3 === 0) {
-          await supabase.from('whatsapp_campaigns').update({
-            current_lead_index: currentIndex,
-            sent_count: sentCount,
-            failed_count: failedCount,
-            updated_at: new Date().toISOString()
-          }).eq('id', campaignId);
-
-          await supabase.from('whatsapp_numbers').update({
-            daily_sent_count: dailySentCount,
-            last_sent_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }).eq('id', numberData.id);
-        }
-      }
-
-      // Final update
-      await supabase.from('whatsapp_campaigns').update({
-        current_lead_index: currentIndex,
-        sent_count: sentCount,
-        failed_count: failedCount,
-        updated_at: new Date().toISOString()
-      }).eq('id', campaignId);
-
-      await supabase.from('whatsapp_numbers').update({
-        daily_sent_count: dailySentCount,
-        last_sent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).eq('id', numberData.id);
-
-      // Check if campaign is completed
-      if (currentIndex >= leads.length) {
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          sent_count: sentCount,
-          failed_count: failedCount
-        }).eq('id', campaignId);
-
-        // Remove any reservations for this campaign
-        await supabase.from('campaign_daily_reservations')
-          .delete()
-          .eq('campaign_id', campaignId);
-
-        console.log(`✓ Campaign ${campaignId} completed: ${sentCount} sent, ${failedCount} failed`);
-
-        return new Response(JSON.stringify({ 
-          success: true, 
-          completed: true,
-          sent: sentCount,
-          failed: failedCount
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // If we hit the batch limit, need to continue processing
-      if (processedInBatch >= MAX_MESSAGES_PER_BATCH && currentIndex < leads.length) {
-        console.log(`Batch complete, scheduling continuation from index ${currentIndex}`);
-        
-        // Self-invoke to continue processing
-        const continueUrl = `${SUPABASE_URL}/functions/v1/campaign-processor`;
-        
-        fetch(continueUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ campaignId, action: 'resume' })
-        }).catch(err => {
-          console.error('Error scheduling continuation:', err);
-        });
-
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: 'Batch complete, continuing...',
-          processed: processedInBatch,
-          currentIndex,
-          remaining: leads.length - currentIndex
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
       return new Response(JSON.stringify({ 
-        success: true,
-        processed: processedInBatch,
-        currentIndex,
-        sent: sentCount,
-        failed: failedCount
+        success: true, 
+        message: 'Campaign started - cron will process messages'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Action: check-balance - Check available balance for a number on a date
+    // Action: process - Called by cron to process running campaigns (ONE message at a time)
+    if (action === 'process') {
+      const now = new Date();
+      const heartbeatId = crypto.randomUUID();
+      
+      // Log heartbeat start
+      await supabase.from('campaign_processor_heartbeats').insert({
+        id: heartbeatId,
+        action: 'process',
+        status: 'running',
+        started_at: now.toISOString()
+      });
+      
+      // Find campaigns that need processing
+      const { data: runningCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('*')
+        .eq('status', 'running')
+        .order('updated_at', { ascending: true })
+        .limit(5);
+
+      // Find scheduled campaigns that should start
+      const { data: scheduledCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('id, name, scheduled_at, whatsapp_number_id')
+        .eq('status', 'scheduled')
+        .lte('scheduled_at', now.toISOString());
+
+      // Find paused campaigns that should resume (smart pause or daily limit)
+      const { data: pausedCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('*')
+        .eq('status', 'paused')
+        .not('resume_at', 'is', null)
+        .lte('resume_at', now.toISOString());
+
+      let messagesProcessed = 0;
+      let campaignsProcessed = 0;
+
+      // Start scheduled campaigns
+      for (const scheduled of (scheduledCampaigns || [])) {
+        console.log(`Starting scheduled campaign: ${scheduled.name}`);
+        
+        // Remove reservation
+        await supabase.from('campaign_daily_reservations')
+          .delete()
+          .eq('campaign_id', scheduled.id);
+
+        // Update to running
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'running',
+          started_at: new Date().toISOString(),
+          scheduled_at: null,
+          updated_at: new Date().toISOString()
+        }).eq('id', scheduled.id);
+        
+        campaignsProcessed++;
+      }
+
+      // Resume paused campaigns
+      for (const paused of (pausedCampaigns || [])) {
+        console.log(`Resuming paused campaign: ${paused.name}`);
+        
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'running',
+          pause_reason: null,
+          paused_at_limit: false,
+          resume_at: null,
+          updated_at: new Date().toISOString()
+        }).eq('id', paused.id);
+        
+        campaignsProcessed++;
+      }
+
+      // Process running campaigns (send one message each)
+      for (const campaign of (runningCampaigns || [])) {
+        // Get number data
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('*')
+          .eq('id', campaign.whatsapp_number_id)
+          .single();
+
+        if (!numberData?.instance_name) {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'Número não configurado'
+          }).eq('id', campaign.id);
+          continue;
+        }
+
+        // Check if connected
+        const isConnected = await checkInstanceConnection(
+          EVOLUTION_API_URL,
+          EVOLUTION_API_KEY,
+          numberData.instance_name
+        );
+
+        if (!isConnected) {
+          await supabase.from('whatsapp_numbers').update({
+            is_connected: false,
+            updated_at: new Date().toISOString()
+          }).eq('id', numberData.id);
+
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado'
+          }).eq('id', campaign.id);
+          continue;
+        }
+
+        // Process ONE message for this campaign
+        const result = await processSingleMessage(
+          supabase,
+          EVOLUTION_API_URL,
+          EVOLUTION_API_KEY,
+          campaign,
+          numberData
+        );
+
+        if (result.processed) {
+          messagesProcessed++;
+        }
+        campaignsProcessed++;
+      }
+
+      // Update heartbeat
+      await supabase.from('campaign_processor_heartbeats').update({
+        status: 'completed',
+        campaigns_processed: campaignsProcessed,
+        messages_sent: messagesProcessed,
+        completed_at: new Date().toISOString()
+      }).eq('id', heartbeatId);
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        campaignsProcessed,
+        messagesProcessed,
+        scheduledStarted: scheduledCampaigns?.length || 0,
+        pausedResumed: pausedCampaigns?.length || 0
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Action: check-balance
     if (action === 'check-balance') {
       const { numberId, targetDate } = body;
       
@@ -561,204 +655,6 @@ Deno.serve(async (req) => {
         dailyLimit: DAILY_LIMIT_PER_NUMBER,
         date: date.toISOString().split('T')[0]
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Action: process-scheduled - Process scheduled campaigns AND running campaigns that need continuation
-    if (action === 'process-scheduled') {
-      const now = new Date();
-      const heartbeatId = crypto.randomUUID();
-      
-      // Log heartbeat start
-      await supabase.from('campaign_processor_heartbeats').insert({
-        id: heartbeatId,
-        action: 'process-scheduled',
-        status: 'running',
-        started_at: now.toISOString()
-      });
-      
-      // Find scheduled campaigns that should start
-      const { data: scheduledCampaigns } = await supabase
-        .from('whatsapp_campaigns')
-        .select('id, name, scheduled_at, whatsapp_number_id')
-        .eq('status', 'scheduled')
-        .lte('scheduled_at', now.toISOString());
-
-      // Also find running campaigns that need to continue processing
-      // These are campaigns that were interrupted by function timeout or just created
-      const { data: runningCampaigns } = await supabase
-        .from('whatsapp_campaigns')
-        .select('id, name, current_lead_index, total_leads, whatsapp_number_id, updated_at')
-        .eq('status', 'running');
-
-      // Filter running campaigns that:
-      // 1. Haven't been updated in the last 15 seconds (stale - interrupted by timeout)
-      // 2. OR have current_lead_index = 0 and sent_count = 0 (newly created, not started yet)
-      const staleRunningCampaigns = (runningCampaigns || []).filter(c => {
-        const lastUpdate = new Date(c.updated_at).getTime();
-        const nowTime = Date.now();
-        const staleDuration = 15000; // 15 seconds
-        const isStale = (nowTime - lastUpdate) > staleDuration;
-        const isNotCompleted = c.current_lead_index < c.total_leads;
-        return isStale && isNotCompleted;
-      });
-
-      const hasScheduled = scheduledCampaigns && scheduledCampaigns.length > 0;
-      const hasStaleRunning = staleRunningCampaigns.length > 0;
-
-      if (!hasScheduled && !hasStaleRunning) {
-        // Update heartbeat as completed (no campaigns)
-        await supabase.from('campaign_processor_heartbeats').update({
-          status: 'completed',
-          campaigns_processed: 0,
-          completed_at: new Date().toISOString()
-        }).eq('id', heartbeatId);
-        
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: 'No campaigns to process' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const results = [];
-
-      // Process scheduled campaigns
-      for (const campaign of (scheduledCampaigns || [])) {
-        // Remove reservation since campaign is starting
-        await supabase.from('campaign_daily_reservations')
-          .delete()
-          .eq('campaign_id', campaign.id);
-
-        // Start the campaign
-        const startUrl = `${SUPABASE_URL}/functions/v1/campaign-processor`;
-        
-        try {
-          await fetch(startUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ campaignId: campaign.id, action: 'start' })
-          });
-          
-          results.push({ id: campaign.id, name: campaign.name, type: 'scheduled', status: 'started' });
-        } catch (err) {
-          console.error(`Error starting campaign ${campaign.id}:`, err);
-          results.push({ id: campaign.id, name: campaign.name, type: 'scheduled', status: 'error' });
-        }
-      }
-
-      // Resume stale running campaigns
-      for (const campaign of staleRunningCampaigns) {
-        console.log(`Resuming stale running campaign ${campaign.id} (${campaign.name}) - index ${campaign.current_lead_index}/${campaign.total_leads}`);
-        
-        const resumeUrl = `${SUPABASE_URL}/functions/v1/campaign-processor`;
-        
-        try {
-          await fetch(resumeUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ campaignId: campaign.id, action: 'resume' })
-          });
-          
-          results.push({ id: campaign.id, name: campaign.name, type: 'running', status: 'resumed' });
-        } catch (err) {
-          console.error(`Error resuming campaign ${campaign.id}:`, err);
-          results.push({ id: campaign.id, name: campaign.name, type: 'running', status: 'error' });
-        }
-      }
-
-      // Update heartbeat as completed
-      const totalProcessed = (scheduledCampaigns?.length || 0) + staleRunningCampaigns.length;
-      await supabase.from('campaign_processor_heartbeats').update({
-        status: 'completed',
-        campaigns_processed: totalProcessed,
-        completed_at: new Date().toISOString()
-      }).eq('id', heartbeatId);
-
-      return new Response(JSON.stringify({ success: true, results }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Action: resume-paused - Resume campaigns paused due to daily limit
-    if (action === 'resume-paused') {
-      const heartbeatId = crypto.randomUUID();
-      
-      // Log heartbeat start
-      await supabase.from('campaign_processor_heartbeats').insert({
-        id: heartbeatId,
-        action: 'resume-paused',
-        status: 'running',
-        started_at: new Date().toISOString()
-      });
-      
-      const { data: pausedCampaigns } = await supabase
-        .from('whatsapp_campaigns')
-        .select('id, name, whatsapp_number_id, resume_at')
-        .eq('status', 'paused')
-        .eq('paused_at_limit', true)
-        .lte('resume_at', new Date().toISOString());
-
-      if (!pausedCampaigns || pausedCampaigns.length === 0) {
-        await supabase.from('campaign_processor_heartbeats').update({
-          status: 'completed',
-          campaigns_processed: 0,
-          completed_at: new Date().toISOString()
-        }).eq('id', heartbeatId);
-        
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: 'No paused campaigns to resume' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const results = [];
-
-      for (const campaign of pausedCampaigns) {
-        // Reset daily count for the number
-        await supabase.from('whatsapp_numbers').update({
-          daily_sent_count: 0,
-          updated_at: new Date().toISOString()
-        }).eq('id', campaign.whatsapp_number_id);
-
-        // Start the campaign
-        const startUrl = `${SUPABASE_URL}/functions/v1/campaign-processor`;
-        
-        try {
-          await fetch(startUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ campaignId: campaign.id, action: 'resume' })
-          });
-          
-          results.push({ id: campaign.id, name: campaign.name, status: 'resumed' });
-        } catch (err) {
-          console.error(`Error resuming campaign ${campaign.id}:`, err);
-          results.push({ id: campaign.id, name: campaign.name, status: 'error' });
-        }
-      }
-
-      // Update heartbeat
-      await supabase.from('campaign_processor_heartbeats').update({
-        status: 'completed',
-        campaigns_processed: pausedCampaigns.length,
-        completed_at: new Date().toISOString()
-      }).eq('id', heartbeatId);
-
-      return new Response(JSON.stringify({ success: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

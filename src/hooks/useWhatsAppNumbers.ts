@@ -29,25 +29,19 @@ const MONTHLY_MESSAGE_LIMITS: Record<string, number> = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
-const RESET_HOUR = 8; // Reset às 08:00
 
-// Verifica se o último envio foi antes do horário de reset de hoje
+// Verifica se o último envio foi antes da meia-noite de hoje (reset às 00:00)
 const shouldResetCount = (lastSentAt: string | null, dailySentCount: number): boolean => {
   if (!lastSentAt || dailySentCount === 0) return false;
   
   const now = new Date();
   const lastSent = new Date(lastSentAt);
   
-  // Cria a data do reset de hoje às 08:00
+  // Cria a data do reset de hoje às 00:00
   const todayReset = new Date(now);
-  todayReset.setHours(RESET_HOUR, 0, 0, 0);
+  todayReset.setHours(0, 0, 0, 0);
   
-  // Se ainda não passou das 08:00 hoje, usa o reset de ontem
-  if (now < todayReset) {
-    todayReset.setDate(todayReset.getDate() - 1);
-  }
-  
-  // Reseta se o último envio foi antes do horário de reset
+  // Reseta se o último envio foi antes da meia-noite de hoje
   return lastSent < todayReset;
 };
 

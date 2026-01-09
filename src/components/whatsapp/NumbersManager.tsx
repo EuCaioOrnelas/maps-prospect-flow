@@ -801,7 +801,7 @@ export const NumbersManager = ({
                         {isAtLimit && (
                           <div className="flex items-center gap-1 text-xs text-destructive">
                             <AlertTriangle size={12} />
-                            Limite atingido - retoma às 08:00
+                            Limite atingido - retoma à meia-noite
                           </div>
                         )}
                       </div>
@@ -873,7 +873,7 @@ export const NumbersManager = ({
                   </div>
                 )}
 
-                {numbers.length < maxNumbers && (
+                {numbers.length < maxNumbers ? (
                   <Button 
                     variant="outline" 
                     className="w-full gap-2"
@@ -881,6 +881,17 @@ export const NumbersManager = ({
                   >
                     <Plus size={16} />
                     Adicionar Número
+                  </Button>
+                ) : (userPlan === 'start' || userPlan === 'growth') && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                    asChild
+                  >
+                    <a href="/upgrade">
+                      <Crown size={16} />
+                      Fazer Upgrade para Conectar Mais Números
+                    </a>
                   </Button>
                 )}
               </>
