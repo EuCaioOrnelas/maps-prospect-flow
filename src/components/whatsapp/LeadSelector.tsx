@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
-import { DailyLimitIndicator } from "./DailyLimitIndicator";
+import { BalanceIndicator } from "./BalanceIndicator";
 
 // Phone validation helper
 const validateAndFormatPhone = (phone: string): { isValid: boolean; formatted: string; display: string } => {
@@ -66,6 +66,10 @@ interface LeadSelectorProps {
   canProceed: boolean;
   dailyLimit: number;
   usedToday: number;
+  selectedNumberId: string | null;
+  selectedNumberName?: string;
+  isScheduled?: boolean;
+  scheduledDate?: Date;
 }
 
 export const LeadSelector = ({ 
@@ -74,7 +78,11 @@ export const LeadSelector = ({
   onNext, 
   canProceed,
   dailyLimit,
-  usedToday
+  usedToday,
+  selectedNumberId,
+  selectedNumberName,
+  isScheduled,
+  scheduledDate
 }: LeadSelectorProps) => {
   const [source, setSource] = useState<'file' | 'history' | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
@@ -568,11 +576,13 @@ export const LeadSelector = ({
       {/* Selected Leads Summary */}
       {selectedLeads.length > 0 && source !== 'history' && (
         <div className="space-y-4">
-          {/* Daily Limit Indicator */}
-          <DailyLimitIndicator 
-            usedToday={usedToday}
-            dailyLimit={dailyLimit}
+          {/* Balance Indicator */}
+          <BalanceIndicator 
+            numberId={selectedNumberId}
+            numberName={selectedNumberName}
             selectedCount={selectedLeads.length}
+            isScheduled={isScheduled}
+            scheduledDate={scheduledDate}
           />
 
           <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">

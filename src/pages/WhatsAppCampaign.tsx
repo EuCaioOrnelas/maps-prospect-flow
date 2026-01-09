@@ -914,6 +914,10 @@ const WhatsAppCampaign = () => {
                   canProceed={canProceedToMessages}
                   dailyLimit={dailyLimit}
                   usedToday={usedToday}
+                  selectedNumberId={selectedNumberId}
+                  selectedNumberName={selectedNumber?.name}
+                  isScheduled={isScheduled}
+                  scheduledDate={scheduledDate}
                 />
               )}
 
