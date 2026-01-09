@@ -975,6 +975,7 @@ export type Database = {
           enable_smart_pause: boolean
           failed_count: number
           id: string
+          last_message_sent_at: string | null
           leads: Json
           messages: Json
           name: string
@@ -1001,6 +1002,7 @@ export type Database = {
           enable_smart_pause?: boolean
           failed_count?: number
           id?: string
+          last_message_sent_at?: string | null
           leads?: Json
           messages?: Json
           name: string
@@ -1027,6 +1029,7 @@ export type Database = {
           enable_smart_pause?: boolean
           failed_count?: number
           id?: string
+          last_message_sent_at?: string | null
           leads?: Json
           messages?: Json
           name?: string
