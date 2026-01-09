@@ -34,9 +34,25 @@ import {
   Square,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ChatComingSoon from './ChatComingSoon';
+
+// Emails com acesso ao Chat
+const CHAT_ALLOWED_EMAILS = [
+  'sonencorretora@hotmail.com',
+  'caiowiize@gmail.com'
+];
 
 const ChatSettings = () => {
   const { profile } = useAuth();
+  
+  // Verificar se o usuário tem acesso ao chat
+  const hasChatAccess = profile?.email && CHAT_ALLOWED_EMAILS.includes(profile.email.toLowerCase());
+  
+  // Se não tem acesso, mostra a página "Em Breve"
+  if (!hasChatAccess) {
+    return <ChatComingSoon />;
+  }
+  
   const { quickReplies, isLoading, createQuickReply, updateQuickReply, deleteQuickReply } = useQuickReplies();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
