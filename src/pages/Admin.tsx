@@ -86,22 +86,25 @@ interface UserProfile {
 
 interface StripeMRRData {
   totalMRR: number;
-  grossMRR?: number;
-  totalRefunded?: number;
-  refundCount?: number;
   activeSubscriptions: number;
-  canceledSubscriptions?: number;
-  canceledMRR?: number;
-  churnRate?: number;
-  subscriptionDetails: Array<{
+  totalRefunded: number;
+  refundCount: number;
+  refundRate: number;
+  canceledSubscriptions: number;
+  churnRate: number;
+  totalPaid: number;
+  totalNetRevenue: number;
+  activeSubscribers?: Array<{
     email: string;
-    plan: string;
-    price: number;
+    monthlyAmount: number;
     startDate: string;
-    status?: string;
   }>;
-  planDistribution: { [plan: string]: number };
-  monthlyMRR: Array<{ month: string; mrr: number }>;
+  paidInvoices?: Array<{
+    email: string;
+    amount: number;
+    date: string;
+    wasRefunded: boolean;
+  }>;
 }
 
 interface Stats {
@@ -183,7 +186,7 @@ const Admin = () => {
       console.error('Error loading Stripe MRR:', error);
       setStripeMRRError(error instanceof Error ? error.message : 'Erro ao carregar MRR');
       // Set empty data when Stripe fails - don't use database fallback
-      setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, subscriptionDetails: [], planDistribution: {}, monthlyMRR: [] });
+      setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, totalRefunded: 0, refundCount: 0, refundRate: 0, canceledSubscriptions: 0, churnRate: 0, totalPaid: 0, totalNetRevenue: 0 });
     } finally {
       setLoadingMRR(false);
     }
@@ -779,7 +782,7 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -854,19 +857,6 @@ const Admin = () => {
                 </p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.35s' }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
-                    <DollarSign size={20} className="text-muted-foreground" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold text-muted-foreground">
-                  R$ {(stripeMRR?.canceledMRR ?? 0).toLocaleString('pt-BR')}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  MRR Perdido
-                </p>
-              </div>
             </div>
 
             {/* Activity Stats */}
@@ -892,57 +882,27 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Revenue Chart - Using Stripe Monthly MRR */}
+            {/* Revenue Summary */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp size={20} className="text-primary" />
-                  <h2 className="font-display font-semibold">Evolução do MRR (Stripe)</h2>
+                  <h2 className="font-display font-semibold">Resumo de Receita (Stripe)</h2>
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
-                <div className="h-64">
-                  {stripeMRR?.monthlyMRR && stripeMRR.monthlyMRR.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={stripeMRR.monthlyMRR.map(item => ({
-                        date: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-                        mrr: item.mrr
-                      }))}>
-                        <defs>
-                          <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `R$${value}`} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                          }}
-                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="mrr" 
-                          stroke="hsl(var(--primary))" 
-                          fillOpacity={1} 
-                          fill="url(#colorMrr)" 
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-muted-foreground">
-                      {stripeMRRError ? (
-                        <p className="text-sm">Erro ao carregar dados do Stripe</p>
-                      ) : (
-                        <p className="text-sm">Nenhum dado de MRR disponível</p>
-                      )}
-                    </div>
-                  )}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-success/10">
+                    <span className="text-sm text-muted-foreground">Total Recebido</span>
+                    <span className="font-bold text-success">R$ {(stripeMRR?.totalPaid ?? 0).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-destructive/10">
+                    <span className="text-sm text-muted-foreground">Total Reembolsado</span>
+                    <span className="font-bold text-destructive">- R$ {(stripeMRR?.totalRefunded ?? 0).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <span className="text-sm font-medium">Receita Líquida</span>
+                    <span className="font-bold text-primary text-lg">R$ {(stripeMRR?.totalNetRevenue ?? 0).toLocaleString('pt-BR')}</span>
+                  </div>
                 </div>
               </div>
 
