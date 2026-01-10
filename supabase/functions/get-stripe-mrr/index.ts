@@ -7,13 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Stripe price IDs to plan mapping
-const PRICE_TO_PLAN: { [key: string]: { name: string; price: number } } = {
-  "price_1SlykAK8CM0R6xMMOCM684rz": { name: "start", price: 197 },
-  "price_1SlykkK8CM0R6xMMZu7WJesV": { name: "growth", price: 497 },
-  "price_1SlylcK8CM0R6xMMyHRWAd8G": { name: "scale", price: 897 },
-};
-
 // Admin emails to exclude from MRR calculations
 const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
@@ -28,12 +21,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
-    // Create client with service role for admin checks
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, { 
       auth: { persistSession: false } 
     });
 
-    // Verify admin access using the user's token
+    // Verify admin access
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("No authorization header");
@@ -42,14 +34,10 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !userData.user) {
-      console.error("[GET-STRIPE-MRR] Auth error:", userError?.message);
       throw new Error("Unauthorized");
     }
 
     const userId = userData.user.id;
-    console.log("[GET-STRIPE-MRR] User authenticated:", userId);
-
-    // Check if user is admin via user_roles table directly
     const { data: adminRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
@@ -58,7 +46,6 @@ serve(async (req) => {
       .single();
 
     if (roleError || !adminRole) {
-      console.error("[GET-STRIPE-MRR] Admin check failed:", roleError?.message);
       throw new Error("Admin access required");
     }
     
@@ -71,156 +58,179 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get all refunds
+    // Get all refunds with their amounts
     const refunds = await stripe.refunds.list({
       limit: 100,
     });
     
     let totalRefunded = 0;
     const refundedCharges = new Set<string>();
-    const refundDetails: Array<{
-      amount: number;
-      date: string;
-      reason: string | null;
-    }> = [];
     
     for (const refund of refunds.data) {
       if (refund.status === "succeeded") {
-        totalRefunded += refund.amount / 100; // Convert cents to BRL
+        totalRefunded += refund.amount / 100;
         if (refund.charge) {
           refundedCharges.add(refund.charge as string);
         }
-        refundDetails.push({
-          amount: refund.amount / 100,
-          date: new Date(refund.created * 1000).toISOString(),
-          reason: refund.reason,
-        });
       }
     }
     
-    console.log(`[GET-STRIPE-MRR] Total refunded: R$ ${totalRefunded}, Refunds count: ${refundDetails.length}`);
+    console.log(`[GET-STRIPE-MRR] Total refunded: R$ ${totalRefunded}`);
 
-    // Get all subscriptions (active and canceled) to calculate churn
-    const allSubscriptions = await stripe.subscriptions.list({
-      status: "all",
+    // Get all invoices with actual amounts paid (not plan prices)
+    const invoices = await stripe.invoices.list({
       limit: 100,
-      expand: ["data.customer"],
+      status: "paid",
+      expand: ["data.customer", "data.charge"],
     });
 
-    const activeSubscriptions = allSubscriptions.data.filter((s: Stripe.Subscription) => s.status === "active");
-    const canceledSubscriptions = allSubscriptions.data.filter((s: Stripe.Subscription) => s.status === "canceled");
-
-    console.log(`[GET-STRIPE-MRR] Active: ${activeSubscriptions.length}, Canceled: ${canceledSubscriptions.length}`);
-
-    let totalMRR = 0;
-    let grossMRR = 0;
-    const subscriptionDetails: Array<{
+    let totalPaid = 0;
+    let totalNetRevenue = 0;
+    const paidInvoices: Array<{
       email: string;
-      plan: string;
-      price: number;
+      amount: number;
+      date: string;
+      wasRefunded: boolean;
+    }> = [];
+
+    for (const invoice of invoices.data) {
+      const customer = invoice.customer as Stripe.Customer;
+      const customerEmail = customer?.email || "";
+      
+      // Skip admin emails
+      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
+        console.log(`[GET-STRIPE-MRR] Skipping admin invoice: ${customerEmail}`);
+        continue;
+      }
+
+      // Skip invoices with 0 amount (admin-granted plans)
+      if (invoice.amount_paid === 0) {
+        console.log(`[GET-STRIPE-MRR] Skipping zero-amount invoice: ${customerEmail}`);
+        continue;
+      }
+
+      const amountBRL = invoice.amount_paid / 100;
+      const chargeId = typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id;
+      const wasRefunded = chargeId ? refundedCharges.has(chargeId) : false;
+      
+      totalPaid += amountBRL;
+      
+      if (!wasRefunded) {
+        totalNetRevenue += amountBRL;
+      }
+
+      paidInvoices.push({
+        email: customerEmail,
+        amount: amountBRL,
+        date: new Date(invoice.created * 1000).toISOString(),
+        wasRefunded,
+      });
+    }
+
+    // Get active subscriptions (only those with real payments)
+    const subscriptions = await stripe.subscriptions.list({
+      status: "active",
+      limit: 100,
+      expand: ["data.customer", "data.latest_invoice"],
+    });
+
+    let activeMRR = 0;
+    const activeSubscribers: Array<{
+      email: string;
+      monthlyAmount: number;
       startDate: string;
-      status: string;
     }> = [];
 
-    const monthlyMRR: { [month: string]: number } = {};
-
-    // Process active subscriptions
-    for (const sub of activeSubscriptions) {
+    for (const sub of subscriptions.data) {
       const customer = sub.customer as Stripe.Customer;
-      const customerEmail = customer.email || "";
-
+      const customerEmail = customer?.email || "";
+      
       // Skip admin emails
       if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-        console.log(`[GET-STRIPE-MRR] Skipping admin: ${customerEmail}`);
         continue;
       }
 
-      // Get the price from the subscription
-      const priceId = sub.items.data[0]?.price.id;
-      const planInfo = PRICE_TO_PLAN[priceId];
+      // Get the actual recurring amount from the subscription
+      const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
+      const recurringAmount = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
+      
+      // Skip subscriptions that haven't paid anything (admin-granted)
+      if (recurringAmount === 0) {
+        console.log(`[GET-STRIPE-MRR] Skipping zero-payment subscription: ${customerEmail}`);
+        continue;
+      }
 
-      if (planInfo) {
-        grossMRR += planInfo.price;
-        totalMRR += planInfo.price;
+      activeMRR += recurringAmount;
+      activeSubscribers.push({
+        email: customerEmail,
+        monthlyAmount: recurringAmount,
+        startDate: new Date(sub.start_date * 1000).toISOString(),
+      });
+    }
+
+    // Get canceled subscriptions count (only those that had real payments)
+    const allSubs = await stripe.subscriptions.list({
+      status: "all",
+      limit: 100,
+      expand: ["data.customer", "data.latest_invoice"],
+    });
+
+    let canceledCount = 0;
+    let canceledWithPaymentCount = 0;
+
+    for (const sub of allSubs.data) {
+      if (sub.status === "canceled") {
+        canceledCount++;
         
-        subscriptionDetails.push({
-          email: customerEmail,
-          plan: planInfo.name,
-          price: planInfo.price,
-          startDate: new Date(sub.start_date * 1000).toISOString(),
-          status: "active",
-        });
+        const customer = sub.customer as Stripe.Customer;
+        const customerEmail = customer?.email || "";
+        
+        // Skip admin
+        if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
+          continue;
+        }
 
-        // Add to monthly MRR
-        const startDate = new Date(sub.start_date * 1000);
-        const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
-        monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + planInfo.price;
+        // Check if this subscription ever had a payment
+        const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
+        if (latestInvoice?.amount_paid && latestInvoice.amount_paid > 0) {
+          canceledWithPaymentCount++;
+        }
       }
     }
 
-    // Calculate canceled subscriptions value (churn)
-    let canceledMRR = 0;
-    const canceledDetails: Array<{
-      email: string;
-      plan: string;
-      price: number;
-      canceledAt: string;
-    }> = [];
+    // Calculate churn rate based on real paying customers only
+    const totalRealCustomers = activeSubscribers.length + canceledWithPaymentCount;
+    const churnRate = totalRealCustomers > 0 
+      ? ((canceledWithPaymentCount / totalRealCustomers) * 100)
+      : 0;
 
-    for (const sub of canceledSubscriptions) {
-      const customer = sub.customer as Stripe.Customer;
-      const customerEmail = customer.email || "";
+    // Calculate refund rate
+    const refundRate = totalPaid > 0 
+      ? ((totalRefunded / totalPaid) * 100)
+      : 0;
 
-      // Skip admin emails
-      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-        continue;
-      }
-
-      const priceId = sub.items.data[0]?.price.id;
-      const planInfo = PRICE_TO_PLAN[priceId];
-
-      if (planInfo) {
-        canceledMRR += planInfo.price;
-        canceledDetails.push({
-          email: customerEmail,
-          plan: planInfo.name,
-          price: planInfo.price,
-          canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : "",
-        });
-      }
-    }
-
-    // Get plan distribution from active only
-    const planDistribution = subscriptionDetails.reduce((acc, sub) => {
-      acc[sub.plan] = (acc[sub.plan] || 0) + 1;
-      return acc;
-    }, {} as { [plan: string]: number });
-
-    // Calculate churn rate
-    const totalEverSubscribed = activeSubscriptions.length + canceledSubscriptions.length;
-    const churnRate = totalEverSubscribed > 0 
-      ? ((canceledSubscriptions.length / totalEverSubscribed) * 100).toFixed(1)
-      : "0";
-
-    console.log(`[GET-STRIPE-MRR] Net MRR: R$ ${totalMRR}, Gross: R$ ${grossMRR}, Refunded: R$ ${totalRefunded}, Churn: ${churnRate}%`);
+    console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunded: R$ ${totalRefunded}, Churn: ${churnRate.toFixed(1)}%`);
 
     return new Response(
       JSON.stringify({
-        totalMRR, // Net MRR (active subscriptions only)
-        grossMRR,
+        // Real MRR from active paying subscriptions
+        totalMRR: activeMRR,
+        activeSubscriptions: activeSubscribers.length,
+        activeSubscribers,
+        
+        // Refund metrics
         totalRefunded,
-        refundCount: refundDetails.length,
-        refundDetails,
-        activeSubscriptions: subscriptionDetails.length,
-        canceledSubscriptions: canceledDetails.length,
-        canceledMRR,
-        canceledDetails,
-        churnRate: parseFloat(churnRate),
-        subscriptionDetails,
-        planDistribution,
-        monthlyMRR: Object.entries(monthlyMRR)
-          .map(([month, mrr]) => ({ month, mrr }))
-          .sort((a, b) => a.month.localeCompare(b.month)),
+        refundCount: refundedCharges.size,
+        refundRate: parseFloat(refundRate.toFixed(1)),
+        
+        // Churn metrics
+        canceledSubscriptions: canceledWithPaymentCount,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        
+        // Revenue summary
+        totalPaid,
+        totalNetRevenue,
+        paidInvoices,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
