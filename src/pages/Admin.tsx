@@ -41,9 +41,11 @@ import {
   XCircle,
   Key,
   LayoutDashboard,
+  Bug,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
 
 // Função para verificar admin via banco de dados (seguro)
 // Preços dos planos (fallback caso Stripe falhe)
@@ -1065,6 +1067,11 @@ const Admin = () => {
                   Nenhum usuário encontrado
                 </div>
               )}
+            </div>
+
+            {/* Subscription Events Debug Log */}
+            <div className="mt-8">
+              <SubscriptionEventsLog />
             </div>
           </>
         )}

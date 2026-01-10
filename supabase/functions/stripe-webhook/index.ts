@@ -63,6 +63,45 @@ const calculateNewSearchesLimit = (
   return { newLimit: newPlanLimit, carryOver: 0 };
 };
 
+// Log subscription event for debugging
+const logSubscriptionEvent = async (
+  supabaseClient: any,
+  eventType: string,
+  eventSource: string,
+  email: string,
+  userId: string | null,
+  previousPlan: string | null,
+  newPlan: string,
+  previousSearchesLimit: number | null,
+  newSearchesLimit: number,
+  carryOver: number = 0,
+  stripeSubscriptionId: string | null = null,
+  stripeCustomerId: string | null = null,
+  stripeEventId: string | null = null,
+  metadata: any = {}
+) => {
+  try {
+    await supabaseClient.from('subscription_events').insert({
+      user_id: userId,
+      email,
+      event_type: eventType,
+      event_source: eventSource,
+      previous_plan: previousPlan,
+      new_plan: newPlan,
+      previous_searches_limit: previousSearchesLimit,
+      new_searches_limit: newSearchesLimit,
+      carry_over: carryOver,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_customer_id: stripeCustomerId,
+      stripe_event_id: stripeEventId,
+      metadata
+    });
+    logStep("Subscription event logged", { eventType, email, newPlan });
+  } catch (error) {
+    logStep("Error logging subscription event", { error: String(error) });
+  }
+};
+
 // Track purchase for landing page analytics
 const trackPurchase = async (
   supabaseClient: any,
@@ -217,6 +256,24 @@ serve(async (req) => {
                   searchesUsed: carryOver > 0 ? profile.searches_used : 0
                 });
 
+                // Log subscription event for debugging
+                await logSubscriptionEvent(
+                  supabaseClient,
+                  "checkout_completed",
+                  "stripe-webhook",
+                  customerEmail,
+                  profile.id,
+                  profile.plan,
+                  plan,
+                  profile.searches_limit,
+                  newLimit,
+                  carryOver,
+                  session.subscription as string,
+                  session.customer as string,
+                  event.id,
+                  { priceId, basePlanLimit, searchesUsed: profile.searches_used }
+                );
+
                 // Track purchase for landing page analytics
                 const amount = PLAN_PRICES[plan] || 0;
                 await trackPurchase(supabaseClient, profile.id, plan, amount);
@@ -297,6 +354,24 @@ serve(async (req) => {
                 searchesLimit: newLimit,
                 carryOver
               });
+
+              // Log subscription event
+              await logSubscriptionEvent(
+                supabaseClient,
+                "subscription_updated_active",
+                "stripe-webhook",
+                customer.email,
+                profile.id,
+                profile.plan,
+                plan,
+                profile.searches_limit,
+                newLimit,
+                carryOver,
+                subscription.id,
+                subscription.customer as string,
+                event.id,
+                { priceId, basePlanLimit, status: subscription.status }
+              );
             } else if (["canceled", "unpaid", "past_due"].includes(subscription.status)) {
               await supabaseClient
                 .from("profiles")
@@ -307,6 +382,24 @@ serve(async (req) => {
                 .eq("id", profile.id);
 
               logStep("Profile downgraded due to subscription status", { status: subscription.status });
+
+              // Log downgrade event
+              await logSubscriptionEvent(
+                supabaseClient,
+                `subscription_${subscription.status}`,
+                "stripe-webhook",
+                customer.email,
+                profile.id,
+                profile.plan,
+                "free",
+                profile.searches_limit,
+                PLAN_LIMITS["free"],
+                0,
+                subscription.id,
+                subscription.customer as string,
+                event.id,
+                { status: subscription.status }
+              );
             }
           }
         }
@@ -325,7 +418,7 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.email) {
           const { data: profile } = await supabaseClient
             .from("profiles")
-            .select("id")
+            .select("id, plan, searches_limit")
             .eq("email", customer.email)
             .maybeSingle();
 
@@ -339,6 +432,24 @@ serve(async (req) => {
               .eq("id", profile.id);
 
             logStep("Profile downgraded to free after subscription deletion");
+
+            // Log deletion event
+            await logSubscriptionEvent(
+              supabaseClient,
+              "subscription_deleted",
+              "stripe-webhook",
+              customer.email,
+              profile.id,
+              profile.plan,
+              "free",
+              profile.searches_limit,
+              PLAN_LIMITS["free"],
+              0,
+              subscription.id,
+              subscription.customer as string,
+              event.id,
+              {}
+            );
           }
         }
         break;
