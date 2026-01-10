@@ -86,12 +86,19 @@ interface UserProfile {
 
 interface StripeMRRData {
   totalMRR: number;
+  grossMRR?: number;
+  totalRefunded?: number;
+  refundCount?: number;
   activeSubscriptions: number;
+  canceledSubscriptions?: number;
+  canceledMRR?: number;
+  churnRate?: number;
   subscriptionDetails: Array<{
     email: string;
     plan: string;
     price: number;
     startDate: string;
+    status?: string;
   }>;
   planDistribution: { [plan: string]: number };
   monthlyMRR: Array<{ month: string; mrr: number }>;
@@ -772,7 +779,7 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -784,14 +791,14 @@ const Admin = () => {
                   R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  MRR (Stripe Real)
+                  MRR Líquido
                   {stripeMRR && !stripeMRRError && (
                     <span className="ml-1 text-xs text-success">✓</span>
                   )}
                 </p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Crown size={20} className="text-primary" />
@@ -802,13 +809,69 @@ const Admin = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Assinantes Ativos
-                  {stripeMRR && !stripeMRRError && (
-                    <span className="ml-1 text-xs text-success">✓</span>
-                  )}
+                </p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <XCircle size={20} className="text-destructive" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-destructive">
+                  R$ {(stripeMRR?.totalRefunded ?? 0).toLocaleString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Total Reembolsado ({stripeMRR?.refundCount ?? 0})
+                </p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-warning" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-warning">
+                  {stripeMRR?.churnRate ?? 0}%
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Taxa de Cancelamento
                 </p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
+                    <XCircle size={20} className="text-muted-foreground" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-muted-foreground">
+                  {stripeMRR?.canceledSubscriptions ?? 0}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Cancelamentos
+                </p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
+                    <DollarSign size={20} className="text-muted-foreground" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-muted-foreground">
+                  R$ {(stripeMRR?.canceledMRR ?? 0).toLocaleString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  MRR Perdido
+                </p>
+              </div>
+            </div>
+
+            {/* Activity Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Zap size={20} className="text-primary" />
@@ -818,7 +881,7 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">Ativos (7 dias)</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.45s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Calendar size={20} className="text-primary" />
