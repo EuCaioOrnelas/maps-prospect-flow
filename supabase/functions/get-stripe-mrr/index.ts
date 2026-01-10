@@ -71,53 +71,63 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get all active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      status: "active",
-      limit: 100,
-      expand: ["data.customer"],
-    });
-
-    console.log(`[GET-STRIPE-MRR] Found ${subscriptions.data.length} active subscriptions`);
-
-    // Get refunds to calculate net revenue
+    // Get all refunds
     const refunds = await stripe.refunds.list({
       limit: 100,
     });
     
     let totalRefunded = 0;
-    const refundedCustomers = new Set<string>();
+    const refundedCharges = new Set<string>();
+    const refundDetails: Array<{
+      amount: number;
+      date: string;
+      reason: string | null;
+    }> = [];
     
     for (const refund of refunds.data) {
       if (refund.status === "succeeded") {
         totalRefunded += refund.amount / 100; // Convert cents to BRL
-        // Get charge to find customer
         if (refund.charge) {
-          const charge = await stripe.charges.retrieve(refund.charge as string);
-          if (charge.customer) {
-            refundedCustomers.add(charge.customer as string);
-          }
+          refundedCharges.add(refund.charge as string);
         }
+        refundDetails.push({
+          amount: refund.amount / 100,
+          date: new Date(refund.created * 1000).toISOString(),
+          reason: refund.reason,
+        });
       }
     }
     
-    console.log(`[GET-STRIPE-MRR] Total refunded: R$ ${totalRefunded}, Refunded customers: ${refundedCustomers.size}`);
+    console.log(`[GET-STRIPE-MRR] Total refunded: R$ ${totalRefunded}, Refunds count: ${refundDetails.length}`);
+
+    // Get all subscriptions (active and canceled) to calculate churn
+    const allSubscriptions = await stripe.subscriptions.list({
+      status: "all",
+      limit: 100,
+      expand: ["data.customer"],
+    });
+
+    const activeSubscriptions = allSubscriptions.data.filter((s: Stripe.Subscription) => s.status === "active");
+    const canceledSubscriptions = allSubscriptions.data.filter((s: Stripe.Subscription) => s.status === "canceled");
+
+    console.log(`[GET-STRIPE-MRR] Active: ${activeSubscriptions.length}, Canceled: ${canceledSubscriptions.length}`);
 
     let totalMRR = 0;
+    let grossMRR = 0;
     const subscriptionDetails: Array<{
       email: string;
       plan: string;
       price: number;
       startDate: string;
-      hasRefund: boolean;
+      status: string;
     }> = [];
 
     const monthlyMRR: { [month: string]: number } = {};
 
-    for (const sub of subscriptions.data) {
+    // Process active subscriptions
+    for (const sub of activeSubscriptions) {
       const customer = sub.customer as Stripe.Customer;
       const customerEmail = customer.email || "";
-      const customerId = customer.id;
 
       // Skip admin emails
       if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
@@ -125,50 +135,87 @@ serve(async (req) => {
         continue;
       }
 
-      // Check if customer has been refunded
-      const hasRefund = refundedCustomers.has(customerId);
-
       // Get the price from the subscription
       const priceId = sub.items.data[0]?.price.id;
       const planInfo = PRICE_TO_PLAN[priceId];
 
       if (planInfo) {
-        // Only add to MRR if customer hasn't been refunded
-        if (!hasRefund) {
-          totalMRR += planInfo.price;
-        }
+        grossMRR += planInfo.price;
+        totalMRR += planInfo.price;
         
         subscriptionDetails.push({
           email: customerEmail,
           plan: planInfo.name,
-          price: hasRefund ? 0 : planInfo.price, // Show 0 if refunded
+          price: planInfo.price,
           startDate: new Date(sub.start_date * 1000).toISOString(),
-          hasRefund,
+          status: "active",
         });
 
-        // Add to monthly MRR only if not refunded
-        if (!hasRefund) {
-          const startDate = new Date(sub.start_date * 1000);
-          const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
-          monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + planInfo.price;
-        }
+        // Add to monthly MRR
+        const startDate = new Date(sub.start_date * 1000);
+        const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
+        monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + planInfo.price;
       }
     }
 
-    // Get plan distribution
+    // Calculate canceled subscriptions value (churn)
+    let canceledMRR = 0;
+    const canceledDetails: Array<{
+      email: string;
+      plan: string;
+      price: number;
+      canceledAt: string;
+    }> = [];
+
+    for (const sub of canceledSubscriptions) {
+      const customer = sub.customer as Stripe.Customer;
+      const customerEmail = customer.email || "";
+
+      // Skip admin emails
+      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
+        continue;
+      }
+
+      const priceId = sub.items.data[0]?.price.id;
+      const planInfo = PRICE_TO_PLAN[priceId];
+
+      if (planInfo) {
+        canceledMRR += planInfo.price;
+        canceledDetails.push({
+          email: customerEmail,
+          plan: planInfo.name,
+          price: planInfo.price,
+          canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : "",
+        });
+      }
+    }
+
+    // Get plan distribution from active only
     const planDistribution = subscriptionDetails.reduce((acc, sub) => {
       acc[sub.plan] = (acc[sub.plan] || 0) + 1;
       return acc;
     }, {} as { [plan: string]: number });
 
-    console.log(`[GET-STRIPE-MRR] Total MRR: R$ ${totalMRR}, Total Refunded: R$ ${totalRefunded}`);
+    // Calculate churn rate
+    const totalEverSubscribed = activeSubscriptions.length + canceledSubscriptions.length;
+    const churnRate = totalEverSubscribed > 0 
+      ? ((canceledSubscriptions.length / totalEverSubscribed) * 100).toFixed(1)
+      : "0";
+
+    console.log(`[GET-STRIPE-MRR] Net MRR: R$ ${totalMRR}, Gross: R$ ${grossMRR}, Refunded: R$ ${totalRefunded}, Churn: ${churnRate}%`);
 
     return new Response(
       JSON.stringify({
-        totalMRR,
+        totalMRR, // Net MRR (active subscriptions only)
+        grossMRR,
         totalRefunded,
+        refundCount: refundDetails.length,
+        refundDetails,
         activeSubscriptions: subscriptionDetails.length,
-        paidSubscriptions: subscriptionDetails.filter(s => !s.hasRefund).length,
+        canceledSubscriptions: canceledDetails.length,
+        canceledMRR,
+        canceledDetails,
+        churnRate: parseFloat(churnRate),
         subscriptionDetails,
         planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
