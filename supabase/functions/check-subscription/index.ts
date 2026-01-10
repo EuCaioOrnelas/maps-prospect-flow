@@ -248,20 +248,25 @@ serve(async (req) => {
         logStep("Profile updated", { plan, searchesLimit });
       }
     } else {
-      logStep("No active subscription found");
-
-      // Reset to free plan if no active subscription
-      const { error: updateError } = await supabaseClient
-        .from('profiles')
-        .update({
-          plan: "free",
-          searches_limit: PLAN_LIMITS["free"],
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        logStep("Error resetting profile to free", { error: updateError.message });
-      }
+      logStep("No active subscription found in Stripe");
+      
+      // IMPORTANT: Do NOT reset to free here!
+      // The webhook is the source of truth for plan changes.
+      // This function should only READ subscription status, not WRITE plan changes.
+      // If we reset here, it can cause race conditions during upgrades where:
+      // 1. Webhook sets the new plan
+      // 2. Old subscription is canceled
+      // 3. This function runs before Stripe fully propagates the new subscription
+      // 4. This function would incorrectly reset to free
+      
+      // Instead, trust the current profile state
+      plan = currentProfile?.plan || "free";
+      searchesLimit = currentProfile?.searches_limit || PLAN_LIMITS["free"];
+      
+      logStep("Keeping current profile state (webhook is source of truth)", {
+        plan,
+        searchesLimit
+      });
     }
 
     return new Response(JSON.stringify({
