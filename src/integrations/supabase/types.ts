@@ -1101,6 +1101,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_searches_limit: {
+        Args: { p_new_limit: number; p_user_email: string }
+        Returns: undefined
+      }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
         Returns: Json
