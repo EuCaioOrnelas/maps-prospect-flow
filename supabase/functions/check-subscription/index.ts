@@ -31,8 +31,8 @@ const PRICE_TO_PLAN: Record<string, string> = {
 // Map plan names to search limits
 const PLAN_LIMITS: Record<string, number> = {
   "free": 10,
-  "start": 100,
-  "growth": 500,
+  "start": 200,
+  "growth": 600,
   "scale": 1200,
 };
 
