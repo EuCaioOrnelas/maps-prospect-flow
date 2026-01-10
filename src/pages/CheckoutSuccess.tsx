@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
 import { motion } from "framer-motion";
+import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const CheckoutSuccess = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
@@ -51,17 +53,32 @@ const CheckoutSuccess = () => {
           data: {
             name,
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
       if (error) throw error;
 
       if (data.user) {
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Você já pode acessar sua conta.",
-        });
-        navigate("/dashboard");
+        // Check if email confirmation is required
+        if (data.user.identities && data.user.identities.length === 0) {
+          // User already exists
+          toast({
+            title: "Email já cadastrado",
+            description: "Faça login com sua conta existente.",
+            variant: "destructive",
+          });
+        } else if (!data.session) {
+          // Email confirmation required
+          setShowEmailVerification(true);
+        } else {
+          // Auto-confirmed, redirect to dashboard
+          toast({
+            title: "Conta criada com sucesso!",
+            description: "Você já pode acessar sua conta.",
+          });
+          navigate("/dashboard");
+        }
       }
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -330,6 +347,18 @@ const CheckoutSuccess = () => {
           Obrigado por escolher a WiizeProspect! 💚
         </motion.p>
       </main>
+
+      {/* Email Verification Dialog */}
+      <EmailVerificationDialog
+        open={showEmailVerification}
+        onOpenChange={setShowEmailVerification}
+        email={email}
+        onRetry={() => {
+          setEmail("");
+          setPassword("");
+          setName("");
+        }}
+      />
     </div>
   );
 };
