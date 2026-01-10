@@ -377,11 +377,18 @@ serve(async (req) => {
                 .from("profiles")
                 .update({ 
                   plan: "free",
-                  searches_limit: PLAN_LIMITS["free"]
+                  searches_limit: PLAN_LIMITS["free"],
+                  searches_used: 0  // Reset usage on downgrade
                 })
                 .eq("id", profile.id);
 
-              logStep("Profile downgraded due to subscription status", { status: subscription.status });
+              logStep("Profile downgraded due to subscription status", { 
+                status: subscription.status,
+                previousPlan: profile.plan,
+                previousLimit: profile.searches_limit,
+                previousUsed: profile.searches_used,
+                newLimit: PLAN_LIMITS["free"]
+              });
 
               // Log downgrade event
               await logSubscriptionEvent(
@@ -398,7 +405,7 @@ serve(async (req) => {
                 subscription.id,
                 subscription.customer as string,
                 event.id,
-                { status: subscription.status }
+                { status: subscription.status, previousSearchesUsed: profile.searches_used }
               );
             }
           }
@@ -418,7 +425,7 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.email) {
           const { data: profile } = await supabaseClient
             .from("profiles")
-            .select("id, plan, searches_limit")
+            .select("id, plan, searches_limit, searches_used")
             .eq("email", customer.email)
             .maybeSingle();
 
@@ -427,11 +434,16 @@ serve(async (req) => {
               .from("profiles")
               .update({ 
                 plan: "free",
-                searches_limit: PLAN_LIMITS["free"]
+                searches_limit: PLAN_LIMITS["free"],
+                searches_used: 0  // Reset usage on downgrade
               })
               .eq("id", profile.id);
 
-            logStep("Profile downgraded to free after subscription deletion");
+            logStep("Profile downgraded to free after subscription deletion", {
+              previousPlan: profile.plan,
+              previousLimit: profile.searches_limit,
+              newLimit: PLAN_LIMITS["free"]
+            });
 
             // Log deletion event
             await logSubscriptionEvent(
@@ -448,7 +460,7 @@ serve(async (req) => {
               subscription.id,
               subscription.customer as string,
               event.id,
-              {}
+              { previousSearchesUsed: profile.searches_used }
             );
           }
         }
