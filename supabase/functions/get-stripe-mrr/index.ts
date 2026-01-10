@@ -80,12 +80,36 @@ serve(async (req) => {
 
     console.log(`[GET-STRIPE-MRR] Found ${subscriptions.data.length} active subscriptions`);
 
+    // Get refunds to calculate net revenue
+    const refunds = await stripe.refunds.list({
+      limit: 100,
+    });
+    
+    let totalRefunded = 0;
+    const refundedCustomers = new Set<string>();
+    
+    for (const refund of refunds.data) {
+      if (refund.status === "succeeded") {
+        totalRefunded += refund.amount / 100; // Convert cents to BRL
+        // Get charge to find customer
+        if (refund.charge) {
+          const charge = await stripe.charges.retrieve(refund.charge as string);
+          if (charge.customer) {
+            refundedCustomers.add(charge.customer as string);
+          }
+        }
+      }
+    }
+    
+    console.log(`[GET-STRIPE-MRR] Total refunded: R$ ${totalRefunded}, Refunded customers: ${refundedCustomers.size}`);
+
     let totalMRR = 0;
     const subscriptionDetails: Array<{
       email: string;
       plan: string;
       price: number;
       startDate: string;
+      hasRefund: boolean;
     }> = [];
 
     const monthlyMRR: { [month: string]: number } = {};
@@ -93,6 +117,7 @@ serve(async (req) => {
     for (const sub of subscriptions.data) {
       const customer = sub.customer as Stripe.Customer;
       const customerEmail = customer.email || "";
+      const customerId = customer.id;
 
       // Skip admin emails
       if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
@@ -100,23 +125,33 @@ serve(async (req) => {
         continue;
       }
 
+      // Check if customer has been refunded
+      const hasRefund = refundedCustomers.has(customerId);
+
       // Get the price from the subscription
       const priceId = sub.items.data[0]?.price.id;
       const planInfo = PRICE_TO_PLAN[priceId];
 
       if (planInfo) {
-        totalMRR += planInfo.price;
+        // Only add to MRR if customer hasn't been refunded
+        if (!hasRefund) {
+          totalMRR += planInfo.price;
+        }
+        
         subscriptionDetails.push({
           email: customerEmail,
           plan: planInfo.name,
-          price: planInfo.price,
+          price: hasRefund ? 0 : planInfo.price, // Show 0 if refunded
           startDate: new Date(sub.start_date * 1000).toISOString(),
+          hasRefund,
         });
 
-        // Add to monthly MRR
-        const startDate = new Date(sub.start_date * 1000);
-        const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
-        monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + planInfo.price;
+        // Add to monthly MRR only if not refunded
+        if (!hasRefund) {
+          const startDate = new Date(sub.start_date * 1000);
+          const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
+          monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + planInfo.price;
+        }
       }
     }
 
@@ -126,12 +161,14 @@ serve(async (req) => {
       return acc;
     }, {} as { [plan: string]: number });
 
-    console.log(`[GET-STRIPE-MRR] Total MRR: R$ ${totalMRR}`);
+    console.log(`[GET-STRIPE-MRR] Total MRR: R$ ${totalMRR}, Total Refunded: R$ ${totalRefunded}`);
 
     return new Response(
       JSON.stringify({
         totalMRR,
+        totalRefunded,
         activeSubscriptions: subscriptionDetails.length,
+        paidSubscriptions: subscriptionDetails.filter(s => !s.hasRefund).length,
         subscriptionDetails,
         planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
