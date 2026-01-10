@@ -9,9 +9,9 @@ const steps = [
     title: "Encontre",
     subtitle: "Leads Qualificados",
     description: "Busque por nicho e localização. Nossa IA analisa milhares de empresas e entrega apenas leads com alto potencial.",
-    color: "from-blue-500 to-cyan-500",
-    bgColor: "bg-blue-500/10",
-    glowColor: "shadow-blue-500/20",
+    color: "from-primary to-emerald-500",
+    bgColor: "bg-primary/10",
+    glowColor: "shadow-primary/20",
   },
   {
     number: "02",
@@ -20,9 +20,9 @@ const steps = [
     title: "Conecte",
     subtitle: "Via WhatsApp",
     description: "Conecte seu WhatsApp em segundos via QR Code. Configure mensagens personalizadas com variações automáticas.",
-    color: "from-green-500 to-emerald-500",
-    bgColor: "bg-green-500/10",
-    glowColor: "shadow-green-500/20",
+    color: "from-primary to-emerald-500",
+    bgColor: "bg-primary/10",
+    glowColor: "shadow-primary/20",
   },
   {
     number: "03",
@@ -31,7 +31,7 @@ const steps = [
     title: "Prospecte",
     subtitle: "Em Escala",
     description: "Dispare mensagens em massa com intervalos inteligentes. Acompanhe taxas de entrega e respostas em tempo real.",
-    color: "from-primary to-purple-500",
+    color: "from-primary to-emerald-500",
     bgColor: "bg-primary/10",
     glowColor: "shadow-primary/20",
   },
@@ -75,7 +75,7 @@ export const HowItWorksSection = () => {
         <div className="hidden md:block">
           <div className="relative">
             {/* Connection line - positioned at icon center */}
-            <div className="absolute top-[40px] lg:top-[48px] left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-blue-500/50 via-green-500/50 to-primary/50 z-0" />
+            <div className="absolute top-[40px] lg:top-[48px] left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-primary/50 via-primary/70 to-primary/50 z-0" />
             
             <div className="grid grid-cols-3 gap-6 lg:gap-10 relative z-10">
               {steps.map((step, index) => (
