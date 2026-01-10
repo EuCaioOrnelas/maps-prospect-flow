@@ -36,6 +36,14 @@ const PLAN_LIMITS: Record<string, number> = {
   "scale": 1200,
 };
 
+// Plan hierarchy for upgrade/downgrade detection
+const PLAN_ORDER: Record<string, number> = {
+  "free": 0,
+  "start": 1,
+  "growth": 2,
+  "scale": 3,
+};
+
 // Map plan names to prices (for tracking revenue)
 const PLAN_PRICES: Record<string, number> = {
   "free": 0,
@@ -44,23 +52,44 @@ const PLAN_PRICES: Record<string, number> = {
   "scale": 497,
 };
 
-// Calculate new searches limit considering remaining searches from previous plan
-const calculateNewSearchesLimit = (
+// Determine if this is an upgrade, downgrade, or same plan
+const getTransitionType = (
+  currentPlan: string,
+  newPlan: string
+): "upgrade" | "downgrade" | "same" => {
+  const currentOrder = PLAN_ORDER[currentPlan] ?? 0;
+  const newOrder = PLAN_ORDER[newPlan] ?? 0;
+  
+  if (newOrder > currentOrder) return "upgrade";
+  if (newOrder < currentOrder) return "downgrade";
+  return "same";
+};
+
+// Calculate new searches limit based on transition type
+const calculateSearchesForTransition = (
   currentSearchesUsed: number,
   currentSearchesLimit: number,
-  newPlanLimit: number
-): { newLimit: number; carryOver: number } => {
-  // Calculate remaining searches from current plan
-  const remainingSearches = Math.max(0, currentSearchesLimit - currentSearchesUsed);
+  currentPlan: string,
+  newPlan: string,
+  newPlanBaseLimit: number
+): { newLimit: number; carryOver: number; transitionType: string } => {
+  const transitionType = getTransitionType(currentPlan, newPlan);
   
-  // If upgrading and has remaining searches, add them to new plan
-  if (remainingSearches > 0 && newPlanLimit > currentSearchesLimit) {
+  if (transitionType === "upgrade") {
+    // UPGRADE: Add remaining searches from current plan to new plan
+    const remainingSearches = Math.max(0, currentSearchesLimit - currentSearchesUsed);
     const carryOver = remainingSearches;
-    const newLimit = newPlanLimit + carryOver;
-    return { newLimit, carryOver };
+    const newLimit = newPlanBaseLimit + carryOver;
+    return { newLimit, carryOver, transitionType };
+  } else if (transitionType === "downgrade") {
+    // DOWNGRADE: Lose all remaining searches, get only new plan's base limit
+    // User starts fresh with new plan
+    return { newLimit: newPlanBaseLimit, carryOver: 0, transitionType };
+  } else {
+    // SAME PLAN (renewal): Keep current limit if higher than base (due to previous carry-over)
+    const newLimit = Math.max(currentSearchesLimit, newPlanBaseLimit);
+    return { newLimit, carryOver: 0, transitionType };
   }
-  
-  return { newLimit: newPlanLimit, carryOver: 0 };
 };
 
 // Log subscription event for debugging
@@ -221,10 +250,12 @@ serve(async (req) => {
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
-              // Calculate new limit with carry-over from previous plan
-              const { newLimit, carryOver } = calculateNewSearchesLimit(
+              // Calculate new limit based on transition type (upgrade/downgrade/same)
+              const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
                 profile.searches_used,
                 profile.searches_limit,
+                profile.plan,
+                plan,
                 basePlanLimit
               );
 
@@ -232,17 +263,22 @@ serve(async (req) => {
                 basePlanLimit,
                 carryOver,
                 newLimit,
-                plan
+                plan,
+                transitionType,
+                previousPlan: profile.plan
               });
+
+              // On downgrade: reset searches_used to 0
+              // On upgrade with carry-over: keep current usage
+              // On upgrade without carry-over or same: reset to 0
+              const newSearchesUsed = transitionType === "upgrade" && carryOver > 0 ? profile.searches_used : 0;
 
               const { error: updateError } = await supabaseClient
                 .from("profiles")
                 .update({ 
                   plan: plan,
                   searches_limit: newLimit,
-                  // Reset searches_used only if user had no remaining searches
-                  // Otherwise keep current usage to properly calculate remaining
-                  searches_used: carryOver > 0 ? profile.searches_used : 0
+                  searches_used: newSearchesUsed
                 })
                 .eq("id", profile.id);
 
@@ -333,32 +369,45 @@ serve(async (req) => {
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
-              // Calculate new limit with carry-over
-              const { newLimit, carryOver } = calculateNewSearchesLimit(
+              // Calculate new limit based on transition type
+              const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
                 profile.searches_used,
                 profile.searches_limit,
+                profile.plan,
+                plan,
                 basePlanLimit
               );
+
+              // On downgrade: reset searches_used to 0
+              const newSearchesUsed = transitionType === "upgrade" && carryOver > 0 ? profile.searches_used : 0;
 
               await supabaseClient
                 .from("profiles")
                 .update({ 
                   plan: plan,
                   searches_limit: newLimit,
-                  searches_used: carryOver > 0 ? profile.searches_used : 0
+                  searches_used: newSearchesUsed
                 })
                 .eq("id", profile.id);
 
               logStep("Profile updated for active subscription", { 
                 plan, 
                 searchesLimit: newLimit,
-                carryOver
+                carryOver,
+                transitionType,
+                previousPlan: profile.plan
               });
 
-              // Log subscription event
+              // Log subscription event with transition type
+              const eventType = transitionType === "downgrade" 
+                ? "subscription_downgrade" 
+                : transitionType === "upgrade" 
+                  ? "subscription_upgrade" 
+                  : "subscription_renewed";
+
               await logSubscriptionEvent(
                 supabaseClient,
-                "subscription_updated_active",
+                eventType,
                 "stripe-webhook",
                 customer.email,
                 profile.id,
@@ -370,7 +419,7 @@ serve(async (req) => {
                 subscription.id,
                 subscription.customer as string,
                 event.id,
-                { priceId, basePlanLimit, status: subscription.status }
+                { priceId, basePlanLimit, status: subscription.status, transitionType }
               );
             } else if (["canceled", "unpaid", "past_due"].includes(subscription.status)) {
               await supabaseClient
