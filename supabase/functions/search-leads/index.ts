@@ -84,10 +84,41 @@ function normalizePhone(phone: string): string {
   return '55' + clean;
 }
 
+// Check if a number is a landline (fixed) - has 8 digits after DDD
+function isLandlineNumber(phone: string): boolean {
+  const clean = phone.replace(/[^0-9]/g, '');
+  // Remove country code if present
+  const withoutCountry = clean.startsWith('55') ? clean.substring(2) : clean;
+  // Landline: DDD (2 digits) + 8 digits = 10 total
+  // Mobile: DDD (2 digits) + 9 digits = 11 total
+  return withoutCountry.length === 10;
+}
+
+// Generate both formats for landline numbers (with and without 9)
+function getPhoneVariations(phone: string): string[] {
+  const clean = phone.replace(/[^0-9]/g, '');
+  const withoutCountry = clean.startsWith('55') ? clean.substring(2) : clean;
+  
+  // If it's a landline (10 digits), try both formats
+  if (withoutCountry.length === 10) {
+    const ddd = withoutCountry.substring(0, 2);
+    const number = withoutCountry.substring(2);
+    
+    return [
+      '55' + withoutCountry,           // Original: 55 + DDD + 8 digits
+      '55' + ddd + '9' + number         // With 9: 55 + DDD + 9 + 8 digits
+    ];
+  }
+  
+  // If it's already a mobile (11 digits), just return normalized
+  return ['55' + withoutCountry];
+}
+
 // Dedicated WhatsApp instance for validating numbers in prospecting
 const VALIDATOR_INSTANCE = 'wiizeprospect_03f5ad6b_1767801176186_k4t5eh';
 
 // Validate if phone number exists on WhatsApp using dedicated validator instance
+// For landlines, tries both formats (with and without 9)
 async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
   if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
     console.log('Evolution API not configured, skipping validation');
@@ -95,44 +126,45 @@ async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
   }
 
   try {
-    let normalized = normalizePhone(phoneNumber);
+    const variations = getPhoneVariations(phoneNumber);
+    const isLandline = isLandlineNumber(phoneNumber);
     
-    // Ensure number starts with 55 for Brazilian numbers
-    if (!normalized.startsWith('55')) {
-      normalized = '55' + normalized;
+    console.log(`Validating WhatsApp for: ${phoneNumber} (${isLandline ? 'landline' : 'mobile'}) - trying: ${variations.join(', ')}`);
+    
+    // Try all variations
+    for (const normalized of variations) {
+      const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/${VALIDATOR_INSTANCE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY!
+        },
+        body: JSON.stringify({
+          numbers: [normalized]
+        })
+      });
+      
+      if (!response.ok) {
+        console.error(`Validation API error: ${response.status}`);
+        continue;
+      }
+      
+      const result = await response.json();
+      
+      if (result && Array.isArray(result) && result.length > 0) {
+        const exists = result[0]?.exists === true;
+        if (exists) {
+          console.log(`WhatsApp validation for ${phoneNumber}: EXISTS ✓ (found as ${normalized})`);
+          return true;
+        }
+      }
     }
     
-    console.log(`Validating WhatsApp for: ${normalized} using instance ${VALIDATOR_INSTANCE}`);
-    
-    const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/${VALIDATOR_INSTANCE}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY!
-      },
-      body: JSON.stringify({
-        numbers: [normalized]
-      })
-    });
-    
-    if (!response.ok) {
-      console.error(`Validation API error: ${response.status}`);
-      return true; // Assume valid on API error
-    }
-    
-    const result = await response.json();
-    
-    // Result format: [{ exists: true/false, jid: "...", number: "..." }]
-    if (result && Array.isArray(result) && result.length > 0) {
-      const exists = result[0]?.exists === true;
-      console.log(`WhatsApp validation for ${phoneNumber}: ${exists ? 'EXISTS ✓' : 'NOT FOUND ✗'}`);
-      return exists;
-    }
-    
-    return true;
+    console.log(`WhatsApp validation for ${phoneNumber}: NOT FOUND ✗`);
+    return false;
   } catch (error) {
     console.error('WhatsApp validation error:', error);
-    return true;
+    return true; // Assume valid on error
   }
 }
 
