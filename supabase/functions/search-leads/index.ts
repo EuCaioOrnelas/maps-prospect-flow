@@ -84,47 +84,14 @@ function normalizePhone(phone: string): string {
   return '55' + clean;
 }
 
-// Validate if phone number exists on WhatsApp
-async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
-  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-    console.log('Evolution API not configured, skipping validation');
-    return true; // Assume valid if can't check
-  }
+// NOTE: WhatsApp validation is disabled in prospecting
+// Validation is done in the warming processor where we have access to user's connected instance
+// This avoids needing a dedicated validation instance and speeds up search results
 
-  try {
-    const normalized = normalizePhone(phoneNumber);
-    
-    // Use a public instance for validation
-    const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/validador-prospecta`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY!
-      },
-      body: JSON.stringify({
-        numbers: [normalized]
-      })
-    });
-    
-    if (!response.ok) {
-      console.error(`Validation API error: ${response.status}`);
-      return true; // Assume valid on API error
-    }
-    
-    const result = await response.json();
-    
-    // Result format: [{ exists: true/false, jid: "...", number: "..." }]
-    if (result && Array.isArray(result) && result.length > 0) {
-      const exists = result[0]?.exists === true;
-      console.log(`WhatsApp validation for ${phoneNumber}: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-      return exists;
-    }
-    
-    return true; // Assume valid if response format unexpected
-  } catch (error) {
-    console.error('WhatsApp validation error:', error);
-    return true; // Assume valid on error
-  }
+// Placeholder function - always returns true (validation happens in warming)
+async function validateWhatsAppNumber(_phoneNumber: string): Promise<boolean> {
+  // Validation will happen in the warming processor
+  return true;
 }
 
 // Validate multiple numbers in parallel (batch of 5)
