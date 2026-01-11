@@ -12,8 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, MapPin, Users, AlertCircle, ExternalLink } from "lucide-react";
+import { Search, MapPin, Users, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SearchGroup {
@@ -33,6 +32,9 @@ interface SelectWarmingSearchDialogProps {
   onSearchSelected: (search: { keyword: string; location: string }) => void;
 }
 
+const ITEMS_PER_PAGE = 3;
+const MAX_ITEMS = 12;
+
 export function SelectWarmingSearchDialog({
   open,
   onOpenChange,
@@ -46,22 +48,26 @@ export function SelectWarmingSearchDialog({
   const [loading, setLoading] = useState(true);
   const [selectedSearch, setSelectedSearch] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     if (open && userId) {
       fetchAvailableSearches();
+      setCurrentPage(0);
+      setSelectedSearch(null);
     }
   }, [open, userId]);
 
   const fetchAvailableSearches = async () => {
     setLoading(true);
     try {
-      // Fetch all search history with results_count
+      // Fetch last 12 unique searches from history
       const { data: searchHistory, error: searchError } = await supabase
         .from('search_history')
-        .select('keyword, location, results_count')
+        .select('keyword, location, leads')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Fetch more to account for duplicates
 
       if (searchError) throw searchError;
 
@@ -73,12 +79,16 @@ export function SelectWarmingSearchDialog({
 
       if (assignError) throw assignError;
 
-      // Group searches and check assignments - use results_count from search_history
+      // Group searches and count real leads from the leads JSON
       const searchMap = new Map<string, SearchGroup>();
       
       searchHistory?.forEach(s => {
         const key = `${s.keyword}|${s.location}`;
-        if (!searchMap.has(key)) {
+        if (!searchMap.has(key) && searchMap.size < MAX_ITEMS) {
+          // Count real leads from the leads JSON array
+          const leadsArray = Array.isArray(s.leads) ? s.leads : [];
+          const realLeadsCount = leadsArray.length;
+
           // Check if assigned to another number
           const assignment = assignments?.find(
             a => a.search_query === s.keyword && a.search_city === s.location
@@ -87,7 +97,7 @@ export function SelectWarmingSearchDialog({
           searchMap.set(key, {
             keyword: s.keyword,
             location: s.location,
-            leadsCount: s.results_count || 0, // Use results_count from search_history
+            leadsCount: realLeadsCount,
             isAssigned: !!assignment && assignment.whatsapp_number_id !== numberId,
             assignedTo: assignment && assignment.whatsapp_number_id !== numberId
               ? (assignment.whatsapp_numbers as any)?.name
@@ -155,6 +165,21 @@ export function SelectWarmingSearchDialog({
   const hasNoSearches = searches.length === 0;
   const hasNoAvailableSearches = availableSearches.length === 0;
 
+  // Pagination
+  const totalPages = Math.ceil(availableSearches.length / ITEMS_PER_PAGE);
+  const paginatedSearches = availableSearches.slice(
+    currentPage * ITEMS_PER_PAGE,
+    (currentPage + 1) * ITEMS_PER_PAGE
+  );
+
+  const handlePrevPage = () => {
+    setCurrentPage(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -202,7 +227,7 @@ export function SelectWarmingSearchDialog({
               {insufficientLeads.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Buscas com leads insuficientes:</p>
-                  {insufficientLeads.map((s) => (
+                  {insufficientLeads.slice(0, 3).map((s) => (
                     <div key={`${s.keyword}|${s.location}`} className="p-3 rounded-lg border border-border bg-muted/30">
                       <div className="flex items-center justify-between">
                         <div>
@@ -228,45 +253,70 @@ export function SelectWarmingSearchDialog({
             </div>
           ) : (
             <>
-              <ScrollArea className="max-h-[300px] pr-4">
-                <RadioGroup value={selectedSearch || ""} onValueChange={setSelectedSearch}>
-                  <div className="space-y-3">
-                    {availableSearches.map((search) => {
-                      const value = `${search.keyword}|${search.location}`;
-                      return (
-                        <div
-                          key={value}
-                          className={`relative flex items-start gap-3 p-4 rounded-lg border transition-colors cursor-pointer ${
-                            selectedSearch === value
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => setSelectedSearch(value)}
-                        >
-                          <RadioGroupItem value={value} id={value} className="mt-1" />
-                          <div className="flex-1">
-                            <Label htmlFor={value} className="cursor-pointer">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-medium text-foreground">
-                                  {search.keyword}
-                                </span>
-                                <Badge variant="secondary" className="text-green-600">
-                                  <Users className="w-3 h-3 mr-1" />
-                                  {search.leadsCount} leads
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {search.location}
-                              </p>
-                            </Label>
-                          </div>
+              <RadioGroup value={selectedSearch || ""} onValueChange={setSelectedSearch}>
+                <div className="space-y-3">
+                  {paginatedSearches.map((search) => {
+                    const value = `${search.keyword}|${search.location}`;
+                    return (
+                      <div
+                        key={value}
+                        className={`relative flex items-start gap-3 p-4 rounded-lg border transition-colors cursor-pointer ${
+                          selectedSearch === value
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => setSelectedSearch(value)}
+                      >
+                        <RadioGroupItem value={value} id={value} className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor={value} className="cursor-pointer">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-foreground">
+                                {search.keyword}
+                              </span>
+                              <Badge variant="secondary" className="text-green-600">
+                                <Users className="w-3 h-3 mr-1" />
+                                {search.leadsCount} leads
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {search.location}
+                            </p>
+                          </Label>
                         </div>
-                      );
-                    })}
-                  </div>
-                </RadioGroup>
-              </ScrollArea>
+                      </div>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {currentPage + 1} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= totalPages - 1}
+                  >
+                    Próxima
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-6">
                 <Button 
