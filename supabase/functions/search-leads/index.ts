@@ -368,30 +368,33 @@ serve(async (req) => {
 
     // Minimum and maximum targets for valid leads
     const MIN_VALID_LEADS = 45;
-    const MAX_LEADS_TO_COLLECT = 60; // Max 3 pages x 20 results = 3 SERP API searches
+    const MAX_LEADS_PER_LOCATION = 60; // Max 3 pages x 20 results = 3 SERP API searches per location
     const resultsPerPage = 20;
 
     // Define nearby cities for major Brazilian cities (fallback expansion)
     const nearbyCities: Record<string, string[]> = {
-      'são paulo': ['guarulhos', 'osasco', 'santo andré', 'são bernardo do campo', 'diadema', 'mauá'],
-      'rio de janeiro': ['niterói', 'são gonçalo', 'duque de caxias', 'nova iguaçu', 'belford roxo'],
-      'belo horizonte': ['contagem', 'betim', 'ribeirão das neves', 'santa luzia', 'ibirité'],
-      'curitiba': ['são josé dos pinhais', 'colombo', 'araucária', 'pinhais', 'campo largo'],
-      'porto alegre': ['canoas', 'novo hamburgo', 'são leopoldo', 'gravataí', 'viamão'],
-      'salvador': ['lauro de freitas', 'camaçari', 'simões filho', 'candeias', 'dias d\'ávila'],
-      'fortaleza': ['caucaia', 'maracanaú', 'maranguape', 'pacatuba', 'eusébio'],
-      'recife': ['jaboatão dos guararapes', 'olinda', 'paulista', 'camaragibe', 'cabo de santo agostinho'],
-      'brasília': ['taguatinga', 'ceilândia', 'samambaia', 'gama', 'águas claras'],
-      'goiânia': ['aparecida de goiânia', 'anápolis', 'trindade', 'senador canedo', 'goianira'],
+      'sao paulo': ['guarulhos', 'osasco', 'santo andre', 'sao bernardo do campo', 'diadema', 'maua'],
+      'rio de janeiro': ['niteroi', 'sao goncalo', 'duque de caxias', 'nova iguacu', 'belford roxo'],
+      'belo horizonte': ['contagem', 'betim', 'ribeirao das neves', 'santa luzia', 'ibirite'],
+      'curitiba': ['sao jose dos pinhais', 'colombo', 'araucaria', 'pinhais', 'campo largo'],
+      'porto alegre': ['canoas', 'novo hamburgo', 'sao leopoldo', 'gravatai', 'viamao'],
+      'salvador': ['lauro de freitas', 'camacari', 'simoes filho', 'candeias', 'dias davila'],
+      'fortaleza': ['caucaia', 'maracanau', 'maranguape', 'pacatuba', 'eusebio'],
+      'recife': ['jaboatao dos guararapes', 'olinda', 'paulista', 'camaragibe', 'cabo de santo agostinho'],
+      'brasilia': ['taguatinga', 'ceilandia', 'samambaia', 'gama', 'aguas claras'],
+      'goiania': ['aparecida de goiania', 'anapolis', 'trindade', 'senador canedo', 'goianira'],
       'manaus': ['iranduba', 'rio preto da eva', 'presidente figueiredo', 'itacoatiara', 'manacapuru'],
-      'belém': ['ananindeua', 'marituba', 'benevides', 'castanhal', 'santa izabel do pará'],
-      'campinas': ['hortolândia', 'sumaré', 'americana', 'indaiatuba', 'valinhos'],
+      'belem': ['ananindeua', 'marituba', 'benevides', 'castanhal', 'santa izabel do para'],
+      'campinas': ['hortolandia', 'sumare', 'americana', 'indaiatuba', 'valinhos'],
     };
 
-    // Get nearby cities for the searched location
-    const locationLower = location.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Normalize location for matching (remove accents and lowercase)
+    const normalizeForMatch = (str: string) => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const locationNormalized = normalizeForMatch(location);
+    
+    // Find nearby cities
     const nearbyLocations = Object.entries(nearbyCities).find(([city]) => 
-      locationLower.includes(city) || city.includes(locationLower)
+      locationNormalized.includes(city) || city.includes(locationNormalized)
     )?.[1] || [];
 
     // Locations to search (main + nearby)
@@ -495,11 +498,10 @@ serve(async (req) => {
       console.log(`\n=== Searching location ${locIndex + 1}/${locationsToSearch.length}: ${currentLocation} ===`);
       console.log(`Current valid leads: ${allValidLeads.length}/${MIN_VALID_LEADS}`);
       
-      // Calculate how many more we need (collect 3x to account for validation loss)
-      const needed = MIN_VALID_LEADS - allValidLeads.length;
-      const toCollect = Math.min(MAX_LEADS_TO_COLLECT - totalRawResults, Math.max(60, needed * 3));
-      
-      if (toCollect <= 0) break;
+      // Calculate how many to collect from this location
+      // For main location, collect more; for nearby cities, collect less
+      const isMainLocation = locIndex === 0;
+      const toCollect = isMainLocation ? MAX_LEADS_PER_LOCATION : Math.min(40, MAX_LEADS_PER_LOCATION);
       
       // Collect raw leads from this location
       const rawLeads = await collectLeadsFromLocation(currentLocation, toCollect);
