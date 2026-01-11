@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
-import { Flame, Info, RefreshCw, Search, Wifi } from "lucide-react";
+import { WarmingStatsPanel } from "@/components/warming/WarmingStatsPanel";
+import { Flame, Info, RefreshCw, Search, Wifi, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -350,6 +351,9 @@ export default function Warming() {
               e isso é esperado. O processo leva cerca de 20 dias para ser concluído.
             </AlertDescription>
           </Alert>
+
+          {/* Stats Panel */}
+          {user && <WarmingStatsPanel userId={user.id} />}
 
           {/* Numbers Grid */}
           {loading ? (
