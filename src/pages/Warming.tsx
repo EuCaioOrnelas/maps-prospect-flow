@@ -83,6 +83,34 @@ export default function Warming() {
     }
   }, [user]);
 
+  // Auto-refresh every 30 seconds for active warming sessions
+  useEffect(() => {
+    const hasActiveSessions = sessions.some(s => s.status === 'active');
+    
+    if (!hasActiveSessions || !user) return;
+
+    const interval = setInterval(() => {
+      // Silent refresh without loading state
+      refreshSessionsData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [sessions, user]);
+
+  const refreshSessionsData = async () => {
+    try {
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('warming_sessions')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (sessionsError) throw sessionsError;
+      setSessions(sessionsData as WarmingSession[] || []);
+    } catch (error) {
+      console.error('Error refreshing sessions:', error);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
