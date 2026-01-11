@@ -14,9 +14,17 @@ import {
   Search,
   MapPin,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface WarmingSession {
   id: string;
@@ -27,6 +35,8 @@ interface WarmingSession {
   leads_limit: number;
   current_day: number;
   error_message?: string | null;
+  messages_sent_today?: number;
+  last_message_at?: string | null;
 }
 
 interface SearchAssignment {
@@ -87,16 +97,35 @@ const getWarmingStatusConfig = (status: 'cold' | 'warm' | 'hot' | undefined) => 
 const getLevelInfo = (level: number) => {
   switch (level) {
     case 1:
-      return { name: 'Nível 1 - Ativação Inicial', days: '1-5', progress: 25 };
+      return { name: 'Nível 1 - Ativação Inicial', days: '1-5', progress: 25, dailyLimit: 2 };
     case 2:
-      return { name: 'Nível 2 - Conversa Leve', days: '6-10', progress: 50 };
+      return { name: 'Nível 2 - Conversa Leve', days: '6-10', progress: 50, dailyLimit: 5 };
     case 3:
-      return { name: 'Nível 3 - Interação Natural', days: '11-15', progress: 75 };
+      return { name: 'Nível 3 - Interação Natural', days: '11-15', progress: 75, dailyLimit: 8 };
     case 4:
-      return { name: 'Nível 4 - Pré-Comercial', days: '16-20', progress: 100 };
+      return { name: 'Nível 4 - Pré-Comercial', days: '16-20', progress: 100, dailyLimit: 10 };
     default:
-      return { name: 'Não iniciado', days: '-', progress: 0 };
+      return { name: 'Não iniciado', days: '-', progress: 0, dailyLimit: 2 };
   }
+};
+
+// Calculate estimated next message time based on interval (10-30 min)
+const getNextMessageEstimate = (lastMessageAt: string | null): string => {
+  if (!lastMessageAt) return 'Aguardando...';
+  
+  const lastMessage = new Date(lastMessageAt);
+  const now = new Date();
+  const diffMinutes = Math.floor((now.getTime() - lastMessage.getTime()) / (1000 * 60));
+  
+  // Average interval is 20 minutes (between 10-30)
+  const avgInterval = 20;
+  const remainingMinutes = Math.max(0, avgInterval - diffMinutes);
+  
+  if (remainingMinutes <= 0) {
+    return 'Em breve...';
+  }
+  
+  return `~${remainingMinutes} min`;
 };
 
 export function WarmingNumberCard({
@@ -124,6 +153,12 @@ export function WarmingNumberCard({
     : 0;
 
   const daysRemaining = session ? Math.max(0, 20 - session.current_day + 1) : 20;
+
+  // Daily progress calculation
+  const messagesSentToday = session?.messages_sent_today || 0;
+  const dailyLimit = levelInfo.dailyLimit;
+  const dailyProgress = Math.min(100, (messagesSentToday / dailyLimit) * 100);
+  const nextMessageTime = getNextMessageEstimate(session?.last_message_at || null);
 
   return (
     <Card className="bg-card border-border hover:border-primary/30 transition-colors">
@@ -197,6 +232,27 @@ export function WarmingNumberCard({
             <span>{daysRemaining} dias restantes</span>
           </div>
         </div>
+
+        {/* Daily Progress Indicator - Only show when session is active */}
+        {isActive && session && (
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium text-blue-500">Progresso do dia</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                <span>Próximo: {nextMessageTime}</span>
+              </div>
+            </div>
+            <Progress value={dailyProgress} className="h-2 bg-blue-500/20" />
+            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+              <span>{messagesSentToday} / {dailyLimit} mensagens hoje</span>
+              <span>{dailyProgress >= 100 ? '✓ Meta atingida' : `${dailyLimit - messagesSentToday} restantes`}</span>
+            </div>
+          </div>
+        )}
 
         {/* Leads Used */}
         <div className="flex items-center justify-between text-sm">
@@ -287,13 +343,33 @@ export function WarmingNumberCard({
             </Button>
           )}
 
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={onViewDetails}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={onViewDetails}
+                  className="relative"
+                >
+                  <Eye className="w-4 h-4" />
+                  {isActive && session && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {isActive && session ? (
+                  <div className="text-center">
+                    <p className="font-medium">{messagesSentToday}/{dailyLimit} msgs hoje</p>
+                    <p className="text-muted-foreground">Próximo: {nextMessageTime}</p>
+                  </div>
+                ) : (
+                  <span>Ver detalhes</span>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardContent>
     </Card>

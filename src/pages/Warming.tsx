@@ -46,6 +46,8 @@ interface WarmingSession {
   paused_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  messages_sent_today: number;
+  last_message_at: string | null;
 }
 
 interface SearchAssignment {
