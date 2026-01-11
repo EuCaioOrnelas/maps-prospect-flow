@@ -37,6 +37,8 @@ interface WarmingSession {
   paused_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  messages_sent_today?: number;
+  last_message_at?: string | null;
 }
 
 interface WarmingInteraction {
@@ -69,6 +71,7 @@ const LEVEL_DETAILS = [
     days: '1-5',
     leadsPerDay: 2,
     messagesPerLead: 1,
+    dailyLimit: 2,
     description: 'Criação de histórico básico de envio'
   },
   {
@@ -78,6 +81,7 @@ const LEVEL_DETAILS = [
     days: '6-10',
     leadsPerDay: 3,
     messagesPerLead: 2,
+    dailyLimit: 5,
     description: 'Conversas bidirecionais simples'
   },
   {
@@ -87,6 +91,7 @@ const LEVEL_DETAILS = [
     days: '11-15',
     leadsPerDay: 3,
     messagesPerLead: 3,
+    dailyLimit: 8,
     description: 'Aumentar profundidade das conversas'
   },
   {
@@ -96,9 +101,28 @@ const LEVEL_DETAILS = [
     days: '16-20',
     leadsPerDay: 2,
     messagesPerLead: 1,
+    dailyLimit: 10,
     description: 'Preparar para campanhas reais'
   }
 ];
+
+// Calculate estimated next message time
+const getNextMessageEstimate = (lastMessageAt: string | null): string => {
+  if (!lastMessageAt) return 'Aguardando...';
+  
+  const lastMessage = new Date(lastMessageAt);
+  const now = new Date();
+  const diffMinutes = Math.floor((now.getTime() - lastMessage.getTime()) / (1000 * 60));
+  
+  const avgInterval = 20;
+  const remainingMinutes = Math.max(0, avgInterval - diffMinutes);
+  
+  if (remainingMinutes <= 0) {
+    return 'Em breve...';
+  }
+  
+  return `~${remainingMinutes} min`;
+};
 
 export function WarmingDetailsDialog({
   open,
@@ -197,6 +221,46 @@ export function WarmingDetailsDialog({
                 </div>
               )}
             </div>
+
+            {/* Daily Progress - Only show when session is active */}
+            {session?.status === 'active' && (
+              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-blue-500" />
+                    <span className="font-medium text-blue-500">Progresso do Dia</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span>Próximo disparo: {getNextMessageEstimate(session.last_message_at || null)}</span>
+                  </div>
+                </div>
+                
+                {(() => {
+                  const currentLevelData = LEVEL_DETAILS.find(l => l.level === session.warming_level) || LEVEL_DETAILS[0];
+                  const messagesSentToday = session.messages_sent_today || 0;
+                  const dailyLimit = currentLevelData.dailyLimit;
+                  const dailyProgress = Math.min(100, (messagesSentToday / dailyLimit) * 100);
+                  
+                  return (
+                    <>
+                      <Progress value={dailyProgress} className="h-3 bg-blue-500/20" />
+                      <div className="flex items-center justify-between text-sm mt-2">
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">{messagesSentToday}</span> / {dailyLimit} mensagens hoje
+                        </span>
+                        <span className={cn(
+                          "font-medium",
+                          dailyProgress >= 100 ? "text-green-500" : "text-blue-500"
+                        )}>
+                          {dailyProgress >= 100 ? '✓ Meta atingida!' : `${dailyLimit - messagesSentToday} restantes`}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
 
             {/* Progress Timeline */}
             <div>
