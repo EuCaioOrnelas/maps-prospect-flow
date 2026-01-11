@@ -56,7 +56,7 @@ export function SelectWarmingSearchDialog({
   const fetchAvailableSearches = async () => {
     setLoading(true);
     try {
-      // Fetch all search history
+      // Fetch all search history with results_count
       const { data: searchHistory, error: searchError } = await supabase
         .from('search_history')
         .select('keyword, location, results_count')
@@ -73,26 +73,13 @@ export function SelectWarmingSearchDialog({
 
       if (assignError) throw assignError;
 
-      // Count leads per search group
-      const { data: leads, error: leadsError } = await supabase
-        .from('leads')
-        .select('category, city')
-        .eq('user_id', userId);
-
-      if (leadsError) throw leadsError;
-
-      // Group searches and check assignments
+      // Group searches and check assignments - use results_count from search_history
       const searchMap = new Map<string, SearchGroup>();
       
       searchHistory?.forEach(s => {
         const key = `${s.keyword}|${s.location}`;
         if (!searchMap.has(key)) {
-          // Count leads matching this search
-          const matchingLeads = leads?.filter(l => 
-            l.category === s.keyword && l.city === s.location
-          ).length || 0;
-
-          // Check if assigned
+          // Check if assigned to another number
           const assignment = assignments?.find(
             a => a.search_query === s.keyword && a.search_city === s.location
           );
@@ -100,7 +87,7 @@ export function SelectWarmingSearchDialog({
           searchMap.set(key, {
             keyword: s.keyword,
             location: s.location,
-            leadsCount: matchingLeads,
+            leadsCount: s.results_count || 0, // Use results_count from search_history
             isAssigned: !!assignment && assignment.whatsapp_number_id !== numberId,
             assignedTo: assignment && assignment.whatsapp_number_id !== numberId
               ? (assignment.whatsapp_numbers as any)?.name
