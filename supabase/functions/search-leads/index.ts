@@ -453,24 +453,11 @@ serve(async (req) => {
       }));
     }
 
-    // Helper to validate and filter leads
-    async function validateAndFilterLeads(leads: Lead[]): Promise<Lead[]> {
-      // Filter leads with valid phone numbers
-      const leadsWithPhone = leads.filter(lead => {
+    // Helper to filter leads with valid phone numbers (no WhatsApp validation)
+    function filterLeadsWithPhone(leads: Lead[]): Lead[] {
+      return leads.filter(lead => {
         const phone = lead.phone?.trim();
         return phone && phone !== '-' && phone !== '' && phone.length >= 8;
-      });
-
-      if (leadsWithPhone.length === 0) return [];
-
-      // Validate WhatsApp numbers in batches
-      const phonesToValidate = leadsWithPhone.map(l => l.phone);
-      const validationResults = await validatePhonesBatch(phonesToValidate);
-      
-      // Filter to only include leads with valid WhatsApp numbers
-      return leadsWithPhone.filter(lead => {
-        const isValid = validationResults.get(lead.phone);
-        return isValid !== false;
       });
     }
 
@@ -519,10 +506,10 @@ serve(async (req) => {
       
       if (withPhone.length === 0) continue;
       
-      // Validate WhatsApp numbers
-      console.log(`Validating ${withPhone.length} phone numbers...`);
-      const validLeads = await validateAndFilterLeads(uniqueLeads);
-      console.log(`${validLeads.length} leads with valid WhatsApp`);
+      // Filter leads with phone numbers (no WhatsApp validation)
+      console.log(`Filtering ${withPhone.length} leads with phone numbers...`);
+      const validLeads = filterLeadsWithPhone(uniqueLeads);
+      console.log(`${validLeads.length} leads with valid phone numbers`);
       
       // Add to our collection
       allValidLeads.push(...validLeads);
