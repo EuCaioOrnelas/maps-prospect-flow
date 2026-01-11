@@ -55,6 +55,8 @@ const SERP_API_KEYS = [
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
 interface Lead {
   name: string;
@@ -66,6 +68,90 @@ interface Lead {
   rating: number;
   reviewCount: number;
   mapsLink: string;
+  hasWhatsApp?: boolean;
+}
+
+// Normalize phone to format 5511999999999
+function normalizePhone(phone: string): string {
+  let clean = phone.replace(/[^0-9]/g, '');
+  
+  // Remove country code if present
+  if (clean.startsWith('55') && clean.length >= 12) {
+    clean = clean.substring(2);
+  }
+  
+  // Add country code back
+  return '55' + clean;
+}
+
+// Validate if phone number exists on WhatsApp
+async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+    console.log('Evolution API not configured, skipping validation');
+    return true; // Assume valid if can't check
+  }
+
+  try {
+    const normalized = normalizePhone(phoneNumber);
+    
+    // Use a public instance for validation
+    const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/validador-prospecta`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY!
+      },
+      body: JSON.stringify({
+        numbers: [normalized]
+      })
+    });
+    
+    if (!response.ok) {
+      console.error(`Validation API error: ${response.status}`);
+      return true; // Assume valid on API error
+    }
+    
+    const result = await response.json();
+    
+    // Result format: [{ exists: true/false, jid: "...", number: "..." }]
+    if (result && Array.isArray(result) && result.length > 0) {
+      const exists = result[0]?.exists === true;
+      console.log(`WhatsApp validation for ${phoneNumber}: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+      return exists;
+    }
+    
+    return true; // Assume valid if response format unexpected
+  } catch (error) {
+    console.error('WhatsApp validation error:', error);
+    return true; // Assume valid on error
+  }
+}
+
+// Validate multiple numbers in parallel (batch of 5)
+async function validatePhonesBatch(phones: string[]): Promise<Map<string, boolean>> {
+  const results = new Map<string, boolean>();
+  
+  // Process in batches of 5 with small delay
+  for (let i = 0; i < phones.length; i += 5) {
+    const batch = phones.slice(i, i + 5);
+    const validations = await Promise.all(
+      batch.map(async phone => {
+        const isValid = await validateWhatsAppNumber(phone);
+        return { phone, isValid };
+      })
+    );
+    
+    for (const { phone, isValid } of validations) {
+      results.set(phone, isValid);
+    }
+    
+    // Small delay between batches to avoid rate limiting
+    if (i + 5 < phones.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  return results;
 }
 
 // Helper function to check if API key has reached its limit
@@ -318,12 +404,32 @@ serve(async (req) => {
     }));
 
     // Filter out leads without valid phone numbers
-    const leads = allLeads.filter(lead => {
+    const leadsWithPhone = allLeads.filter(lead => {
       const phone = lead.phone?.trim();
       return phone && phone !== '-' && phone !== '' && phone.length >= 8;
     });
 
-    console.log(`Found ${allLeads.length} total leads, ${leads.length} with valid phone numbers`);
+    console.log(`Found ${allLeads.length} total leads, ${leadsWithPhone.length} with phone numbers`);
+
+    // Validate WhatsApp numbers in batches
+    console.log(`Starting WhatsApp validation for ${leadsWithPhone.length} numbers...`);
+    
+    const phonesToValidate = leadsWithPhone.map(l => l.phone);
+    const validationResults = await validatePhonesBatch(phonesToValidate);
+    
+    // Filter to only include leads with valid WhatsApp numbers
+    const leads = leadsWithPhone.filter(lead => {
+      const isValid = validationResults.get(lead.phone);
+      if (!isValid) {
+        console.log(`Filtering out non-WhatsApp number: ${lead.phone}`);
+      }
+      return isValid !== false; // Keep if true or undefined (validation failed)
+    });
+
+    const validCount = leads.length;
+    const invalidCount = leadsWithPhone.length - validCount;
+    console.log(`WhatsApp validation complete: ${validCount} valid, ${invalidCount} invalid`);
+    console.log(`Returning ${leads.length} leads with valid WhatsApp numbers`);
 
     // Update user's search count
     const { error: updateError } = await supabase
