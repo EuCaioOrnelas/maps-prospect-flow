@@ -200,6 +200,52 @@ function getUniqueMessage(messages: string[]): string {
   return message
 }
 
+// Validate if phone number exists on WhatsApp
+async function validateWhatsAppNumber(
+  instanceName: string,
+  phoneNumber: string,
+  evolutionApiUrl: string,
+  evolutionApiKey: string
+): Promise<{ exists: boolean; formattedNumber?: string }> {
+  try {
+    const formattedPhone = phoneNumber.replace(/\D/g, '')
+    
+    const response = await fetch(`${evolutionApiUrl}/chat/whatsappNumbers/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': evolutionApiKey
+      },
+      body: JSON.stringify({
+        numbers: [formattedPhone]
+      })
+    })
+
+    if (!response.ok) {
+      console.log(`Validation request failed for ${formattedPhone}`)
+      return { exists: false }
+    }
+
+    const result = await response.json()
+    
+    // Check if the number exists in the response
+    if (Array.isArray(result) && result.length > 0) {
+      const numberInfo = result[0]
+      if (numberInfo.exists === true || numberInfo.exists === 'true') {
+        return { 
+          exists: true, 
+          formattedNumber: numberInfo.jid?.replace('@s.whatsapp.net', '') || formattedPhone 
+        }
+      }
+    }
+    
+    return { exists: false }
+  } catch (error) {
+    console.error('Error validating WhatsApp number:', error)
+    return { exists: false }
+  }
+}
+
 // Send message via Evolution API
 async function sendMessage(
   instanceName: string,
@@ -230,6 +276,11 @@ async function sendMessage(
       // Check for blocking indicators
       if (errorText.includes('blocked') || errorText.includes('ban') || errorText.includes('spam')) {
         return { success: false, messageId: 'BLOCKED' }
+      }
+      
+      // Check for "not exists" error
+      if (errorText.includes('exists":false') || errorText.includes('not on WhatsApp')) {
+        return { success: false, messageId: 'NOT_EXISTS' }
       }
       
       return { success: false }
@@ -512,12 +563,13 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Get available leads from user's prospects (exclude already used)
+        // Get available leads from user's prospects (exclude already used and invalid numbers)
         const { data: usedInteractions } = await supabase
           .from('warming_interactions')
-          .select('lead_phone')
+          .select('lead_phone, status')
           .eq('warming_session_id', session.id)
 
+        // Exclude both used phones and invalid numbers
         const usedPhones = new Set(usedInteractions?.map((i: any) => i.lead_phone) || [])
 
         // Get the search assignment for this number
@@ -620,16 +672,70 @@ Deno.serve(async (req) => {
         
         console.log(`${availableLeads.length} leads available for warming`)
 
-        // Pick a random lead
-        const lead = getRandomElement(availableLeads)
-        const message = getUniqueMessage(levelConfig.initialMessages)
+        // Try to find a valid WhatsApp number (up to 5 attempts)
+        let validLead = null
+        let validatedPhone = ''
+        const invalidPhones: string[] = []
+        
+        for (let attempt = 0; attempt < Math.min(5, availableLeads.length); attempt++) {
+          // Pick a random lead that hasn't been marked invalid in this session
+          const candidateLeads = availableLeads.filter((l: any) => !invalidPhones.includes(l.phone))
+          if (candidateLeads.length === 0) break
+          
+          const candidate = getRandomElement(candidateLeads)
+          console.log(`Validating WhatsApp number: ${candidate.phone} (attempt ${attempt + 1})`)
+          
+          const validation = await validateWhatsAppNumber(
+            session.whatsapp_numbers.instance_name,
+            candidate.phone,
+            evolutionApiUrl,
+            evolutionApiKey
+          )
+          
+          if (validation.exists) {
+            validLead = candidate
+            validatedPhone = validation.formattedNumber || candidate.phone
+            console.log(`✓ Number validated: ${validatedPhone}`)
+            break
+          } else {
+            console.log(`✗ Number not on WhatsApp: ${candidate.phone}`)
+            invalidPhones.push(candidate.phone)
+            
+            // Mark as invalid in warming_interactions so we don't try again
+            await supabase
+              .from('warming_interactions')
+              .insert({
+                warming_session_id: session.id,
+                user_id: session.user_id,
+                lead_phone: candidate.phone,
+                lead_name: candidate.contact_name,
+                lead_id: candidate.id || null,
+                warming_level: level,
+                messages_sent: 0,
+                messages_received: 0,
+                status: 'invalid_number',
+                last_message_sent: null,
+                last_message_at: new Date().toISOString(),
+                conversation_ended: true
+              })
+            
+            // Small delay between validations to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+        }
+        
+        if (!validLead) {
+          console.log(`No valid WhatsApp numbers found after ${invalidPhones.length} attempts`)
+          continue
+        }
 
-        console.log(`Sending to lead ${lead.phone}: "${message.substring(0, 30)}..."`)
+        const message = getUniqueMessage(levelConfig.initialMessages)
+        console.log(`Sending to validated lead ${validatedPhone}: "${message.substring(0, 30)}..."`)
 
         // Send message
         const sendResult = await sendMessage(
           session.whatsapp_numbers.instance_name,
-          lead.phone,
+          validatedPhone,
           message,
           evolutionApiUrl,
           evolutionApiKey
@@ -646,6 +752,11 @@ Deno.serve(async (req) => {
             .eq('id', session.id)
           continue
         }
+        
+        if (sendResult.messageId === 'NOT_EXISTS') {
+          console.log(`Number doesn't exist (post-validation), skipping`)
+          continue
+        }
 
         if (sendResult.success) {
           // Create interaction record
@@ -654,9 +765,9 @@ Deno.serve(async (req) => {
             .insert({
               warming_session_id: session.id,
               user_id: session.user_id,
-              lead_phone: lead.phone,
-              lead_name: lead.contact_name,
-              lead_id: lead.id,
+              lead_phone: validatedPhone,
+              lead_name: validLead.contact_name,
+              lead_id: validLead.id || null,
               warming_level: level,
               messages_sent: 1,
               messages_received: 0,
