@@ -1019,6 +1019,149 @@ export type Database = {
         }
         Relationships: []
       }
+      warming_interactions: {
+        Row: {
+          conversation_ended: boolean
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_message_sent: string | null
+          last_response_at: string | null
+          lead_id: string | null
+          lead_name: string | null
+          lead_phone: string
+          messages_received: number
+          messages_sent: number
+          status: string
+          updated_at: string
+          user_id: string
+          warming_level: number
+          warming_session_id: string
+        }
+        Insert: {
+          conversation_ended?: boolean
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_sent?: string | null
+          last_response_at?: string | null
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_phone: string
+          messages_received?: number
+          messages_sent?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          warming_level: number
+          warming_session_id: string
+        }
+        Update: {
+          conversation_ended?: boolean
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_sent?: string | null
+          last_response_at?: string | null
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_phone?: string
+          messages_received?: number
+          messages_sent?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warming_level?: number
+          warming_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warming_interactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warming_interactions_warming_session_id_fkey"
+            columns: ["warming_session_id"]
+            isOneToOne: false
+            referencedRelation: "warming_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warming_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_day: number
+          error_message: string | null
+          id: string
+          last_message_at: string | null
+          last_reset_date: string | null
+          leads_limit: number
+          leads_used: number
+          messages_sent_today: number
+          paused_at: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          warming_level: number
+          warming_status: string
+          whatsapp_number_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_day?: number
+          error_message?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_reset_date?: string | null
+          leads_limit?: number
+          leads_used?: number
+          messages_sent_today?: number
+          paused_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          warming_level?: number
+          warming_status?: string
+          whatsapp_number_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_day?: number
+          error_message?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_reset_date?: string | null
+          leads_limit?: number
+          leads_used?: number
+          messages_sent_today?: number
+          paused_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warming_level?: number
+          warming_status?: string
+          whatsapp_number_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warming_sessions_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: true
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_campaigns: {
         Row: {
           completed_at: string | null

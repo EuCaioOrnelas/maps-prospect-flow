@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.campaign-processor]
 verify_jwt = false
+
+[functions.warming-processor]
+verify_jwt = false
