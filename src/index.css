@@ -155,6 +155,10 @@
   .animate-fade-in {
     animation: fade-in 0.5s ease-out forwards;
   }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+  }
 }
 
 @keyframes float {
@@ -187,6 +191,17 @@
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes shimmer {
