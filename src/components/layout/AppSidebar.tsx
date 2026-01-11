@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Megaphone,
   Users,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -79,6 +80,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: Megaphone,
       onClick: isFreePlan ? onWhatsAppClick : undefined,
       active: currentPath === "/whatsapp"
+    },
+    { 
+      title: "Aquecimento", 
+      url: "/warming", 
+      icon: Flame,
+      active: currentPath === "/warming"
     },
     { 
       title: "CRM", 
@@ -285,7 +292,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
-            {/* CRM */}
+            {/* Aquecimento */}
             <li>
               <Link
                 to={mainNavItems[2].url}
@@ -296,7 +303,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
-                <Users size={20} className="shrink-0" />
+                <Flame size={20} className="shrink-0" />
                 <span 
                   className={cn(
                     "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
@@ -308,13 +315,36 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </Link>
             </li>
 
-            {/* Chat */}
+            {/* CRM */}
             <li>
               <Link
                 to={mainNavItems[3].url}
                 className={cn(
                   "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
                   mainNavItems[3].active 
+                    ? "bg-primary/20 text-primary font-medium" 
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
+              >
+                <Users size={20} className="shrink-0" />
+                <span 
+                  className={cn(
+                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
+                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                  )}
+                >
+                  {mainNavItems[3].title}
+                </span>
+              </Link>
+            </li>
+
+            {/* Chat */}
+            <li>
+              <Link
+                to={mainNavItems[4].url}
+                className={cn(
+                  "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
+                  mainNavItems[4].active 
                     ? "bg-primary/20 text-primary font-medium" 
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
@@ -326,7 +356,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
                   )}
                 >
-                  {mainNavItems[3].title}
+                  {mainNavItems[4].title}
                 </span>
               </Link>
             </li>
