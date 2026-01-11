@@ -366,111 +366,188 @@ serve(async (req) => {
 
     console.log(`Searching for: ${keyword} in ${location}`);
 
-    // Call SERP API with pagination to get more results
-    const searchQuery = encodeURIComponent(`${keyword} ${location}`);
-    const maxLeads = 50;
+    // Minimum and maximum targets for valid leads
+    const MIN_VALID_LEADS = 45;
+    const MAX_LEADS_TO_COLLECT = 150; // Collect more to account for validation filtering
     const resultsPerPage = 20;
-    const pagesToFetch = Math.ceil(maxLeads / resultsPerPage);
-    
-    let allResults: any[] = [];
-    const seenPlaceIds = new Set<string>();
-    const seenNames = new Set<string>();
-    
-    console.log(`Will fetch up to ${pagesToFetch} pages with ${SERP_API_KEYS.length} API keys available`);
-    
-    for (let page = 0; page < pagesToFetch && allResults.length < maxLeads; page++) {
-      const startIndex = page * resultsPerPage;
-      
-      console.log(`Fetching page ${page + 1} (start=${startIndex})...`);
-      
-      const result = await fetchWithFallback(searchQuery, startIndex);
-      
-      if (!result) {
-        console.error('All API keys exhausted for this request');
-        if (page === 0) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Limite de API atingido',
-              message: 'Nosso serviço de buscas está temporariamente indisponível. Por favor, entre em contato com nosso suporte para resolvermos isso rapidamente.',
-              allKeysExhausted: true,
-              redirectToContact: true
-            }),
-            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        break;
-      }
 
-      const pageResults = result.data.local_results || [];
-      console.log(`Page ${page + 1}: received ${pageResults.length} results (using key ${result.keyIndex + 1})`);
+    // Define nearby cities for major Brazilian cities (fallback expansion)
+    const nearbyCities: Record<string, string[]> = {
+      'são paulo': ['guarulhos', 'osasco', 'santo andré', 'são bernardo do campo', 'diadema', 'mauá'],
+      'rio de janeiro': ['niterói', 'são gonçalo', 'duque de caxias', 'nova iguaçu', 'belford roxo'],
+      'belo horizonte': ['contagem', 'betim', 'ribeirão das neves', 'santa luzia', 'ibirité'],
+      'curitiba': ['são josé dos pinhais', 'colombo', 'araucária', 'pinhais', 'campo largo'],
+      'porto alegre': ['canoas', 'novo hamburgo', 'são leopoldo', 'gravataí', 'viamão'],
+      'salvador': ['lauro de freitas', 'camaçari', 'simões filho', 'candeias', 'dias d\'ávila'],
+      'fortaleza': ['caucaia', 'maracanaú', 'maranguape', 'pacatuba', 'eusébio'],
+      'recife': ['jaboatão dos guararapes', 'olinda', 'paulista', 'camaragibe', 'cabo de santo agostinho'],
+      'brasília': ['taguatinga', 'ceilândia', 'samambaia', 'gama', 'águas claras'],
+      'goiânia': ['aparecida de goiânia', 'anápolis', 'trindade', 'senador canedo', 'goianira'],
+      'manaus': ['iranduba', 'rio preto da eva', 'presidente figueiredo', 'itacoatiara', 'manacapuru'],
+      'belém': ['ananindeua', 'marituba', 'benevides', 'castanhal', 'santa izabel do pará'],
+      'campinas': ['hortolândia', 'sumaré', 'americana', 'indaiatuba', 'valinhos'],
+    };
+
+    // Get nearby cities for the searched location
+    const locationLower = location.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const nearbyLocations = Object.entries(nearbyCities).find(([city]) => 
+      locationLower.includes(city) || city.includes(locationLower)
+    )?.[1] || [];
+
+    // Locations to search (main + nearby)
+    const locationsToSearch = [location, ...nearbyLocations.map(c => `${c}, ${location.split(',').pop()?.trim() || 'Brasil'}`)];
+    
+    let allValidLeads: Lead[] = [];
+    const seenPhones = new Set<string>();
+    const seenNames = new Set<string>();
+    let searchedLocations: string[] = [];
+    let totalRawResults = 0;
+    let totalWithPhone = 0;
+    
+    // Helper to collect leads from a location
+    async function collectLeadsFromLocation(searchLocation: string, maxToCollect: number): Promise<Lead[]> {
+      const searchQuery = encodeURIComponent(`${keyword} ${searchLocation}`);
+      const pagesToFetch = Math.ceil(maxToCollect / resultsPerPage);
+      const collectedResults: any[] = [];
+      const localSeenPlaceIds = new Set<string>();
       
-      if (pageResults.length === 0) {
-        console.log('No more results available, stopping pagination');
+      for (let page = 0; page < pagesToFetch && collectedResults.length < maxToCollect; page++) {
+        const startIndex = page * resultsPerPage;
+        console.log(`Fetching ${searchLocation} page ${page + 1} (start=${startIndex})...`);
+        
+        const result = await fetchWithFallback(searchQuery, startIndex);
+        
+        if (!result) {
+          console.log('API keys exhausted for this location');
+          break;
+        }
+
+        const pageResults = result.data.local_results || [];
+        console.log(`${searchLocation} page ${page + 1}: ${pageResults.length} results`);
+        
+        if (pageResults.length === 0) break;
+        
+        for (const item of pageResults) {
+          const placeId = item.place_id || '';
+          if (placeId && localSeenPlaceIds.has(placeId)) continue;
+          if (placeId) localSeenPlaceIds.add(placeId);
+          collectedResults.push({ ...item, searchLocation });
+          if (collectedResults.length >= maxToCollect) break;
+        }
+      }
+      
+      // Parse to Lead format
+      return collectedResults.map((result: any) => ({
+        name: result.title || '-',
+        category: result.type || result.types?.[0] || '-',
+        address: result.address || '-',
+        city: result.searchLocation || searchLocation,
+        phone: result.phone || '-',
+        website: result.website || '-',
+        rating: result.rating || 0,
+        reviewCount: result.reviews || 0,
+        mapsLink: result.link || (result.place_id ? `https://www.google.com/maps/place/?q=place_id:${result.place_id}` : '-'),
+      }));
+    }
+
+    // Helper to validate and filter leads
+    async function validateAndFilterLeads(leads: Lead[]): Promise<Lead[]> {
+      // Filter leads with valid phone numbers
+      const leadsWithPhone = leads.filter(lead => {
+        const phone = lead.phone?.trim();
+        return phone && phone !== '-' && phone !== '' && phone.length >= 8;
+      });
+
+      if (leadsWithPhone.length === 0) return [];
+
+      // Validate WhatsApp numbers in batches
+      const phonesToValidate = leadsWithPhone.map(l => l.phone);
+      const validationResults = await validatePhonesBatch(phonesToValidate);
+      
+      // Filter to only include leads with valid WhatsApp numbers
+      return leadsWithPhone.filter(lead => {
+        const isValid = validationResults.get(lead.phone);
+        return isValid !== false;
+      });
+    }
+
+    // Helper to deduplicate leads
+    function deduplicateLeads(leads: Lead[]): Lead[] {
+      return leads.filter(lead => {
+        const phoneKey = lead.phone.replace(/[^0-9]/g, '').slice(-8);
+        const nameKey = lead.name.toLowerCase().trim();
+        
+        if (seenPhones.has(phoneKey) || seenNames.has(nameKey)) {
+          return false;
+        }
+        
+        seenPhones.add(phoneKey);
+        seenNames.add(nameKey);
+        return true;
+      });
+    }
+
+    // MAIN SEARCH LOOP: Search locations until we have enough valid leads
+    for (let locIndex = 0; locIndex < locationsToSearch.length && allValidLeads.length < MIN_VALID_LEADS; locIndex++) {
+      const currentLocation = locationsToSearch[locIndex];
+      searchedLocations.push(currentLocation);
+      
+      console.log(`\n=== Searching location ${locIndex + 1}/${locationsToSearch.length}: ${currentLocation} ===`);
+      console.log(`Current valid leads: ${allValidLeads.length}/${MIN_VALID_LEADS}`);
+      
+      // Calculate how many more we need (collect 3x to account for validation loss)
+      const needed = MIN_VALID_LEADS - allValidLeads.length;
+      const toCollect = Math.min(MAX_LEADS_TO_COLLECT - totalRawResults, Math.max(60, needed * 3));
+      
+      if (toCollect <= 0) break;
+      
+      // Collect raw leads from this location
+      const rawLeads = await collectLeadsFromLocation(currentLocation, toCollect);
+      totalRawResults += rawLeads.length;
+      
+      console.log(`Collected ${rawLeads.length} raw leads from ${currentLocation}`);
+      
+      // Deduplicate first (before validation to save API calls)
+      const uniqueLeads = deduplicateLeads(rawLeads);
+      console.log(`${uniqueLeads.length} unique leads after deduplication`);
+      
+      const withPhone = uniqueLeads.filter(l => l.phone && l.phone !== '-' && l.phone.length >= 8);
+      totalWithPhone += withPhone.length;
+      console.log(`${withPhone.length} leads with phone numbers`);
+      
+      if (withPhone.length === 0) continue;
+      
+      // Validate WhatsApp numbers
+      console.log(`Validating ${withPhone.length} phone numbers...`);
+      const validLeads = await validateAndFilterLeads(uniqueLeads);
+      console.log(`${validLeads.length} leads with valid WhatsApp`);
+      
+      // Add to our collection
+      allValidLeads.push(...validLeads);
+      
+      // Check if we have enough
+      if (allValidLeads.length >= MIN_VALID_LEADS) {
+        console.log(`✓ Reached minimum target of ${MIN_VALID_LEADS} valid leads!`);
         break;
       }
       
-      // Deduplicate results by place_id and name
-      for (const item of pageResults) {
-        const placeId = item.place_id || '';
-        const name = (item.title || '').toLowerCase().trim();
-        
-        // Skip if we've seen this place_id or name
-        if ((placeId && seenPlaceIds.has(placeId)) || (name && seenNames.has(name))) {
-          console.log(`Skipping duplicate: ${item.title}`);
-          continue;
-        }
-        
-        if (placeId) seenPlaceIds.add(placeId);
-        if (name) seenNames.add(name);
-        
-        allResults.push(item);
-        
-        if (allResults.length >= maxLeads) break;
+      // If this is the main location and we got very few results, continue to nearby cities
+      if (locIndex === 0 && validLeads.length < 10 && nearbyLocations.length > 0) {
+        console.log(`Main location had few results, will search nearby cities...`);
       }
     }
 
-    console.log(`Total unique results collected: ${allResults.length}`);
-
-    // Parse leads from SERP response
-    const allLeads: Lead[] = allResults.slice(0, maxLeads).map((result: any) => ({
-      name: result.title || '-',
-      category: result.type || result.types?.[0] || '-',
-      address: result.address || '-',
-      city: location,
-      phone: result.phone || '-',
-      website: result.website || '-',
-      rating: result.rating || 0,
-      reviewCount: result.reviews || 0,
-      mapsLink: result.link || (result.place_id ? `https://www.google.com/maps/place/?q=place_id:${result.place_id}` : '-'),
-    }));
-
-    // Filter out leads without valid phone numbers
-    const leadsWithPhone = allLeads.filter(lead => {
-      const phone = lead.phone?.trim();
-      return phone && phone !== '-' && phone !== '' && phone.length >= 8;
-    });
-
-    console.log(`Found ${allLeads.length} total leads, ${leadsWithPhone.length} with phone numbers`);
-
-    // Validate WhatsApp numbers in batches
-    console.log(`Starting WhatsApp validation for ${leadsWithPhone.length} numbers...`);
+    // Final trim to max 50 leads
+    const leads = allValidLeads.slice(0, 50);
     
-    const phonesToValidate = leadsWithPhone.map(l => l.phone);
-    const validationResults = await validatePhonesBatch(phonesToValidate);
+    console.log(`\n=== SEARCH SUMMARY ===`);
+    console.log(`Locations searched: ${searchedLocations.join(', ')}`);
+    console.log(`Total raw results: ${totalRawResults}`);
+    console.log(`Total with phone: ${totalWithPhone}`);
+    console.log(`Final valid leads: ${leads.length}`);
     
-    // Filter to only include leads with valid WhatsApp numbers
-    const leads = leadsWithPhone.filter(lead => {
-      const isValid = validationResults.get(lead.phone);
-      if (!isValid) {
-        console.log(`Filtering out non-WhatsApp number: ${lead.phone}`);
-      }
-      return isValid !== false; // Keep if true or undefined (validation failed)
-    });
-
     const validCount = leads.length;
-    const invalidCount = leadsWithPhone.length - validCount;
-    console.log(`WhatsApp validation complete: ${validCount} valid, ${invalidCount} invalid`);
-    console.log(`Returning ${leads.length} leads with valid WhatsApp numbers`);
+    const invalidCount = totalWithPhone - allValidLeads.length;
 
     // Update user's search count
     const { error: updateError } = await supabase
@@ -521,8 +598,8 @@ serve(async (req) => {
     console.log('Search completed successfully');
 
     // Build response with accurate count info
-    const maxExpected = 50;
-    const foundLess = leads.length < maxExpected;
+    const foundLess = leads.length < MIN_VALID_LEADS;
+    const searchedMultipleLocations = searchedLocations.length > 1;
 
     return new Response(
       JSON.stringify({ 
@@ -530,10 +607,13 @@ serve(async (req) => {
         searchesUsed: profile.searches_used + 1,
         searchesLimit: profile.searches_limit,
         resultsCount: leads.length,
+        locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
         message: foundLess 
-          ? `Encontramos apenas ${leads.length} resultados para "${keyword}" em ${location}. Isso pode indicar que o nicho é pequeno na região ou há poucos estabelecimentos cadastrados.`
-          : null
+          ? `Encontramos ${leads.length} resultados válidos para "${keyword}"${searchedMultipleLocations ? ` em ${searchedLocations.length} cidades` : ` em ${location}`}. O nicho pode ser pequeno na região.`
+          : searchedMultipleLocations
+            ? `Encontramos ${leads.length} leads válidos buscando em ${searchedLocations.length} cidades da região.`
+            : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
