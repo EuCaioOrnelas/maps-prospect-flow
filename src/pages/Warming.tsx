@@ -262,15 +262,29 @@ export default function Warming() {
       
       // Also update the session if it exists
       if (existingSession) {
+        // Check if session was paused due to needing leads - auto resume
+        const needsLeadsResume = existingSession.status === 'paused' && 
+          existingSession.error_message?.includes('NEEDS_LEADS');
+        
         await supabase
           .from('warming_sessions')
           .update({
             assigned_search_query: search.keyword,
-            assigned_search_city: search.location || null
+            assigned_search_city: search.location || null,
+            // If paused for needing leads, resume the session
+            ...(needsLeadsResume ? {
+              status: 'active',
+              paused_at: null,
+              error_message: null
+            } : {})
           })
           .eq('id', existingSession.id);
-          
-        toast.success('Busca atualizada');
+        
+        if (needsLeadsResume) {
+          toast.success('Novos leads selecionados - aquecimento retomado!');
+        } else {
+          toast.success('Busca atualizada');
+        }
       } else {
         // No session yet - start the warming
         await startWarmingSession(numberId, search.keyword, search.location || null);

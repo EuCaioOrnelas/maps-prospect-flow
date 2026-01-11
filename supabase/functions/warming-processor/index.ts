@@ -731,7 +731,18 @@ Deno.serve(async (req) => {
         }
 
         if (!allLeads.length) {
-          console.log(`No leads available for session ${session.id} (check search assignment or run a search first)`)
+          console.log(`No leads available for session ${session.id} - pausing and requesting new leads`)
+          
+          // Pause session and request new leads
+          await supabase
+            .from('warming_sessions')
+            .update({
+              status: 'paused',
+              paused_at: new Date().toISOString(),
+              error_message: 'NEEDS_LEADS:Sem leads disponíveis - selecione uma nova busca para continuar'
+            })
+            .eq('id', session.id)
+          
           continue
         }
 
@@ -740,7 +751,7 @@ Deno.serve(async (req) => {
         if (!availableLeads.length) {
           console.log(`No more available leads for session ${session.id} (all ${allLeads.length} already used)`)
           
-          // If we've run out of leads before 50, complete the warming
+          // If we've run out of leads and used at least 40, complete the warming
           if (session.leads_used >= 40) {
             await supabase
               .from('warming_sessions')
@@ -749,6 +760,17 @@ Deno.serve(async (req) => {
                 warming_status: 'hot',
                 warming_level: 4,
                 completed_at: new Date().toISOString()
+              })
+              .eq('id', session.id)
+          } else {
+            // Otherwise, pause and request new leads
+            console.log(`Pausing session ${session.id} - needs more leads to continue`)
+            await supabase
+              .from('warming_sessions')
+              .update({
+                status: 'paused',
+                paused_at: new Date().toISOString(),
+                error_message: 'NEEDS_LEADS:Leads esgotados - selecione uma nova busca para continuar o aquecimento'
               })
               .eq('id', session.id)
           }
