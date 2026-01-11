@@ -308,7 +308,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
-                <Flame size={20} className="shrink-0 text-primary" />
+                <Flame size={20} className="shrink-0" />
                 <span
                   className={cn(
                     "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
