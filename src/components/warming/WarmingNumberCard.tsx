@@ -273,6 +273,27 @@ export function WarmingNumberCard({
           </div>
         )}
 
+        {/* Needs Leads Warning - Show when paused due to running out of leads */}
+        {isPaused && session?.error_message?.includes('NEEDS_LEADS') && (
+          <div 
+            className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-colors"
+            onClick={onSelectSearch}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Search className="w-4 h-4 text-orange-500" />
+              <p className="text-sm font-medium text-orange-500">
+                Leads esgotados
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {session.error_message.replace('NEEDS_LEADS:', '')}
+            </p>
+            <p className="text-xs text-orange-500 mt-2 font-medium">
+              Clique aqui para selecionar novos leads →
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 pt-2">
           {!number.is_connected ? (
