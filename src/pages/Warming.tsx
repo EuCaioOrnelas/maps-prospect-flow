@@ -589,8 +589,8 @@ export default function Warming() {
             </div>
           )}
 
-          {/* Warming Interactions Log */}
-          {user && !loading && numbers.length > 0 && (
+          {/* Warming Interactions Log - Admin Only */}
+          {isAdmin && user && !loading && numbers.length > 0 && (
             <div className="mt-6">
               <WarmingInteractionsLog userId={user.id} />
             </div>
