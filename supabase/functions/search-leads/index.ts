@@ -368,7 +368,7 @@ serve(async (req) => {
 
     // Minimum and maximum targets for valid leads
     const MIN_VALID_LEADS = 45;
-    const MAX_LEADS_TO_COLLECT = 75; // Limited to save SERP API credits (each 20 results = 1 search)
+    const MAX_LEADS_TO_COLLECT = 60; // Max 3 pages x 20 results = 3 SERP API searches
     const resultsPerPage = 20;
 
     // Define nearby cities for major Brazilian cities (fallback expansion)
