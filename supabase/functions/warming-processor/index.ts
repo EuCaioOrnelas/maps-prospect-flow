@@ -523,40 +523,85 @@ Deno.serve(async (req) => {
         // Get the search assignment for this number
         const assignment = assignments?.find((a: any) => a.whatsapp_number_id === session.whatsapp_number_id)
         
-        // Build leads query - filter by assigned search if available
-        let leadsQuery = supabase
-          .from('leads')
-          .select('id, phone, contact_name, category, city')
-          .eq('user_id', session.user_id)
-          .not('phone', 'is', null)
-
-        // Filter by assigned search (category = keyword, city = location)
-        if (assignment) {
-          console.log(`Filtering leads by assigned search: "${assignment.search_query}" in "${assignment.search_city}"`)
-          leadsQuery = leadsQuery.eq('category', assignment.search_query)
-          if (assignment.search_city) {
-            leadsQuery = leadsQuery.eq('city', assignment.search_city)
+        let allLeads: any[] = []
+        
+        // First try to get leads from search_history (where the prospected leads are stored)
+        const searchQuery = assignment?.search_query || session.assigned_search_query
+        const searchCity = assignment?.search_city || session.assigned_search_city
+        
+        if (searchQuery) {
+          console.log(`Looking for leads from search history: "${searchQuery}" in "${searchCity || 'any'}"`)
+          
+          // Build search history query
+          let historyQuery = supabase
+            .from('search_history')
+            .select('leads, keyword, location')
+            .eq('user_id', session.user_id)
+            .ilike('keyword', `%${searchQuery}%`)
+          
+          if (searchCity) {
+            historyQuery = historyQuery.ilike('location', `%${searchCity}%`)
           }
-        } else if (session.assigned_search_query) {
-          // Fallback to session's own assigned search
-          console.log(`Filtering leads by session search: "${session.assigned_search_query}" in "${session.assigned_search_city}"`)
-          leadsQuery = leadsQuery.eq('category', session.assigned_search_query)
-          if (session.assigned_search_city) {
-            leadsQuery = leadsQuery.eq('city', session.assigned_search_city)
+          
+          const { data: searchResults } = await historyQuery.order('created_at', { ascending: false }).limit(10)
+          
+          if (searchResults && searchResults.length > 0) {
+            console.log(`Found ${searchResults.length} search history entries`)
+            
+            // Extract leads from all matching searches
+            for (const search of searchResults) {
+              if (search.leads && Array.isArray(search.leads)) {
+                for (const lead of search.leads) {
+                  // Only add if has phone and not already in list
+                  if (lead.phone && !allLeads.some((l: any) => l.phone === lead.phone)) {
+                    allLeads.push({
+                      id: lead.id || null,
+                      phone: lead.phone,
+                      contact_name: lead.name || lead.contact_name || lead.company || null,
+                      company_name: lead.company || lead.company_name || null
+                    })
+                  }
+                }
+              }
+            }
+            console.log(`Extracted ${allLeads.length} unique leads from search history`)
+          }
+        }
+        
+        // Fallback: also check the leads table if no leads found in search_history
+        if (allLeads.length === 0) {
+          console.log(`No leads in search history, checking leads table...`)
+          
+          let leadsQuery = supabase
+            .from('leads')
+            .select('id, phone, contact_name, company_name, category, city')
+            .eq('user_id', session.user_id)
+            .not('phone', 'is', null)
+          
+          if (searchQuery) {
+            leadsQuery = leadsQuery.ilike('category', `%${searchQuery}%`)
+          }
+          if (searchCity) {
+            leadsQuery = leadsQuery.ilike('city', `%${searchCity}%`)
+          }
+          
+          const { data: tableLeads } = await leadsQuery.limit(100)
+          
+          if (tableLeads && tableLeads.length > 0) {
+            allLeads = tableLeads
+            console.log(`Found ${allLeads.length} leads in leads table`)
           }
         }
 
-        const { data: leads, error: leadsError } = await leadsQuery.limit(100)
-
-        if (leadsError || !leads?.length) {
-          console.log(`No leads available for session ${session.id} (check search assignment)`)
+        if (!allLeads.length) {
+          console.log(`No leads available for session ${session.id} (check search assignment or run a search first)`)
           continue
         }
 
-        const availableLeads = leads.filter((l: any) => !usedPhones.has(l.phone))
+        const availableLeads = allLeads.filter((l: any) => !usedPhones.has(l.phone))
 
         if (!availableLeads.length) {
-          console.log(`No more available leads for session ${session.id}`)
+          console.log(`No more available leads for session ${session.id} (all ${allLeads.length} already used)`)
           
           // If we've run out of leads before 50, complete the warming
           if (session.leads_used >= 40) {
@@ -572,6 +617,8 @@ Deno.serve(async (req) => {
           }
           continue
         }
+        
+        console.log(`${availableLeads.length} leads available for warming`)
 
         // Pick a random lead
         const lead = getRandomElement(availableLeads)
