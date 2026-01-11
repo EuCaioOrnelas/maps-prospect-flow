@@ -31,6 +31,7 @@ import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
 import CRMComingSoon from "./pages/CRMComingSoon";
 import Warming from "./pages/Warming";
+import WarmingReports from "./pages/WarmingReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -149,6 +150,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Warming />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/warming/reports" 
+                element={
+                  <ProtectedRoute>
+                    <WarmingReports />
                   </ProtectedRoute>
                 } 
               />
