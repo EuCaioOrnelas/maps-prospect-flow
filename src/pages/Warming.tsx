@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
-import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle } from "lucide-react";
+import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -585,6 +586,13 @@ export default function Warming() {
                   />
                 );
               })}
+            </div>
+          )}
+
+          {/* Warming Interactions Log */}
+          {user && !loading && numbers.length > 0 && (
+            <div className="mt-6">
+              <WarmingInteractionsLog userId={user.id} />
             </div>
           )}
 
