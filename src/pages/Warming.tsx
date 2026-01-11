@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
-import { Flame, Info, RefreshCw, Search, Wifi } from "lucide-react";
+import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,16 +38,26 @@ interface WarmingSession {
   error_message: string | null;
 }
 
+interface SearchAssignment {
+  whatsapp_number_id: string;
+  search_query: string;
+  search_city: string | null;
+}
+
 export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [sessions, setSessions] = useState<WarmingSession[]>([]);
+  const [assignments, setAssignments] = useState<SearchAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNumber, setSelectedNumber] = useState<WhatsAppNumber | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectSearchOpen, setSelectSearchOpen] = useState(false);
+  const [pendingStartNumber, setPendingStartNumber] = useState<WhatsAppNumber | null>(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [hasConnectedNumber, setHasConnectedNumber] = useState(false);
+  const [testingWarming, setTestingWarming] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -88,6 +99,15 @@ export default function Warming() {
 
       if (sessionsError) throw sessionsError;
       setSessions(sessionsData as WarmingSession[] || []);
+
+      // Fetch search assignments
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('warming_search_assignments')
+        .select('whatsapp_number_id, search_query, search_city')
+        .eq('user_id', user?.id);
+
+      if (assignmentsError) throw assignmentsError;
+      setAssignments(assignmentsData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Erro ao carregar dados');
@@ -100,7 +120,29 @@ export default function Warming() {
     return sessions.find(s => s.whatsapp_number_id === numberId);
   };
 
+  const getAssignmentForNumber = (numberId: string): SearchAssignment | undefined => {
+    return assignments.find(a => a.whatsapp_number_id === numberId);
+  };
+
   const handleStartWarming = async (numberId: string) => {
+    const number = numbers.find(n => n.id === numberId);
+    if (!number) return;
+
+    // Check if this number has an assigned search
+    const assignment = getAssignmentForNumber(numberId);
+    
+    if (!assignment) {
+      // No search assigned - open dialog to select one
+      setPendingStartNumber(number);
+      setSelectSearchOpen(true);
+      return;
+    }
+
+    // Has assignment - proceed to start
+    await startWarmingSession(numberId, assignment.search_query, assignment.search_city);
+  };
+
+  const startWarmingSession = async (numberId: string, searchQuery: string, searchCity: string | null) => {
     try {
       const existingSession = getSessionForNumber(numberId);
       
@@ -111,7 +153,9 @@ export default function Warming() {
           .update({ 
             status: 'active',
             paused_at: null,
-            started_at: existingSession.started_at || new Date().toISOString()
+            started_at: existingSession.started_at || new Date().toISOString(),
+            assigned_search_query: searchQuery,
+            assigned_search_city: searchCity
           })
           .eq('id', existingSession.id);
 
@@ -125,7 +169,9 @@ export default function Warming() {
             user_id: user?.id,
             whatsapp_number_id: numberId,
             status: 'active',
-            started_at: new Date().toISOString()
+            started_at: new Date().toISOString(),
+            assigned_search_query: searchQuery,
+            assigned_search_city: searchCity
           });
 
         if (error) throw error;
@@ -136,6 +182,13 @@ export default function Warming() {
     } catch (error) {
       console.error('Error starting warming:', error);
       toast.error('Erro ao iniciar aquecimento');
+    }
+  };
+
+  const handleSearchSelected = async (search: { keyword: string; location: string }) => {
+    if (pendingStartNumber) {
+      await startWarmingSession(pendingStartNumber.id, search.keyword, search.location);
+      setPendingStartNumber(null);
     }
   };
 
@@ -164,6 +217,29 @@ export default function Warming() {
   const handleViewDetails = (number: WhatsAppNumber) => {
     setSelectedNumber(number);
     setDetailsOpen(true);
+  };
+
+  const handleTestWarming = async () => {
+    setTestingWarming(true);
+    try {
+      // Call the warming processor directly to test
+      const { data, error } = await supabase.functions.invoke('warming-processor', {
+        body: { test: true }
+      });
+
+      if (error) throw error;
+
+      console.log('Warming processor test result:', data);
+      toast.success('Teste de aquecimento executado com sucesso! Verifique os logs para detalhes.');
+      
+      // Refresh data to see any changes
+      await fetchData();
+    } catch (error) {
+      console.error('Error testing warming:', error);
+      toast.error('Erro ao testar aquecimento');
+    } finally {
+      setTestingWarming(false);
+    }
   };
 
   // Check prerequisites
@@ -331,15 +407,27 @@ export default function Warming() {
               </p>
             </div>
 
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fetchData}
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleTestWarming}
+                disabled={testingWarming || sessions.filter(s => s.status === 'active').length === 0}
+                title="Executar teste do processador de aquecimento"
+              >
+                <TestTube className={`w-4 h-4 mr-2 ${testingWarming ? 'animate-pulse' : ''}`} />
+                {testingWarming ? 'Testando...' : 'Testar'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fetchData}
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
           </div>
 
           {/* Educational Alert */}
@@ -347,7 +435,8 @@ export default function Warming() {
             <Info className="h-4 w-4" />
             <AlertDescription className="text-muted-foreground">
               O aquecimento simula o uso natural do WhatsApp. Nem todas as mensagens recebem resposta, 
-              e isso é esperado. O processo leva cerca de 20 dias para ser concluído.
+              e isso é esperado. O processo leva cerca de 20 dias para ser concluído. 
+              <strong className="text-foreground"> Cada número usa uma busca de leads diferente.</strong>
             </AlertDescription>
           </Alert>
 
@@ -373,16 +462,24 @@ export default function Warming() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {numbers.map((number) => (
-                <WarmingNumberCard
-                  key={number.id}
-                  number={number}
-                  session={getSessionForNumber(number.id)}
-                  onStart={() => handleStartWarming(number.id)}
-                  onPause={() => handlePauseWarming(number.id)}
-                  onViewDetails={() => handleViewDetails(number)}
-                />
-              ))}
+              {numbers.map((number) => {
+                const assignment = getAssignmentForNumber(number.id);
+                return (
+                  <WarmingNumberCard
+                    key={number.id}
+                    number={number}
+                    session={getSessionForNumber(number.id)}
+                    assignment={assignment}
+                    onStart={() => handleStartWarming(number.id)}
+                    onPause={() => handlePauseWarming(number.id)}
+                    onViewDetails={() => handleViewDetails(number)}
+                    onSelectSearch={() => {
+                      setPendingStartNumber(number);
+                      setSelectSearchOpen(true);
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -395,6 +492,21 @@ export default function Warming() {
           onOpenChange={setDetailsOpen}
           number={selectedNumber}
           session={getSessionForNumber(selectedNumber.id)}
+        />
+      )}
+
+      {/* Select Search Dialog */}
+      {pendingStartNumber && user && (
+        <SelectWarmingSearchDialog
+          open={selectSearchOpen}
+          onOpenChange={(open) => {
+            setSelectSearchOpen(open);
+            if (!open) setPendingStartNumber(null);
+          }}
+          userId={user.id}
+          numberId={pendingStartNumber.id}
+          numberName={pendingStartNumber.name}
+          onSearchSelected={handleSearchSelected}
         />
       )}
     </div>

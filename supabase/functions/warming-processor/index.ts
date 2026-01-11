@@ -294,7 +294,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get all active warming sessions
+    // Get all active warming sessions with their search assignments
     const { data: sessions, error: sessionsError } = await supabase
       .from('warming_sessions')
       .select(`
@@ -311,6 +311,13 @@ Deno.serve(async (req) => {
     if (sessionsError) {
       throw sessionsError
     }
+
+    // Get search assignments for all active sessions
+    const sessionNumberIds = sessions?.map((s: any) => s.whatsapp_number_id) || []
+    const { data: assignments } = await supabase
+      .from('warming_search_assignments')
+      .select('whatsapp_number_id, search_query, search_city')
+      .in('whatsapp_number_id', sessionNumberIds)
 
     console.log(`Found ${sessions?.length || 0} active warming sessions`)
 
@@ -416,15 +423,36 @@ Deno.serve(async (req) => {
 
         const usedPhones = new Set(usedInteractions?.map((i: any) => i.lead_phone) || [])
 
-        const { data: leads, error: leadsError } = await supabase
+        // Get the search assignment for this number
+        const assignment = assignments?.find((a: any) => a.whatsapp_number_id === session.whatsapp_number_id)
+        
+        // Build leads query - filter by assigned search if available
+        let leadsQuery = supabase
           .from('leads')
-          .select('id, phone, contact_name')
+          .select('id, phone, contact_name, category, city')
           .eq('user_id', session.user_id)
           .not('phone', 'is', null)
-          .limit(100)
+
+        // Filter by assigned search (category = keyword, city = location)
+        if (assignment) {
+          console.log(`Filtering leads by assigned search: "${assignment.search_query}" in "${assignment.search_city}"`)
+          leadsQuery = leadsQuery.eq('category', assignment.search_query)
+          if (assignment.search_city) {
+            leadsQuery = leadsQuery.eq('city', assignment.search_city)
+          }
+        } else if (session.assigned_search_query) {
+          // Fallback to session's own assigned search
+          console.log(`Filtering leads by session search: "${session.assigned_search_query}" in "${session.assigned_search_city}"`)
+          leadsQuery = leadsQuery.eq('category', session.assigned_search_query)
+          if (session.assigned_search_city) {
+            leadsQuery = leadsQuery.eq('city', session.assigned_search_city)
+          }
+        }
+
+        const { data: leads, error: leadsError } = await leadsQuery.limit(100)
 
         if (leadsError || !leads?.length) {
-          console.log(`No leads available for session ${session.id}`)
+          console.log(`No leads available for session ${session.id} (check search assignment)`)
           continue
         }
 

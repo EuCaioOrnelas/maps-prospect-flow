@@ -10,7 +10,9 @@ import {
   WifiOff,
   Flame,
   Thermometer,
-  ThermometerSun
+  ThermometerSun,
+  Search,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,12 @@ interface WarmingSession {
   current_day: number;
 }
 
+interface SearchAssignment {
+  whatsapp_number_id: string;
+  search_query: string;
+  search_city: string | null;
+}
+
 interface WarmingNumberCardProps {
   number: {
     id: string;
@@ -32,9 +40,11 @@ interface WarmingNumberCardProps {
     is_connected: boolean;
   };
   session?: WarmingSession;
+  assignment?: SearchAssignment;
   onStart: () => void;
   onPause: () => void;
   onViewDetails: () => void;
+  onSelectSearch?: () => void;
 }
 
 const getWarmingStatusConfig = (status: 'cold' | 'warm' | 'hot' | undefined) => {
@@ -87,9 +97,11 @@ const getLevelInfo = (level: number) => {
 export function WarmingNumberCard({
   number,
   session,
+  assignment,
   onStart,
   onPause,
-  onViewDetails
+  onViewDetails,
+  onSelectSearch
 }: WarmingNumberCardProps) {
   const warmingStatus = getWarmingStatusConfig(session?.warming_status);
   const levelInfo = getLevelInfo(session?.warming_level || 0);
@@ -143,6 +155,35 @@ export function WarmingNumberCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Assigned Search Info */}
+        {assignment ? (
+          <div 
+            className="p-3 rounded-lg bg-primary/5 border border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors"
+            onClick={onSelectSearch}
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <Search className="w-4 h-4 text-primary shrink-0" />
+              <span className="font-medium text-foreground truncate">{assignment.search_query}</span>
+            </div>
+            {assignment.search_city && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                <MapPin className="w-3 h-3" />
+                <span>{assignment.search_city}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div 
+            className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 cursor-pointer hover:bg-yellow-500/15 transition-colors"
+            onClick={onSelectSearch}
+          >
+            <p className="text-sm text-yellow-600 flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Clique para selecionar uma busca
+            </p>
+          </div>
+        )}
+
         {/* Level Info */}
         <div>
           <div className="flex items-center justify-between text-sm mb-2">
@@ -214,6 +255,8 @@ export function WarmingNumberCard({
             <Button 
               className="flex-1 bg-primary hover:bg-primary/90" 
               onClick={onStart}
+              disabled={!assignment}
+              title={!assignment ? 'Selecione uma busca primeiro' : undefined}
             >
               <Play className="w-4 h-4 mr-2" />
               {isPaused ? 'Retomar' : 'Iniciar'}

@@ -1091,8 +1091,61 @@ export type Database = {
           },
         ]
       }
+      warming_search_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          leads_count: number | null
+          search_city: string | null
+          search_query: string
+          updated_at: string
+          user_id: string
+          warming_session_id: string | null
+          whatsapp_number_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leads_count?: number | null
+          search_city?: string | null
+          search_query: string
+          updated_at?: string
+          user_id: string
+          warming_session_id?: string | null
+          whatsapp_number_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leads_count?: number | null
+          search_city?: string | null
+          search_query?: string
+          updated_at?: string
+          user_id?: string
+          warming_session_id?: string | null
+          whatsapp_number_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warming_search_assignments_warming_session_id_fkey"
+            columns: ["warming_session_id"]
+            isOneToOne: false
+            referencedRelation: "warming_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warming_search_assignments_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warming_sessions: {
         Row: {
+          assigned_search_city: string | null
+          assigned_search_query: string | null
           completed_at: string | null
           created_at: string
           current_day: number
@@ -1113,6 +1166,8 @@ export type Database = {
           whatsapp_number_id: string
         }
         Insert: {
+          assigned_search_city?: string | null
+          assigned_search_query?: string | null
           completed_at?: string | null
           created_at?: string
           current_day?: number
@@ -1133,6 +1188,8 @@ export type Database = {
           whatsapp_number_id: string
         }
         Update: {
+          assigned_search_city?: string | null
+          assigned_search_query?: string | null
           completed_at?: string | null
           created_at?: string
           current_day?: number
