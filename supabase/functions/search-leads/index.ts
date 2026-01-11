@@ -84,14 +84,56 @@ function normalizePhone(phone: string): string {
   return '55' + clean;
 }
 
-// NOTE: WhatsApp validation is disabled in prospecting
-// Validation is done in the warming processor where we have access to user's connected instance
-// This avoids needing a dedicated validation instance and speeds up search results
+// Dedicated WhatsApp instance for validating numbers in prospecting
+const VALIDATOR_INSTANCE = 'wiizeprospect_03f5ad6b_1767801176186_k4t5eh';
 
-// Placeholder function - always returns true (validation happens in warming)
-async function validateWhatsAppNumber(_phoneNumber: string): Promise<boolean> {
-  // Validation will happen in the warming processor
-  return true;
+// Validate if phone number exists on WhatsApp using dedicated validator instance
+async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+    console.log('Evolution API not configured, skipping validation');
+    return true;
+  }
+
+  try {
+    let normalized = normalizePhone(phoneNumber);
+    
+    // Ensure number starts with 55 for Brazilian numbers
+    if (!normalized.startsWith('55')) {
+      normalized = '55' + normalized;
+    }
+    
+    console.log(`Validating WhatsApp for: ${normalized} using instance ${VALIDATOR_INSTANCE}`);
+    
+    const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/${VALIDATOR_INSTANCE}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY!
+      },
+      body: JSON.stringify({
+        numbers: [normalized]
+      })
+    });
+    
+    if (!response.ok) {
+      console.error(`Validation API error: ${response.status}`);
+      return true; // Assume valid on API error
+    }
+    
+    const result = await response.json();
+    
+    // Result format: [{ exists: true/false, jid: "...", number: "..." }]
+    if (result && Array.isArray(result) && result.length > 0) {
+      const exists = result[0]?.exists === true;
+      console.log(`WhatsApp validation for ${phoneNumber}: ${exists ? 'EXISTS ✓' : 'NOT FOUND ✗'}`);
+      return exists;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('WhatsApp validation error:', error);
+    return true;
+  }
 }
 
 // Validate multiple numbers in parallel (batch of 5)
