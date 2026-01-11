@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -10,10 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
-import { Flame, Info, RefreshCw, Search, Wifi, TestTube } from "lucide-react";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface TestLogEntry {
+  timestamp: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+}
 
 interface WhatsAppNumber {
   id: string;
@@ -46,6 +54,7 @@ interface SearchAssignment {
 
 export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [sessions, setSessions] = useState<WarmingSession[]>([]);
@@ -58,6 +67,8 @@ export default function Warming() {
   const [leadsCount, setLeadsCount] = useState(0);
   const [hasConnectedNumber, setHasConnectedNumber] = useState(false);
   const [testingWarming, setTestingWarming] = useState(false);
+  const [testLogs, setTestLogs] = useState<TestLogEntry[]>([]);
+  const [showTestLogs, setShowTestLogs] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -265,23 +276,69 @@ export default function Warming() {
     setDetailsOpen(true);
   };
 
+  const addTestLog = (type: TestLogEntry['type'], message: string) => {
+    setTestLogs(prev => [...prev, {
+      timestamp: new Date().toLocaleTimeString('pt-BR'),
+      type,
+      message
+    }]);
+  };
+
   const handleTestWarming = async () => {
     setTestingWarming(true);
+    setTestLogs([]);
+    setShowTestLogs(true);
+    
+    addTestLog('info', 'Iniciando teste do processador de aquecimento...');
+    
     try {
-      // Call the warming processor directly to test
+      addTestLog('info', 'Chamando warming-processor com { test: true }...');
+      
       const { data, error } = await supabase.functions.invoke('warming-processor', {
         body: { test: true }
       });
 
-      if (error) throw error;
+      if (error) {
+        addTestLog('error', `Erro na chamada: ${error.message}`);
+        throw error;
+      }
 
       console.log('Warming processor test result:', data);
-      toast.success('Teste de aquecimento executado com sucesso! Verifique os logs para detalhes.');
       
-      // Refresh data to see any changes
+      // Parse response data for logs
+      if (data) {
+        addTestLog('success', 'Resposta recebida do processador');
+        
+        if (data.activeSessions !== undefined) {
+          addTestLog('info', `Sessões ativas encontradas: ${data.activeSessions}`);
+        }
+        
+        if (data.messagesSent !== undefined) {
+          addTestLog('success', `Mensagens enviadas: ${data.messagesSent}`);
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+          data.errors.forEach((err: string) => {
+            addTestLog('error', err);
+          });
+        }
+        
+        if (data.details) {
+          addTestLog('info', `Detalhes: ${JSON.stringify(data.details)}`);
+        }
+        
+        if (data.message) {
+          addTestLog('info', data.message);
+        }
+      }
+      
+      addTestLog('success', 'Teste concluído com sucesso!');
+      toast.success('Teste de aquecimento executado!');
+      
       await fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error testing warming:', error);
+      addTestLog('error', `Erro ao testar: ${error.message || 'Erro desconhecido'}`);
       toast.error('Erro ao testar aquecimento');
     } finally {
       setTestingWarming(false);
@@ -454,16 +511,18 @@ export default function Warming() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleTestWarming}
-                disabled={testingWarming || sessions.filter(s => s.status === 'active').length === 0}
-                title="Executar teste do processador de aquecimento"
-              >
-                <TestTube className={`w-4 h-4 mr-2 ${testingWarming ? 'animate-pulse' : ''}`} />
-                {testingWarming ? 'Testando...' : 'Testar'}
-              </Button>
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleTestWarming}
+                  disabled={testingWarming || sessions.filter(s => s.status === 'active').length === 0}
+                  title="Executar teste do processador de aquecimento"
+                >
+                  <TestTube className={`w-4 h-4 mr-2 ${testingWarming ? 'animate-pulse' : ''}`} />
+                  {testingWarming ? 'Testando...' : 'Testar'}
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -527,6 +586,52 @@ export default function Warming() {
                 );
               })}
             </div>
+          )}
+
+          {/* Test Logs Panel - Admin Only */}
+          {isAdmin && showTestLogs && testLogs.length > 0 && (
+            <Card className="mt-6 border-primary/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TestTube className="w-4 h-4 text-primary" />
+                    Logs do Teste de Aquecimento
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setShowTestLogs(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-48 rounded-md border bg-muted/30 p-3">
+                  <div className="space-y-2">
+                    {testLogs.map((log, index) => (
+                      <div 
+                        key={index} 
+                        className={`flex items-start gap-2 text-sm ${
+                          log.type === 'error' ? 'text-destructive' :
+                          log.type === 'success' ? 'text-green-500' :
+                          log.type === 'warning' ? 'text-yellow-500' :
+                          'text-muted-foreground'
+                        }`}
+                      >
+                        {log.type === 'success' && <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+                        {log.type === 'error' && <XCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+                        {log.type === 'warning' && <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+                        {log.type === 'info' && <Info className="w-4 h-4 mt-0.5 shrink-0" />}
+                        <span className="text-xs text-muted-foreground shrink-0">[{log.timestamp}]</span>
+                        <span className="break-all">{log.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>
