@@ -282,16 +282,53 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Check for force parameter (admin only)
+    let forceRun = false
+    try {
+      const body = await req.json()
+      if (body.force === true) {
+        // Verify admin via authorization header
+        const authHeader = req.headers.get('authorization')
+        if (authHeader) {
+          const token = authHeader.replace('Bearer ', '')
+          const { data: { user } } = await supabase.auth.getUser(token)
+          
+          if (user) {
+            // Check if user is admin directly in user_roles table
+            const { data: adminRole } = await supabase
+              .from('user_roles')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('role', 'admin')
+              .single()
+            
+            if (adminRole) {
+              forceRun = true
+              console.log('[WARMING] Force mode enabled by admin:', user.email)
+            } else {
+              console.log('[WARMING] Force mode denied - user is not admin')
+            }
+          }
+        }
+      }
+    } catch {
+      // No body or invalid JSON, continue normally
+    }
+
     console.log('=== WARMING PROCESSOR START ===')
     console.log('Time:', new Date().toISOString())
 
-    // Check business hours (Mon-Fri, 8h-18h São Paulo)
-    if (!isBusinessHours()) {
+    // Check business hours (Mon-Fri, 8h-18h São Paulo) - skip if force mode
+    if (!forceRun && !isBusinessHours()) {
       console.log('Outside business hours (Mon-Fri, 08:00-18:00 São Paulo), skipping')
       return new Response(
         JSON.stringify({ message: 'Outside business hours' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+    
+    if (forceRun) {
+      console.log('[WARMING] Bypassing business hours check (force mode)')
     }
 
     // Get all active warming sessions with their search assignments
