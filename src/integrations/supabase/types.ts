@@ -789,6 +789,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shared_reports: {
         Row: {
           created_at: string
@@ -1387,6 +1423,15 @@ export type Database = {
       }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
+      log_security_event: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_resource_id?: string
+          p_resource_type: string
+        }
+        Returns: undefined
+      }
       normalize_brazilian_phone: {
         Args: { phone_input: string }
         Returns: string
