@@ -155,15 +155,19 @@ export function WarmingNumberCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Assigned Search Info */}
-        {assignment ? (
+        {/* Assigned Search Info - Only show if assigned, clicking allows changing */}
+        {assignment && (
           <div 
             className="p-3 rounded-lg bg-primary/5 border border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors"
             onClick={onSelectSearch}
+            title="Clique para trocar a busca"
           >
-            <div className="flex items-center gap-2 text-sm">
-              <Search className="w-4 h-4 text-primary shrink-0" />
-              <span className="font-medium text-foreground truncate">{assignment.search_query}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm min-w-0">
+                <Search className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-medium text-foreground truncate">{assignment.search_query}</span>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0 ml-2">Trocar</span>
             </div>
             {assignment.search_city && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -171,16 +175,6 @@ export function WarmingNumberCard({
                 <span>{assignment.search_city}</span>
               </div>
             )}
-          </div>
-        ) : (
-          <div 
-            className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 cursor-pointer hover:bg-yellow-500/15 transition-colors"
-            onClick={onSelectSearch}
-          >
-            <p className="text-sm text-yellow-600 flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              Clique para selecionar uma busca
-            </p>
           </div>
         )}
 
@@ -255,8 +249,6 @@ export function WarmingNumberCard({
             <Button 
               className="flex-1 bg-primary hover:bg-primary/90" 
               onClick={onStart}
-              disabled={!assignment}
-              title={!assignment ? 'Selecione uma busca primeiro' : undefined}
             >
               <Play className="w-4 h-4 mr-2" />
               {isPaused ? 'Retomar' : 'Iniciar'}

@@ -186,9 +186,55 @@ export default function Warming() {
   };
 
   const handleSearchSelected = async (search: { keyword: string; location: string }) => {
-    if (pendingStartNumber) {
-      await startWarmingSession(pendingStartNumber.id, search.keyword, search.location);
+    if (!pendingStartNumber || !user) return;
+    
+    const numberId = pendingStartNumber.id;
+    const existingSession = getSessionForNumber(numberId);
+    const existingAssignment = getAssignmentForNumber(numberId);
+    
+    try {
+      // Update or create the assignment
+      if (existingAssignment) {
+        await supabase
+          .from('warming_search_assignments')
+          .update({
+            search_query: search.keyword,
+            search_city: search.location || null
+          })
+          .eq('whatsapp_number_id', numberId)
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('warming_search_assignments')
+          .insert({
+            user_id: user.id,
+            whatsapp_number_id: numberId,
+            search_query: search.keyword,
+            search_city: search.location || null
+          });
+      }
+      
+      // Also update the session if it exists
+      if (existingSession) {
+        await supabase
+          .from('warming_sessions')
+          .update({
+            assigned_search_query: search.keyword,
+            assigned_search_city: search.location || null
+          })
+          .eq('id', existingSession.id);
+          
+        toast.success('Busca atualizada');
+      } else {
+        // No session yet - start the warming
+        await startWarmingSession(numberId, search.keyword, search.location || null);
+      }
+      
       setPendingStartNumber(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error saving search assignment:', error);
+      toast.error('Erro ao salvar busca');
     }
   };
 
