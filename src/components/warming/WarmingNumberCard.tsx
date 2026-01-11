@@ -233,27 +233,6 @@ export function WarmingNumberCard({
           </div>
         </div>
 
-        {/* Daily Progress Indicator - Only show when session is active */}
-        {isActive && session && (
-          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-500">Progresso do dia</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                <span>Próximo: {nextMessageTime}</span>
-              </div>
-            </div>
-            <Progress value={dailyProgress} className="h-2 bg-blue-500/20" />
-            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-              <span>{messagesSentToday} / {dailyLimit} mensagens hoje</span>
-              <span>{dailyProgress >= 100 ? '✓ Meta atingida' : `${dailyLimit - messagesSentToday} restantes`}</span>
-            </div>
-          </div>
-        )}
-
         {/* Leads Used */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Leads utilizados</span>
