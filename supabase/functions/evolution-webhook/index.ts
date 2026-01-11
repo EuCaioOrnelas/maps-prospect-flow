@@ -714,10 +714,129 @@ serve(async (req) => {
                         metadata: { automatic: true, trigger: 'webhook_response' },
                       });
                     }
+                    }
                   }
                 }
-              }
-              
+                
+                // ===== WARMING RESPONSE DETECTION =====
+                // Check if this message is a response to a warming interaction
+                const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
+                const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
+                
+                // Find warming interactions waiting for response from this phone
+                const { data: warmingInteractions } = await supabase
+                  .from('warming_interactions')
+                  .select('*, warming_sessions!inner(*)')
+                  .eq('warming_sessions.user_id', whatsappNumber.user_id)
+                  .eq('status', 'in_progress')
+                  .eq('conversation_ended', false);
+                
+                if (warmingInteractions && warmingInteractions.length > 0) {
+                  // Find matching interaction by phone (compare last 8 digits)
+                  const matchingInteraction = warmingInteractions.find((i: any) => {
+                    const interactionPhoneLast8 = i.lead_phone.replace(/\D/g, '').slice(-8);
+                    return interactionPhoneLast8 === leadPhoneLast8;
+                  });
+                  
+                  if (matchingInteraction) {
+                    console.log('=== WARMING RESPONSE DETECTED ===');
+                    console.log('Interaction ID:', matchingInteraction.id);
+                    console.log('Lead phone:', matchingInteraction.lead_phone);
+                    console.log('Response:', content?.substring(0, 50));
+                    
+                    const currentLevel = matchingInteraction.warming_level;
+                    const messagesSent = matchingInteraction.messages_sent;
+                    const messagesReceived = matchingInteraction.messages_received + 1;
+                    
+                    // Determine if we should send a follow-up response
+                    let shouldRespond = false;
+                    let responseMessages: string[] = [];
+                    let responseDelay: [number, number] = [3, 10];
+                    let shouldEndConversation = false;
+                    
+                    // Level 2: Send one response then end
+                    if (currentLevel === 2 && messagesReceived === 1 && messagesSent === 1) {
+                      shouldRespond = true;
+                      responseMessages = [
+                        'Tudo sim, obrigado!',
+                        'tudo sim, obrigado!',
+                        'Tudo certo por aqui',
+                        'tudo certo por aqui'
+                      ];
+                      responseDelay = [3, 10];
+                      shouldEndConversation = true;
+                    }
+                    // Level 3: First response -> send follow-up question
+                    else if (currentLevel === 3 && messagesReceived === 1 && messagesSent === 1) {
+                      shouldRespond = true;
+                      responseMessages = [
+                        'Tudo bem por aí?',
+                        'tudo bem por aí?',
+                        'Tudo certo hoje?',
+                        'tudo certo hoje?'
+                      ];
+                      responseDelay = [2, 8];
+                      shouldEndConversation = false;
+                    }
+                    // Level 3: Second response -> send closing
+                    else if (currentLevel === 3 && messagesReceived === 2 && messagesSent === 2) {
+                      shouldRespond = true;
+                      responseMessages = [
+                        'Que bom!',
+                        'que bom!',
+                        'Perfeito, obrigado!',
+                        'perfeito, obrigado!'
+                      ];
+                      responseDelay = [3, 10];
+                      shouldEndConversation = true;
+                    }
+                    // Level 4: Send neutral response then end
+                    else if (currentLevel === 4 && messagesReceived === 1 && messagesSent === 1) {
+                      shouldRespond = true;
+                      responseMessages = [
+                        'Perfeito, obrigado!',
+                        'perfeito, obrigado!',
+                        'Combinado, agradeço!',
+                        'combinado, agradeço!'
+                      ];
+                      responseDelay = [5, 15];
+                      shouldEndConversation = true;
+                    }
+                    // Max messages reached, end conversation
+                    else if (messagesSent >= 3) {
+                      shouldEndConversation = true;
+                    }
+                    
+                    // Update the interaction
+                    await supabase
+                      .from('warming_interactions')
+                      .update({
+                        messages_received: messagesReceived,
+                        last_response_at: new Date().toISOString(),
+                        status: shouldEndConversation && !shouldRespond ? 'completed' : 'in_progress',
+                        conversation_ended: shouldEndConversation && !shouldRespond
+                      })
+                      .eq('id', matchingInteraction.id);
+                    
+                    // Schedule response if needed (using background task)
+                    if (shouldRespond && responseMessages.length > 0) {
+                      const delayMs = (Math.floor(Math.random() * (responseDelay[1] - responseDelay[0] + 1)) + responseDelay[0]) * 60 * 1000;
+                      const responseMessage = responseMessages[Math.floor(Math.random() * responseMessages.length)];
+                      
+                      console.log(`Scheduling warming response in ${delayMs / 60000} minutes`);
+                      
+                      // Store pending response for the warming processor to handle
+                      await supabase
+                        .from('warming_interactions')
+                        .update({
+                          status: 'pending_response',
+                          last_message_sent: responseMessage,
+                          conversation_ended: shouldEndConversation
+                        })
+                        .eq('id', matchingInteraction.id);
+                    }
+                  }
+                }
               await supabase
                 .from('conversations')
                 .update(updateData)
