@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
-import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle } from "lucide-react";
+import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle } from "lucide-react";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -70,6 +71,9 @@ export default function Warming() {
   const [testingWarming, setTestingWarming] = useState(false);
   const [testLogs, setTestLogs] = useState<TestLogEntry[]>([]);
   const [showTestLogs, setShowTestLogs] = useState(false);
+  const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
+  const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -275,6 +279,60 @@ export default function Warming() {
   const handleViewDetails = (number: WhatsAppNumber) => {
     setSelectedNumber(number);
     setDetailsOpen(true);
+  };
+
+  const handleReconnect = (number: WhatsAppNumber) => {
+    setReconnectingNumber(number);
+    setReconnectDialogOpen(true);
+  };
+
+  const handleReconnectSuccess = async () => {
+    setReconnectDialogOpen(false);
+    setReconnectingNumber(null);
+    
+    toast.success('Número reconectado! Sincronizando mensagens...');
+    
+    // Sync messages after reconnection
+    if (reconnectingNumber?.instance_name) {
+      setIsSyncing(true);
+      try {
+        await supabase.functions.invoke('evolution-sync-messages', {
+          body: {
+            instanceName: reconnectingNumber.instance_name,
+            numberId: reconnectingNumber.id,
+            lastSyncAt: new Date().toISOString()
+          }
+        });
+        toast.success('Mensagens sincronizadas!');
+      } catch (error) {
+        console.error('Error syncing messages:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+    
+    // Refresh data and auto-resume warming if it was paused due to disconnection
+    await fetchData();
+    
+    // Find the session for this number and resume if paused due to disconnection
+    const session = getSessionForNumber(reconnectingNumber?.id || '');
+    if (session?.status === 'paused' && session?.error_message?.includes('desconectado')) {
+      try {
+        await supabase
+          .from('warming_sessions')
+          .update({
+            status: 'active',
+            paused_at: null,
+            error_message: null
+          })
+          .eq('id', session.id);
+        
+        toast.success('Aquecimento retomado automaticamente!');
+        await fetchData();
+      } catch (error) {
+        console.error('Error resuming warming:', error);
+      }
+    }
   };
 
   const addTestLog = (type: TestLogEntry['type'], message: string) => {
@@ -570,11 +628,12 @@ export default function Warming() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {numbers.map((number) => {
                 const assignment = getAssignmentForNumber(number.id);
+                const session = getSessionForNumber(number.id);
                 return (
                   <WarmingNumberCard
                     key={number.id}
                     number={number}
-                    session={getSessionForNumber(number.id)}
+                    session={session}
                     assignment={assignment}
                     onStart={() => handleStartWarming(number.id)}
                     onPause={() => handlePauseWarming(number.id)}
@@ -583,6 +642,7 @@ export default function Warming() {
                       setPendingStartNumber(number);
                       setSelectSearchOpen(true);
                     }}
+                    onReconnect={!number.is_connected && number.instance_name ? () => handleReconnect(number) : undefined}
                   />
                 );
               })}
@@ -666,6 +726,22 @@ export default function Warming() {
           numberId={pendingStartNumber.id}
           numberName={pendingStartNumber.name}
           onSearchSelected={handleSearchSelected}
+        />
+      )}
+
+      {/* Reconnect Dialog */}
+      {reconnectingNumber && (
+        <ReconnectDialog
+          open={reconnectDialogOpen}
+          onOpenChange={(open) => {
+            setReconnectDialogOpen(open);
+            if (!open) setReconnectingNumber(null);
+          }}
+          instanceName={reconnectingNumber.instance_name || ''}
+          numberId={reconnectingNumber.id}
+          numberName={reconnectingNumber.name}
+          qrCode={null}
+          onReconnected={handleReconnectSuccess}
         />
       )}
     </div>
