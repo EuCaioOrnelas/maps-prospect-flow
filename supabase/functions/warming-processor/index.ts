@@ -251,6 +251,19 @@ function getUniqueMessage(messages: string[]): string {
   return message
 }
 
+// Normalize phone number to format 5511999999999
+function normalizePhoneForValidation(phone: string): string {
+  let clean = phone.replace(/\D/g, '')
+  
+  // Remove country code if present, then re-add it
+  if (clean.startsWith('55') && clean.length >= 12) {
+    clean = clean.substring(2)
+  }
+  
+  // Add country code
+  return '55' + clean
+}
+
 // Validate if phone number exists on WhatsApp
 async function validateWhatsAppNumber(
   instanceName: string,
@@ -259,7 +272,8 @@ async function validateWhatsAppNumber(
   evolutionApiKey: string
 ): Promise<{ exists: boolean; formattedNumber?: string }> {
   try {
-    const formattedPhone = phoneNumber.replace(/\D/g, '')
+    const formattedPhone = normalizePhoneForValidation(phoneNumber)
+    console.log(`Checking WhatsApp for: ${formattedPhone}`)
     
     const response = await fetch(`${evolutionApiUrl}/chat/whatsappNumbers/${instanceName}`, {
       method: 'POST',
@@ -273,11 +287,13 @@ async function validateWhatsAppNumber(
     })
 
     if (!response.ok) {
-      console.log(`Validation request failed for ${formattedPhone}`)
+      const errorText = await response.text()
+      console.log(`Validation request failed for ${formattedPhone}: ${errorText}`)
       return { exists: false }
     }
 
     const result = await response.json()
+    console.log(`Validation result for ${formattedPhone}:`, JSON.stringify(result))
     
     // Check if the number exists in the response
     if (Array.isArray(result) && result.length > 0) {
