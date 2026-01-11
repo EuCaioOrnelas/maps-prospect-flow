@@ -12,12 +12,20 @@ import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
 import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
-import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle } from "lucide-react";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical } from "lucide-react";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TestLogEntry {
   timestamp: string;
@@ -76,6 +84,20 @@ export default function Warming() {
   const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showBetaWarning, setShowBetaWarning] = useState(false);
+
+  // Check if beta warning was already shown
+  useEffect(() => {
+    const betaWarningSeen = localStorage.getItem('warming_beta_warning_seen');
+    if (!betaWarningSeen) {
+      setShowBetaWarning(true);
+    }
+  }, []);
+
+  const handleCloseBetaWarning = () => {
+    localStorage.setItem('warming_beta_warning_seen', 'true');
+    setShowBetaWarning(false);
+  };
 
   useEffect(() => {
     if (user) {
@@ -788,6 +810,50 @@ export default function Warming() {
           onReconnected={handleReconnectSuccess}
         />
       )}
+
+      {/* Beta Warning Dialog */}
+      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle className="text-xl">Sistema em Versão Beta</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                O sistema de <strong>Aquecimento de Números</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+              </p>
+              <p>
+                Estamos trabalhando constantemente para melhorar a experiência e corrigir possíveis falhas.
+              </p>
+              <div className="bg-muted/50 p-3 rounded-lg border">
+                <p className="text-sm">
+                  <strong>Encontrou algum problema?</strong><br />
+                  Entre em contato conosco pela página de <span className="text-primary font-medium">Contato</span> que vamos trabalhar para corrigir o mais rápido possível!
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/contact')}
+              className="w-full sm:w-auto"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Ir para Contato
+            </Button>
+            <Button 
+              onClick={handleCloseBetaWarning}
+              className="w-full sm:w-auto"
+            >
+              Entendi, continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
