@@ -40,7 +40,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   // Keep reports submenu open if on a reports page
-  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports";
+  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports";
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -64,6 +64,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       url: "/whatsapp/reports",
       icon: Send,
       active: currentPath === "/whatsapp/reports"
+    },
+    {
+      title: "Relatórios de Aquecimento",
+      url: "/warming/reports",
+      icon: Flame,
+      active: currentPath === "/warming/reports"
     },
   ];
 
@@ -215,12 +221,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
               </button>
 
-              {/* Submenu */}
               <div
                 className={cn(
                   "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
                   isHovered && (isReportsOpen || isOnReportsPage)
-                    ? "max-h-24 opacity-100 mt-1"
+                    ? "max-h-32 opacity-100 mt-1"
                     : "max-h-0 opacity-0"
                 )}
               >

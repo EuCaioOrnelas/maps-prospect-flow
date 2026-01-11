@@ -9,6 +9,7 @@ import { ptBR } from "date-fns/locale";
 
 interface WarmingStatsProps {
   userId: string;
+  selectedNumberId?: string | null;
 }
 
 interface DailyStats {
@@ -27,7 +28,7 @@ interface InteractionStats {
   averageResponseTime: string;
 }
 
-export function WarmingStatsPanel({ userId }: WarmingStatsProps) {
+export function WarmingStatsPanel({ userId, selectedNumberId }: WarmingStatsProps) {
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [stats, setStats] = useState<InteractionStats>({
     totalMessagesSent: 0,
@@ -43,26 +44,39 @@ export function WarmingStatsPanel({ userId }: WarmingStatsProps) {
     if (userId) {
       fetchStats();
     }
-  }, [userId]);
+  }, [userId, selectedNumberId]);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
       
-      // Fetch all interactions for the user
-      const { data: interactions, error: interactionsError } = await supabase
+      // Build query for interactions
+      let interactionsQuery = supabase
         .from('warming_interactions')
-        .select('*')
+        .select('*, warming_sessions!inner(whatsapp_number_id)')
         .eq('user_id', userId);
+
+      // Filter by number if selected
+      if (selectedNumberId) {
+        interactionsQuery = interactionsQuery.eq('warming_sessions.whatsapp_number_id', selectedNumberId);
+      }
+
+      const { data: interactions, error: interactionsError } = await interactionsQuery;
 
       if (interactionsError) throw interactionsError;
 
-      // Fetch active sessions count
-      const { data: sessions, error: sessionsError } = await supabase
+      // Build query for active sessions
+      let sessionsQuery = supabase
         .from('warming_sessions')
         .select('*')
         .eq('user_id', userId)
         .eq('status', 'active');
+
+      if (selectedNumberId) {
+        sessionsQuery = sessionsQuery.eq('whatsapp_number_id', selectedNumberId);
+      }
+
+      const { data: sessions, error: sessionsError } = await sessionsQuery;
 
       if (sessionsError) throw sessionsError;
 
@@ -74,7 +88,7 @@ export function WarmingStatsPanel({ userId }: WarmingStatsProps) {
         : 0;
       const totalLeadsContacted = interactions?.length || 0;
 
-      // Calculate average response time (simplified - based on interactions with responses)
+      // Calculate average response time
       const respondedInteractions = interactions?.filter(i => i.last_response_at && i.last_message_at) || [];
       let avgResponseTime = "-";
       
@@ -159,101 +173,105 @@ export function WarmingStatsPanel({ userId }: WarmingStatsProps) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-4">
-              <div className="h-12 bg-muted rounded" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-16 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 mb-8">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* KPI Cards - 2 rows of 3 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Row 1 */}
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-primary" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Msg Enviadas</p>
-                <p className="text-xl font-bold text-foreground">{stats.totalMessagesSent}</p>
+                <p className="text-sm text-muted-foreground">Mensagens Enviadas</p>
+                <p className="text-2xl font-bold text-foreground">{stats.totalMessagesSent}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-green-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <MessageCircle className="w-6 h-6 text-green-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Respostas</p>
-                <p className="text-xl font-bold text-foreground">{stats.totalMessagesReceived}</p>
+                <p className="text-sm text-muted-foreground">Respostas Recebidas</p>
+                <p className="text-2xl font-bold text-foreground">{stats.totalMessagesReceived}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Percent className="w-5 h-5 text-blue-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Percent className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Taxa Resposta</p>
-                <p className="text-xl font-bold text-foreground">{stats.responseRate}%</p>
+                <p className="text-sm text-muted-foreground">Taxa de Resposta</p>
+                <p className="text-2xl font-bold text-foreground">{stats.responseRate}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Row 2 */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                <Users className="w-6 h-6 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Leads Utilizados</p>
+                <p className="text-2xl font-bold text-foreground">{stats.totalLeadsContacted}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-orange-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Leads Usados</p>
-                <p className="text-xl font-bold text-foreground">{stats.totalLeadsContacted}</p>
+                <p className="text-sm text-muted-foreground">Sessões Ativas</p>
+                <p className="text-2xl font-bold text-foreground">{stats.activeSessions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-purple-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-cyan-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Sessões Ativas</p>
-                <p className="text-xl font-bold text-foreground">{stats.activeSessions}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-cyan-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Tempo Médio</p>
-                <p className="text-xl font-bold text-foreground">{stats.averageResponseTime}</p>
+                <p className="text-sm text-muted-foreground">Tempo Médio de Resposta</p>
+                <p className="text-2xl font-bold text-foreground">{stats.averageResponseTime}</p>
               </div>
             </div>
           </CardContent>
