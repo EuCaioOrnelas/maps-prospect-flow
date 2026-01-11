@@ -356,18 +356,25 @@ async function checkForAutoPause(
   const fiveDaysAgo = new Date()
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
   
+  // Only count SENT messages (not invalid_number entries)
   const { data: recentInteractions } = await supabase
     .from('warming_interactions')
-    .select('messages_received')
+    .select('messages_received, messages_sent, status')
     .eq('warming_session_id', sessionId)
     .gte('created_at', fiveDaysAgo.toISOString())
   
-  if (!recentInteractions || recentInteractions.length < 5) {
+  // Filter to only sent messages (exclude invalid_number)
+  const sentMessages = recentInteractions?.filter((i: any) => 
+    i.status !== 'invalid_number' && i.messages_sent > 0
+  ) || []
+  
+  // Need at least 5 actual sent messages to trigger pause
+  if (sentMessages.length < 5) {
     return false
   }
   
-  // Check if all recent interactions have 0 responses
-  const allNoResponse = recentInteractions.every((i: any) => i.messages_received === 0)
+  // Check if all recent sent messages have 0 responses
+  const allNoResponse = sentMessages.every((i: any) => i.messages_received === 0)
   return allNoResponse
 }
 
@@ -734,12 +741,15 @@ Deno.serve(async (req) => {
         
         console.log(`${availableLeads.length} leads available for warming`)
 
-        // Try to find a valid WhatsApp number (up to 5 attempts)
+        // Try to find a valid WhatsApp number (up to 20 attempts to handle landlines)
         let validLead = null
         let validatedPhone = ''
         const invalidPhones: string[] = []
+        const maxValidationAttempts = Math.min(20, availableLeads.length)
         
-        for (let attempt = 0; attempt < Math.min(5, availableLeads.length); attempt++) {
+        console.log(`Will try up to ${maxValidationAttempts} validation attempts from ${availableLeads.length} available leads`)
+        
+        for (let attempt = 0; attempt < maxValidationAttempts; attempt++) {
           // Pick a random lead that hasn't been marked invalid in this session
           const candidateLeads = availableLeads.filter((l: any) => !invalidPhones.includes(l.phone))
           if (candidateLeads.length === 0) break
