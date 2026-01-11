@@ -323,6 +323,66 @@ Deno.serve(async (req) => {
 
     let totalMessagesSent = 0
     let sessionsProcessed = 0
+    let followUpsSent = 0
+
+    // ========== FIRST: Process pending follow-up responses ==========
+    console.log('\n=== Processing pending follow-up responses ===')
+    
+    const { data: pendingResponses } = await supabase
+      .from('warming_interactions')
+      .select(`
+        *,
+        warming_sessions!inner(
+          id,
+          user_id,
+          whatsapp_number_id,
+          whatsapp_numbers!inner(instance_name, is_connected)
+        )
+      `)
+      .eq('status', 'pending_response')
+      .eq('warming_sessions.status', 'active')
+    
+    if (pendingResponses && pendingResponses.length > 0) {
+      console.log(`Found ${pendingResponses.length} pending follow-up responses`)
+      
+      for (const interaction of pendingResponses) {
+        if (!interaction.last_message_sent) continue
+        if (!interaction.warming_sessions.whatsapp_numbers.is_connected) continue
+        
+        const instanceName = interaction.warming_sessions.whatsapp_numbers.instance_name
+        
+        console.log(`Sending follow-up to ${interaction.lead_phone}: "${interaction.last_message_sent}"`)
+        
+        const sendResult = await sendMessage(
+          instanceName,
+          interaction.lead_phone,
+          interaction.last_message_sent,
+          evolutionApiUrl,
+          evolutionApiKey
+        )
+        
+        if (sendResult.success) {
+          await supabase
+            .from('warming_interactions')
+            .update({
+              status: interaction.conversation_ended ? 'completed' : 'in_progress',
+              messages_sent: interaction.messages_sent + 1,
+              last_message_at: new Date().toISOString()
+            })
+            .eq('id', interaction.id)
+          
+          followUpsSent++
+          console.log(`✓ Follow-up sent successfully`)
+        } else {
+          console.log(`✗ Failed to send follow-up`)
+        }
+        
+        // Small delay between messages
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
+    
+    console.log(`\n=== Processing new warming messages ===`)
 
     for (const session of sessions || []) {
       try {
@@ -557,12 +617,13 @@ Deno.serve(async (req) => {
     }
 
     console.log(`\n=== WARMING PROCESSOR END ===`)
-    console.log(`Messages sent: ${totalMessagesSent}, Sessions processed: ${sessionsProcessed}`)
+    console.log(`Messages sent: ${totalMessagesSent}, Follow-ups sent: ${followUpsSent}, Sessions processed: ${sessionsProcessed}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         messagesSent: totalMessagesSent,
+        followUpsSent: followUpsSent,
         sessionsProcessed: sessionsProcessed,
         totalSessions: sessions?.length || 0
       }),
