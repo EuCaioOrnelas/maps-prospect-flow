@@ -55,6 +55,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 interface SearchHistoryItem {
   id: string;
@@ -560,7 +561,8 @@ const Reports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <BackgroundGlow />
       {/* Sidebar - Desktop only */}
       <AppSidebar profile={profile} />
 

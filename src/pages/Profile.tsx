@@ -35,6 +35,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 const Profile = () => {
   const { profile, user, refreshProfile } = useAuth();
@@ -220,7 +221,8 @@ const Profile = () => {
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <BackgroundGlow />
       <SEO 
         title="Meu Perfil - WiizeProspect"
         description="Gerencie seu perfil e configurações da conta WiizeProspect"

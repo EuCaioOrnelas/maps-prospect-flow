@@ -43,6 +43,7 @@ import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
 import { useOnboardingModals } from "@/hooks/useOnboardingModals";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 interface Lead {
   name: string;
   category: string;
@@ -478,7 +479,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      {/* Background Glows */}
+      <BackgroundGlow />
       {/* Sidebar - Desktop only */}
       <AppSidebar 
         profile={profile} 

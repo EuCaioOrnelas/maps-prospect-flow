@@ -5,6 +5,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -605,7 +606,8 @@ export default function Warming() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <BackgroundGlow />
       <SEO 
         title="Aquecimento de Números | WiizeProspect"
         description="Sistema de aquecimento inteligente para números WhatsApp"

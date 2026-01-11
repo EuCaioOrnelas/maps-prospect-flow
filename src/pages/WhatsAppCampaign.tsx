@@ -40,6 +40,7 @@ import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 export interface Lead {
   name: string;
@@ -750,7 +751,8 @@ const WhatsAppCampaign = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <BackgroundGlow />
       <DisclaimerModal />
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
