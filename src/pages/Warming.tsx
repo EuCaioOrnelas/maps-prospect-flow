@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { Flame, Info, RefreshCw, Search, Wifi } from "lucide-react";
@@ -321,6 +322,9 @@ export default function Warming() {
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
                   Aquecimento de Números
                 </h1>
+                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-xs font-semibold">
+                  BETA
+                </Badge>
               </div>
               <p className="text-muted-foreground">
                 Prepare seus números novos para uso comercial de forma segura e automática
