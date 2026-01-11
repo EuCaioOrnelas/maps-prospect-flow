@@ -177,6 +177,8 @@ const Dashboard = () => {
           return;
         }
 
+        console.log('[Dashboard] Fetched search history:', data?.length, 'items for user:', user.id);
+
         setSearchHistory((data || []).map(item => ({
           ...item,
           leads: Array.isArray(item.leads) ? (item.leads as unknown as Lead[]) : []
