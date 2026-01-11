@@ -12,12 +12,15 @@ import {
   Megaphone,
   Users,
   Flame,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 import { useTotalUnread } from "@/hooks/useTotalUnread";
+import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AppSidebarProps {
   profile?: {
@@ -35,6 +38,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { totalUnread } = useTotalUnread();
+  const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
@@ -299,25 +303,51 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
             {/* Aquecimento */}
             <li>
-              <Link
-                to={mainNavItems[2].url}
-                className={cn(
-                  "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
-                  mainNavItems[2].active 
-                    ? "bg-primary/20 text-primary font-medium" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                )}
-              >
-                <Flame size={20} className="shrink-0" />
-                <span
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={mainNavItems[2].url}
+                      className={cn(
+                        "flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200 relative",
+                        mainNavItems[2].active 
+                          ? "bg-primary/20 text-primary font-medium" 
+                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      )}
+                    >
+                      <div className="relative shrink-0">
+                        <Flame size={20} />
+                        {hasDisconnectedWarming && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
+                            <AlertTriangle size={8} className="text-destructive-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300 flex-1",
+                          isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                        )}
+                      >
+                        {mainNavItems[2].title}
+                      </span>
+                      {hasDisconnectedWarming && isHovered && (
+                        <span className="text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded shrink-0">
+                          !
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  {hasDisconnectedWarming && !isHovered && (
+                    <TooltipContent side="right" className="bg-destructive text-destructive-foreground">
+                      <p className="font-medium">Número desconectado</p>
+                      <p className="text-xs opacity-90">
+                        {disconnectedNumbers.length} número(s) precisa(m) reconectar
+                      </p>
+                    </TooltipContent>
                   )}
-                >
-                  {mainNavItems[2].title}
-                </span>
-              </Link>
+                </Tooltip>
+              </TooltipProvider>
             </li>
 
             {/* CRM */}

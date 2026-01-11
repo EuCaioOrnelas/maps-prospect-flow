@@ -12,7 +12,9 @@ import {
   Thermometer,
   ThermometerSun,
   Search,
-  MapPin
+  MapPin,
+  AlertTriangle,
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ interface WarmingSession {
   leads_used: number;
   leads_limit: number;
   current_day: number;
+  error_message?: string | null;
 }
 
 interface SearchAssignment {
@@ -38,6 +41,7 @@ interface WarmingNumberCardProps {
     name: string;
     phone_number: string | null;
     is_connected: boolean;
+    instance_name?: string | null;
   };
   session?: WarmingSession;
   assignment?: SearchAssignment;
@@ -45,6 +49,7 @@ interface WarmingNumberCardProps {
   onPause: () => void;
   onViewDetails: () => void;
   onSelectSearch?: () => void;
+  onReconnect?: () => void;
 }
 
 const getWarmingStatusConfig = (status: 'cold' | 'warm' | 'hot' | undefined) => {
@@ -101,7 +106,8 @@ export function WarmingNumberCard({
   onStart,
   onPause,
   onViewDetails,
-  onSelectSearch
+  onSelectSearch,
+  onReconnect
 }: WarmingNumberCardProps) {
   const warmingStatus = getWarmingStatusConfig(session?.warming_status);
   const levelInfo = getLevelInfo(session?.warming_level || 0);
@@ -217,16 +223,42 @@ export function WarmingNumberCard({
           </div>
         )}
 
+        {/* Disconnection Warning - Show when paused due to disconnection */}
+        {!number.is_connected && isPaused && session?.error_message?.includes('desconectado') && (
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <p className="text-sm font-medium text-amber-500">
+                Número desconectado
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O aquecimento foi pausado. Reconecte para continuar de onde parou.
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 pt-2">
           {!number.is_connected ? (
-            <Button 
-              variant="outline" 
-              className="flex-1" 
-              disabled
-            >
-              Conecte o número
-            </Button>
+            onReconnect ? (
+              <Button 
+                variant="default" 
+                className="flex-1 bg-amber-500 hover:bg-amber-600"
+                onClick={onReconnect}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Reconectar
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="flex-1" 
+                disabled
+              >
+                Conecte o número
+              </Button>
+            )
           ) : isActive ? (
             <Button 
               variant="outline" 

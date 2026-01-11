@@ -166,6 +166,57 @@ function isBusinessHours(): boolean {
   return hour >= 8 && hour < 18
 }
 
+// Detect automated bot responses and generate appropriate reply variations
+const BOT_RESPONSE_PATTERNS = [
+  // Common auto-reply patterns in Portuguese
+  /esta mensagem é automática/i,
+  /mensagem automática/i,
+  /resposta automática/i,
+  /fora do horário/i,
+  /atendimento das \d+/i,
+  /aguarde.*atend/i,
+  /em breve.*retornar/i,
+  /atendente.*disponível/i,
+  /digite.*opção/i,
+  /para atendimento digite/i,
+  /selecione.*opção/i,
+  /escolha.*abaixo/i,
+  /menu.*opções/i,
+  /bot.*atendimento/i,
+  /sou.*assistente virtual/i,
+  /bem-vindo.*atendimento/i,
+  /obrigad.*contato/i,
+  /sua mensagem.*recebida/i,
+  /retornaremos.*breve/i,
+  /\d+\s*[-–]\s*\w+/i, // Menu options like "1 - Vendas, 2 - Suporte"
+  /[1-9]\s*\)/i, // Menu options like "1) Vendas"
+  /não responda este número/i,
+  /contato.*comercial/i,
+]
+
+// Responses to bypass bots - natural conversational replies
+const BOT_BYPASS_RESPONSES = [
+  'Oi, é com você mesmo que falo?',
+  'Olá, gostaria de falar com alguém do atendimento',
+  'Tem alguém disponível pra conversar?',
+  'Bom dia, consegue me passar pra alguém?',
+  'Olá, é atendimento humano?',
+  'Oi! Posso falar com uma pessoa?',
+  'Olá, tudo bem? Queria falar com alguém',
+  'Oi, tem alguém que possa me atender?',
+  'Bom dia! Preciso falar com um atendente',
+  'Olá! Pode me transferir pra um atendente?',
+]
+
+function isAutomatedResponse(message: string): boolean {
+  if (!message) return false
+  return BOT_RESPONSE_PATTERNS.some(pattern => pattern.test(message))
+}
+
+function getBotBypassResponse(): string {
+  return getRandomElement(BOT_BYPASS_RESPONSES)
+}
+
 // Vary message to avoid patterns
 function varyMessage(message: string): string {
   const variations = [
@@ -476,9 +527,20 @@ Deno.serve(async (req) => {
       try {
         console.log(`\n--- Processing session ${session.id} ---`)
         
-        // Check if number is connected
+        // Check if number is connected - PAUSE if disconnected instead of just skipping
         if (!session.whatsapp_numbers.is_connected || !session.whatsapp_numbers.instance_name) {
-          console.log(`Number ${session.whatsapp_number_id} not connected, skipping`)
+          console.log(`Number ${session.whatsapp_number_id} not connected, pausing warming session`)
+          
+          // Pause the session so it can be resumed when reconnected
+          await supabase
+            .from('warming_sessions')
+            .update({
+              status: 'paused',
+              paused_at: new Date().toISOString(),
+              error_message: 'Número desconectado - reconecte para continuar o aquecimento'
+            })
+            .eq('id', session.id)
+          
           continue
         }
 
