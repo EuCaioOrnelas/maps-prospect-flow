@@ -217,38 +217,75 @@ function getBotBypassResponse(): string {
   return getRandomElement(BOT_BYPASS_RESPONSES)
 }
 
-// Vary message to avoid patterns
+// Vary message to avoid patterns - with more variation
 function varyMessage(message: string): string {
-  const variations = [
-    // No change
-    message,
-    // Remove punctuation at end
-    message.replace(/[.!?]+$/, ''),
-    // Add emoji occasionally
-    Math.random() > 0.7 ? message + ' 👋' : message,
-  ]
-  return getRandomElement(variations)
-}
-
-// Track messages sent in last period to avoid patterns
-let lastMessageTexts: string[] = []
-
-function getUniqueMessage(messages: string[]): string {
-  let attempts = 0
-  let message: string
+  const rand = Math.random()
   
-  do {
-    message = varyMessage(getRandomElement(messages))
-    attempts++
-  } while (lastMessageTexts.includes(message) && attempts < 10)
-  
-  // Keep track of last 5 messages
-  lastMessageTexts.push(message)
-  if (lastMessageTexts.length > 5) {
-    lastMessageTexts.shift()
+  // Apply random variations
+  if (rand < 0.15) {
+    // Remove punctuation
+    return message.replace(/[.!?]+$/, '')
+  } else if (rand < 0.25) {
+    // Add space before punctuation (natural typing)
+    return message.replace(/([.!?])$/, ' $1')
+  } else if (rand < 0.35) {
+    // Add wave emoji
+    return message + ' 👋'
+  } else if (rand < 0.40) {
+    // Lowercase first letter (casual)
+    return message.charAt(0).toLowerCase() + message.slice(1)
+  } else if (rand < 0.45) {
+    // Double punctuation
+    return message.replace(/([!?])$/, '$1$1')
   }
   
   return message
+}
+
+// Get unique message - avoiding repetition from recent database entries
+async function getUniqueMessageFromDB(
+  supabase: any,
+  sessionId: string,
+  messages: string[]
+): Promise<string> {
+  // Get last 10 messages sent in this session
+  const { data: recentInteractions } = await supabase
+    .from('warming_interactions')
+    .select('last_message_sent')
+    .eq('warming_session_id', sessionId)
+    .not('last_message_sent', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(10)
+  
+  const recentMessages = recentInteractions?.map((i: any) => i.last_message_sent?.toLowerCase().trim()) || []
+  
+  // Try to find a message that wasn't sent recently
+  let attempts = 0
+  let finalMessage: string
+  
+  do {
+    const baseMessage = getRandomElement(messages)
+    finalMessage = varyMessage(baseMessage)
+    attempts++
+    
+    // Check if this message (or similar) was sent recently
+    const isRecent = recentMessages.some((recent: string) => {
+      if (!recent) return false
+      const normalizedFinal = finalMessage.toLowerCase().replace(/[^a-záàâãéèêíïóôõöúçñ]/g, '')
+      const normalizedRecent = recent.toLowerCase().replace(/[^a-záàâãéèêíïóôõöúçñ]/g, '')
+      return normalizedFinal === normalizedRecent
+    })
+    
+    if (!isRecent) break
+  } while (attempts < 15)
+  
+  console.log(`Selected message after ${attempts} attempts: "${finalMessage}"`)
+  return finalMessage
+}
+
+// Legacy function for backward compatibility
+function getUniqueMessage(messages: string[]): string {
+  return varyMessage(getRandomElement(messages))
 }
 
 // Normalize phone number to format 5511999999999
@@ -839,8 +876,9 @@ Deno.serve(async (req) => {
           continue
         }
 
-        const message = getUniqueMessage(levelConfig.initialMessages)
-        console.log(`Sending to validated lead ${validatedPhone}: "${message.substring(0, 30)}..."`)
+        // Get unique message avoiding recent ones in database
+        const message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages)
+        console.log(`Sending to validated lead ${validatedPhone}: "${message}"`)
 
         // Send message
         const sendResult = await sendMessage(
