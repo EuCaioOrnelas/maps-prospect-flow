@@ -754,14 +754,96 @@ serve(async (req) => {
                     let responseDelay: [number, number] = [3, 10];
                     let shouldEndConversation = false;
                     
+                    // First, check for contextual responses based on what the lead said
+                    const leadMessage = (content || '').toLowerCase().trim();
+                    
+                    // Contextual response patterns
+                    const CONTEXTUAL_RESPONSES = {
+                      // Respostas positivas
+                      positive: {
+                        patterns: [
+                          /^tudo\s*(bem|certo|ótimo|otimo|bom|joia|beleza|tranquilo)?[.!?]?\s*$/i,
+                          /^bem\s*(obrigad[oa])?[.!?]?\s*$/i,
+                          /^ótimo[.!?]?\s*$/i,
+                          /^blz[.!?]?\s*$/i,
+                          /^sim[.!?]?\s*$/i,
+                          /^ok[.!?]?\s*$/i,
+                          /^pode\s*(sim|mandar)?[.!?]?\s*$/i,
+                          /^claro[.!?]?\s*$/i,
+                          /^tranquilo[.!?]?\s*$/i,
+                          /e\s*vc[.!?]?\s*$/i,
+                          /e\s*você[.!?]?\s*$/i,
+                          /e\s*voce[.!?]?\s*$/i,
+                          /e\s*tu[.!?]?\s*$/i
+                        ],
+                        responses: [
+                          'Que bom!', 'que bom!', 'Ótimo!', 'ótimo!', 'Legal!', 'legal!',
+                          'Que ótimo!', 'que ótimo!', 'Perfeito!', 'perfeito!', 'Show!', 'show!',
+                          'Por aqui também!', 'por aqui também!', 'Tudo certo também!', 'tudo certo também!',
+                          'Aqui também tudo bem!', 'aqui também tudo bem!'
+                        ]
+                      },
+                      // Lead pergunta quem é
+                      whoAreYou: {
+                        patterns: [
+                          /quem\s*(é|e)\s*(voce|você|vc)/i,
+                          /quem\s*fala/i,
+                          /de\s*onde\s*(é|e)/i,
+                          /te\s*conheço/i,
+                          /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i
+                        ],
+                        responses: [
+                          'Desculpa, acho que errei o número!', 'desculpa, acho que errei o número!',
+                          'Opa, desculpa! Acho que peguei o número errado', 'opa, desculpa! acho que peguei o número errado',
+                          'Ih, desculpa! Número errado', 'ih, desculpa! número errado'
+                        ],
+                        shouldEnd: true
+                      },
+                      // Lead pede para parar
+                      stopRequest: {
+                        patterns: [
+                          /para\s*(de\s*)?mandar/i,
+                          /não\s*mande\s*mais/i,
+                          /spam/i,
+                          /me\s*bloqueia/i
+                        ],
+                        responses: [
+                          'Desculpa pelo incômodo!', 'desculpa pelo incômodo!'
+                        ],
+                        shouldEnd: true
+                      }
+                    };
+                    
+                    // Check contextual responses first
+                    let contextualResponse: string[] | null = null;
+                    let forceEndConversation = false;
+                    
+                    for (const [key, ctx] of Object.entries(CONTEXTUAL_RESPONSES)) {
+                      const ctxData = ctx as { patterns: RegExp[]; responses: string[]; shouldEnd?: boolean };
+                      if (ctxData.patterns.some(p => p.test(leadMessage))) {
+                        contextualResponse = ctxData.responses;
+                        forceEndConversation = ctxData.shouldEnd || false;
+                        console.log(`Matched contextual response: ${key}`);
+                        break;
+                      }
+                    }
+                    
+                    // Use contextual response if matched
+                    if (contextualResponse && messagesReceived === 1) {
+                      shouldRespond = true;
+                      responseMessages = contextualResponse;
+                      responseDelay = [2, 8];
+                      shouldEndConversation = forceEndConversation || (currentLevel <= 2);
+                    }
+                    // Otherwise use level-based logic
                     // Level 2: Send one response then end
-                    if (currentLevel === 2 && messagesReceived === 1 && messagesSent === 1) {
+                    else if (currentLevel === 2 && messagesReceived === 1 && messagesSent === 1) {
                       shouldRespond = true;
                       responseMessages = [
-                        'Tudo sim, obrigado!',
-                        'tudo sim, obrigado!',
-                        'Tudo certo por aqui',
-                        'tudo certo por aqui'
+                        'Tudo sim, obrigado!', 'tudo sim, obrigado!',
+                        'Tudo certo por aqui', 'tudo certo por aqui',
+                        'Tudo bem sim!', 'tudo bem sim!',
+                        'Por aqui tudo bem!', 'por aqui tudo bem!'
                       ];
                       responseDelay = [3, 10];
                       shouldEndConversation = true;
@@ -770,10 +852,10 @@ serve(async (req) => {
                     else if (currentLevel === 3 && messagesReceived === 1 && messagesSent === 1) {
                       shouldRespond = true;
                       responseMessages = [
-                        'Tudo bem por aí?',
-                        'tudo bem por aí?',
-                        'Tudo certo hoje?',
-                        'tudo certo hoje?'
+                        'Tudo bem por aí?', 'tudo bem por aí?',
+                        'Tudo certo hoje?', 'tudo certo hoje?',
+                        'Por aqui tudo bem!', 'por aqui tudo bem!',
+                        'Aqui também!', 'aqui também!'
                       ];
                       responseDelay = [2, 8];
                       shouldEndConversation = false;
@@ -782,10 +864,10 @@ serve(async (req) => {
                     else if (currentLevel === 3 && messagesReceived === 2 && messagesSent === 2) {
                       shouldRespond = true;
                       responseMessages = [
-                        'Que bom!',
-                        'que bom!',
-                        'Perfeito, obrigado!',
-                        'perfeito, obrigado!'
+                        'Que bom!', 'que bom!',
+                        'Perfeito!', 'perfeito!',
+                        'Legal!', 'legal!',
+                        'Show!', 'show!'
                       ];
                       responseDelay = [3, 10];
                       shouldEndConversation = true;
@@ -794,10 +876,10 @@ serve(async (req) => {
                     else if (currentLevel === 4 && messagesReceived === 1 && messagesSent === 1) {
                       shouldRespond = true;
                       responseMessages = [
-                        'Perfeito, obrigado!',
-                        'perfeito, obrigado!',
-                        'Combinado, agradeço!',
-                        'combinado, agradeço!'
+                        'Perfeito, obrigado!', 'perfeito, obrigado!',
+                        'Combinado, agradeço!', 'combinado, agradeço!',
+                        'Show, obrigado!', 'show, obrigado!',
+                        'Legal, valeu!', 'legal, valeu!'
                       ];
                       responseDelay = [5, 15];
                       shouldEndConversation = true;
