@@ -21,6 +21,7 @@ const plans = [
     price: "197",
     anchorPrice: "397",
     searches: "200",
+    whatsappNumbers: 2,
     description: "Ideal para começar a prospectar novos clientes",
     features: [
       "Até 200 buscas estratégicas/mês",
@@ -30,6 +31,7 @@ const plans = [
       "Suporte por email",
       "2 números WhatsApp",
       "Até 10.000 disparos/mês",
+      "🔥 Aquecimento de até 2 chips",
     ],
     popular: false,
   },
@@ -39,6 +41,7 @@ const plans = [
     price: "497",
     anchorPrice: "997",
     searches: "600",
+    whatsappNumbers: 5,
     description: "Para profissionais que querem escalar resultados",
     features: [
       "Até 600 buscas estratégicas/mês",
@@ -49,6 +52,7 @@ const plans = [
       "Relatório de uso mensal",
       "5 números WhatsApp",
       "Até 30.000 disparos/mês",
+      "🔥 Aquecimento de até 5 chips",
     ],
     popular: true,
   },
@@ -58,6 +62,7 @@ const plans = [
     price: "897",
     anchorPrice: "1.797",
     searches: "1.200",
+    whatsappNumbers: 10,
     description: "Para equipes e agências com alta demanda",
     features: [
       "Até 1.200 buscas estratégicas/mês",
@@ -69,6 +74,7 @@ const plans = [
       "API access (em breve)",
       "10 números WhatsApp",
       "Até 60.000 disparos/mês",
+      "🔥 Aquecimento de até 10 chips",
     ],
     popular: false,
   },

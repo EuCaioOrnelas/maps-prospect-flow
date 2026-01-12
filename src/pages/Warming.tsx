@@ -13,7 +13,7 @@ import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
 import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
-import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical } from "lucide-react";
+import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical, Lock, Crown, Sparkles } from "lucide-react";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -475,6 +475,121 @@ export default function Warming() {
   const meetsLeadsRequirement = leadsCount >= 50;
   const meetsNumberRequirement = hasConnectedNumber;
   const canAccessWarming = meetsLeadsRequirement && meetsNumberRequirement;
+  
+  // Check if user has a paid plan (start, growth, or scale)
+  const currentPlan = profile?.plan?.toLowerCase() || 'free';
+  const isPaidPlan = ['start', 'growth', 'scale'].includes(currentPlan);
+  const hasPlanAccess = isPaidPlan;
+
+  // Show upgrade screen if user is on free/trial plan
+  if (!loading && !hasPlanAccess) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SEO 
+          title="Aquecimento de Números | WiizeProspect"
+          description="Sistema de aquecimento inteligente para números WhatsApp"
+        />
+        
+        <AppSidebar profile={profile} />
+        <MobileNav profile={profile} />
+
+        <main className="lg:pl-14 pt-16 lg:pt-0 min-h-screen flex items-center justify-center">
+          <div className="max-w-lg mx-auto p-4 lg:p-8 text-center">
+            {/* Lock Icon */}
+            <div className="mb-8">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 border border-primary/30">
+                <Lock className="w-10 h-10 text-primary" />
+              </div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">
+                Aquecimento de Chips
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Recurso exclusivo para planos pagos
+              </p>
+            </div>
+
+            {/* Feature Description */}
+            <div className="mb-8 p-6 rounded-xl bg-muted/30 border border-border/50 text-left">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                  <Flame className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">O que é o Aquecimento?</h3>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                O sistema de aquecimento prepara seus números WhatsApp para campanhas de prospecção em massa, 
+                simulando conversas naturais para evitar bloqueios e melhorar a entregabilidade.
+              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  Evita bloqueios do WhatsApp
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  Aumenta taxa de entrega
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  Processo 100% automático
+                </li>
+              </ul>
+            </div>
+
+            {/* Plans Comparison */}
+            <div className="mb-8 space-y-3">
+              <p className="text-sm text-muted-foreground mb-4">
+                Escolha um plano para desbloquear o aquecimento:
+              </p>
+              
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="flex items-center gap-3">
+                    <Crown className="w-5 h-5 text-primary" />
+                    <span className="font-medium">Start</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">Até 2 chips</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/30">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <span className="font-medium">Growth</span>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Popular</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">Até 5 chips</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="flex items-center gap-3">
+                    <Crown className="w-5 h-5 text-primary" />
+                    <span className="font-medium">Scale</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">Até 10 chips</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <Button 
+              onClick={() => navigate('/upgrade')}
+              className="w-full gap-2"
+              size="lg"
+            >
+              <Crown className="w-5 h-5" />
+              Ver Planos e Desbloquear
+            </Button>
+            
+            <p className="text-xs text-muted-foreground mt-4">
+              Garantia de 7 dias • Cancele quando quiser
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   // Show prerequisites screen if requirements not met
   if (!loading && !canAccessWarming) {
