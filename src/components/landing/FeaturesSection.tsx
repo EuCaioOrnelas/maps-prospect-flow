@@ -1,4 +1,4 @@
-import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, ShieldCheck } from "lucide-react";
+import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, Flame } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const features = [
@@ -35,9 +35,10 @@ const features = [
     badge: "Novo",
   },
   {
-    icon: Shield,
-    title: "Dados Verificados",
-    description: "Informações reais extraídas do Google Maps: telefone, site, avaliações e endereço atualizados.",
+    icon: Flame,
+    title: "Aquecimento de Chips",
+    description: "Prepare números novos para uso comercial em 20 dias. Simula uso natural do WhatsApp com mensagens automáticas para evitar bloqueios.",
+    badge: "Novo",
   },
   {
     icon: TrendingUp,
