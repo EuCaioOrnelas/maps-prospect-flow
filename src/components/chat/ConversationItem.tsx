@@ -65,9 +65,15 @@ const getDisplayName = (conversation: Conversation) => {
   if (conversation.is_group) {
     return conversation.group_name || `Grupo ${conversation.phone.slice(-6)}`;
   }
+  
+  // Priority: 1. Linked contact name (verified match), 2. Formatted phone number
+  // Note: We DON'T use contact_name from conversation as it can be stale/wrong
+  // Only use contacts.name if there's a proper contact_id link
   if (conversation.contact_id && conversation.contacts?.name) {
     return conversation.contacts.name;
   }
+  
+  // Always show formatted phone number for non-saved contacts
   return formatPhoneNumber(conversation.phone);
 };
 

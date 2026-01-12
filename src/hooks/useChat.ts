@@ -365,10 +365,19 @@ export const useChat = (selectedNumberId?: string | null) => {
     // Mark conversation as read (only updates unread count in our database)
     // This does NOT send read receipts to the contact - that's handled separately
     // Also reset manually_marked_unread flag
-    await supabase
+    const { error: updateError } = await supabase
       .from('conversations')
       .update({ unread_count: 0, manually_marked_unread: false })
       .eq('id', conversationId);
+
+    if (!updateError) {
+      // Update local state immediately so UI reflects the change
+      setConversations(prev => prev.map(c => 
+        c.id === conversationId 
+          ? { ...c, unread_count: 0, manually_marked_unread: false }
+          : c
+      ));
+    }
   }, [user]);
 
 
@@ -713,7 +722,16 @@ export const useChat = (selectedNumberId?: string | null) => {
     setSelectedConversation(conversation);
     setMessages([]); // Clear messages instantly to show loading state
     
-    // Fetch messages in background
+    // If there are unread messages, mark as read immediately in local state
+    if (conversation.unread_count > 0 || conversation.manually_marked_unread) {
+      setConversations(prev => prev.map(c => 
+        c.id === conversation.id 
+          ? { ...c, unread_count: 0, manually_marked_unread: false }
+          : c
+      ));
+    }
+    
+    // Fetch messages in background (this will also update the DB)
     fetchMessages(conversation.id);
     
     // Send read receipt only if there are unread messages (fire and forget)
