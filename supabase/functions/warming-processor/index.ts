@@ -750,6 +750,21 @@ Deno.serve(async (req) => {
         const currentDay = Math.max(1, daysDiff)
 
         console.log(`Session day: ${currentDay}, leads used: ${session.leads_used}/${session.leads_limit}`)
+        
+        // Always update current_day in the database (even if no message is sent)
+        // This ensures the UI shows the correct day count
+        if (session.current_day !== currentDay) {
+          const level = getWarmingLevel(currentDay)
+          await supabase
+            .from('warming_sessions')
+            .update({
+              current_day: currentDay,
+              warming_level: level,
+              warming_status: getWarmingStatus(level)
+            })
+            .eq('id', session.id)
+          console.log(`Updated session current_day from ${session.current_day} to ${currentDay}`)
+        }
 
         // Check if warming is complete
         if (currentDay > 20 || session.leads_used >= session.leads_limit) {

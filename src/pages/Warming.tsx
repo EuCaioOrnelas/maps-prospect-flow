@@ -193,9 +193,35 @@ export default function Warming() {
     return assignments.find(a => a.whatsapp_number_id === numberId);
   };
 
+  // Get max warming chips allowed based on plan
+  const getMaxWarmingChips = () => {
+    switch (currentPlan) {
+      case 'start':
+        return 2;
+      case 'growth':
+        return 5;
+      case 'scale':
+        return 10;
+      default:
+        return 0;
+    }
+  };
+
+  const maxWarmingChips = getMaxWarmingChips();
+  const activeWarmingSessions = sessions.filter(s => s.status === 'active' || s.status === 'paused');
+  const activeWarmingCount = activeWarmingSessions.length;
+  const canStartNewWarming = activeWarmingCount < maxWarmingChips;
+
   const handleStartWarming = async (numberId: string) => {
     const number = numbers.find(n => n.id === numberId);
     if (!number) return;
+
+    // Check if user has reached warming chip limit
+    const existingSession = getSessionForNumber(numberId);
+    if (!existingSession && !canStartNewWarming) {
+      toast.error(`Limite de ${maxWarmingChips} chip(s) em aquecimento atingido para o plano ${currentPlan.toUpperCase()}`);
+      return;
+    }
 
     // Check if this number has an assigned search
     const assignment = getAssignmentForNumber(numberId);
