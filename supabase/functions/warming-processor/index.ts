@@ -9,7 +9,7 @@ const corsHeaders = {
 // LÓGICA COMPLETA DOS DISPAROS DE AQUECIMENTO
 // ============================================
 
-// Warming level configurations based on spec
+// Warming level configurations based on spec - WITH MANY VARIATIONS
 const WARMING_LEVELS = {
   1: {
     name: 'Frio - Ativação Inicial',
@@ -19,14 +19,20 @@ const WARMING_LEVELS = {
     minDelayMinutes: 20,
     maxDelayMinutes: 40,
     initialMessages: [
-      'Oi',
-      'oi',
-      'Olá',
-      'olá',
-      'Bom dia',
-      'bom dia',
-      'Boa tarde',
-      'boa tarde'
+      // Variações de "Oi"
+      'Oi', 'oi', 'Oii', 'oii', 'Oi!', 'oi!',
+      // Variações de "Olá"
+      'Olá', 'olá', 'Olá!', 'olá!', 'Ola', 'ola',
+      // Variações de "Bom dia"
+      'Bom dia', 'bom dia', 'Bom dia!', 'bom dia!', 'Bom diaa',
+      // Variações de "Boa tarde"
+      'Boa tarde', 'boa tarde', 'Boa tarde!', 'boa tarde!',
+      // Variações de "E aí"
+      'E aí', 'e aí', 'E ai', 'e ai', 'Eai',
+      // Variações de "Opa"
+      'Opa', 'opa', 'Opa!', 'opa!', 'Opaa',
+      // Variações simples
+      'Ei', 'ei', 'Hey', 'hey'
     ],
     followUpMessages: [],
     closingMessages: [],
@@ -40,20 +46,30 @@ const WARMING_LEVELS = {
     minDelayMinutes: 15,
     maxDelayMinutes: 30,
     initialMessages: [
-      'Oi, tudo bem?',
-      'oi, tudo bem?',
-      'Bom dia, tudo certo?',
-      'bom dia, tudo certo?',
-      'Olá, tudo bem?',
-      'olá, como vai?'
+      // Variações de "Oi, tudo bem?"
+      'Oi, tudo bem?', 'oi, tudo bem?', 'Oi tudo bem?', 'oi tudo bem?',
+      'Oi, tudo bem', 'oi, tudo bem', 'Oi! Tudo bem?', 'oi! tudo bem?',
+      // Variações de "Bom dia, tudo certo?"
+      'Bom dia, tudo certo?', 'bom dia, tudo certo?', 'Bom dia! Tudo certo?',
+      'Bom dia, tudo bem?', 'bom dia, tudo bem?',
+      // Variações de "Olá, tudo bem?"
+      'Olá, tudo bem?', 'olá, tudo bem?', 'Olá! Tudo bem?', 'olá! tudo bem?',
+      'Ola, tudo bem?', 'ola, tudo bem?',
+      // Variações de "Olá, como vai?"
+      'Olá, como vai?', 'olá, como vai?', 'Olá como vai?', 'olá como vai?',
+      // Outras variações
+      'E aí, tudo certo?', 'e aí, tudo certo?', 'Opa, tudo bem?', 'opa, tudo bem?',
+      'Oi, td bem?', 'oi, td bem?', 'Oi, blz?', 'oi, blz?'
     ],
     followUpMessages: [
-      'Tudo sim, obrigado!',
-      'tudo sim, obrigado!',
-      'Tudo certo por aqui',
-      'tudo certo por aqui',
-      'Tudo ótimo, valeu!',
-      'tudo bem sim!'
+      'Tudo sim, obrigado!', 'tudo sim, obrigado!', 'Tudo sim obrigado!',
+      'Tudo certo por aqui', 'tudo certo por aqui', 'Tudo certo por aqui!',
+      'Tudo ótimo, valeu!', 'tudo ótimo, valeu!', 'Tudo ótimo valeu!',
+      'Tudo bem sim!', 'tudo bem sim!', 'Tudo bem sim',
+      'Tudo tranquilo!', 'tudo tranquilo!', 'Tudo tranquilo',
+      'Por aqui tudo bem!', 'por aqui tudo bem!', 'Por aqui tudo bem',
+      'Tudo certo!', 'tudo certo!', 'Tudo certo',
+      'Tudo joia!', 'tudo joia!', 'Tudo joia'
     ],
     closingMessages: [],
     waitForResponse: true,
@@ -68,28 +84,32 @@ const WARMING_LEVELS = {
     minDelayMinutes: 10,
     maxDelayMinutes: 25,
     initialMessages: [
-      'Olá',
-      'olá',
-      'Oi, tudo bem?',
-      'oi, tudo bem?',
-      'Oi!',
-      'oi!'
+      // Variações simples
+      'Olá', 'olá', 'Olá!', 'olá!', 'Ola', 'ola',
+      'Oi, tudo bem?', 'oi, tudo bem?', 'Oi! Tudo bem?', 'oi! tudo bem?',
+      'Oi!', 'oi!', 'Oii', 'oii',
+      'E aí, tudo bem?', 'e aí, tudo bem?',
+      'Opa, tudo bem?', 'opa, tudo bem?',
+      'Olá, como vai?', 'olá, como vai?',
+      'Oi, como vai?', 'oi, como vai?'
     ],
     followUpMessages: [
-      'Tudo bem por aí?',
-      'tudo bem por aí?',
-      'Tudo certo hoje?',
-      'tudo certo hoje?',
-      'Como está?',
-      'como está?'
+      'Tudo bem por aí?', 'tudo bem por aí?', 'Tudo bem por ai?', 'tudo bem por ai?',
+      'Tudo certo hoje?', 'tudo certo hoje?', 'Tudo certo hj?', 'tudo certo hj?',
+      'Como está?', 'como está?', 'Como esta?', 'como esta?',
+      'Tudo tranquilo?', 'tudo tranquilo?', 'Tudo tranquilo',
+      'Como vão as coisas?', 'como vão as coisas?',
+      'Td bem?', 'td bem?', 'Td certo?', 'td certo?'
     ],
     closingMessages: [
-      'Que bom!',
-      'que bom!',
-      'Perfeito, obrigado!',
-      'perfeito, obrigado!',
-      'Ótimo!',
-      'ótimo!'
+      'Que bom!', 'que bom!', 'Que bom', 'que bom',
+      'Perfeito, obrigado!', 'perfeito, obrigado!', 'Perfeito obrigado!',
+      'Ótimo!', 'ótimo!', 'Ótimo', 'ótimo',
+      'Que ótimo!', 'que ótimo!', 'Que ótimo',
+      'Legal!', 'legal!', 'Legal',
+      'Show!', 'show!', 'Show',
+      'Muito bom!', 'muito bom!', 'Muito bom',
+      'Bacana!', 'bacana!', 'Bacana'
     ],
     waitForResponse: true,
     responseWaitHours: 12,
@@ -106,20 +126,104 @@ const WARMING_LEVELS = {
     initialMessages: [
       'Oi, tudo bem? Trabalho com empresas da região, posso te mandar uma informação rápida depois?',
       'oi, tudo bem? trabalho com empresas da região, posso te mandar uma informação rápida depois?',
-      'Olá! Trabalho com empresas aqui da região, posso enviar uma informação depois?'
+      'Olá! Trabalho com empresas aqui da região, posso enviar uma informação depois?',
+      'olá! trabalho com empresas aqui da região, posso enviar uma informação depois?',
+      'Oi, tudo bem? Atuo com empresas aqui da região, posso te passar uma info depois?',
+      'oi, tudo bem? atuo com empresas aqui da região, posso te passar uma info depois?',
+      'Olá, tudo bem? Trabalho com negócios da região, posso enviar algo depois?',
+      'olá, tudo bem? trabalho com negócios da região, posso enviar algo depois?'
     ],
     followUpMessages: [
-      'Perfeito, obrigado!',
-      'perfeito, obrigado!',
-      'Combinado, agradeço!',
-      'combinado, agradeço!',
-      'Ótimo, valeu!',
-      'ótimo, valeu!'
+      'Perfeito, obrigado!', 'perfeito, obrigado!', 'Perfeito obrigado!',
+      'Combinado, agradeço!', 'combinado, agradeço!', 'Combinado agradeço!',
+      'Ótimo, valeu!', 'ótimo, valeu!', 'Ótimo valeu!',
+      'Show, obrigado!', 'show, obrigado!', 'Show obrigado!',
+      'Beleza, obrigado!', 'beleza, obrigado!', 'Beleza obrigado!',
+      'Combinado!', 'combinado!', 'Combinado',
+      'Legal, agradeço!', 'legal, agradeço!', 'Legal agradeço!'
     ],
     closingMessages: [],
     waitForResponse: true,
     responseWaitHours: 24,
     responseDelayMinutes: [5, 15]
+  }
+}
+
+// Contextual responses based on what the lead says
+const CONTEXTUAL_RESPONSES = {
+  // Respostas positivas do lead
+  positive: {
+    patterns: [
+      /^tudo\s*(bem|certo|ótimo|otimo|bom|joia|beleza|tranquilo)?[.!?]?\s*$/i,
+      /^bem\s*(obrigad[oa])?[.!?]?\s*$/i,
+      /^ótimo[.!?]?\s*$/i,
+      /^otimo[.!?]?\s*$/i,
+      /^blz[.!?]?\s*$/i,
+      /^td\s*bem[.!?]?\s*$/i,
+      /^sim[.!?]?\s*$/i,
+      /^ok[.!?]?\s*$/i,
+      /^pode\s*(sim|mandar)?[.!?]?\s*$/i,
+      /^claro[.!?]?\s*$/i,
+      /^tranquilo[.!?]?\s*$/i,
+      /^de\s*boa[.!?]?\s*$/i,
+      /^suave[.!?]?\s*$/i
+    ],
+    responses: [
+      'Que bom!', 'que bom!', 'Ótimo!', 'ótimo!', 'Legal!', 'legal!',
+      'Que ótimo!', 'que ótimo!', 'Perfeito!', 'perfeito!', 'Show!', 'show!',
+      'Bacana!', 'bacana!', 'Muito bom!', 'muito bom!'
+    ]
+  },
+  // Lead pergunta "quem é você" ou similar
+  whoAreYou: {
+    patterns: [
+      /quem\s*(é|e)\s*(voce|você|vc)/i,
+      /quem\s*fala/i,
+      /quem\s*ta\s*falando/i,
+      /de\s*onde\s*(é|e)/i,
+      /te\s*conheço/i,
+      /conhece\s*(eu|a\s*gente)/i,
+      /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i
+    ],
+    responses: [
+      'Desculpa, acho que errei o número!', 'desculpa, acho que errei o número!',
+      'Opa, desculpa! Acho que peguei o número errado', 'opa, desculpa! acho que peguei o número errado',
+      'Ih, desculpa! Número errado', 'ih, desculpa! número errado',
+      'Foi mal, errei o contato!', 'foi mal, errei o contato!'
+    ]
+  },
+  // Lead diz que não conhece
+  dontKnow: {
+    patterns: [
+      /não\s*(te\s*)?conheço/i,
+      /nao\s*(te\s*)?conheco/i,
+      /quem\s*é/i,
+      /quem\s*e\s*vc/i,
+      /não\s*sei\s*quem/i,
+      /nao\s*sei\s*quem/i
+    ],
+    responses: [
+      'Desculpa, número errado!', 'desculpa, número errado!',
+      'Opa, desculpa! Errei o contato', 'opa, desculpa! errei o contato',
+      'Foi mal, engano!', 'foi mal, engano!'
+    ]
+  },
+  // Lead pede para parar
+  stopRequest: {
+    patterns: [
+      /para\s*(de\s*)?mandar/i,
+      /não\s*mande\s*mais/i,
+      /nao\s*mande\s*mais/i,
+      /me\s*bloqueia/i,
+      /para\s*com\s*isso/i,
+      /spam/i,
+      /sai\s*fora/i
+    ],
+    responses: [
+      'Desculpa pelo incômodo!', 'desculpa pelo incômodo!',
+      'Desculpa, não vou mais incomodar!', 'desculpa, não vou mais incomodar!'
+    ],
+    shouldEndConversation: true
   }
 }
 
