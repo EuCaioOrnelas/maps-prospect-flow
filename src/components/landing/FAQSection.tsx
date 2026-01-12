@@ -37,6 +37,10 @@ const faqs = [
     answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
   },
   {
+    question: "O que é o Aquecimento de Chips e como funciona?",
+    answer: "O Aquecimento de Chips é um sistema inteligente que prepara números novos ou inativos para uso comercial em 20 dias. Funciona em 4 níveis progressivos: nos primeiros 5 dias envia mensagens simples (bom dia, oi), depois evolui para perguntas leves, interações mais naturais e finalmente mensagens pré-comerciais. O objetivo é simular o uso natural do WhatsApp, construindo reputação gradualmente para evitar bloqueios quando você começar os disparos em massa."
+  },
+  {
     question: "Qual plano é ideal para mim?",
     answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números WhatsApp."
   }
