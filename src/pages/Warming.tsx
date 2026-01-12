@@ -803,6 +803,30 @@ export default function Warming() {
             </div>
           </div>
 
+          {/* Warming Chips Limit Indicator */}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+              <Flame className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {activeWarmingCount}/{maxWarmingChips} chips em aquecimento
+              </span>
+              <span className="text-xs text-muted-foreground">
+                (Plano {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)})
+              </span>
+            </div>
+            {!canStartNewWarming && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/upgrade')}
+                className="text-primary border-primary/30 hover:bg-primary/10"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Aumentar limite
+              </Button>
+            )}
+          </div>
+
           {/* Educational Alert */}
           <Alert className="mb-6 bg-muted/50 border-muted">
             <Info className="h-4 w-4" />
