@@ -428,10 +428,37 @@ const ChatAreaComponent = ({
     }
   }, [onForwardMessage, onSendMedia, isSelectionMode, selectedMessages, messages]);
 
-  const getQuotedMessage = (quotedId: string | null) => {
+  const getQuotedMessage = useCallback((quotedId: string | null) => {
     if (!quotedId) return null;
-    return messages.find(m => m.id === quotedId || m.message_id === quotedId);
-  };
+    
+    // Try exact match first - by id (UUID) or message_id (WhatsApp ID)
+    let found = messages.find(m => m.id === quotedId || m.message_id === quotedId);
+    if (found) return found;
+    
+    // WhatsApp IDs can have different formats, try more flexible matching
+    // The stanzaId (quoted_message_id) should match the message_id of the original message
+    // Try case-insensitive match and partial matching for IDs that might have prefixes
+    const quotedIdLower = quotedId.toLowerCase();
+    found = messages.find(m => {
+      if (!m.message_id) return false;
+      const msgIdLower = m.message_id.toLowerCase();
+      
+      // Exact case-insensitive match
+      if (msgIdLower === quotedIdLower) return true;
+      
+      // Check if one contains the other (for IDs with prefixes)
+      if (msgIdLower.includes(quotedIdLower) || quotedIdLower.includes(msgIdLower)) return true;
+      
+      // Check if the core part matches (removing common prefixes)
+      const cleanQuoted = quotedId.replace(/^(3EB0|BAE5|false_|true_)/gi, '');
+      const cleanMsgId = m.message_id.replace(/^(3EB0|BAE5|false_|true_)/gi, '');
+      if (cleanQuoted === cleanMsgId) return true;
+      
+      return false;
+    });
+    
+    return found || null;
+  }, [messages]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
