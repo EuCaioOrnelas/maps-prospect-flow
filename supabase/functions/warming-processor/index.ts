@@ -506,17 +506,30 @@ async function sendMessage(
 }
 
 // Check for consecutive days without responses (auto-pause)
+// Only triggers if session has been running for at least 5 days AND has 5+ messages with no responses
 async function checkForAutoPause(
   supabase: any,
-  sessionId: string
+  sessionId: string,
+  sessionStartedAt: string
 ): Promise<boolean> {
+  // First, check if the session has been running for at least 5 days
+  const startDate = new Date(sessionStartedAt)
+  const now = new Date()
+  const daysSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  
+  // Don't auto-pause if session is less than 5 days old
+  if (daysSinceStart < 5) {
+    console.log(`Session only ${daysSinceStart} days old, skipping auto-pause check`)
+    return false
+  }
+  
   const fiveDaysAgo = new Date()
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
   
   // Only count SENT messages (not invalid_number entries)
   const { data: recentInteractions } = await supabase
     .from('warming_interactions')
-    .select('messages_received, messages_sent, status')
+    .select('messages_received, messages_sent, status, created_at')
     .eq('warming_session_id', sessionId)
     .gte('created_at', fiveDaysAgo.toISOString())
   
@@ -525,13 +538,20 @@ async function checkForAutoPause(
     i.status !== 'invalid_number' && i.messages_sent > 0
   ) || []
   
-  // Need at least 5 actual sent messages to trigger pause
-  if (sentMessages.length < 5) {
+  // Need at least 10 actual sent messages over 5 days to trigger pause
+  // This means the system has been actively trying but getting no responses
+  if (sentMessages.length < 10) {
+    console.log(`Only ${sentMessages.length} messages sent in last 5 days, need 10+ for auto-pause`)
     return false
   }
   
   // Check if all recent sent messages have 0 responses
   const allNoResponse = sentMessages.every((i: any) => i.messages_received === 0)
+  
+  if (allNoResponse) {
+    console.log(`All ${sentMessages.length} messages in last 5 days have no responses, triggering auto-pause`)
+  }
+  
   return allNoResponse
 }
 
@@ -708,10 +728,10 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Check for auto-pause conditions
-        const shouldAutoPause = await checkForAutoPause(supabase, session.id)
+        // Check for auto-pause conditions (only if session is at least 5 days old)
+        const shouldAutoPause = await checkForAutoPause(supabase, session.id, session.started_at)
         if (shouldAutoPause) {
-          console.log(`Auto-pausing session ${session.id} due to 5 days without responses`)
+          console.log(`Auto-pausing session ${session.id} due to 5+ days without responses`)
           await supabase
             .from('warming_sessions')
             .update({
