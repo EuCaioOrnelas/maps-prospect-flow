@@ -193,35 +193,9 @@ export default function Warming() {
     return assignments.find(a => a.whatsapp_number_id === numberId);
   };
 
-  // Get max warming chips allowed based on plan
-  const getMaxWarmingChips = () => {
-    switch (currentPlan) {
-      case 'start':
-        return 2;
-      case 'growth':
-        return 5;
-      case 'scale':
-        return 10;
-      default:
-        return 0;
-    }
-  };
-
-  const maxWarmingChips = getMaxWarmingChips();
-  const activeWarmingSessions = sessions.filter(s => s.status === 'active' || s.status === 'paused');
-  const activeWarmingCount = activeWarmingSessions.length;
-  const canStartNewWarming = activeWarmingCount < maxWarmingChips;
-
   const handleStartWarming = async (numberId: string) => {
     const number = numbers.find(n => n.id === numberId);
     if (!number) return;
-
-    // Check if user has reached warming chip limit
-    const existingSession = getSessionForNumber(numberId);
-    if (!existingSession && !canStartNewWarming) {
-      toast.error(`Limite de ${maxWarmingChips} chip(s) em aquecimento atingido para o plano ${currentPlan.toUpperCase()}`);
-      return;
-    }
 
     // Check if this number has an assigned search
     const assignment = getAssignmentForNumber(numberId);
@@ -257,6 +231,16 @@ export default function Warming() {
         if (error) throw error;
         toast.success('Aquecimento retomado');
       } else {
+        // Check limit before creating new session
+        const plan = profile?.plan?.toLowerCase() || 'free';
+        const maxChips = plan === 'start' ? 2 : plan === 'growth' ? 5 : plan === 'scale' ? 10 : 0;
+        const activeCount = sessions.filter(s => s.status === 'active' || s.status === 'paused').length;
+        
+        if (activeCount >= maxChips) {
+          toast.error(`Limite de ${maxChips} chip(s) em aquecimento atingido para o plano ${plan.toUpperCase()}`);
+          return;
+        }
+        
         // Create new session
         const { error } = await supabase
           .from('warming_sessions')
@@ -506,6 +490,25 @@ export default function Warming() {
   const currentPlan = profile?.plan?.toLowerCase() || 'free';
   const isPaidPlan = ['start', 'growth', 'scale'].includes(currentPlan);
   const hasPlanAccess = isPaidPlan;
+
+  // Get max warming chips allowed based on plan
+  const getMaxWarmingChips = (plan: string) => {
+    switch (plan) {
+      case 'start':
+        return 2;
+      case 'growth':
+        return 5;
+      case 'scale':
+        return 10;
+      default:
+        return 0;
+    }
+  };
+
+  const maxWarmingChips = getMaxWarmingChips(currentPlan);
+  const activeWarmingSessions = sessions.filter(s => s.status === 'active' || s.status === 'paused');
+  const activeWarmingCount = activeWarmingSessions.length;
+  const canStartNewWarming = activeWarmingCount < maxWarmingChips;
 
   // Show upgrade screen if user is on free/trial plan
   if (!loading && !hasPlanAccess) {
