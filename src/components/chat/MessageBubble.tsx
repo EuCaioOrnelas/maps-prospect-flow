@@ -7,6 +7,7 @@ import {
   Clock,
   Pencil,
   User,
+  Loader2,
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
@@ -29,6 +30,7 @@ interface MessageBubbleProps {
   isDeleting?: boolean;
   isGroup?: boolean;
   instanceName?: string | null;
+  isLoadingQuoted?: boolean;
   onReply: (message: Message) => void;
   onForward?: (message: Message) => void;
   onDelete?: (message: Message, forEveryone: boolean) => void;
@@ -83,6 +85,7 @@ const MessageBubbleComponent = ({
   isDeleting = false,
   isGroup = false,
   instanceName = null,
+  isLoadingQuoted = false,
   onReply,
   onForward,
   onDelete,
@@ -303,6 +306,22 @@ const MessageBubbleComponent = ({
               {message.sender_name || formatSenderPhone(message.sender_jid)}
             </p>
           )}
+          {/* Loading state for quoted message being fetched */}
+          {isLoadingQuoted && !quotedMessage && message.quoted_message_id && (
+            <div className={cn(
+              'mb-2 p-2 rounded border-l-4 text-xs flex items-center gap-2',
+              message.from_me 
+                ? 'bg-[hsl(158,37%,6%)] border-primary/70' 
+                : 'bg-muted/80 border-primary/50'
+            )}>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span className={cn(
+                message.from_me ? "text-white/70" : "text-muted-foreground"
+              )}>
+                Carregando mensagem...
+              </span>
+            </div>
+          )}
           {quotedMessage && (
             <div className={cn(
               'mb-2 p-2 rounded border-l-4 text-xs',
@@ -373,6 +392,7 @@ export const MessageBubble = memo(MessageBubbleComponent, (prevProps, nextProps)
     prevProps.quotedMessage?.id === nextProps.quotedMessage?.id &&
     prevProps.isSelectionMode === nextProps.isSelectionMode &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.isDeleting === nextProps.isDeleting
+    prevProps.isDeleting === nextProps.isDeleting &&
+    prevProps.isLoadingQuoted === nextProps.isLoadingQuoted
   );
 });
