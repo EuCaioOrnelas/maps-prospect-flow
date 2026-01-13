@@ -27,6 +27,7 @@ import {
   CheckSquare,
   Share2,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ import chatBackground from '@/assets/chat-background.png';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useChatDrafts } from '@/hooks/useChatDrafts';
+import { useChatOptimization } from '@/hooks/useChatOptimization';
 
 import type { QuickReply } from '@/hooks/useQuickReplies';
 import { MessageSearch } from './MessageSearch';
@@ -100,6 +102,11 @@ const ChatAreaComponent = ({
 }: ChatAreaProps) => {
   // Draft system - persists input per conversation
   const { draft, saveDraft, clearDraft } = useChatDrafts(conversation?.id || null);
+  // Optimization hook for quoted messages
+  const { fetchQuotedMessage, fetchingQuotedIds } = useChatOptimization();
+  // Cache for fetched quoted messages
+  const [fetchedQuotedMessages, setFetchedQuotedMessages] = useState<Map<string, Message>>(new Map());
+  
   const [inputValue, setInputValue] = useState('');
   const [fontSizeIndex, setFontSizeIndex] = useState(1);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -129,6 +136,11 @@ const ChatAreaComponent = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaUploaderRef = useRef<MediaUploaderRef>(null);
+
+  // Clear fetched quoted messages when conversation changes
+  useEffect(() => {
+    setFetchedQuotedMessages(new Map());
+  }, [conversation?.id]);
 
   // Clear highlight after animation
   useEffect(() => {
@@ -428,7 +440,8 @@ const ChatAreaComponent = ({
     }
   }, [onForwardMessage, onSendMedia, isSelectionMode, selectedMessages, messages]);
 
-  const getQuotedMessage = useCallback((quotedId: string | null) => {
+  // Get quoted message - first check local messages, then check fetched cache, then trigger fetch
+  const getQuotedMessage = useCallback((quotedId: string | null): Message | null | 'loading' => {
     if (!quotedId) return null;
     
     // Try exact match first - by id (UUID) or message_id (WhatsApp ID)
@@ -436,8 +449,6 @@ const ChatAreaComponent = ({
     if (found) return found;
     
     // WhatsApp IDs can have different formats, try more flexible matching
-    // The stanzaId (quoted_message_id) should match the message_id of the original message
-    // Try case-insensitive match and partial matching for IDs that might have prefixes
     const quotedIdLower = quotedId.toLowerCase();
     found = messages.find(m => {
       if (!m.message_id) return false;
@@ -457,8 +468,27 @@ const ChatAreaComponent = ({
       return false;
     });
     
-    return found || null;
-  }, [messages]);
+    if (found) return found;
+    
+    // Check fetched quoted messages cache
+    const cached = fetchedQuotedMessages.get(quotedId);
+    if (cached) return cached;
+    
+    // Check if currently fetching
+    if (fetchingQuotedIds.has(quotedId)) return 'loading';
+    
+    // Not found locally - trigger async fetch from database
+    if (conversation?.id) {
+      fetchQuotedMessage(quotedId, conversation.id).then(fetchedMsg => {
+        if (fetchedMsg) {
+          setFetchedQuotedMessages(prev => new Map(prev).set(quotedId, fetchedMsg));
+        }
+      });
+      return 'loading';
+    }
+    
+    return null;
+  }, [messages, fetchedQuotedMessages, fetchingQuotedIds, conversation?.id, fetchQuotedMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1022,7 +1052,9 @@ const ChatAreaComponent = ({
                     }
                     
                     const message = item.message;
-                    const quotedMessage = getQuotedMessage(message.quoted_message_id);
+                    const quotedResult = getQuotedMessage(message.quoted_message_id);
+                    const quotedMessage = quotedResult === 'loading' ? null : quotedResult;
+                    const isLoadingQuoted = quotedResult === 'loading';
                     
                     return (
                       <MessageBubble
@@ -1037,6 +1069,7 @@ const ChatAreaComponent = ({
                         isDeleting={deletingMessageIds.has(message.id)}
                         isGroup={conversation?.is_group || false}
                         instanceName={instanceName}
+                        isLoadingQuoted={isLoadingQuoted}
                         onReply={handleReply}
                         onForward={handleForward}
                         onDelete={handleDelete}
