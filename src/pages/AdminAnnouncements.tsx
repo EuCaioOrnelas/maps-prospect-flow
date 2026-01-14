@@ -36,7 +36,8 @@ import {
   Trash2, 
   Bell,
   Calendar,
-  Loader2
+  Loader2,
+  Pencil
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -66,6 +67,7 @@ const AdminAnnouncements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [newAnnouncement, setNewAnnouncement] = useState({
@@ -73,6 +75,13 @@ const AdminAnnouncements = () => {
     content: '',
     duration: '7d',
   });
+
+  const [editingAnnouncement, setEditingAnnouncement] = useState<{
+    id: string;
+    title: string;
+    content: string;
+    duration: string;
+  } | null>(null);
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -173,6 +182,54 @@ const AdminAnnouncements = () => {
     } catch (error) {
       console.error('Error deleting announcement:', error);
       toast.error('Erro ao excluir aviso');
+    }
+  };
+
+  const handleEdit = (announcement: Announcement) => {
+    setEditingAnnouncement({
+      id: announcement.id,
+      title: announcement.title,
+      content: announcement.content,
+      duration: '7d', // Default duration for extension
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingAnnouncement) return;
+
+    if (!editingAnnouncement.title.trim() || !editingAnnouncement.content.trim()) {
+      toast.error('Preencha título e conteúdo');
+      return;
+    }
+
+    if (editingAnnouncement.content.length > 200) {
+      toast.error('Conteúdo deve ter no máximo 200 caracteres');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .update({
+          title: editingAnnouncement.title,
+          content: editingAnnouncement.content,
+          expires_at: getExpirationDate(editingAnnouncement.duration).toISOString(),
+        })
+        .eq('id', editingAnnouncement.id);
+
+      if (error) throw error;
+
+      toast.success('Aviso atualizado com sucesso!');
+      setEditDialogOpen(false);
+      setEditingAnnouncement(null);
+      fetchAnnouncements();
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      toast.error('Erro ao atualizar aviso');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -289,14 +346,24 @@ const AdminAnnouncements = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(announcement.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => handleEdit(announcement)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(announcement.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -365,6 +432,73 @@ const AdminAnnouncements = () => {
             <Button onClick={handleCreate} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Criar Aviso
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Aviso</DialogTitle>
+          </DialogHeader>
+
+          {editingAnnouncement && (
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Título (pode usar emojis 🎉)</label>
+                <Input
+                  value={editingAnnouncement.title}
+                  onChange={(e) => setEditingAnnouncement(prev => prev ? { ...prev, title: e.target.value } : null)}
+                  placeholder="Ex: 🚀 Nova funcionalidade disponível!"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Conteúdo ({editingAnnouncement.content.length}/200 caracteres)
+                </label>
+                <Textarea
+                  value={editingAnnouncement.content}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 200) {
+                      setEditingAnnouncement(prev => prev ? { ...prev, content: e.target.value } : null);
+                    }
+                  }}
+                  placeholder="Descreva a novidade..."
+                  className="min-h-[100px] resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Nova Duração (a partir de agora)</label>
+                <Select
+                  value={editingAnnouncement.duration}
+                  onValueChange={(value) => setEditingAnnouncement(prev => prev ? { ...prev, duration: value } : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1d">1 dia</SelectItem>
+                    <SelectItem value="3d">3 dias</SelectItem>
+                    <SelectItem value="7d">7 dias</SelectItem>
+                    <SelectItem value="14d">14 dias</SelectItem>
+                    <SelectItem value="30d">30 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdate} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
