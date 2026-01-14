@@ -26,8 +26,8 @@ export default function CRM() {
   const { user, profile, loading } = useAuth();
   
   // Verificar se o usuário tem acesso ao CRM
-  const hasCRMAccess = profile?.email && CRM_ALLOWED_EMAILS.includes(profile.email.toLowerCase());
-  
+  const userEmail = (profile?.email ?? user?.email ?? '').toLowerCase();
+  const hasCRMAccess = !!userEmail && CRM_ALLOWED_EMAILS.includes(userEmail);
   // Aguardar carregamento do profile antes de verificar acesso
   if (loading) {
     return (
