@@ -111,7 +111,10 @@ export const KanbanColumnDraggable = ({
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
-                <div className="absolute top-2 right-2 z-10">
+                <div 
+                  className="absolute top-2 right-2 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Checkbox 
                     checked={selectedLeadIds?.has(lead.id)}
                     onCheckedChange={() => onLeadClick(lead)}
