@@ -160,22 +160,30 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         style={{ overflow: 'hidden' }}
       >
         {/* Logo area - aligned with navbar height */}
-        <div className="h-[57px] min-h-[57px] flex items-center justify-center px-3 border-b border-sidebar-border">
-          <div className="flex items-center relative">
-            {/* Show icon when collapsed */}
-            <div className={cn(
-              "absolute inset-0 flex items-center justify-center transition-all duration-300",
-              isHovered ? "opacity-0 pointer-events-none" : "opacity-100"
-            )}>
-              <img src="/logo-icon.png" alt="Wiize" className="h-11 w-auto" />
-            </div>
-            {/* Show full logo when expanded */}
-            <div className={cn(
-              "flex items-center transition-all duration-300",
-              isHovered ? "opacity-100" : "opacity-0"
-            )}>
-              <img src="/logo-branca.png" alt="Wiize" className="h-8 w-auto" />
-            </div>
+        <div className="h-[57px] min-h-[57px] flex items-center px-3 border-b border-sidebar-border overflow-hidden">
+          <div className="relative w-full h-full flex items-center">
+            {/* Icon logo - visible when collapsed, fades out smoothly */}
+            <img 
+              src="/logo-icon.png" 
+              alt="Wiize" 
+              className={cn(
+                "h-10 w-auto absolute left-0 transition-all duration-500 ease-in-out",
+                isHovered 
+                  ? "opacity-0 scale-75 -translate-x-4" 
+                  : "opacity-100 scale-100 translate-x-0"
+              )}
+            />
+            {/* Full logo - visible when expanded, fades in smoothly */}
+            <img 
+              src="/logo-branca.png" 
+              alt="Wiize" 
+              className={cn(
+                "h-8 w-auto transition-all duration-500 ease-in-out",
+                isHovered 
+                  ? "opacity-100 scale-100 translate-x-0" 
+                  : "opacity-0 scale-90 translate-x-4"
+              )}
+            />
           </div>
         </div>
 
