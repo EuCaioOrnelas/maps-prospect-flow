@@ -1,16 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM, type Lead } from '@/hooks/useCRM';
-import { KanbanBoard } from '@/components/crm/KanbanBoard';
-import { LeadDetailPanel } from '@/components/crm/LeadDetailPanel';
+import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
+import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Button } from '@/components/ui/button';
-import { Users, X } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -65,6 +64,8 @@ export default function CRM() {
     origin: '',
     whatsappNumberId: '',
   });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch WhatsApp numbers for filter
   const { data: whatsappNumbers = [] } = useQuery({
@@ -150,16 +151,19 @@ export default function CRM() {
 
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);
+    setDialogOpen(true);
   };
 
   const handleLeadMove = async (leadId: string, stageId: string) => {
     await moveLeadToStage(leadId, stageId);
   };
 
-  const handleOpenChat = (conversationId: string) => {
-    navigate(`/chat?conversation=${conversationId}`);
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setSelectedLead(null);
+    }
   };
-
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -191,7 +195,6 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
-
               </div>
 
               {/* Metrics */}
@@ -217,58 +220,40 @@ export default function CRM() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <div className="h-full flex gap-4">
-                <div className={`flex-1 overflow-hidden transition-all duration-300 ${selectedLead ? 'lg:mr-96' : ''}`}>
-                  <KanbanBoard
-                    stages={stages}
-                    leads={filteredLeads}
-                    onLeadClick={handleLeadClick}
-                    onLeadMove={handleLeadMove}
-                    selectedLead={selectedLead}
-                  />
-                </div>
-
-                {/* Lead Detail Panel */}
-                {selectedLead && (
-                  <div className="fixed right-0 top-0 h-screen w-full lg:w-96 bg-background border-l border-border z-50 lg:z-30 animate-in slide-in-from-right duration-300">
-                    <div className="flex items-center justify-between p-4 border-b border-border lg:pt-4">
-                      <h2 className="font-semibold text-foreground">Detalhes do Lead</h2>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setSelectedLead(null)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <LeadDetailPanel
-                      lead={selectedLead}
-                      stages={stages}
-                      onUpdate={async (id, updates) => {
-                        const result = await updateLead(id, updates);
-                        return result as Lead | null;
-                      }}
-                      onDelete={deleteLead}
-                      onMoveToStage={moveLeadToStage}
-                      onAddNote={addNote}
-                      onFetchNotes={fetchNotes}
-                      onFetchActivities={async (leadId) => {
-                        const activities = await fetchActivities(leadId);
-                        return activities.map(a => ({
-                          ...a,
-                          metadata: (a.metadata || {}) as Record<string, unknown>,
-                        }));
-                      }}
-                      onClose={() => setSelectedLead(null)}
-                    />
-                  </div>
-                )}
-              </div>
+              <KanbanBoardWithScroll
+                stages={stages}
+                leads={filteredLeads}
+                onLeadClick={handleLeadClick}
+                onLeadMove={handleLeadMove}
+                selectedLead={selectedLead}
+              />
             )}
           </div>
         </div>
       </main>
 
+      {/* Lead Detail Dialog */}
+      <LeadDetailDialog
+        lead={selectedLead}
+        stages={stages}
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        onUpdate={async (id, updates) => {
+          const result = await updateLead(id, updates);
+          return result as Lead | null;
+        }}
+        onDelete={deleteLead}
+        onMoveToStage={moveLeadToStage}
+        onAddNote={addNote}
+        onFetchNotes={fetchNotes}
+        onFetchActivities={async (leadId) => {
+          const activities = await fetchActivities(leadId);
+          return activities.map(a => ({
+            ...a,
+            metadata: (a.metadata || {}) as Record<string, unknown>,
+          }));
+        }}
+      />
     </div>
   );
 }
