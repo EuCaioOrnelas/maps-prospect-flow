@@ -7,6 +7,7 @@ import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Users, X } from 'lucide-react';
@@ -137,7 +138,10 @@ export default function CRM() {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Glows */}
+      <BackgroundGlow />
+      
       <SEO 
         title="CRM - WiizeProspect"
         description="Gerencie seus leads e vendas com o CRM integrado ao WhatsApp"

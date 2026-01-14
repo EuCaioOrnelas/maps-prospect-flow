@@ -46,6 +46,7 @@ import {
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 // Função para verificar admin via banco de dados (seguro)
 // Preços dos planos (fallback caso Stripe falhe)
@@ -820,7 +821,10 @@ const Admin = () => {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Glows */}
+      <BackgroundGlow />
+      
       {/* Header */}
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container mx-auto px-4 py-4">

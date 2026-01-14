@@ -17,6 +17,7 @@ import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { ReconnectDialog } from '@/components/whatsapp/ReconnectDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -584,7 +585,10 @@ const Chat = () => {
         description="Converse com seus leads em tempo real"
       />
       
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background flex relative">
+        {/* Background Glows */}
+        <BackgroundGlow />
+        
         {/* Desktop Sidebar */}
         <AppSidebar profile={profile} />
 
