@@ -765,12 +765,6 @@ const WhatsAppCampaign = () => {
             <p className="text-muted-foreground text-sm">Gerencie suas campanhas de WhatsApp</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/whatsapp/reports">
-              <Button variant="outline" size="sm" className="gap-2">
-                <BarChart3 size={16} />
-                <span className="hidden sm:inline">Relatórios</span>
-              </Button>
-            </Link>
             <NumbersManager
               numbers={numbers}
               onNumbersChange={setNumbers}
