@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import {
   Building2,
-  User,
   Phone,
   MapPin,
   Globe,
@@ -25,6 +24,7 @@ import {
   Pencil,
   Clock,
   ExternalLink,
+  DollarSign,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -72,6 +72,7 @@ export const LeadDetailDialog = ({
   const [newNote, setNewNote] = useState('');
   const [newTag, setNewTag] = useState('');
   const [formData, setFormData] = useState({
+    phone: '',
     company_name: '',
     contact_name: '',
     category: '',
@@ -80,10 +81,12 @@ export const LeadDetailDialog = ({
     website: '',
     estimated_value: 0,
   });
+  const [showWhatsAppOptions, setShowWhatsAppOptions] = useState(false);
 
   useEffect(() => {
     if (lead) {
       setFormData({
+        phone: lead.phone || '',
         company_name: lead.company_name || '',
         contact_name: lead.contact_name || '',
         category: lead.category || '',
@@ -95,6 +98,7 @@ export const LeadDetailDialog = ({
       loadNotesAndActivities();
       setIsEditing(false);
       setActiveTab('info');
+      setShowWhatsAppOptions(false);
     }
   }, [lead?.id]);
 
@@ -175,12 +179,24 @@ export const LeadDetailDialog = ({
     }
   };
 
-  const handleOpenChat = () => {
+  const openWhatsApp = (type: 'web' | 'app') => {
     if (!lead) return;
-    if (lead.conversation_id) {
-      navigate(`/chat?conversation=${lead.conversation_id}`);
+    const phoneDigits = lead.phone.replace(/\D/g, '');
+    if (type === 'web') {
+      window.open(`https://web.whatsapp.com/send?phone=${encodeURIComponent(phoneDigits)}`, '_blank');
     } else {
-      navigate(`/chat?phone=${lead.phone}`);
+      window.open(`https://wa.me/${encodeURIComponent(phoneDigits)}`, '_blank');
+    }
+    setShowWhatsAppOptions(false);
+  };
+
+  const handleValueChange = async (value: number) => {
+    if (!lead) return;
+    try {
+      await onUpdate(lead.id, { estimated_value: value });
+      toast.success('Valor atualizado!');
+    } catch {
+      toast.error('Erro ao atualizar valor');
     }
   };
 
@@ -229,14 +245,34 @@ export const LeadDetailDialog = ({
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30">
-          <Button 
-            size="sm" 
-            className="flex-1"
-            onClick={handleOpenChat}
-          >
-            <MessageCircle className="w-4 h-4 mr-1.5" />
-            Conversar
-          </Button>
+          <div className="relative flex-1">
+            <Button 
+              size="sm" 
+              className="w-full"
+              onClick={() => setShowWhatsAppOptions(!showWhatsAppOptions)}
+            >
+              <MessageCircle className="w-4 h-4 mr-1.5" />
+              Conversar
+            </Button>
+            {showWhatsAppOptions && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                <button
+                  className="w-full px-3 py-2 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
+                  onClick={() => openWhatsApp('web')}
+                >
+                  <Globe className="w-4 h-4" />
+                  WhatsApp Web
+                </button>
+                <button
+                  className="w-full px-3 py-2 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
+                  onClick={() => openWhatsApp('app')}
+                >
+                  <Phone className="w-4 h-4" />
+                  WhatsApp App
+                </button>
+              </div>
+            )}
+          </div>
           
           <Select
             value={lead.pipeline_stage_id || ''}
@@ -316,6 +352,15 @@ export const LeadDetailDialog = ({
               <div className="space-y-5">
                 {isEditing ? (
                   <div className="space-y-4">
+                    {/* Phone */}
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Telefone</label>
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d+]/g, '') })}
+                        placeholder="+5511999999999"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-medium text-muted-foreground mb-1 block">Empresa</label>
@@ -423,6 +468,23 @@ export const LeadDetailDialog = ({
                       </div>
                     </div>
 
+                    {/* Negotiation Value - Prominent */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Valor da Negociação</span>
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                        <div className="flex items-center gap-3">
+                          <DollarSign className="w-5 h-5 text-primary" />
+                          <Input
+                            type="number"
+                            value={lead.estimated_value || 0}
+                            onChange={(e) => handleValueChange(parseFloat(e.target.value) || 0)}
+                            className="text-lg font-semibold border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                            placeholder="0,00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Tags */}
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tags</span>
@@ -459,13 +521,8 @@ export const LeadDetailDialog = ({
 
                     {/* Metadata */}
                     <div className="pt-3 border-t border-border">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Origem: {lead.origin}</span>
-                        {lead.estimated_value > 0 && (
-                          <span className="text-primary font-medium">
-                            R$ {lead.estimated_value.toLocaleString('pt-BR')}
-                          </span>
-                        )}
+                      <div className="text-xs text-muted-foreground">
+                        Origem: {lead.origin}
                       </div>
                     </div>
                   </>

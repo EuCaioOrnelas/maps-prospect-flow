@@ -46,7 +46,7 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
       bgColor: 'bg-orange-100',
     },
     {
-      label: 'Valor Total em Pipeline',
+      label: 'Valor Total em Negociação',
       value: `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
       icon: DollarSign,
       color: 'text-primary',
