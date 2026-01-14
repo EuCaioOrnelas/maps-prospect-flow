@@ -143,14 +143,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4">
           <Link 
             to="/dashboard"
-            className="relative flex items-center justify-center h-10 group cursor-pointer"
+            className="relative flex items-center justify-center h-11 group cursor-pointer"
           >
             {/* Icon logo - visible when collapsed */}
             <img 
               src={logoIcon} 
               alt="Wiize" 
               className={cn(
-                "h-10 w-10 object-contain transition-all duration-300 ease-out group-hover:scale-105 group-hover:brightness-110",
+                "h-11 w-11 object-contain transition-all duration-300 ease-out group-hover:scale-105 group-hover:brightness-110",
                 isHovered 
                   ? "opacity-0 scale-90 absolute pointer-events-none" 
                   : "opacity-100 scale-100"
@@ -161,7 +161,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               src={logoBranca} 
               alt="Wiize" 
               className={cn(
-                "h-10 w-auto object-contain transition-all duration-300 ease-out group-hover:scale-[1.02] group-hover:brightness-110",
+                "h-10 w-auto object-contain transition-all duration-300 ease-out group-hover:scale-[1.02] group-hover:brightness-110 ml-0.5",
                 isHovered 
                   ? "opacity-100 scale-100" 
                   : "opacity-0 scale-95 absolute pointer-events-none"

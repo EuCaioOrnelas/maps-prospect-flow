@@ -847,58 +847,83 @@ serve(async (req) => {
                       }
                       
                       // Use contextual response if matched (only on first response if not already completed)
-                      if (contextualResponse && messagesReceived === 1 && !matchingInteraction.conversation_ended) {
+                      if (contextualResponse && !matchingInteraction.conversation_ended) {
                         shouldRespond = true;
                         responseMessages = contextualResponse;
                         responseDelay = [2, 8];
-                        shouldEndConversation = forceEndConversation || (currentLevel <= 2);
+                        shouldEndConversation = forceEndConversation || (currentLevel <= 2 && messagesReceived >= 1);
                       }
-                      // Level-based logic (only if conversation not ended)
+                      // Level-based logic (only if conversation not ended and no contextual match)
                       else if (!matchingInteraction.conversation_ended) {
-                        if (currentLevel === 2 && messagesReceived === 1 && messagesSent === 1) {
-                          shouldRespond = true;
-                          responseMessages = [
-                            'Tudo sim, obrigado!', 'tudo sim, obrigado!',
-                            'Tudo certo por aqui', 'tudo certo por aqui',
-                            'Tudo bem sim!', 'tudo bem sim!',
-                            'Por aqui tudo bem!', 'por aqui tudo bem!'
-                          ];
-                          responseDelay = [3, 10];
+                        // Level 1: Simple greeting - always end after first response
+                        if (currentLevel === 1) {
+                          // Don't respond at level 1, just mark as completed
                           shouldEndConversation = true;
                         }
-                        else if (currentLevel === 3 && messagesReceived === 1 && messagesSent === 1) {
-                          shouldRespond = true;
-                          responseMessages = [
-                            'Tudo bem por aí?', 'tudo bem por aí?',
-                            'Tudo certo hoje?', 'tudo certo hoje?',
-                            'Por aqui tudo bem!', 'por aqui tudo bem!',
-                            'Aqui também!', 'aqui também!'
-                          ];
-                          responseDelay = [2, 8];
-                          shouldEndConversation = false;
+                        // Level 2: Light conversation - respond once then end
+                        else if (currentLevel === 2) {
+                          if (messagesReceived >= 1 && messagesSent === 1) {
+                            shouldRespond = true;
+                            responseMessages = [
+                              'Tudo sim, obrigado!', 'tudo sim, obrigado!',
+                              'Tudo certo por aqui', 'tudo certo por aqui',
+                              'Tudo bem sim!', 'tudo bem sim!',
+                              'Por aqui tudo bem!', 'por aqui tudo bem!',
+                              'Tudo tranquilo!', 'tudo tranquilo!'
+                            ];
+                            responseDelay = [3, 10];
+                            shouldEndConversation = true;
+                          } else if (messagesSent >= 2) {
+                            shouldEndConversation = true;
+                          }
                         }
-                        else if (currentLevel === 3 && messagesReceived === 2 && messagesSent === 2) {
-                          shouldRespond = true;
-                          responseMessages = [
-                            'Que bom!', 'que bom!',
-                            'Perfeito!', 'perfeito!',
-                            'Legal!', 'legal!',
-                            'Show!', 'show!'
-                          ];
-                          responseDelay = [3, 10];
-                          shouldEndConversation = true;
+                        // Level 3: Natural interaction - up to 3 exchanges
+                        else if (currentLevel === 3) {
+                          if (messagesReceived >= 1 && messagesSent === 1) {
+                            shouldRespond = true;
+                            responseMessages = [
+                              'Tudo bem por aí?', 'tudo bem por aí?',
+                              'Tudo certo hoje?', 'tudo certo hoje?',
+                              'Por aqui tudo bem!', 'por aqui tudo bem!',
+                              'Aqui também!', 'aqui também!',
+                              'Tudo ótimo!', 'tudo ótimo!'
+                            ];
+                            responseDelay = [2, 8];
+                            shouldEndConversation = false;
+                          }
+                          else if (messagesReceived >= 2 && messagesSent === 2) {
+                            shouldRespond = true;
+                            responseMessages = [
+                              'Que bom!', 'que bom!',
+                              'Perfeito!', 'perfeito!',
+                              'Legal!', 'legal!',
+                              'Show!', 'show!',
+                              'Ótimo!', 'ótimo!'
+                            ];
+                            responseDelay = [3, 10];
+                            shouldEndConversation = true;
+                          } else if (messagesSent >= 3) {
+                            shouldEndConversation = true;
+                          }
                         }
-                        else if (currentLevel === 4 && messagesReceived === 1 && messagesSent === 1) {
-                          shouldRespond = true;
-                          responseMessages = [
-                            'Perfeito, obrigado!', 'perfeito, obrigado!',
-                            'Combinado, agradeço!', 'combinado, agradeço!',
-                            'Show, obrigado!', 'show, obrigado!',
-                            'Legal, valeu!', 'legal, valeu!'
-                          ];
-                          responseDelay = [5, 15];
-                          shouldEndConversation = true;
+                        // Level 4: Pre-commercial - respond naturally then end
+                        else if (currentLevel === 4) {
+                          if (messagesReceived >= 1 && messagesSent === 1) {
+                            shouldRespond = true;
+                            responseMessages = [
+                              'Perfeito, obrigado!', 'perfeito, obrigado!',
+                              'Combinado, agradeço!', 'combinado, agradeço!',
+                              'Show, obrigado!', 'show, obrigado!',
+                              'Legal, valeu!', 'legal, valeu!',
+                              'Ótimo, obrigado pela atenção!', 'ótimo, obrigado pela atenção!'
+                            ];
+                            responseDelay = [5, 15];
+                            shouldEndConversation = true;
+                          } else if (messagesSent >= 2) {
+                            shouldEndConversation = true;
+                          }
                         }
+                        // Fallback: end conversation if too many messages
                         else if (messagesSent >= 3) {
                           shouldEndConversation = true;
                         }
