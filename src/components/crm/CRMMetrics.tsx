@@ -34,9 +34,9 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   // Count leads that have been contacted (not never_contacted)
   const prospectedLeads = leads.filter(lead => lead.whatsapp_status !== 'never_contacted').length;
 
-  // Conversion rate based on prospected leads vs won leads
-  const conversionRate = prospectedLeads > 0 
-    ? Math.round((wonLeads / prospectedLeads) * 100) 
+  // Conversion rate based on total leads vs won leads (rounded to 2 decimal places)
+  const conversionRate = totalLeads > 0 
+    ? Math.round((wonLeads / totalLeads) * 10000) / 100
     : 0;
 
   const metrics: Metric[] = [
@@ -49,7 +49,7 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
     },
     {
       label: 'Taxa de Conversão',
-      value: `${conversionRate}%`,
+      value: `${conversionRate}% (${wonLeads})`,
       icon: Target,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
