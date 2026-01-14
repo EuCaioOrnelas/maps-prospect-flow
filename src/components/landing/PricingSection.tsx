@@ -188,7 +188,7 @@ export const PricingSection = () => {
 
                 <div className="mb-6">
                   <h3 className="font-display font-bold mb-2 text-lg md:text-xl">{plan.name}</h3>
-                  <p className="text-muted-foreground text-xs sm:text-sm">{plan.description}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
 
                 <div className="mb-6">
