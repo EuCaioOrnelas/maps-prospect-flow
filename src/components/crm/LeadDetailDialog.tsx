@@ -10,7 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Building2,
   Phone,
@@ -86,6 +99,11 @@ export const LeadDetailDialog = ({
   const [showWhatsAppOptions, setShowWhatsAppOptions] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const HISTORY_PER_PAGE = 5;
+  const [showNewOriginDialog, setShowNewOriginDialog] = useState(false);
+  const [newOriginValue, setNewOriginValue] = useState('');
+  const [pendingOriginUpdate, setPendingOriginUpdate] = useState(false);
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [showDeleteLeadDialog, setShowDeleteLeadDialog] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -178,13 +196,43 @@ export const LeadDetailDialog = ({
 
   const handleDelete = async () => {
     if (!lead) return;
-    if (!confirm('Tem certeza que deseja excluir este lead?')) return;
     try {
       await onDelete(lead.id);
       onOpenChange(false);
       toast.success('Lead excluído!');
     } catch {
       toast.error('Erro ao excluir lead');
+    }
+  };
+
+  const handleNewOriginSubmit = async () => {
+    if (!lead || !newOriginValue.trim()) return;
+    setPendingOriginUpdate(true);
+    try {
+      await onAddOrigin(newOriginValue.trim());
+      const updatedLead = await onUpdate(lead.id, { origin: newOriginValue.trim() });
+      if (updatedLead) Object.assign(lead, updatedLead);
+      toast.success('Origem criada e atualizada!');
+      setShowNewOriginDialog(false);
+      setNewOriginValue('');
+    } catch {
+      toast.error('Erro ao criar origem');
+    } finally {
+      setPendingOriginUpdate(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase.from('lead_notes').delete().eq('id', noteId);
+      if (error) throw error;
+      loadNotesAndActivities();
+      toast.success('Nota excluída!');
+    } catch {
+      toast.error('Erro ao excluir nota');
+    } finally {
+      setDeleteNoteId(null);
     }
   };
 
@@ -540,13 +588,7 @@ export const LeadDetailDialog = ({
                         value={lead.origin || ''}
                         onValueChange={async (value) => {
                           if (value === '__new__') {
-                            const newOrigin = prompt('Nome da nova origem:');
-                            if (newOrigin) {
-                              await onAddOrigin(newOrigin);
-                              const updatedLead = await onUpdate(lead.id, { origin: newOrigin });
-                              if (updatedLead) Object.assign(lead, updatedLead);
-                              toast.success('Origem atualizada!');
-                            }
+                            setShowNewOriginDialog(true);
                           } else {
                             const updatedLead = await onUpdate(lead.id, { origin: value });
                             if (updatedLead) Object.assign(lead, updatedLead);
@@ -598,16 +640,7 @@ export const LeadDetailDialog = ({
                         {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </p>
                       <button
-                        onClick={async () => {
-                          if (!confirm('Excluir esta nota?')) return;
-                          try {
-                            const { supabase } = await import('@/integrations/supabase/client');
-                            await supabase.from('lead_notes').delete().eq('id', note.id);
-                            loadNotesAndActivities();
-                          } catch {
-                            console.error('Error deleting note');
-                          }
-                        }}
+                        onClick={() => setDeleteNoteId(note.id)}
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -684,12 +717,84 @@ export const LeadDetailDialog = ({
             variant="ghost"
             size="sm"
             className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteLeadDialog(true)}
           >
             <Trash2 className="w-4 h-4 mr-1" />
             Excluir Lead
           </Button>
         </div>
+
+        {/* New Origin Dialog */}
+        <Dialog open={showNewOriginDialog} onOpenChange={setShowNewOriginDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Nova Origem</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                value={newOriginValue}
+                onChange={(e) => setNewOriginValue(e.target.value)}
+                placeholder="Nome da nova origem"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newOriginValue.trim()) {
+                    handleNewOriginSubmit();
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewOriginDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleNewOriginSubmit} disabled={!newOriginValue.trim() || pendingOriginUpdate}>
+                {pendingOriginUpdate ? 'Criando...' : 'Criar Origem'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Note Confirmation */}
+        <AlertDialog open={!!deleteNoteId} onOpenChange={(open) => !open && setDeleteNoteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Nota</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta nota? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteNoteId && handleDeleteNote(deleteNoteId)}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Lead Confirmation */}
+        <AlertDialog open={showDeleteLeadDialog} onOpenChange={setShowDeleteLeadDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Lead</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este lead? Todas as notas e histórico associados serão removidos. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Excluir Lead
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
