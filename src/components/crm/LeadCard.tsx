@@ -81,12 +81,14 @@ export const LeadCard = ({
 
       {/* Footer - Status and Response */}
       <div className="flex items-center justify-between gap-2">
-        <Badge 
-          variant="secondary" 
-          className={cn("text-[10px] px-1.5 py-0", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
-        >
-          {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-        </Badge>
+        {lead.whatsapp_status && (
+          <Badge 
+            variant="secondary" 
+            className={cn("text-[10px] px-1.5 py-0", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
+          >
+            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+          </Badge>
+        )}
         
         {hasResponse && (
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">

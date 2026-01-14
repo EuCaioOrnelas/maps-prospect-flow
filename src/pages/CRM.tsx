@@ -4,6 +4,7 @@ import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
 import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
 import { AddLeadDialog } from '@/components/crm/AddLeadDialog';
+import { ExportLeadsButton } from '@/components/crm/ExportLeadsButton';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -232,7 +233,7 @@ export default function CRM() {
       <main className="lg:pl-14 pt-14 lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
           {/* Header */}
-          <div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm">
+          <div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm relative z-10">
             <div className="p-4 lg:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -246,25 +247,30 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
-                <Button onClick={() => setAddLeadOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Lead
-                </Button>
               </div>
 
               {/* Metrics */}
               <CRMMetrics stages={stages} leads={leads} />
 
               {/* Filters */}
-              <div className="mt-4">
-                <CRMFilters 
-                  stages={stages}
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  availableTags={availableTags}
-                  whatsappNumbers={whatsappNumbers}
-                  availableOrigins={availableOrigins}
-                />
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex-1">
+                  <CRMFilters 
+                    stages={stages}
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    availableTags={availableTags}
+                    whatsappNumbers={whatsappNumbers}
+                    availableOrigins={availableOrigins}
+                  />
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <ExportLeadsButton leads={filteredLeads} stages={stages} />
+                  <Button onClick={() => setAddLeadOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Lead
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

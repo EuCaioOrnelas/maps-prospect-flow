@@ -12,6 +12,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import AdminLandingPages from "./pages/AdminLandingPages";
+import AdminAnnouncements from "./pages/AdminAnnouncements";
 import LandingPage from "./pages/LandingPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -85,6 +86,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAdmin>
                     <AdminLandingPages />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/announcements" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminAnnouncements />
                   </ProtectedRoute>
                 } 
               />
