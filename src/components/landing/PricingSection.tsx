@@ -171,9 +171,9 @@ export const PricingSection = () => {
                   scale: plan.popular ? 1.02 : 1.03,
                   transition: { duration: 0.3 }
                 }}
-                className={`relative rounded-2xl flex flex-col h-full ${
+                className={`relative rounded-2xl flex flex-col ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-8 md:z-10"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-6 md:z-10"
                     : "glass p-5 md:p-6"
                 }`}
               >
