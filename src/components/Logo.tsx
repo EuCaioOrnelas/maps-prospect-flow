@@ -20,9 +20,9 @@ export const Logo = ({
   iconOnly = false
 }: LogoProps) => {
   const sizes = {
-    sm: { height: "h-8", mobileHeight: "h-7" },
-    md: { height: "h-10", mobileHeight: "h-8" },
-    lg: { height: "h-12", mobileHeight: "h-10" },
+    sm: { height: "h-16", mobileHeight: "h-14" },
+    md: { height: "h-20", mobileHeight: "h-16" },
+    lg: { height: "h-24", mobileHeight: "h-20" },
   };
 
   const effectiveSize = sizes[size];
