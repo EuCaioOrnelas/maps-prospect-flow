@@ -141,16 +141,19 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       >
         {/* Logo area - aligned with navbar height */}
         <div className={cn(
-          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border transition-all duration-300 ease-out",
-          isHovered ? "justify-start px-4" : "justify-center"
+          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4 transition-all duration-300 ease-out",
+          isHovered ? "justify-start" : "justify-center"
         )}>
-          <div className="relative flex items-center justify-center">
+          <div className={cn(
+            "relative flex items-center transition-all duration-300 ease-out",
+            isHovered ? "w-full justify-start" : "w-10 justify-center"
+          )}>
             {/* Icon logo - visible when collapsed */}
             <img 
               src={logoIcon} 
               alt="Wiize" 
               className={cn(
-                "h-10 w-auto object-contain transition-all duration-300 ease-out",
+                "h-10 w-10 object-contain transition-all duration-300 ease-out",
                 isHovered 
                   ? "opacity-0 scale-90 absolute pointer-events-none" 
                   : "opacity-100 scale-100"
