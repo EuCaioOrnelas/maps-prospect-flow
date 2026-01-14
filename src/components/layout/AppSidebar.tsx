@@ -146,7 +146,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         )}>
           <div className={cn(
             "relative flex items-center transition-all duration-300 ease-out",
-            isHovered ? "w-full justify-start" : "w-10 justify-center"
+            isHovered ? "w-full justify-start pl-1" : "w-10 justify-center"
           )}>
             {/* Icon logo - visible when collapsed */}
             <img 
@@ -159,15 +159,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   : "opacity-100 scale-100"
               )}
             />
-            {/* Full logo - visible when expanded */}
+            {/* Full logo - visible when expanded, slides from right when closing */}
             <img 
               src={logoBranca} 
               alt="Wiize" 
               className={cn(
-                "h-9 w-auto object-contain transition-all duration-300 ease-out",
+                "h-9 w-auto object-contain transition-all duration-300 ease-out origin-left",
                 isHovered 
-                  ? "opacity-100 scale-100" 
-                  : "opacity-0 scale-95 absolute pointer-events-none"
+                  ? "opacity-100 scale-100 translate-x-0" 
+                  : "opacity-0 scale-95 -translate-x-2 absolute pointer-events-none"
               )}
             />
           </div>
