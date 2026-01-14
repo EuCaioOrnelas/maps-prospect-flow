@@ -17,6 +17,33 @@ const WIIZE_PRICE_IDS = [
 // Admin emails to exclude from MRR calculations
 const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
+// Helper to paginate through all Stripe list results
+async function fetchAllPages<T>(
+  fetchFn: (params: { limit: number; starting_after?: string }) => Promise<Stripe.ApiList<T>>,
+  maxPages = 10
+): Promise<T[]> {
+  const allItems: T[] = [];
+  let hasMore = true;
+  let startingAfter: string | undefined = undefined;
+  let pageCount = 0;
+
+  while (hasMore && pageCount < maxPages) {
+    const params: { limit: number; starting_after?: string } = { limit: 100 };
+    if (startingAfter) params.starting_after = startingAfter;
+    
+    const response = await fetchFn(params);
+    allItems.push(...response.data);
+    
+    hasMore = response.has_more;
+    if (response.data.length > 0) {
+      startingAfter = (response.data[response.data.length - 1] as any).id;
+    }
+    pageCount++;
+  }
+
+  return allItems;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -65,33 +92,41 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get all subscriptions (to find WiizeProspect ones)
-    const allSubs = await stripe.subscriptions.list({
-      status: "all",
-      limit: 100,
-      expand: ["data.customer", "data.latest_invoice"],
-    });
+    // Get ALL subscriptions with pagination (up to 1000)
+    console.log("[GET-STRIPE-MRR] Fetching all subscriptions...");
+    const allSubsData = await fetchAllPages<Stripe.Subscription>(
+      (params) => stripe.subscriptions.list({
+        ...params,
+        status: "all",
+        expand: ["data.customer", "data.latest_invoice"],
+      }),
+      10 // max 10 pages = 1000 subscriptions
+    );
 
     // Filter only WiizeProspect subscriptions
-    const wiizeSubs = allSubs.data.filter((sub: Stripe.Subscription) => {
+    const wiizeSubs = allSubsData.filter((sub: Stripe.Subscription) => {
       const priceId = sub.items.data[0]?.price.id;
       return WIIZE_PRICE_IDS.includes(priceId);
     });
 
-    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subscriptions`);
+    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subscriptions (from ${allSubsData.length} total)`);
 
-    // Get refunds
-    const refunds = await stripe.refunds.list({
-      limit: 100,
-      expand: ["data.charge"],
-    });
+    // Get ALL refunds with pagination
+    console.log("[GET-STRIPE-MRR] Fetching all refunds...");
+    const allRefunds = await fetchAllPages<Stripe.Refund>(
+      (params) => stripe.refunds.list({
+        ...params,
+        expand: ["data.charge"],
+      }),
+      5 // max 5 pages = 500 refunds
+    );
 
     // Find refunded charges that belong to WiizeProspect subscriptions
     const refundedChargeIds = new Set<string>();
     let wiizeRefundCount = 0;
     let wiizeRefundedAmount = 0;
 
-    for (const refund of refunds.data) {
+    for (const refund of allRefunds) {
       if (refund.status === "succeeded" && refund.charge) {
         const charge = typeof refund.charge === "string" 
           ? await stripe.charges.retrieve(refund.charge)
@@ -115,16 +150,21 @@ serve(async (req) => {
       }
     }
 
-    // Get all paid invoices for WiizeProspect subscriptions to track monthly revenue
-    const paidInvoices = await stripe.invoices.list({
-      limit: 100,
-      status: "paid",
-      expand: ["data.customer"],
-    });
+    // Get ALL paid invoices with pagination for complete MRR history
+    console.log("[GET-STRIPE-MRR] Fetching all paid invoices...");
+    const allPaidInvoices = await fetchAllPages<Stripe.Invoice>(
+      (params) => stripe.invoices.list({
+        ...params,
+        status: "paid",
+        expand: ["data.customer"],
+      }),
+      10 // max 10 pages = 1000 invoices
+    );
+
+    console.log(`[GET-STRIPE-MRR] Found ${allPaidInvoices.length} paid invoices`);
 
     // Track monthly revenue by invoice paid date (not subscription start date)
     const monthlyMRR: { [month: string]: number } = {};
-    const monthlyStats: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
 
     // Process WiizeProspect subscriptions
     let activeMRR = 0;
@@ -163,7 +203,7 @@ serve(async (req) => {
     }
 
     // Process paid invoices to get correct monthly MRR by payment date
-    for (const invoice of paidInvoices.data) {
+    for (const invoice of allPaidInvoices) {
       // Only process WiizeProspect invoices
       if (!invoice.subscription) continue;
       
@@ -195,8 +235,6 @@ serve(async (req) => {
       const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
       
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
-      
-      console.log(`[GET-STRIPE-MRR] Invoice ${invoice.id}: R$ ${invoice.amount_paid / 100} paid on ${monthKey}`);
     }
 
     // Calculate churn rate
@@ -204,6 +242,7 @@ serve(async (req) => {
     const churnRate = totalPaying > 0 ? ((canceledCount / totalPaying) * 100) : 0;
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunds: ${wiizeRefundCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
+    console.log(`[GET-STRIPE-MRR] Monthly MRR entries: ${Object.keys(monthlyMRR).length}`);
 
     return new Response(
       JSON.stringify({
