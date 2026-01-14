@@ -39,11 +39,37 @@ import {
   User,
   Tag,
   Link2,
+  Check,
+  DollarSign,
+  Calendar,
+  TrendingUp,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface LeadDeal {
+  id: string;
+  lead_id: string;
+  user_id: string;
+  value: number;
+  contract_type: string;
+  contract_months: number;
+  closed_at: string;
+  notes: string | null;
+  created_at: string;
+}
+
+const CONTRACT_TYPES = [
+  { value: '1', label: '1 Mês' },
+  { value: '3', label: '3 Meses' },
+  { value: '6', label: '6 Meses' },
+  { value: '12', label: '1 Ano' },
+  { value: 'custom', label: 'Personalizado' },
+];
 
 interface LeadDetailDialogProps {
   lead: Lead | null;
@@ -83,10 +109,12 @@ export const LeadDetailDialog = ({
   onAddOrigin,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history'>('info');
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals'>('info');
   const [isEditing, setIsEditing] = useState(false);
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
+  const [deals, setDeals] = useState<LeadDeal[]>([]);
   const [newNote, setNewNote] = useState('');
   const [newTag, setNewTag] = useState('');
   const [formData, setFormData] = useState({
@@ -107,6 +135,12 @@ export const LeadDetailDialog = ({
   const [pendingOriginUpdate, setPendingOriginUpdate] = useState(false);
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
   const [showDeleteLeadDialog, setShowDeleteLeadDialog] = useState(false);
+  
+  // Deal closing state
+  const [dealValue, setDealValue] = useState<number>(0);
+  const [contractType, setContractType] = useState<string>('1');
+  const [customMonths, setCustomMonths] = useState<number>(1);
+  const [showDealConfirm, setShowDealConfirm] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -120,13 +154,28 @@ export const LeadDetailDialog = ({
         website: lead.website || '',
         estimated_value: lead.estimated_value || 0,
       });
+      setDealValue(lead.estimated_value || 0);
       loadNotesAndActivities();
+      loadDeals();
       setIsEditing(false);
       setActiveTab('info');
       setShowWhatsAppOptions(false);
       setHistoryPage(1);
+      setShowDealConfirm(false);
     }
   }, [lead?.id]);
+
+  const loadDeals = async () => {
+    if (!lead) return;
+    const { data, error } = await supabase
+      .from('lead_deals')
+      .select('*')
+      .eq('lead_id', lead.id)
+      .order('closed_at', { ascending: false });
+    if (!error && data) {
+      setDeals(data as LeadDeal[]);
+    }
+  };
 
   const loadNotesAndActivities = async () => {
     if (!lead) return;
@@ -386,6 +435,7 @@ export const LeadDetailDialog = ({
         <div className="flex border-b border-border">
           {[
             { id: 'info', label: 'Informações' },
+            { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'notes', label: `Notas (${notes.length})` },
             { id: 'history', label: 'Histórico' },
           ].map((tab) => (
@@ -598,24 +648,49 @@ export const LeadDetailDialog = ({
                       </div>
                     </div>
 
-                    {/* Negotiation Value - Prominent */}
+                    {/* Negotiation Value with Close Deal */}
                     <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Valor da Negociação</span>
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        Valor da Negociação
+                      </span>
                       <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-primary font-medium text-lg">R$</span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={lead.estimated_value ? lead.estimated_value.toLocaleString('pt-BR') : ''}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
-                              handleValueChange(value);
-                            }}
-                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder="0,00"
-                          />
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-primary font-medium text-lg">R$</span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              value={dealValue ? dealValue.toLocaleString('pt-BR') : ''}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
+                                setDealValue(value);
+                              }}
+                              className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder="0,00"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-9 w-9 p-0 border-primary/30 hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => setShowDealConfirm(true)}
+                            disabled={!dealValue || dealValue <= 0}
+                            title="Confirmar fechamento"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
                         </div>
+                        {deals.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-primary/10">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Total em vendas:</span>
+                              <span className="font-medium text-primary">
+                                R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -691,6 +766,68 @@ export const LeadDetailDialog = ({
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Deals Tab */}
+            {activeTab === 'deals' && (
+              <div className="space-y-4">
+                {deals.length > 0 ? (
+                  <div className="space-y-3">
+                    {deals.map((deal) => (
+                      <div key={deal.id} className="bg-muted/40 rounded-lg p-4 border border-border/50">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="w-4 h-4 text-primary" />
+                              <span className="font-semibold text-lg text-primary">
+                                R$ {Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {deal.contract_months} {deal.contract_months === 1 ? 'mês' : 'meses'}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                {format(new Date(deal.closed_at), "dd/MM/yyyy", { locale: ptBR })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {deal.notes && (
+                          <p className="text-sm text-muted-foreground mt-2 pt-2 border-t border-border/50">
+                            {deal.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* Total Summary */}
+                    <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Total em Vendas</span>
+                        <span className="text-xl font-bold text-primary">
+                          R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {deals.length} {deals.length === 1 ? 'venda registrada' : 'vendas registradas'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma venda registrada
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use o campo de valor na aba Informações e clique no ✓ para registrar
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -828,11 +965,95 @@ export const LeadDetailDialog = ({
                 onClick={handleDelete}
                 className="bg-destructive hover:bg-destructive/90"
               >
-                Excluir Lead
+              Excluir Lead
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Confirm Deal Dialog */}
+        <Dialog open={showDealConfirm} onOpenChange={setShowDealConfirm}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Confirmar Fechamento
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="bg-primary/10 rounded-lg p-4 text-center">
+                <span className="text-sm text-muted-foreground">Valor da venda</span>
+                <p className="text-2xl font-bold text-primary">
+                  R$ {dealValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo de Contrato</label>
+                <Select value={contractType} onValueChange={setContractType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {contractType === 'custom' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Número de Meses</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={customMonths}
+                    onChange={(e) => setCustomMonths(parseInt(e.target.value) || 1)}
+                    placeholder="Ex: 24"
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDealConfirm(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={async () => {
+                  if (!lead || !user) return;
+                  const months = contractType === 'custom' ? customMonths : parseInt(contractType);
+                  try {
+                    const { error } = await supabase.from('lead_deals').insert({
+                      lead_id: lead.id,
+                      user_id: user.id,
+                      value: dealValue,
+                      contract_type: contractType,
+                      contract_months: months,
+                    });
+                    if (error) throw error;
+                    
+                    // Update lead estimated_value
+                    await onUpdate(lead.id, { estimated_value: dealValue });
+                    
+                    toast.success('Venda registrada com sucesso!');
+                    setShowDealConfirm(false);
+                    setDealValue(0);
+                    loadDeals();
+                  } catch {
+                    toast.error('Erro ao registrar venda');
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Check className="w-4 h-4 mr-1" />
+                Confirmar Venda
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

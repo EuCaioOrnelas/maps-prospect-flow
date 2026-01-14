@@ -411,6 +411,50 @@ export type Database = {
           },
         ]
       }
+      lead_deals: {
+        Row: {
+          closed_at: string
+          contract_months: number
+          contract_type: string
+          created_at: string
+          id: string
+          lead_id: string
+          notes: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          closed_at?: string
+          contract_months?: number
+          contract_type?: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          closed_at?: string
+          contract_months?: number
+          contract_type?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_deals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_notes: {
         Row: {
           content: string
