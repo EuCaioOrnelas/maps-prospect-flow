@@ -145,7 +145,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           isHovered ? "justify-start" : "justify-center"
         )}>
           <div className={cn(
-            "relative flex items-center transition-all duration-300 ease-out",
+            "relative flex items-center transition-all duration-300 ease-out group cursor-pointer",
             isHovered ? "w-full justify-start pl-1" : "w-10 justify-center"
           )}>
             {/* Icon logo - visible when collapsed */}
@@ -154,6 +154,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               alt="Wiize" 
               className={cn(
                 "h-10 w-10 object-contain transition-all duration-300 ease-out",
+                "group-hover:scale-110 group-hover:brightness-110",
                 isHovered 
                   ? "opacity-0 scale-90 absolute pointer-events-none" 
                   : "opacity-100 scale-100"
@@ -165,9 +166,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               alt="Wiize" 
               className={cn(
                 "h-9 w-auto object-contain transition-all duration-300 ease-out origin-left",
+                "group-hover:scale-105 group-hover:brightness-110",
                 isHovered 
                   ? "opacity-100 scale-100 translate-x-0" 
-                  : "opacity-0 scale-95 -translate-x-2 absolute pointer-events-none"
+                  : "opacity-0 scale-90 -translate-x-4 absolute pointer-events-none"
               )}
             />
           </div>
