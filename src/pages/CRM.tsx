@@ -1,19 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
 import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
+import { AddLeadDialog } from '@/components/crm/AddLeadDialog';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import CRMComingSoon from './CRMComingSoon';
+import { Button } from '@/components/ui/button';
 
 // Emails com acesso ao CRM
 const CRM_ALLOWED_EMAILS = [
@@ -66,6 +68,22 @@ export default function CRM() {
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
+
+  // Fetch custom origins
+  const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
+    queryKey: ['lead-origins', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('lead_origins')
+        .select('name')
+        .eq('user_id', user.id)
+        .order('name');
+      return data?.map(o => o.name) || [];
+    },
+    enabled: !!user,
+  });
 
   // Fetch WhatsApp numbers for filter
   const { data: whatsappNumbers = [] } = useQuery({
@@ -97,7 +115,7 @@ export default function CRM() {
     enabled: !!user,
   });
 
-  // Get all unique tags from leads
+  // Get all unique tags and origins from leads
   const availableTags = useMemo(() => {
     const tagsSet = new Set<string>();
     leads.forEach(lead => {
@@ -105,6 +123,15 @@ export default function CRM() {
     });
     return Array.from(tagsSet);
   }, [leads]);
+
+  const availableOrigins = useMemo(() => {
+    const originsSet = new Set<string>(['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social']);
+    leads.forEach(lead => {
+      if (lead.origin) originsSet.add(lead.origin);
+    });
+    customOrigins.forEach(origin => originsSet.add(origin));
+    return Array.from(originsSet).sort();
+  }, [leads, customOrigins]);
 
   // Filter leads
   const filteredLeads = leads.filter(lead => {
@@ -165,6 +192,30 @@ export default function CRM() {
     }
   };
 
+  const handleAddOrigin = useCallback(async (originName: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .insert({ user_id: user.id, name: originName });
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error adding origin:', error);
+    }
+  }, [user, refetchOrigins]);
+
+  const checkLeadExists = useCallback(async (phone: string): Promise<boolean> => {
+    if (!user) return false;
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const { data } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('phone', normalizedPhone)
+      .limit(1);
+    return (data?.length || 0) > 0;
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-background relative">
       {/* Background Glows */}
@@ -195,6 +246,10 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
+                <Button onClick={() => setAddLeadOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Lead
+                </Button>
               </div>
 
               {/* Metrics */}
@@ -208,6 +263,7 @@ export default function CRM() {
                   onFiltersChange={setFilters}
                   availableTags={availableTags}
                   whatsappNumbers={whatsappNumbers}
+                  availableOrigins={availableOrigins}
                 />
               </div>
             </div>
@@ -237,6 +293,7 @@ export default function CRM() {
       <LeadDetailDialog
         lead={selectedLead}
         stages={stages}
+        origins={availableOrigins}
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         onUpdate={async (id, updates) => {
@@ -254,6 +311,18 @@ export default function CRM() {
             metadata: (a.metadata || {}) as Record<string, unknown>,
           }));
         }}
+        onAddOrigin={handleAddOrigin}
+      />
+
+      {/* Add Lead Dialog */}
+      <AddLeadDialog
+        open={addLeadOpen}
+        onOpenChange={setAddLeadOpen}
+        stages={stages}
+        origins={availableOrigins}
+        onAddLead={createLead}
+        onAddOrigin={handleAddOrigin}
+        checkLeadExists={checkLeadExists}
       />
     </div>
   );

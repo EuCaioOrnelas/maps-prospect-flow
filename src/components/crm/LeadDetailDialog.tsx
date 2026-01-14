@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 interface LeadDetailDialogProps {
   lead: Lead | null;
   stages: PipelineStage[];
+  origins: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: (id: string, updates: Partial<Lead>) => Promise<Lead | null>;
@@ -40,6 +41,7 @@ interface LeadDetailDialogProps {
   onAddNote: (leadId: string, content: string) => Promise<LeadNote | null>;
   onFetchNotes: (leadId: string) => Promise<LeadNote[]>;
   onFetchActivities: (leadId: string) => Promise<LeadActivity[]>;
+  onAddOrigin: (origin: string) => Promise<void>;
 }
 
 const formatPhoneNumber = (phone: string) => {
@@ -53,6 +55,7 @@ const formatPhoneNumber = (phone: string) => {
 export const LeadDetailDialog = ({
   lead,
   stages,
+  origins,
   open,
   onOpenChange,
   onUpdate,
@@ -61,6 +64,7 @@ export const LeadDetailDialog = ({
   onAddNote,
   onFetchNotes,
   onFetchActivities,
+  onAddOrigin,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history'>('info');
@@ -507,7 +511,7 @@ export const LeadDetailDialog = ({
                           <input
                             type="text"
                             inputMode="decimal"
-                            value={lead.estimated_value ? lead.estimated_value.toLocaleString('pt-BR') : '0'}
+                            value={lead.estimated_value ? lead.estimated_value.toLocaleString('pt-BR') : ''}
                             onChange={(e) => {
                               const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
                               handleValueChange(value);
@@ -519,11 +523,37 @@ export const LeadDetailDialog = ({
                       </div>
                     </div>
 
-                    {/* Metadata */}
-                    <div className="pt-3 border-t border-border">
-                      <div className="text-xs text-muted-foreground">
-                        Origem: {lead.origin}
-                      </div>
+                    {/* Origin - Editable */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Origem</span>
+                      <Select
+                        value={lead.origin || ''}
+                        onValueChange={async (value) => {
+                          if (value === '__new__') {
+                            const newOrigin = prompt('Nome da nova origem:');
+                            if (newOrigin) {
+                              await onAddOrigin(newOrigin);
+                              await onUpdate(lead.id, { origin: newOrigin });
+                            }
+                          } else {
+                            await onUpdate(lead.id, { origin: value });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Selecionar origem" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...new Set(['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social', ...origins])].map((origin) => (
+                            <SelectItem key={origin} value={origin}>
+                              {origin}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="__new__">
+                            <span className="text-primary">+ Nova origem</span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}

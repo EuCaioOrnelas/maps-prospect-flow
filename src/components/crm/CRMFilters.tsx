@@ -38,6 +38,7 @@ interface CRMFiltersProps {
   onFiltersChange: (filters: CRMFiltersState) => void;
   availableTags: string[];
   whatsappNumbers: WhatsAppNumber[];
+  availableOrigins: string[];
 }
 
 export const CRMFilters = ({
@@ -46,6 +47,7 @@ export const CRMFilters = ({
   onFiltersChange,
   availableTags,
   whatsappNumbers,
+  availableOrigins,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -208,10 +210,11 @@ export const CRMFilters = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as origens</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="google_maps">Google Maps</SelectItem>
-                  <SelectItem value="import">Importação</SelectItem>
-                  <SelectItem value="campaign">Campanha</SelectItem>
+                  {availableOrigins.map((origin) => (
+                    <SelectItem key={origin} value={origin}>
+                      {origin}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
