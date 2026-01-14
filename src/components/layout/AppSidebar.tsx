@@ -161,20 +161,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       >
         {/* Logo area - fixed height and consistent padding */}
         <div className="h-14 min-h-[56px] flex items-center px-2.5 border-b border-sidebar-border">
-          <div className="flex items-center">
+          <div className="flex items-center h-8 relative">
             {/* Show icon when collapsed */}
             <div className={cn(
-              "transition-all duration-300",
-              isHovered ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+              "absolute inset-0 flex items-center transition-all duration-300",
+              isHovered ? "opacity-0 pointer-events-none" : "opacity-100"
             )}>
-              <Logo size="sm" iconOnly variant="dark" />
+              <img src="/logo-icon.png" alt="Wiize" className="h-8 w-auto" />
             </div>
             {/* Show full logo when expanded */}
             <div className={cn(
-              "transition-all duration-300",
-              isHovered ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+              "flex items-center transition-all duration-300",
+              isHovered ? "opacity-100" : "opacity-0"
             )}>
-              <Logo size="sm" variant="dark" />
+              <img src="/logo-branca.png" alt="Wiize" className="h-8 w-auto" />
             </div>
           </div>
         </div>
