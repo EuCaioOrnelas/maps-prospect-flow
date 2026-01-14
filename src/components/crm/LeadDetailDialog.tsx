@@ -134,6 +134,7 @@ export const LeadDetailDialog = ({
   const [newOriginValue, setNewOriginValue] = useState('');
   const [pendingOriginUpdate, setPendingOriginUpdate] = useState(false);
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [deleteDealId, setDeleteDealId] = useState<string | null>(null);
   const [showDeleteLeadDialog, setShowDeleteLeadDialog] = useState(false);
   
   // Deal closing state
@@ -285,6 +286,19 @@ export const LeadDetailDialog = ({
       toast.error('Erro ao excluir nota');
     } finally {
       setDeleteNoteId(null);
+    }
+  };
+
+  const handleDeleteDeal = async (dealId: string) => {
+    try {
+      const { error } = await supabase.from('lead_deals').delete().eq('id', dealId);
+      if (error) throw error;
+      loadDeals();
+      toast.success('Venda excluída!');
+    } catch {
+      toast.error('Erro ao excluir venda');
+    } finally {
+      setDeleteDealId(null);
     }
   };
 
@@ -775,7 +789,7 @@ export const LeadDetailDialog = ({
                 {deals.length > 0 ? (
                   <div className="space-y-3">
                     {deals.map((deal) => (
-                      <div key={deal.id} className="bg-muted/40 rounded-lg p-4 border border-border/50">
+                      <div key={deal.id} className="bg-muted/40 rounded-lg p-4 border border-border/50 group relative">
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
@@ -795,6 +809,12 @@ export const LeadDetailDialog = ({
                               </span>
                             </div>
                           </div>
+                          <button
+                            onClick={() => setDeleteDealId(deal.id)}
+                            className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                         {deal.notes && (
                           <p className="text-sm text-muted-foreground mt-2 pt-2 border-t border-border/50">
@@ -950,7 +970,27 @@ export const LeadDetailDialog = ({
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Delete Lead Confirmation */}
+        {/* Delete Deal Confirmation */}
+        <AlertDialog open={!!deleteDealId} onOpenChange={(open) => !open && setDeleteDealId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Venda</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteDealId && handleDeleteDeal(deleteDealId)}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={showDeleteLeadDialog} onOpenChange={setShowDeleteLeadDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
