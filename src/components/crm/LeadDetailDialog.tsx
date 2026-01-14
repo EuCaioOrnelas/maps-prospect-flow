@@ -20,11 +20,9 @@ import {
   Trash2,
   Save,
   Plus,
-  X,
   Pencil,
   Clock,
   ExternalLink,
-  DollarSign,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -352,14 +350,46 @@ export const LeadDetailDialog = ({
               <div className="space-y-5">
                 {isEditing ? (
                   <div className="space-y-4">
-                    {/* Phone */}
+                    {/* Phone with Country Code */}
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Telefone</label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d+]/g, '') })}
-                        placeholder="+5511999999999"
-                      />
+                      <div className="flex gap-2">
+                        <select
+                          value={formData.phone.startsWith('+') ? formData.phone.slice(0, formData.phone.length > 3 ? (formData.phone.startsWith('+55') ? 3 : 2) : 2) : '+55'}
+                          onChange={(e) => {
+                            const currentNumber = formData.phone.replace(/^\+\d{1,3}/, '');
+                            setFormData({ ...formData, phone: e.target.value + currentNumber });
+                          }}
+                          className="h-10 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <option value="+55">🇧🇷 +55</option>
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+44">🇬🇧 +44</option>
+                          <option value="+351">🇵🇹 +351</option>
+                          <option value="+34">🇪🇸 +34</option>
+                          <option value="+33">🇫🇷 +33</option>
+                          <option value="+49">🇩🇪 +49</option>
+                          <option value="+39">🇮🇹 +39</option>
+                          <option value="+81">🇯🇵 +81</option>
+                          <option value="+86">🇨🇳 +86</option>
+                          <option value="+91">🇮🇳 +91</option>
+                          <option value="+52">🇲🇽 +52</option>
+                          <option value="+54">🇦🇷 +54</option>
+                          <option value="+56">🇨🇱 +56</option>
+                          <option value="+57">🇨🇴 +57</option>
+                          <option value="+598">🇺🇾 +598</option>
+                          <option value="+595">🇵🇾 +595</option>
+                        </select>
+                        <Input
+                          value={formData.phone.replace(/^\+\d{1,3}/, '')}
+                          onChange={(e) => {
+                            const countryCode = formData.phone.match(/^\+\d{1,3}/)?.[0] || '+55';
+                            setFormData({ ...formData, phone: countryCode + e.target.value.replace(/\D/g, '') });
+                          }}
+                          placeholder="11999999999"
+                          className="flex-1"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -473,48 +503,18 @@ export const LeadDetailDialog = ({
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Valor da Negociação</span>
                       <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
                         <div className="flex items-center gap-3">
-                          <DollarSign className="w-5 h-5 text-primary" />
-                          <Input
-                            type="number"
-                            value={lead.estimated_value || 0}
-                            onChange={(e) => handleValueChange(parseFloat(e.target.value) || 0)}
-                            className="text-lg font-semibold border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                          <span className="text-primary font-medium text-lg">R$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={lead.estimated_value ? lead.estimated_value.toLocaleString('pt-BR') : '0'}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
+                              handleValueChange(value);
+                            }}
+                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="0,00"
                           />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tags</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(lead.tags || []).map((tag, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="text-xs pl-2 pr-1 py-0.5 gap-1"
-                          >
-                            {tag}
-                            <button 
-                              onClick={() => handleRemoveTag(tag)}
-                              className="hover:bg-destructive/20 rounded p-0.5"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                        <div className="flex gap-1">
-                          <Input
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            placeholder="Nova tag..."
-                            className="h-7 text-xs w-24"
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                          />
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={handleAddTag}>
-                            <Plus className="w-3 h-3" />
-                          </Button>
                         </div>
                       </div>
                     </div>
