@@ -140,39 +140,32 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         )}
       >
         {/* Logo area - aligned with navbar height */}
-        <div className={cn(
-          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4 transition-all duration-300 ease-out",
-          isHovered ? "justify-start" : "justify-center"
-        )}>
-          <div className={cn(
-            "relative flex items-center transition-all duration-300 ease-out group cursor-pointer",
-            isHovered ? "w-full justify-start pl-1" : "w-10 justify-center"
-          )}>
-            {/* Icon logo - visible when collapsed */}
+        <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4">
+          <Link 
+            to="/dashboard"
+            className={cn(
+              "relative flex items-center h-10 overflow-hidden transition-all duration-300 ease-out group cursor-pointer",
+              isHovered ? "w-40" : "w-10"
+            )}
+          >
+            {/* Icon logo - always at the left */}
             <img 
               src={logoIcon} 
               alt="Wiize" 
-              className={cn(
-                "h-10 w-10 object-contain transition-all duration-300 ease-out",
-                "group-hover:scale-110 group-hover:brightness-110",
-                isHovered 
-                  ? "opacity-0 scale-90 absolute pointer-events-none" 
-                  : "opacity-100 scale-100"
-              )}
+              className="h-10 w-10 min-w-[40px] object-contain transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110"
             />
-            {/* Full logo - visible when expanded, slides from right when closing */}
+            {/* Full logo text - clips in/out from right */}
             <img 
               src={logoBranca} 
               alt="Wiize" 
               className={cn(
-                "h-9 w-auto object-contain transition-all duration-300 ease-out origin-left",
-                "group-hover:scale-105 group-hover:brightness-110",
+                "h-8 w-auto object-contain ml-1 transition-all duration-300 ease-out group-hover:brightness-110",
                 isHovered 
-                  ? "opacity-100 scale-100 translate-x-0" 
-                  : "opacity-0 scale-90 -translate-x-4 absolute pointer-events-none"
+                  ? "opacity-100 translate-x-0" 
+                  : "opacity-0 -translate-x-full"
               )}
             />
-          </div>
+          </Link>
         </div>
 
         {/* Main navigation */}
