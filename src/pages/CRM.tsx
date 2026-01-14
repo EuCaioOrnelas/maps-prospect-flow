@@ -5,13 +5,14 @@ import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
 import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
 import { AddLeadDialog } from '@/components/crm/AddLeadDialog';
 import { ExportLeadsButton } from '@/components/crm/ExportLeadsButton';
+import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -53,6 +54,7 @@ export default function CRM() {
     moveLeadToStage,
     updateLead,
     deleteLead,
+    deleteLeads,
     createLead,
     addNote,
     fetchNotes,
@@ -70,6 +72,8 @@ export default function CRM() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -217,6 +221,33 @@ export default function CRM() {
     return (data?.length || 0) > 0;
   }, [user]);
 
+  // Bulk selection handlers
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeadIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllLeads = useCallback(() => {
+    setSelectedLeadIds(new Set(filteredLeads.map(l => l.id)));
+  }, [filteredLeads]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedLeadIds(new Set());
+    setBulkSelectMode(false);
+  }, []);
+
+  const handleBulkDelete = useCallback(async () => {
+    await deleteLeads(Array.from(selectedLeadIds));
+    clearSelection();
+  }, [deleteLeads, selectedLeadIds, clearSelection]);
+
   return (
     <div className="min-h-screen bg-background relative">
       {/* Background Glows */}
@@ -243,7 +274,7 @@ export default function CRM() {
                   <div>
                     <h1 className="text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
                     <p className="text-sm text-muted-foreground">
-                      {leads.length} leads no funil
+                      {filteredLeads.length} leads no funil
                     </p>
                   </div>
                 </div>
@@ -265,8 +296,19 @@ export default function CRM() {
                   />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant={bulkSelectMode ? "secondary" : "outline"}
+                    size="default"
+                    onClick={() => {
+                      setBulkSelectMode(!bulkSelectMode);
+                      if (bulkSelectMode) clearSelection();
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {bulkSelectMode ? 'Cancelar' : 'Excluir em massa'}
+                  </Button>
                   <ExportLeadsButton leads={filteredLeads} stages={stages} />
-                  <Button onClick={() => setAddLeadOpen(true)}>
+                  <Button size="default" onClick={() => setAddLeadOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Lead
                   </Button>
@@ -285,10 +327,18 @@ export default function CRM() {
               <KanbanBoardWithScroll
                 stages={stages}
                 leads={filteredLeads}
-                onLeadClick={handleLeadClick}
+                onLeadClick={(lead) => {
+                  if (bulkSelectMode) {
+                    toggleLeadSelection(lead.id);
+                  } else {
+                    handleLeadClick(lead);
+                  }
+                }}
                 onLeadMove={handleLeadMove}
                 selectedLead={selectedLead}
                 filteredStageId={filters.stage}
+                bulkSelectMode={bulkSelectMode}
+                selectedLeadIds={selectedLeadIds}
               />
             )}
           </div>
@@ -329,6 +379,16 @@ export default function CRM() {
         onAddLead={createLead}
         onAddOrigin={handleAddOrigin}
         checkLeadExists={checkLeadExists}
+      />
+
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar
+        selectedCount={selectedLeadIds.size}
+        totalCount={filteredLeads.length}
+        onSelectAll={selectAllLeads}
+        onClearSelection={clearSelection}
+        onDelete={handleBulkDelete}
+        isAllSelected={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0}
       />
     </div>
   );

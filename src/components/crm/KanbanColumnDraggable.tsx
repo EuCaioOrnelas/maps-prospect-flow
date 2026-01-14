@@ -2,6 +2,7 @@ import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface KanbanColumnDraggableProps {
   stage: PipelineStage;
@@ -15,6 +16,8 @@ interface KanbanColumnDraggableProps {
   selectedLeadId?: string;
   isDragging?: boolean;
   isExpanded?: boolean;
+  bulkSelectMode?: boolean;
+  selectedLeadIds?: Set<string>;
 }
 
 export const KanbanColumnDraggable = ({
@@ -29,6 +32,8 @@ export const KanbanColumnDraggable = ({
   selectedLeadId,
   isDragging,
   isExpanded,
+  bulkSelectMode,
+  selectedLeadIds,
 }: KanbanColumnDraggableProps) => {
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -91,14 +96,23 @@ export const KanbanColumnDraggable = ({
       <ScrollArea className="flex-1 p-2">
         <div className="space-y-2">
           {leads.map((lead) => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              onClick={() => onLeadClick(lead)}
-              onDragStart={() => onDragStart(lead.id)}
-              onDragEnd={onDragEnd}
-              isSelected={selectedLeadId === lead.id}
-            />
+            <div key={lead.id} className="relative">
+              {bulkSelectMode && (
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox 
+                    checked={selectedLeadIds?.has(lead.id)}
+                    onCheckedChange={() => onLeadClick(lead)}
+                  />
+                </div>
+              )}
+              <LeadCard
+                lead={lead}
+                onClick={() => onLeadClick(lead)}
+                onDragStart={() => onDragStart(lead.id)}
+                onDragEnd={onDragEnd}
+                isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
+              />
+            </div>
           ))}
           {leads.length === 0 && (
             <div className={cn(

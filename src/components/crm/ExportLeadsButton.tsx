@@ -72,7 +72,7 @@ export const ExportLeadsButton = ({ leads, stages }: ExportLeadsButtonProps) => 
   return (
     <Button 
       variant="outline" 
-      size="sm" 
+      size="default" 
       onClick={handleExport}
       disabled={exporting || leads.length === 0}
     >

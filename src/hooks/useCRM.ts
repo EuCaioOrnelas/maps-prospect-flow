@@ -157,6 +157,7 @@ export const useCRM = () => {
   };
 
   // Fetch leads with whatsapp_number info
+  // Only fetch leads that have conversation OR were prospected (from campaigns/search)
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
@@ -167,6 +168,7 @@ export const useCRM = () => {
         whatsapp_number:whatsapp_numbers(id, name, phone_number)
       `)
       .eq('user_id', user.id)
+      .or('conversation_id.not.is.null,whatsapp_status.neq.never_contacted')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -260,6 +262,22 @@ export const useCRM = () => {
 
     if (error) {
       console.error('Error deleting lead:', error);
+      throw error;
+    }
+  };
+
+  // Delete multiple leads
+  const deleteLeads = async (ids: string[]) => {
+    if (!user || ids.length === 0) return;
+
+    const { error } = await supabase
+      .from('leads')
+      .delete()
+      .in('id', ids)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting leads:', error);
       throw error;
     }
   };
@@ -435,6 +453,7 @@ export const useCRM = () => {
     updateLead,
     moveLeadToStage,
     deleteLead,
+    deleteLeads,
     addNote,
     fetchNotes,
     fetchActivities,

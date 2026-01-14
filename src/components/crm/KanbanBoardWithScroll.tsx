@@ -10,6 +10,8 @@ interface KanbanBoardWithScrollProps {
   onLeadMove: (leadId: string, stageId: string) => void;
   selectedLead: Lead | null;
   filteredStageId?: string;
+  bulkSelectMode?: boolean;
+  selectedLeadIds?: Set<string>;
 }
 
 export const KanbanBoardWithScroll = ({
@@ -19,6 +21,8 @@ export const KanbanBoardWithScroll = ({
   onLeadMove,
   selectedLead,
   filteredStageId,
+  bulkSelectMode,
+  selectedLeadIds,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -180,6 +184,8 @@ export const KanbanBoardWithScroll = ({
           selectedLeadId={selectedLead?.id}
           isDragging={!!draggedLead}
           isExpanded={!!filteredStageId}
+          bulkSelectMode={bulkSelectMode}
+          selectedLeadIds={selectedLeadIds}
         />
       ))}
     </div>
