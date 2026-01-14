@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
@@ -12,37 +12,46 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2 } from 'lucide-react';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import CRMComingSoon from './CRMComingSoon';
 import { Button } from '@/components/ui/button';
-
-// Emails com acesso ao CRM
-const CRM_ALLOWED_EMAILS = [
-  'caiowiize@gmail.com'
-];
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const [showBetaWarning, setShowBetaWarning] = useState(false);
+
+  // Check if beta warning was already shown
+  useEffect(() => {
+    const betaWarningSeen = localStorage.getItem('crm_beta_warning_seen');
+    if (!betaWarningSeen) {
+      setShowBetaWarning(true);
+    }
+  }, []);
+
+  const handleCloseBetaWarning = () => {
+    localStorage.setItem('crm_beta_warning_seen', 'true');
+    setShowBetaWarning(false);
+  };
   
-  // Verificar se o usuário tem acesso ao CRM
-  const userEmail = (profile?.email ?? user?.email ?? '').toLowerCase();
-  const hasCRMAccess = !!userEmail && CRM_ALLOWED_EMAILS.includes(userEmail);
-  // Aguardar carregamento do profile antes de verificar acesso
+  // Aguardar carregamento do profile antes de continuar
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
-  }
-  
-  // Se não tem acesso, mostra a página "Em Breve"
-  if (!hasCRMAccess) {
-    return <CRMComingSoon />;
   }
 
   const {
@@ -304,7 +313,12 @@ export default function CRM() {
                     <Users className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h1 className="text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
+                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-xs font-semibold">
+                        BETA
+                      </Badge>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {filteredLeads.length} leads no funil
                     </p>
@@ -423,6 +437,50 @@ export default function CRM() {
         onDelete={handleBulkDelete}
         isAllSelected={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0}
       />
+
+      {/* Beta Warning Dialog */}
+      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle className="text-xl">CRM em Versão Beta</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                O <strong>CRM integrado</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+              </p>
+              <p>
+                Estamos trabalhando constantemente para melhorar a experiência, adicionar novas funcionalidades e corrigir possíveis falhas.
+              </p>
+              <div className="bg-muted/50 p-3 rounded-lg border">
+                <p className="text-sm">
+                  <strong>Encontrou algum problema?</strong><br />
+                  Entre em contato conosco pela página de <span className="text-primary font-medium">Contato</span> que vamos trabalhar para corrigir o mais rápido possível!
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/contact')}
+              className="w-full sm:w-auto"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Ir para Contato
+            </Button>
+            <Button 
+              onClick={handleCloseBetaWarning}
+              className="w-full sm:w-auto"
+            >
+              Entendi, continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
