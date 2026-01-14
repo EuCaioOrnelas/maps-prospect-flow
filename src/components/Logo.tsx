@@ -1,49 +1,82 @@
-import { MapPin } from "lucide-react";
+import logoVerde from "@/assets/logo-verde.png";
+import logoBranca from "@/assets/logo-branca.png";
+import logoIcon from "@/assets/logo-icon.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   mobileSize?: "sm" | "md" | "lg";
   mobileInitialsOnly?: boolean;
+  variant?: "dark" | "light"; // dark = use white logo for dark backgrounds, light = use green logo for light backgrounds
+  iconOnly?: boolean; // Show only the icon (for collapsed sidebar)
 }
 
-export const Logo = ({ size = "md", showText = true, mobileSize, mobileInitialsOnly = false }: LogoProps) => {
+export const Logo = ({ 
+  size = "md", 
+  showText = true, 
+  mobileSize, 
+  mobileInitialsOnly = false,
+  variant = "dark",
+  iconOnly = false
+}: LogoProps) => {
   const sizes = {
-    sm: { icon: 20, text: "text-lg", iconClass: "w-5 h-5", padding: "p-1.5" },
-    md: { icon: 28, text: "text-2xl", iconClass: "w-7 h-7", padding: "p-2" },
-    lg: { icon: 36, text: "text-3xl", iconClass: "w-9 h-9", padding: "p-2" },
+    sm: { height: "h-8", mobileHeight: "h-7" },
+    md: { height: "h-10", mobileHeight: "h-8" },
+    lg: { height: "h-12", mobileHeight: "h-10" },
   };
 
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
-  return (
-    <div className="flex items-center gap-2">
-      <div className="relative">
-        <div className="absolute inset-0 bg-primary/30 blur-lg rounded-full" />
-        <div className={`relative bg-primary rounded-xl shadow-button ${mobileSize ? mobileEffectiveSize.padding : effectiveSize.padding} md:${effectiveSize.padding}`}>
-          <MapPin 
-            className={`text-primary-foreground ${mobileSize ? `${mobileEffectiveSize.iconClass} md:${effectiveSize.iconClass}` : effectiveSize.iconClass}`}
-          />
-        </div>
+  // Choose the appropriate logo based on variant
+  const logoSrc = variant === "dark" ? logoBranca : logoVerde;
+
+  // If iconOnly, show only the icon version
+  if (iconOnly) {
+    return (
+      <div className="flex items-center">
+        <img 
+          src={logoIcon} 
+          alt="Wiize" 
+          className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
+        />
       </div>
-      {showText && (
+    );
+  }
+
+  return (
+    <div className="flex items-center">
+      {showText ? (
         <>
           {mobileInitialsOnly ? (
             <>
-              <span className={`font-display font-bold ${mobileEffectiveSize.text} text-foreground md:hidden`}>
-                WP
-              </span>
-              <span className={`font-display font-bold ${effectiveSize.text} text-foreground hidden md:inline`}>
-                WiizeProspect
-              </span>
+              {/* Mobile: show icon only */}
+              <img 
+                src={logoIcon} 
+                alt="Wiize" 
+                className={`${mobileEffectiveSize.mobileHeight} w-auto md:hidden`}
+              />
+              {/* Desktop: show full logo */}
+              <img 
+                src={logoSrc} 
+                alt="WiizeProspect" 
+                className={`hidden md:block ${effectiveSize.height} w-auto`}
+              />
             </>
           ) : (
-            <span className={`font-display font-bold ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text} text-foreground`}>
-              WiizeProspect
-            </span>
+            <img 
+              src={logoSrc} 
+              alt="WiizeProspect" 
+              className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
+            />
           )}
         </>
+      ) : (
+        <img 
+          src={logoIcon} 
+          alt="Wiize" 
+          className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
+        />
       )}
     </div>
   );

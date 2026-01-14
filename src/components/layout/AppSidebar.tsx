@@ -161,16 +161,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       >
         {/* Logo area - fixed height and consistent padding */}
         <div className="h-14 min-h-[56px] flex items-center px-2.5 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <Logo size="sm" showText={false} />
-            <span 
-              className={cn(
-                "font-display font-bold text-lg text-foreground whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-              )}
-            >
-              WiizeProspect
-            </span>
+          <div className="flex items-center">
+            {/* Show icon when collapsed */}
+            <div className={cn(
+              "transition-all duration-300",
+              isHovered ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+            )}>
+              <Logo size="sm" iconOnly variant="dark" />
+            </div>
+            {/* Show full logo when expanded */}
+            <div className={cn(
+              "transition-all duration-300",
+              isHovered ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+            )}>
+              <Logo size="sm" variant="dark" />
+            </div>
           </div>
         </div>
 

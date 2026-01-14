@@ -37,7 +37,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/">
-              <Logo size="md" mobileSize="sm" />
+              <Logo size="md" mobileSize="sm" variant="dark" />
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
