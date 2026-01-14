@@ -25,6 +25,7 @@ import {
   Trash2,
   Save,
   Plus,
+  Pencil,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -345,9 +346,31 @@ export const LeadDetailPanel = ({
                     </div>
                   )}
                   {lead.contact_name && (
+                    <div className="flex items-center gap-2 text-sm group">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="flex-1">{lead.contact_name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                  {!lead.contact_name && (
                     <div className="flex items-center gap-2 text-sm">
                       <User className="w-4 h-4 text-muted-foreground" />
-                      <span>{lead.contact_name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Adicionar nome
+                      </Button>
                     </div>
                   )}
                   {(lead.city || lead.region) && (

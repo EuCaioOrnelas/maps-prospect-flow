@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,8 @@ import {
   PartyPopper,
   Pencil,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Flame
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,8 +91,38 @@ export const NumbersManager = ({
   // Track if we're creating a NEW number (not saved to DB yet) vs connecting existing one
   const [pendingNumberName, setPendingNumberName] = useState<string | null>(null);
   
+  // Warming sessions for each number
+  const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
+  
   const { user, profile } = useAuth();
   const { toast } = useToast();
+
+  // Fetch warming sessions when dialog opens
+  useEffect(() => {
+    const fetchWarmingSessions = async () => {
+      if (!manageDialogOpen || numbers.length === 0) return;
+      
+      const numberIds = numbers.map(n => n.id);
+      const { data } = await supabase
+        .from('warming_sessions')
+        .select('whatsapp_number_id, warming_level, warming_status, status')
+        .in('whatsapp_number_id', numberIds);
+      
+      if (data) {
+        const sessionsMap: Record<string, { warming_level: number; warming_status: string; status: string }> = {};
+        data.forEach(session => {
+          sessionsMap[session.whatsapp_number_id] = {
+            warming_level: session.warming_level,
+            warming_status: session.warming_status,
+            status: session.status
+          };
+        });
+        setWarmingSessions(sessionsMap);
+      }
+    };
+    
+    fetchWarmingSessions();
+  }, [manageDialogOpen, numbers]);
 
   // Handle forceOpen prop - open manage dialog when there are numbers, add dialog when empty
   useEffect(() => {
@@ -785,6 +817,55 @@ export const NumbersManager = ({
                           </Button>
                         </div>
                       </div>
+
+                      {/* Warming Level Badge */}
+                      {warmingSessions[number.id] && (
+                        <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-muted/50">
+                          <Flame 
+                            size={16} 
+                            className={
+                              warmingSessions[number.id].warming_status === 'hot' 
+                                ? 'text-orange-500' 
+                                : warmingSessions[number.id].warming_status === 'warm'
+                                  ? 'text-yellow-500'
+                                  : 'text-blue-400'
+                            } 
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">Aquecimento</span>
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs ${
+                                  warmingSessions[number.id].warming_status === 'hot' 
+                                    ? 'bg-orange-500/20 text-orange-500' 
+                                    : warmingSessions[number.id].warming_status === 'warm'
+                                      ? 'bg-yellow-500/20 text-yellow-500'
+                                      : 'bg-blue-500/20 text-blue-400'
+                                }`}
+                              >
+                                Nível {warmingSessions[number.id].warming_level}/4
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              {[1, 2, 3, 4].map((level) => (
+                                <div 
+                                  key={level}
+                                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                                    level <= warmingSessions[number.id].warming_level
+                                      ? warmingSessions[number.id].warming_status === 'hot' 
+                                        ? 'bg-orange-500' 
+                                        : warmingSessions[number.id].warming_status === 'warm'
+                                          ? 'bg-yellow-500'
+                                          : 'bg-blue-400'
+                                      : 'bg-muted'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Daily Usage */}
                       <div className="space-y-2 mb-3">
