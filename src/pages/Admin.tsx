@@ -94,6 +94,13 @@ interface StripeMRRData {
   monthlyMRR: Array<{ month: string; mrr: number }>;
 }
 
+interface SalesChartData {
+  month: string;
+  newSales: number;
+  upgrades: number;
+  cancellations: number;
+}
+
 interface Stats {
   totalUsers: number;
   totalSearches: number;
@@ -142,6 +149,8 @@ const Admin = () => {
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
   const [loadingMRR, setLoadingMRR] = useState(false);
   const [stripeMRRError, setStripeMRRError] = useState<string | null>(null);
+  const [salesChartData, setSalesChartData] = useState<SalesChartData[]>([]);
+  const [loadingSalesChart, setLoadingSalesChart] = useState(false);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
@@ -176,6 +185,68 @@ const Admin = () => {
       setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, totalRefunded: 0, refundCount: 0, canceledSubscriptions: 0, churnRate: 0, monthlyMRR: [] });
     } finally {
       setLoadingMRR(false);
+    }
+  }, []);
+
+  // Fetch sales chart data from subscription_events table
+  const loadSalesChartData = useCallback(async () => {
+    setLoadingSalesChart(true);
+    try {
+      // Get subscription events from the last 12 months
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+      
+      const { data: events, error } = await supabase
+        .from('subscription_events')
+        .select('*')
+        .gte('created_at', twelveMonthsAgo.toISOString())
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Group events by month
+      const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
+      
+      for (const event of events || []) {
+        const eventDate = new Date(event.created_at);
+        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0 };
+        }
+        
+        // Categorize events
+        if (event.event_type === 'checkout.session.completed') {
+          // Check if it's a new sale or upgrade
+          const previousPlan = event.previous_plan?.toLowerCase();
+          if (!previousPlan || previousPlan === 'free') {
+            // New sale (from free or no previous plan)
+            monthlyData[monthKey].newSales++;
+          } else {
+            // Upgrade (from another paid plan)
+            monthlyData[monthKey].upgrades++;
+          }
+        } else if (event.event_type === 'customer.subscription.deleted' || 
+                   (event.event_type === 'customer.subscription.updated' && event.new_plan === 'free')) {
+          // Cancellation
+          monthlyData[monthKey].cancellations++;
+        }
+      }
+      
+      // Convert to array and sort by month
+      const chartData = Object.entries(monthlyData)
+        .map(([month, data]) => ({
+          month,
+          ...data
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+      
+      setSalesChartData(chartData);
+    } catch (error) {
+      console.error('Error loading sales chart data:', error);
+      setSalesChartData([]);
+    } finally {
+      setLoadingSalesChart(false);
     }
   }, []);
 
@@ -366,7 +437,7 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR()]);
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData()]);
   };
 
   const loadData = async () => {
@@ -844,6 +915,96 @@ const Admin = () => {
                 </p>
               </div>
 
+            </div>
+
+            {/* Sales/Upgrades/Cancellations Chart - Full Width */}
+            <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in mb-8" style={{ animationDelay: '0.35s' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={20} className="text-primary" />
+                  <h2 className="font-display font-semibold">Vendas, Upgrades e Cancelamentos por Mês</h2>
+                  {loadingSalesChart && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={loadSalesChartData}
+                  disabled={loadingSalesChart}
+                  className="gap-2"
+                >
+                  {loadingSalesChart ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={14} />
+                  )}
+                  Atualizar
+                </Button>
+              </div>
+              <div className="h-80">
+                {salesChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesChartData.map(item => ({
+                      ...item,
+                      month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number, name: string) => {
+                          const labels: { [key: string]: string } = {
+                            newSales: 'Novas Vendas',
+                            upgrades: 'Upgrades',
+                            cancellations: 'Cancelamentos'
+                          };
+                          return [value, labels[name] || name];
+                        }}
+                      />
+                      <Bar 
+                        dataKey="newSales" 
+                        name="Novas Vendas"
+                        fill="#22c55e" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="upgrades" 
+                        name="Upgrades"
+                        fill="#3b82f6" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="cancellations" 
+                        name="Cancelamentos"
+                        fill="#ef4444" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">Nenhum dado de vendas disponível</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#22c55e]" />
+                  <span className="text-muted-foreground">Novas Vendas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#3b82f6]" />
+                  <span className="text-muted-foreground">Upgrades</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#ef4444]" />
+                  <span className="text-muted-foreground">Cancelamentos</span>
+                </div>
+              </div>
             </div>
 
             {/* Activity Stats */}

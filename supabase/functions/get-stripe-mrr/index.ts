@@ -115,11 +115,21 @@ serve(async (req) => {
       }
     }
 
+    // Get all paid invoices for WiizeProspect subscriptions to track monthly revenue
+    const paidInvoices = await stripe.invoices.list({
+      limit: 100,
+      status: "paid",
+      expand: ["data.customer"],
+    });
+
+    // Track monthly revenue by invoice paid date (not subscription start date)
+    const monthlyMRR: { [month: string]: number } = {};
+    const monthlyStats: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
+
     // Process WiizeProspect subscriptions
     let activeMRR = 0;
     let activeCount = 0;
     let canceledCount = 0;
-    const monthlyMRR: { [month: string]: number } = {};
 
     for (const sub of wiizeSubs) {
       const customer = sub.customer as Stripe.Customer;
@@ -146,15 +156,47 @@ serve(async (req) => {
         if (!wasRefunded) {
           activeMRR += amountPaid;
           activeCount++;
-
-          // Add to monthly MRR
-          const startDate = new Date(sub.start_date * 1000);
-          const monthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
-          monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + amountPaid;
         }
       } else if (sub.status === "canceled") {
         canceledCount++;
       }
+    }
+
+    // Process paid invoices to get correct monthly MRR by payment date
+    for (const invoice of paidInvoices.data) {
+      // Only process WiizeProspect invoices
+      if (!invoice.subscription) continue;
+      
+      const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === invoice.subscription);
+      if (!sub) continue;
+
+      const customer = invoice.customer as Stripe.Customer;
+      const customerEmail = customer?.email || "";
+      
+      // Skip admin emails
+      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
+        continue;
+      }
+
+      // Skip zero amount invoices (admin-granted)
+      if (invoice.amount_paid === 0) {
+        continue;
+      }
+
+      // Check if this invoice's charge was refunded
+      const chargeId = invoice.charge;
+      const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
+      if (wasRefunded) continue;
+
+      // Use the invoice paid_at timestamp (when the payment was actually made)
+      // Fall back to created timestamp if paid_at is not available
+      const paymentTimestamp = invoice.status_transitions?.paid_at || invoice.created;
+      const paymentDate = new Date(paymentTimestamp * 1000);
+      const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
+      
+      monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
+      
+      console.log(`[GET-STRIPE-MRR] Invoice ${invoice.id}: R$ ${invoice.amount_paid / 100} paid on ${monthKey}`);
     }
 
     // Calculate churn rate
