@@ -42,6 +42,7 @@ import {
   Key,
   LayoutDashboard,
   Bug,
+  Bell,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -838,6 +839,12 @@ const Admin = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <Link to="/admin/announcements">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Bell size={16} />
+                  <span className="hidden sm:inline">Avisos</span>
+                </Button>
+              </Link>
               <Link to="/admin/landing-pages">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <LayoutDashboard size={16} />
