@@ -69,6 +69,15 @@ export const LeadCard = ({
         <span className="truncate">{formatPhone(lead.phone)}</span>
       </div>
 
+      {/* Estimated Value - if exists */}
+      {lead.estimated_value && lead.estimated_value > 0 && (
+        <div className="mb-2 pt-2 border-t border-border/50">
+          <span className="text-xs font-medium text-primary">
+            R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+          </span>
+        </div>
+      )}
+
       {/* Footer - Status and Response */}
       <div className="flex items-center justify-between gap-2">
         <Badge 
