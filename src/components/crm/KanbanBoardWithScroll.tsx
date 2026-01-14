@@ -12,6 +12,7 @@ interface KanbanBoardWithScrollProps {
   filteredStageId?: string;
   bulkSelectMode?: boolean;
   selectedLeadIds?: Set<string>;
+  onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
 }
 
 export const KanbanBoardWithScroll = ({
@@ -23,6 +24,7 @@ export const KanbanBoardWithScroll = ({
   filteredStageId,
   bulkSelectMode,
   selectedLeadIds,
+  onSelectAllInColumn,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -164,7 +166,7 @@ export const KanbanBoardWithScroll = ({
     <div 
       ref={containerRef}
       className={cn(
-        "flex gap-4 overflow-x-auto pb-4 h-full",
+        "flex gap-4 overflow-x-auto pb-4 h-full pr-4",
         draggedLead && "cursor-grabbing select-none",
         filteredStageId && "justify-center"
       )}
@@ -186,6 +188,7 @@ export const KanbanBoardWithScroll = ({
           isExpanded={!!filteredStageId}
           bulkSelectMode={bulkSelectMode}
           selectedLeadIds={selectedLeadIds}
+          onSelectAllInColumn={onSelectAllInColumn}
         />
       ))}
     </div>

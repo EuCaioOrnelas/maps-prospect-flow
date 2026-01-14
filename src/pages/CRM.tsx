@@ -68,6 +68,8 @@ export default function CRM() {
     tags: [],
     origin: '',
     whatsappNumberId: '',
+    dateFrom: undefined,
+    dateTo: undefined,
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -178,6 +180,21 @@ export default function CRM() {
       return false;
     }
 
+    // Date range filter
+    if (filters.dateFrom) {
+      const leadDate = new Date(lead.created_at);
+      const fromDate = new Date(filters.dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      if (leadDate < fromDate) return false;
+    }
+
+    if (filters.dateTo) {
+      const leadDate = new Date(lead.created_at);
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      if (leadDate > toDate) return false;
+    }
+
     return true;
   });
 
@@ -237,6 +254,21 @@ export default function CRM() {
   const selectAllLeads = useCallback(() => {
     setSelectedLeadIds(new Set(filteredLeads.map(l => l.id)));
   }, [filteredLeads]);
+
+  const toggleColumnSelection = useCallback((stageId: string, leadIds: string[]) => {
+    setSelectedLeadIds(prev => {
+      const newSet = new Set(prev);
+      const allSelected = leadIds.every(id => newSet.has(id));
+      if (allSelected) {
+        // Deselect all in column
+        leadIds.forEach(id => newSet.delete(id));
+      } else {
+        // Select all in column
+        leadIds.forEach(id => newSet.add(id));
+      }
+      return newSet;
+    });
+  }, []);
 
   const clearSelection = useCallback(() => {
     setSelectedLeadIds(new Set());
@@ -339,6 +371,7 @@ export default function CRM() {
                 filteredStageId={filters.stage}
                 bulkSelectMode={bulkSelectMode}
                 selectedLeadIds={selectedLeadIds}
+                onSelectAllInColumn={toggleColumnSelection}
               />
             )}
           </div>
