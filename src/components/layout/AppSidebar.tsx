@@ -153,14 +153,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "h-full w-14 bg-sidebar border-r border-sidebar-border flex flex-col",
+          "h-full w-[72px] bg-sidebar border-r border-sidebar-border flex flex-col",
           "transition-[width] duration-300 ease-out",
           isHovered && "w-56"
         )}
         style={{ overflow: 'hidden' }}
       >
         {/* Logo area - fixed height and consistent padding */}
-        <div className="h-14 min-h-[56px] flex items-center px-2.5 border-b border-sidebar-border">
+        <div className="h-16 min-h-[64px] flex items-center justify-center px-2 border-b border-sidebar-border">
           <div className="flex items-center h-10 relative">
             {/* Show icon when collapsed - 1.5x larger */}
             <div className={cn(
