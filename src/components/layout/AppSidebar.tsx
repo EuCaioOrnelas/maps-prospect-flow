@@ -52,7 +52,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     "flex items-center rounded-lg transition-colors duration-200",
     isHovered
       ? "w-full h-10 px-2.5 justify-start gap-3"
-      : "w-10 h-10 justify-center gap-0",
+      : "w-10 h-10 justify-center gap-0 mx-auto",
   );
 
   const navItemActive = "bg-sidebar-accent/60 text-primary";
@@ -251,35 +251,37 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 )}
               </button>
 
-              <div
-                className={cn(
-                  "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
-                  isHovered && (isReportsOpen || isOnReportsPage)
-                    ? "max-h-32 opacity-100 mt-1"
-                    : "max-h-0 opacity-0"
-                )}
-              >
-                <ul className="pl-4 space-y-0.5">
-                  {reportsSubItems.map((subItem) => (
-                    <li key={subItem.title}>
-                      <Link
-                        to={subItem.url}
-                        className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
-                          subItem.active
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <subItem.icon size={16} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">
-                          {subItem.title}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {isHovered && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    (isReportsOpen || isOnReportsPage)
+                      ? "max-h-32 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    {reportsSubItems.map((subItem) => (
+                      <li key={subItem.title}>
+                        <Link
+                          to={subItem.url}
+                          className={cn(
+                            "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                            subItem.active
+                              ? "bg-sidebar-accent/60 text-primary font-medium"
+                              : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          )}
+                        >
+                          <subItem.icon size={16} className="shrink-0" />
+                          <span className="whitespace-nowrap truncate">
+                            {subItem.title}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </li>
 
             {/* Disparos */}
