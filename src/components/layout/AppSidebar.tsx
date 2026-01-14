@@ -161,7 +161,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       >
         {/* Logo area - aligned with navbar height */}
         <div className={cn(
-          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border overflow-hidden transition-all duration-500",
+          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border overflow-hidden transition-all duration-300 ease-out",
           isHovered ? "justify-start px-4" : "justify-center"
         )}>
           <div className="relative flex items-center">
@@ -170,21 +170,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               src="/logo-icon.png" 
               alt="Wiize" 
               className={cn(
-                "h-[52px] w-auto transition-all duration-400 ease-out",
+                "h-[52px] w-auto transition-all duration-300 ease-out",
                 isHovered 
-                  ? "opacity-0 scale-0 absolute" 
+                  ? "opacity-0 scale-90 absolute pointer-events-none" 
                   : "opacity-100 scale-100"
               )}
             />
-            {/* Full logo - visible when expanded, slides in from left */}
+            {/* Full logo - visible when expanded */}
             <img 
               src="/logo-branca.png" 
               alt="Wiize" 
               className={cn(
-                "h-9 w-auto transition-all duration-400 ease-out origin-left",
+                "h-9 w-auto transition-all duration-300 ease-out delay-75",
                 isHovered 
-                  ? "opacity-100 scale-100 translate-x-0" 
-                  : "opacity-0 scale-50 -translate-x-full absolute"
+                  ? "opacity-100 scale-100" 
+                  : "opacity-0 scale-95 absolute pointer-events-none"
               )}
             />
           </div>
