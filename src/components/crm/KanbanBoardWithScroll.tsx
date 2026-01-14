@@ -9,6 +9,7 @@ interface KanbanBoardWithScrollProps {
   onLeadClick: (lead: Lead) => void;
   onLeadMove: (leadId: string, stageId: string) => void;
   selectedLead: Lead | null;
+  filteredStageId?: string;
 }
 
 export const KanbanBoardWithScroll = ({
@@ -17,6 +18,7 @@ export const KanbanBoardWithScroll = ({
   onLeadClick,
   onLeadMove,
   selectedLead,
+  filteredStageId,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -149,16 +151,22 @@ export const KanbanBoardWithScroll = ({
     };
   }, [handleGlobalDragOver]);
 
+  // Filter stages if a specific stage is selected
+  const displayedStages = filteredStageId 
+    ? stages.filter(stage => stage.id === filteredStageId)
+    : stages;
+
   return (
     <div 
       ref={containerRef}
       className={cn(
         "flex gap-4 overflow-x-auto pb-4 h-full",
-        draggedLead && "cursor-grabbing select-none"
+        draggedLead && "cursor-grabbing select-none",
+        filteredStageId && "justify-center"
       )}
       onDragOver={handleContainerDragOver}
     >
-      {stages.map((stage) => (
+      {displayedStages.map((stage) => (
         <KanbanColumnDraggable
           key={stage.id}
           stage={stage}
@@ -171,6 +179,7 @@ export const KanbanBoardWithScroll = ({
           isDragOver={dragOverStage === stage.id}
           selectedLeadId={selectedLead?.id}
           isDragging={!!draggedLead}
+          isExpanded={!!filteredStageId}
         />
       ))}
     </div>
