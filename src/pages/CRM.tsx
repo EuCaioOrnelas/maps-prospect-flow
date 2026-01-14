@@ -226,6 +226,7 @@ export default function CRM() {
                 onLeadClick={handleLeadClick}
                 onLeadMove={handleLeadMove}
                 selectedLead={selectedLead}
+                filteredStageId={filters.stage}
               />
             )}
           </div>

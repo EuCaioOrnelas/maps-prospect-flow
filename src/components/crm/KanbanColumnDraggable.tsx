@@ -14,6 +14,7 @@ interface KanbanColumnDraggableProps {
   isDragOver: boolean;
   selectedLeadId?: string;
   isDragging?: boolean;
+  isExpanded?: boolean;
 }
 
 export const KanbanColumnDraggable = ({
@@ -27,6 +28,7 @@ export const KanbanColumnDraggable = ({
   isDragOver,
   selectedLeadId,
   isDragging,
+  isExpanded,
 }: KanbanColumnDraggableProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
@@ -49,7 +51,8 @@ export const KanbanColumnDraggable = ({
   return (
     <div
       className={cn(
-        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
+        isExpanded ? "w-full max-w-2xl" : "w-72 min-w-[288px]",
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",
