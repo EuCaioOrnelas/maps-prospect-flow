@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard } from "lucide-react";
+import { Check, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import type { LucideIcon } from "lucide-react";
 
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
@@ -15,7 +16,19 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-const plans = [
+const plans: {
+  name: string;
+  key: string;
+  price: string;
+  anchorPrice: string;
+  searches: string;
+  whatsappNumbers: number;
+  monthlyMessages: string;
+  description: string;
+  features: string[];
+  popular: boolean;
+  icon: LucideIcon;
+}[] = [
   {
     name: "Start",
     key: "start",
@@ -35,6 +48,7 @@ const plans = [
       "Suporte por email",
     ],
     popular: false,
+    icon: Rocket,
   },
   {
     name: "Growth",
@@ -55,6 +69,7 @@ const plans = [
       "Suporte prioritário",
     ],
     popular: true,
+    icon: TrendingUp,
   },
   {
     name: "Scale",
@@ -75,6 +90,7 @@ const plans = [
       "Suporte VIP",
     ],
     popular: false,
+    icon: Building2,
   },
 ];
 
@@ -402,8 +418,13 @@ const Upgrade = () => {
                 )}
 
                 <div className="mb-6">
-                  <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-muted-foreground text-sm">{plan.description}</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-display text-xl sm:text-2xl font-bold">{plan.name}</h3>
+                  </div>
+                  <p className="text-muted-foreground text-sm min-h-[2.5rem]">{plan.description}</p>
                 </div>
 
                 <div className="mb-6">
