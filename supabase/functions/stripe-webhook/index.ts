@@ -307,7 +307,16 @@ serve(async (req) => {
                   session.subscription as string,
                   session.customer as string,
                   event.id,
-                  { priceId, basePlanLimit, searchesUsed: profile.searches_used }
+                  {
+                    priceId,
+                    price_id: priceId,
+                    currency: session.currency ?? newSubscription.items.data[0]?.price.currency ?? null,
+                    amount_paid: typeof session.amount_total === 'number' ? session.amount_total / 100 : null,
+                    stripe_event_created: event.created,
+                    stripe_event_type: event.type,
+                    basePlanLimit,
+                    searchesUsed: profile.searches_used,
+                  }
                 );
 
                 // Track purchase for landing page analytics
@@ -419,7 +428,16 @@ serve(async (req) => {
                 subscription.id,
                 subscription.customer as string,
                 event.id,
-                { priceId, basePlanLimit, status: subscription.status, transitionType }
+                {
+                  priceId,
+                  price_id: priceId,
+                  currency: subscription.items.data[0]?.price.currency ?? null,
+                  stripe_event_created: event.created,
+                  stripe_event_type: event.type,
+                  basePlanLimit,
+                  status: subscription.status,
+                  transitionType,
+                }
               );
             } else if (["canceled", "unpaid", "past_due"].includes(subscription.status)) {
               await supabaseClient
@@ -454,7 +472,12 @@ serve(async (req) => {
                 subscription.id,
                 subscription.customer as string,
                 event.id,
-                { status: subscription.status, previousSearchesUsed: profile.searches_used }
+                { 
+                  status: subscription.status,
+                  stripe_event_created: event.created,
+                  stripe_event_type: event.type,
+                  previousSearchesUsed: profile.searches_used 
+                }
               );
             }
           }
@@ -509,7 +532,11 @@ serve(async (req) => {
               subscription.id,
               subscription.customer as string,
               event.id,
-              { previousSearchesUsed: profile.searches_used }
+              { 
+                stripe_event_created: event.created,
+                stripe_event_type: event.type,
+                previousSearchesUsed: profile.searches_used 
+              }
             );
           }
         }

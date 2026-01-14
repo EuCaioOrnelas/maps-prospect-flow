@@ -73,6 +73,11 @@ const PLAN_COLORS: { [key: string]: string } = {
   scale: '#f59e0b',
 };
 
+const monthKeyToLocalDate = (monthKey: string) => {
+  const [y, m] = monthKey.split('-');
+  return new Date(Number(y), Number(m) - 1, 1);
+};
+
 interface UserProfile {
   id: string;
   email: string;
@@ -324,7 +329,7 @@ const Admin = () => {
     }
 
     return stripeMRR.monthlyMRR.filter(item => {
-      const itemDate = new Date(item.month + '-01');
+      const itemDate = monthKeyToLocalDate(item.month);
       return itemDate >= startDate;
     });
   }, [stripeMRR?.monthlyMRR, chartPeriodFilter]);
@@ -1052,12 +1057,13 @@ const Admin = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={processedSalesChartData.map(item => ({
                       ...item,
-                      month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                      month: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
                     }))}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
                       <Tooltip 
+                        cursor={{ fill: 'hsl(var(--background))', fillOpacity: 0 }}
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
@@ -1149,7 +1155,7 @@ const Admin = () => {
                   {filteredMRRData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={filteredMRRData.map(item => ({
-                        date: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                        date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
                         mrr: item.mrr
                       }))}>
                         <defs>
