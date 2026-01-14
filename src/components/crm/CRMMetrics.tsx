@@ -20,14 +20,23 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
   // Find the "won" stage (by name pattern)
-  const wonStage = stages.find(s => s.name.toLowerCase().includes('ganho') || s.name.toLowerCase().includes('fechado'));
+  const wonStage = stages.find(s => 
+    s.name.toLowerCase().includes('ganho') || 
+    s.name.toLowerCase().includes('fechado') ||
+    s.name.toLowerCase().includes('won') ||
+    s.name.toLowerCase().includes('closed')
+  );
   
   const wonLeads = wonStage 
     ? leads.filter(lead => lead.pipeline_stage_id === wonStage.id).length 
     : 0;
 
-  const conversionRate = totalLeads > 0 
-    ? Math.round((wonLeads / totalLeads) * 100) 
+  // Count leads that have been contacted (not never_contacted)
+  const prospectedLeads = leads.filter(lead => lead.whatsapp_status !== 'never_contacted').length;
+
+  // Conversion rate based on prospected leads vs won leads
+  const conversionRate = prospectedLeads > 0 
+    ? Math.round((wonLeads / prospectedLeads) * 100) 
     : 0;
 
   const metrics: Metric[] = [
