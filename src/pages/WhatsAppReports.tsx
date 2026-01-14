@@ -60,6 +60,7 @@ import { format, subDays, startOfDay, endOfDay, eachDayOfInterval, parseISO } fr
 import { ptBR } from "date-fns/locale";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 interface Campaign {
   id: string;
@@ -307,7 +308,10 @@ const WhatsAppReports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Glows */}
+      <BackgroundGlow />
+      
       {/* Sidebar - Desktop only */}
       <AppSidebar profile={profile} />
 

@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WarmingStatsPanel } from "@/components/warming/WarmingStatsPanel";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Flame, RefreshCw, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -66,7 +67,10 @@ export default function WarmingReports() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Glows */}
+      <BackgroundGlow />
+      
       <SEO 
         title="Relatórios de Aquecimento | WiizeProspect"
         description="Estatísticas e relatórios do sistema de aquecimento de números"
