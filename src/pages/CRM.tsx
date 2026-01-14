@@ -23,10 +23,19 @@ const CRM_ALLOWED_EMAILS = [
 
 export default function CRM() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   
   // Verificar se o usuário tem acesso ao CRM
   const hasCRMAccess = profile?.email && CRM_ALLOWED_EMAILS.includes(profile.email.toLowerCase());
+  
+  // Aguardar carregamento do profile antes de verificar acesso
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   // Se não tem acesso, mostra a página "Em Breve"
   if (!hasCRMAccess) {
