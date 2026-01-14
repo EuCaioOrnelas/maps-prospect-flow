@@ -106,6 +106,8 @@ interface SalesChartData {
   newSales: number;
   upgrades: number;
   cancellations: number;
+  salesValue: number;
+  refundValue: number;
 }
 
 type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all';
@@ -256,14 +258,14 @@ const Admin = () => {
     );
 
     // Group events by month
-    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number } } = {};
     
     for (const event of filteredEvents) {
       const eventDate = new Date(event.created_at);
       const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0 };
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0 };
       }
       
       // Categorize events based on actual event_type from webhook
@@ -271,17 +273,26 @@ const Admin = () => {
       const previousPlan = event.previous_plan?.toLowerCase();
       const newPlan = event.new_plan?.toLowerCase();
       
+      // Get plan price for value calculation
+      const planPrice = PLAN_PRICES[newPlan] || 0;
+      
       if (eventType === 'checkout_completed') {
         // Check if it's a new sale or upgrade
         if (!previousPlan || previousPlan === 'free') {
           // New sale (from free or no previous plan)
           monthlyData[monthKey].newSales++;
+          monthlyData[monthKey].salesValue += planPrice;
         } else if (previousPlan !== newPlan) {
           // Upgrade (from another paid plan to a different plan)
           monthlyData[monthKey].upgrades++;
+          // Add the difference in plan prices for upgrades
+          const previousPrice = PLAN_PRICES[previousPlan] || 0;
+          monthlyData[monthKey].salesValue += Math.max(0, planPrice - previousPrice);
         }
       } else if (eventType === 'subscription_upgrade') {
         monthlyData[monthKey].upgrades++;
+        const previousPrice = PLAN_PRICES[previousPlan] || 0;
+        monthlyData[monthKey].salesValue += Math.max(0, planPrice - previousPrice);
       } else if (
         eventType === 'subscription_deleted' || 
         eventType === 'subscription_canceled' ||
@@ -289,6 +300,10 @@ const Admin = () => {
       ) {
         // Cancellation
         monthlyData[monthKey].cancellations++;
+      } else if (eventType === 'refund' || eventType === 'charge_refunded') {
+        // Refund - get amount from metadata if available
+        const refundAmount = event.metadata?.amount || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
+        monthlyData[monthKey].refundValue += refundAmount;
       }
     }
     
@@ -1131,6 +1146,40 @@ const Admin = () => {
                   Atualizar
                 </Button>
               </div>
+              
+              {/* Summary Cards */}
+              {processedSalesChartData.length > 0 && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                  <div className="bg-success/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Total Vendas</p>
+                    <p className="text-lg font-bold text-success">
+                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.salesValue, 0).toLocaleString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales + item.upgrades, 0)} transações
+                    </p>
+                  </div>
+                  <div className="bg-destructive/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Total Reembolsos</p>
+                    <p className="text-lg font-bold text-destructive">
+                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.refundValue, 0).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="bg-primary/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Novas Vendas</p>
+                    <p className="text-lg font-bold">
+                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales, 0)}
+                    </p>
+                  </div>
+                  <div className="bg-warning/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Cancelamentos</p>
+                    <p className="text-lg font-bold text-warning">
+                      {processedSalesChartData.reduce((sum, item) => sum + item.cancellations, 0)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="h-80">
                 {processedSalesChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -1140,7 +1189,8 @@ const Admin = () => {
                     }))}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `R$${value}`} />
                       <Tooltip 
                         cursor={{ fill: 'hsl(var(--background))', fillOpacity: 0 }}
                         contentStyle={{ 
@@ -1152,28 +1202,52 @@ const Admin = () => {
                           const labels: { [key: string]: string } = {
                             newSales: 'Novas Vendas',
                             upgrades: 'Upgrades',
-                            cancellations: 'Cancelamentos'
+                            cancellations: 'Cancelamentos',
+                            salesValue: 'Valor em Vendas',
+                            refundValue: 'Valor Reembolsado'
                           };
+                          if (name === 'salesValue' || name === 'refundValue') {
+                            return [`R$ ${value.toLocaleString('pt-BR')}`, labels[name] || name];
+                          }
                           return [value, labels[name] || name];
                         }}
                       />
                       <Bar 
+                        yAxisId="left"
                         dataKey="newSales" 
                         name="Novas Vendas"
                         fill="#22c55e" 
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
+                        yAxisId="left"
                         dataKey="upgrades" 
                         name="Upgrades"
                         fill="#3b82f6" 
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
+                        yAxisId="left"
                         dataKey="cancellations" 
                         name="Cancelamentos"
                         fill="#ef4444" 
                         radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="salesValue" 
+                        name="Valor em Vendas"
+                        fill="#10b981" 
+                        radius={[4, 4, 0, 0]}
+                        opacity={0.6}
+                      />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="refundValue" 
+                        name="Valor Reembolsado"
+                        fill="#f43f5e" 
+                        radius={[4, 4, 0, 0]}
+                        opacity={0.6}
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -1183,7 +1257,7 @@ const Admin = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-[#22c55e]" />
                   <span className="text-muted-foreground">Novas Vendas</span>
@@ -1195,6 +1269,14 @@ const Admin = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-[#ef4444]" />
                   <span className="text-muted-foreground">Cancelamentos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#10b981] opacity-60" />
+                  <span className="text-muted-foreground">R$ Vendas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#f43f5e] opacity-60" />
+                  <span className="text-muted-foreground">R$ Reembolsos</span>
                 </div>
               </div>
             </div>
