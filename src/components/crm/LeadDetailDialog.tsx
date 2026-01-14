@@ -36,6 +36,9 @@ import {
   Pencil,
   Clock,
   ExternalLink,
+  User,
+  Tag,
+  Link2,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -267,7 +270,7 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5">
           <div className="flex items-start gap-4">
@@ -366,7 +369,7 @@ export const LeadDetailDialog = ({
             value={lead.whatsapp_status}
             onValueChange={(value) => handleWhatsAppStatusChange(value as WhatsAppStatus)}
           >
-            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
               <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
             </SelectTrigger>
             <SelectContent>
@@ -455,47 +458,82 @@ export const LeadDetailDialog = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Empresa</label>
-                        <Input
-                          value={formData.company_name}
-                          onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                          placeholder="Nome da empresa"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          Empresa
+                        </label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={formData.company_name}
+                            onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                            placeholder="Nome da empresa"
+                            className="pl-9"
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Contato</label>
-                        <Input
-                          value={formData.contact_name}
-                          onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                          placeholder="Nome do contato"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Contato
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={formData.contact_name}
+                            onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                            placeholder="Nome do contato"
+                            className="pl-9"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Cidade</label>
-                        <Input
-                          value={formData.city}
-                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                          placeholder="Cidade"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          Cidade
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            placeholder="Cidade"
+                            className="pl-9"
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Região</label>
-                        <Input
-                          value={formData.region}
-                          onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                          placeholder="Região"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                          <Tag className="w-3 h-3" />
+                          Região
+                        </label>
+                        <div className="relative">
+                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={formData.region}
+                            onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                            placeholder="Região"
+                            className="pl-9"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Website</label>
-                      <Input
-                        value={formData.website}
-                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        placeholder="https://..."
-                      />
+                      <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                        <Link2 className="w-3 h-3" />
+                        Website
+                      </label>
+                      <div className="relative">
+                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          value={formData.website}
+                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                          placeholder="https://..."
+                          className="pl-9"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2 pt-2">
                       <Button size="sm" onClick={handleSave} className="flex-1">
