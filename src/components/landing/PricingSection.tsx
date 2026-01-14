@@ -2,19 +2,32 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, Gift, Search, MessageSquare, Smartphone, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, Gift, Search, MessageSquare, Smartphone, ArrowRight, Rocket, TrendingUp, Building2 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "./EmailCaptureModal";
+import type { LucideIcon } from "lucide-react";
+
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
   growth: "price_1SlykkK8CM0R6xMMZu7WJesV",
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-const plans = [
+const plans: {
+  name: string;
+  key: string;
+  price: string;
+  anchorPrice: string;
+  searches: string;
+  whatsappNumbers: number;
+  description: string;
+  features: string[];
+  popular: boolean;
+  icon: LucideIcon;
+}[] = [
   {
     name: "Start",
     key: "start",
@@ -33,6 +46,7 @@ const plans = [
       "Suporte por email",
     ],
     popular: false,
+    icon: Rocket,
   },
   {
     name: "Growth",
@@ -52,6 +66,7 @@ const plans = [
       "Suporte prioritário",
     ],
     popular: true,
+    icon: TrendingUp,
   },
   {
     name: "Scale",
@@ -71,6 +86,7 @@ const plans = [
       "Suporte VIP",
     ],
     popular: false,
+    icon: Building2,
   },
 ];
 
@@ -187,7 +203,12 @@ export const PricingSection = () => {
                 )}
 
                 <div className="mb-6">
-                  <h3 className="font-display font-bold mb-2 text-lg md:text-xl">{plan.name}</h3>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
+                  </div>
                   <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
 
