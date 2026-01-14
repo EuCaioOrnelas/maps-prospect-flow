@@ -60,7 +60,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
         </div>
         
         {/* Spacer for desktop sidebar */}
-        <div className="hidden lg:block lg:w-14" />
+        <div className="hidden lg:block lg:w-[72px]" />
 
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
