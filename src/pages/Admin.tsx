@@ -299,6 +299,74 @@ const Admin = () => {
       .sort((a, b) => a.month.localeCompare(b.month));
   }, [allSalesEvents, chartPeriodFilter]);
 
+  // Process churn data by reason
+  const churnByReasonData = useMemo(() => {
+    if (!allSalesEvents.length) return [];
+
+    // Calculate date range based on filter (same as sales)
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (chartPeriodFilter) {
+      case '1m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        break;
+      case '3m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case '6m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        break;
+      case '12m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      case 'all':
+      default:
+        startDate = new Date(2024, 0, 1);
+        break;
+    }
+
+    // Filter events by date
+    const filteredEvents = allSalesEvents.filter(event => 
+      new Date(event.created_at) >= startDate
+    );
+
+    // Churn reasons counters
+    const churnReasons: { [key: string]: number } = {
+      canceled: 0,
+      deleted: 0,
+      past_due: 0,
+      unpaid: 0,
+    };
+
+    for (const event of filteredEvents) {
+      const eventType = event.event_type?.toLowerCase() || '';
+      
+      if (eventType === 'subscription_canceled') {
+        churnReasons.canceled++;
+      } else if (eventType === 'subscription_deleted') {
+        churnReasons.deleted++;
+      } else if (eventType === 'subscription_past_due') {
+        churnReasons.past_due++;
+      } else if (eventType === 'subscription_unpaid') {
+        churnReasons.unpaid++;
+      }
+    }
+
+    // Map to readable labels and colors
+    const churnData = [
+      { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
+      { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
+      { name: 'Pagamento Atrasado', value: churnReasons.past_due, color: '#eab308' },
+      { name: 'Não Pago', value: churnReasons.unpaid, color: '#6b7280' },
+    ].filter(item => item.value > 0);
+
+    return churnData;
+  }, [allSalesEvents, chartPeriodFilter]);
+
   // Filter MRR data by period
   const filteredMRRData = useMemo(() => {
     if (!stripeMRR?.monthlyMRR?.length) return [];
@@ -1233,6 +1301,61 @@ const Admin = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
+
+              {/* Churn by Reason Pie Chart */}
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.65s' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <XCircle size={20} className="text-destructive" />
+                  <h2 className="font-display font-semibold">Churn por Motivo</h2>
+                </div>
+                <div className="h-64 flex items-center justify-center">
+                  {churnByReasonData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={churnByReasonData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          {churnByReasonData.map((entry, index) => (
+                            <Cell key={`churn-cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: number, name: string, props: any) => [
+                            `${value} cancelamento(s)`,
+                            props.payload.name
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <p className="text-sm">Nenhum churn no período selecionado 🎉</p>
+                    </div>
+                  )}
+                </div>
+                {churnByReasonData.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm">
+                    {churnByReasonData.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                        <span className="text-muted-foreground">{item.name} ({item.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
