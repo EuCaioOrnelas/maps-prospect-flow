@@ -30,7 +30,6 @@ export const KanbanColumnDraggable = ({
   isDragging,
   isExpanded,
 }: KanbanColumnDraggableProps) => {
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -86,11 +85,6 @@ export const KanbanColumnDraggable = ({
             {leads.length}
           </span>
         </div>
-        {totalValue > 0 && (
-          <p className="text-xs text-muted-foreground">
-            R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-        )}
       </div>
 
       {/* Cards */}
