@@ -18,6 +18,7 @@ interface KanbanColumnDraggableProps {
   isExpanded?: boolean;
   bulkSelectMode?: boolean;
   selectedLeadIds?: Set<string>;
+  onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
 }
 
 export const KanbanColumnDraggable = ({
@@ -34,7 +35,9 @@ export const KanbanColumnDraggable = ({
   isExpanded,
   bulkSelectMode,
   selectedLeadIds,
+  onSelectAllInColumn,
 }: KanbanColumnDraggableProps) => {
+  const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -70,6 +73,16 @@ export const KanbanColumnDraggable = ({
       <div className="p-3 border-b border-border/50">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
+            {bulkSelectMode && leads.length > 0 && (
+              <Checkbox
+                checked={allLeadsInColumnSelected}
+                onCheckedChange={() => {
+                  if (onSelectAllInColumn) {
+                    onSelectAllInColumn(stage.id, leads.map(l => l.id));
+                  }
+                }}
+              />
+            )}
             <div
               className={cn(
                 "w-3 h-3 rounded-full transition-transform duration-300",

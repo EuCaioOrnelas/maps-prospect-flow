@@ -3,6 +3,7 @@ import { type PipelineStage, type WhatsAppStatus, WHATSAPP_STATUS_LABELS } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
   SelectContent,
@@ -15,7 +16,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Search, X, SlidersHorizontal, Smartphone } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Smartphone, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export interface CRMFiltersState {
   search: string;
@@ -24,6 +28,8 @@ export interface CRMFiltersState {
   tags: string[];
   origin: string;
   whatsappNumberId: string;
+  dateFrom: Date | undefined;
+  dateTo: Date | undefined;
 }
 
 interface WhatsAppNumber {
@@ -56,6 +62,8 @@ export const CRMFilters = ({
     filters.whatsappStatus,
     filters.origin,
     filters.whatsappNumberId,
+    filters.dateFrom,
+    filters.dateTo,
     ...filters.tags,
   ].filter(Boolean).length;
 
@@ -74,6 +82,8 @@ export const CRMFilters = ({
       tags: [],
       origin: '',
       whatsappNumberId: '',
+      dateFrom: undefined,
+      dateTo: undefined,
     });
   };
 
@@ -217,6 +227,75 @@ export const CRMFilters = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="w-3 h-3" />
+                  Período de criação
+                </div>
+              </label>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal text-xs h-9",
+                        !filters.dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      {filters.dateFrom ? format(filters.dateFrom, "dd/MM/yy", { locale: ptBR }) : "De"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.dateFrom}
+                      onSelect={(date) => updateFilter('dateFrom', date)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal text-xs h-9",
+                        !filters.dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      {filters.dateTo ? format(filters.dateTo, "dd/MM/yy", { locale: ptBR }) : "Até"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.dateTo}
+                      onSelect={(date) => updateFilter('dateTo', date)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {(filters.dateFrom || filters.dateTo) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-1 h-7 text-xs w-full"
+                  onClick={() => {
+                    updateFilter('dateFrom', undefined);
+                    updateFilter('dateTo', undefined);
+                  }}
+                >
+                  Limpar período
+                </Button>
+              )}
             </div>
 
             {/* Tags Filter */}
