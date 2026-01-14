@@ -14,11 +14,26 @@ import { Users, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import CRMComingSoon from './CRMComingSoon';
+
+// Emails com acesso ao CRM
+const CRM_ALLOWED_EMAILS = [
+  'caiowiize@gmail.com'
+];
 
 export default function CRM() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { 
+  const { user, profile } = useAuth();
+  
+  // Verificar se o usuário tem acesso ao CRM
+  const hasCRMAccess = profile?.email && CRM_ALLOWED_EMAILS.includes(profile.email.toLowerCase());
+  
+  // Se não tem acesso, mostra a página "Em Breve"
+  if (!hasCRMAccess) {
+    return <CRMComingSoon />;
+  }
+
+  const {
     stages, 
     leads, 
     isLoading, 
@@ -57,8 +72,8 @@ export default function CRM() {
     enabled: !!user,
   });
 
-  // Fetch user profile for sidebar
-  const { data: profile } = useQuery({
+  // Fetch user profile for sidebar (already available from useAuth)
+  const { data: sidebarProfile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -147,8 +162,8 @@ export default function CRM() {
         description="Gerencie seus leads e vendas com o CRM integrado ao WhatsApp"
       />
       
-      <AppSidebar profile={profile} />
-      <MobileNav profile={profile} />
+      <AppSidebar profile={profile || sidebarProfile} />
+      <MobileNav profile={profile || sidebarProfile} />
 
       <main className="lg:pl-14 pt-14 lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
