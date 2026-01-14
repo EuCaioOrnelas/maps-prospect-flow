@@ -190,8 +190,8 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4 border-b border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 py-4 border-b border-border">
           <DialogTitle className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <span className="truncate">
@@ -204,8 +204,8 @@ export const LeadDetailDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4 py-4">
+        <ScrollArea className="flex-1">
+          <div className="space-y-4 p-6">
             {/* Stage Selector */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -216,7 +216,7 @@ export const LeadDetailDialog = ({
                   value={lead.pipeline_stage_id || ''}
                   onValueChange={(value) => onMoveToStage(lead.id, value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="focus:ring-offset-0">
                     <SelectValue>
                       <div className="flex items-center gap-2">
                         <div
@@ -252,7 +252,7 @@ export const LeadDetailDialog = ({
                   value={lead.whatsapp_status}
                   onValueChange={(value) => handleWhatsAppStatusChange(value as WhatsAppStatus)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="focus:ring-offset-0">
                     <SelectValue>
                       <Badge className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}>
                         {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
@@ -308,7 +308,7 @@ export const LeadDetailDialog = ({
               <TabsList className="w-full">
                 <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
                 <TabsTrigger value="notes" className="flex-1">Notas</TabsTrigger>
-                <TabsTrigger value="activity" className="flex-1">Atividade</TabsTrigger>
+                <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
               </TabsList>
 
               <TabsContent value="info" className="space-y-4 mt-4">
@@ -321,6 +321,7 @@ export const LeadDetailDialog = ({
                           value={formData.company_name}
                           onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                           placeholder="Nome da empresa"
+                          className="focus:ring-offset-0"
                         />
                       </div>
                       <div>
@@ -329,6 +330,7 @@ export const LeadDetailDialog = ({
                           value={formData.contact_name}
                           onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                           placeholder="Nome do contato"
+                          className="focus:ring-offset-0"
                         />
                       </div>
                     </div>
@@ -338,6 +340,7 @@ export const LeadDetailDialog = ({
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         placeholder="Categoria/Nicho"
+                        className="focus:ring-offset-0"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -347,6 +350,7 @@ export const LeadDetailDialog = ({
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           placeholder="Cidade"
+                          className="focus:ring-offset-0"
                         />
                       </div>
                       <div>
@@ -355,6 +359,7 @@ export const LeadDetailDialog = ({
                           value={formData.region}
                           onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                           placeholder="Região"
+                          className="focus:ring-offset-0"
                         />
                       </div>
                     </div>
@@ -365,6 +370,7 @@ export const LeadDetailDialog = ({
                           value={formData.website}
                           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                           placeholder="https://..."
+                          className="focus:ring-offset-0"
                         />
                       </div>
                       <div>
@@ -374,6 +380,7 @@ export const LeadDetailDialog = ({
                           value={formData.estimated_value}
                           onChange={(e) => setFormData({ ...formData, estimated_value: parseFloat(e.target.value) || 0 })}
                           placeholder="0.00"
+                          className="focus:ring-offset-0"
                         />
                       </div>
                     </div>
@@ -466,7 +473,7 @@ export const LeadDetailDialog = ({
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       placeholder="Nova tag"
-                      className="text-sm"
+                      className="text-sm focus:ring-offset-0"
                       onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
                     />
                     <Button size="sm" variant="outline" onClick={handleAddTag}>
@@ -482,7 +489,7 @@ export const LeadDetailDialog = ({
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                     placeholder="Adicionar nota..."
-                    className="text-sm min-h-[80px]"
+                    className="text-sm min-h-[80px] focus:ring-offset-0"
                   />
                 </div>
                 <Button size="sm" onClick={handleAddNote} className="w-full">
@@ -506,25 +513,21 @@ export const LeadDetailDialog = ({
                 </div>
               </TabsContent>
 
-              <TabsContent value="activity" className="space-y-4 mt-4">
-                <div className="space-y-3 max-h-48 overflow-y-auto">
-                  {activities.map((activity) => (
-                    <div key={activity.id} className="flex gap-3 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                      <div>
+              <TabsContent value="history" className="space-y-4 mt-4">
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {activities.slice(0, 10).map((activity) => (
+                    <div key={activity.id} className="flex gap-3 text-sm border-l-2 border-primary/30 pl-3 py-1">
+                      <div className="flex-1">
                         <p className="text-foreground">{activity.description}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(activity.created_at), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
+                          {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
                   ))}
                   {activities.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      Nenhuma atividade registrada
+                      Nenhuma movimentação registrada
                     </p>
                   )}
                 </div>
@@ -534,7 +537,7 @@ export const LeadDetailDialog = ({
         </ScrollArea>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-border">
+        <div className="px-6 py-4 border-t border-border">
           <Button
             variant="destructive"
             size="sm"
