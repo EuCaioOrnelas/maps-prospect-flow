@@ -84,6 +84,8 @@ export const LeadDetailDialog = ({
     estimated_value: 0,
   });
   const [showWhatsAppOptions, setShowWhatsAppOptions] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PER_PAGE = 5;
 
   useEffect(() => {
     if (lead) {
@@ -101,6 +103,7 @@ export const LeadDetailDialog = ({
       setIsEditing(false);
       setActiveTab('info');
       setShowWhatsAppOptions(false);
+      setHistoryPage(1);
     }
   }, [lead?.id]);
 
@@ -577,12 +580,27 @@ export const LeadDetailDialog = ({
 
                 <div className="space-y-2">
                   {notes.map((note) => (
-                    <div key={note.id} className="bg-muted/40 rounded-lg p-3">
-                      <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                    <div key={note.id} className="bg-muted/40 rounded-lg p-3 group relative">
+                      <p className="text-sm whitespace-pre-wrap pr-8">{note.content}</p>
                       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </p>
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Excluir esta nota?')) return;
+                          try {
+                            const { supabase } = await import('@/integrations/supabase/client');
+                            await supabase.from('lead_notes').delete().eq('id', note.id);
+                            loadNotesAndActivities();
+                          } catch {
+                            console.error('Error deleting note');
+                          }
+                        }}
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   ))}
                   {notes.length === 0 && (
@@ -597,12 +615,14 @@ export const LeadDetailDialog = ({
             {/* History Tab */}
             {activeTab === 'history' && (
               <div className="space-y-1">
-                {activities.slice(0, 10).map((activity, index) => (
+                {activities
+                  .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
+                  .map((activity, index, arr) => (
                   <div 
                     key={activity.id} 
                     className={cn(
                       "flex gap-3 py-3",
-                      index !== activities.slice(0, 10).length - 1 && "border-b border-border/50"
+                      index !== arr.length - 1 && "border-b border-border/50"
                     )}
                   >
                     <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
@@ -618,6 +638,29 @@ export const LeadDetailDialog = ({
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Nenhuma movimentação registrada
                   </p>
+                )}
+                {activities.length > HISTORY_PER_PAGE && (
+                  <div className="flex items-center justify-center gap-2 pt-4 border-t border-border/50">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={historyPage === 1}
+                      onClick={() => setHistoryPage(p => p - 1)}
+                    >
+                      Anterior
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      {historyPage} / {Math.ceil(activities.length / HISTORY_PER_PAGE)}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={historyPage >= Math.ceil(activities.length / HISTORY_PER_PAGE)}
+                      onClick={() => setHistoryPage(p => p + 1)}
+                    >
+                      Próximo
+                    </Button>
+                  </div>
                 )}
               </div>
             )}

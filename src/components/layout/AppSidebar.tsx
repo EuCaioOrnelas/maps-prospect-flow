@@ -13,6 +13,7 @@ import {
   Users,
   Flame,
   AlertTriangle,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +21,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 import { useTotalUnread } from "@/hooks/useTotalUnread";
 import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
+import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 
 interface AppSidebarProps {
   profile?: {
@@ -35,10 +38,12 @@ interface AppSidebarProps {
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
+  const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
   const { totalUnread } = useTotalUnread();
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
+  const { unreadCount: unreadAnnouncements } = useUnreadAnnouncements();
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
@@ -426,6 +431,34 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             ))}
             
+            {/* Notifications */}
+            <li>
+              <button
+                onClick={() => setAnnouncementsOpen(true)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-colors duration-200",
+                  "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
+              >
+                <div className="relative shrink-0">
+                  <Bell size={20} />
+                  {unreadAnnouncements > 0 && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-primary-foreground">{unreadAnnouncements}</span>
+                    </div>
+                  )}
+                </div>
+                <span 
+                  className={cn(
+                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
+                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
+                  )}
+                >
+                  Novidades
+                </span>
+              </button>
+            </li>
+
             {/* Profile */}
             <li>
               <Link
@@ -477,6 +510,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </ul>
         </div>
       </aside>
+
+      {/* Announcements Dialog */}
+      <AnnouncementsDialog 
+        open={announcementsOpen} 
+        onOpenChange={setAnnouncementsOpen} 
+      />
     </div>
   );
 };
