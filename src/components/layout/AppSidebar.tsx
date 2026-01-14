@@ -48,6 +48,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
+  const navItemBase = cn(
+    "flex items-center rounded-lg transition-colors duration-200",
+    isHovered
+      ? "w-full h-10 px-2.5 justify-start gap-3"
+      : "w-10 h-10 justify-center gap-0",
+  );
+
+  const navItemActive = "bg-sidebar-accent/60 text-primary";
+  const navItemInactive =
+    "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50";
+
   // Keep reports submenu open if on a reports page
   const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports";
 
@@ -198,11 +209,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to={mainNavItems[0].url}
                 className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  mainNavItems[0].active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  navItemBase,
+                  mainNavItems[0].active ? navItemActive : navItemInactive
                 )}
               >
                 <Search size={20} className="shrink-0" />
@@ -222,11 +230,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <button
                 onClick={handleReportsClick}
                 className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  isOnReportsPage
-                    ? "bg-primary/10 text-primary" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  navItemBase,
+                  isOnReportsPage ? navItemActive : navItemInactive
                 )}
               >
                 <BarChart3 size={20} className="shrink-0" />
@@ -263,8 +268,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         to={subItem.url}
                         className={cn(
                           "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
-                          subItem.active 
-                            ? "bg-primary/15 text-primary font-medium" 
+                          subItem.active
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
@@ -285,11 +290,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <button
                   onClick={mainNavItems[1].onClick}
                   className={cn(
-                    "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                    isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                    mainNavItems[1].active 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    navItemBase,
+                    mainNavItems[1].active ? navItemActive : navItemInactive
                   )}
                 >
                   <Megaphone size={20} className="shrink-0" />
@@ -305,13 +307,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               ) : (
                 <Link
                   to={mainNavItems[1].url}
-                  className={cn(
-                    "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                    isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                    mainNavItems[1].active 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                  )}
+                   className={cn(
+                     navItemBase,
+                     mainNavItems[1].active ? navItemActive : navItemInactive
+                   )}
                 >
                   <Megaphone size={20} className="shrink-0" />
                   <span 
@@ -334,11 +333,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     <Link
                       to={mainNavItems[2].url}
                       className={cn(
-                        "flex items-center gap-3 py-2 rounded-lg transition-all duration-300 relative",
-                        isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                        mainNavItems[2].active 
-                          ? "bg-primary/10 text-primary" 
-                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        navItemBase,
+                        "relative",
+                        mainNavItems[2].active ? navItemActive : navItemInactive
                       )}
                     >
                       <div className="relative shrink-0">
@@ -380,13 +377,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
               <Link
                 to={mainNavItems[3].url}
-                className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  mainNavItems[3].active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
+                 className={cn(
+                   navItemBase,
+                   mainNavItems[3].active ? navItemActive : navItemInactive
+                 )}
               >
                 <Users size={20} className="shrink-0" />
                 <span 
@@ -404,13 +398,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
               <Link
                 to={mainNavItems[4].url}
-                className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  mainNavItems[4].active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
+                 className={cn(
+                   navItemBase,
+                   mainNavItems[4].active ? navItemActive : navItemInactive
+                 )}
               >
                 <MessageCircle size={20} className="shrink-0" />
                 <span 
@@ -433,14 +424,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <li key={item.title} className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
                 <Link
                   to={item.url}
-                  className={cn(
-                    "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                    isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                    item.active 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-                    item.highlight && !item.active && "text-primary hover:text-primary"
-                  )}
+                   className={cn(
+                     navItemBase,
+                     item.active ? navItemActive : navItemInactive,
+                     item.highlight && !item.active && "text-primary hover:text-primary"
+                   )}
                 >
                   <item.icon size={20} className="shrink-0" />
                   <span 
@@ -459,11 +447,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
               <button
                 onClick={() => setAnnouncementsOpen(true)}
-                className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
+                 className={cn(
+                   navItemBase,
+                   navItemInactive
+                 )}
               >
                 <div className="relative shrink-0">
                   <Bell size={20} />
@@ -488,13 +475,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
               <Link
                 to="/profile"
-                className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  currentPath === "/profile" 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
+                 className={cn(
+                   navItemBase,
+                   currentPath === "/profile" ? navItemActive : navItemInactive
+                 )}
               >
                 <Avatar className="h-5 w-5 shrink-0 border border-sidebar-border">
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
@@ -517,11 +501,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
               <button
                 onClick={handleLogout}
-                className={cn(
-                  "flex items-center gap-3 py-2 rounded-lg transition-all duration-300",
-                  isHovered ? "px-2.5 justify-start w-full" : "justify-center w-10 h-10",
-                  "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                )}
+                 className={cn(
+                   navItemBase,
+                   "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                 )}
               >
                 <LogOut size={20} className="shrink-0" />
                 <span 
