@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,6 +101,8 @@ interface SalesChartData {
   cancellations: number;
 }
 
+type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all';
+
 interface Stats {
   totalUsers: number;
   totalSearches: number;
@@ -150,7 +152,9 @@ const Admin = () => {
   const [loadingMRR, setLoadingMRR] = useState(false);
   const [stripeMRRError, setStripeMRRError] = useState<string | null>(null);
   const [salesChartData, setSalesChartData] = useState<SalesChartData[]>([]);
+  const [allSalesEvents, setAllSalesEvents] = useState<any[]>([]);
   const [loadingSalesChart, setLoadingSalesChart] = useState(false);
+  const [chartPeriodFilter, setChartPeriodFilter] = useState<ChartPeriodFilter>('6m');
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
@@ -192,63 +196,138 @@ const Admin = () => {
   const loadSalesChartData = useCallback(async () => {
     setLoadingSalesChart(true);
     try {
-      // Get subscription events from the last 12 months
-      const twelveMonthsAgo = new Date();
-      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-      
+      // Get all subscription events (we'll filter by period in memory)
       const { data: events, error } = await supabase
         .from('subscription_events')
         .select('*')
-        .gte('created_at', twelveMonthsAgo.toISOString())
         .order('created_at', { ascending: true });
       
       if (error) throw error;
       
-      // Group events by month
-      const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
-      
-      for (const event of events || []) {
-        const eventDate = new Date(event.created_at);
-        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0 };
-        }
-        
-        // Categorize events
-        if (event.event_type === 'checkout.session.completed') {
-          // Check if it's a new sale or upgrade
-          const previousPlan = event.previous_plan?.toLowerCase();
-          if (!previousPlan || previousPlan === 'free') {
-            // New sale (from free or no previous plan)
-            monthlyData[monthKey].newSales++;
-          } else {
-            // Upgrade (from another paid plan)
-            monthlyData[monthKey].upgrades++;
-          }
-        } else if (event.event_type === 'customer.subscription.deleted' || 
-                   (event.event_type === 'customer.subscription.updated' && event.new_plan === 'free')) {
-          // Cancellation
-          monthlyData[monthKey].cancellations++;
-        }
-      }
-      
-      // Convert to array and sort by month
-      const chartData = Object.entries(monthlyData)
-        .map(([month, data]) => ({
-          month,
-          ...data
-        }))
-        .sort((a, b) => a.month.localeCompare(b.month));
-      
-      setSalesChartData(chartData);
+      setAllSalesEvents(events || []);
     } catch (error) {
       console.error('Error loading sales chart data:', error);
-      setSalesChartData([]);
+      setAllSalesEvents([]);
     } finally {
       setLoadingSalesChart(false);
     }
   }, []);
+
+  // Process sales events based on period filter
+  const processedSalesChartData = useMemo(() => {
+    if (!allSalesEvents.length) return [];
+
+    // Calculate date range based on filter
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (chartPeriodFilter) {
+      case '1m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        break;
+      case '3m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case '6m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        break;
+      case '12m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1); // Jan 1 of current year
+        break;
+      case 'all':
+      default:
+        startDate = new Date(2024, 0, 1); // Start from 2024
+        break;
+    }
+
+    // Filter events by date
+    const filteredEvents = allSalesEvents.filter(event => 
+      new Date(event.created_at) >= startDate
+    );
+
+    // Group events by month
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number } } = {};
+    
+    for (const event of filteredEvents) {
+      const eventDate = new Date(event.created_at);
+      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0 };
+      }
+      
+      // Categorize events based on actual event_type from webhook
+      const eventType = event.event_type?.toLowerCase();
+      const previousPlan = event.previous_plan?.toLowerCase();
+      const newPlan = event.new_plan?.toLowerCase();
+      
+      if (eventType === 'checkout_completed') {
+        // Check if it's a new sale or upgrade
+        if (!previousPlan || previousPlan === 'free') {
+          // New sale (from free or no previous plan)
+          monthlyData[monthKey].newSales++;
+        } else if (previousPlan !== newPlan) {
+          // Upgrade (from another paid plan to a different plan)
+          monthlyData[monthKey].upgrades++;
+        }
+      } else if (eventType === 'subscription_upgrade') {
+        monthlyData[monthKey].upgrades++;
+      } else if (
+        eventType === 'subscription_deleted' || 
+        eventType === 'subscription_canceled' ||
+        (eventType === 'subscription_updated' && newPlan === 'free')
+      ) {
+        // Cancellation
+        monthlyData[monthKey].cancellations++;
+      }
+    }
+    
+    // Convert to array and sort by month
+    return Object.entries(monthlyData)
+      .map(([month, data]) => ({
+        month,
+        ...data
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  }, [allSalesEvents, chartPeriodFilter]);
+
+  // Filter MRR data by period
+  const filteredMRRData = useMemo(() => {
+    if (!stripeMRR?.monthlyMRR?.length) return [];
+
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (chartPeriodFilter) {
+      case '1m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        break;
+      case '3m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case '6m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        break;
+      case '12m':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      case 'all':
+      default:
+        startDate = new Date(2024, 0, 1);
+        break;
+    }
+
+    return stripeMRR.monthlyMRR.filter(item => {
+      const itemDate = new Date(item.month + '-01');
+      return itemDate >= startDate;
+    });
+  }, [stripeMRR?.monthlyMRR, chartPeriodFilter]);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
@@ -917,6 +996,34 @@ const Admin = () => {
 
             </div>
 
+            {/* Period Filter */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <Calendar size={20} className="text-primary" />
+                Período de Análise
+              </h2>
+              <div className="flex gap-2">
+                {[
+                  { value: '1m', label: '1 Mês' },
+                  { value: '3m', label: '3 Meses' },
+                  { value: '6m', label: '6 Meses' },
+                  { value: '12m', label: '12 Meses' },
+                  { value: 'year', label: 'Este Ano' },
+                  { value: 'all', label: 'Tudo' },
+                ].map(option => (
+                  <Button
+                    key={option.value}
+                    variant={chartPeriodFilter === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setChartPeriodFilter(option.value as ChartPeriodFilter)}
+                    className="text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Sales/Upgrades/Cancellations Chart - Full Width */}
             <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in mb-8" style={{ animationDelay: '0.35s' }}>
               <div className="flex items-center justify-between mb-4">
@@ -941,9 +1048,9 @@ const Admin = () => {
                 </Button>
               </div>
               <div className="h-80">
-                {salesChartData.length > 0 ? (
+                {processedSalesChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesChartData.map(item => ({
+                    <BarChart data={processedSalesChartData.map(item => ({
                       ...item,
                       month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
                     }))}>
@@ -1039,9 +1146,9 @@ const Admin = () => {
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-64">
-                  {stripeMRR?.monthlyMRR && stripeMRR.monthlyMRR.length > 0 ? (
+                  {filteredMRRData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={stripeMRR.monthlyMRR.map(item => ({
+                      <AreaChart data={filteredMRRData.map(item => ({
                         date: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
                         mrr: item.mrr
                       }))}>
@@ -1077,7 +1184,7 @@ const Admin = () => {
                       {stripeMRRError ? (
                         <p className="text-sm">Erro ao carregar dados do Stripe</p>
                       ) : (
-                        <p className="text-sm">Nenhum dado de MRR disponível</p>
+                        <p className="text-sm">Nenhum dado de MRR disponível para o período</p>
                       )}
                     </div>
                   )}
