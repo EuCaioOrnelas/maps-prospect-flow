@@ -72,9 +72,11 @@ export const LeadCard = ({
       {/* Estimated Value - if exists */}
       {lead.estimated_value && lead.estimated_value > 0 && (
         <div className="mb-2 py-1.5 px-2 -mx-1 rounded-md bg-primary/5 border border-primary/10">
-          <span className="text-[10px] text-muted-foreground">Valor em negociação </span>
+          <span className="text-[10px] text-muted-foreground">Valor em Negociação: </span>
           <span className="text-xs font-semibold text-primary">
-            R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+            R$ {lead.estimated_value >= 1000 
+              ? `${(lead.estimated_value / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })} mil`
+              : lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
           </span>
         </div>
       )}
