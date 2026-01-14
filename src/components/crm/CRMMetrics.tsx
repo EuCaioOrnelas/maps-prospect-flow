@@ -10,6 +10,7 @@ interface CRMMetricsProps {
 interface Metric {
   label: string;
   value: string | number;
+  subValue?: string;
   icon: LucideIcon;
   color: string;
   bgColor: string;
@@ -49,7 +50,8 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
     },
     {
       label: 'Taxa de Conversão',
-      value: `${conversionRate}% (${wonLeads})`,
+      value: conversionRate,
+      subValue: `${wonLeads} leads`,
       icon: Target,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
@@ -73,7 +75,14 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
                 <metric.icon className={`w-4 h-4 ${metric.color}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold">{metric.value}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-2xl font-bold">
+                    {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
+                  </p>
+                  {metric.subValue && (
+                    <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">{metric.label}</p>
               </div>
             </div>
