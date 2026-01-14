@@ -49,19 +49,19 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
       bgColor: 'bg-blue-100',
     },
     {
-      label: 'Valor Total em Negociação',
-      value: `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
-      icon: DollarSign,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-    },
-    {
       label: 'Taxa de Conversão',
       value: conversionRate,
       subValue: `${wonLeads} leads`,
       icon: Target,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
+    },
+    {
+      label: 'Valor Total em Negociação',
+      value: `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
+      icon: DollarSign,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
   ];
 
