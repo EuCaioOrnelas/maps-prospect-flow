@@ -497,6 +497,73 @@ serve(async (req) => {
               
               console.log(`✓ Message sent to ${formattedPhone} (${sentCount}/${leads.length})`);
 
+              // ===== CRM INTEGRATION: Create or update lead in "Prospectado" stage =====
+              try {
+                // Get "Prospectado" stage for this user
+                const { data: prospectadoStage } = await supabase
+                  .from('pipeline_stages')
+                  .select('id')
+                  .eq('user_id', userId)
+                  .eq('name', 'Prospectado')
+                  .single();
+
+                // Check if lead with this phone already exists (by normalized phone)
+                const { data: existingLead } = await supabase
+                  .from('leads')
+                  .select('id, whatsapp_status, pipeline_stage_id')
+                  .eq('user_id', userId)
+                  .or(`phone.eq.${formattedPhone},phone.ilike.%${formattedPhone.slice(-8)}%`)
+                  .limit(1)
+                  .single();
+
+                if (existingLead) {
+                  // Update existing lead - mark message sent
+                  const updateData: Record<string, unknown> = {
+                    last_message_sent: personalizedMessage.substring(0, 200),
+                    last_message_sent_at: new Date().toISOString(),
+                    whatsapp_number_id: numberId,
+                    updated_at: new Date().toISOString(),
+                  };
+                  
+                  // Update whatsapp_status if still never_contacted
+                  if (existingLead.whatsapp_status === 'never_contacted') {
+                    updateData.whatsapp_status = 'message_sent';
+                  }
+
+                  await supabase
+                    .from('leads')
+                    .update(updateData)
+                    .eq('id', existingLead.id);
+
+                  console.log(`Updated existing lead ${existingLead.id} for campaign message`);
+                } else {
+                  // Create new lead in "Prospectado" stage
+                  const { error: createLeadError } = await supabase
+                    .from('leads')
+                    .insert({
+                      user_id: userId,
+                      phone: formattedPhone,
+                      company_name: lead.name || null,
+                      contact_name: lead.name || null,
+                      origin: 'campaign',
+                      whatsapp_status: 'message_sent',
+                      pipeline_stage_id: prospectadoStage?.id || null,
+                      last_message_sent: personalizedMessage.substring(0, 200),
+                      last_message_sent_at: new Date().toISOString(),
+                      whatsapp_number_id: numberId,
+                      tags: ['campanha'],
+                    });
+
+                  if (createLeadError) {
+                    console.error('Error creating lead:', createLeadError);
+                  } else {
+                    console.log(`Created new lead for phone ${formattedPhone}`);
+                  }
+                }
+              } catch (crmError) {
+                console.error('Error syncing with CRM:', crmError);
+              }
+
               // Sync to chat
               try {
                 const remoteJid = `${formattedPhone}@s.whatsapp.net`;
@@ -561,6 +628,13 @@ serve(async (req) => {
                       last_message_at: new Date().toISOString(),
                     })
                     .eq('id', conversationId);
+
+                  // Update lead with conversation_id
+                  await supabase
+                    .from('leads')
+                    .update({ conversation_id: conversationId })
+                    .eq('user_id', userId)
+                    .or(`phone.eq.${formattedPhone},phone.ilike.%${formattedPhone.slice(-8)}%`);
                 }
               } catch (syncError) {
                 console.error('Error syncing message:', syncError);
