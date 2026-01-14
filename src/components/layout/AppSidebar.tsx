@@ -235,22 +235,28 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 )}
               >
                 <BarChart3 size={20} className="shrink-0" />
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden flex-1 text-left transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-32" : "opacity-0 max-w-0"
-                  )}
-                >
-                  Relatórios
-                </span>
-                <ChevronDown 
-                  size={16} 
-                  className={cn(
-                    "shrink-0 transition-all duration-300",
-                    isHovered ? "opacity-100" : "opacity-0 w-0",
-                    (isReportsOpen || isOnReportsPage) && "rotate-180"
-                  )}
-                />
+
+                {isHovered ? (
+                  <>
+                    <span
+                      className={cn(
+                        "whitespace-nowrap overflow-hidden flex-1 text-left transition-[opacity,max-width] duration-300",
+                        "opacity-100 max-w-32",
+                      )}
+                    >
+                      Relatórios
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={cn(
+                        "shrink-0 transition-transform duration-300",
+                        (isReportsOpen || isOnReportsPage) && "rotate-180",
+                      )}
+                    />
+                  </>
+                ) : (
+                  <span className="sr-only">Relatórios</span>
+                )}
               </button>
 
               <div
