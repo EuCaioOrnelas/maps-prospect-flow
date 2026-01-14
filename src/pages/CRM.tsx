@@ -264,7 +264,7 @@ export default function CRM() {
       <main className="lg:pl-14 pt-14 lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
           {/* Header */}
-          <div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm relative z-10">
+          <div className="flex-shrink-0 border-b border-border/50 relative z-10">
             <div className="p-4 lg:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">

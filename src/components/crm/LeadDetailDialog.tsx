@@ -165,7 +165,11 @@ export const LeadDetailDialog = ({
   const handleWhatsAppStatusChange = async (status: WhatsAppStatus) => {
     if (!lead) return;
     try {
-      await onUpdate(lead.id, { whatsapp_status: status });
+      const updatedLead = await onUpdate(lead.id, { whatsapp_status: status });
+      if (updatedLead) {
+        // Update local lead reference for real-time UI update
+        Object.assign(lead, updatedLead);
+      }
       toast.success('Status atualizado!');
     } catch {
       toast.error('Erro ao atualizar status');
@@ -198,7 +202,10 @@ export const LeadDetailDialog = ({
   const handleValueChange = async (value: number) => {
     if (!lead) return;
     try {
-      await onUpdate(lead.id, { estimated_value: value });
+      const updatedLead = await onUpdate(lead.id, { estimated_value: value });
+      if (updatedLead) {
+        Object.assign(lead, updatedLead);
+      }
       toast.success('Valor atualizado!');
     } catch {
       toast.error('Erro ao atualizar valor');
@@ -536,10 +543,14 @@ export const LeadDetailDialog = ({
                             const newOrigin = prompt('Nome da nova origem:');
                             if (newOrigin) {
                               await onAddOrigin(newOrigin);
-                              await onUpdate(lead.id, { origin: newOrigin });
+                              const updatedLead = await onUpdate(lead.id, { origin: newOrigin });
+                              if (updatedLead) Object.assign(lead, updatedLead);
+                              toast.success('Origem atualizada!');
                             }
                           } else {
-                            await onUpdate(lead.id, { origin: value });
+                            const updatedLead = await onUpdate(lead.id, { origin: value });
+                            if (updatedLead) Object.assign(lead, updatedLead);
+                            toast.success('Origem atualizada!');
                           }
                         }}
                       >
