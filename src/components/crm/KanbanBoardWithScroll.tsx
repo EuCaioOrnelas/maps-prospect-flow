@@ -70,32 +70,38 @@ export const KanbanBoardWithScroll = ({
     }
   }, []);
 
-  // Handle container drag over with smooth acceleration
-  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (!containerRef.current || !draggedLead) return;
+  // Calculate scroll velocity based on mouse position - works globally
+  const calculateScrollVelocity = useCallback((mouseX: number) => {
+    if (!containerRef.current) return;
     
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX;
     
-    const edgeThreshold = 120; // pixels from edge to start scrolling
-    const maxSpeed = 8; // maximum scroll speed
+    // Use the full viewport width for edge detection
+    const viewportWidth = window.innerWidth;
+    const edgeThreshold = 150; // pixels from viewport edge to start scrolling
+    const maxSpeed = 10; // maximum scroll speed
     
     let targetVelocity = 0;
     
-    // Check if near left edge
-    if (mouseX < rect.left + edgeThreshold) {
-      const distance = rect.left + edgeThreshold - mouseX;
+    // Check if near left edge of viewport OR container
+    const leftEdge = Math.min(rect.left, edgeThreshold);
+    if (mouseX < leftEdge + edgeThreshold) {
+      const distance = leftEdge + edgeThreshold - mouseX;
       const intensity = Math.min(1, distance / edgeThreshold);
-      targetVelocity = -maxSpeed * intensity * intensity; // Quadratic for smoother start
+      targetVelocity = -maxSpeed * intensity * intensity;
     }
-    // Check if near right edge
-    else if (mouseX > rect.right - edgeThreshold) {
+    // Check if near right edge of viewport OR container
+    else if (mouseX > viewportWidth - edgeThreshold) {
+      const distance = mouseX - (viewportWidth - edgeThreshold);
+      const intensity = Math.min(1, distance / edgeThreshold);
+      targetVelocity = maxSpeed * intensity * intensity;
+    }
+    // Also check if near right edge of container
+    else if (mouseX > rect.right - edgeThreshold && mouseX <= rect.right) {
       const distance = mouseX - (rect.right - edgeThreshold);
       const intensity = Math.min(1, distance / edgeThreshold);
-      targetVelocity = maxSpeed * intensity * intensity; // Quadratic for smoother start
+      targetVelocity = maxSpeed * intensity * intensity;
     }
     
     // Smoothly interpolate to target velocity
@@ -105,7 +111,33 @@ export const KanbanBoardWithScroll = ({
     if (!animationRef.current && Math.abs(scrollVelocity.current) > 0.1) {
       animationRef.current = requestAnimationFrame(smoothScroll);
     }
-  }, [draggedLead, smoothScroll]);
+  }, [smoothScroll]);
+
+  // Global drag handler - works anywhere on the page
+  const handleGlobalDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    if (draggedLead) {
+      calculateScrollVelocity(e.clientX);
+    }
+  }, [draggedLead, calculateScrollVelocity]);
+
+  // Container drag over handler
+  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggedLead) {
+      calculateScrollVelocity(e.clientX);
+    }
+  }, [draggedLead, calculateScrollVelocity]);
+
+  // Add global drag listener when dragging starts
+  useEffect(() => {
+    if (draggedLead) {
+      document.addEventListener('dragover', handleGlobalDragOver);
+      return () => {
+        document.removeEventListener('dragover', handleGlobalDragOver);
+      };
+    }
+  }, [draggedLead, handleGlobalDragOver]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -113,8 +145,9 @@ export const KanbanBoardWithScroll = ({
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      document.removeEventListener('dragover', handleGlobalDragOver);
     };
-  }, []);
+  }, [handleGlobalDragOver]);
 
   return (
     <div 
