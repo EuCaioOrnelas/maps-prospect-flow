@@ -1,4 +1,3 @@
-import logoVerde from "@/assets/logo-verde.png";
 import logoBranca from "@/assets/logo-branca.png";
 import logoIcon from "@/assets/logo-icon.png";
 
@@ -7,7 +6,7 @@ interface LogoProps {
   showText?: boolean;
   mobileSize?: "sm" | "md" | "lg";
   mobileInitialsOnly?: boolean;
-  variant?: "dark" | "light"; // dark = use white logo for dark backgrounds, light = use green logo for light backgrounds
+  variant?: "dark" | "light"; // dark = use white logo for dark backgrounds
   iconOnly?: boolean; // Show only the icon (for collapsed sidebar)
 }
 
@@ -28,8 +27,8 @@ export const Logo = ({
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
-  // Choose the appropriate logo based on variant
-  const logoSrc = variant === "dark" ? logoBranca : logoVerde;
+  // Always use the white/complete logo (logoBranca is now the complete logo with text)
+  const logoSrc = logoBranca;
 
   // If iconOnly, show only the icon version
   if (iconOnly) {

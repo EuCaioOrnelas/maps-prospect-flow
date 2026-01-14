@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Search, 
   BarChart3, 
   Crown, 
   LogOut,
-  ChevronDown,
   FileSearch,
   Send,
   MessageCircle,
@@ -18,12 +17,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Logo } from "@/components/Logo";
 import { useTotalUnread } from "@/hooks/useTotalUnread";
 import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
+import { SidebarNavItem } from "./SidebarNavItem";
+import logoIcon from "@/assets/logo-icon.png";
+import logoBranca from "@/assets/logo-branca.png";
 
 interface AppSidebarProps {
   profile?: {
@@ -37,6 +37,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
@@ -44,23 +45,34 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { totalUnread } = useTotalUnread();
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements } = useUnreadAnnouncements();
+  const expandTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
-  const navItemBase = cn(
-    "flex items-center rounded-lg transition-colors duration-200",
-    isHovered
-      ? "w-full h-10 px-2.5 justify-start gap-3"
-      : "w-10 h-10 justify-center gap-0 mx-auto",
-  );
-
-  const navItemActive = "bg-sidebar-accent/60 text-primary";
-  const navItemInactive =
-    "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50";
-
   // Keep reports submenu open if on a reports page
   const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports";
+
+  // Sync expanded state with hover, but with delay to prevent glitches
+  useEffect(() => {
+    if (isHovered) {
+      // Expand immediately when hovering
+      expandTimeoutRef.current = setTimeout(() => {
+        setIsExpanded(true);
+      }, 50);
+    } else {
+      // Collapse after animation completes
+      if (expandTimeoutRef.current) {
+        clearTimeout(expandTimeoutRef.current);
+      }
+      setIsExpanded(false);
+    }
+    return () => {
+      if (expandTimeoutRef.current) {
+        clearTimeout(expandTimeoutRef.current);
+      }
+    };
+  }, [isHovered]);
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -93,56 +105,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     },
   ];
 
-  const mainNavItems = [
-    { 
-      title: "Prospecção", 
-      url: "/dashboard", 
-      icon: Search,
-      active: currentPath === "/dashboard"
-    },
-    { 
-      title: "Disparos", 
-      url: isFreePlan ? "#" : "/whatsapp", 
-      icon: Megaphone,
-      onClick: isFreePlan ? onWhatsAppClick : undefined,
-      active: currentPath === "/whatsapp"
-    },
-    { 
-      title: "Aquecimento", 
-      url: "/warming", 
-      icon: Flame,
-      active: currentPath === "/warming"
-    },
-    { 
-      title: "CRM", 
-      url: "/crm", 
-      icon: Users,
-      active: currentPath === "/crm"
-    },
-    { 
-      title: "Chat", 
-      url: "/chat", 
-      icon: MessageCircle,
-      active: currentPath === "/chat"
-    },
-  ];
-
-  const bottomNavItems = [
-    ...(profile?.plan !== 'scale' ? [{
-      title: "Upgrade",
-      url: "/upgrade",
-      icon: Crown,
-      highlight: true,
-      active: currentPath === "/upgrade"
-    }] : []),
-  ];
-
   const handleLogout = async () => {
     await signOut();
   };
 
   const handleReportsClick = () => {
-    if (isHovered) {
+    if (isExpanded) {
       setIsReportsOpen(!isReportsOpen);
     }
   };
@@ -155,6 +123,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const showUpgrade = profile?.plan !== 'scale';
+
   return (
     <div
       className="fixed left-0 top-0 h-screen z-40 hidden lg:flex"
@@ -164,24 +134,23 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "h-full w-[72px] bg-sidebar border-r border-sidebar-border flex flex-col",
-          "transition-[width] duration-300 ease-out",
-          isHovered && "w-56"
+          "h-full bg-sidebar border-r border-sidebar-border flex flex-col",
+          "transition-[width] duration-300 ease-out overflow-hidden",
+          isHovered ? "w-56" : "w-[72px]"
         )}
-        style={{ overflow: 'hidden' }}
       >
         {/* Logo area - aligned with navbar height */}
         <div className={cn(
-          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border overflow-hidden transition-all duration-300 ease-out",
+          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border transition-all duration-300 ease-out",
           isHovered ? "justify-start px-4" : "justify-center"
         )}>
-          <div className="relative flex items-center">
+          <div className="relative flex items-center justify-center">
             {/* Icon logo - visible when collapsed */}
             <img 
-              src="/logo-icon.png" 
+              src={logoIcon} 
               alt="Wiize" 
               className={cn(
-                "h-[52px] w-auto transition-all duration-300 ease-out",
+                "h-10 w-auto object-contain transition-all duration-300 ease-out",
                 isHovered 
                   ? "opacity-0 scale-90 absolute pointer-events-none" 
                   : "opacity-100 scale-100"
@@ -189,10 +158,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             />
             {/* Full logo - visible when expanded */}
             <img 
-              src="/logo-branca.png" 
+              src={logoBranca} 
               alt="Wiize" 
               className={cn(
-                "h-9 w-auto transition-all duration-300 ease-out",
+                "h-9 w-auto object-contain transition-all duration-300 ease-out",
                 isHovered 
                   ? "opacity-100 scale-100" 
                   : "opacity-0 scale-95 absolute pointer-events-none"
@@ -203,55 +172,33 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
-          <ul className="space-y-1 flex flex-col items-center">
+          <ul className="space-y-1 px-4">
             {/* Prospecção */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <Link
-                to={mainNavItems[0].url}
-                className={cn(
-                  navItemBase,
-                  mainNavItems[0].active ? navItemActive : navItemInactive
-                )}
-              >
-                <Search size={20} className="shrink-0" />
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  {mainNavItems[0].title}
-                </span>
-              </Link>
+            <li>
+              <SidebarNavItem
+                title="Prospecção"
+                icon={Search}
+                url="/dashboard"
+                isActive={currentPath === "/dashboard"}
+                isExpanded={isExpanded}
+                tooltip="Prospecção"
+              />
             </li>
 
             {/* Relatórios with submenu */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <button
+            <li>
+              <SidebarNavItem
+                title="Relatórios"
+                icon={BarChart3}
                 onClick={handleReportsClick}
-                className={cn(
-                  navItemBase,
-                  isOnReportsPage ? navItemActive : navItemInactive
-                )}
-              >
-                <BarChart3 size={20} className="shrink-0" />
-                {isHovered && (
-                  <>
-                    <span className="whitespace-nowrap overflow-hidden flex-1 text-left">
-                      Relatórios
-                    </span>
-                    <ChevronDown
-                      size={16}
-                      className={cn(
-                        "shrink-0 transition-transform duration-300",
-                        (isReportsOpen || isOnReportsPage) && "rotate-180"
-                      )}
-                    />
-                  </>
-                )}
-              </button>
+                isActive={isOnReportsPage}
+                isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isReportsOpen || isOnReportsPage}
+                tooltip="Relatórios"
+              />
 
-              {isHovered && (
+              {isExpanded && (
                 <div
                   className={cn(
                     "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
@@ -285,200 +232,116 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Disparos */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              {mainNavItems[1].onClick ? (
-                <button
-                  onClick={mainNavItems[1].onClick}
-                  className={cn(
-                    navItemBase,
-                    mainNavItems[1].active ? navItemActive : navItemInactive
-                  )}
-                >
-                  <Megaphone size={20} className="shrink-0" />
-                  <span 
-                    className={cn(
-                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                    )}
-                  >
-                    {mainNavItems[1].title}
-                  </span>
-                </button>
-              ) : (
-                <Link
-                  to={mainNavItems[1].url}
-                   className={cn(
-                     navItemBase,
-                     mainNavItems[1].active ? navItemActive : navItemInactive
-                   )}
-                >
-                  <Megaphone size={20} className="shrink-0" />
-                  <span 
-                    className={cn(
-                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                    )}
-                  >
-                    {mainNavItems[1].title}
-                  </span>
-                </Link>
-              )}
+            <li>
+              <SidebarNavItem
+                title="Disparos"
+                icon={Megaphone}
+                url={isFreePlan ? undefined : "/whatsapp"}
+                onClick={isFreePlan ? onWhatsAppClick : undefined}
+                isActive={currentPath === "/whatsapp"}
+                isExpanded={isExpanded}
+                tooltip="Disparos"
+              />
             </li>
 
             {/* Aquecimento */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={mainNavItems[2].url}
-                      className={cn(
-                        navItemBase,
-                        "relative",
-                        mainNavItems[2].active ? navItemActive : navItemInactive
-                      )}
-                    >
-                      <div className="relative shrink-0">
-                        <Flame size={20} />
-                        {hasDisconnectedWarming && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
-                            <AlertTriangle size={8} className="text-destructive-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <span
-                        className={cn(
-                          "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300 flex-1",
-                          isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                        )}
-                      >
-                        {mainNavItems[2].title}
-                      </span>
-                      {hasDisconnectedWarming && isHovered && (
-                        <span className="text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded shrink-0">
-                          !
-                        </span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  {hasDisconnectedWarming && !isHovered && (
-                    <TooltipContent side="right" className="bg-destructive text-destructive-foreground">
+            <li>
+              <SidebarNavItem
+                title="Aquecimento"
+                icon={Flame}
+                url="/warming"
+                isActive={currentPath === "/warming"}
+                isExpanded={isExpanded}
+                badge={hasDisconnectedWarming ? (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
+                    <AlertTriangle size={8} className="text-destructive-foreground" />
+                  </div>
+                ) : undefined}
+                tooltip={
+                  hasDisconnectedWarming ? (
+                    <div>
                       <p className="font-medium">Número desconectado</p>
                       <p className="text-xs opacity-90">
                         {disconnectedNumbers.length} número(s) precisa(m) reconectar
                       </p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+                    </div>
+                  ) : "Aquecimento"
+                }
+              />
             </li>
 
             {/* CRM */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <Link
-                to={mainNavItems[3].url}
-                 className={cn(
-                   navItemBase,
-                   mainNavItems[3].active ? navItemActive : navItemInactive
-                 )}
-              >
-                <Users size={20} className="shrink-0" />
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  {mainNavItems[3].title}
-                </span>
-              </Link>
+            <li>
+              <SidebarNavItem
+                title="CRM"
+                icon={Users}
+                url="/crm"
+                isActive={currentPath === "/crm"}
+                isExpanded={isExpanded}
+                tooltip="CRM"
+              />
             </li>
 
             {/* Chat */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <Link
-                to={mainNavItems[4].url}
-                 className={cn(
-                   navItemBase,
-                   mainNavItems[4].active ? navItemActive : navItemInactive
-                 )}
-              >
-                <MessageCircle size={20} className="shrink-0" />
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  {mainNavItems[4].title}
-                </span>
-              </Link>
+            <li>
+              <SidebarNavItem
+                title="Chat"
+                icon={MessageCircle}
+                url="/chat"
+                isActive={currentPath === "/chat"}
+                isExpanded={isExpanded}
+                tooltip="Chat"
+              />
             </li>
           </ul>
         </nav>
 
         {/* Bottom navigation */}
         <div className="py-4 border-t border-sidebar-border">
-          <ul className="space-y-1 flex flex-col items-center">
-            {bottomNavItems.map((item) => (
-              <li key={item.title} className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-                <Link
-                  to={item.url}
-                   className={cn(
-                     navItemBase,
-                     item.active ? navItemActive : navItemInactive,
-                     item.highlight && !item.active && "text-primary hover:text-primary"
-                   )}
-                >
-                  <item.icon size={20} className="shrink-0" />
-                  <span 
-                    className={cn(
-                      "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                      isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                    )}
-                  >
-                    {item.title}
-                  </span>
-                </Link>
+          <ul className="space-y-1 px-4">
+            {/* Upgrade */}
+            {showUpgrade && (
+              <li>
+                <SidebarNavItem
+                  title="Upgrade"
+                  icon={Crown}
+                  url="/upgrade"
+                  isActive={currentPath === "/upgrade"}
+                  isExpanded={isExpanded}
+                  highlight
+                  tooltip="Upgrade"
+                />
               </li>
-            ))}
+            )}
             
             {/* Notifications */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <button
+            <li>
+              <SidebarNavItem
+                title="Novidades"
+                icon={Bell}
                 onClick={() => setAnnouncementsOpen(true)}
-                 className={cn(
-                   navItemBase,
-                   navItemInactive
-                 )}
-              >
-                <div className="relative shrink-0">
-                  <Bell size={20} />
-                  {unreadAnnouncements > 0 && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-primary-foreground">{unreadAnnouncements}</span>
-                    </div>
-                  )}
-                </div>
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  Novidades
-                </span>
-              </button>
+                isExpanded={isExpanded}
+                badge={unreadAnnouncements > 0 ? (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-primary-foreground">{unreadAnnouncements}</span>
+                  </div>
+                ) : undefined}
+                tooltip="Novidades"
+              />
             </li>
 
             {/* Profile */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
+            <li>
               <Link
                 to="/profile"
-                 className={cn(
-                   navItemBase,
-                   currentPath === "/profile" ? navItemActive : navItemInactive
-                 )}
+                className={cn(
+                  "flex items-center rounded-lg transition-colors duration-200",
+                  "w-10 h-10 justify-center",
+                  isExpanded && "w-full px-2.5 justify-start gap-3",
+                  currentPath === "/profile"
+                    ? "bg-sidebar-accent/60 text-primary"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
               >
                 <Avatar className="h-5 w-5 shrink-0 border border-sidebar-border">
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
@@ -486,36 +349,24 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
-                <span 
-                  className={cn(
-                    "whitespace-nowrap truncate overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  {profile?.name || 'Meu Perfil'}
-                </span>
+                {isExpanded && (
+                  <span className="whitespace-nowrap truncate overflow-hidden flex-1">
+                    {profile?.name || 'Meu Perfil'}
+                  </span>
+                )}
               </Link>
             </li>
 
             {/* Logout */}
-            <li className={cn("w-full", isHovered ? "px-2" : "flex justify-center")}>
-              <button
+            <li>
+              <SidebarNavItem
+                title="Sair"
+                icon={LogOut}
                 onClick={handleLogout}
-                 className={cn(
-                   navItemBase,
-                   "text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                 )}
-              >
-                <LogOut size={20} className="shrink-0" />
-                <span 
-                  className={cn(
-                    "whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-300",
-                    isHovered ? "opacity-100 max-w-40" : "opacity-0 max-w-0"
-                  )}
-                >
-                  Sair
-                </span>
-              </button>
+                isExpanded={isExpanded}
+                className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                tooltip="Sair"
+              />
             </li>
           </ul>
         </div>
