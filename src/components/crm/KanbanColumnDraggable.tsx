@@ -49,9 +49,11 @@ export const KanbanColumnDraggable = ({
   return (
     <div
       className={cn(
-        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
-        isDragOver && "border-primary bg-primary/5 ring-2 ring-primary/20 scale-[1.02]",
-        isDragging && !isDragOver && "opacity-80"
+        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
+        isDragOver 
+          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
+          : "border-border/50",
+        isDragging && !isDragOver && "opacity-70"
       )}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
@@ -62,14 +64,22 @@ export const KanbanColumnDraggable = ({
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <div
-              className="w-3 h-3 rounded-full"
+              className={cn(
+                "w-3 h-3 rounded-full transition-transform duration-300",
+                isDragOver && "scale-125"
+              )}
               style={{ backgroundColor: stage.color }}
             />
             <h3 className="font-medium text-sm text-foreground truncate">
               {stage.name}
             </h3>
           </div>
-          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+          <span className={cn(
+            "text-xs font-medium px-2 py-0.5 rounded-full transition-colors duration-300",
+            isDragOver 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-primary/10 text-primary"
+          )}>
             {leads.length}
           </span>
         </div>
@@ -95,10 +105,12 @@ export const KanbanColumnDraggable = ({
           ))}
           {leads.length === 0 && (
             <div className={cn(
-              "text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg transition-colors",
-              isDragOver ? "border-primary bg-primary/10" : "border-transparent"
+              "text-center py-8 text-sm border-2 border-dashed rounded-lg transition-all duration-300",
+              isDragOver 
+                ? "border-primary bg-primary/10 text-primary font-medium" 
+                : "border-muted-foreground/30 text-muted-foreground"
             )}>
-              {isDragOver ? "Solte aqui" : "Nenhum lead nesta etapa"}
+              {isDragOver ? "Solte aqui" : "Nenhum lead"}
             </div>
           )}
         </div>
