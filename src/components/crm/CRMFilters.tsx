@@ -142,7 +142,7 @@ export const CRMFilters = ({
       {/* Advanced Filters */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="default" className="gap-2">
             <SlidersHorizontal className="w-4 h-4" />
             Filtros
             {activeFiltersCount > 0 && (

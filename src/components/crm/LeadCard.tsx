@@ -69,8 +69,8 @@ export const LeadCard = ({
         <span className="truncate">{formatPhone(lead.phone)}</span>
       </div>
 
-      {/* Estimated Value - if exists */}
-      {lead.estimated_value && lead.estimated_value > 0 && (
+      {/* Estimated Value - if exists and greater than 0 */}
+      {Number(lead.estimated_value) > 0 && (
         <div className="mb-2 py-1.5 px-2 -mx-1 rounded-md bg-primary/5 border border-primary/10">
           <span className="text-[10px] text-muted-foreground">Valor em Negociação: </span>
           <span className="text-xs font-semibold text-primary">
