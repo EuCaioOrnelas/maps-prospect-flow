@@ -181,7 +181,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               src="/logo-branca.png" 
               alt="Wiize" 
               className={cn(
-                "h-9 w-auto transition-all duration-300 ease-out delay-75",
+                "h-9 w-auto transition-all duration-300 ease-out",
                 isHovered 
                   ? "opacity-100 scale-100" 
                   : "opacity-0 scale-95 absolute pointer-events-none"
