@@ -6,13 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Building2,
@@ -20,12 +17,14 @@ import {
   Phone,
   MapPin,
   Globe,
-  Tag,
   MessageCircle,
-  Calendar,
   Trash2,
   Save,
   Plus,
+  X,
+  Pencil,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -45,7 +44,6 @@ interface LeadDetailDialogProps {
   onFetchActivities: (leadId: string) => Promise<LeadActivity[]>;
 }
 
-// Format phone number for display
 const formatPhoneNumber = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
   if (digits.length >= 11 && digits.startsWith('55')) {
@@ -67,6 +65,7 @@ export const LeadDetailDialog = ({
   onFetchActivities,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history'>('info');
   const [isEditing, setIsEditing] = useState(false);
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
@@ -94,6 +93,8 @@ export const LeadDetailDialog = ({
         estimated_value: lead.estimated_value || 0,
       });
       loadNotesAndActivities();
+      setIsEditing(false);
+      setActiveTab('info');
     }
   }, [lead?.id]);
 
@@ -147,7 +148,6 @@ export const LeadDetailDialog = ({
     const updatedTags = (lead.tags || []).filter(tag => tag !== tagToRemove);
     try {
       await onUpdate(lead.id, { tags: updatedTags });
-      toast.success('Tag removida!');
     } catch {
       toast.error('Erro ao remover tag');
     }
@@ -187,204 +187,180 @@ export const LeadDetailDialog = ({
   if (!lead) return null;
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);
+  const displayName = lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b border-border">
-          <DialogTitle className="flex items-center gap-3">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+        {/* Header */}
+        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5">
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold text-primary-foreground shrink-0"
+              style={{ backgroundColor: currentStage?.color || 'hsl(var(--primary))' }}
+            >
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            
             <div className="flex-1 min-w-0">
-              <span className="truncate">
-                {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
-              </span>
-              {(lead.contact_name && lead.company_name) && (
-                <p className="text-sm font-normal text-muted-foreground truncate">{lead.company_name}</p>
+              <h2 className="text-lg font-semibold text-foreground truncate">
+                {displayName}
+              </h2>
+              {lead.company_name && lead.contact_name && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Building2 className="w-3 h-3" />
+                  {lead.company_name}
+                </p>
               )}
+              <div className="flex items-center gap-2 mt-2">
+                <Badge 
+                  className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
+                >
+                  {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
+                </span>
+              </div>
             </div>
-          </DialogTitle>
-        </DialogHeader>
+          </div>
+        </div>
 
+        {/* Quick Actions Bar */}
+        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30">
+          <Button 
+            size="sm" 
+            className="flex-1"
+            onClick={handleOpenChat}
+          >
+            <MessageCircle className="w-4 h-4 mr-1.5" />
+            Conversar
+          </Button>
+          
+          <Select
+            value={lead.pipeline_stage_id || ''}
+            onValueChange={(value) => onMoveToStage(lead.id, value)}
+          >
+            <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: currentStage?.color }}
+                />
+                <span className="truncate">{currentStage?.name || 'Etapa'}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {stages.map((stage) => (
+                <SelectItem key={stage.id} value={stage.id}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: stage.color }}
+                    />
+                    {stage.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={lead.whatsapp_status}
+            onValueChange={(value) => handleWhatsAppStatusChange(value as WhatsAppStatus)}
+          >
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {WHATSAPP_STATUS_LABELS[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex border-b border-border">
+          {[
+            { id: 'info', label: 'Informações' },
+            { id: 'notes', label: `Notas (${notes.length})` },
+            { id: 'history', label: 'Histórico' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium transition-colors relative",
+                activeTab === tab.id 
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
         <ScrollArea className="flex-1">
-          <div className="space-y-4 p-6">
-            {/* Stage Selector */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  Etapa do Pipeline
-                </label>
-                <Select
-                  value={lead.pipeline_stage_id || ''}
-                  onValueChange={(value) => onMoveToStage(lead.id, value)}
-                >
-                  <SelectTrigger className="focus:ring-offset-0">
-                    <SelectValue>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: currentStage?.color }}
-                        />
-                        {currentStage?.name || 'Selecionar etapa'}
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stages.map((stage) => (
-                      <SelectItem key={stage.id} value={stage.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: stage.color }}
-                          />
-                          {stage.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* WhatsApp Status */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  Status WhatsApp
-                </label>
-                <Select
-                  value={lead.whatsapp_status}
-                  onValueChange={(value) => handleWhatsAppStatusChange(value as WhatsAppStatus)}
-                >
-                  <SelectTrigger className="focus:ring-offset-0">
-                    <SelectValue>
-                      <Badge className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}>
-                        {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-                      </Badge>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        <Badge className={cn("text-xs", WHATSAPP_STATUS_COLORS[status])}>
-                          {WHATSAPP_STATUS_LABELS[status]}
-                        </Badge>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex gap-2">
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="flex-1"
-                onClick={handleOpenChat}
-              >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                Abrir Chat
-              </Button>
-              {lead.google_maps_link && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(lead.google_maps_link!, '_blank')}
-                >
-                  <MapPin className="w-4 h-4" />
-                </Button>
-              )}
-              {lead.website && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(lead.website!, '_blank')}
-                >
-                  <Globe className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <Tabs defaultValue="info" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
-                <TabsTrigger value="notes" className="flex-1">Notas</TabsTrigger>
-                <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="info" className="space-y-4 mt-4">
+          <div className="p-6">
+            {/* Info Tab */}
+            {activeTab === 'info' && (
+              <div className="space-y-5">
                 {isEditing ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Empresa</label>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Empresa</label>
                         <Input
                           value={formData.company_name}
                           onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                           placeholder="Nome da empresa"
-                          className="focus:ring-offset-0"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Contato</label>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Contato</label>
                         <Input
                           value={formData.contact_name}
                           onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                           placeholder="Nome do contato"
-                          className="focus:ring-offset-0"
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Categoria</label>
-                      <Input
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="Categoria/Nicho"
-                        className="focus:ring-offset-0"
-                      />
-                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Cidade</label>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Cidade</label>
                         <Input
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           placeholder="Cidade"
-                          className="focus:ring-offset-0"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Região</label>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Região</label>
                         <Input
                           value={formData.region}
                           onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                           placeholder="Região"
-                          className="focus:ring-offset-0"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Website</label>
-                        <Input
-                          value={formData.website}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                          placeholder="https://..."
-                          className="focus:ring-offset-0"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">Valor Estimado (R$)</label>
-                        <Input
-                          type="number"
-                          value={formData.estimated_value}
-                          onChange={(e) => setFormData({ ...formData, estimated_value: parseFloat(e.target.value) || 0 })}
-                          placeholder="0.00"
-                          className="focus:ring-offset-0"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Website</label>
+                      <Input
+                        value={formData.website}
+                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                        placeholder="https://..."
+                      />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-2">
                       <Button size="sm" onClick={handleSave} className="flex-1">
                         <Save className="w-4 h-4 mr-1" /> Salvar
                       </Button>
@@ -394,154 +370,179 @@ export const LeadDetailDialog = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        <span>{formatPhoneNumber(lead.phone)}</span>
+                  <>
+                    {/* Contact Details */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contato</span>
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setIsEditing(true)}>
+                          <Pencil className="w-3 h-3 mr-1" />
+                          Editar
+                        </Button>
                       </div>
-                      {lead.company_name && (
+                      
+                      <div className="bg-muted/40 rounded-lg p-3 space-y-2">
                         <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="w-4 h-4 text-muted-foreground" />
-                          <span>{lead.company_name}</span>
+                          <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium">{formatPhoneNumber(lead.phone)}</span>
                         </div>
-                      )}
-                      {lead.contact_name && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span>{lead.contact_name}</span>
-                        </div>
-                      )}
-                      {(lead.city || lead.region) && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span>{[lead.city, lead.region].filter(Boolean).join(', ')}</span>
-                        </div>
-                      )}
-                      {lead.category && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Tag className="w-4 h-4 text-muted-foreground" />
-                          <span>{lead.category}</span>
-                        </div>
-                      )}
-                      {lead.website && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Globe className="w-4 h-4 text-muted-foreground" />
-                          <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
-                            {lead.website}
+                        
+                        {(lead.city || lead.region) && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4 shrink-0" />
+                            <span>{[lead.city, lead.region].filter(Boolean).join(', ')}</span>
+                          </div>
+                        )}
+                        
+                        {lead.website && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <a 
+                              href={lead.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-primary hover:underline truncate flex items-center gap-1"
+                            >
+                              {lead.website.replace(/^https?:\/\//, '')}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        )}
+
+                        {lead.google_maps_link && (
+                          <a 
+                            href={lead.google_maps_link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            Ver no Google Maps
                           </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tags</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(lead.tags || []).map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs pl-2 pr-1 py-0.5 gap-1"
+                          >
+                            {tag}
+                            <button 
+                              onClick={() => handleRemoveTag(tag)}
+                              className="hover:bg-destructive/20 rounded p-0.5"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                        <div className="flex gap-1">
+                          <Input
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            placeholder="Nova tag..."
+                            className="h-7 text-xs w-24"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                          />
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={handleAddTag}>
+                            <Plus className="w-3 h-3" />
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    {lead.estimated_value > 0 && (
-                      <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                        <span>R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          Prospectado {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
-                        </span>
-                      </div>
-                      <span>Origem: {lead.origin}</span>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => setIsEditing(true)} className="w-full">
-                      Editar informações
-                    </Button>
-                  </div>
+
+                    {/* Metadata */}
+                    <div className="pt-3 border-t border-border">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Origem: {lead.origin}</span>
+                        {lead.estimated_value > 0 && (
+                          <span className="text-primary font-medium">
+                            R$ {lead.estimated_value.toLocaleString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
                 )}
+              </div>
+            )}
 
-                {/* Tags */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Tags</label>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {(lead.tags || []).map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs cursor-pointer hover:bg-destructive/20"
-                        onClick={() => handleRemoveTag(tag)}
-                      >
-                        {tag} ×
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Nova tag"
-                      className="text-sm focus:ring-offset-0"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                    />
-                    <Button size="sm" variant="outline" onClick={handleAddTag}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="notes" className="space-y-4 mt-4">
+            {/* Notes Tab */}
+            {activeTab === 'notes' && (
+              <div className="space-y-4">
                 <div className="flex gap-2">
                   <Textarea
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Adicionar nota..."
-                    className="text-sm min-h-[80px] focus:ring-offset-0"
+                    placeholder="Escreva uma nota..."
+                    className="text-sm min-h-[80px] resize-none"
                   />
                 </div>
-                <Button size="sm" onClick={handleAddNote} className="w-full">
-                  <Plus className="w-4 h-4 mr-1" /> Adicionar Nota
+                <Button size="sm" onClick={handleAddNote} className="w-full" disabled={!newNote.trim()}>
+                  <Plus className="w-4 h-4 mr-1" /> Adicionar
                 </Button>
 
-                <div className="space-y-3 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
                   {notes.map((note) => (
-                    <div key={note.id} className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-sm">{note.content}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
+                    <div key={note.id} className="bg-muted/40 rounded-lg p-3">
+                      <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
                         {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </p>
                     </div>
                   ))}
                   {notes.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
+                    <p className="text-sm text-muted-foreground text-center py-6">
                       Nenhuma nota adicionada
                     </p>
                   )}
                 </div>
-              </TabsContent>
+              </div>
+            )}
 
-              <TabsContent value="history" className="space-y-4 mt-4">
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {activities.slice(0, 10).map((activity) => (
-                    <div key={activity.id} className="flex gap-3 text-sm border-l-2 border-primary/30 pl-3 py-1">
-                      <div className="flex-1">
-                        <p className="text-foreground">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </p>
-                      </div>
+            {/* History Tab */}
+            {activeTab === 'history' && (
+              <div className="space-y-1">
+                {activities.slice(0, 10).map((activity, index) => (
+                  <div 
+                    key={activity.id} 
+                    className={cn(
+                      "flex gap-3 py-3",
+                      index !== activities.slice(0, 10).length - 1 && "border-b border-border/50"
+                    )}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
                     </div>
-                  ))}
-                  {activities.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Nenhuma movimentação registrada
-                    </p>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+                  </div>
+                ))}
+                {activities.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Nenhuma movimentação registrada
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border">
+        <div className="px-6 py-3 border-t border-border bg-muted/20">
           <Button
-            variant="destructive"
+            variant="ghost"
             size="sm"
-            className="w-full"
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={handleDelete}
           >
             <Trash2 className="w-4 h-4 mr-1" />
