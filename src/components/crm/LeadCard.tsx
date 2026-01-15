@@ -163,7 +163,7 @@ const LeadCardComponent = ({
           <Badge
             variant="secondary"
             className={cn(
-              "text-[10px] px-1.5 py-0 shrink-0 transition-transform duration-200 hover:scale-105",
+              "text-[10px] px-1.5 py-0 shrink-0 pointer-events-none",
               WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
             )}
           >
