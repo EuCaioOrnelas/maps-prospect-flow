@@ -61,7 +61,7 @@ export const KanbanColumnDraggable = ({
     <div
       className={cn(
         "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
-        isExpanded ? "w-full max-w-2xl" : "w-72 min-w-[288px]",
+        isExpanded ? "w-full max-w-2xl" : "w-64 min-w-[256px] sm:w-72 sm:min-w-[288px]",
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",

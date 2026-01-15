@@ -43,7 +43,7 @@ export const KanbanColumn = ({
   return (
     <div
       className={cn(
-        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
+        "flex flex-col w-64 min-w-[256px] sm:w-72 sm:min-w-[288px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
         isDragOver && "border-primary bg-primary/5 ring-2 ring-primary/20"
       )}
       onDragOver={handleDragOver}
