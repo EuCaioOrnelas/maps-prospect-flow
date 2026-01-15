@@ -328,9 +328,11 @@ async function processSingleMessage(
     const responseCount = await getCampaignResponseCount(supabase, campaign.id);
     totalResponses = responseCount;
     
+    // With progressive unlocking, responses should already have unlocked the next window
+    // via the webhook. But as a fallback, check here too.
     if (responseCount === 0) {
       // No responses - pause waiting for response
-      console.log(`Campaign ${campaign.id}: Window ${currentWindow} complete, waiting for response to unlock next`);
+      console.log(`Campaign ${campaign.id}: Window ${currentWindow} complete (${windowSentCount}/${windowLimit}), waiting for response to unlock next`);
       
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
@@ -342,7 +344,7 @@ async function processSingleMessage(
       return { processed: false, completed: false, skipped: false };
     }
     
-    // Has responses - unlock next window
+    // Has responses - unlock next window (fallback if webhook didn't catch it)
     currentWindow++;
     windowSentCount = 0;
     
@@ -354,7 +356,7 @@ async function processSingleMessage(
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
     
-    console.log(`Campaign ${campaign.id}: Window ${currentWindow} unlocked!`);
+    console.log(`Campaign ${campaign.id}: Window ${currentWindow} unlocked (processor fallback)!`);
   }
 
   // Check for incidents (blocks/reports) - pause immediately
