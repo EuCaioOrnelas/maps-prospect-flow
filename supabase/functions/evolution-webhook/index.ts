@@ -520,16 +520,19 @@ serve(async (req) => {
             }
 
             // Extract quoted message ID from contextInfo
-            const contextInfo = messageData.contextInfo || 
+            // contextInfo can be in the root of data, inside messageData, or inside specific message types
+            const contextInfo = data.contextInfo || 
+                               messageData.contextInfo || 
                                messageData.extendedTextMessage?.contextInfo ||
                                messageData.imageMessage?.contextInfo ||
                                messageData.videoMessage?.contextInfo ||
                                messageData.audioMessage?.contextInfo ||
-                               messageData.documentMessage?.contextInfo;
+                               messageData.documentMessage?.contextInfo ||
+                               messageData.stickerMessage?.contextInfo;
             const quotedMessageId = contextInfo?.stanzaId || contextInfo?.quotedStanzaId || null;
             
             if (quotedMessageId) {
-              console.log('Message has quoted message ID:', quotedMessageId);
+              console.log('Message has quoted message ID:', quotedMessageId, 'from contextInfo');
             }
 
             // Extract message content based on type
