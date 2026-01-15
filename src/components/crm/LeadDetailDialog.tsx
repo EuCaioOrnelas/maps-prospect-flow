@@ -98,6 +98,41 @@ const formatPhoneNumber = (phone: string) => {
   return `+${digits}`;
 };
 
+// Format number to Brazilian currency format (1.234,56)
+const formatCurrency = (value: number): string => {
+  if (!value && value !== 0) return '';
+  return value.toLocaleString('pt-BR', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
+
+// Parse Brazilian currency format to number
+const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  // Remove all dots (thousand separators) and replace comma with dot (decimal separator)
+  const cleaned = value.replace(/\./g, '').replace(',', '.');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+// Format input as user types in Brazilian currency format
+const formatCurrencyInput = (input: string): string => {
+  // Remove all non-digit characters
+  const digits = input.replace(/\D/g, '');
+  
+  if (!digits) return '';
+  
+  // Convert to cents then to reais with 2 decimal places
+  const cents = parseInt(digits, 10);
+  const reais = cents / 100;
+  
+  return reais.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const LeadDetailDialog = ({
   lead,
   stages,
@@ -728,12 +763,13 @@ export const LeadDetailDialog = ({
                           <input
                             type="text"
                             inputMode="decimal"
-                            value={dealValue ? dealValue.toLocaleString('pt-BR') : ''}
+                            value={formatCurrency(dealValue)}
                             onChange={(e) => {
-                              const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
+                              const formatted = formatCurrencyInput(e.target.value);
+                              const value = parseCurrency(formatted);
                               setDealValue(value);
                             }}
-                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
                             placeholder="0,00"
                           />
                         </div>
