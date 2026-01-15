@@ -834,28 +834,61 @@ serve(async (req) => {
                         
                         const ignoredContact = ignoredContacts && ignoredContacts.length > 0 ? ignoredContacts[0] : null;
                         
-                        // Only count as valid response if:
-                        // 1. We have a record of when the message was sent (ignored_contact exists)
-                        // 2. The response came at least 60 seconds after the message was sent
-                        const MIN_RESPONSE_TIME_SECONDS = 60;
-                        const now = new Date();
-                        
-                        // If no record of message being sent, don't count as campaign response
+                        // If no record of message being sent to this phone, don't count as campaign response
                         if (!ignoredContact || !ignoredContact.first_message_sent_at) {
                           console.log(`⚠️ No message record found for ${normalizedPhone} in campaign ${campaign.id}, not counting as campaign response`);
                           continue;
                         }
                         
+                        // Use the message timestamp from WhatsApp for accurate timing
+                        const messageTimestamp = data?.messageTimestamp 
+                          ? new Date(Number(data.messageTimestamp) * 1000) 
+                          : new Date();
+                        
                         const messageSentAt = new Date(ignoredContact.first_message_sent_at);
-                        const secondsSinceSent = (now.getTime() - messageSentAt.getTime()) / 1000;
+                        const secondsSinceSent = (messageTimestamp.getTime() - messageSentAt.getTime()) / 1000;
                         
-                        console.log(`Response from ${normalizedPhone}: ${secondsSinceSent.toFixed(0)}s since message was sent at ${messageSentAt.toISOString()}`);
+                        console.log(`=== BOT DETECTION CHECK ===`);
+                        console.log(`Campaign: ${campaign.id}`);
+                        console.log(`Phone: ${normalizedPhone}`);
+                        console.log(`Message sent at: ${messageSentAt.toISOString()}`);
+                        console.log(`Response received at: ${messageTimestamp.toISOString()}`);
+                        console.log(`Time difference: ${secondsSinceSent.toFixed(0)} seconds`);
                         
-                        // Filter out responses that came too fast (potential bots/auto-replies)
+                        // ANTI-BOT FILTER: Only count responses that came at least 60 seconds after the message was sent
+                        // This filters out:
+                        // - Automatic "Away" messages
+                        // - Bot auto-replies
+                        // - Quick automated responses
+                        const MIN_RESPONSE_TIME_SECONDS = 60;
+                        
                         if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
-                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot/auto-reply`);
+                          console.log(`🤖 BOT DETECTED: Response came in ${secondsSinceSent.toFixed(0)}s (< ${MIN_RESPONSE_TIME_SECONDS}s minimum)`);
+                          console.log(`🤖 Ignoring automatic/bot message, waiting for human response...`);
                           continue;
                         }
+                        
+                        // Additional bot pattern detection (common auto-reply phrases)
+                        const botPatterns = [
+                          /obrigad[oa] (pelo|por) (contato|mensagem)/i,
+                          /atendimento autom[aá]tico/i,
+                          /resposta autom[aá]tica/i,
+                          /estamos (ausentes|indispon[ií]veis)/i,
+                          /fora do hor[aá]rio/i,
+                          /retornaremos (em breve|logo)/i,
+                          /aguarde (um momento|atendimento)/i,
+                        ];
+                        
+                        const messageContent = content || '';
+                        const isBotPattern = botPatterns.some(pattern => pattern.test(messageContent));
+                        
+                        if (isBotPattern) {
+                          console.log(`🤖 BOT PATTERN DETECTED in message content: "${messageContent.substring(0, 100)}..."`);
+                          console.log(`🤖 Ignoring bot message, waiting for human response...`);
+                          continue;
+                        }
+                        
+                        console.log(`✅ HUMAN RESPONSE VALIDATED: ${secondsSinceSent.toFixed(0)}s after campaign message`);
                         
                         // Register new campaign response (valid human response)
                         const { error: responseError } = await supabase
