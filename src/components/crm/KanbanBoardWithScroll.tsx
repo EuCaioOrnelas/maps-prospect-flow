@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
-import { KanbanColumn } from './KanbanColumn';
+import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
 
 interface KanbanBoardWithScrollProps {
@@ -14,6 +14,7 @@ interface KanbanBoardWithScrollProps {
   selectedLeadIds?: Set<string>;
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
+  columnWidth?: ColumnWidth;
 }
 
 export const KanbanBoardWithScroll = ({
@@ -27,6 +28,7 @@ export const KanbanBoardWithScroll = ({
   selectedLeadIds,
   onSelectAllInColumn,
   onUpdateLeadName,
+  columnWidth = 'medium',
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -192,6 +194,7 @@ export const KanbanBoardWithScroll = ({
             selectedLeadIds={selectedLeadIds}
             onSelectAllInColumn={onSelectAllInColumn}
             onUpdateLeadName={onUpdateLeadName}
+            columnWidth={columnWidth}
           />
         </div>
       ))}
