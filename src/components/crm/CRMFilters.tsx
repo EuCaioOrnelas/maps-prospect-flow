@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { type PipelineStage, type WhatsAppStatus, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,23 @@ export const CRMFilters = ({
   availableOrigins,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [localSearch, setLocalSearch] = useState(filters.search);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== filters.search) {
+        onFiltersChange({ ...filters, search: localSearch });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearch]);
+
+  // Sync local search when filters.search changes externally (e.g., clear filters)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
 
   const activeFiltersCount = [
     filters.stage,
@@ -97,12 +114,12 @@ export const CRMFilters = ({
 
   return (
     <div className="flex items-center gap-3">
-      {/* Search */}
+      {/* Search with debounce */}
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          value={filters.search}
-          onChange={(e) => updateFilter('search', e.target.value)}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Buscar leads..."
           className="pl-9"
         />
