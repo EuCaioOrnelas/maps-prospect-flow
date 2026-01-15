@@ -117,10 +117,10 @@ export const KanbanColumn = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1" viewportClassName="pr-4">
-        <div className="space-y-2 p-2 w-full min-w-0">
+      <ScrollArea className="flex-1 overflow-hidden">
+        <div className="space-y-2 p-2 pr-3">
           {leads.map((lead) => (
-            <div key={lead.id} className="relative w-full min-w-0">
+            <div key={lead.id} className="relative overflow-hidden">
               {bulkSelectMode && (
                 <div 
                   className="absolute top-2 right-2 z-10"
