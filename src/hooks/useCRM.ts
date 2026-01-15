@@ -92,15 +92,20 @@ export const WHATSAPP_STATUS_COLORS: Record<WhatsAppStatus, string> = {
   blocked: 'bg-red-100 text-red-700',
 };
 
+// Colunas padrão travadas (não podem ser editadas/excluídas)
+export const LOCKED_STAGE_NAMES = ['Prospectado', 'Fechado (Ganho)', 'Perdido'];
+
+// Verifica se uma coluna é travada
+export const isLockedStage = (stageName: string) => LOCKED_STAGE_NAMES.includes(stageName);
+
 const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'updated_at'>[] = [
   { name: 'Prospectado', position: 0, color: '#6B7280', is_default: true },
   { name: 'Mensagem Enviada', position: 1, color: '#3B82F6', is_default: true },
-  { name: 'Respondeu', position: 2, color: '#10B981', is_default: true },
-  { name: 'Qualificado', position: 3, color: '#8B5CF6', is_default: true },
-  { name: 'Em Negociação', position: 4, color: '#F59E0B', is_default: true },
-  { name: 'Proposta Enviada', position: 5, color: '#EC4899', is_default: true },
-  { name: 'Fechado (Ganho)', position: 6, color: '#22C55E', is_default: true },
-  { name: 'Perdido', position: 7, color: '#EF4444', is_default: true },
+  { name: 'Qualificado', position: 2, color: '#8B5CF6', is_default: true },
+  { name: 'Em Negociação', position: 3, color: '#F59E0B', is_default: true },
+  { name: 'Proposta Enviada', position: 4, color: '#EC4899', is_default: true },
+  { name: 'Fechado (Ganho)', position: 5, color: '#22C55E', is_default: true },
+  { name: 'Perdido', position: 6, color: '#EF4444', is_default: true },
 ];
 
 export const useCRM = () => {
@@ -412,6 +417,178 @@ export const useCRM = () => {
     return data;
   };
 
+  // Create new stage
+  const createStage = async (name: string, color: string) => {
+    if (!user) return null;
+
+    // Pega a posição antes de "Fechado (Ganho)" e "Perdido"
+    const sortedStages = [...stages].sort((a, b) => a.position - b.position);
+    const lockedEndStages = sortedStages.filter(s => 
+      s.name === 'Fechado (Ganho)' || s.name === 'Perdido'
+    );
+    const editableStages = sortedStages.filter(s => 
+      s.name !== 'Fechado (Ganho)' && s.name !== 'Perdido'
+    );
+    
+    // Nova posição = última posição editável + 1
+    const newPosition = editableStages.length > 0 
+      ? Math.max(...editableStages.map(s => s.position)) + 1 
+      : 1;
+
+    // Atualiza posições das colunas travadas no final
+    for (let i = 0; i < lockedEndStages.length; i++) {
+      await supabase
+        .from('pipeline_stages')
+        .update({ position: newPosition + 1 + i })
+        .eq('id', lockedEndStages[i].id)
+        .eq('user_id', user.id);
+    }
+
+    const { data, error } = await supabase
+      .from('pipeline_stages')
+      .insert({
+        user_id: user.id,
+        name,
+        color,
+        position: newPosition,
+        is_default: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating stage:', error);
+      throw error;
+    }
+
+    await fetchStages();
+    return data;
+  };
+
+  // Delete stage and move leads to Prospectado
+  const deleteStage = async (stageId: string) => {
+    if (!user) return;
+
+    const stageToDelete = stages.find(s => s.id === stageId);
+    if (!stageToDelete || isLockedStage(stageToDelete.name)) {
+      throw new Error('Não é possível excluir esta coluna');
+    }
+
+    // Encontra a coluna Prospectado
+    const prospectadoStage = stages.find(s => s.name === 'Prospectado');
+    if (!prospectadoStage) {
+      throw new Error('Coluna Prospectado não encontrada');
+    }
+
+    // Move todos os leads para Prospectado
+    const { error: moveError } = await supabase
+      .from('leads')
+      .update({ pipeline_stage_id: prospectadoStage.id })
+      .eq('pipeline_stage_id', stageId)
+      .eq('user_id', user.id);
+
+    if (moveError) {
+      console.error('Error moving leads:', moveError);
+      throw moveError;
+    }
+
+    // Exclui a coluna
+    const { error } = await supabase
+      .from('pipeline_stages')
+      .delete()
+      .eq('id', stageId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting stage:', error);
+      throw error;
+    }
+
+    // Reordena as posições
+    await reorderStages();
+    await fetchStages();
+    await fetchLeads();
+  };
+
+  // Move stage up or down
+  const moveStage = async (stageId: string, direction: 'up' | 'down') => {
+    if (!user) return;
+
+    const stage = stages.find(s => s.id === stageId);
+    if (!stage || isLockedStage(stage.name)) return;
+
+    // Ordena stages
+    const sortedStages = [...stages].sort((a, b) => a.position - b.position);
+    
+    // Encontra índices das colunas travadas
+    const prospectadoIndex = sortedStages.findIndex(s => s.name === 'Prospectado');
+    const fechadoIndex = sortedStages.findIndex(s => s.name === 'Fechado (Ganho)');
+    const perdidoIndex = sortedStages.findIndex(s => s.name === 'Perdido');
+    
+    const currentIndex = sortedStages.findIndex(s => s.id === stageId);
+    
+    // Calcula limites para movimento
+    const minIndex = prospectadoIndex + 1; // Não pode ir antes de Prospectado
+    const maxIndex = Math.min(fechadoIndex, perdidoIndex) - 1; // Não pode ir depois de Fechado/Perdido
+    
+    let targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    
+    // Verifica se o movimento é válido
+    if (targetIndex < minIndex || targetIndex > maxIndex) return;
+    
+    // Pula colunas travadas
+    const targetStage = sortedStages[targetIndex];
+    if (isLockedStage(targetStage.name)) return;
+
+    // Troca posições
+    const tempPosition = stage.position;
+    
+    await supabase
+      .from('pipeline_stages')
+      .update({ position: targetStage.position })
+      .eq('id', stage.id)
+      .eq('user_id', user.id);
+
+    await supabase
+      .from('pipeline_stages')
+      .update({ position: tempPosition })
+      .eq('id', targetStage.id)
+      .eq('user_id', user.id);
+
+    await fetchStages();
+  };
+
+  // Reorder stages to ensure consistent positions
+  const reorderStages = async () => {
+    if (!user) return;
+
+    const sortedStages = [...stages].sort((a, b) => a.position - b.position);
+    
+    // Separa colunas por tipo
+    const prospectado = sortedStages.find(s => s.name === 'Prospectado');
+    const fechado = sortedStages.find(s => s.name === 'Fechado (Ganho)');
+    const perdido = sortedStages.find(s => s.name === 'Perdido');
+    const editableStages = sortedStages.filter(s => !isLockedStage(s.name));
+
+    // Reordena: Prospectado (0), editáveis (1..n), Fechado (n+1), Perdido (n+2)
+    const orderedStages = [
+      prospectado,
+      ...editableStages,
+      fechado,
+      perdido,
+    ].filter(Boolean) as PipelineStage[];
+
+    for (let i = 0; i < orderedStages.length; i++) {
+      if (orderedStages[i].position !== i) {
+        await supabase
+          .from('pipeline_stages')
+          .update({ position: i })
+          .eq('id', orderedStages[i].id)
+          .eq('user_id', user.id);
+      }
+    }
+  };
+
   // Initial fetch
   useEffect(() => {
     if (user) {
@@ -481,6 +658,9 @@ export const useCRM = () => {
     getLeadsByStage,
     getStageMetrics,
     updateStage,
+    createStage,
+    deleteStage,
+    moveStage,
     logActivity,
   };
 };

@@ -8,11 +8,12 @@ import { ExportLeadsButton } from '@/components/crm/ExportLeadsButton';
 import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
+import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2, FlaskConical, MessageCircle } from 'lucide-react';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -68,6 +69,10 @@ export default function CRM() {
     addNote,
     fetchNotes,
     fetchActivities,
+    updateStage,
+    createStage,
+    deleteStage,
+    moveStage,
   } = useCRM();
 
   const [filters, setFilters] = useState<CRMFiltersState>({
@@ -85,6 +90,7 @@ export default function CRM() {
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const [manageStagesOpen, setManageStagesOpen] = useState(false);
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -343,6 +349,14 @@ export default function CRM() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setManageStagesOpen(true)}
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Colunas
+                  </Button>
+                  <Button
                     variant={bulkSelectMode ? "secondary" : "outline"}
                     size="default"
                     onClick={() => {
@@ -439,6 +453,17 @@ export default function CRM() {
         onClearSelection={clearSelection}
         onDelete={handleBulkDelete}
         isAllSelected={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0}
+      />
+
+      {/* Manage Stages Dialog */}
+      <ManageStagesDialog
+        open={manageStagesOpen}
+        onOpenChange={setManageStagesOpen}
+        stages={stages}
+        onCreateStage={createStage}
+        onUpdateStage={updateStage}
+        onDeleteStage={deleteStage}
+        onMoveStage={moveStage}
       />
 
       {/* Beta Warning Dialog */}
