@@ -22,8 +22,7 @@ import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
-import logoIcon from "@/assets/logo-icon.png";
-import logoBranca from "@/assets/logo-branca.png";
+import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface AppSidebarProps {
   profile?: {
@@ -143,30 +142,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4">
           <Link 
             to="/dashboard"
-            className="relative flex items-center justify-center h-11 group cursor-pointer"
+            className="flex items-center gap-2 h-10 group cursor-pointer"
           >
-            {/* Icon logo - visible when collapsed */}
+            {/* Icon logo - always visible */}
             <img 
-              src={logoIcon} 
+              src={logoIconNew} 
               alt="Wiize" 
-              className={cn(
-                "h-11 w-11 object-contain transition-all duration-300 ease-out group-hover:scale-105 group-hover:brightness-110",
-                isHovered 
-                  ? "opacity-0 scale-90 absolute pointer-events-none" 
-                  : "opacity-100 scale-100"
-              )}
+              className="h-9 w-9 object-contain rounded-lg transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 shrink-0"
             />
-            {/* Full logo - visible when expanded */}
-            <img 
-              src={logoBranca} 
-              alt="Wiize" 
+            {/* Text "wiize" - visible when expanded */}
+            <span
               className={cn(
-                "h-10 w-auto object-contain transition-all duration-300 ease-out group-hover:scale-[1.02] group-hover:brightness-110 ml-0.5",
+                "font-normal text-xl tracking-tight text-foreground transition-all duration-300 ease-out whitespace-nowrap",
                 isHovered 
-                  ? "opacity-100 scale-100" 
-                  : "opacity-0 scale-95 absolute pointer-events-none"
+                  ? "opacity-100 translate-x-0" 
+                  : "opacity-0 -translate-x-2 absolute pointer-events-none"
               )}
-            />
+            >
+              wiize
+            </span>
           </Link>
         </div>
 
