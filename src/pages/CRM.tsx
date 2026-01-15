@@ -361,14 +361,14 @@ export default function CRM() {
                   </Button>
                   <Button
                     variant={bulkSelectMode ? "secondary" : "outline"}
-                    size="default"
+                    size="icon"
                     onClick={() => {
                       setBulkSelectMode(!bulkSelectMode);
                       if (bulkSelectMode) clearSelection();
                     }}
+                    title={bulkSelectMode ? 'Cancelar seleção' : 'Excluir em massa'}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {bulkSelectMode ? 'Cancelar' : 'Excluir em massa'}
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                   <ExportLeadsButton leads={filteredLeads} stages={stages} />
                   <Button size="default" onClick={() => setAddLeadOpen(true)}>
