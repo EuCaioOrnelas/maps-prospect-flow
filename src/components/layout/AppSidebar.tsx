@@ -142,7 +142,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-2">
           <Link 
             to="/dashboard"
-            className="flex items-center gap-1 h-12 group cursor-pointer"
+            className="flex items-center gap-0.5 h-12 group cursor-pointer"
           >
             {/* Icon logo - always visible */}
             <img 
@@ -153,7 +153,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {/* Text "wiize" - visible when expanded */}
             <span
               className={cn(
-                "text-3xl tracking-tight text-foreground transition-all duration-300 ease-out whitespace-nowrap",
+                "text-3xl tracking-tight text-foreground transition-all duration-300 ease-out whitespace-nowrap -mt-0.5",
                 isHovered 
                   ? "opacity-100 translate-x-0" 
                   : "opacity-0 -translate-x-2 absolute pointer-events-none"

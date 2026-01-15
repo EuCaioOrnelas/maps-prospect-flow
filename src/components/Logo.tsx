@@ -40,7 +40,7 @@ export const Logo = ({
   }
 
   return (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex items-center justify-center gap-0.5">
       <img 
         src={logoIconNew} 
         alt="Wiize" 
@@ -50,14 +50,14 @@ export const Logo = ({
         <>
           {mobileInitialsOnly ? (
             <span 
-              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text}`}
+              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text} -mt-0.5`}
               style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
             >
               wiize
             </span>
           ) : (
             <span 
-              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text}`}
+              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text} -mt-0.5`}
               style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
             >
               wiize
