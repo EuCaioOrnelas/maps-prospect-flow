@@ -267,6 +267,15 @@ async function processSingleMessage(
   numberData: any
 ): Promise<{ processed: boolean; completed: boolean; skipped: boolean; error?: string }> {
   
+  const campaignLog = (level: string, msg: string, data?: any) => {
+    const prefix = `[Campaign ${campaign.id.slice(0,8)}]`;
+    const dataStr = data ? ` | ${JSON.stringify(data)}` : '';
+    console.log(`${level} ${prefix} ${msg}${dataStr}`);
+  };
+
+  campaignLog('📊', `=== PROCESSING START ===`);
+  campaignLog('📊', `Campaign: ${campaign.name}`);
+  
   // Check delay
   const delayMin = campaign.delay_seconds || 40;
   const delayMax = campaign.delay_seconds_max || 60;
@@ -276,7 +285,7 @@ async function processSingleMessage(
     const elapsed = campaign.last_message_sent_at 
       ? Math.floor((Date.now() - new Date(campaign.last_message_sent_at).getTime()) / 1000)
       : 0;
-    console.log(`Campaign ${campaign.id}: waiting for delay (${elapsed}s/${requiredDelay}s)`);
+    campaignLog('⏳', `Waiting for delay`, { elapsed, required: requiredDelay });
     return { processed: false, completed: false, skipped: true };
   }
 
@@ -293,6 +302,7 @@ async function processSingleMessage(
 
   const validMessages = messages.filter(m => m?.trim());
   if (!Array.isArray(leads) || leads.length === 0 || validMessages.length === 0) {
+    campaignLog('❌', `Invalid campaign data`, { leadsCount: leads?.length, messagesCount: validMessages.length });
     return { processed: false, completed: false, skipped: false, error: 'Invalid campaign data' };
   }
 
@@ -303,6 +313,16 @@ async function processSingleMessage(
   let windowSentCount = campaign.window_sent_count || 0;
   let totalResponses = campaign.total_responses || 0;
   let first10NoResponseCount = campaign.first_10_no_response_count || 0;
+
+  campaignLog('📈', `Current State`, {
+    leadIndex: currentIndex,
+    totalLeads: leads.length,
+    sent: sentCount,
+    failed: failedCount,
+    window: currentWindow,
+    windowSent: windowSentCount,
+    responses: totalResponses
+  });
 
   // Check if completed
   if (currentIndex >= leads.length) {
@@ -317,26 +337,36 @@ async function processSingleMessage(
       .delete()
       .eq('campaign_id', campaign.id);
 
-    console.log(`✓ Campaign ${campaign.id} completed: ${sentCount} sent, ${failedCount} failed`);
+    campaignLog('✅', `COMPLETED`, { sent: sentCount, failed: failedCount });
     return { processed: false, completed: true, skipped: false };
   }
 
   // ===== WINDOW SYSTEM LOGIC =====
-  
-  // Get current window limit
   const windowLimit = getWindowLimit(currentWindow);
+  const accumulatedLimit = getAccumulatedLimit(currentWindow);
+  
+  campaignLog('🪟', `Window System Check`, {
+    currentWindow,
+    windowLimit,
+    windowSentCount,
+    accumulatedLimit,
+    isWindowComplete: windowSentCount >= windowLimit
+  });
   
   // Check if we reached the current window limit
   if (windowSentCount >= windowLimit && currentWindow < 4) {
-    // Check for responses to unlock next window
     const responseCount = await getCampaignResponseCount(supabase, campaign.id);
     totalResponses = responseCount;
     
-    // With progressive unlocking, responses should already have unlocked the next window
-    // via the webhook. But as a fallback, check here too.
+    campaignLog('🔒', `Window ${currentWindow} LIMIT REACHED`, {
+      windowSentCount,
+      windowLimit,
+      responseCount,
+      needsResponse: responseCount === 0
+    });
+    
     if (responseCount === 0) {
-      // No responses - pause waiting for response
-      console.log(`Campaign ${campaign.id}: Window ${currentWindow} complete (${windowSentCount}/${windowLimit}), waiting for response to unlock next`);
+      campaignLog('⏸️', `PAUSING - Waiting for response to unlock Window ${currentWindow + 1}`);
       
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
@@ -348,9 +378,17 @@ async function processSingleMessage(
       return { processed: false, completed: false, skipped: false };
     }
     
-    // Has responses - unlock next window (fallback if webhook didn't catch it)
+    // Has responses - unlock next window
+    const oldWindow = currentWindow;
     currentWindow++;
     windowSentCount = 0;
+    
+    campaignLog('🔓', `WINDOW UNLOCKED!`, {
+      oldWindow,
+      newWindow: currentWindow,
+      newLimit: getWindowLimit(currentWindow),
+      totalResponsesThatUnlocked: responseCount
+    });
     
     await supabase.from('whatsapp_campaigns').update({
       current_window: currentWindow,
@@ -359,14 +397,12 @@ async function processSingleMessage(
       window_unlocked_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
-    
-    console.log(`Campaign ${campaign.id}: Window ${currentWindow} unlocked (processor fallback)!`);
   }
 
-  // Check for incidents (blocks/reports) - pause immediately
+  // Check for incidents (blocks/reports)
   const hasIncident = await hasIncidents(supabase, campaign.id);
   if (hasIncident) {
-    console.log(`Campaign ${campaign.id}: Incident detected, pausing`);
+    campaignLog('🚨', `INCIDENT DETECTED - Pausing campaign immediately`);
     
     await supabase.from('whatsapp_campaigns').update({
       status: 'paused',
@@ -378,10 +414,10 @@ async function processSingleMessage(
   }
 
   // Check first 10 no-response rule
-  if (sentCount < 10 && sentCount > 0) {
+  if (sentCount >= 10 && sentCount <= 10) {
     const responseCount = await getCampaignResponseCount(supabase, campaign.id);
-    if (responseCount === 0 && sentCount >= 10) {
-      console.log(`Campaign ${campaign.id}: No responses in first 10 messages, pausing`);
+    if (responseCount === 0) {
+      campaignLog('⚠️', `NO RESPONSES in first 10 messages - Pausing`);
       
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
@@ -392,27 +428,37 @@ async function processSingleMessage(
       
       return { processed: false, completed: false, skipped: false };
     }
+    campaignLog('✅', `First 10 check passed`, { responseCount });
   }
 
   // Get daily count
   let dailySentCount = numberData.daily_sent_count || 0;
   
   if (shouldResetDailyCount(numberData.last_sent_at)) {
+    campaignLog('🔄', `Daily count reset triggered`);
     dailySentCount = 0;
     await supabase.from('whatsapp_numbers').update({ 
       daily_sent_count: 0 
     }).eq('id', numberData.id);
   }
 
+  campaignLog('📅', `Daily limit check`, {
+    dailySentCount,
+    dailyLimit: DAILY_LIMIT_PER_NUMBER,
+    remaining: DAILY_LIMIT_PER_NUMBER - dailySentCount
+  });
+
   // Check daily limit
   if (dailySentCount >= DAILY_LIMIT_PER_NUMBER) {
-    console.log(`Daily limit reached for number ${numberData.id}`);
-    
     const spNow = getSaoPauloTime();
     const spTomorrow = new Date(spNow);
     spTomorrow.setDate(spTomorrow.getDate() + 1);
     spTomorrow.setHours(0, 0, 0, 0);
     const tomorrowUTC = new Date(spTomorrow.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
+
+    campaignLog('🛑', `DAILY LIMIT REACHED - Pausing until tomorrow`, {
+      resumeAt: tomorrowUTC.toISOString()
+    });
 
     await supabase.from('whatsapp_campaigns').update({
       status: 'paused',
@@ -435,6 +481,12 @@ async function processSingleMessage(
       const pauseMs = (campaign.pause_minutes || 5) * 60 * 1000;
       const resumeAt = new Date(Date.now() + pauseMs).toISOString();
       
+      campaignLog('☕', `SMART PAUSE activated`, {
+        pauseAfter: campaign.pause_after_contacts,
+        pauseMinutes: campaign.pause_minutes,
+        resumeAt
+      });
+      
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
         pause_reason: 'smart_pause',
@@ -442,7 +494,6 @@ async function processSingleMessage(
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
       
-      console.log(`Smart pause activated for campaign ${campaign.id}`);
       return { processed: false, completed: false, skipped: false };
     }
   }
@@ -452,6 +503,7 @@ async function processSingleMessage(
   const phone = lead?.phone || lead?.telefone;
   
   if (!phone) {
+    campaignLog('⚠️', `Lead ${currentIndex + 1} has no phone`, { leadName: lead?.name });
     failedCount++;
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
@@ -468,7 +520,7 @@ async function processSingleMessage(
   // ===== CHECK IF CONTACT IS IGNORED =====
   const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
   if (isIgnored) {
-    console.log(`Skipping ignored contact: ${formattedPhone}`);
+    campaignLog('🚫', `Skipping IGNORED contact`, { phone: formattedPhone });
     failedCount++;
     
     await supabase.from('whatsapp_campaigns').update({
@@ -480,13 +532,22 @@ async function processSingleMessage(
     return { processed: true, completed: false, skipped: false };
   }
 
-  // Select message (first message for stage 1, random for others)
-  const randomMessage = validMessages[Math.floor(Math.random() * validMessages.length)];
+  // Select message (random variation)
+  const messageIndex = Math.floor(Math.random() * validMessages.length);
+  const randomMessage = validMessages[messageIndex];
   const personalizedMessage = randomMessage
     .replace(/\{nome\}/gi, lead.name || 'Cliente')
     .replace(/\{empresa\}/gi, lead.name || 'Empresa');
 
-  console.log(`Processing message ${currentIndex + 1}/${leads.length} to ${formattedPhone} (Window ${currentWindow})`);
+  campaignLog('📤', `SENDING MESSAGE`, {
+    leadIndex: currentIndex + 1,
+    totalLeads: leads.length,
+    phone: formattedPhone,
+    window: currentWindow,
+    windowProgress: `${windowSentCount + 1}/${getWindowLimit(currentWindow)}`,
+    messageVariation: messageIndex + 1,
+    messagePreview: personalizedMessage.substring(0, 50) + '...'
+  });
 
   // Re-check campaign status
   const { data: statusCheck } = await supabase
@@ -496,7 +557,7 @@ async function processSingleMessage(
     .single();
 
   if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
-    console.log(`Campaign ${campaign.id} status changed to ${statusCheck?.status}`);
+    campaignLog('⛔', `Campaign status changed externally`, { newStatus: statusCheck?.status });
     return { processed: false, completed: false, skipped: false };
   }
 
@@ -515,7 +576,18 @@ async function processSingleMessage(
     sentCount++;
     dailySentCount++;
     windowSentCount++;
-    console.log(`✓ Sent to ${formattedPhone} (${sentCount}/${leads.length}, Window ${currentWindow}: ${windowSentCount}/${windowLimit})`);
+    
+    const newWindowLimit = getWindowLimit(currentWindow);
+    campaignLog('✅', `MESSAGE SENT SUCCESSFULLY`, {
+      phone: formattedPhone,
+      messageId: result.messageId,
+      progress: `${sentCount}/${leads.length}`,
+      windowProgress: `${windowSentCount}/${newWindowLimit}`,
+      window: currentWindow,
+      dailyProgress: `${dailySentCount}/${DAILY_LIMIT_PER_NUMBER}`,
+      remainingInWindow: newWindowLimit - windowSentCount,
+      willTriggerWindowPause: windowSentCount >= newWindowLimit && currentWindow < 4
+    });
 
     // Add to ignored list (will only be removed if contact responds)
     await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
@@ -570,7 +642,11 @@ async function processSingleMessage(
       console.error('Sync error:', syncError);
     }
   } else {
-    console.error(`✗ Failed to send to ${formattedPhone}:`, result.error);
+    campaignLog('❌', `MESSAGE FAILED`, {
+      phone: formattedPhone,
+      error: result.error,
+      failedCount: failedCount + 1
+    });
     failedCount++;
   }
 
@@ -605,9 +681,19 @@ async function processSingleMessage(
       .delete()
       .eq('campaign_id', campaign.id);
 
-    console.log(`✓ Campaign ${campaign.id} completed: ${sentCount} sent, ${failedCount} failed`);
+    campaignLog('🎉', `=== CAMPAIGN COMPLETED ===`, {
+      totalSent: sentCount,
+      totalFailed: failedCount,
+      successRate: `${Math.round((sentCount / (sentCount + failedCount)) * 100)}%`
+    });
     return { processed: true, completed: true, skipped: false };
   }
+
+  campaignLog('📊', `=== PROCESSING END ===`, {
+    nextLeadIndex: currentIndex + 1,
+    windowState: `${windowSentCount}/${getWindowLimit(currentWindow)}`,
+    campaignProgress: `${sentCount}/${leads.length}`
+  });
 
   return { processed: true, completed: false, skipped: false };
 }
@@ -717,6 +803,10 @@ Deno.serve(async (req) => {
       const spNow = getSaoPauloTime();
       const heartbeatId = crypto.randomUUID();
       
+      console.log(`\n${'='.repeat(60)}`);
+      console.log(`🔄 CAMPAIGN PROCESSOR - ${spNow.toISOString()} (São Paulo)`);
+      console.log(`${'='.repeat(60)}`);
+      
       await supabase.from('campaign_processor_heartbeats').insert({
         id: heartbeatId,
         action: 'process',
@@ -754,6 +844,13 @@ Deno.serve(async (req) => {
         .eq('status', 'paused')
         .eq('pause_reason', 'waiting_response');
 
+      console.log(`📊 Campaign Summary:`, {
+        running: runningCampaigns?.length || 0,
+        scheduled: scheduledCampaigns?.length || 0,
+        pausedToResume: pausedCampaigns?.length || 0,
+        waitingResponse: waitingCampaigns?.length || 0
+      });
+
       let messagesProcessed = 0;
       let campaignsProcessed = 0;
       let skippedDueToDelay = 0;
@@ -761,15 +858,29 @@ Deno.serve(async (req) => {
       // Check waiting campaigns for responses
       for (const waiting of (waitingCampaigns || [])) {
         const responseCount = await getCampaignResponseCount(supabase, waiting.id);
+        
+        console.log(`🔍 [${waiting.name}] Checking for responses:`, {
+          campaignId: waiting.id.slice(0, 8),
+          currentWindow: waiting.current_window,
+          responseCount,
+          hasResponses: responseCount > 0
+        });
+        
         if (responseCount > 0) {
-          console.log(`Campaign ${waiting.id} received response, resuming`);
+          const oldWindow = waiting.current_window || 1;
+          const newWindow = Math.min(oldWindow + 1, 4);
           
-          const newWindow = (waiting.current_window || 1) + 1;
+          console.log(`🔓 [${waiting.name}] UNLOCKING WINDOW!`, {
+            oldWindow,
+            newWindow,
+            newLimit: getWindowLimit(newWindow),
+            responsesThatTriggered: responseCount
+          });
           
           await supabase.from('whatsapp_campaigns').update({
             status: 'running',
             pause_reason: null,
-            current_window: Math.min(newWindow, 4),
+            current_window: newWindow,
             window_sent_count: 0,
             total_responses: responseCount,
             window_unlocked_at: now.toISOString(),
@@ -777,12 +888,14 @@ Deno.serve(async (req) => {
           }).eq('id', waiting.id);
           
           campaignsProcessed++;
+        } else {
+          console.log(`⏸️ [${waiting.name}] Still waiting for response to unlock Window ${(waiting.current_window || 1) + 1}`);
         }
       }
 
       // Start scheduled campaigns
       for (const scheduled of (scheduledCampaigns || [])) {
-        console.log(`Starting scheduled campaign: ${scheduled.name}`);
+        console.log(`📅 Starting SCHEDULED campaign: ${scheduled.name}`);
         
         await supabase.from('campaign_daily_reservations')
           .delete()
@@ -802,7 +915,10 @@ Deno.serve(async (req) => {
 
       // Resume paused campaigns
       for (const paused of (pausedCampaigns || [])) {
-        console.log(`Resuming paused campaign: ${paused.name}`);
+        console.log(`▶️ Resuming PAUSED campaign: ${paused.name}`, {
+          pauseReason: paused.pause_reason,
+          resumeAt: paused.resume_at
+        });
         
         await supabase.from('whatsapp_campaigns').update({
           status: 'running',
@@ -867,6 +983,15 @@ Deno.serve(async (req) => {
         campaignsProcessed++;
       }
 
+      console.log(`\n📊 PROCESSOR SUMMARY:`, {
+        campaignsProcessed,
+        messagesProcessed,
+        skippedDueToDelay,
+        scheduledStarted: scheduledCampaigns?.length || 0,
+        pausedResumed: pausedCampaigns?.length || 0
+      });
+      console.log(`${'='.repeat(60)}\n`);
+
       await supabase.from('campaign_processor_heartbeats').update({
         status: 'completed',
         campaigns_processed: campaignsProcessed,
@@ -881,7 +1006,7 @@ Deno.serve(async (req) => {
         skippedDueToDelay,
         scheduledStarted: scheduledCampaigns?.length || 0,
         pausedResumed: pausedCampaigns?.length || 0,
-        waitingResumed: waitingCampaigns?.filter(async w => await getCampaignResponseCount(supabase, w.id) > 0).length || 0,
+        waitingForResponse: waitingCampaigns?.length || 0,
         saoPauloTime: spNow.toISOString()
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -917,6 +1042,13 @@ Deno.serve(async (req) => {
     if (action === 'register-response') {
       const { contactPhone, campaignId: respCampaignId, userId, messageContent } = body;
       
+      console.log(`📩 REGISTER RESPONSE called:`, {
+        contactPhone,
+        campaignId: respCampaignId?.slice(0, 8),
+        userId: userId?.slice(0, 8),
+        messagePreview: messageContent?.substring(0, 30)
+      });
+      
       if (!contactPhone || !userId) {
         return new Response(JSON.stringify({ error: 'contactPhone and userId required' }), {
           status: 400,
@@ -925,20 +1057,29 @@ Deno.serve(async (req) => {
       }
 
       const normalizedPhone = normalizePhone(contactPhone);
+      console.log(`📱 Normalized phone: ${normalizedPhone}`);
 
       // Remove from ignored list since they responded
-      await supabase.from('ignored_contacts')
+      const { error: deleteError } = await supabase.from('ignored_contacts')
         .delete()
         .eq('user_id', userId)
         .eq('phone', normalizedPhone);
+      
+      console.log(`🗑️ Removed from ignored list:`, { success: !deleteError, error: deleteError?.message });
 
       // If campaign specified, register response
       if (respCampaignId) {
         const { data: campaign } = await supabase
           .from('whatsapp_campaigns')
-          .select('current_window')
+          .select('current_window, name, status')
           .eq('id', respCampaignId)
           .single();
+
+        console.log(`📋 Campaign for response:`, {
+          name: campaign?.name,
+          status: campaign?.status,
+          currentWindow: campaign?.current_window
+        });
 
         await supabase.from('campaign_responses').insert({
           campaign_id: respCampaignId,
@@ -955,10 +1096,39 @@ Deno.serve(async (req) => {
           .select('*', { count: 'exact', head: true })
           .eq('campaign_id', respCampaignId);
 
+        console.log(`📊 Total responses for campaign: ${count}`);
+
         await supabase.from('whatsapp_campaigns').update({
           total_responses: count || 0,
           updated_at: new Date().toISOString()
         }).eq('id', respCampaignId);
+        
+        // If campaign is waiting for response, unlock it now
+        if (campaign?.status === 'paused') {
+          console.log(`🔓 Campaign was paused - checking if we should unlock window`);
+          
+          const { data: pausedCampaign } = await supabase
+            .from('whatsapp_campaigns')
+            .select('pause_reason, current_window')
+            .eq('id', respCampaignId)
+            .single();
+            
+          if (pausedCampaign?.pause_reason === 'waiting_response') {
+            const newWindow = Math.min((pausedCampaign.current_window || 1) + 1, 4);
+            
+            console.log(`🔓 UNLOCKING Window ${newWindow} immediately due to response!`);
+            
+            await supabase.from('whatsapp_campaigns').update({
+              status: 'running',
+              pause_reason: null,
+              current_window: newWindow,
+              window_sent_count: 0,
+              total_responses: count || 0,
+              window_unlocked_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }).eq('id', respCampaignId);
+          }
+        }
       }
 
       return new Response(JSON.stringify({ 
