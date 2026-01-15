@@ -253,13 +253,13 @@ export const CampaignSummary = ({
         </div>
       </div>
 
-      {/* Anti-Block Protection Info */}
-      <div className="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-start gap-3">
-        <Shield size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+      {/* Window System Info */}
+      <div className="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-start gap-3">
+        <Shield size={18} className="text-primary flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="font-medium text-green-600">Proteção anti-bloqueio ativa</p>
+          <p className="font-medium text-primary">Sistema de janelas ativo</p>
           <p className="text-muted-foreground">
-            Envio por janelas + pausa automática + limite de 200/dia para proteger seu número.
+            Envio por janelas progressivas com liberação por resposta. Limite de 200/dia por número.
           </p>
         </div>
       </div>

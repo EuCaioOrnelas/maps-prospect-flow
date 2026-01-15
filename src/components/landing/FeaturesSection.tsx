@@ -25,7 +25,7 @@ const features = [
   {
     icon: MessageSquare,
     title: "Disparos em Massa via WhatsApp",
-    description: "Envie mensagens automatizadas para seus leads com limite de 200 disparos/dia. Estratégia anti-bloqueio com API oficial.",
+    description: "Envie mensagens automatizadas para seus leads com limite de 200 disparos/dia. Sistema de janelas inteligente com API oficial.",
     badge: "Novo",
   },
   {
