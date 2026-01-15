@@ -24,6 +24,7 @@ import UserInsights from "./pages/UserInsights";
 import WhatsAppReports from "./pages/WhatsAppReports";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import RefundPolicy from "./pages/RefundPolicy";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutFailed from "./pages/CheckoutFailed";
 import Contact from "./pages/Contact";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/upgrade" element={<Upgrade />} />
               <Route path="/checkout-success" element={<CheckoutSuccess />} />
               <Route path="/checkout-failed" element={<CheckoutFailed />} />

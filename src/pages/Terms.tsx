@@ -83,10 +83,18 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Pagamentos e Assinaturas</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Pagamentos, Assinaturas e Reembolsos</h2>
               <p>
                 Os planos pagos são cobrados mensalmente. Você pode cancelar sua assinatura a qualquer momento através 
-                do portal de gerenciamento. Reembolsos serão avaliados caso a caso conforme nossa política.
+                do portal de gerenciamento. Para informações detalhadas sobre reembolsos, consulte nossa{" "}
+                <Link to="/refund-policy" className="text-primary hover:underline">
+                  Política de Reembolso
+                </Link>.
+              </p>
+              <p>
+                Ao utilizar a plataforma, você declara ciência de que o uso gera custos operacionais imediatos e não recuperáveis, 
+                e que o reembolso está condicionado ao não uso da plataforma ou a falhas técnicas comprovadas, conforme descrito 
+                em nossa Política de Reembolso.
               </p>
             </section>
 

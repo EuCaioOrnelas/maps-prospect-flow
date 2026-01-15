@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +19,7 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const navigate = useNavigate();
@@ -33,6 +35,15 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!acceptedTerms) {
+      toast({
+        title: "Termos não aceitos",
+        description: "Você precisa aceitar os Termos de Uso e a Política de Reembolso para criar sua conta.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isPasswordStrong(password)) {
       toast({
         title: "Senha muito fraca",
@@ -81,6 +92,7 @@ const Signup = () => {
     setEmail("");
     setPassword("");
     setName("");
+    setAcceptedTerms(false);
   };
 
   const benefits = [
@@ -180,12 +192,35 @@ const Signup = () => {
                 <PasswordStrength password={password} />
               </div>
 
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="terms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  Li e aceito os{" "}
+                  <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                    Termos de Uso
+                  </Link>
+                  ,{" "}
+                  <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                    Política de Privacidade
+                  </Link>{" "}
+                  e{" "}
+                  <Link to="/refund-policy" className="text-primary hover:underline" target="_blank">
+                    Política de Reembolso
+                  </Link>
+                </Label>
+              </div>
+
               <Button
                 type="submit"
                 variant="hero"
                 size="lg"
                 className="w-full h-11 sm:h-12 text-sm sm:text-base"
-                disabled={isLoading}
+                disabled={isLoading || !acceptedTerms}
               >
                 {isLoading ? (
                   <>
@@ -197,17 +232,6 @@ const Signup = () => {
                 )}
               </Button>
             </form>
-
-            <p className="text-center text-muted-foreground mt-4 sm:mt-6 text-xs sm:text-sm">
-              Ao criar uma conta, você concorda com nossos{" "}
-              <Link to="/terms" className="text-primary hover:underline">
-                Termos de Uso
-              </Link>{" "}
-              e{" "}
-              <Link to="/privacy" className="text-primary hover:underline">
-                Política de Privacidade
-              </Link>
-            </p>
 
             <p className="text-center text-muted-foreground mt-3 sm:mt-4 text-xs sm:text-sm">
               Já tem uma conta?{" "}
