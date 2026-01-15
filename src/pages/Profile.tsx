@@ -360,7 +360,7 @@ const Profile = () => {
             </Card>
 
             {/* Security Card - right 40% */}
-            <Card className="border-border/50 h-fit">
+            <Card className="border-border/50 h-full">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
