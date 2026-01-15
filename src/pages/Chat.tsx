@@ -598,7 +598,7 @@ const Chat = () => {
           <MobileNav profile={profile} />
 
           {/* Chat Layout */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden lg:p-4">
             {/* Initial Sync Loading Screen */}
             {initialSyncLoading ? (
               <div className="flex-1 flex items-center justify-center p-8">
