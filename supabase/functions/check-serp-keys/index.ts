@@ -15,6 +15,8 @@ const API_KEYS = [
   { name: 'SERP_API_KEY_2', index: 2, label: 'Chave 2 (Backup)' },
   { name: 'SERP_API_KEY_3', index: 3, label: 'Chave 3 (Backup)' },
   { name: 'SERP_API_KEY_4', index: 4, label: 'Chave 4 (Backup)' },
+  { name: 'SERP_API_KEY_5', index: 5, label: 'Chave 5 (Backup)' },
+  { name: 'SERP_API_KEY_6', index: 6, label: 'Chave 6 (Backup)' },
 ];
 
 interface KeyCheckResult {
