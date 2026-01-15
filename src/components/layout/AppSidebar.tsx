@@ -312,7 +312,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {/* Notifications */}
             <li>
               <SidebarNavItem
-                title="Novidades"
+                title="Avisos"
                 icon={Bell}
                 onClick={() => setAnnouncementsOpen(true)}
                 isExpanded={isExpanded}
@@ -321,7 +321,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     <span className="text-[10px] font-bold text-primary-foreground">{unreadAnnouncements}</span>
                   </div>
                 ) : undefined}
-                tooltip="Novidades"
+                tooltip="Avisos"
               />
             </li>
 

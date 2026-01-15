@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell } from 'lucide-react';
+import { Check, Bell, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -24,10 +24,28 @@ interface AnnouncementsDialogProps {
 }
 
 export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+
+  // Check for subscription renewal reminder
+  const subscriptionRenewalInfo = (() => {
+    if (!profile?.subscription_current_period_end || profile?.plan === 'free') {
+      return null;
+    }
+    const renewalDate = new Date(profile.subscription_current_period_end);
+    const daysUntilRenewal = differenceInDays(renewalDate, new Date());
+    
+    // Show reminder if within 7 days of renewal
+    if (daysUntilRenewal >= 0 && daysUntilRenewal <= 7) {
+      return {
+        daysRemaining: daysUntilRenewal,
+        renewalDate,
+      };
+    }
+    return null;
+  })();
 
   useEffect(() => {
     if (open && user) {
@@ -97,6 +115,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
   };
 
   const unreadCount = announcements.filter(a => !readIds.has(a.id)).length;
+  const hasRenewalReminder = subscriptionRenewalInfo !== null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,7 +124,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-primary" />
-              Novidades
+              Avisos
             </DialogTitle>
             {unreadCount > 0 && (
               <Button size="sm" variant="ghost" onClick={markAllAsRead}>
@@ -117,14 +136,37 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6 py-4">
+          {/* Subscription Renewal Reminder */}
+          {subscriptionRenewalInfo && (
+            <div className="mb-4 p-4 rounded-lg border bg-amber-500/10 border-amber-500/30">
+              <div className="flex items-start gap-3">
+                <CreditCard className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-medium text-sm text-amber-500 mb-1">
+                    Renovação da assinatura
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {subscriptionRenewalInfo.daysRemaining === 0 ? (
+                      <>Sua assinatura renova <strong className="text-foreground">hoje</strong>.</>
+                    ) : subscriptionRenewalInfo.daysRemaining === 1 ? (
+                      <>Sua assinatura renova <strong className="text-foreground">amanhã</strong>.</>
+                    ) : (
+                      <>Sua assinatura renova em <strong className="text-foreground">{subscriptionRenewalInfo.daysRemaining} dias</strong> ({format(subscriptionRenewalInfo.renewalDate, "dd 'de' MMMM", { locale: ptBR })}).</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : announcements.length === 0 ? (
+          ) : announcements.length === 0 && !hasRenewalReminder ? (
             <div className="text-center py-8 text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>Nenhuma novidade no momento</p>
+              <p>Nenhum aviso no momento</p>
             </div>
           ) : (
             <div className="space-y-4">
