@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
-
 interface ConnectionMonitorOptions {
   numbers: WhatsAppNumber[];
   onNumbersChange: (numbers: WhatsAppNumber[]) => void;
@@ -38,31 +38,39 @@ export const useConnectionMonitor = ({
   // Constants for cooldowns
   const SYNC_COOLDOWN_MS = 30000;
 
-  // Check connection status for a single number
+  // Check connection status for a single number with automatic session refresh
   const checkConnectionStatus = useCallback(async (number: WhatsAppNumber): Promise<boolean | null> => {
     if (!number.instance_name) return false;
 
     try {
-      const response = await supabase.functions.invoke('evolution-check-status', {
+      const { data, error } = await invokeWithRetry<{
+        connected: boolean | null;
+        requiresReauth?: boolean;
+        state?: string;
+      }>('evolution-check-status', {
         body: { 
           instanceName: number.instance_name,
           numberId: number.id 
         },
+      }, {
+        maxRetries: 1,
+        onSessionRefreshed: () => {
+          console.log(`[ConnectionMonitor] Session refreshed for ${number.name}`);
+        }
       });
 
-      // Handle auth errors (401 - session expired)
-      if (response.error?.message?.includes('401') || response.data?.requiresReauth) {
-        console.log(`Auth error for ${number.name}, session may have expired`);
-        return null; // Don't change state on auth errors
+      if (error) {
+        console.error(`Error checking status for ${number.name}:`, error);
+        return null;
       }
 
       // Handle uncertain state (API temporarily unavailable)
-      if (response.data?.connected === null) {
+      if (data?.connected === null) {
         console.log(`Uncertain connection state for ${number.name}, skipping update`);
-        return null; // Uncertain - don't change state
+        return null;
       }
 
-      return response.data?.connected === true;
+      return data?.connected === true;
     } catch (err) {
       console.error(`Error checking status for ${number.name}:`, err);
       return null; // On error, don't assume disconnected

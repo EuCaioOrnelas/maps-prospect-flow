@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
@@ -243,39 +244,47 @@ export const NumbersManager = ({
       try {
         setCheckingConnection(true);
         
-        const response = await supabase.functions.invoke('evolution-check-status', {
+        const { data, error } = await invokeWithRetry<{
+          connected: boolean;
+          phoneNumber?: string;
+          requiresReauth?: boolean;
+        }>('evolution-check-status', {
           body: { 
             instanceName: connectingInstanceName,
             numberId: isNewNumber ? null : connectingNumberId 
           },
+        }, {
+          maxRetries: 1,
+          onSessionRefreshed: () => {
+            console.log('[NumbersManager] Session refreshed during connection check');
+          }
         });
 
-        // Handle auth errors
-        if (response.error?.message?.includes('401') || response.data?.requiresReauth) {
-          console.log('Session expired, skipping connection check');
+        if (error) {
+          console.log('Error checking connection status:', error);
           return;
         }
 
-        if (response.data?.connected) {
+        if (data?.connected) {
           // Show success animation
           setShowSuccessAnimation(true);
           
           if (isNewNumber && user) {
             // NOW create the number in database since connection succeeded
-            const { data: newNumber, error } = await supabase
+            const { data: newNumber, error: insertError } = await supabase
               .from('whatsapp_numbers')
               .insert({
                 user_id: user.id,
                 name: pendingNumberName,
                 is_connected: true,
-                phone_number: response.data.phoneNumber || null,
+                phone_number: data.phoneNumber || null,
                 instance_name: connectingInstanceName
               })
               .select()
               .single();
             
-            if (error) {
-              console.error('Error saving number:', error);
+            if (insertError) {
+              console.error('Error saving number:', insertError);
               toast({
                 title: "Erro ao salvar",
                 description: "Conexão bem-sucedida mas erro ao salvar. Tente novamente.",
@@ -300,7 +309,7 @@ export const NumbersManager = ({
             // Existing number - just update local state
             onNumbersChange(numbers.map(n => 
               n.id === connectingNumberId 
-                ? { ...n, is_connected: true, phone_number: response.data.phoneNumber, instance_name: connectingInstanceName } 
+                ? { ...n, is_connected: true, phone_number: data.phoneNumber, instance_name: connectingInstanceName } 
                 : n
             ));
 
@@ -314,8 +323,8 @@ export const NumbersManager = ({
 
           toast({
             title: "WhatsApp conectado!",
-            description: response.data.phoneNumber 
-              ? `Número ${response.data.phoneNumber} conectado com sucesso`
+            description: data.phoneNumber 
+              ? `Número ${data.phoneNumber} conectado com sucesso`
               : "Número pronto para disparos",
           });
         }
