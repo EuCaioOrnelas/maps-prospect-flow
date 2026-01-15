@@ -175,24 +175,25 @@ export const KanbanBoardWithScroll = ({
       onDragOver={handleContainerDragOver}
     >
       {displayedStages.map((stage) => (
-        <KanbanColumn
-          key={stage.id}
-          stage={stage}
-          leads={getLeadsByStage(stage.id)}
-          onLeadClick={onLeadClick}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={() => handleDragOver(stage.id)}
-          onDrop={() => handleDrop(stage.id)}
-          isDragOver={dragOverStage === stage.id}
-          isDragging={!!draggedLead}
-          isExpanded={!!filteredStageId}
-          selectedLeadId={selectedLead?.id}
-          bulkSelectMode={bulkSelectMode}
-          selectedLeadIds={selectedLeadIds}
-          onSelectAllInColumn={onSelectAllInColumn}
-          onUpdateLeadName={onUpdateLeadName}
-        />
+        <div key={stage.id} className="min-w-0">
+          <KanbanColumn
+            stage={stage}
+            leads={getLeadsByStage(stage.id)}
+            onLeadClick={onLeadClick}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={() => handleDragOver(stage.id)}
+            onDrop={() => handleDrop(stage.id)}
+            isDragOver={dragOverStage === stage.id}
+            isDragging={!!draggedLead}
+            isExpanded={!!filteredStageId}
+            selectedLeadId={selectedLead?.id}
+            bulkSelectMode={bulkSelectMode}
+            selectedLeadIds={selectedLeadIds}
+            onSelectAllInColumn={onSelectAllInColumn}
+            onUpdateLeadName={onUpdateLeadName}
+          />
+        </div>
       ))}
     </div>
   );
