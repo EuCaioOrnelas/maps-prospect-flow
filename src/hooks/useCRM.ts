@@ -162,48 +162,25 @@ export const useCRM = () => {
     setStages(data || []);
   };
 
-  // Fetch leads with whatsapp_number info
-  // Only fetch leads that have conversation OR were prospected (from campaigns/search)
+  // Fetch ALL leads for the user
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
-    // First query: leads with conversation_id
-    const { data: leadsWithConversation, error: error1 } = await supabase
+    const { data, error } = await supabase
       .from('leads')
       .select(`
         *,
         whatsapp_number:whatsapp_numbers(id, name, phone_number)
       `)
       .eq('user_id', user.id)
-      .not('conversation_id', 'is', null)
       .order('created_at', { ascending: false });
-
-    // Second query: leads with whatsapp_status != never_contacted (and no conversation)
-    const { data: leadsProspected, error: error2 } = await supabase
-      .from('leads')
-      .select(`
-        *,
-        whatsapp_number:whatsapp_numbers(id, name, phone_number)
-      `)
-      .eq('user_id', user.id)
-      .is('conversation_id', null)
-      .neq('whatsapp_status', 'never_contacted')
-      .order('created_at', { ascending: false });
-
-    const error = error1 || error2;
 
     if (error) {
       console.error('Error fetching leads:', error);
       return;
     }
 
-    // Combine and dedupe leads
-    const allLeads = [...(leadsWithConversation || []), ...(leadsProspected || [])];
-    const uniqueLeads = allLeads.filter((lead, index, self) => 
-      index === self.findIndex((l) => l.id === lead.id)
-    );
-
-    setLeads(uniqueLeads as Lead[]);
+    setLeads((data || []) as Lead[]);
     setIsLoading(false);
   }, [user]);
 
