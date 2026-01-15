@@ -34,6 +34,7 @@ import ChatSettings from "./pages/ChatSettings";
 import CRM from "./pages/CRM";
 import Warming from "./pages/Warming";
 import WarmingReports from "./pages/WarmingReports";
+import AIAgents from "./pages/AIAgents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -169,6 +170,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <WarmingReports />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/agents" 
+                element={
+                  <ProtectedRoute>
+                    <AIAgents />
                   </ProtectedRoute>
                 } 
               />

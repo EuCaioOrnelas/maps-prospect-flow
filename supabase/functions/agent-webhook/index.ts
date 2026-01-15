@@ -1,0 +1,475 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Get São Paulo time
+function getSaoPauloTime(): Date {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+}
+
+// Check if current time is within operating hours
+function isWithinOperatingHours(startTime: string, endTime: string): boolean {
+  const now = getSaoPauloTime();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+}
+
+// Get random delay between min and max seconds
+function getRandomDelay(minSeconds: number, maxSeconds: number): number {
+  return Math.floor(Math.random() * (maxSeconds - minSeconds + 1) + minSeconds) * 1000;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
+    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const url = new URL(req.url);
+    const agentId = url.searchParams.get('agent_id');
+    const action = url.searchParams.get('action') || 'receive'; // receive, send, process
+
+    if (!agentId) {
+      return new Response(
+        JSON.stringify({ error: 'agent_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Fetch agent
+    const { data: agent, error: agentError } = await supabase
+      .from('ai_agents')
+      .select('*, whatsapp_number:whatsapp_numbers(instance_name)')
+      .eq('id', agentId)
+      .single();
+
+    if (agentError || !agent) {
+      return new Response(
+        JSON.stringify({ error: 'Agent not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if agent is active
+    if (agent.status !== 'active') {
+      return new Response(
+        JSON.stringify({ error: 'Agent is not active', status: agent.status }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check operating hours
+    if (!isWithinOperatingHours(agent.operating_hours_start, agent.operating_hours_end)) {
+      console.log('Outside operating hours, skipping');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          reason: 'outside_hours',
+          message: `Agent operates between ${agent.operating_hours_start} and ${agent.operating_hours_end}` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const body = await req.json();
+
+    // === ACTION: RECEIVE MESSAGE (from n8n when lead responds) ===
+    if (action === 'receive') {
+      const { phone, message, lead_name } = body;
+
+      if (!phone || !message) {
+        return new Response(
+          JSON.stringify({ error: 'phone and message are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if conversation exists
+      const { data: existingConv } = await supabase
+        .from('agent_conversations')
+        .select('*')
+        .eq('agent_id', agentId)
+        .eq('lead_phone', phone)
+        .single();
+
+      if (existingConv) {
+        // Check if already replied - NEVER reply twice
+        if (existingConv.reply_sent) {
+          console.log('Already replied to this lead, ignoring');
+          
+          // Log the received message anyway
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: existingConv.id,
+            direction: 'received',
+            content: message,
+          });
+
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              reason: 'already_replied',
+              message: 'Agent already replied to this lead. Conversation ended.' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Update conversation with response
+        await supabase
+          .from('agent_conversations')
+          .update({
+            response_received: true,
+            response_received_at: new Date().toISOString(),
+            response_content: message,
+            status: 'responded',
+          })
+          .eq('id', existingConv.id);
+
+        // Log the message
+        await supabase.from('agent_message_logs').insert({
+          agent_id: agentId,
+          conversation_id: existingConv.id,
+          direction: 'received',
+          content: message,
+        });
+
+        // Generate and send AI response
+        if (lovableApiKey) {
+          // Random delay (30s to 3min) to seem human
+          const delay = getRandomDelay(30, 180);
+          console.log(`Waiting ${delay/1000}s before responding...`);
+          await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10000))); // Max 10s in edge function
+
+          // Generate short response with AI
+          const stylePrompts = {
+            formal: 'Responda de forma formal e profissional.',
+            neutral: 'Responda de forma neutra e amigável.',
+            informal: 'Responda de forma informal e descontraída.',
+          };
+
+          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${lovableApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash-lite',
+              messages: [
+                {
+                  role: 'system',
+                  content: `Você é um assistente de prospecção via WhatsApp.
+                  
+REGRAS CRÍTICAS:
+- Responda com NO MÁXIMO 40 caracteres
+- NUNCA faça perguntas
+- NUNCA use CTAs agressivos
+- NUNCA peça para entrar em contato
+- Seja breve e natural
+- Encerre a conversa naturalmente
+- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
+
+Exemplo de respostas boas:
+- "Opa, que bom! 👍"
+- "Show, obrigado!"
+- "Entendi, valeu!"
+- "Legal, fico à disposição"
+
+Objetivo: Encerrar a conversa de forma educada após uma única resposta.`
+                },
+                {
+                  role: 'user',
+                  content: `Lead respondeu: "${message}"\n\nGere uma resposta curta e final (max 40 chars).`
+                }
+              ],
+              max_tokens: 50,
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
+            
+            // Ensure max 40 chars
+            if (replyContent.length > 40) {
+              replyContent = replyContent.substring(0, 37) + '...';
+            }
+
+            // Send via Evolution API
+            const instanceName = agent.whatsapp_number?.instance_name;
+            if (instanceName) {
+              const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+                method: 'POST',
+                headers: {
+                  'apikey': evolutionApiKey,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  number: phone,
+                  text: replyContent,
+                }),
+              });
+
+              if (sendResponse.ok) {
+                // Update conversation as completed
+                await supabase
+                  .from('agent_conversations')
+                  .update({
+                    reply_sent: true,
+                    reply_sent_at: new Date().toISOString(),
+                    reply_content: replyContent,
+                    status: 'completed',
+                  })
+                  .eq('id', existingConv.id);
+
+                // Log the reply
+                await supabase.from('agent_message_logs').insert({
+                  agent_id: agentId,
+                  conversation_id: existingConv.id,
+                  direction: 'sent',
+                  content: replyContent,
+                });
+
+                console.log('Reply sent successfully:', replyContent);
+              }
+            }
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            action: 'response_processed',
+            conversation_id: existingConv.id 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        // New conversation from unknown lead - just log it
+        const { data: newConv } = await supabase
+          .from('agent_conversations')
+          .insert({
+            agent_id: agentId,
+            lead_phone: phone,
+            lead_name: lead_name,
+            response_received: true,
+            response_received_at: new Date().toISOString(),
+            response_content: message,
+            status: 'responded',
+          })
+          .select()
+          .single();
+
+        if (newConv) {
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: newConv.id,
+            direction: 'received',
+            content: message,
+          });
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            action: 'new_conversation_logged',
+            conversation_id: newConv?.id 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // === ACTION: SEND INITIAL MESSAGE (proactive prospecting) ===
+    if (action === 'send') {
+      const { phone, lead_name, message } = body;
+
+      if (!phone) {
+        return new Response(
+          JSON.stringify({ error: 'phone is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check daily limit
+      if (agent.messages_sent_today >= agent.daily_limit) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'daily_limit_reached',
+            message: `Daily limit of ${agent.daily_limit} messages reached` 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if already contacted this lead
+      const { data: existingConv } = await supabase
+        .from('agent_conversations')
+        .select('id')
+        .eq('agent_id', agentId)
+        .eq('lead_phone', phone)
+        .single();
+
+      if (existingConv) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'already_contacted',
+            message: 'Lead already contacted by this agent' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get message template
+      const templates = agent.message_templates as string[] || [];
+      let messageToSend = message;
+      
+      if (!messageToSend && templates.length > 0) {
+        // Pick random template
+        messageToSend = templates[Math.floor(Math.random() * templates.length)];
+        // Replace variables
+        messageToSend = messageToSend
+          .replace('{nome}', lead_name || 'você')
+          .replace('{categoria}', agent.target_audience || 'sua área');
+      }
+
+      if (!messageToSend) {
+        messageToSend = 'Olá! Tudo bem?';
+      }
+
+      // Random delay before sending
+      const delay = getRandomDelay(30, 180);
+      console.log(`Waiting ${delay/1000}s before sending...`);
+      await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10000)));
+
+      // Send via Evolution API
+      const instanceName = agent.whatsapp_number?.instance_name;
+      if (!instanceName) {
+        return new Response(
+          JSON.stringify({ error: 'WhatsApp number not configured properly' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': evolutionApiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          number: phone,
+          text: messageToSend,
+        }),
+      });
+
+      if (!sendResponse.ok) {
+        const errorText = await sendResponse.text();
+        console.error('Failed to send message:', errorText);
+        return new Response(
+          JSON.stringify({ error: 'Failed to send message', details: errorText }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create conversation record
+      const { data: newConv } = await supabase
+        .from('agent_conversations')
+        .insert({
+          agent_id: agentId,
+          lead_phone: phone,
+          lead_name: lead_name,
+          initial_message_sent_at: new Date().toISOString(),
+          initial_message_content: messageToSend,
+          status: 'awaiting_response',
+        })
+        .select()
+        .single();
+
+      // Log the message
+      if (newConv) {
+        await supabase.from('agent_message_logs').insert({
+          agent_id: agentId,
+          conversation_id: newConv.id,
+          direction: 'sent',
+          content: messageToSend,
+        });
+      }
+
+      // Increment daily count
+      await supabase
+        .from('ai_agents')
+        .update({ 
+          messages_sent_today: agent.messages_sent_today + 1,
+          last_reset_date: new Date().toISOString().split('T')[0],
+        })
+        .eq('id', agentId);
+
+      // Forward to n8n webhook if configured
+      if (agent.n8n_webhook_url) {
+        try {
+          await fetch(agent.n8n_webhook_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'message_sent',
+              agent_id: agentId,
+              conversation_id: newConv?.id,
+              phone,
+              lead_name,
+              message: messageToSend,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+        } catch (e) {
+          console.error('Failed to notify n8n:', e);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          action: 'message_sent',
+          conversation_id: newConv?.id,
+          message: messageToSend,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ error: 'Invalid action. Use: receive, send' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Agent webhook error:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

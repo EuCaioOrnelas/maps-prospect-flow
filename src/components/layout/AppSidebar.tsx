@@ -13,6 +13,7 @@ import {
   Flame,
   AlertTriangle,
   Bell,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -286,6 +287,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/chat"}
                 isExpanded={isExpanded}
                 tooltip="Chat"
+              />
+            </li>
+
+            {/* Agentes de IA */}
+            <li>
+              <SidebarNavItem
+                title="Agentes IA"
+                icon={Bot}
+                url="/agents"
+                isActive={currentPath === "/agents"}
+                isExpanded={isExpanded}
+                tooltip="Agentes de IA"
               />
             </li>
           </ul>
