@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
@@ -40,7 +41,7 @@ const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string =>
   }
 };
 
-export const KanbanColumn = ({
+const KanbanColumnComponent = ({
   stage,
   leads,
   onLeadClick,
@@ -59,24 +60,31 @@ export const KanbanColumn = ({
   onUpdateLeadName,
   columnWidth = 'medium',
 }: KanbanColumnProps) => {
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
-  const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
+  const totalValue = useMemo(() => 
+    leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
+    [leads]
+  );
+  
+  const allLeadsInColumnSelected = useMemo(() => 
+    leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id)),
+    [leads, selectedLeadIds]
+  );
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     onDragOver();
-  };
+  }, [onDragOver]);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     onDrop();
-  };
+  }, [onDrop]);
 
-  const handleDragEnter = (e: React.DragEvent) => {
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     onDragOver();
-  };
+  }, [onDragOver]);
 
   return (
     <div
@@ -169,3 +177,5 @@ export const KanbanColumn = ({
     </div>
   );
 };
+
+export const KanbanColumn = memo(KanbanColumnComponent);
