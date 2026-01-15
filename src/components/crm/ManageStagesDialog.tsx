@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type PipelineStage, isLockedStage } from '@/hooks/useCRM';
+import { type PipelineStage, type Lead, isLockedStage } from '@/hooks/useCRM';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -20,6 +37,7 @@ import {
   Lock,
   Check,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -28,9 +46,10 @@ interface ManageStagesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stages: PipelineStage[];
+  leads?: Lead[];
   onCreateStage: (name: string, color: string) => Promise<PipelineStage | null>;
   onUpdateStage: (id: string, updates: Partial<PipelineStage>) => Promise<PipelineStage | null>;
-  onDeleteStage: (id: string) => Promise<void>;
+  onDeleteStage: (id: string, moveLeadsToStageId?: string) => Promise<void>;
   onMoveStage: (id: string, direction: 'up' | 'down') => Promise<void>;
 }
 
@@ -51,6 +70,7 @@ export const ManageStagesDialog = ({
   open,
   onOpenChange,
   stages,
+  leads = [],
   onCreateStage,
   onUpdateStage,
   onDeleteStage,
@@ -63,6 +83,10 @@ export const ManageStagesDialog = ({
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Delete confirmation state
+  const [deleteConfirmStage, setDeleteConfirmStage] = useState<PipelineStage | null>(null);
+  const [moveToStageId, setMoveToStageId] = useState<string>('');
 
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
 
@@ -157,21 +181,41 @@ export const ManageStagesDialog = ({
     setEditColor('');
   };
 
-  const handleDeleteStage = async (stage: PipelineStage) => {
+  const handleRequestDelete = (stage: PipelineStage) => {
     if (isLockedStage(stage.name)) {
       toast.error('Esta coluna não pode ser excluída');
       return;
     }
+    
+    // Find leads in this stage
+    const leadsInStage = leads.filter(l => l.pipeline_stage_id === stage.id);
+    
+    // Set default move target to first available stage (Prospectado)
+    const firstStage = sortedStages.find(s => s.id !== stage.id && !isLockedStage(s.name) || s.name === 'Prospectado');
+    setMoveToStageId(firstStage?.id || sortedStages[0]?.id || '');
+    
+    setDeleteConfirmStage(stage);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmStage) return;
+    
     setIsLoading(true);
     try {
-      await onDeleteStage(stage.id);
-      toast.success('Coluna excluída. Leads movidos para Prospectado.');
+      await onDeleteStage(deleteConfirmStage.id, moveToStageId || undefined);
+      const targetStage = stages.find(s => s.id === moveToStageId);
+      toast.success(`Coluna excluída${targetStage ? `. Leads movidos para ${targetStage.name}.` : '.'}`);
+      setDeleteConfirmStage(null);
+      setMoveToStageId('');
     } catch (error) {
       toast.error('Erro ao excluir coluna');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getLeadsCountInStage = (stageId: string) => {
+    return leads.filter(l => l.pipeline_stage_id === stageId).length;
   };
 
   const handleMoveStage = async (stageId: string, direction: 'up' | 'down') => {
@@ -313,7 +357,7 @@ export const ManageStagesDialog = ({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteStage(stage)}
+                          onClick={() => handleRequestDelete(stage)}
                           disabled={isLoading || locked}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -388,6 +432,60 @@ export const ManageStagesDialog = ({
           )}
         </div>
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmStage} onOpenChange={(open) => !open && setDeleteConfirmStage(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Excluir coluna "{deleteConfirmStage?.name}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              {deleteConfirmStage && getLeadsCountInStage(deleteConfirmStage.id) > 0 ? (
+                <>
+                  <p>
+                    Esta coluna possui <strong>{getLeadsCountInStage(deleteConfirmStage.id)} lead(s)</strong>. 
+                    Escolha para qual coluna deseja mover esses leads:
+                  </p>
+                  <Select value={moveToStageId} onValueChange={setMoveToStageId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a coluna de destino" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sortedStages
+                        .filter(s => s.id !== deleteConfirmStage?.id)
+                        .map((stage) => (
+                          <SelectItem key={stage.id} value={stage.id}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: stage.color }}
+                              />
+                              {stage.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              ) : (
+                <p>Esta ação não pode ser desfeita.</p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isLoading || (deleteConfirmStage && getLeadsCountInStage(deleteConfirmStage.id) > 0 && !moveToStageId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLoading ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

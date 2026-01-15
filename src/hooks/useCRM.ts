@@ -466,8 +466,8 @@ export const useCRM = () => {
     return data;
   };
 
-  // Delete stage and move leads to Prospectado
-  const deleteStage = async (stageId: string) => {
+  // Delete stage and move leads to specified stage (or Prospectado by default)
+  const deleteStage = async (stageId: string, moveLeadsToStageId?: string) => {
     if (!user) return;
 
     const stageToDelete = stages.find(s => s.id === stageId);
@@ -475,16 +475,20 @@ export const useCRM = () => {
       throw new Error('Não é possível excluir esta coluna');
     }
 
-    // Encontra a coluna Prospectado
-    const prospectadoStage = stages.find(s => s.name === 'Prospectado');
-    if (!prospectadoStage) {
-      throw new Error('Coluna Prospectado não encontrada');
+    // Encontra a coluna de destino (padrão: Prospectado)
+    let targetStageId = moveLeadsToStageId;
+    if (!targetStageId) {
+      const prospectadoStage = stages.find(s => s.name === 'Prospectado');
+      if (!prospectadoStage) {
+        throw new Error('Coluna Prospectado não encontrada');
+      }
+      targetStageId = prospectadoStage.id;
     }
 
-    // Move todos os leads para Prospectado
+    // Move todos os leads para a coluna de destino
     const { error: moveError } = await supabase
       .from('leads')
-      .update({ pipeline_stage_id: prospectadoStage.id })
+      .update({ pipeline_stage_id: targetStageId })
       .eq('pipeline_stage_id', stageId)
       .eq('user_id', user.id);
 
