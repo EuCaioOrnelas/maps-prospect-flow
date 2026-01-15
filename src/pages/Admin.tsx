@@ -48,6 +48,7 @@ import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
 import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
+import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 // Função para verificar admin via banco de dados (seguro)
@@ -1598,6 +1599,11 @@ const Admin = () => {
                   Nenhum usuário encontrado
                 </div>
               )}
+            </div>
+
+            {/* Terms Acceptance Log */}
+            <div className="mt-8">
+              <TermsAcceptanceLog />
             </div>
 
             {/* Subscription Events Debug Log */}
