@@ -177,6 +177,8 @@ const Admin = () => {
         { name: 'Chave 2 (Backup)', status: 'unknown', message: 'Não verificada' },
         { name: 'Chave 3 (Backup)', status: 'unknown', message: 'Não verificada' },
         { name: 'Chave 4 (Backup)', status: 'unknown', message: 'Não verificada' },
+        { name: 'Chave 5 (Backup)', status: 'unknown', message: 'Não verificada' },
+        { name: 'Chave 6 (Backup)', status: 'unknown', message: 'Não verificada' },
       ]
     },
     evolutionApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },

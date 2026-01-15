@@ -51,6 +51,8 @@ const SERP_API_KEYS = [
   Deno.env.get('SERP_API_KEY_2'),
   Deno.env.get('SERP_API_KEY_3'),
   Deno.env.get('SERP_API_KEY_4'),
+  Deno.env.get('SERP_API_KEY_5'),
+  Deno.env.get('SERP_API_KEY_6'),
 ].filter(key => key && key.trim() !== '');
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
