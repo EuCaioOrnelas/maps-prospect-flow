@@ -5,24 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Check if phone is an invalid group ID (starts with 120363 or has group patterns)
+const isGroupId = (phone: string): boolean => {
+  const digits = phone.replace(/\D/g, '');
+  // WhatsApp group IDs start with 120363
+  if (digits.startsWith('120363')) return true;
+  // Group JID patterns contain hyphen with timestamp (e.g., 554497690978-1624205300)
+  if (phone.includes('-') && digits.length > 15) return true;
+  return false;
+};
+
 // Valid Brazilian phone format: 55 + DDD (2 digits) + number (8-9 digits) = 12-13 digits
 const isValidBrazilianPhone = (phone: string): boolean => {
   const digits = phone.replace(/\D/g, '');
   
-  // Must be 12-13 digits and start with 55
-  if (digits.length < 12 || digits.length > 13) return false;
-  if (!digits.startsWith('55')) return false;
+  // Group IDs are never valid
+  if (isGroupId(phone)) return false;
   
-  // DDD must be valid (11-99, but commonly 11-99 with some exceptions)
-  const ddd = digits.slice(2, 4);
-  const dddNum = parseInt(ddd, 10);
-  if (dddNum < 11 || dddNum > 99) return false;
+  // Must be 10-13 digits
+  if (digits.length < 10 || digits.length > 13) return false;
+  
+  // If 12-13 digits, should start with 55 (Brazil)
+  if (digits.length >= 12 && !digits.startsWith('55')) return false;
   
   return true;
 };
 
 // Try to fix a phone number
 const tryFixPhone = (phone: string): string | null => {
+  // Group IDs cannot be fixed
+  if (isGroupId(phone)) return null;
+  
   const digits = phone.replace(/\D/g, '');
   
   // If it's already valid, return it
@@ -38,8 +51,6 @@ const tryFixPhone = (phone: string): string | null => {
     }
   }
   
-  // If it starts with 55 but has wrong length, it's unfixable
-  // If it's too long or too short, it's unfixable
   return null;
 };
 
@@ -116,11 +127,13 @@ Deno.serve(async (req) => {
           const digits = lead.phone.replace(/\D/g, '');
           
           let reason = 'Formato inválido';
-          if (digits.length > 13) {
+          if (isGroupId(lead.phone)) {
+            reason = 'ID de grupo WhatsApp';
+          } else if (digits.length > 15) {
             reason = 'Número muito longo';
-          } else if (digits.length < 12) {
+          } else if (digits.length < 10) {
             reason = 'Número muito curto';
-          } else if (!digits.startsWith('55')) {
+          } else if (digits.length >= 12 && !digits.startsWith('55')) {
             reason = 'Não começa com 55';
           }
           
