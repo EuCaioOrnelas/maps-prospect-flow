@@ -153,8 +153,8 @@ export const LeadCard = ({
 
       {/* Estimated Value - if exists and greater than 0 */}
       {Number(lead.estimated_value) > 0 && (
-        <div className="mb-2 py-1.5 px-2 -mx-1 rounded-md bg-primary/5 border border-primary/10">
-          <span className="text-[10px] text-muted-foreground">Valor em Negociação: </span>
+        <div className="mb-2 py-1.5 px-2 -mx-1 rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1">
+          <span className="text-[10px] text-muted-foreground">Valor em Negociação:</span>
           <span className="text-xs font-semibold text-primary">
             R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
@@ -162,23 +162,25 @@ export const LeadCard = ({
       )}
 
       {/* Footer - Status and Response */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 min-w-0">
         {lead.whatsapp_status && (
           <Badge 
             variant="secondary" 
-            className={cn("text-[10px] px-1.5 py-0", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
+            className={cn("text-[10px] px-1.5 py-0 shrink-0", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
           >
             {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
           </Badge>
         )}
         
         {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-            <MessageCircle className="w-3 h-3" />
-            {formatDistanceToNow(new Date(lead.last_response_at!), {
-              addSuffix: false,
-              locale: ptBR,
-            })}
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 shrink-0 whitespace-nowrap">
+            <MessageCircle className="w-3 h-3 shrink-0" />
+            <span className="truncate max-w-[80px]">
+              {formatDistanceToNow(new Date(lead.last_response_at!), {
+                addSuffix: false,
+                locale: ptBR,
+              })}
+            </span>
           </span>
         )}
       </div>
