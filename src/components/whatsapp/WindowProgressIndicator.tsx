@@ -8,6 +8,8 @@ interface WindowProgressIndicatorProps {
   windowSentCount: number;
   totalSent: number;
   totalResponses: number;
+  totalLeads: number;
+  failedCount: number;
   status: 'running' | 'paused' | 'waiting_response' | 'completed';
   pauseReason?: string;
 }
@@ -17,12 +19,15 @@ export const WindowProgressIndicator = ({
   windowSentCount,
   totalSent,
   totalResponses,
+  totalLeads,
+  failedCount,
   status,
   pauseReason,
 }: WindowProgressIndicatorProps) => {
   const windowLimit = getWindowLimit(currentWindow);
   const windowProgress = windowLimit > 0 ? (windowSentCount / windowLimit) * 100 : 0;
-  const accumulatedLimit = getAccumulatedLimit(4); // 200
+  // Calculate pending based on actual campaign leads, not hardcoded 200
+  const pendingCount = Math.max(0, totalLeads - totalSent - failedCount);
 
   const getStatusInfo = () => {
     switch (status) {
@@ -153,8 +158,8 @@ export const WindowProgressIndicator = ({
           <p className="text-xs text-muted-foreground">Respostas</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-bold text-muted-foreground">{accumulatedLimit - totalSent}</p>
-          <p className="text-xs text-muted-foreground">Restantes</p>
+          <p className="text-lg font-bold text-muted-foreground">{pendingCount}</p>
+          <p className="text-xs text-muted-foreground">Pendentes</p>
         </div>
       </div>
 

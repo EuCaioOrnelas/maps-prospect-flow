@@ -200,6 +200,8 @@ export const RealtimeMonitor = ({
                   windowSentCount={campaign.window_sent_count || 0}
                   totalSent={campaign.sent_count}
                   totalResponses={campaign.total_responses || 0}
+                  totalLeads={campaign.total_leads}
+                  failedCount={campaign.failed_count}
                   status="running"
                 />
               </div>
@@ -363,6 +365,8 @@ export const RealtimeMonitor = ({
                   windowSentCount={campaign.window_sent_count || 0}
                   totalSent={campaign.sent_count}
                   totalResponses={campaign.total_responses || 0}
+                  totalLeads={campaign.total_leads}
+                  failedCount={campaign.failed_count}
                   status="paused"
                   pauseReason={campaign.pause_reason}
                 />
