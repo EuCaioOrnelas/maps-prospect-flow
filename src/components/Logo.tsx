@@ -24,9 +24,9 @@ export const Logo = ({
   const { user } = useAuth();
   
   const sizes = {
-    sm: { icon: "h-8 w-8", text: "text-xl" },
-    md: { icon: "h-10 w-10", text: "text-[1.7rem]" },
-    lg: { icon: "h-12 w-12", text: "text-3xl" },
+    sm: { icon: "h-10 w-10", text: "text-2xl" },
+    md: { icon: "h-12 w-12", text: "text-3xl" },
+    lg: { icon: "h-14 w-14", text: "text-4xl" },
   };
 
   const effectiveSize = sizes[size];
