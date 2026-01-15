@@ -12,8 +12,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2, FlaskConical, MessageCircle, LayoutGrid, LayoutList } from 'lucide-react';
-import { type DensityMode } from '@/components/crm/KanbanColumn';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -86,16 +85,6 @@ export default function CRM() {
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
-  const [density, setDensity] = useState<DensityMode>(() => {
-    const saved = localStorage.getItem('crm_density');
-    return (saved === 'compact' || saved === 'normal') ? saved : 'normal';
-  });
-
-  const toggleDensity = () => {
-    const newDensity = density === 'normal' ? 'compact' : 'normal';
-    setDensity(newDensity);
-    localStorage.setItem('crm_density', newDensity);
-  };
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -354,18 +343,6 @@ export default function CRM() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={toggleDensity}
-                    title={density === 'normal' ? 'Modo compacto' : 'Modo normal'}
-                  >
-                    {density === 'normal' ? (
-                      <LayoutList className="w-4 h-4" />
-                    ) : (
-                      <LayoutGrid className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
                     variant={bulkSelectMode ? "secondary" : "outline"}
                     size="default"
                     onClick={() => {
@@ -412,7 +389,6 @@ export default function CRM() {
                 onUpdateLeadName={async (leadId, newName) => {
                   await updateLead(leadId, { contact_name: newName });
                 }}
-                density={density}
               />
             )}
           </div>

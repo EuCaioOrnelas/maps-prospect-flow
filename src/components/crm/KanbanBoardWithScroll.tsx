@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
-import { KanbanColumn, type DensityMode } from './KanbanColumn';
+import { KanbanColumn } from './KanbanColumn';
 import { cn } from '@/lib/utils';
 
 interface KanbanBoardWithScrollProps {
@@ -14,7 +14,6 @@ interface KanbanBoardWithScrollProps {
   selectedLeadIds?: Set<string>;
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
-  density?: DensityMode;
 }
 
 export const KanbanBoardWithScroll = ({
@@ -28,7 +27,6 @@ export const KanbanBoardWithScroll = ({
   selectedLeadIds,
   onSelectAllInColumn,
   onUpdateLeadName,
-  density = 'normal',
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -194,7 +192,6 @@ export const KanbanBoardWithScroll = ({
           selectedLeadIds={selectedLeadIds}
           onSelectAllInColumn={onSelectAllInColumn}
           onUpdateLeadName={onUpdateLeadName}
-          density={density}
         />
       ))}
     </div>

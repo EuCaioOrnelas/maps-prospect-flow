@@ -3,9 +3,6 @@ import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { type DensityMode } from './types';
-
-export type { DensityMode };
 
 interface KanbanColumnProps {
   stage: PipelineStage;
@@ -23,7 +20,6 @@ interface KanbanColumnProps {
   selectedLeadIds?: Set<string>;
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
-  density?: DensityMode;
 }
 
 export const KanbanColumn = ({
@@ -42,7 +38,6 @@ export const KanbanColumn = ({
   selectedLeadIds,
   onSelectAllInColumn,
   onUpdateLeadName,
-  density = 'normal',
 }: KanbanColumnProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
   const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
@@ -78,7 +73,7 @@ export const KanbanColumn = ({
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div className={cn("border-b border-border/50", density === 'compact' ? "p-2" : "p-3")}>
+      <div className="p-2 border-b border-border/50">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             {bulkSelectMode && leads.length > 0 && (
@@ -93,34 +88,26 @@ export const KanbanColumn = ({
             )}
             <div
               className={cn(
-                "rounded-full transition-transform duration-300",
-                isDragOver && "scale-125",
-                density === 'compact' ? "w-2 h-2" : "w-3 h-3"
+                "w-2 h-2 rounded-full transition-transform duration-300",
+                isDragOver && "scale-125"
               )}
               style={{ backgroundColor: stage.color }}
             />
-            <h3 className={cn(
-              "font-medium text-foreground truncate",
-              density === 'compact' ? "text-xs" : "text-sm"
-            )}>
+            <h3 className="text-xs font-medium text-foreground truncate">
               {stage.name}
             </h3>
           </div>
           <span className={cn(
-            "font-medium px-2 py-0.5 rounded-full transition-colors duration-300",
+            "text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors duration-300",
             isDragOver 
               ? "bg-primary text-primary-foreground" 
-              : "bg-primary/10 text-primary",
-            density === 'compact' ? "text-[10px]" : "text-xs"
+              : "bg-primary/10 text-primary"
           )}>
             {leads.length}
           </span>
         </div>
         {totalValue > 0 && (
-          <p className={cn(
-            "text-muted-foreground",
-            density === 'compact' ? "text-[10px]" : "text-xs"
-          )}>
+          <p className="text-[10px] text-muted-foreground">
             R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         )}
@@ -128,10 +115,7 @@ export const KanbanColumn = ({
 
       {/* Cards */}
       <ScrollArea className="flex-1" viewportClassName="pr-3">
-        <div className={cn(
-          "w-full",
-          density === 'compact' ? "space-y-1 p-1.5" : "space-y-2 p-2"
-        )}>
+        <div className="space-y-1 p-1.5 w-full">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
@@ -152,17 +136,15 @@ export const KanbanColumn = ({
                 onDragEnd={onDragEnd}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
                 onUpdateName={onUpdateLeadName}
-                density={density}
               />
             </div>
           ))}
           {leads.length === 0 && (
             <div className={cn(
-              "text-center text-sm border-2 border-dashed rounded-lg transition-all duration-300",
+              "py-4 text-center text-sm border-2 border-dashed rounded-lg transition-all duration-300",
               isDragOver 
                 ? "border-primary bg-primary/10 text-primary font-medium" 
-                : "border-muted-foreground/30 text-muted-foreground",
-              density === 'compact' ? "py-4" : "py-8"
+                : "border-muted-foreground/30 text-muted-foreground"
             )}>
               {isDragOver ? "Solte aqui" : "Nenhum lead"}
             </div>
