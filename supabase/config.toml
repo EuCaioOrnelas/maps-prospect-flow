@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.warming-processor]
 verify_jwt = false
+
+[functions.cleanup-invalid-phones]
+verify_jwt = false
