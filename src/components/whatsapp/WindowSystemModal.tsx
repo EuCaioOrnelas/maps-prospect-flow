@@ -63,68 +63,110 @@ export const WindowSystemModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Shield className="h-6 w-6 text-primary" />
-            Como funciona o envio por janelas
+            Sistema de Janelas Inteligente
           </DialogTitle>
           <DialogDescription className="text-base mt-2">
-            O envio das mensagens é feito em etapas chamadas de <strong>janelas</strong>.
-            Isso protege o número contra bloqueios e permite que o sistema valide a aceitação 
-            das mensagens antes de liberar volumes maiores.
+            O envio é dividido em <strong>janelas progressivas</strong>. Cada janela só é liberada 
+            quando um lead <strong>responde</strong> sua mensagem, validando que seu conteúdo está 
+            sendo bem recebido.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Explicação das Janelas */}
+          {/* Como funciona */}
+          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+            <h4 className="font-semibold text-sm flex items-center gap-2 mb-3">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              Como funciona a liberação por resposta
+            </h4>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">1</div>
+                <span>Campanha inicia enviando até <strong className="text-foreground">20 mensagens</strong> (Janela 1)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">2</div>
+                <span>O sistema <strong className="text-foreground">aguarda uma resposta</strong> de qualquer lead da campanha</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">3</div>
+                <span>Quando um lead responde, a <strong className="text-foreground">próxima janela é liberada automaticamente</strong></span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">4</div>
+                <span>O processo se repete para cada janela: <strong className="text-foreground">20 → 30 → 50 → 100</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Janelas de envio */}
           <div className="space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              Janelas de envio
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              Limites de cada janela
             </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {SENDING_WINDOWS.map((window) => (
+            <div className="grid grid-cols-4 gap-2">
+              {SENDING_WINDOWS.map((window, index) => (
                 <div 
                   key={window.window}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
+                  className="flex flex-col items-center p-3 rounded-lg bg-muted/50 border relative"
                 >
-                  <span className="font-medium text-sm">{window.label}</span>
-                  <span className="text-primary font-semibold">
-                    até {window.limit} mensagens
-                  </span>
+                  <span className="text-xs text-muted-foreground">Janela {window.window}</span>
+                  <span className="text-lg font-bold text-primary">{window.limit}</span>
+                  <span className="text-xs text-muted-foreground">msgs</span>
+                  {index < SENDING_WINDOWS.length - 1 && (
+                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                      →
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Você selecionou <strong>{totalLeads}</strong> contatos para esta campanha.
+            <p className="text-xs text-muted-foreground text-center">
+              Total: até <strong>200 mensagens por dia</strong> por número
             </p>
           </div>
 
-          {/* Regras Principais */}
+          {/* Regras de segurança */}
           <div className="space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Regras de proteção
+              <Shield className="h-4 w-4 text-green-500" />
+              Proteções automáticas
             </h4>
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <span>A próxima janela só é liberada após <strong>pelo menos 1 resposta recebida</strong></span>
+                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Janela só avança com <strong>pelo menos 1 resposta recebida</strong></span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <span>Caso não haja resposta ou ocorra bloqueio/denúncia, <strong>o envio é pausado automaticamente</strong></span>
+                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Sistema detecta bloqueios e <strong>pausa automaticamente</strong></span>
               </li>
               <li className="flex items-start gap-2">
-                <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>O limite total diário permanece em <strong>até 200 mensagens por número</strong></span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <span>Contatos que não respondem são <strong>bloqueados para reenvio futuro</strong></span>
+                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Leads que não respondem são <strong>protegidos de reenvio</strong></span>
               </li>
             </ul>
+          </div>
+
+          {/* Info sobre respostas */}
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+            <div className="flex items-start gap-3">
+              <MessageSquare className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-sm text-blue-600 dark:text-blue-400">
+                  Por que precisamos de respostas?
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Quando leads respondem, isso indica ao WhatsApp que suas mensagens são relevantes.
+                  Isso <strong>protege seu número</strong> e aumenta a taxa de entrega.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Aviso de Responsabilidade */}
