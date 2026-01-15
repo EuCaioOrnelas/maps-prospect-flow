@@ -122,6 +122,54 @@ export type Database = {
           },
         ]
       }
+      campaign_incidents: {
+        Row: {
+          campaign_id: string | null
+          contact_phone: string | null
+          created_at: string
+          detected_at: string
+          id: string
+          incident_type: string
+          user_id: string
+          whatsapp_number_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          incident_type: string
+          user_id: string
+          whatsapp_number_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          incident_type?: string
+          user_id?: string
+          whatsapp_number_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_incidents_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_incidents_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_processor_heartbeats: {
         Row: {
           action: string
@@ -157,6 +205,47 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      campaign_responses: {
+        Row: {
+          campaign_id: string
+          contact_phone: string
+          created_at: string
+          id: string
+          message_content: string | null
+          responded_at: string
+          user_id: string
+          window_number: number
+        }
+        Insert: {
+          campaign_id: string
+          contact_phone: string
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          responded_at?: string
+          user_id: string
+          window_number?: number
+        }
+        Update: {
+          campaign_id?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          responded_at?: string
+          user_id?: string
+          window_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_responses_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -307,6 +396,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ignored_contacts: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          first_message_sent_at: string
+          id: string
+          phone: string
+          user_id: string
+          whatsapp_number_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          first_message_sent_at?: string
+          id?: string
+          phone: string
+          user_id: string
+          whatsapp_number_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          first_message_sent_at?: string
+          id?: string
+          phone?: string
+          user_id?: string
+          whatsapp_number_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ignored_contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ignored_contacts_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       landing_page_events: {
         Row: {
@@ -519,7 +653,10 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           estimated_value: number | null
+          first_message_sent: boolean | null
+          first_message_sent_at: string | null
           google_maps_link: string | null
+          has_responded: boolean | null
           id: string
           last_message_sent: string | null
           last_message_sent_at: string | null
@@ -530,6 +667,7 @@ export type Database = {
           pipeline_stage_id: string | null
           prospected_at: string | null
           region: string | null
+          responded_at: string | null
           tags: string[] | null
           updated_at: string
           user_id: string
@@ -547,7 +685,10 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           estimated_value?: number | null
+          first_message_sent?: boolean | null
+          first_message_sent_at?: string | null
           google_maps_link?: string | null
+          has_responded?: boolean | null
           id?: string
           last_message_sent?: string | null
           last_message_sent_at?: string | null
@@ -558,6 +699,7 @@ export type Database = {
           pipeline_stage_id?: string | null
           prospected_at?: string | null
           region?: string | null
+          responded_at?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id: string
@@ -575,7 +717,10 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           estimated_value?: number | null
+          first_message_sent?: boolean | null
+          first_message_sent_at?: string | null
           google_maps_link?: string | null
+          has_responded?: boolean | null
           id?: string
           last_message_sent?: string | null
           last_message_sent_at?: string | null
@@ -586,6 +731,7 @@ export type Database = {
           pipeline_stage_id?: string | null
           prospected_at?: string | null
           region?: string | null
+          responded_at?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string
@@ -1381,14 +1527,18 @@ export type Database = {
       }
       whatsapp_campaigns: {
         Row: {
+          accepted_window_terms: boolean | null
           completed_at: string | null
           created_at: string
           current_lead_index: number
+          current_window: number | null
           delay_seconds: number
           delay_seconds_max: number
           enable_smart_pause: boolean
           failed_count: number
+          first_10_no_response_count: number | null
           id: string
+          is_first_stage: boolean | null
           last_message_sent_at: string | null
           leads: Json
           messages: Json
@@ -1403,19 +1553,26 @@ export type Database = {
           started_at: string | null
           status: string
           total_leads: number
+          total_responses: number | null
           updated_at: string
           user_id: string
           whatsapp_number_id: string | null
+          window_sent_count: number | null
+          window_unlocked_at: string | null
         }
         Insert: {
+          accepted_window_terms?: boolean | null
           completed_at?: string | null
           created_at?: string
           current_lead_index?: number
+          current_window?: number | null
           delay_seconds?: number
           delay_seconds_max?: number
           enable_smart_pause?: boolean
           failed_count?: number
+          first_10_no_response_count?: number | null
           id?: string
+          is_first_stage?: boolean | null
           last_message_sent_at?: string | null
           leads?: Json
           messages?: Json
@@ -1430,19 +1587,26 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_leads?: number
+          total_responses?: number | null
           updated_at?: string
           user_id: string
           whatsapp_number_id?: string | null
+          window_sent_count?: number | null
+          window_unlocked_at?: string | null
         }
         Update: {
+          accepted_window_terms?: boolean | null
           completed_at?: string | null
           created_at?: string
           current_lead_index?: number
+          current_window?: number | null
           delay_seconds?: number
           delay_seconds_max?: number
           enable_smart_pause?: boolean
           failed_count?: number
+          first_10_no_response_count?: number | null
           id?: string
+          is_first_stage?: boolean | null
           last_message_sent_at?: string | null
           leads?: Json
           messages?: Json
@@ -1457,9 +1621,12 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_leads?: number
+          total_responses?: number | null
           updated_at?: string
           user_id?: string
           whatsapp_number_id?: string | null
+          window_sent_count?: number | null
+          window_unlocked_at?: string | null
         }
         Relationships: [
           {
