@@ -50,6 +50,19 @@ const RefundPolicy = () => {
               Nosso compromisso é oferecer uma plataforma robusta, transparente e funcional. Esta Política de Reembolso tem como objetivo alinhar expectativas antes da contratação e evitar interpretações equivocadas sobre o uso do sistema.
             </p>
 
+            <section className="space-y-3 sm:space-y-4 bg-primary/10 p-4 sm:p-6 rounded-lg border border-primary/30">
+              <h2 className="text-lg sm:text-xl font-semibold text-primary">Período de Teste Gratuito</h2>
+              <p className="text-foreground">
+                A WiizeProspect oferece <strong>30 dias de teste gratuito</strong> para que você possa explorar e avaliar todas as funcionalidades da plataforma antes de efetuar qualquer pagamento.
+              </p>
+              <p>
+                Durante esse período, você tem acesso completo às ferramentas de prospecção, CRM, disparos e automações, permitindo que avalie se a plataforma atende às suas necessidades de forma prática e sem compromisso financeiro.
+              </p>
+              <p className="font-medium text-foreground">
+                Ao optar pela contratação após o período de teste, o usuário declara que já testou e validou a plataforma, compreendendo que o reembolso não será possível, exceto nos casos específicos descritos nesta política.
+              </p>
+            </section>
+
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">1. Uso da plataforma e custos operacionais</h2>
               <p>
