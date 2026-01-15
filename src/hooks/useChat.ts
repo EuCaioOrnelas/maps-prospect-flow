@@ -860,14 +860,54 @@ export const useChat = (selectedNumberId?: string | null) => {
         (payload) => {
           const updatedMessage = payload.new as Message;
           
-          // Update message status in real-time
+          // Update message in real-time (status AND content for edits)
           setMessages(prev => 
             prev.map(m => 
               (m.id === updatedMessage.id || (m.message_id && m.message_id === updatedMessage.message_id))
-                ? { ...m, status: updatedMessage.status }
+                ? { 
+                    ...m, 
+                    status: updatedMessage.status,
+                    content: updatedMessage.content,
+                    updated_at: updatedMessage.updated_at,
+                  }
                 : m
             )
           );
+
+          // If content changed, also update conversation's last_message if this is the most recent
+          if (payload.old && (payload.old as Message).content !== updatedMessage.content) {
+            setConversations(prev => 
+              prev.map(c => {
+                if (c.id !== updatedMessage.conversation_id) return c;
+                // Only update if this message is the last one
+                if (c.last_message_at && new Date(updatedMessage.created_at) >= new Date(c.last_message_at)) {
+                  return {
+                    ...c,
+                    last_message: updatedMessage.content || `[${updatedMessage.message_type}]`,
+                  };
+                }
+                return c;
+              })
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const deletedMessage = payload.old as Message;
+          
+          // Remove deleted message from the list
+          setMessages(prev => prev.filter(m => 
+            m.id !== deletedMessage.id && 
+            !(m.message_id && m.message_id === deletedMessage.message_id)
+          ));
         }
       )
       .subscribe();

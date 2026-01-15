@@ -564,6 +564,80 @@ serve(async (req) => {
     }
 
     // ============================================
+    // HANDLE MESSAGE EDITS
+    // ============================================
+    if (normalizedEvent.includes('messagesedit') || normalizedEvent.includes('messageedit') || normalizedEvent.includes('messageupdate')) {
+      // Check if this is an edit (has editedMessage) vs status update
+      const editedMessage = data?.editedMessage || data?.message?.editedMessage;
+      const key = data?.key || editedMessage?.key || {};
+      
+      if (editedMessage || data?.message?.text || data?.newContent) {
+        console.log('[WEBHOOK] Processing MESSAGE EDIT');
+        
+        const msgId = key.id || data?.id || data?.messageId || '';
+        const newContent = editedMessage?.message?.conversation || 
+                          editedMessage?.message?.extendedTextMessage?.text ||
+                          data?.message?.text ||
+                          data?.newContent || '';
+        
+        console.log('[WEBHOOK] Edit - msgId:', msgId, 'newContent:', newContent?.substring(0, 100));
+        
+        if (msgId && newContent) {
+          // Find and update the message
+          const { data: existingMsg } = await supabase
+            .from('messages')
+            .select('id, conversation_id')
+            .eq('message_id', msgId)
+            .eq('user_id', whatsappNumber.user_id)
+            .maybeSingle();
+          
+          if (existingMsg) {
+            console.log('[WEBHOOK] Updating edited message:', existingMsg.id);
+            
+            const { error: updateError } = await supabase
+              .from('messages')
+              .update({ 
+                content: newContent,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingMsg.id);
+            
+            if (updateError) {
+              console.error('[WEBHOOK] Error updating edited message:', updateError);
+            } else {
+              console.log('[WEBHOOK] Message edited successfully');
+              
+              // Update conversation's last_message if needed
+              const { data: lastMsg } = await supabase
+                .from('messages')
+                .select('id, content, message_type, created_at')
+                .eq('conversation_id', existingMsg.conversation_id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              
+              if (lastMsg && lastMsg.id === existingMsg.id) {
+                await supabase
+                  .from('conversations')
+                  .update({
+                    last_message: newContent.substring(0, 100),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', existingMsg.conversation_id);
+              }
+            }
+          } else {
+            console.log('[WEBHOOK] Message not found for edit:', msgId);
+          }
+        }
+        
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // ============================================
     // HANDLE MESSAGE DELETIONS (from mobile)
     // ============================================
     if (normalizedEvent.includes('messagesdelete') || normalizedEvent.includes('messagedelete') || normalizedEvent.includes('messagerevoked')) {
