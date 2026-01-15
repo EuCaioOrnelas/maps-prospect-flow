@@ -386,6 +386,9 @@ export default function CRM() {
                 bulkSelectMode={bulkSelectMode}
                 selectedLeadIds={selectedLeadIds}
                 onSelectAllInColumn={toggleColumnSelection}
+                onUpdateLeadName={async (leadId, newName) => {
+                  await updateLead(leadId, { contact_name: newName });
+                }}
               />
             )}
           </div>

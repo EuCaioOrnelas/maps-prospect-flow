@@ -13,6 +13,7 @@ interface KanbanColumnProps {
   onDrop: () => void;
   isDragOver: boolean;
   selectedLeadId?: string;
+  onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
 }
 
 export const KanbanColumn = ({
@@ -25,6 +26,7 @@ export const KanbanColumn = ({
   onDrop,
   isDragOver,
   selectedLeadId,
+  onUpdateLeadName,
 }: KanbanColumnProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
@@ -81,6 +83,7 @@ export const KanbanColumn = ({
               onDragStart={() => onDragStart(lead.id)}
               onDragEnd={onDragEnd}
               isSelected={selectedLeadId === lead.id}
+              onUpdateName={onUpdateLeadName}
             />
           ))}
           {leads.length === 0 && (

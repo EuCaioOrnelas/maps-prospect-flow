@@ -66,6 +66,8 @@ export const LeadDetailPanel = ({
 }: LeadDetailPanelProps) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingName, setEditingName] = useState(lead.contact_name || '');
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [newNote, setNewNote] = useState('');
@@ -79,6 +81,11 @@ export const LeadDetailPanel = ({
     website: lead.website || '',
     estimated_value: lead.estimated_value || 0,
   });
+
+  // Update editingName when lead changes
+  useEffect(() => {
+    setEditingName(lead.contact_name || '');
+  }, [lead.contact_name]);
 
   useEffect(() => {
     loadNotesAndActivities();
@@ -158,21 +165,93 @@ export const LeadDetailPanel = ({
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);
 
+  const handleSaveName = async () => {
+    if (editingName.trim()) {
+      try {
+        await onUpdate(lead.id, { contact_name: editingName.trim() });
+        setIsEditingName(false);
+        toast.success('Nome atualizado!');
+      } catch {
+        toast.error('Erro ao atualizar nome');
+      }
+    }
+  };
+
   return (
     <div className="w-96 bg-card border-l border-border h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-lg truncate">
-            {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
-          </h2>
-          {(lead.contact_name && lead.company_name) && (
-            <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
-          )}
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+      {/* Header with editable name */}
+      <div className="p-4 border-b border-border relative">
+        {/* Close button - always visible */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+          className="absolute top-3 right-3 h-8 w-8"
+        >
           <X className="w-4 h-4" />
         </Button>
+        
+        {/* Name section - separate and prominent */}
+        <div className="pr-10">
+          {isEditingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveName();
+                  if (e.key === 'Escape') {
+                    setIsEditingName(false);
+                    setEditingName(lead.contact_name || '');
+                  }
+                }}
+                className="h-9 text-base font-semibold flex-1"
+                placeholder="Nome do contato"
+                autoFocus
+              />
+              <Button size="icon" variant="ghost" onClick={handleSaveName} className="h-9 w-9 text-primary hover:text-primary hover:bg-primary/10 shrink-0">
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={() => {
+                  setIsEditingName(false);
+                  setEditingName(lead.contact_name || '');
+                }}
+                className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h2 className="font-semibold text-lg truncate flex-1">
+                {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsEditingName(true)}
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+          {!isEditingName && (lead.contact_name && lead.company_name) && (
+            <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
+          )}
+          {!isEditingName && !lead.contact_name && (
+            <button 
+              onClick={() => setIsEditingName(true)}
+              className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+            >
+              <Plus className="w-3 h-3" />
+              Adicionar nome do contato
+            </button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1">

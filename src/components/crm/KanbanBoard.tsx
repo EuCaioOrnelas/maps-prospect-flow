@@ -10,6 +10,7 @@ interface KanbanBoardProps {
   onLeadClick: (lead: Lead) => void;
   onLeadMove: (leadId: string, stageId: string) => void;
   selectedLead: Lead | null;
+  onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
 }
 
 export const KanbanBoard = ({
@@ -18,6 +19,7 @@ export const KanbanBoard = ({
   onLeadClick,
   onLeadMove,
   selectedLead,
+  onUpdateLeadName,
 }: KanbanBoardProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export const KanbanBoard = ({
           onDrop={() => handleDrop(stage.id)}
           isDragOver={dragOverStage === stage.id}
           selectedLeadId={selectedLead?.id}
+          onUpdateLeadName={onUpdateLeadName}
         />
       ))}
     </div>
