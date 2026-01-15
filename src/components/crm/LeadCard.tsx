@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { type DensityMode } from './types';
 
 interface LeadCardProps {
   lead: Lead;
@@ -15,7 +14,6 @@ interface LeadCardProps {
   onDragEnd: () => void;
   isSelected?: boolean;
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
-  density?: DensityMode;
 }
 
 export const LeadCard = ({
@@ -25,7 +23,6 @@ export const LeadCard = ({
   onDragEnd,
   isSelected,
   onUpdateName,
-  density = 'normal',
 }: LeadCardProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
@@ -71,15 +68,12 @@ export const LeadCard = ({
     }
   };
 
-  const isCompact = density === 'compact';
-
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg cursor-pointer transition-all duration-200 w-full min-w-0",
+        "bg-card border border-border rounded-lg cursor-pointer transition-all duration-200 w-full min-w-0 p-2",
         "hover:shadow-md hover:border-primary/30",
-        isSelected && "ring-2 ring-primary border-primary",
-        isCompact ? "p-2" : "p-3"
+        isSelected && "ring-2 ring-primary border-primary"
       )}
       onClick={onClick}
       draggable={!isEditingName}
@@ -96,14 +90,14 @@ export const LeadCard = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header - Name and Score */}
-      <div className={cn("flex items-center justify-between gap-2", isCompact ? "mb-1" : "mb-1.5")}>
+      <div className="flex items-center justify-between gap-2 mb-1">
         {isEditingName ? (
           <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={cn(isCompact ? "h-6 text-xs" : "h-7 text-sm")}
+              className="h-6 text-xs"
               placeholder="Nome do contato"
               autoFocus
             />
@@ -112,21 +106,18 @@ export const LeadCard = ({
               disabled={!editName.trim()}
               className="p-1 rounded hover:bg-primary/20 text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check className={cn(isCompact ? "w-3 h-3" : "w-4 h-4")} />
+              <Check className="w-3 h-3" />
             </button>
             <button
               onClick={handleCancelEdit}
               className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors"
             >
-              <X className={cn(isCompact ? "w-3 h-3" : "w-4 h-4")} />
+              <X className="w-3 h-3" />
             </button>
           </div>
         ) : (
           <>
-            <h4 className={cn(
-              "font-medium text-foreground truncate flex-1",
-              isCompact ? "text-xs" : "text-sm"
-            )}>
+            <h4 className="text-sm font-medium text-foreground truncate flex-1">
               {displayName}
             </h4>
             {onUpdateName && (
@@ -137,16 +128,15 @@ export const LeadCard = ({
                   isHovered ? "opacity-100" : "opacity-0"
                 )}
               >
-                <Pencil className={cn(isCompact ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                <Pencil className="w-3 h-3" />
               </button>
             )}
             {lead.ai_score > 0 && (
               <span className={cn(
-                "font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
                 lead.ai_score >= 80 ? "bg-green-500/20 text-green-400" :
                 lead.ai_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
-                "bg-red-500/20 text-red-400",
-                isCompact ? "text-[8px]" : "text-[10px]"
+                "bg-red-500/20 text-red-400"
               )}>
                 {lead.ai_score}
               </span>
@@ -155,25 +145,19 @@ export const LeadCard = ({
         )}
       </div>
 
-      {/* Phone - Always shown, compact */}
-      <div className={cn(
-        "flex items-center gap-1.5 text-muted-foreground",
-        isCompact ? "text-[10px] mb-1" : "text-xs mb-2"
-      )}>
-        <Phone className={cn(isCompact ? "w-2.5 h-2.5" : "w-3 h-3", "shrink-0")} />
+      {/* Phone */}
+      <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
+        <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate">{formatPhone(lead.phone)}</span>
       </div>
 
-      {/* Estimated Value - if exists and greater than 0 */}
+      {/* Estimated Value */}
       {Number(lead.estimated_value) > 0 && (
-        <div className={cn(
-          "rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1 -mx-1",
-          isCompact ? "mb-1 py-1 px-1.5" : "mb-2 py-1.5 px-2"
-        )}>
-          <span className={cn("text-muted-foreground", isCompact ? "text-[8px]" : "text-[10px]")}>
+        <div className="rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1 -mx-1 mb-1 py-1 px-1.5">
+          <span className="text-[8px] text-muted-foreground">
             Valor em Negociação:
           </span>
-          <span className={cn("font-semibold text-primary", isCompact ? "text-[10px]" : "text-xs")}>
+          <span className="text-[10px] font-semibold text-primary">
             R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
@@ -185,9 +169,8 @@ export const LeadCard = ({
           <Badge 
             variant="secondary" 
             className={cn(
-              "px-1.5 py-0 shrink-0", 
-              WHATSAPP_STATUS_COLORS[lead.whatsapp_status],
-              isCompact ? "text-[8px]" : "text-[10px]"
+              "px-1.5 py-0 shrink-0 text-[9px]", 
+              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
             )}
           >
             {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
@@ -195,11 +178,8 @@ export const LeadCard = ({
         )}
 
         {hasResponse && (
-          <span className={cn(
-            "text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right",
-            isCompact ? "text-[8px]" : "text-[10px]"
-          )}>
-            <MessageCircle className={cn(isCompact ? "w-2.5 h-2.5" : "w-3 h-3", "shrink-0")} />
+          <span className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right">
+            <MessageCircle className="w-3 h-3 shrink-0" />
             <span className="whitespace-normal break-words leading-tight">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
                 addSuffix: false,
