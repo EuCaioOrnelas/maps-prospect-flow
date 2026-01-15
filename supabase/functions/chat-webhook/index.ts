@@ -566,19 +566,45 @@ serve(async (req) => {
     // ============================================
     // HANDLE MESSAGE EDITS
     // ============================================
-    if (normalizedEvent.includes('messagesedit') || normalizedEvent.includes('messageedit') || normalizedEvent.includes('messageupdate')) {
-      // Check if this is an edit (has editedMessage) vs status update
-      const editedMessage = data?.editedMessage || data?.message?.editedMessage;
-      const key = data?.key || editedMessage?.key || {};
+    // Evolution API can send: messages.edit, messages.update, messagesedit, messageedit, messageupdate
+    const isEditEvent = normalizedEvent.includes('messagesedit') || 
+                        normalizedEvent.includes('messageedit') || 
+                        normalizedEvent.includes('messageupdate') ||
+                        normalizedEvent.includes('messages.edit') ||
+                        normalizedEvent.includes('messages.update') ||
+                        normalizedEvent === 'messagesedit' ||
+                        normalizedEvent === 'messageedit';
+    
+    if (isEditEvent) {
+      // Check if this is an edit (has editedMessage or protocolMessage with editedMessage) vs status update
+      const editedMessage = data?.editedMessage || 
+                           data?.message?.editedMessage ||
+                           data?.message?.protocolMessage?.editedMessage;
+      const protocolMessage = data?.message?.protocolMessage;
+      const key = data?.key || editedMessage?.key || protocolMessage?.key || {};
       
-      if (editedMessage || data?.message?.text || data?.newContent) {
-        console.log('[WEBHOOK] Processing MESSAGE EDIT');
+      // Extract content from various possible locations
+      const hasEditContent = editedMessage || protocolMessage?.editedMessage || data?.message?.text || data?.newContent || data?.text;
+      
+      if (hasEditContent) {
+        console.log('[WEBHOOK] Processing MESSAGE EDIT - event:', normalizedEvent);
+        console.log('[WEBHOOK] Edit data structure:', JSON.stringify({
+          hasEditedMessage: !!editedMessage,
+          hasProtocolMessage: !!protocolMessage,
+          key: key,
+          dataKeys: Object.keys(data || {})
+        }));
         
-        const msgId = key.id || data?.id || data?.messageId || '';
+        const msgId = key.id || data?.key?.id || data?.id || data?.messageId || protocolMessage?.key?.id || '';
         const newContent = editedMessage?.message?.conversation || 
                           editedMessage?.message?.extendedTextMessage?.text ||
+                          editedMessage?.extendedTextMessage?.text ||
+                          protocolMessage?.editedMessage?.message?.conversation ||
+                          protocolMessage?.editedMessage?.message?.extendedTextMessage?.text ||
+                          protocolMessage?.editedMessage?.extendedTextMessage?.text ||
                           data?.message?.text ||
-                          data?.newContent || '';
+                          data?.newContent ||
+                          data?.text || '';
         
         console.log('[WEBHOOK] Edit - msgId:', msgId, 'newContent:', newContent?.substring(0, 100));
         

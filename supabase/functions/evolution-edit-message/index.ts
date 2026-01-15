@@ -121,11 +121,11 @@ serve(async (req) => {
 
     console.log(`[EDIT] Editing message ${message.message_id} on instance ${instanceName}`);
 
-    // Call Evolution API to edit the message
+    // Call Evolution API to edit the message (API v2 uses POST)
     const evolutionResponse = await fetch(
       `${EVOLUTION_API_URL}/chat/updateMessage/${instanceName}`,
       {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': EVOLUTION_API_KEY,
