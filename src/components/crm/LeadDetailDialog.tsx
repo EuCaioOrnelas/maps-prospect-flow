@@ -1317,79 +1317,125 @@ export const LeadDetailDialog = ({
             <DialogHeader>
               <DialogTitle>Gerenciar Origens</DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[400px] pr-2">
+            
+            {/* Add new origin */}
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={newOriginValue}
+                onChange={(e) => setNewOriginValue(e.target.value)}
+                placeholder="Nova origem..."
+                className="h-9"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newOriginValue.trim()) {
+                    onAddOrigin(newOriginValue.trim());
+                    setNewOriginValue('');
+                    toast.success('Origem criada!');
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (newOriginValue.trim()) {
+                    onAddOrigin(newOriginValue.trim());
+                    setNewOriginValue('');
+                    toast.success('Origem criada!');
+                  }
+                }}
+                disabled={!newOriginValue.trim()}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <ScrollArea className="max-h-[350px] pr-2">
               <div className="space-y-2">
-                {origins.map((origin) => (
-                  <div 
-                    key={origin}
-                    className="flex items-center gap-2 p-2 rounded-lg border bg-card"
-                  >
-                    {editingOriginName === origin ? (
-                      <>
-                        <Input
-                          value={editOriginNewName}
-                          onChange={(e) => setEditOriginNewName(e.target.value)}
-                          className="h-8 flex-1"
-                          autoFocus
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={async () => {
-                            if (onUpdateOrigin && editOriginNewName.trim()) {
-                              try {
-                                await onUpdateOrigin(origin, editOriginNewName.trim());
-                                toast.success('Origem atualizada!');
-                                setEditingOriginName(null);
-                              } catch {
-                                toast.error('Erro ao atualizar origem');
-                              }
-                            }
-                          }}
-                          disabled={!editOriginNewName.trim()}
-                        >
-                          <Check className="w-4 h-4 text-green-500" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => setEditingOriginName(null)}
-                        >
-                          <X className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="flex-1 text-sm">{origin}</span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setEditingOriginName(origin);
-                            setEditOriginNewName(origin);
-                          }}
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteOriginName(origin)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </>
-                    )}
+                {/* Default origins - read only */}
+                <div className="space-y-1 mb-3">
+                  <span className="text-xs font-medium text-muted-foreground uppercase">Origens Padrão</span>
+                  {['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social', 'WhatsApp'].map((origin) => (
+                    <div 
+                      key={origin}
+                      className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30"
+                    >
+                      <span className="flex-1 text-sm text-muted-foreground">{origin}</span>
+                      <span className="text-[10px] text-muted-foreground/60 bg-muted px-1.5 py-0.5 rounded">padrão</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Custom origins - editable */}
+                {origins.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase">Origens Personalizadas</span>
+                    {origins.map((origin) => (
+                      <div 
+                        key={origin}
+                        className="flex items-center gap-2 p-2 rounded-lg border bg-card"
+                      >
+                        {editingOriginName === origin ? (
+                          <>
+                            <Input
+                              value={editOriginNewName}
+                              onChange={(e) => setEditOriginNewName(e.target.value)}
+                              className="h-8 flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={async () => {
+                                if (onUpdateOrigin && editOriginNewName.trim()) {
+                                  try {
+                                    await onUpdateOrigin(origin, editOriginNewName.trim());
+                                    toast.success('Origem atualizada!');
+                                    setEditingOriginName(null);
+                                  } catch {
+                                    toast.error('Erro ao atualizar origem');
+                                  }
+                                }
+                              }}
+                              disabled={!editOriginNewName.trim()}
+                            >
+                              <Check className="w-4 h-4 text-green-500" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => setEditingOriginName(null)}
+                            >
+                              <X className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm">{origin}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditingOriginName(origin);
+                                setEditOriginNewName(origin);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteOriginName(origin)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {origins.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhuma origem personalizada criada
-                  </p>
                 )}
               </div>
             </ScrollArea>
