@@ -13,12 +13,6 @@ interface ColumnWidthToggleProps {
   onChange: (value: ColumnWidth) => void;
 }
 
-const COLUMN_WIDTH_OPTIONS: { value: ColumnWidth; label: string; icon: typeof Columns2 }[] = [
-  { value: 'compact', label: 'Compacta', icon: Columns4 },
-  { value: 'medium', label: 'Média', icon: Columns3 },
-  { value: 'large', label: 'Larga', icon: Columns2 },
-];
-
 export const ColumnWidthToggle = ({ value, onChange }: ColumnWidthToggleProps) => {
   return (
     <TooltipProvider>
@@ -32,22 +26,50 @@ export const ColumnWidthToggle = ({ value, onChange }: ColumnWidthToggleProps) =
         }}
         className="border border-border rounded-lg p-0.5 bg-muted/30"
       >
-        {COLUMN_WIDTH_OPTIONS.map((option) => (
-          <Tooltip key={option.value}>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value={option.value}
-                aria-label={option.label}
-                className="h-8 w-8 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-              >
-                <option.icon className="h-4 w-4" />
-              </ToggleGroupItem>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{option.label}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value="compact"
+              aria-label="Compacta"
+              className="h-8 w-8 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Columns4 className="h-4 w-4" />
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Compacta</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value="medium"
+              aria-label="Média"
+              className="h-8 w-8 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Columns3 className="h-4 w-4" />
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Média</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value="large"
+              aria-label="Larga"
+              className="h-8 w-8 p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Columns2 className="h-4 w-4" />
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Larga</p>
+          </TooltipContent>
+        </Tooltip>
       </ToggleGroup>
     </TooltipProvider>
   );
