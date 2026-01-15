@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface WhatsAppNumber {
@@ -149,15 +150,27 @@ export const useWhatsAppNumbers = () => {
         (payload) => {
           console.log('Realtime update received:', payload);
           const updatedNumber = payload.new as WhatsAppNumber;
-          
+
           // Check if we should reset this number's count based on the 08:00 rule
           if (shouldResetCount(updatedNumber.last_sent_at, updatedNumber.daily_sent_count)) {
             updatedNumber.daily_sent_count = 0;
           }
-          
-          setNumbers(prev => prev.map(n => 
-            n.id === updatedNumber.id ? { ...n, ...updatedNumber } : n
-          ));
+
+          // Avoid UI flicker: ignore updates that only change updated_at (or other non-meaningful fields)
+          setNumbers(prev => prev.map(n => {
+            if (n.id !== updatedNumber.id) return n;
+
+            const merged = { ...n, ...updatedNumber };
+            const changed =
+              n.is_connected !== merged.is_connected ||
+              n.phone_number !== merged.phone_number ||
+              n.instance_name !== merged.instance_name ||
+              n.daily_sent_count !== merged.daily_sent_count ||
+              n.last_sent_at !== merged.last_sent_at ||
+              n.name !== merged.name;
+
+            return changed ? merged : n;
+          }));
         }
       )
       .subscribe();
@@ -176,40 +189,52 @@ export const useWhatsAppNumbers = () => {
   }, [user, hasMassMessagingAccess, fetchNumbers]);
 
   // Verify and update connection status from Evolution API
-  // Esta função atualiza o estado local imediatamente quando detecta desconexão
+  // IMPORTANT: never flip to disconnected on transient/API errors to avoid UI flicker.
   const verifyAndUpdateConnectionStatus = async (numberId: string, instanceName: string): Promise<boolean> => {
     try {
       console.log(`Verifying connection status for ${instanceName}...`);
-      
-      const response = await supabase.functions.invoke('evolution-check-status', {
+
+      const { data, error } = await invokeWithRetry<{
+        connected: boolean | null;
+        requiresReauth?: boolean;
+      }>('evolution-check-status', {
         body: { instanceName, numberId },
+      }, {
+        maxRetries: 1,
       });
 
-      const isReallyConnected = response.data?.connected === true;
-      
-      // Se não está conectado, atualizar o estado local imediatamente
+      if (error) {
+        console.log(`[useWhatsAppNumbers] Could not verify status for ${instanceName}:`, error);
+        // Keep previous state on errors
+        return true;
+      }
+
+      // If API couldn't determine state, keep previous state
+      if (data?.connected === null) {
+        console.log(`[useWhatsAppNumbers] Uncertain status for ${instanceName}, keeping previous state`);
+        return true;
+      }
+
+      const isReallyConnected = data?.connected === true;
+
+      // Only mark disconnected when we're sure
       if (!isReallyConnected) {
         console.log(`Number ${numberId} (${instanceName}) is NOT connected. Updating local state.`);
-        
-        setNumbers(prev => prev.map(n => 
-          n.id === numberId 
-            ? { ...n, is_connected: false } 
+
+        setNumbers(prev => prev.map(n =>
+          n.id === numberId
+            ? { ...n, is_connected: false }
             : n
         ));
-        
+
         return false;
       }
-      
+
       return true;
     } catch (err) {
       console.error('Error verifying connection status:', err);
-      // Em caso de erro, assumir desconectado por segurança
-      setNumbers(prev => prev.map(n => 
-        n.id === numberId 
-          ? { ...n, is_connected: false } 
-          : n
-      ));
-      return false;
+      // Keep previous state on unexpected errors
+      return true;
     }
   };
 
