@@ -888,7 +888,7 @@ export const LeadDetailDialog = ({
                 <div className="space-y-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags</span>
                   <div className="bg-muted/40 rounded-lg p-3">
-                    <div className="flex flex-wrap gap-1 mb-2">
+                    <div className="flex flex-wrap gap-1">
                       {(lead.tags || []).map((tag, index) => (
                         <Badge
                           key={index}
@@ -903,38 +903,10 @@ export const LeadDetailDialog = ({
                         <span className="text-xs text-muted-foreground">Sem tags</span>
                       )}
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Nova tag"
-                        className="h-8 text-sm"
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                      />
-                      <Button size="sm" variant="outline" onClick={handleAddTag} className="h-8 px-2" disabled={!newTag.trim()}>
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
                 </div>
 
-                {/* Meta Info */}
-                <div className="space-y-2 text-xs text-muted-foreground bg-muted/20 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3 h-3" />
-                    <span>
-                      Prospectado em {format(new Date(lead.prospected_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3" />
-                    <span>
-                      Atualizado {formatDistanceToNow(new Date(lead.updated_at), { addSuffix: true, locale: ptBR })}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Negotiation Value with Close Deal Button - At the end */}
+                {/* Negotiation Value with Close Deal Button */}
                 <div className="space-y-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                     <DollarSign className="w-3 h-3" />
@@ -988,6 +960,22 @@ export const LeadDetailDialog = ({
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Meta Info - At the end */}
+                <div className="space-y-2 text-xs text-muted-foreground bg-muted/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3 h-3" />
+                    <span>
+                      Cadastrado em {format(new Date(lead.prospected_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      Atualizado {formatDistanceToNow(new Date(lead.updated_at), { addSuffix: true, locale: ptBR })}
+                    </span>
                   </div>
                 </div>
               </div>
