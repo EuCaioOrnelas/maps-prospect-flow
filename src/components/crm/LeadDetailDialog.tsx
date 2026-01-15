@@ -675,19 +675,6 @@ export const LeadDetailDialog = ({
                         toast.success('Empresa atualizada!');
                       }}
                     />
-
-                    {/* Contact Name - Editable */}
-                    <EditableInfoField
-                      icon={<User className="w-4 h-4 text-muted-foreground" />}
-                      label="Nome do Contato"
-                      value={formData.contact_name}
-                      placeholder="Adicionar contato"
-                      onChange={(value) => setFormData({ ...formData, contact_name: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { contact_name: formData.contact_name });
-                        toast.success('Contato atualizado!');
-                      }}
-                    />
                   </div>
                 </div>
 
