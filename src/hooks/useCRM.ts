@@ -137,13 +137,6 @@ export const useCRM = () => {
       return;
     }
 
-    // Auto-migrate: add "Respondeu Mensagem" if it doesn't exist
-    const hasRespondeuMensagem = data.some(s => s.name === 'Respondeu Mensagem');
-    if (!hasRespondeuMensagem) {
-      await addRespondeuMensagemStage(data);
-      return;
-    }
-
     setStages(data);
   }, [user]);
 
@@ -167,43 +160,6 @@ export const useCRM = () => {
     }
 
     setStages(data || []);
-  };
-
-  // Auto-migrate: add "Respondeu Mensagem" stage for existing users
-  const addRespondeuMensagemStage = async (existingStages: PipelineStage[]) => {
-    if (!user) return;
-
-    // Find "Mensagem Enviada" stage to insert after it
-    const mensagemEnviadaStage = existingStages.find(s => s.name === 'Mensagem Enviada');
-    const newPosition = mensagemEnviadaStage ? mensagemEnviadaStage.position + 1 : 2;
-
-    // Update positions of all stages that come after
-    const stagesToUpdate = existingStages.filter(s => s.position >= newPosition);
-    for (const stage of stagesToUpdate) {
-      await supabase
-        .from('pipeline_stages')
-        .update({ position: stage.position + 1 })
-        .eq('id', stage.id)
-        .eq('user_id', user.id);
-    }
-
-    // Insert the new stage
-    const { error } = await supabase
-      .from('pipeline_stages')
-      .insert({
-        user_id: user.id,
-        name: 'Respondeu Mensagem',
-        color: '#10B981',
-        position: newPosition,
-        is_default: true,
-      });
-
-    if (error) {
-      console.error('Error adding Respondeu Mensagem stage:', error);
-    }
-
-    // Refetch stages
-    await fetchStages();
   };
 
   // Fetch leads with whatsapp_number info
