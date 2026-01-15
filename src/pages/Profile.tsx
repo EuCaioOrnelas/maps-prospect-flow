@@ -56,13 +56,29 @@ const Profile = () => {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
 
   const getNextSearchResetLabel = () => {
-    const now = new Date();
-    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return nextReset.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
+    const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+    
+    if (isFreePlan) {
+      // Free plan: reset on first day of next month
+      const now = new Date();
+      const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      return nextReset.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } else {
+      // Paid plans: reset on subscription renewal date
+      if (profile?.subscription_current_period_end) {
+        const renewalDate = new Date(profile.subscription_current_period_end);
+        return renewalDate.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        });
+      }
+      return 'Na renovação da assinatura';
+    }
   };
 
   const getLastResetLabel = () => {
@@ -80,15 +96,33 @@ const Profile = () => {
   };
 
   const getNextResetDate = () => {
-    const now = new Date();
-    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
-    return nextReset.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+    
+    if (isFreePlan) {
+      // Free plan: reset on first day of next month at midnight
+      const now = new Date();
+      const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+      return nextReset.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } else {
+      // Paid plans: use subscription end date
+      if (profile?.subscription_current_period_end) {
+        const renewalDate = new Date(profile.subscription_current_period_end);
+        return renewalDate.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
+      return 'Na próxima renovação';
+    }
   };
 
   const getPlanName = (plan: string) => {

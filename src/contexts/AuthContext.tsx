@@ -11,6 +11,7 @@ interface Profile {
   searches_limit: number;
   plan: string;
   last_searches_reset?: string;
+  subscription_current_period_end?: string;
   created_at?: string;
   avatar_url?: string;
   trial_start_at?: string;

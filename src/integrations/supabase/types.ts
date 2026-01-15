@@ -952,6 +952,7 @@ export type Database = {
           searches_limit: number
           searches_used: number
           signup_ip: string | null
+          subscription_current_period_end: string | null
           terms_accepted_at: string | null
           trial_messages_sent: number | null
           trial_start_at: string | null
@@ -971,6 +972,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          subscription_current_period_end?: string | null
           terms_accepted_at?: string | null
           trial_messages_sent?: number | null
           trial_start_at?: string | null
@@ -990,6 +992,7 @@ export type Database = {
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          subscription_current_period_end?: string | null
           terms_accepted_at?: string | null
           trial_messages_sent?: number | null
           trial_start_at?: string | null
