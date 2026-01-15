@@ -71,9 +71,9 @@ export const LeadCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200",
+        "w-full max-w-full bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200",
         "hover:shadow-md hover:border-primary/30",
-        isSelected && "ring-2 ring-primary border-primary"
+        isSelected && "ring-2 ring-inset ring-primary border-primary"
       )}
       onClick={onClick}
       draggable={!isEditingName}
@@ -149,9 +149,9 @@ export const LeadCard = ({
       </div>
 
       {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate">{formatPhone(lead.phone)}</span>
+        <span className="truncate min-w-0">{formatPhone(lead.phone)}</span>
       </div>
 
       {/* Estimated Value */}
