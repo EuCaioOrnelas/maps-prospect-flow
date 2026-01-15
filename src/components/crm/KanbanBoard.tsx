@@ -51,20 +51,21 @@ export const KanbanBoard = ({
   return (
     <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 h-full -mx-2 px-2">
       {stages.map((stage) => (
-        <KanbanColumn
-          key={stage.id}
-          stage={stage}
-          leads={getLeadsByStage(stage.id)}
-          onLeadClick={onLeadClick}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={() => handleDragOver(stage.id)}
-          onDrop={() => handleDrop(stage.id)}
-          isDragOver={dragOverStage === stage.id}
-          isDragging={!!draggedLead}
-          selectedLeadId={selectedLead?.id}
-          onUpdateLeadName={onUpdateLeadName}
-        />
+        <div key={stage.id} className="min-w-0">
+          <KanbanColumn
+            stage={stage}
+            leads={getLeadsByStage(stage.id)}
+            onLeadClick={onLeadClick}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={() => handleDragOver(stage.id)}
+            onDrop={() => handleDrop(stage.id)}
+            isDragOver={dragOverStage === stage.id}
+            isDragging={!!draggedLead}
+            selectedLeadId={selectedLead?.id}
+            onUpdateLeadName={onUpdateLeadName}
+          />
+        </div>
       ))}
     </div>
   );

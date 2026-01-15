@@ -38,6 +38,7 @@ export const LeadCard = ({
   
   const displayName = lead.contact_name || lead.company_name || formatPhone(lead.phone);
   const hasResponse = !!lead.last_response_at;
+  const showStatus = !!lead.whatsapp_status;
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -117,7 +118,7 @@ export const LeadCard = ({
           </div>
         ) : (
           <>
-            <h4 className="font-medium text-sm text-foreground truncate flex-1 min-w-0">
+            <h4 className="font-medium text-sm text-foreground break-words flex-1 min-w-0 leading-snug">
               {displayName}
             </h4>
             {onUpdateName && (
@@ -148,7 +149,7 @@ export const LeadCard = ({
       {/* Phone - Always shown, compact */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate min-w-0">{formatPhone(lead.phone)}</span>
+        <span className="break-all min-w-0 leading-snug">{formatPhone(lead.phone)}</span>
       </div>
 
       {/* Estimated Value - if exists and greater than 0 */}
@@ -161,10 +162,27 @@ export const LeadCard = ({
         </div>
       )}
 
-      {/* Footer - Response time and Status */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* Footer - Status (left) and Response time (right) */}
+      <div className="flex items-center gap-2 min-w-0">
+        {lead.whatsapp_status && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-1.5 py-0 w-fit shrink-0",
+              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
+            )}
+          >
+            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+          </Badge>
+        )}
+
         {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <span
+            className={cn(
+              "text-[10px] text-muted-foreground flex items-center gap-1 shrink-0",
+              showStatus && "ml-auto"
+            )}
+          >
             <MessageCircle className="w-3 h-3 shrink-0" />
             <span className="whitespace-nowrap">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
@@ -173,15 +191,6 @@ export const LeadCard = ({
               })}
             </span>
           </span>
-        )}
-
-        {lead.whatsapp_status && (
-          <Badge 
-            variant="secondary" 
-            className={cn("text-[10px] px-1.5 py-0 w-fit", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
-          >
-            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-          </Badge>
         )}
       </div>
     </div>
