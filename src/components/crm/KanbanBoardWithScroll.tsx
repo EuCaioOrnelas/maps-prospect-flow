@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ interface KanbanBoardWithScrollProps {
   columnWidth?: ColumnWidth;
 }
 
-export const KanbanBoardWithScroll = ({
+const KanbanBoardWithScrollComponent = ({
   stages,
   leads,
   onLeadClick,
@@ -36,11 +36,11 @@ export const KanbanBoardWithScroll = ({
   const animationRef = useRef<number | null>(null);
   const scrollVelocity = useRef(0);
 
-  const handleDragStart = (leadId: string) => {
+  const handleDragStart = useCallback((leadId: string) => {
     setDraggedLead(leadId);
-  };
+  }, []);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
     setDragOverStage(null);
     scrollVelocity.current = 0;
@@ -48,22 +48,27 @@ export const KanbanBoardWithScroll = ({
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-  };
+  }, []);
 
-  const handleDragOver = (stageId: string) => {
+  const handleDragOver = useCallback((stageId: string) => {
     setDragOverStage(stageId);
-  };
+  }, []);
 
-  const handleDrop = (stageId: string) => {
+  const handleDrop = useCallback((stageId: string) => {
     if (draggedLead) {
       onLeadMove(draggedLead, stageId);
     }
     handleDragEnd();
-  };
+  }, [draggedLead, onLeadMove, handleDragEnd]);
 
-  const getLeadsByStage = (stageId: string) => {
-    return leads.filter(lead => lead.pipeline_stage_id === stageId);
-  };
+  // Memoize leads by stage to avoid recalculating on every render
+  const leadsByStage = useMemo(() => {
+    const map = new Map<string, Lead[]>();
+    stages.forEach(stage => {
+      map.set(stage.id, leads.filter(lead => lead.pipeline_stage_id === stage.id));
+    });
+    return map;
+  }, [leads, stages]);
 
   // Smooth scroll animation
   const smoothScroll = useCallback(() => {
@@ -144,9 +149,12 @@ export const KanbanBoardWithScroll = ({
     };
   }, [handleGlobalDragOver]);
 
-  const displayedStages = filteredStageId 
-    ? stages.filter(stage => stage.id === filteredStageId)
-    : stages;
+  const displayedStages = useMemo(() => 
+    filteredStageId 
+      ? stages.filter(stage => stage.id === filteredStageId)
+      : stages,
+    [stages, filteredStageId]
+  );
 
   return (
     <div 
@@ -162,7 +170,7 @@ export const KanbanBoardWithScroll = ({
         <KanbanColumn
           key={stage.id}
           stage={stage}
-          leads={getLeadsByStage(stage.id)}
+          leads={leadsByStage.get(stage.id) || []}
           onLeadClick={onLeadClick}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
@@ -182,3 +190,5 @@ export const KanbanBoardWithScroll = ({
     </div>
   );
 };
+
+export const KanbanBoardWithScroll = memo(KanbanBoardWithScrollComponent);

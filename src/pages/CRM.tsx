@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
@@ -9,6 +9,7 @@ import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
+import { MobileBlockOverlay } from '@/components/crm/MobileBlockOverlay';
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
@@ -21,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,7 @@ import {
 export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const isMobile = useIsMobile();
   const [showBetaWarning, setShowBetaWarning] = useState(false);
 
   // Check if beta warning was already shown
@@ -47,6 +50,11 @@ export default function CRM() {
     localStorage.setItem('crm_beta_warning_seen', 'true');
     setShowBetaWarning(false);
   };
+
+  // Show mobile block overlay
+  if (isMobile) {
+    return <MobileBlockOverlay />;
+  }
   
   // Aguardar carregamento do profile antes de continuar
   if (loading) {

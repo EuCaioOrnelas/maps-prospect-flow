@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
 import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
@@ -16,7 +16,7 @@ interface LeadCardProps {
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
 }
 
-export const LeadCard = ({
+const LeadCardComponent = ({
   lead,
   onClick,
   onDragStart,
@@ -193,3 +193,19 @@ export const LeadCard = ({
     </div>
   );
 };
+
+// Memoize with custom comparison to avoid unnecessary re-renders
+export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.lead.id === nextProps.lead.id &&
+    prevProps.lead.contact_name === nextProps.lead.contact_name &&
+    prevProps.lead.company_name === nextProps.lead.company_name &&
+    prevProps.lead.phone === nextProps.lead.phone &&
+    prevProps.lead.whatsapp_status === nextProps.lead.whatsapp_status &&
+    prevProps.lead.ai_score === nextProps.lead.ai_score &&
+    prevProps.lead.estimated_value === nextProps.lead.estimated_value &&
+    prevProps.lead.last_response_at === nextProps.lead.last_response_at &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.onClick === nextProps.onClick
+  );
+});
