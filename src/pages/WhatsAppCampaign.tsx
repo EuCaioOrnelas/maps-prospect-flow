@@ -199,7 +199,42 @@ const WhatsAppCampaign = () => {
   const hasPendingReset = hasNumberPendingReset(selectedNumberId || undefined);
 
   const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday) && !hasPendingReset;
-  const canProceedToSettings = messages.filter(m => m.trim()).length === 5;
+  
+  // Validation for messages: all 5 filled, no links, no duplicates
+  const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
+  const MAX_MESSAGE_CHARS = 120;
+  
+  const messagesValidation = (() => {
+    const filledMessages = messages.filter(m => m.trim());
+    const allFilled = filledMessages.length === 5;
+    
+    // Check for links
+    const hasLinks = messages.some(m => LINK_REGEX.test(m));
+    
+    // Check for over limit
+    const hasOverLimit = messages.some(m => m.length > MAX_MESSAGE_CHARS);
+    
+    // Check for duplicates
+    const normalizedMessages = messages.map(m => m.trim().toLowerCase().replace(/\s+/g, ' '));
+    const seen = new Set<string>();
+    let hasDuplicates = false;
+    normalizedMessages.forEach(msg => {
+      if (msg.length > 0) {
+        if (seen.has(msg)) {
+          hasDuplicates = true;
+        } else {
+          seen.add(msg);
+        }
+      }
+    });
+    
+    return { allFilled, hasLinks, hasOverLimit, hasDuplicates };
+  })();
+  
+  const canProceedToSettings = messagesValidation.allFilled && 
+                               !messagesValidation.hasLinks && 
+                               !messagesValidation.hasDuplicates && 
+                               !messagesValidation.hasOverLimit;
   const canStartCampaign = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && (isConnected || isScheduled) && !!selectedNumberId && !hasPendingReset;
 
   const isValidSchedule = () => {
