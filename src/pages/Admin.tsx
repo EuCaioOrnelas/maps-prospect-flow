@@ -47,6 +47,7 @@ import {
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
+import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 // Função para verificar admin via banco de dados (seguro)
@@ -1602,6 +1603,11 @@ const Admin = () => {
             {/* Subscription Events Debug Log */}
             <div className="mt-8">
               <SubscriptionEventsLog />
+            </div>
+
+            {/* Phone Cleanup Tool */}
+            <div className="mt-8">
+              <PhoneCleanupTool />
             </div>
           </>
         )}
