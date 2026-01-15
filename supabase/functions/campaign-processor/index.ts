@@ -8,6 +8,14 @@ const corsHeaders = {
 const DAILY_LIMIT_PER_NUMBER = 200;
 const SAO_PAULO_OFFSET_HOURS = -3; // UTC-3
 
+// Janelas de envio anti-bloqueio
+const SENDING_WINDOWS = [
+  { window: 1, limit: 20 },
+  { window: 2, limit: 30 },
+  { window: 3, limit: 50 },
+  { window: 4, limit: 100 },
+];
+
 interface Lead {
   name: string;
   phone?: string;
@@ -26,11 +34,10 @@ function getSaoPauloMidnightUTC(): Date {
   const spNow = getSaoPauloTime();
   const spMidnight = new Date(spNow);
   spMidnight.setHours(0, 0, 0, 0);
-  // Convert back to UTC
   return new Date(spMidnight.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
 }
 
-// Check if we should reset daily count (reset at midnight São Paulo time)
+// Check if we should reset daily count
 function shouldResetDailyCount(lastSentAt: string | null): boolean {
   if (!lastSentAt) return false;
   const lastSent = new Date(lastSentAt);
@@ -38,7 +45,7 @@ function shouldResetDailyCount(lastSentAt: string | null): boolean {
   return lastSent < spMidnightUTC;
 }
 
-// Check if enough time has passed since last message (respects configured delay)
+// Check if enough time has passed since last message
 function canSendNextMessage(lastMessageSentAt: string | null, delaySeconds: number): boolean {
   if (!lastMessageSentAt) return true;
   const lastSent = new Date(lastMessageSentAt).getTime();
@@ -59,6 +66,19 @@ function normalizePhone(phone: string): string {
     normalized = '55' + normalized;
   }
   return normalized;
+}
+
+// Get window limit
+function getWindowLimit(windowNumber: number): number {
+  const window = SENDING_WINDOWS.find(w => w.window === windowNumber);
+  return window?.limit || 0;
+}
+
+// Get accumulated limit up to window
+function getAccumulatedLimit(windowNumber: number): number {
+  return SENDING_WINDOWS
+    .filter(w => w.window <= windowNumber)
+    .reduce((sum, w) => sum + w.limit, 0);
 }
 
 // Check if instance is connected
@@ -124,6 +144,71 @@ async function sendMessage(
   }
 }
 
+// Check if contact is in ignored list (should not receive new messages)
+async function isContactIgnored(
+  supabase: any,
+  userId: string,
+  phone: string
+): Promise<boolean> {
+  const normalizedPhone = normalizePhone(phone);
+  const { data } = await supabase
+    .from('ignored_contacts')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('phone', normalizedPhone)
+    .single();
+  
+  return !!data;
+}
+
+// Add contact to ignored list
+async function addToIgnoredList(
+  supabase: any,
+  userId: string,
+  phone: string,
+  campaignId: string,
+  whatsappNumberId: string
+): Promise<void> {
+  const normalizedPhone = normalizePhone(phone);
+  try {
+    await supabase.from('ignored_contacts').upsert({
+      user_id: userId,
+      phone: normalizedPhone,
+      campaign_id: campaignId,
+      whatsapp_number_id: whatsappNumberId,
+      first_message_sent_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,phone' });
+  } catch (e) {
+    console.log('Contact already in ignored list or error:', e);
+  }
+}
+
+// Check for responses to current campaign
+async function getCampaignResponseCount(
+  supabase: any,
+  campaignId: string
+): Promise<number> {
+  const { count } = await supabase
+    .from('campaign_responses')
+    .select('*', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId);
+  
+  return count || 0;
+}
+
+// Check for incidents (blocks/reports)
+async function hasIncidents(
+  supabase: any,
+  campaignId: string
+): Promise<boolean> {
+  const { count } = await supabase
+    .from('campaign_incidents')
+    .select('*', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId);
+  
+  return (count || 0) > 0;
+}
+
 // Get available daily balance for a number
 async function getAvailableBalance(
   supabase: any,
@@ -169,7 +254,7 @@ async function getAvailableBalance(
   return Math.max(0, DAILY_LIMIT_PER_NUMBER - usedToday - totalReserved);
 }
 
-// Process a single campaign - send ONE message and return
+// Process a single campaign - send ONE message with window logic
 async function processSingleMessage(
   supabase: any,
   evolutionUrl: string,
@@ -178,7 +263,7 @@ async function processSingleMessage(
   numberData: any
 ): Promise<{ processed: boolean; completed: boolean; skipped: boolean; error?: string }> {
   
-  // Check if enough time has passed since last message (respect delay settings)
+  // Check delay
   const delayMin = campaign.delay_seconds || 40;
   const delayMax = campaign.delay_seconds_max || 60;
   const requiredDelay = getRandomDelay(delayMin, delayMax);
@@ -210,7 +295,11 @@ async function processSingleMessage(
   const currentIndex = campaign.current_lead_index || 0;
   let sentCount = campaign.sent_count || 0;
   let failedCount = campaign.failed_count || 0;
-  
+  let currentWindow = campaign.current_window || 1;
+  let windowSentCount = campaign.window_sent_count || 0;
+  let totalResponses = campaign.total_responses || 0;
+  let first10NoResponseCount = campaign.first_10_no_response_count || 0;
+
   // Check if completed
   if (currentIndex >= leads.length) {
     await supabase.from('whatsapp_campaigns').update({
@@ -228,7 +317,78 @@ async function processSingleMessage(
     return { processed: false, completed: true, skipped: false };
   }
 
-  // Get and check daily count
+  // ===== WINDOW SYSTEM LOGIC =====
+  
+  // Get current window limit
+  const windowLimit = getWindowLimit(currentWindow);
+  
+  // Check if we reached the current window limit
+  if (windowSentCount >= windowLimit && currentWindow < 4) {
+    // Check for responses to unlock next window
+    const responseCount = await getCampaignResponseCount(supabase, campaign.id);
+    totalResponses = responseCount;
+    
+    if (responseCount === 0) {
+      // No responses - pause waiting for response
+      console.log(`Campaign ${campaign.id}: Window ${currentWindow} complete, waiting for response to unlock next`);
+      
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'waiting_response',
+        total_responses: totalResponses,
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+      
+      return { processed: false, completed: false, skipped: false };
+    }
+    
+    // Has responses - unlock next window
+    currentWindow++;
+    windowSentCount = 0;
+    
+    await supabase.from('whatsapp_campaigns').update({
+      current_window: currentWindow,
+      window_sent_count: 0,
+      total_responses: totalResponses,
+      window_unlocked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+    
+    console.log(`Campaign ${campaign.id}: Window ${currentWindow} unlocked!`);
+  }
+
+  // Check for incidents (blocks/reports) - pause immediately
+  const hasIncident = await hasIncidents(supabase, campaign.id);
+  if (hasIncident) {
+    console.log(`Campaign ${campaign.id}: Incident detected, pausing`);
+    
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'paused',
+      pause_reason: 'incident_detected',
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+    
+    return { processed: false, completed: false, skipped: false };
+  }
+
+  // Check first 10 no-response rule
+  if (sentCount < 10 && sentCount > 0) {
+    const responseCount = await getCampaignResponseCount(supabase, campaign.id);
+    if (responseCount === 0 && sentCount >= 10) {
+      console.log(`Campaign ${campaign.id}: No responses in first 10 messages, pausing`);
+      
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'no_response_first_10',
+        first_10_no_response_count: sentCount,
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+      
+      return { processed: false, completed: false, skipped: false };
+    }
+  }
+
+  // Get daily count
   let dailySentCount = numberData.daily_sent_count || 0;
   
   if (shouldResetDailyCount(numberData.last_sent_at)) {
@@ -242,12 +402,10 @@ async function processSingleMessage(
   if (dailySentCount >= DAILY_LIMIT_PER_NUMBER) {
     console.log(`Daily limit reached for number ${numberData.id}`);
     
-    // Get tomorrow midnight in São Paulo
     const spNow = getSaoPauloTime();
     const spTomorrow = new Date(spNow);
     spTomorrow.setDate(spTomorrow.getDate() + 1);
     spTomorrow.setHours(0, 0, 0, 0);
-    // Convert to UTC
     const tomorrowUTC = new Date(spTomorrow.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
 
     await supabase.from('whatsapp_campaigns').update({
@@ -278,7 +436,7 @@ async function processSingleMessage(
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
       
-      console.log(`Smart pause activated for campaign ${campaign.id}, resume at ${resumeAt}`);
+      console.log(`Smart pause activated for campaign ${campaign.id}`);
       return { processed: false, completed: false, skipped: false };
     }
   }
@@ -301,13 +459,28 @@ async function processSingleMessage(
 
   const formattedPhone = normalizePhone(phone);
 
-  // Select ONE random message
+  // ===== CHECK IF CONTACT IS IGNORED =====
+  const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
+  if (isIgnored) {
+    console.log(`Skipping ignored contact: ${formattedPhone}`);
+    failedCount++;
+    
+    await supabase.from('whatsapp_campaigns').update({
+      current_lead_index: currentIndex + 1,
+      failed_count: failedCount,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+    
+    return { processed: true, completed: false, skipped: false };
+  }
+
+  // Select message (first message for stage 1, random for others)
   const randomMessage = validMessages[Math.floor(Math.random() * validMessages.length)];
   const personalizedMessage = randomMessage
     .replace(/\{nome\}/gi, lead.name || 'Cliente')
     .replace(/\{empresa\}/gi, lead.name || 'Empresa');
 
-  console.log(`Processing message ${currentIndex + 1}/${leads.length} to ${formattedPhone}`);
+  console.log(`Processing message ${currentIndex + 1}/${leads.length} to ${formattedPhone} (Window ${currentWindow})`);
 
   // Re-check campaign status
   const { data: statusCheck } = await supabase
@@ -335,7 +508,11 @@ async function processSingleMessage(
   if (result.success) {
     sentCount++;
     dailySentCount++;
-    console.log(`✓ Sent to ${formattedPhone} (${sentCount}/${leads.length})`);
+    windowSentCount++;
+    console.log(`✓ Sent to ${formattedPhone} (${sentCount}/${leads.length}, Window ${currentWindow}: ${windowSentCount}/${windowLimit})`);
+
+    // Add to ignored list (will only be removed if contact responds)
+    await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
 
     // Sync to chat
     try {
@@ -391,11 +568,13 @@ async function processSingleMessage(
     failedCount++;
   }
 
-  // Update campaign progress with last_message_sent_at
+  // Update campaign progress
   await supabase.from('whatsapp_campaigns').update({
     current_lead_index: currentIndex + 1,
     sent_count: sentCount,
     failed_count: failedCount,
+    window_sent_count: windowSentCount,
+    current_window: currentWindow,
     last_message_sent_at: now,
     updated_at: now
   }).eq('id', campaign.id);
@@ -513,12 +692,14 @@ Deno.serve(async (req) => {
         status: 'running',
         started_at: campaign.started_at || new Date().toISOString(),
         pause_reason: null,
+        current_window: 1,
+        window_sent_count: 0,
         updated_at: new Date().toISOString()
       }).eq('id', campaignId);
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'Campaign started'
+        message: 'Campaign started with window system'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -545,7 +726,7 @@ Deno.serve(async (req) => {
         .order('updated_at', { ascending: true })
         .limit(10);
 
-      // Find scheduled campaigns that should start (using São Paulo time)
+      // Find scheduled campaigns that should start
       const { data: scheduledCampaigns } = await supabase
         .from('whatsapp_campaigns')
         .select('id, name, scheduled_at, whatsapp_number_id')
@@ -560,13 +741,42 @@ Deno.serve(async (req) => {
         .not('resume_at', 'is', null)
         .lte('resume_at', now.toISOString());
 
+      // Find campaigns waiting for response that now have responses
+      const { data: waitingCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('*')
+        .eq('status', 'paused')
+        .eq('pause_reason', 'waiting_response');
+
       let messagesProcessed = 0;
       let campaignsProcessed = 0;
       let skippedDueToDelay = 0;
 
+      // Check waiting campaigns for responses
+      for (const waiting of (waitingCampaigns || [])) {
+        const responseCount = await getCampaignResponseCount(supabase, waiting.id);
+        if (responseCount > 0) {
+          console.log(`Campaign ${waiting.id} received response, resuming`);
+          
+          const newWindow = (waiting.current_window || 1) + 1;
+          
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'running',
+            pause_reason: null,
+            current_window: Math.min(newWindow, 4),
+            window_sent_count: 0,
+            total_responses: responseCount,
+            window_unlocked_at: now.toISOString(),
+            updated_at: now.toISOString()
+          }).eq('id', waiting.id);
+          
+          campaignsProcessed++;
+        }
+      }
+
       // Start scheduled campaigns
       for (const scheduled of (scheduledCampaigns || [])) {
-        console.log(`Starting scheduled campaign: ${scheduled.name} (SP time: ${spNow.toISOString()})`);
+        console.log(`Starting scheduled campaign: ${scheduled.name}`);
         
         await supabase.from('campaign_daily_reservations')
           .delete()
@@ -576,6 +786,8 @@ Deno.serve(async (req) => {
           status: 'running',
           started_at: now.toISOString(),
           scheduled_at: null,
+          current_window: 1,
+          window_sent_count: 0,
           updated_at: now.toISOString()
         }).eq('id', scheduled.id);
         
@@ -663,6 +875,7 @@ Deno.serve(async (req) => {
         skippedDueToDelay,
         scheduledStarted: scheduledCampaigns?.length || 0,
         pausedResumed: pausedCampaigns?.length || 0,
+        waitingResumed: waitingCampaigns?.filter(async w => await getCampaignResponseCount(supabase, w.id) > 0).length || 0,
         saoPauloTime: spNow.toISOString()
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -689,6 +902,62 @@ Deno.serve(async (req) => {
         dailyLimit: DAILY_LIMIT_PER_NUMBER,
         date: date.toISOString().split('T')[0],
         saoPauloTime: getSaoPauloTime().toISOString()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Action: register-response - Called when a contact responds
+    if (action === 'register-response') {
+      const { contactPhone, campaignId: respCampaignId, userId, messageContent } = body;
+      
+      if (!contactPhone || !userId) {
+        return new Response(JSON.stringify({ error: 'contactPhone and userId required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const normalizedPhone = normalizePhone(contactPhone);
+
+      // Remove from ignored list since they responded
+      await supabase.from('ignored_contacts')
+        .delete()
+        .eq('user_id', userId)
+        .eq('phone', normalizedPhone);
+
+      // If campaign specified, register response
+      if (respCampaignId) {
+        const { data: campaign } = await supabase
+          .from('whatsapp_campaigns')
+          .select('current_window')
+          .eq('id', respCampaignId)
+          .single();
+
+        await supabase.from('campaign_responses').insert({
+          campaign_id: respCampaignId,
+          user_id: userId,
+          contact_phone: normalizedPhone,
+          message_content: messageContent,
+          window_number: campaign?.current_window || 1,
+          responded_at: new Date().toISOString()
+        });
+
+        // Update campaign response count
+        const { count } = await supabase
+          .from('campaign_responses')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', respCampaignId);
+
+        await supabase.from('whatsapp_campaigns').update({
+          total_responses: count || 0,
+          updated_at: new Date().toISOString()
+        }).eq('id', respCampaignId);
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Response registered'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

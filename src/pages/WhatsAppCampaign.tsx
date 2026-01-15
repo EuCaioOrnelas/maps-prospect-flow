@@ -38,6 +38,7 @@ import { useCampaignBalance } from "@/hooks/useCampaignBalance";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
+import { WindowSystemModal } from "@/components/whatsapp/WindowSystemModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -126,6 +127,7 @@ const WhatsAppCampaign = () => {
   // Show upgrade modal only if trial expired (not for free trial users who can still use)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
+  const [showWindowModal, setShowWindowModal] = useState(false);
   
   useEffect(() => {
     // If trial expired, show upgrade modal
@@ -270,7 +272,22 @@ const WhatsAppCampaign = () => {
     }
   };
 
+  // Show window modal before starting
+  const handleShowWindowModal = () => {
+    if (!selectedNumberId) {
+      toast({
+        title: "Selecione um número",
+        description: "Escolha um número WhatsApp para os disparos",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowWindowModal(true);
+  };
+
   const handleStartCampaign = async () => {
+    setShowWindowModal(false);
+    
     if (!selectedNumberId) {
       toast({
         title: "Selecione um número",
