@@ -153,12 +153,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {/* Text "wiize" - fade in/out when expanded */}
             <span
               className={cn(
-                "text-[1.7rem] tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out",
+                "text-[1.7rem] tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out flex items-center",
                 isHovered 
                   ? "opacity-100 translate-x-0" 
                   : "opacity-0 -translate-x-2 w-0 overflow-hidden"
               )}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
+              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
             >
               wiize
             </span>

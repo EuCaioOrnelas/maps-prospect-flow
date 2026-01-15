@@ -50,15 +50,15 @@ export const Logo = ({
         <>
           {mobileInitialsOnly ? (
             <span 
-              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text}`}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
+              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text} flex items-center`}
+              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
             >
               wiize
             </span>
           ) : (
             <span 
-              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text}`}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
+              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text} flex items-center`}
+              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
             >
               wiize
             </span>
