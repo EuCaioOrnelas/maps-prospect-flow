@@ -87,14 +87,25 @@ export const ManageStagesDialog = ({
   };
 
   const handleCreateStage = async () => {
-    if (!newStageName.trim()) {
+    const trimmedName = newStageName.trim();
+    
+    if (!trimmedName) {
       toast.error('Digite um nome para a coluna');
+      return;
+    }
+
+    // Check for duplicate names (case-insensitive)
+    const nameExists = stages.some(
+      s => s.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (nameExists) {
+      toast.error('Já existe uma coluna com esse nome');
       return;
     }
 
     setIsLoading(true);
     try {
-      await onCreateStage(newStageName.trim(), newStageColor);
+      await onCreateStage(trimmedName, newStageColor);
       setNewStageName('');
       setNewStageColor(PRESET_COLORS[1]);
       setIsCreating(false);
@@ -113,12 +124,22 @@ export const ManageStagesDialog = ({
   };
 
   const handleSaveEdit = async () => {
-    if (!editingStageId || !editName.trim()) return;
+    const trimmedName = editName.trim();
+    if (!editingStageId || !trimmedName) return;
+
+    // Check for duplicate names (case-insensitive), excluding current stage
+    const nameExists = stages.some(
+      s => s.id !== editingStageId && s.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (nameExists) {
+      toast.error('Já existe uma coluna com esse nome');
+      return;
+    }
 
     setIsLoading(true);
     try {
       await onUpdateStage(editingStageId, { 
-        name: editName.trim(), 
+        name: trimmedName, 
         color: editColor 
       });
       setEditingStageId(null);

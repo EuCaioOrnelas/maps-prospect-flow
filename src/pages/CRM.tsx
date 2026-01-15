@@ -9,7 +9,6 @@ import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
-import { ColumnWidthToggle } from '@/components/crm/ColumnWidthToggle';
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
@@ -93,15 +92,8 @@ export default function CRM() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
-  const [columnWidth, setColumnWidth] = useState<ColumnWidth>(() => {
-    const saved = localStorage.getItem('crm_column_width');
-    return (saved as ColumnWidth) || 'medium';
-  });
-
-  // Save column width preference
-  useEffect(() => {
-    localStorage.setItem('crm_column_width', columnWidth);
-  }, [columnWidth]);
+  // Fixed medium column width as default
+  const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -359,7 +351,6 @@ export default function CRM() {
                   />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <ColumnWidthToggle value={columnWidth} onChange={setColumnWidth} />
                   <Button
                     variant="outline"
                     size="default"
