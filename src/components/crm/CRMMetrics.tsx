@@ -18,7 +18,17 @@ interface Metric {
 
 export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   const totalLeads = leads.length;
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
+  
+  // Find the "lost" stage (by name pattern) to exclude from total value
+  const lostStage = stages.find(s => 
+    s.name.toLowerCase().includes('perdido') || 
+    s.name.toLowerCase().includes('lost')
+  );
+
+  // Calculate total value excluding lost leads
+  const totalValue = leads
+    .filter(lead => !lostStage || lead.pipeline_stage_id !== lostStage.id)
+    .reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
   // Find the "won" stage (by name pattern)
   const wonStage = stages.find(s => 
