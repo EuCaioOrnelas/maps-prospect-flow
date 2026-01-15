@@ -371,7 +371,7 @@ const Profile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
+                <div className="space-y-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Lock className="h-4 w-4 text-muted-foreground" />
@@ -384,7 +384,7 @@ const Profile = () => {
                   <Button 
                     variant="outline" 
                     onClick={() => setShowPasswordModal(true)}
-                    className="gap-2"
+                    className="gap-2 w-full"
                   >
                     <Lock className="h-4 w-4" />
                     Alterar senha
