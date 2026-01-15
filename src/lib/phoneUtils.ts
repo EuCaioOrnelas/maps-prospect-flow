@@ -1,17 +1,17 @@
 /**
  * Utility functions for phone number formatting and validation
- * Brazilian phone format: +55 (XX) XXXXX-XXXX (mobile) or +55 (XX) XXXX-XXXX (landline)
+ * Supports Brazilian and international phone formats
  */
 
 /**
  * Format a phone number for display
- * Handles Brazilian numbers with country code (55)
+ * Handles Brazilian and international numbers
  */
 export const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
   
   // Brazilian phone with country code
-  if (digits.startsWith('55') && digits.length >= 12) {
+  if (digits.startsWith('55') && digits.length >= 12 && digits.length <= 13) {
     const ddd = digits.slice(2, 4);
     const number = digits.slice(4);
     
@@ -26,11 +26,16 @@ export const formatPhoneNumber = (phone: string): string => {
   }
   
   // Brazilian number without country code (10-11 digits)
-  if (digits.length === 11) {
+  if (digits.length === 11 && !digits.startsWith('1')) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   }
-  if (digits.length === 10) {
+  if (digits.length === 10 && !digits.startsWith('1')) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  
+  // International format: +XX XXXX XXXX...
+  if (digits.length >= 10) {
+    return `+${digits}`;
   }
   
   // Fallback: just show with + prefix
@@ -73,6 +78,7 @@ export const formatPhoneShort = (phone: string): string => {
 
 /**
  * Check if a phone number is valid (not a group ID)
+ * Supports international numbers
  */
 export const isValidPhoneNumber = (phone: string): boolean => {
   const digits = phone.replace(/\D/g, '');
@@ -80,7 +86,7 @@ export const isValidPhoneNumber = (phone: string): boolean => {
   // Group IDs start with 120363
   if (digits.startsWith('120363')) return false;
   
-  // Valid length: 10-13 digits
+  // Valid length: 10-15 digits (supports international)
   if (digits.length > 15) return false;
   if (digits.length < 10) return false;
   
@@ -91,12 +97,15 @@ export const isValidPhoneNumber = (phone: string): boolean => {
 };
 
 /**
- * Normalize phone number to Brazilian format with country code
+ * Normalize phone number - supports international numbers
+ * For Brazilian numbers (10-11 digits without country code), adds 55
+ * For international numbers (already has country code), keeps as-is
  */
 export const normalizePhone = (phone: string): string => {
   let digits = phone.replace(/\D/g, '');
   
-  // Add country code if missing
+  // If number has 10-11 digits without country code, assume Brazil (55)
+  // International numbers should already have country code (12+ digits)
   if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
     digits = '55' + digits;
   }

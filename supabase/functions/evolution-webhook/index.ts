@@ -32,8 +32,8 @@ serve(async (req) => {
     
     console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
-    // Helper function to normalize Brazilian phone numbers (add 9 for mobile)
-    function normalizeBrazilianPhone(phone: string): string {
+    // Helper function to normalize phone numbers (supports international)
+    function normalizePhoneNumber(phone: string): string {
       // Remove all non-digits
       let cleanPhone = phone.replace(/\D/g, '');
       
@@ -42,28 +42,36 @@ serve(async (req) => {
         return phone;
       }
       
-      // Remove country code 55 if present
-      let hasCountryCode = false;
-      if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
-        hasCountryCode = true;
-        cleanPhone = cleanPhone.slice(2);
-      }
+      // Check if it's a Brazilian number (starts with 55 or has 10-11 digits)
+      const isBrazilian = cleanPhone.startsWith('55') || 
+        (cleanPhone.length >= 10 && cleanPhone.length <= 11);
       
-      // Now we should have DDD + number (10 or 11 digits)
-      // Brazilian mobile numbers should be 11 digits (DDD + 9 + 8 digits)
-      if (cleanPhone.length === 10) {
-        const ddd = cleanPhone.slice(0, 2);
-        const numberPart = cleanPhone.slice(2);
-        
-        // Check if it's a mobile number (starts with 6, 7, 8, 9 after DDD)
-        if (['6', '7', '8', '9'].includes(numberPart[0])) {
-          // Add the 9 prefix for mobile numbers
-          cleanPhone = ddd + '9' + numberPart;
+      if (isBrazilian) {
+        // Remove country code 55 if present to process
+        let hasCountryCode = false;
+        if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
+          hasCountryCode = true;
+          cleanPhone = cleanPhone.slice(2);
         }
+        
+        // Brazilian mobile numbers should be 11 digits (DDD + 9 + 8 digits)
+        if (cleanPhone.length === 10) {
+          const ddd = cleanPhone.slice(0, 2);
+          const numberPart = cleanPhone.slice(2);
+          
+          // Check if it's a mobile number (starts with 6, 7, 8, 9 after DDD)
+          if (['6', '7', '8', '9'].includes(numberPart[0])) {
+            // Add the 9 prefix for mobile numbers
+            cleanPhone = ddd + '9' + numberPart;
+          }
+        }
+        
+        // Re-add country code for Brazil
+        return '55' + cleanPhone;
       }
       
-      // Re-add country code
-      return '55' + cleanPhone;
+      // For international numbers, return as-is (already has country code)
+      return cleanPhone;
     }
 
     async function downloadAndStoreMedia(
@@ -391,7 +399,7 @@ serve(async (req) => {
             // Strategy 3: Create new conversation if not found
             if (!conversationId) {
               // For groups, use the group jid directly; for individuals, normalize
-              const phoneForStorage = isGroup ? rawPhone : normalizeBrazilianPhone(rawPhone);
+              const phoneForStorage = isGroup ? rawPhone : normalizePhoneNumber(rawPhone);
               const jidForStorage = isGroup ? remoteJid : (phoneForStorage + '@s.whatsapp.net');
               
               // For groups, try to get the group name from the data
