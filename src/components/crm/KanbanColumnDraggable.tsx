@@ -108,8 +108,8 @@ export const KanbanColumnDraggable = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 p-2 pr-4">
+      <ScrollArea className="flex-1" viewportClassName="pr-3">
+        <div className="space-y-2 p-2 w-full">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (

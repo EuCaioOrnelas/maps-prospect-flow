@@ -73,8 +73,8 @@ export const KanbanColumn = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 p-2 pr-3">
+      <ScrollArea className="flex-1" viewportClassName="pr-3">
+        <div className="space-y-2 p-2 w-full">
           {leads.map((lead) => (
             <LeadCard
               key={lead.id}
