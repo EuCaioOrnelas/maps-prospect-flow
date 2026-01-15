@@ -30,9 +30,21 @@ const LeadCardComponent = ({
 
   const formatPhone = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
-    if (digits.length >= 11 && digits.startsWith('55')) {
-      return `(${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+    // Brazilian phone with country code: 55 + DDD (2) + number (8 or 9 digits)
+    if (digits.startsWith('55') && digits.length >= 12) {
+      const ddd = digits.slice(2, 4);
+      const number = digits.slice(4);
+      
+      // 9-digit mobile numbers: XXXXX-XXXX
+      if (number.length === 9) {
+        return `(${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
+      }
+      // 8-digit landline/old mobile: XXXX-XXXX
+      if (number.length === 8) {
+        return `(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+      }
     }
+    // Fallback: just show with + prefix
     return `+${digits}`;
   };
   
