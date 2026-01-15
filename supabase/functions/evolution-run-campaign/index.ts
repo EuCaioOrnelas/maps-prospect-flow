@@ -31,12 +31,16 @@ declare const EdgeRuntime: {
 // Track active campaigns to prevent duplicate runs (per instance)
 const activeCampaignLocks = new Map<string, string>(); // numberId -> campaignId
 
-// Normalize phone number to prevent duplicates
+// Normalize phone number - supports international numbers
 function normalizePhone(phone: string): string {
   let normalized = phone.replace(/\D/g, '');
-  if (!normalized.startsWith('55')) {
+  
+  // If number has 10-11 digits without country code, assume Brazil (55)
+  // International numbers should already have country code (12+ digits)
+  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
     normalized = '55' + normalized;
   }
+  
   return normalized;
 }
 

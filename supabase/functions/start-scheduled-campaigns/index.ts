@@ -6,12 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Normalize phone number
+// Normalize phone number - supports international numbers
 function normalizePhone(phone: string): string {
   let normalized = phone.replace(/\D/g, '');
-  if (!normalized.startsWith('55')) {
+  
+  // If number has 10-11 digits without country code, assume Brazil (55)
+  // International numbers should already have country code (12+ digits)
+  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
     normalized = '55' + normalized;
   }
+  
   return normalized;
 }
 
