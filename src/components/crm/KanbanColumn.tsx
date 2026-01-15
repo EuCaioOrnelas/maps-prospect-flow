@@ -43,7 +43,7 @@ export const KanbanColumn = ({
   return (
     <div
       className={cn(
-        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
+        "flex flex-col w-80 min-w-[320px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
         isDragOver && "border-primary bg-primary/5 ring-2 ring-primary/20"
       )}
       onDragOver={handleDragOver}
@@ -74,7 +74,7 @@ export const KanbanColumn = ({
 
       {/* Cards */}
       <ScrollArea className="flex-1">
-        <div className="space-y-2 p-2 pr-4">
+        <div className="space-y-2 p-2">
           {leads.map((lead) => (
             <LeadCard
               key={lead.id}
