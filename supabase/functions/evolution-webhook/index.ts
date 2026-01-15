@@ -824,30 +824,36 @@ serve(async (req) => {
                       
                       if (!existingResponse) {
                         // Check when the message was sent to this contact (from ignored_contacts)
-                        const { data: ignoredContact } = await supabase
+                        const { data: ignoredContacts } = await supabase
                           .from('ignored_contacts')
                           .select('first_message_sent_at')
                           .eq('user_id', whatsappNumber.user_id)
                           .eq('phone', normalizedPhone)
                           .eq('campaign_id', campaign.id)
-                          .single();
+                          .limit(1);
                         
-                        // Only count as valid response if it came at least 60 seconds after the message was sent
-                        // This filters out automated responses/bots
+                        const ignoredContact = ignoredContacts && ignoredContacts.length > 0 ? ignoredContacts[0] : null;
+                        
+                        // Only count as valid response if:
+                        // 1. We have a record of when the message was sent (ignored_contact exists)
+                        // 2. The response came at least 60 seconds after the message was sent
                         const MIN_RESPONSE_TIME_SECONDS = 60;
                         const now = new Date();
-                        const messageSentAt = ignoredContact?.first_message_sent_at 
-                          ? new Date(ignoredContact.first_message_sent_at) 
-                          : null;
                         
-                        const secondsSinceSent = messageSentAt 
-                          ? (now.getTime() - messageSentAt.getTime()) / 1000 
-                          : 999999; // If no record, assume it's valid
+                        // If no record of message being sent, don't count as campaign response
+                        if (!ignoredContact || !ignoredContact.first_message_sent_at) {
+                          console.log(`⚠️ No message record found for ${normalizedPhone} in campaign ${campaign.id}, not counting as campaign response`);
+                          continue;
+                        }
                         
-                        console.log(`Response from ${normalizedPhone}: ${secondsSinceSent.toFixed(0)}s since message was sent`);
+                        const messageSentAt = new Date(ignoredContact.first_message_sent_at);
+                        const secondsSinceSent = (now.getTime() - messageSentAt.getTime()) / 1000;
                         
+                        console.log(`Response from ${normalizedPhone}: ${secondsSinceSent.toFixed(0)}s since message was sent at ${messageSentAt.toISOString()}`);
+                        
+                        // Filter out responses that came too fast (potential bots/auto-replies)
                         if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
-                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot`);
+                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot/auto-reply`);
                           continue;
                         }
                         
