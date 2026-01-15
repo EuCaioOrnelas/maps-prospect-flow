@@ -126,11 +126,6 @@ export const KanbanColumn = ({
             {leads.length}
           </span>
         </div>
-        {showTotalValue && totalValue > 0 && (
-          <p className="text-xs text-muted-foreground">
-            R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-        )}
       </div>
 
       {/* Cards */}
