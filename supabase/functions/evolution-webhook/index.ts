@@ -1030,14 +1030,183 @@ serve(async (req) => {
         }
         break;
 
+      case 'messages.edit':
+      case 'message.edit':
+      case 'messagesedit':
+      case 'messageedit':
+        // Message was edited by contact or by user on phone
+        console.log('=== MESSAGE EDIT EVENT ===');
+        console.log('Edit data:', JSON.stringify(data));
+        
+        {
+          // Extract message key and new content from various possible payload structures
+          const editedMessage = data?.editedMessage || 
+                               data?.message?.editedMessage ||
+                               data?.message?.protocolMessage?.editedMessage;
+          const protocolMessage = data?.message?.protocolMessage;
+          const key = data?.key || editedMessage?.key || protocolMessage?.key || {};
+          
+          const msgId = key.id || data?.key?.id || data?.id || data?.messageId || protocolMessage?.key?.id || '';
+          
+          // Extract new content from various locations
+          const newContent = editedMessage?.message?.conversation || 
+                            editedMessage?.message?.extendedTextMessage?.text ||
+                            editedMessage?.extendedTextMessage?.text ||
+                            editedMessage?.conversation ||
+                            protocolMessage?.editedMessage?.message?.conversation ||
+                            protocolMessage?.editedMessage?.message?.extendedTextMessage?.text ||
+                            protocolMessage?.editedMessage?.extendedTextMessage?.text ||
+                            data?.message?.text ||
+                            data?.newContent ||
+                            data?.text || '';
+          
+          console.log('Edit - msgId:', msgId, 'newContent:', newContent?.substring(0, 100));
+          
+          if (msgId && newContent) {
+            // Get WhatsApp number info
+            const { data: whatsappNumber } = await supabase
+              .from('whatsapp_numbers')
+              .select('id, user_id')
+              .eq('instance_name', instance)
+              .single();
+            
+            if (whatsappNumber) {
+              // Find the message by message_id
+              const { data: existingMsg } = await supabase
+                .from('messages')
+                .select('id, conversation_id')
+                .eq('message_id', msgId)
+                .eq('user_id', whatsappNumber.user_id)
+                .maybeSingle();
+              
+              if (existingMsg) {
+                console.log('Updating edited message:', existingMsg.id);
+                
+                const { error: updateError } = await supabase
+                  .from('messages')
+                  .update({ 
+                    content: newContent,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', existingMsg.id);
+                
+                if (updateError) {
+                  console.error('Error updating edited message:', updateError);
+                } else {
+                  console.log('Message edited successfully in database');
+                  
+                  // Update conversation's last_message if this is the most recent
+                  const { data: lastMsg } = await supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('conversation_id', existingMsg.conversation_id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                  
+                  if (lastMsg && lastMsg.id === existingMsg.id) {
+                    await supabase
+                      .from('conversations')
+                      .update({
+                        last_message: newContent.substring(0, 100),
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', existingMsg.conversation_id);
+                    console.log('Updated conversation last_message');
+                  }
+                }
+              } else {
+                console.log('Message not found for edit, msgId:', msgId);
+              }
+            }
+          } else {
+            console.log('Could not extract msgId or newContent from edit event');
+          }
+        }
+        break;
+
       case 'messages.update':
       case 'message.update':
       case 'messageupdate':
-        // Message status update (delivered, read, etc)
-        // Can be a single object or an array
-        console.log('=== MESSAGE STATUS UPDATE ===');
+        // Message status update (delivered, read, etc) OR edit event
+        // Evolution API can send edit events as messages.update with protocolMessage
+        console.log('=== MESSAGE STATUS/EDIT UPDATE ===');
         console.log('Raw data:', JSON.stringify(data));
         
+        {
+          // First check if this is an edit event (has protocolMessage with editedMessage)
+          const editedMessage = data?.editedMessage || 
+                               data?.message?.editedMessage ||
+                               data?.message?.protocolMessage?.editedMessage;
+          
+          if (editedMessage) {
+            // This is actually an edit event, handle it
+            console.log('Detected edit within messages.update, processing as edit');
+            const protocolMessage = data?.message?.protocolMessage;
+            const key = data?.key || editedMessage?.key || protocolMessage?.key || {};
+            
+            const msgId = key.id || protocolMessage?.key?.id || '';
+            const newContent = editedMessage?.message?.conversation || 
+                              editedMessage?.message?.extendedTextMessage?.text ||
+                              editedMessage?.extendedTextMessage?.text ||
+                              editedMessage?.conversation ||
+                              protocolMessage?.editedMessage?.message?.conversation ||
+                              protocolMessage?.editedMessage?.message?.extendedTextMessage?.text || '';
+            
+            console.log('Edit via update - msgId:', msgId, 'newContent:', newContent?.substring(0, 100));
+            
+            if (msgId && newContent) {
+              const { data: whatsappNumber } = await supabase
+                .from('whatsapp_numbers')
+                .select('id, user_id')
+                .eq('instance_name', instance)
+                .single();
+              
+              if (whatsappNumber) {
+                const { data: existingMsg } = await supabase
+                  .from('messages')
+                  .select('id, conversation_id')
+                  .eq('message_id', msgId)
+                  .eq('user_id', whatsappNumber.user_id)
+                  .maybeSingle();
+                
+                if (existingMsg) {
+                  await supabase
+                    .from('messages')
+                    .update({ 
+                      content: newContent,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', existingMsg.id);
+                  
+                  console.log('Message edited via update event:', existingMsg.id);
+                  
+                  // Update conversation last_message if needed
+                  const { data: lastMsg } = await supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('conversation_id', existingMsg.conversation_id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                  
+                  if (lastMsg && lastMsg.id === existingMsg.id) {
+                    await supabase
+                      .from('conversations')
+                      .update({
+                        last_message: newContent.substring(0, 100),
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', existingMsg.conversation_id);
+                  }
+                }
+              }
+            }
+            break;
+          }
+        }
+        
+        // Regular status update (not an edit)
         const updates = Array.isArray(data) ? data : [data];
         
         for (const update of updates) {
