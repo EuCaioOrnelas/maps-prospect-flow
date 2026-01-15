@@ -820,7 +820,35 @@ serve(async (req) => {
                         .single();
                       
                       if (!existingResponse) {
-                        // Register new campaign response
+                        // Check when the message was sent to this contact (from ignored_contacts)
+                        const { data: ignoredContact } = await supabase
+                          .from('ignored_contacts')
+                          .select('first_message_sent_at')
+                          .eq('user_id', whatsappNumber.user_id)
+                          .eq('phone', normalizedPhone)
+                          .eq('campaign_id', campaign.id)
+                          .single();
+                        
+                        // Only count as valid response if it came at least 60 seconds after the message was sent
+                        // This filters out automated responses/bots
+                        const MIN_RESPONSE_TIME_SECONDS = 60;
+                        const now = new Date();
+                        const messageSentAt = ignoredContact?.first_message_sent_at 
+                          ? new Date(ignoredContact.first_message_sent_at) 
+                          : null;
+                        
+                        const secondsSinceSent = messageSentAt 
+                          ? (now.getTime() - messageSentAt.getTime()) / 1000 
+                          : 999999; // If no record, assume it's valid
+                        
+                        console.log(`Response from ${normalizedPhone}: ${secondsSinceSent.toFixed(0)}s since message was sent`);
+                        
+                        if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
+                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot`);
+                          continue;
+                        }
+                        
+                        // Register new campaign response (valid human response)
                         const { error: responseError } = await supabase
                           .from('campaign_responses')
                           .insert({
@@ -835,38 +863,67 @@ serve(async (req) => {
                         if (responseError) {
                           console.error('Error inserting campaign response:', responseError);
                         } else {
-                          console.log('Campaign response registered for campaign:', campaign.id);
+                          console.log('✅ Valid human response registered for campaign:', campaign.id);
                           
                           // Update campaign total_responses
                           const newTotalResponses = (campaign.total_responses || 0) + 1;
                           
-                          // Check if campaign was waiting for response - if so, resume it and unlock next window!
+                          // Get current campaign status
                           const { data: campaignStatus } = await supabase
                             .from('whatsapp_campaigns')
                             .select('status, pause_reason, current_window')
                             .eq('id', campaign.id)
                             .single();
                           
-                          if (campaignStatus?.status === 'paused' && campaignStatus?.pause_reason === 'waiting_response') {
-                            // UNLOCK NEXT WINDOW - Campaign was waiting for a response!
-                            const newWindow = Math.min((campaignStatus.current_window || 1) + 1, 4);
+                          const currentWindow = campaignStatus?.current_window || 1;
+                          
+                          // PROGRESSIVE WINDOW UNLOCK: Unlock next window immediately when valid response is received
+                          // This works even if not at the end of current window
+                          if (currentWindow < 4) {
+                            const newWindow = currentWindow + 1;
                             
-                            await supabase
-                              .from('whatsapp_campaigns')
-                              .update({ 
-                                status: 'running',
-                                pause_reason: null,
-                                current_window: newWindow,
-                                window_sent_count: 0,
-                                total_responses: newTotalResponses,
-                                window_unlocked_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                              })
-                              .eq('id', campaign.id);
-                            
-                            console.log(`🎉 WINDOW UNLOCKED! Campaign ${campaign.id} resumed, now on Window ${newWindow}`);
+                            if (campaignStatus?.status === 'paused' && campaignStatus?.pause_reason === 'waiting_response') {
+                              // Campaign was paused waiting for response - resume it
+                              await supabase
+                                .from('whatsapp_campaigns')
+                                .update({ 
+                                  status: 'running',
+                                  pause_reason: null,
+                                  current_window: newWindow,
+                                  window_sent_count: 0,
+                                  total_responses: newTotalResponses,
+                                  window_unlocked_at: new Date().toISOString(),
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('id', campaign.id);
+                              
+                              console.log(`🎉 WINDOW UNLOCKED! Campaign ${campaign.id} resumed, now on Window ${newWindow}`);
+                            } else if (campaignStatus?.status === 'running') {
+                              // Campaign is still running - just unlock next window for when current one completes
+                              await supabase
+                                .from('whatsapp_campaigns')
+                                .update({ 
+                                  current_window: newWindow,
+                                  window_sent_count: 0,
+                                  total_responses: newTotalResponses,
+                                  window_unlocked_at: new Date().toISOString(),
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('id', campaign.id);
+                              
+                              console.log(`🎉 WINDOW PRE-UNLOCKED! Campaign ${campaign.id} progressed to Window ${newWindow} (mid-window unlock)`);
+                            } else {
+                              // Just update total_responses
+                              await supabase
+                                .from('whatsapp_campaigns')
+                                .update({ 
+                                  total_responses: newTotalResponses,
+                                  updated_at: new Date().toISOString()
+                                })
+                                .eq('id', campaign.id);
+                            }
                           } else {
-                            // Just update total_responses
+                            // Already at max window, just update total_responses
                             await supabase
                               .from('whatsapp_campaigns')
                               .update({ 
@@ -881,7 +938,7 @@ serve(async (req) => {
                       }
                     }
                     
-                    // Remove from ignored_contacts if present
+                    // Remove from ignored_contacts if present (contact responded, allow future messages)
                     await supabase
                       .from('ignored_contacts')
                       .delete()
