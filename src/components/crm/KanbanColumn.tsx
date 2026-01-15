@@ -81,7 +81,7 @@ export const KanbanColumn = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full",
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full overflow-hidden",
         getColumnWidthClass(columnWidth, isExpanded),
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
@@ -129,8 +129,8 @@ export const KanbanColumn = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-2">
+      <ScrollArea className="flex-1 overflow-hidden">
+        <div className="p-2 pr-3 space-y-2 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
