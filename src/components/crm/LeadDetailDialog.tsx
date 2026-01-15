@@ -184,9 +184,14 @@ export const LeadDetailDialog = ({
   
   // Deal closing state
   const [dealValue, setDealValue] = useState<number>(0);
+  const [savedValue, setSavedValue] = useState<number>(0); // Track saved value to detect changes
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
   const [showDealConfirm, setShowDealConfirm] = useState(false);
+  const [isSavingValue, setIsSavingValue] = useState(false);
+
+  // Check if value has unsaved changes
+  const hasUnsavedValue = dealValue !== savedValue;
 
   useEffect(() => {
     if (lead) {
@@ -200,7 +205,9 @@ export const LeadDetailDialog = ({
         website: lead.website || '',
         estimated_value: lead.estimated_value || 0,
       });
-      setDealValue(lead.estimated_value || 0);
+      const initialValue = lead.estimated_value || 0;
+      setDealValue(initialValue);
+      setSavedValue(initialValue);
       loadNotesAndActivities();
       loadDeals();
       setIsEditing(false);
@@ -360,14 +367,18 @@ export const LeadDetailDialog = ({
 
   const handleValueChange = async (value: number) => {
     if (!lead) return;
+    setIsSavingValue(true);
     try {
       const updatedLead = await onUpdate(lead.id, { estimated_value: value });
       if (updatedLead) {
         Object.assign(lead, updatedLead);
       }
-      toast.success('Valor atualizado!');
+      setSavedValue(value); // Mark as saved
+      toast.success('Valor salvo!');
     } catch {
-      toast.error('Erro ao atualizar valor');
+      toast.error('Erro ao salvar valor');
+    } finally {
+      setIsSavingValue(false);
     }
   };
 
@@ -769,25 +780,32 @@ export const LeadDetailDialog = ({
                               const value = parseCurrency(formatted);
                               setDealValue(value);
                             }}
-                            onBlur={() => {
-                              // Save value when user leaves the field
-                              if (lead && dealValue !== (lead.estimated_value || 0)) {
-                                handleValueChange(dealValue);
-                              }
-                            }}
                             className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
                             placeholder="0,00"
                           />
                         </div>
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setShowDealConfirm(true)}
-                          disabled={!dealValue || dealValue <= 0}
-                        >
-                          <Check className="w-4 h-4 mr-2" />
-                          Negociação Fechada
-                        </Button>
+                        {hasUnsavedValue ? (
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            variant="secondary"
+                            onClick={() => handleValueChange(dealValue)}
+                            disabled={isSavingValue}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {isSavingValue ? 'Salvando...' : 'Salvar Valor'}
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setShowDealConfirm(true)}
+                            disabled={!dealValue || dealValue <= 0}
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Negociação Fechada
+                          </Button>
+                        )}
                         {deals.length > 0 && (
                           <div className="pt-2 border-t border-primary/10">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
