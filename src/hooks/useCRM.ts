@@ -197,15 +197,48 @@ export const useCRM = () => {
     setIsLoading(false);
   }, [user]);
 
+  // Validate phone number before creating lead
+  const isValidPhoneNumber = (phone: string): boolean => {
+    const digits = phone.replace(/\D/g, '');
+    // Reject group IDs (start with 120363)
+    if (digits.startsWith('120363')) return false;
+    // Reject too long (likely group JIDs)
+    if (digits.length > 15) return false;
+    // Reject too short
+    if (digits.length < 10) return false;
+    // Reject group JID patterns (contains hyphen with timestamp)
+    if (phone.includes('-') && phone.length > 15) return false;
+    return true;
+  };
+
+  // Normalize phone number to Brazilian format
+  const normalizePhone = (phone: string): string => {
+    let digits = phone.replace(/\D/g, '');
+    // Add country code if missing
+    if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
+      digits = '55' + digits;
+    }
+    return digits;
+  };
+
   // Create lead
   const createLead = async (lead: Partial<Lead>) => {
     if (!user) return null;
+
+    // Validate phone number
+    if (!lead.phone || !isValidPhoneNumber(lead.phone)) {
+      console.error('Invalid phone number:', lead.phone);
+      throw new Error('Número de telefone inválido. Não é possível cadastrar IDs de grupos.');
+    }
+
+    // Normalize the phone number
+    const normalizedPhone = normalizePhone(lead.phone);
 
     const { data, error } = await supabase
       .from('leads')
       .insert({
         user_id: user.id,
-        phone: lead.phone!,
+        phone: normalizedPhone,
         company_name: lead.company_name,
         contact_name: lead.contact_name,
         category: lead.category,
