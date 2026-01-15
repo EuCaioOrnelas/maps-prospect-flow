@@ -517,7 +517,7 @@ const Dashboard = () => {
             
             <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-8 pb-6 border-b border-border/50">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Target size={16} className="text-primary" />
@@ -532,9 +532,22 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Brain size={16} className="text-primary" />
+                    <Globe size={16} className="text-primary" />
                   </div>
-                  <span>Alta conversão</span>
+                  <span>Busca global</span>
+                </div>
+              </div>
+
+              {/* Global search info */}
+              <div className="flex items-center gap-3 p-3 mb-6 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin size={18} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Prospecção global no Google Maps</p>
+                  <p className="text-xs text-muted-foreground">
+                    Busque em qualquer lugar: <span className="text-primary/80">São Paulo, SP</span> • <span className="text-primary/80">Miami, FL, USA</span> • <span className="text-primary/80">Lisboa, Portugal</span> • <span className="text-primary/80">Tokyo, Japan</span>
+                  </p>
                 </div>
               </div>
 
@@ -556,15 +569,22 @@ const Dashboard = () => {
                 <div className="space-y-2">
                   <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
                     <MapPin size={14} className="text-primary" />
-                    Cidade ou Região
+                    Localização
+                    <span className="ml-auto flex items-center gap-1 text-xs font-normal text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
+                      <Globe size={10} />
+                      Global
+                    </span>
                   </Label>
                   <Input
                     id="location"
-                    placeholder="Ex: São Paulo, SP"
+                    placeholder="Ex: São Paulo, SP ou Miami, FL, USA"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   />
+                  <p className="text-xs text-muted-foreground/70">
+                    Cidade, Estado • Cidade, País • ou qualquer região do mundo
+                  </p>
                 </div>
               </div>
 
