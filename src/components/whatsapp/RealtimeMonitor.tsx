@@ -11,15 +11,23 @@ import {
   Square,
   MessageSquare,
   Smartphone,
-  RefreshCw,
-  Loader2,
-  Wifi
+  Wifi,
+  MessageCircle,
+  AlertTriangle
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProcessorHeartbeat } from "./ProcessorHeartbeat";
+import { WindowProgressIndicator } from "./WindowProgressIndicator";
+
+interface ExtendedCampaign extends Campaign {
+  current_window?: number;
+  window_sent_count?: number;
+  total_responses?: number;
+  is_first_stage?: boolean;
+}
 
 interface RealtimeMonitorProps {
   campaigns: Campaign[];
@@ -44,8 +52,8 @@ export const RealtimeMonitor = ({
     return () => clearInterval(timer);
   }, []);
 
-  const runningCampaigns = campaigns.filter(c => c.status === 'running');
-  const pausedCampaigns = campaigns.filter(c => c.status === 'paused');
+  const runningCampaigns = campaigns.filter(c => c.status === 'running') as ExtendedCampaign[];
+  const pausedCampaigns = campaigns.filter(c => c.status === 'paused') as ExtendedCampaign[];
 
   if (runningCampaigns.length === 0 && pausedCampaigns.length === 0) {
     return null;
@@ -184,14 +192,35 @@ export const RealtimeMonitor = ({
               </div>
             </div>
 
+            {/* Window Progress Indicator */}
+            {campaign.current_window !== undefined && (
+              <div className="mb-4">
+                <WindowProgressIndicator
+                  currentWindow={campaign.current_window || 1}
+                  windowSentCount={campaign.window_sent_count || 0}
+                  totalSent={campaign.sent_count}
+                  totalResponses={campaign.total_responses || 0}
+                  status="running"
+                />
+              </div>
+            )}
+
             {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="p-3 rounded-lg bg-muted/30 text-center">
                 <div className="flex items-center justify-center gap-1 text-green-500 mb-0.5">
                   <CheckCircle2 size={14} />
                   <span className="text-lg font-bold">{campaign.sent_count}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Enviadas</p>
+              </div>
+              
+              <div className="p-3 rounded-lg bg-muted/30 text-center">
+                <div className="flex items-center justify-center gap-1 text-blue-500 mb-0.5">
+                  <MessageCircle size={14} />
+                  <span className="text-lg font-bold">{campaign.total_responses || 0}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Respostas</p>
               </div>
               
               <div className="p-3 rounded-lg bg-muted/30 text-center">
@@ -212,6 +241,16 @@ export const RealtimeMonitor = ({
                 <p className="text-xs text-muted-foreground">Pendentes</p>
               </div>
             </div>
+
+            {/* First Stage Warning */}
+            {campaign.is_first_stage && (
+              <div className="mt-3 flex items-center gap-2 text-xs p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertTriangle size={14} className="text-amber-600" />
+                <span className="text-amber-600">
+                  Primeiro estágio: apenas 1 mensagem por contato até receber resposta
+                </span>
+              </div>
+            )}
 
             {/* Message Variations Info */}
             <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
@@ -316,6 +355,20 @@ export const RealtimeMonitor = ({
               )}
             </div>
 
+            {/* Window Progress Indicator for paused campaigns */}
+            {campaign.current_window !== undefined && (
+              <div className="mb-3">
+                <WindowProgressIndicator
+                  currentWindow={campaign.current_window || 1}
+                  windowSentCount={campaign.window_sent_count || 0}
+                  totalSent={campaign.sent_count}
+                  totalResponses={campaign.total_responses || 0}
+                  status="paused"
+                  pauseReason={campaign.pause_reason}
+                />
+              </div>
+            )}
+
             {/* Progress Bar */}
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
@@ -323,6 +376,8 @@ export const RealtimeMonitor = ({
                 <span>{Math.round(progress)}% concluído</span>
                 <div className="flex items-center gap-2">
                   <span className="text-green-500">{campaign.sent_count} enviadas</span>
+                  <span>•</span>
+                  <span className="text-blue-500">{campaign.total_responses || 0} respostas</span>
                   <span>•</span>
                   <span className="text-destructive">{campaign.failed_count} falhas</span>
                   <span>•</span>
@@ -340,6 +395,25 @@ export const RealtimeMonitor = ({
             {isPausedManually && (
               <div className="mt-3 pt-3 border-t border-border text-sm text-blue-500">
                 <p>Clique em "Retomar" para continuar os disparos de onde parou.</p>
+              </div>
+            )}
+
+            {/* Window system pause reasons */}
+            {campaign.pause_reason === 'waiting_response' && (
+              <div className="mt-3 pt-3 border-t border-border text-sm text-amber-600">
+                <p>Aguardando resposta para liberar próxima janela de envio.</p>
+              </div>
+            )}
+
+            {campaign.pause_reason === 'no_response_first_10' && (
+              <div className="mt-3 pt-3 border-t border-border text-sm text-destructive">
+                <p>Pausado por segurança: nenhuma resposta nos primeiros 10 disparos.</p>
+              </div>
+            )}
+
+            {campaign.pause_reason === 'incident_detected' && (
+              <div className="mt-3 pt-3 border-t border-border text-sm text-destructive">
+                <p>Pausado por segurança: bloqueio ou denúncia detectado.</p>
               </div>
             )}
           </div>

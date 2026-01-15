@@ -76,6 +76,13 @@ export interface Campaign {
   pause_reason?: string;
   resume_at?: string | null;
   whatsapp_number_id?: string | null;
+  // Window system fields
+  current_window?: number;
+  window_sent_count?: number;
+  total_responses?: number;
+  is_first_stage?: boolean;
+  accepted_window_terms?: boolean;
+  first_10_no_response_count?: number;
 }
 
 export interface CampaignState {

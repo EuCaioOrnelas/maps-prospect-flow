@@ -9,10 +9,13 @@ import {
   Clock,
   Pause,
   Smartphone,
-  Shuffle
+  Shuffle,
+  Shield,
+  Layers
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import { SENDING_WINDOWS } from "./WindowSystemModal";
 
 interface CampaignSummaryProps {
   campaignName: string;
@@ -90,6 +93,24 @@ export const CampaignSummary = ({
   // Check if messages use name variable
   const usesNameVariable = messages.some(m => m.includes('{nome}'));
 
+  // Calculate which windows will be used
+  const getWindowsUsed = () => {
+    const leadCount = selectedLeads.length;
+    let remaining = leadCount;
+    const windows: { window: number; count: number }[] = [];
+    
+    for (let i = 0; i < SENDING_WINDOWS.length && remaining > 0; i++) {
+      const windowLimit = SENDING_WINDOWS[i].limit;
+      const toSend = Math.min(windowLimit, remaining);
+      windows.push({ window: i + 1, count: toSend });
+      remaining -= toSend;
+    }
+    
+    return windows;
+  };
+
+  const windowsUsed = getWindowsUsed();
+
   return (
     <div className="glass rounded-2xl p-6">
       <div className="text-center mb-6">
@@ -135,6 +156,40 @@ export const CampaignSummary = ({
             <span className="text-muted-foreground">Total de contatos</span>
           </div>
           <span className="font-medium text-lg">{selectedLeads.length}</span>
+        </div>
+
+        {/* Window System Info */}
+        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
+          <div className="flex items-center gap-2">
+            <Layers size={18} className="text-amber-600" />
+            <span className="font-medium text-amber-600">Sistema de Janelas Ativo</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {SENDING_WINDOWS.map((windowItem, idx) => {
+              const windowInfo = windowsUsed.find(w => w.window === idx + 1);
+              const isActive = !!windowInfo;
+              return (
+                <div 
+                  key={idx}
+                  className={`text-center p-2 rounded-lg text-xs ${
+                    isActive 
+                      ? 'bg-amber-500/20 border border-amber-500/30' 
+                      : 'bg-muted/30 border border-border opacity-50'
+                  }`}
+                >
+                  <div className={`font-semibold ${isActive ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                    Janela {idx + 1}
+                  </div>
+                  <div className={isActive ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}>
+                    {windowInfo ? `${windowInfo.count}/${windowItem.limit}` : `0/${windowItem.limit}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Cada janela só é liberada após receber resposta. Sem resposta = pausa automática.
+          </p>
         </div>
 
         {/* Messages */}
@@ -195,6 +250,17 @@ export const CampaignSummary = ({
             <span className="text-foreground font-medium">Duração estimada</span>
           </div>
           <span className="font-bold text-primary text-lg">{estimatedDuration()}</span>
+        </div>
+      </div>
+
+      {/* Anti-Block Protection Info */}
+      <div className="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-start gap-3">
+        <Shield size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-green-600">Proteção anti-bloqueio ativa</p>
+          <p className="text-muted-foreground">
+            Envio por janelas + pausa automática + limite de 200/dia para proteger seu número.
+          </p>
         </div>
       </div>
 

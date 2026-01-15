@@ -763,6 +763,8 @@ serve(async (req) => {
                     whatsapp_status: 'replied',
                     last_response: content || `[${messageType}]`,
                     last_response_at: new Date().toISOString(),
+                    has_responded: true,
+                    responded_at: new Date().toISOString(),
                     conversation_id: conversationId,
                     updated_at: new Date().toISOString(),
                   };
@@ -792,6 +794,72 @@ serve(async (req) => {
                         metadata: { automatic: true, trigger: 'webhook_response' },
                       });
                     }
+                  }
+                  
+                  // ===== CAMPAIGN RESPONSE DETECTION =====
+                  // Check if this response is from a campaign contact and register it
+                  const { data: runningCampaigns } = await supabase
+                    .from('whatsapp_campaigns')
+                    .select('id, name, current_window, total_responses')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('whatsapp_number_id', whatsappNumber.id)
+                    .in('status', ['running', 'paused']);
+                  
+                  if (runningCampaigns && runningCampaigns.length > 0) {
+                    console.log('=== CAMPAIGN RESPONSE CHECK ===');
+                    console.log('Found', runningCampaigns.length, 'running/paused campaigns');
+                    
+                    // Check if this phone is in the campaign leads
+                    for (const campaign of runningCampaigns) {
+                      // Check if we've already registered a response from this phone
+                      const { data: existingResponse } = await supabase
+                        .from('campaign_responses')
+                        .select('id')
+                        .eq('campaign_id', campaign.id)
+                        .eq('contact_phone', normalizedPhone)
+                        .single();
+                      
+                      if (!existingResponse) {
+                        // Register new campaign response
+                        const { error: responseError } = await supabase
+                          .from('campaign_responses')
+                          .insert({
+                            campaign_id: campaign.id,
+                            user_id: whatsappNumber.user_id,
+                            contact_phone: normalizedPhone,
+                            window_number: campaign.current_window || 1,
+                            message_content: content?.substring(0, 500) || null,
+                            responded_at: new Date().toISOString(),
+                          });
+                        
+                        if (responseError) {
+                          console.error('Error inserting campaign response:', responseError);
+                        } else {
+                          console.log('Campaign response registered for campaign:', campaign.id);
+                          
+                          // Update campaign total_responses
+                          const newTotalResponses = (campaign.total_responses || 0) + 1;
+                          await supabase
+                            .from('whatsapp_campaigns')
+                            .update({ 
+                              total_responses: newTotalResponses,
+                              updated_at: new Date().toISOString()
+                            })
+                            .eq('id', campaign.id);
+                          
+                          console.log('Campaign total_responses updated to:', newTotalResponses);
+                        }
+                      }
+                    }
+                    
+                    // Remove from ignored_contacts if present
+                    await supabase
+                      .from('ignored_contacts')
+                      .delete()
+                      .eq('user_id', whatsappNumber.user_id)
+                      .eq('phone', normalizedPhone);
+                    
+                    console.log('Removed from ignored_contacts (if was there)');
                   }
                 }
               } else {
