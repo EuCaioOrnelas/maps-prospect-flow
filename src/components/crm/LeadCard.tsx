@@ -111,8 +111,11 @@ const LeadCardComponent = ({
           </div>
         ) : (
           <>
-            <h4 className="font-medium text-sm text-foreground flex-1 min-w-0 truncate" title={displayName}>
-              {displayName.length > 50 ? `${displayName.slice(0, 50)}...` : displayName}
+            <h4 
+              className="font-medium text-sm text-foreground flex-1 min-w-0 truncate max-w-[calc(100%-40px)]" 
+              title={displayName}
+            >
+              {displayName}
             </h4>
             <div className="flex items-center gap-1 shrink-0">
               {onUpdateName && (
