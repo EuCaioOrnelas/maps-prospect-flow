@@ -50,6 +50,12 @@ export const useConnectionMonitor = ({
         },
       });
 
+      // Handle auth errors (401 - session expired)
+      if (response.error?.message?.includes('401') || response.data?.requiresReauth) {
+        console.log(`Auth error for ${number.name}, session may have expired`);
+        return null; // Don't change state on auth errors
+      }
+
       // Handle uncertain state (API temporarily unavailable)
       if (response.data?.connected === null) {
         console.log(`Uncertain connection state for ${number.name}, skipping update`);
