@@ -19,6 +19,7 @@ interface KanbanColumnDraggableProps {
   bulkSelectMode?: boolean;
   selectedLeadIds?: Set<string>;
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
+  onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
 }
 
 export const KanbanColumnDraggable = ({
@@ -36,6 +37,7 @@ export const KanbanColumnDraggable = ({
   bulkSelectMode,
   selectedLeadIds,
   onSelectAllInColumn,
+  onUpdateLeadName,
 }: KanbanColumnDraggableProps) => {
   const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
 
@@ -127,6 +129,7 @@ export const KanbanColumnDraggable = ({
                 onDragStart={() => onDragStart(lead.id)}
                 onDragEnd={onDragEnd}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
+                onUpdateName={onUpdateLeadName}
               />
             </div>
           ))}

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -11,6 +13,7 @@ interface LeadCardProps {
   onDragStart: () => void;
   onDragEnd: () => void;
   isSelected?: boolean;
+  onUpdateName?: (leadId: string, newName: string) => Promise<void>;
 }
 
 export const LeadCard = ({
@@ -19,7 +22,12 @@ export const LeadCard = ({
   onDragStart,
   onDragEnd,
   isSelected,
+  onUpdateName,
 }: LeadCardProps) => {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState(lead.contact_name || '');
+  const [isHovered, setIsHovered] = useState(false);
+
   const formatPhone = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length >= 11 && digits.startsWith('55')) {
@@ -31,6 +39,35 @@ export const LeadCard = ({
   const displayName = lead.contact_name || lead.company_name || formatPhone(lead.phone);
   const hasResponse = !!lead.last_response_at;
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditName(lead.contact_name || '');
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onUpdateName && editName.trim()) {
+      await onUpdateName(lead.id, editName.trim());
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingName(false);
+    setEditName(lead.contact_name || '');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      handleSaveName(e as unknown as React.MouseEvent);
+    } else if (e.key === 'Escape') {
+      handleCancelEdit(e as unknown as React.MouseEvent);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -39,27 +76,69 @@ export const LeadCard = ({
         isSelected && "ring-2 ring-primary border-primary"
       )}
       onClick={onClick}
-      draggable
+      draggable={!isEditingName}
       onDragStart={(e) => {
+        if (isEditingName) {
+          e.preventDefault();
+          return;
+        }
         e.dataTransfer.effectAllowed = 'move';
         onDragStart();
       }}
       onDragEnd={onDragEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header - Name and Score */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <h4 className="font-medium text-sm text-foreground truncate flex-1">
-          {displayName}
-        </h4>
-        {lead.ai_score > 0 && (
-          <span className={cn(
-            "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
-            lead.ai_score >= 80 ? "bg-green-500/20 text-green-400" :
-            lead.ai_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
-            "bg-red-500/20 text-red-400"
-          )}>
-            {lead.ai_score}
-          </span>
+        {isEditingName ? (
+          <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="h-7 text-sm"
+              placeholder="Nome do contato"
+              autoFocus
+            />
+            <button
+              onClick={handleSaveName}
+              className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleCancelEdit}
+              className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <h4 className="font-medium text-sm text-foreground truncate flex-1">
+              {displayName}
+            </h4>
+            {isHovered && onUpdateName && (
+              <button
+                onClick={handleEditClick}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all opacity-0 animate-fade-in"
+                style={{ opacity: isHovered ? 1 : 0 }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {lead.ai_score > 0 && (
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                lead.ai_score >= 80 ? "bg-green-500/20 text-green-400" :
+                lead.ai_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
+                "bg-red-500/20 text-red-400"
+              )}>
+                {lead.ai_score}
+              </span>
+            )}
+          </>
         )}
       </div>
 
