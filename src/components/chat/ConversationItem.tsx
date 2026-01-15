@@ -45,12 +45,22 @@ const formatTime = (dateString: string | null) => {
 const formatPhoneNumber = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
   
-  if (digits.length === 13 && digits.startsWith('55')) {
-    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  // Brazilian phone with country code
+  if (digits.startsWith('55') && digits.length >= 12) {
+    const ddd = digits.slice(2, 4);
+    const number = digits.slice(4);
+    
+    // 9-digit mobile: +55 (XX) XXXXX-XXXX
+    if (number.length === 9) {
+      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
+    }
+    // 8-digit landline: +55 (XX) XXXX-XXXX
+    if (number.length === 8) {
+      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    }
   }
-  if (digits.length === 12 && digits.startsWith('55')) {
-    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
-  }
+  
+  // Fallback for other formats
   if (digits.length >= 11) {
     const countryCode = digits.slice(0, 2);
     const areaCode = digits.slice(2, 4);
