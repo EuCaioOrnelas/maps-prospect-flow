@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { 
   Check, 
   CheckCheck, 
@@ -38,17 +39,10 @@ interface MessageBubbleProps {
   onSelect?: (message: Message) => void;
 }
 
-// Format sender phone for groups
+// Format sender phone for groups - uses centralized utility
 const formatSenderPhone = (phone: string | null): string => {
   if (!phone) return 'Desconhecido';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length >= 11 && digits.startsWith('55')) {
-    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-  }
-  if (digits.length >= 10) {
-    return `+${digits}`;
-  }
-  return phone;
+  return formatPhoneNumber(phone);
 };
 
 const getStatusIcon = (status: string, fromMe: boolean) => {

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import type { Conversation } from '@/hooks/useChat';
 import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -42,33 +43,7 @@ const formatTime = (dateString: string | null) => {
   return format(date, 'dd/MM/yyyy');
 };
 
-const formatPhoneNumber = (phone: string) => {
-  const digits = phone.replace(/\D/g, '');
-  
-  // Brazilian phone with country code
-  if (digits.startsWith('55') && digits.length >= 12) {
-    const ddd = digits.slice(2, 4);
-    const number = digits.slice(4);
-    
-    // 9-digit mobile: +55 (XX) XXXXX-XXXX
-    if (number.length === 9) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
-    }
-    // 8-digit landline: +55 (XX) XXXX-XXXX
-    if (number.length === 8) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
-    }
-  }
-  
-  // Fallback for other formats
-  if (digits.length >= 11) {
-    const countryCode = digits.slice(0, 2);
-    const areaCode = digits.slice(2, 4);
-    const rest = digits.slice(4);
-    return `+${countryCode} (${areaCode}) ${rest}`;
-  }
-  return `+${digits}`;
-};
+// formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
 const getDisplayName = (conversation: Conversation) => {
   // For groups, use group_name or phone as group ID

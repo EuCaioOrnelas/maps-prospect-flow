@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -243,14 +244,7 @@ const EditableCurrencyField = ({
   );
 };
 
-// Format phone number for display
-const formatPhoneNumber = (phone: string) => {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length >= 11 && digits.startsWith('55')) {
-    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-  }
-  return `+${digits}`;
-};
+// formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
 export const LeadDetailPanel = ({
   lead,

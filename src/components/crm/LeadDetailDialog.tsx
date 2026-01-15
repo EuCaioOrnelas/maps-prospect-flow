@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,25 +91,7 @@ interface LeadDetailDialogProps {
   onDeleteOrigin?: (name: string) => Promise<void>;
 }
 
-const formatPhoneNumber = (phone: string) => {
-  const digits = phone.replace(/\D/g, '');
-  
-  // Brazilian phone with country code
-  if (digits.startsWith('55') && digits.length >= 12) {
-    const ddd = digits.slice(2, 4);
-    const number = digits.slice(4);
-    
-    // 9-digit mobile: +55 (XX) XXXXX-XXXX
-    if (number.length === 9) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
-    }
-    // 8-digit landline: +55 (XX) XXXX-XXXX
-    if (number.length === 8) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
-    }
-  }
-  return `+${digits}`;
-};
+// formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
 // Format number to Brazilian currency format (1.234,56)
 const formatCurrency = (value: number): string => {

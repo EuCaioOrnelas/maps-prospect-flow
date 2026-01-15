@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, UserPlus, Target } from 'lucide-react';
 import type { Conversation } from '@/hooks/useChat';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface SaveContactDialogProps {
   open: boolean;
@@ -68,15 +69,7 @@ export const SaveContactDialog = ({
     }
   };
 
-  const formatPhoneNumber = (phone: string) => {
-    if (phone.length === 13) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
-    }
-    if (phone.length === 12) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 8)}-${phone.slice(8)}`;
-    }
-    return phone;
-  };
+  // formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>

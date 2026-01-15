@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { 
   Send, 
   Clock,
@@ -717,15 +718,7 @@ const ChatAreaComponent = ({
     return formatPhoneNumber(conversation.phone);
   };
 
-  const formatPhoneNumber = (phone: string) => {
-    if (phone.length === 13) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
-    }
-    if (phone.length === 12) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 8)}-${phone.slice(8)}`;
-    }
-    return phone;
-  };
+  // formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
