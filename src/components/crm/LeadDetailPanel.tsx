@@ -44,6 +44,205 @@ interface LeadDetailPanelProps {
   onFetchActivities: (leadId: string) => Promise<LeadActivity[]>;
 }
 
+// Editable Field Component
+const EditableField = ({ 
+  icon, 
+  label, 
+  value, 
+  placeholder, 
+  onChange, 
+  onSave,
+  compact = false,
+  isLink = false
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: string; 
+  placeholder: string; 
+  onChange: (value: string) => void; 
+  onSave: () => void;
+  compact?: boolean;
+  isLink?: boolean;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleSave = () => {
+    onChange(localValue);
+    onSave();
+    setIsEditing(false);
+    toast.success('Atualizado!');
+  };
+
+  if (isEditing) {
+    return (
+      <div className={cn("flex items-center gap-2", compact ? "" : "py-2 border-b border-border/50")}>
+        {icon}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <div className="flex items-center gap-1 mt-0.5">
+            <Input
+              value={localValue}
+              onChange={(e) => setLocalValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                  setLocalValue(value);
+                  setIsEditing(false);
+                }
+              }}
+              className="h-7 text-sm"
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" onClick={handleSave} className="h-7 w-7 shrink-0">
+              <Save className="w-3 h-3" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => { setLocalValue(value); setIsEditing(false); }} className="h-7 w-7 shrink-0">
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className={cn(
+        "flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md transition-colors group",
+        compact ? "p-1" : "py-2 px-1 border-b border-border/50"
+      )}
+      onClick={() => setIsEditing(true)}
+    >
+      {icon}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {value ? (
+          isLink ? (
+            <a 
+              href={value.startsWith('http') ? value : `https://${value}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-sm text-primary hover:underline truncate block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {value}
+            </a>
+          ) : (
+            <p className="text-sm font-medium truncate">{value}</p>
+          )
+        ) : (
+          <p className="text-sm text-muted-foreground/60 italic">{placeholder}</p>
+        )}
+      </div>
+      <Pencil className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+    </div>
+  );
+};
+
+// Editable Currency Field Component
+const EditableCurrencyField = ({ 
+  label, 
+  value, 
+  onChange, 
+  onSave 
+}: { 
+  label: string; 
+  value: number; 
+  onChange: (value: number) => void; 
+  onSave: () => void;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayValue, setDisplayValue] = useState(
+    value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
+  );
+
+  useEffect(() => {
+    setDisplayValue(
+      value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
+    );
+  }, [value]);
+
+  const formatCurrency = (val: string) => {
+    const numbers = val.replace(/\D/g, '');
+    const numValue = parseInt(numbers) / 100;
+    if (isNaN(numValue) || numValue === 0) return '';
+    return numValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const parseCurrency = (val: string) => {
+    const numbers = val.replace(/\D/g, '');
+    return parseInt(numbers) / 100 || 0;
+  };
+
+  const handleSave = () => {
+    onChange(parseCurrency(displayValue));
+    onSave();
+    setIsEditing(false);
+    toast.success('Atualizado!');
+  };
+
+  if (isEditing) {
+    return (
+      <div className="py-2 border-b border-border/50">
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        <div className="flex items-center gap-1">
+          <div className="relative flex-1">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+            <Input
+              value={displayValue}
+              onChange={(e) => setDisplayValue(formatCurrency(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                  setDisplayValue(value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+                  setIsEditing(false);
+                }
+              }}
+              className="h-7 text-sm pl-8"
+              placeholder="0,00"
+              autoFocus
+            />
+          </div>
+          <Button size="icon" variant="ghost" onClick={handleSave} className="h-7 w-7 shrink-0">
+            <Save className="w-3 h-3" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => { 
+            setDisplayValue(value > 0 ? value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''); 
+            setIsEditing(false); 
+          }} className="h-7 w-7 shrink-0">
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md transition-colors group py-2 px-1 border-b border-border/50"
+      onClick={() => setIsEditing(true)}
+    >
+      <div className="w-4 h-4 flex items-center justify-center text-muted-foreground text-sm font-medium">R$</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {value > 0 ? (
+          <p className="text-sm font-medium text-primary">
+            R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground/60 italic">Adicionar valor</p>
+        )}
+      </div>
+      <Pencil className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+    </div>
+  );
+};
+
 // Format phone number for display
 const formatPhoneNumber = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
@@ -333,194 +532,156 @@ export const LeadDetailPanel = ({
             )}
           </div>
 
-          {/* Tabs */}
-          <Tabs defaultValue="info" className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
-              <TabsTrigger value="notes" className="flex-1">Notas</TabsTrigger>
-              <TabsTrigger value="activity" className="flex-1">Atividade</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="info" className="space-y-4 mt-4">
-              {isEditing ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Empresa</label>
-                    <Input
-                      value={formData.company_name}
-                      onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                      placeholder="Nome da empresa"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Contato</label>
-                    <Input
-                      value={formData.contact_name}
-                      onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                      placeholder="Nome do contato"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Categoria</label>
-                    <Input
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      placeholder="Categoria/Nicho"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Cidade</label>
-                      <Input
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="Cidade"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Região</label>
-                      <Input
-                        value={formData.region}
-                        onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                        placeholder="Região"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Website</label>
-                    <Input
-                      value={formData.website}
-                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Valor Estimado (R$)</label>
-                    <Input
-                      type="number"
-                      value={formData.estimated_value}
-                      onChange={(e) => setFormData({ ...formData, estimated_value: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSave} className="flex-1">
-                      <Save className="w-4 h-4 mr-1" /> Salvar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{lead.phone}</span>
-                  </div>
-                  {lead.company_name && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Building2 className="w-4 h-4 text-muted-foreground" />
-                      <span>{lead.company_name}</span>
-                    </div>
-                  )}
-                  {lead.contact_name && (
-                    <div className="flex items-center gap-2 text-sm group">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span className="flex-1">{lead.contact_name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                  {!lead.contact_name && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Adicionar nome
-                      </Button>
-                    </div>
-                  )}
-                  {(lead.city || lead.region) && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{[lead.city, lead.region].filter(Boolean).join(', ')}</span>
-                    </div>
-                  )}
-                  {lead.category && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Tag className="w-4 h-4 text-muted-foreground" />
-                      <span>{lead.category}</span>
-                    </div>
-                  )}
-                  {lead.website && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Globe className="w-4 h-4 text-muted-foreground" />
-                      <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
-                        {lead.website}
-                      </a>
-                    </div>
-                  )}
-                  {lead.estimated_value > 0 && (
-                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                      <span>R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="w-3 h-3" />
-                    <span>
-                      Prospectado {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Origem: {lead.origin}</span>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(true)} className="w-full">
-                    Editar informações
-                  </Button>
-                </div>
-              )}
-
-              {/* Tags */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Tags</label>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {(lead.tags || []).map((tag, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="text-xs cursor-pointer hover:bg-destructive/20"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      {tag} ×
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Nova tag"
-                    className="text-sm"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                  />
-                  <Button size="sm" variant="outline" onClick={handleAddTag}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
+          {/* All Lead Information - Always Visible */}
+          <div className="space-y-4">
+            {/* Contact Info Section */}
+            <div className="space-y-3 bg-muted/30 rounded-lg p-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações de Contato</h3>
+              
+              <div className="flex items-center gap-3 py-2 border-b border-border/50">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Telefone</p>
+                  <p className="text-sm font-medium truncate">{formatPhoneNumber(lead.phone)}</p>
                 </div>
               </div>
-            </TabsContent>
+
+              <EditableField
+                icon={<Building2 className="w-4 h-4 text-muted-foreground" />}
+                label="Empresa"
+                value={formData.company_name}
+                placeholder="Adicionar empresa"
+                onChange={(value) => setFormData({ ...formData, company_name: value })}
+                onSave={() => onUpdate(lead.id, { company_name: formData.company_name })}
+              />
+
+              <EditableField
+                icon={<User className="w-4 h-4 text-muted-foreground" />}
+                label="Contato"
+                value={formData.contact_name}
+                placeholder="Adicionar contato"
+                onChange={(value) => setFormData({ ...formData, contact_name: value })}
+                onSave={() => onUpdate(lead.id, { contact_name: formData.contact_name })}
+              />
+            </div>
+
+            {/* Location Section */}
+            <div className="space-y-3 bg-muted/30 rounded-lg p-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Localização</h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <EditableField
+                  icon={<MapPin className="w-4 h-4 text-muted-foreground" />}
+                  label="Cidade"
+                  value={formData.city}
+                  placeholder="Adicionar cidade"
+                  onChange={(value) => setFormData({ ...formData, city: value })}
+                  onSave={() => onUpdate(lead.id, { city: formData.city })}
+                  compact
+                />
+
+                <EditableField
+                  icon={<MapPin className="w-4 h-4 text-muted-foreground" />}
+                  label="Região"
+                  value={formData.region}
+                  placeholder="Adicionar região"
+                  onChange={(value) => setFormData({ ...formData, region: value })}
+                  onSave={() => onUpdate(lead.id, { region: formData.region })}
+                  compact
+                />
+              </div>
+            </div>
+
+            {/* Business Info Section */}
+            <div className="space-y-3 bg-muted/30 rounded-lg p-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações do Negócio</h3>
+              
+              <EditableField
+                icon={<Tag className="w-4 h-4 text-muted-foreground" />}
+                label="Categoria/Nicho"
+                value={formData.category}
+                placeholder="Adicionar categoria"
+                onChange={(value) => setFormData({ ...formData, category: value })}
+                onSave={() => onUpdate(lead.id, { category: formData.category })}
+              />
+
+              <EditableField
+                icon={<Globe className="w-4 h-4 text-muted-foreground" />}
+                label="Website"
+                value={formData.website}
+                placeholder="Adicionar website"
+                onChange={(value) => setFormData({ ...formData, website: value })}
+                onSave={() => onUpdate(lead.id, { website: formData.website })}
+                isLink
+              />
+
+              <EditableCurrencyField
+                label="Valor da Negociação"
+                value={formData.estimated_value}
+                onChange={(value) => setFormData({ ...formData, estimated_value: value })}
+                onSave={() => onUpdate(lead.id, { estimated_value: formData.estimated_value })}
+              />
+            </div>
+
+            {/* Meta Info */}
+            <div className="space-y-2 text-xs text-muted-foreground bg-muted/20 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3 h-3" />
+                <span>
+                  Prospectado {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Activity className="w-3 h-3" />
+                <span>Origem: {lead.origin || 'manual'}</span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="bg-muted/30 rounded-lg p-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tags</h3>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {(lead.tags || []).map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="text-xs cursor-pointer hover:bg-destructive/20"
+                    onClick={() => handleRemoveTag(tag)}
+                  >
+                    {tag} ×
+                  </Badge>
+                ))}
+                {(lead.tags || []).length === 0 && (
+                  <span className="text-xs text-muted-foreground">Sem tags</span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Nova tag"
+                  className="text-sm h-8"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                />
+                <Button size="sm" variant="outline" onClick={handleAddTag} className="h-8 px-2">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs for Notes and Activity only */}
+          <Tabs defaultValue="notes" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="notes" className="flex-1">
+                <FileText className="w-3 h-3 mr-1" />
+                Notas
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1">
+                <Activity className="w-3 h-3 mr-1" />
+                Atividade
+              </TabsTrigger>
+            </TabsList>
 
             <TabsContent value="notes" className="space-y-4 mt-4">
               <div className="flex gap-2">
