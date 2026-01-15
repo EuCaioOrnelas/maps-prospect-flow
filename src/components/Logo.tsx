@@ -1,13 +1,12 @@
-import logoBranca from "@/assets/logo-branca.png";
-import logoIcon from "@/assets/logo-icon.png";
+import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   mobileSize?: "sm" | "md" | "lg";
   mobileInitialsOnly?: boolean;
-  variant?: "dark" | "light"; // dark = use white logo for dark backgrounds
-  iconOnly?: boolean; // Show only the icon (for collapsed sidebar)
+  variant?: "dark" | "light";
+  iconOnly?: boolean;
 }
 
 export const Logo = ({ 
@@ -19,63 +18,46 @@ export const Logo = ({
   iconOnly = false
 }: LogoProps) => {
   const sizes = {
-    sm: { height: "h-10", mobileHeight: "h-8" },
-    md: { height: "h-12", mobileHeight: "h-10" },
-    lg: { height: "h-16", mobileHeight: "h-14" },
+    sm: { icon: "h-8", text: "text-lg" },
+    md: { icon: "h-10", text: "text-xl" },
+    lg: { icon: "h-12", text: "text-2xl" },
   };
 
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
-  // Always use the white/complete logo (logoBranca is now the complete logo with text)
-  const logoSrc = logoBranca;
-
-  // If iconOnly, show only the icon version
+  // If iconOnly, show only the icon
   if (iconOnly) {
     return (
       <div className="flex items-center">
         <img 
-          src={logoIcon} 
+          src={logoIconNew} 
           alt="Wiize" 
-          className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
+          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} w-auto rounded-lg`}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center">
-      {showText ? (
+    <div className="flex items-center gap-2">
+      <img 
+        src={logoIconNew} 
+        alt="Wiize" 
+        className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} w-auto rounded-lg`}
+      />
+      {showText && (
         <>
           {mobileInitialsOnly ? (
-            <>
-              {/* Mobile: show icon only */}
-              <img 
-                src={logoIcon} 
-                alt="Wiize" 
-                className={`${mobileEffectiveSize.mobileHeight} w-auto md:hidden`}
-              />
-              {/* Desktop: show full logo */}
-              <img 
-                src={logoSrc} 
-                alt="WiizeProspect" 
-                className={`hidden md:block ${effectiveSize.height} w-auto`}
-              />
-            </>
+            <span className={`hidden md:inline font-normal tracking-tight text-foreground ${effectiveSize.text}`}>
+              wiize
+            </span>
           ) : (
-            <img 
-              src={logoSrc} 
-              alt="WiizeProspect" 
-              className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
-            />
+            <span className={`font-normal tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text}`}>
+              wiize
+            </span>
           )}
         </>
-      ) : (
-        <img 
-          src={logoIcon} 
-          alt="Wiize" 
-          className={`${mobileSize ? `${mobileEffectiveSize.mobileHeight} md:${effectiveSize.height}` : effectiveSize.height} w-auto`}
-        />
       )}
     </div>
   );
