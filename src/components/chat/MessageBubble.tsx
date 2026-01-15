@@ -9,6 +9,10 @@ import {
   Pencil,
   User,
   Loader2,
+  Image as ImageIcon,
+  Video,
+  Mic,
+  FileText,
 } from 'lucide-react';
 import type { Message } from '@/hooks/useChat';
 import { MediaPreview } from './MediaPreview';
@@ -318,23 +322,89 @@ const MessageBubbleComponent = ({
           )}
           {quotedMessage && (
             <div className={cn(
-              'mb-2 p-2 rounded border-l-4 text-xs',
+              'mb-2 p-2 rounded border-l-4 text-xs flex gap-2',
               message.from_me 
                 ? 'bg-[hsl(158,37%,6%)] border-primary/70' 
                 : 'bg-muted/80 border-primary/50'
             )}>
-              <p className={cn(
-                "font-semibold",
-                message.from_me ? "text-primary" : "text-primary"
-              )}>
-                {quotedMessage.from_me ? 'Você' : displayName}
-              </p>
-              <p className={cn(
-                "line-clamp-2 mt-0.5",
-                message.from_me ? "text-white/70" : "text-muted-foreground"
-              )}>
-                {quotedMessage.content || '[Mídia]'}
-              </p>
+              {/* Media thumbnail or icon for quoted message */}
+              {quotedMessage.media_url && ['image', 'video', 'sticker'].includes(quotedMessage.message_type) && (
+                <div className="shrink-0 w-12 h-12 rounded overflow-hidden bg-black/20">
+                  <img 
+                    src={quotedMessage.media_url} 
+                    alt="" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              {quotedMessage.message_type === 'audio' && !quotedMessage.media_url && (
+                <div className="shrink-0 w-10 h-10 rounded bg-primary/20 flex items-center justify-center">
+                  <Mic className="h-5 w-5 text-primary" />
+                </div>
+              )}
+              {quotedMessage.message_type === 'document' && (
+                <div className="shrink-0 w-10 h-10 rounded bg-primary/20 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <p className={cn(
+                  "font-semibold",
+                  message.from_me ? "text-primary" : "text-primary"
+                )}>
+                  {quotedMessage.from_me ? 'Você' : displayName}
+                </p>
+                <p className={cn(
+                  "line-clamp-2 mt-0.5 flex items-center gap-1",
+                  message.from_me ? "text-white/70" : "text-muted-foreground"
+                )}>
+                  {/* Show media type icon inline if there's media but no text content */}
+                  {quotedMessage.message_type === 'image' && !quotedMessage.content && (
+                    <>
+                      <ImageIcon className="h-3 w-3 inline shrink-0" />
+                      <span>Foto</span>
+                    </>
+                  )}
+                  {quotedMessage.message_type === 'video' && !quotedMessage.content && (
+                    <>
+                      <Video className="h-3 w-3 inline shrink-0" />
+                      <span>Vídeo</span>
+                    </>
+                  )}
+                  {(quotedMessage.message_type === 'audio' || quotedMessage.message_type === 'ptt') && (
+                    <>
+                      <Mic className="h-3 w-3 inline shrink-0" />
+                      <span>Áudio</span>
+                    </>
+                  )}
+                  {quotedMessage.message_type === 'document' && (
+                    <>
+                      <FileText className="h-3 w-3 inline shrink-0" />
+                      <span>{quotedMessage.media_filename || 'Documento'}</span>
+                    </>
+                  )}
+                  {quotedMessage.message_type === 'sticker' && !quotedMessage.content && (
+                    <span>Figurinha</span>
+                  )}
+                  {/* Show content if available, with media type prefix if it's a caption */}
+                  {quotedMessage.content && (
+                    <span className="truncate">
+                      {['image', 'video'].includes(quotedMessage.message_type) && (
+                        <span className="inline-flex items-center gap-1">
+                          {quotedMessage.message_type === 'image' && <ImageIcon className="h-3 w-3 inline shrink-0" />}
+                          {quotedMessage.message_type === 'video' && <Video className="h-3 w-3 inline shrink-0" />}
+                        </span>
+                      )}
+                      {quotedMessage.content}
+                    </span>
+                  )}
+                  {/* Fallback for unknown types */}
+                  {!quotedMessage.content && !['image', 'video', 'audio', 'ptt', 'document', 'sticker'].includes(quotedMessage.message_type) && (
+                    <span>[Mensagem]</span>
+                  )}
+                </p>
+              </div>
             </div>
           )}
 
