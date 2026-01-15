@@ -234,7 +234,7 @@ const Profile = () => {
       {/* Header */}
       <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl lg:pl-20">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl lg:pl-14">
         {/* Page Title */}
         <div className="mb-6">
           <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>

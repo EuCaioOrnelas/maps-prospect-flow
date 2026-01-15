@@ -358,7 +358,7 @@ export default function CRM() {
       <AppSidebar profile={profile || sidebarProfile} />
       <MobileNav profile={profile || sidebarProfile} />
 
-      <main className="lg:pl-[72px] pt-14 lg:pt-0 min-h-screen">
+      <main className="lg:pl-14 pt-14 lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 border-b border-border/50 relative z-10">

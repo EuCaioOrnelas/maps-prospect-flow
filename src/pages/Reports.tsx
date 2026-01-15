@@ -569,7 +569,7 @@ const Reports = () => {
       {/* Header */}
       <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20" ref={reportRef}>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14" ref={reportRef}>
         {/* Page Header with filters */}
         <div className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>

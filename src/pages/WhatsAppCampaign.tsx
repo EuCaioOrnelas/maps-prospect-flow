@@ -732,7 +732,7 @@ const WhatsAppCampaign = () => {
         <AppSidebar profile={profile} />
         <AppHeader profile={profile} />
 
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14">
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
         </main>
 
@@ -757,7 +757,7 @@ const WhatsAppCampaign = () => {
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-20">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14">
         {/* Page Header */}
         <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
           <div>

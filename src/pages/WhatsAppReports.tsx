@@ -319,7 +319,7 @@ const WhatsAppReports = () => {
       {/* Header */}
       <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-4 py-8 lg:pl-20">
+      <main className="container mx-auto px-4 py-8 lg:pl-14">
         <div className="max-w-6xl mx-auto">
           {/* Header with filter */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
