@@ -518,6 +518,7 @@ export default function CRM() {
         open={manageStagesOpen}
         onOpenChange={setManageStagesOpen}
         stages={stages}
+        leads={leads}
         onCreateStage={createStage}
         onUpdateStage={updateStage}
         onDeleteStage={deleteStage}
