@@ -153,7 +153,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {/* Text "wiize" - fade in/out when expanded */}
             <span
               className={cn(
-                "text-2xl tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out",
+                "text-[1.7rem] tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out",
                 isHovered 
                   ? "opacity-100 translate-x-0" 
                   : "opacity-0 -translate-x-2 w-0 overflow-hidden"
