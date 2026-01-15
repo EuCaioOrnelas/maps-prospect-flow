@@ -133,6 +133,122 @@ const formatCurrencyInput = (input: string): string => {
   });
 };
 
+// Editable Info Field Component for inline editing
+const EditableInfoField = ({ 
+  icon, 
+  label, 
+  value, 
+  placeholder, 
+  onChange, 
+  onSave,
+  isLink = false
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: string; 
+  placeholder: string; 
+  onChange: (value: string) => void; 
+  onSave: () => Promise<void>;
+  isLink?: boolean;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      onChange(localValue);
+      await onSave();
+      setIsEditing(false);
+    } catch {
+      toast.error('Erro ao salvar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-3 p-3">
+        {icon}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground mb-1">{label}</p>
+          <div className="flex items-center gap-1">
+            <Input
+              value={localValue}
+              onChange={(e) => setLocalValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                  setLocalValue(value);
+                  setIsEditing(false);
+                }
+              }}
+              className="h-8 text-sm"
+              autoFocus
+              disabled={isSaving}
+            />
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={handleSave} 
+              className="h-8 w-8 shrink-0 text-primary hover:text-primary hover:bg-primary/10"
+              disabled={isSaving}
+            >
+              <Save className="w-4 h-4" />
+            </Button>
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={() => { setLocalValue(value); setIsEditing(false); }} 
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              disabled={isSaving}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/60 transition-colors group"
+      onClick={() => setIsEditing(true)}
+    >
+      {icon}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {value ? (
+          isLink ? (
+            <a 
+              href={value.startsWith('http') ? value : `https://${value}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-sm text-primary hover:underline truncate flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {value.replace(/^https?:\/\//, '')}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : (
+            <p className="text-sm font-medium truncate">{value}</p>
+          )
+        ) : (
+          <p className="text-sm text-muted-foreground/60 italic">{placeholder}</p>
+        )}
+      </div>
+      <Pencil className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+    </div>
+  );
+};
+
 export const LeadDetailDialog = ({
   lead,
   stages,
@@ -530,296 +646,287 @@ export const LeadDetailDialog = ({
         {/* Content */}
         <ScrollArea className="flex-1">
           <div className="p-6">
-            {/* Info Tab */}
+            {/* Info Tab - All Information Visible */}
             {activeTab === 'info' && (
               <div className="space-y-5">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    {/* Phone with Country Code */}
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Telefone</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={formData.phone.startsWith('+') ? formData.phone.slice(0, formData.phone.length > 3 ? (formData.phone.startsWith('+55') ? 3 : 2) : 2) : '+55'}
-                          onChange={(e) => {
-                            const currentNumber = formData.phone.replace(/^\+\d{1,3}/, '');
-                            setFormData({ ...formData, phone: e.target.value + currentNumber });
-                          }}
-                          className="h-10 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        >
-                          <option value="+55">🇧🇷 +55</option>
-                          <option value="+1">🇺🇸 +1</option>
-                          <option value="+44">🇬🇧 +44</option>
-                          <option value="+351">🇵🇹 +351</option>
-                          <option value="+34">🇪🇸 +34</option>
-                          <option value="+33">🇫🇷 +33</option>
-                          <option value="+49">🇩🇪 +49</option>
-                          <option value="+39">🇮🇹 +39</option>
-                          <option value="+81">🇯🇵 +81</option>
-                          <option value="+86">🇨🇳 +86</option>
-                          <option value="+91">🇮🇳 +91</option>
-                          <option value="+52">🇲🇽 +52</option>
-                          <option value="+54">🇦🇷 +54</option>
-                          <option value="+56">🇨🇱 +56</option>
-                          <option value="+57">🇨🇴 +57</option>
-                          <option value="+598">🇺🇾 +598</option>
-                          <option value="+595">🇵🇾 +595</option>
-                        </select>
-                        <Input
-                          value={formData.phone.replace(/^\+\d{1,3}/, '')}
-                          onChange={(e) => {
-                            const countryCode = formData.phone.match(/^\+\d{1,3}/)?.[0] || '+55';
-                            setFormData({ ...formData, phone: countryCode + e.target.value.replace(/\D/g, '') });
-                          }}
-                          placeholder="11999999999"
-                          className="flex-1"
-                        />
+                {/* Contact Information Section */}
+                <div className="space-y-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações de Contato</span>
+                  
+                  <div className="bg-muted/40 rounded-lg divide-y divide-border/50">
+                    {/* Phone - Read only */}
+                    <div className="flex items-center gap-3 p-3">
+                      <Phone className="w-4 h-4 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Telefone</p>
+                        <p className="text-sm font-medium">{formatPhoneNumber(lead.phone)}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                          <Building2 className="w-3 h-3" />
-                          Empresa
-                        </label>
-                        <div className="relative">
-                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={formData.company_name}
-                            onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                            placeholder="Nome da empresa"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          Contato
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={formData.contact_name}
-                            onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                            placeholder="Nome do contato"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          Cidade
-                        </label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            placeholder="Cidade"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                          <Tag className="w-3 h-3" />
-                          Região
-                        </label>
-                        <div className="relative">
-                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={formData.region}
-                            onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                            placeholder="Região"
-                            className="pl-9"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                        <Link2 className="w-3 h-3" />
-                        Website
-                      </label>
-                      <div className="relative">
-                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          value={formData.website}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                          placeholder="https://..."
-                          className="pl-9"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" onClick={handleSave} className="flex-1">
-                        <Save className="w-4 h-4 mr-1" /> Salvar
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Contact Details */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contato</span>
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setIsEditing(true)}>
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Editar
-                        </Button>
-                      </div>
-                      
-                      <div className="bg-muted/40 rounded-lg p-3 space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="font-medium">{formatPhoneNumber(lead.phone)}</span>
-                        </div>
-                        
-                        {(lead.city || lead.region) && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="w-4 h-4 shrink-0" />
-                            <span>{[lead.city, lead.region].filter(Boolean).join(', ')}</span>
-                          </div>
-                        )}
-                        
-                        {lead.website && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                            <a 
-                              href={lead.website} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-primary hover:underline truncate flex items-center gap-1"
-                            >
-                              {lead.website.replace(/^https?:\/\//, '')}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
-                        )}
 
-                        {lead.google_maps_link && (
+                    {/* Company Name - Editable */}
+                    <EditableInfoField
+                      icon={<Building2 className="w-4 h-4 text-muted-foreground" />}
+                      label="Empresa"
+                      value={formData.company_name}
+                      placeholder="Adicionar empresa"
+                      onChange={(value) => setFormData({ ...formData, company_name: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { company_name: formData.company_name });
+                        toast.success('Empresa atualizada!');
+                      }}
+                    />
+
+                    {/* Contact Name - Editable */}
+                    <EditableInfoField
+                      icon={<User className="w-4 h-4 text-muted-foreground" />}
+                      label="Nome do Contato"
+                      value={formData.contact_name}
+                      placeholder="Adicionar contato"
+                      onChange={(value) => setFormData({ ...formData, contact_name: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { contact_name: formData.contact_name });
+                        toast.success('Contato atualizado!');
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Location Section */}
+                <div className="space-y-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Localização</span>
+                  
+                  <div className="bg-muted/40 rounded-lg divide-y divide-border/50">
+                    {/* City - Editable */}
+                    <EditableInfoField
+                      icon={<MapPin className="w-4 h-4 text-muted-foreground" />}
+                      label="Cidade"
+                      value={formData.city}
+                      placeholder="Adicionar cidade"
+                      onChange={(value) => setFormData({ ...formData, city: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { city: formData.city });
+                        toast.success('Cidade atualizada!');
+                      }}
+                    />
+
+                    {/* Region - Editable */}
+                    <EditableInfoField
+                      icon={<Tag className="w-4 h-4 text-muted-foreground" />}
+                      label="Região/Estado"
+                      value={formData.region}
+                      placeholder="Adicionar região"
+                      onChange={(value) => setFormData({ ...formData, region: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { region: formData.region });
+                        toast.success('Região atualizada!');
+                      }}
+                    />
+
+                    {/* Google Maps Link */}
+                    {lead.google_maps_link && (
+                      <div className="flex items-center gap-3 p-3">
+                        <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Google Maps</p>
                           <a 
                             href={lead.google_maps_link} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
                           >
-                            <MapPin className="w-3 h-3" />
-                            Ver no Google Maps
+                            Ver no mapa
+                            <ExternalLink className="w-3 h-3" />
                           </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Origin - Editable (MOVED ABOVE VALUE) */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Origem</span>
-                        {onUpdateOrigin && onDeleteOrigin && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-6 px-2 text-xs"
-                            onClick={() => setShowManageOriginsDialog(true)}
-                          >
-                            <Settings2 className="w-3 h-3 mr-1" />
-                            Gerenciar
-                          </Button>
-                        )}
-                      </div>
-                      <Select
-                        value={lead.origin || ''}
-                        onValueChange={async (value) => {
-                          if (value === '__new__') {
-                            setShowNewOriginDialog(true);
-                          } else {
-                            const updatedLead = await onUpdate(lead.id, { origin: value });
-                            if (updatedLead) Object.assign(lead, updatedLead);
-                            toast.success('Origem atualizada!');
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Selecionar origem" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[...new Set(['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social', ...origins])].map((origin) => (
-                            <SelectItem key={origin} value={origin}>
-                              {origin}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="__new__">
-                            <span className="text-primary">+ Nova origem</span>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Negotiation Value with Close Deal Button */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" />
-                        Valor da Negociação
-                      </span>
-                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-primary font-medium text-lg">R$</span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={formatCurrency(dealValue)}
-                            onChange={(e) => {
-                              const formatted = formatCurrencyInput(e.target.value);
-                              const value = parseCurrency(formatted);
-                              setDealValue(value);
-                            }}
-                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
-                            placeholder="0,00"
-                          />
                         </div>
-                        {hasUnsavedValue ? (
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            variant="secondary"
-                            onClick={() => handleValueChange(dealValue)}
-                            disabled={isSavingValue}
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {isSavingValue ? 'Salvando...' : 'Salvar Valor'}
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => setShowDealConfirm(true)}
-                            disabled={!dealValue || dealValue <= 0}
-                          >
-                            <Check className="w-4 h-4 mr-2" />
-                            Negociação Fechada
-                          </Button>
-                        )}
-                        {deals.length > 0 && (
-                          <div className="pt-2 border-t border-primary/10">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Total em vendas:</span>
-                              <span className="font-medium text-primary">
-                                R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                          </div>
-                        )}
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Business Info Section */}
+                <div className="space-y-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Negócio</span>
+                  
+                  <div className="bg-muted/40 rounded-lg divide-y divide-border/50">
+                    {/* Category - Editable */}
+                    <EditableInfoField
+                      icon={<Tag className="w-4 h-4 text-muted-foreground" />}
+                      label="Categoria/Nicho"
+                      value={formData.category}
+                      placeholder="Adicionar categoria"
+                      onChange={(value) => setFormData({ ...formData, category: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { category: formData.category });
+                        toast.success('Categoria atualizada!');
+                      }}
+                    />
+
+                    {/* Website - Editable */}
+                    <EditableInfoField
+                      icon={<Globe className="w-4 h-4 text-muted-foreground" />}
+                      label="Website"
+                      value={formData.website}
+                      placeholder="Adicionar website"
+                      onChange={(value) => setFormData({ ...formData, website: value })}
+                      onSave={async () => {
+                        await onUpdate(lead.id, { website: formData.website });
+                        toast.success('Website atualizado!');
+                      }}
+                      isLink
+                    />
+                  </div>
+                </div>
+
+                {/* Origin Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Origem</span>
+                    {onUpdateOrigin && onDeleteOrigin && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 px-2 text-xs"
+                        onClick={() => setShowManageOriginsDialog(true)}
+                      >
+                        <Settings2 className="w-3 h-3 mr-1" />
+                        Gerenciar
+                      </Button>
+                    )}
+                  </div>
+                  <Select
+                    value={lead.origin || ''}
+                    onValueChange={async (value) => {
+                      if (value === '__new__') {
+                        setShowNewOriginDialog(true);
+                      } else {
+                        const updatedLead = await onUpdate(lead.id, { origin: value });
+                        if (updatedLead) Object.assign(lead, updatedLead);
+                        toast.success('Origem atualizada!');
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecionar origem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...new Set(['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social', ...origins])].map((origin) => (
+                        <SelectItem key={origin} value={origin}>
+                          {origin}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__new__">
+                        <span className="text-primary">+ Nova origem</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tags Section */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags</span>
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {(lead.tags || []).map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs cursor-pointer hover:bg-destructive/20 transition-colors"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          {tag} ×
+                        </Badge>
+                      ))}
+                      {(lead.tags || []).length === 0 && (
+                        <span className="text-xs text-muted-foreground">Sem tags</span>
+                      )}
                     </div>
-                  </>
-                )}
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Nova tag"
+                        className="h-8 text-sm"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                      />
+                      <Button size="sm" variant="outline" onClick={handleAddTag} className="h-8 px-2" disabled={!newTag.trim()}>
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meta Info */}
+                <div className="space-y-2 text-xs text-muted-foreground bg-muted/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3 h-3" />
+                    <span>
+                      Prospectado em {format(new Date(lead.prospected_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      Atualizado {formatDistanceToNow(new Date(lead.updated_at), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Negotiation Value with Close Deal Button - At the end */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    Valor da Negociação
+                  </span>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-medium text-lg">R$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={formatCurrency(dealValue)}
+                        onChange={(e) => {
+                          const formatted = formatCurrencyInput(e.target.value);
+                          const value = parseCurrency(formatted);
+                          setDealValue(value);
+                        }}
+                        className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
+                        placeholder="0,00"
+                      />
+                    </div>
+                    {hasUnsavedValue ? (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        variant="secondary"
+                        onClick={() => handleValueChange(dealValue)}
+                        disabled={isSavingValue}
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        {isSavingValue ? 'Salvando...' : 'Salvar Valor'}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setShowDealConfirm(true)}
+                        disabled={!dealValue || dealValue <= 0}
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        Negociação Fechada
+                      </Button>
+                    )}
+                    {deals.length > 0 && (
+                      <div className="pt-2 border-t border-primary/10">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Total em vendas:</span>
+                          <span className="font-medium text-primary">
+                            R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
