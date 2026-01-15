@@ -58,22 +58,19 @@ export const KanbanBoardWithScroll = ({
     if (draggedLead) {
       onLeadMove(draggedLead, stageId);
     }
-    setDraggedLead(null);
-    setDragOverStage(null);
-    scrollVelocity.current = 0;
+    handleDragEnd();
   };
 
   const getLeadsByStage = (stageId: string) => {
     return leads.filter(lead => lead.pipeline_stage_id === stageId);
   };
 
-  // Smooth scroll animation loop
+  // Smooth scroll animation
   const smoothScroll = useCallback(() => {
     if (!containerRef.current) return;
     
     if (Math.abs(scrollVelocity.current) > 0.5) {
       containerRef.current.scrollLeft += scrollVelocity.current;
-      // Apply friction to slow down gradually
       scrollVelocity.current *= 0.95;
       animationRef.current = requestAnimationFrame(smoothScroll);
     } else {
@@ -82,50 +79,39 @@ export const KanbanBoardWithScroll = ({
     }
   }, []);
 
-  // Calculate scroll velocity based on mouse position - works globally
   const calculateScrollVelocity = useCallback((mouseX: number) => {
     if (!containerRef.current) return;
     
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
-    
-    // Use the full viewport width for edge detection
     const viewportWidth = window.innerWidth;
-    const edgeThreshold = 150; // pixels from viewport edge to start scrolling
-    const maxSpeed = 10; // maximum scroll speed
+    const edgeThreshold = 150;
+    const maxSpeed = 10;
     
     let targetVelocity = 0;
     
-    // Check if near left edge of viewport OR container
     const leftEdge = Math.min(rect.left, edgeThreshold);
     if (mouseX < leftEdge + edgeThreshold) {
       const distance = leftEdge + edgeThreshold - mouseX;
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = -maxSpeed * intensity * intensity;
-    }
-    // Check if near right edge of viewport OR container
-    else if (mouseX > viewportWidth - edgeThreshold) {
+    } else if (mouseX > viewportWidth - edgeThreshold) {
       const distance = mouseX - (viewportWidth - edgeThreshold);
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = maxSpeed * intensity * intensity;
-    }
-    // Also check if near right edge of container
-    else if (mouseX > rect.right - edgeThreshold && mouseX <= rect.right) {
+    } else if (mouseX > rect.right - edgeThreshold && mouseX <= rect.right) {
       const distance = mouseX - (rect.right - edgeThreshold);
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = maxSpeed * intensity * intensity;
     }
     
-    // Smoothly interpolate to target velocity
     scrollVelocity.current += (targetVelocity - scrollVelocity.current) * 0.15;
     
-    // Start animation if not running and we have velocity
     if (!animationRef.current && Math.abs(scrollVelocity.current) > 0.1) {
       animationRef.current = requestAnimationFrame(smoothScroll);
     }
   }, [smoothScroll]);
 
-  // Global drag handler - works anywhere on the page
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
@@ -133,7 +119,6 @@ export const KanbanBoardWithScroll = ({
     }
   }, [draggedLead, calculateScrollVelocity]);
 
-  // Container drag over handler
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
@@ -141,7 +126,6 @@ export const KanbanBoardWithScroll = ({
     }
   }, [draggedLead, calculateScrollVelocity]);
 
-  // Add global drag listener when dragging starts
   useEffect(() => {
     if (draggedLead) {
       document.addEventListener('dragover', handleGlobalDragOver);
@@ -151,7 +135,6 @@ export const KanbanBoardWithScroll = ({
     }
   }, [draggedLead, handleGlobalDragOver]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (animationRef.current) {
@@ -161,7 +144,6 @@ export const KanbanBoardWithScroll = ({
     };
   }, [handleGlobalDragOver]);
 
-  // Filter stages if a specific stage is selected
   const displayedStages = filteredStageId 
     ? stages.filter(stage => stage.id === filteredStageId)
     : stages;
@@ -170,33 +152,32 @@ export const KanbanBoardWithScroll = ({
     <div 
       ref={containerRef}
       className={cn(
-        "flex gap-3 sm:gap-4 overflow-x-auto pb-4 h-full pr-4 -mx-2 px-2",
+        "flex gap-4 overflow-x-auto pb-4 h-full",
         draggedLead && "cursor-grabbing select-none",
         filteredStageId && "justify-center"
       )}
       onDragOver={handleContainerDragOver}
     >
       {displayedStages.map((stage) => (
-        <div key={stage.id} className="min-w-0">
-          <KanbanColumn
-            stage={stage}
-            leads={getLeadsByStage(stage.id)}
-            onLeadClick={onLeadClick}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={() => handleDragOver(stage.id)}
-            onDrop={() => handleDrop(stage.id)}
-            isDragOver={dragOverStage === stage.id}
-            isDragging={!!draggedLead}
-            isExpanded={!!filteredStageId}
-            selectedLeadId={selectedLead?.id}
-            bulkSelectMode={bulkSelectMode}
-            selectedLeadIds={selectedLeadIds}
-            onSelectAllInColumn={onSelectAllInColumn}
-            onUpdateLeadName={onUpdateLeadName}
-            columnWidth={columnWidth}
-          />
-        </div>
+        <KanbanColumn
+          key={stage.id}
+          stage={stage}
+          leads={getLeadsByStage(stage.id)}
+          onLeadClick={onLeadClick}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragOver={() => handleDragOver(stage.id)}
+          onDrop={() => handleDrop(stage.id)}
+          isDragOver={dragOverStage === stage.id}
+          isDragging={!!draggedLead}
+          isExpanded={!!filteredStageId}
+          selectedLeadId={selectedLead?.id}
+          bulkSelectMode={bulkSelectMode}
+          selectedLeadIds={selectedLeadIds}
+          onSelectAllInColumn={onSelectAllInColumn}
+          onUpdateLeadName={onUpdateLeadName}
+          columnWidth={columnWidth}
+        />
       ))}
     </div>
   );

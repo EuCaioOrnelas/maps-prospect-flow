@@ -6,12 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 export type ColumnWidth = 'compact' | 'medium' | 'large';
 
-const COLUMN_WIDTH_CLASSES: Record<ColumnWidth, string> = {
-  compact: 'w-56 min-w-[224px]',
-  medium: 'w-72 min-w-[288px]',
-  large: 'w-80 min-w-[320px]',
-};
-
 interface KanbanColumnProps {
   stage: PipelineStage;
   leads: Lead[];
@@ -22,7 +16,6 @@ interface KanbanColumnProps {
   onDrop: () => void;
   isDragOver: boolean;
   selectedLeadId?: string;
-  // Optional features
   isDragging?: boolean;
   isExpanded?: boolean;
   showTotalValue?: boolean;
@@ -32,6 +25,20 @@ interface KanbanColumnProps {
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
 }
+
+const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
+  if (isExpanded) return 'w-full max-w-2xl';
+  
+  switch (width) {
+    case 'compact':
+      return 'w-56 min-w-[224px]';
+    case 'large':
+      return 'w-80 min-w-[320px]';
+    case 'medium':
+    default:
+      return 'w-72 min-w-[288px]';
+  }
+};
 
 export const KanbanColumn = ({
   stage,
@@ -74,8 +81,8 @@ export const KanbanColumn = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
-        isExpanded ? "w-full max-w-2xl" : COLUMN_WIDTH_CLASSES[columnWidth],
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full",
+        getColumnWidthClass(columnWidth, isExpanded),
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",
@@ -86,8 +93,8 @@ export const KanbanColumn = ({
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div className="p-3 border-b border-border/50">
-        <div className="flex items-center justify-between mb-1">
+      <div className="p-3 border-b border-border/50 shrink-0">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2 min-w-0">
             {bulkSelectMode && leads.length > 0 && (
               <Checkbox
@@ -101,7 +108,7 @@ export const KanbanColumn = ({
             )}
             <div
               className={cn(
-                "w-3 h-3 rounded-full shrink-0 transition-transform duration-300",
+                "w-3 h-3 rounded-full shrink-0 transition-transform duration-200",
                 isDragOver && "scale-125"
               )}
               style={{ backgroundColor: stage.color }}
@@ -111,7 +118,7 @@ export const KanbanColumn = ({
             </h3>
           </div>
           <span className={cn(
-            "text-xs font-medium px-2 py-0.5 rounded-full shrink-0 transition-colors duration-300",
+            "text-xs font-medium px-2 py-0.5 rounded-full shrink-0 transition-colors duration-200",
             isDragOver 
               ? "bg-primary text-primary-foreground" 
               : "bg-primary/10 text-primary"
@@ -127,10 +134,10 @@ export const KanbanColumn = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1 overflow-hidden">
-        <div className="space-y-2 p-2 pr-3">
+      <ScrollArea className="flex-1">
+        <div className="p-2 space-y-2">
           {leads.map((lead) => (
-            <div key={lead.id} className="relative overflow-hidden">
+            <div key={lead.id} className="relative">
               {bulkSelectMode && (
                 <div 
                   className="absolute top-2 right-2 z-10"
@@ -154,7 +161,7 @@ export const KanbanColumn = ({
           ))}
           {leads.length === 0 && (
             <div className={cn(
-              "text-center py-8 text-sm border-2 border-dashed rounded-lg transition-all duration-300",
+              "text-center py-8 text-sm border-2 border-dashed rounded-lg transition-colors duration-200",
               isDragOver 
                 ? "border-primary bg-primary/10 text-primary font-medium" 
                 : "border-muted-foreground/30 text-muted-foreground"
