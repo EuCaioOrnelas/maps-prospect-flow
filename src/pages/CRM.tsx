@@ -38,33 +38,7 @@ export default function CRM() {
   const isMobile = useIsMobile();
   const [showBetaWarning, setShowBetaWarning] = useState(false);
 
-  // Check if beta warning was already shown
-  useEffect(() => {
-    const betaWarningSeen = localStorage.getItem('crm_beta_warning_seen');
-    if (!betaWarningSeen) {
-      setShowBetaWarning(true);
-    }
-  }, []);
-
-  const handleCloseBetaWarning = () => {
-    localStorage.setItem('crm_beta_warning_seen', 'true');
-    setShowBetaWarning(false);
-  };
-
-  // Show mobile block overlay
-  if (isMobile) {
-    return <MobileBlockOverlay />;
-  }
-  
-  // Aguardar carregamento do profile antes de continuar
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const {
     stages, 
     leads, 
@@ -101,8 +75,20 @@ export default function CRM() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
-  // Fixed medium column width as default
   const columnWidth: ColumnWidth = 'medium';
+
+  // Check if beta warning was already shown
+  useEffect(() => {
+    const betaWarningSeen = localStorage.getItem('crm_beta_warning_seen');
+    if (!betaWarningSeen) {
+      setShowBetaWarning(true);
+    }
+  }, []);
+
+  const handleCloseBetaWarning = useCallback(() => {
+    localStorage.setItem('crm_beta_warning_seen', 'true');
+    setShowBetaWarning(false);
+  }, []);
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -134,7 +120,7 @@ export default function CRM() {
     enabled: !!user,
   });
 
-  // Fetch user profile for sidebar (already available from useAuth)
+  // Fetch user profile for sidebar
   const { data: sidebarProfile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -166,6 +152,19 @@ export default function CRM() {
     customOrigins.forEach(origin => originsSet.add(origin));
     return Array.from(originsSet).sort();
   }, [leads, customOrigins]);
+
+  // EARLY RETURNS AFTER ALL HOOKS
+  if (isMobile) {
+    return <MobileBlockOverlay />;
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Filter leads
   const filteredLeads = leads.filter(lead => {
