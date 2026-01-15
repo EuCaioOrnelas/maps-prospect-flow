@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -35,10 +35,12 @@ import { useWhatsAppNumbers, WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { NoConnectedNumbers } from "@/components/whatsapp/NoConnectedNumbers";
 import { useCampaignRealtime } from "@/hooks/useCampaignRealtime";
 import { useCampaignBalance } from "@/hooks/useCampaignBalance";
+import { useCampaignDrafts, CampaignDraft } from "@/hooks/useCampaignDrafts";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
 import { WindowSystemModal } from "@/components/whatsapp/WindowSystemModal";
+import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -173,6 +175,17 @@ const WhatsAppCampaign = () => {
   } = useWhatsAppNumbers();
 
   const { getBalanceForDate } = useCampaignBalance();
+
+  const { 
+    drafts, 
+    loading: loadingDrafts, 
+    saveDraft, 
+    deleteDraft, 
+    loadDraft, 
+    clearCurrentDraft,
+    resetDraftState,
+    currentDraftId
+  } = useCampaignDrafts();
 
   const [showConnectModal, setShowConnectModal] = useState(false);
 
@@ -410,6 +423,9 @@ const WhatsAppCampaign = () => {
         setIsStartingCampaign(false);
         return;
       }
+      
+      // Clear draft after successful campaign creation
+      await handleCampaignCreatedFromDraft();
 
       setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
 
@@ -537,6 +553,66 @@ const WhatsAppCampaign = () => {
       campaignId: null
     });
     setActiveTab('new');
+    resetDraftState();
+  };
+
+  // Auto-save draft when step changes or data changes
+  const saveDraftDebounced = useCallback(async () => {
+    if (step === 'running') return;
+    if (activeTab !== 'new') return;
+    
+    await saveDraft({
+      step,
+      selectedLeads,
+      messages,
+      campaignName,
+      delaySecondsMin,
+      delaySecondsMax,
+      pauseAfterContacts,
+      pauseMinutes,
+      enableSmartPause,
+      isScheduled,
+      scheduledDate,
+      scheduledTime,
+      selectedNumberId,
+    });
+  }, [step, selectedLeads, messages, campaignName, delaySecondsMin, delaySecondsMax, pauseAfterContacts, pauseMinutes, enableSmartPause, isScheduled, scheduledDate, scheduledTime, selectedNumberId, saveDraft, activeTab]);
+
+  // Save draft when navigating between steps
+  useEffect(() => {
+    if (step !== 'leads' || selectedLeads.length > 0 || messages.some(m => m.trim()) || campaignName) {
+      const timer = setTimeout(saveDraftDebounced, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, selectedLeads, messages, campaignName, saveDraftDebounced]);
+
+  const handleLoadDraft = (draft: CampaignDraft) => {
+    loadDraft(draft);
+    setStep(draft.step);
+    setSelectedLeads(draft.selected_leads || []);
+    setMessages(draft.messages || ['', '', '', '', '']);
+    setCampaignName(draft.campaign_name || '');
+    setDelaySecondsMin(draft.delay_seconds_min || 40);
+    setDelaySecondsMax(draft.delay_seconds_max || 60);
+    setPauseAfterContacts(draft.pause_after_contacts || 30);
+    setPauseMinutes(draft.pause_minutes || 5);
+    setEnableSmartPause(draft.enable_smart_pause ?? true);
+    setIsScheduled(draft.is_scheduled || false);
+    setScheduledDate(draft.scheduled_date ? new Date(draft.scheduled_date) : undefined);
+    setScheduledTime(draft.scheduled_time || '09:00');
+    setSelectedNumberId(draft.selected_number_id);
+    
+    toast({
+      title: "Rascunho carregado",
+      description: "Continue de onde parou",
+    });
+  };
+
+  // Delete draft when campaign is successfully created
+  const handleCampaignCreatedFromDraft = async () => {
+    if (currentDraftId) {
+      await clearCurrentDraft();
+    }
   };
 
   const handleDeleteCampaign = async (campaignId: string) => {
@@ -922,6 +998,15 @@ const WhatsAppCampaign = () => {
             </>
           ) : (
             <>
+              {/* Drafts Section */}
+              {step === 'leads' && activeTab === 'new' && (
+                <CampaignDrafts
+                  drafts={drafts}
+                  onLoadDraft={handleLoadDraft}
+                  onDeleteDraft={deleteDraft}
+                  loading={loadingDrafts}
+                />
+              )}
               
               {step !== 'running' && activeTab === 'new' && renderStepIndicator()}
 

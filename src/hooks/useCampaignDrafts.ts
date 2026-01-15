@@ -38,16 +38,17 @@ export const useCampaignDrafts = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('campaign_drafts')
+      // Use type assertion since campaign_drafts may not be in generated types yet
+      const { data, error } = await (supabase
+        .from('campaign_drafts' as any)
         .select('*')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false }) as any);
 
       if (error) throw error;
       
       // Parse the data properly
-      const parsedDrafts = (data || []).map(draft => ({
+      const parsedDrafts = (data || []).map((draft: any) => ({
         ...draft,
         selected_leads: Array.isArray(draft.selected_leads) 
           ? draft.selected_leads 
@@ -115,10 +116,10 @@ export const useCampaignDrafts = () => {
     try {
       if (currentDraftId) {
         // Update existing draft
-        const { error } = await supabase
-          .from('campaign_drafts')
+        const { error } = await (supabase
+          .from('campaign_drafts' as any)
           .update(draftPayload)
-          .eq('id', currentDraftId);
+          .eq('id', currentDraftId) as any);
 
         if (error) throw error;
         
@@ -131,11 +132,11 @@ export const useCampaignDrafts = () => {
         return currentDraftId;
       } else {
         // Create new draft
-        const { data, error } = await supabase
-          .from('campaign_drafts')
+        const { data, error } = await (supabase
+          .from('campaign_drafts' as any)
           .insert(draftPayload)
           .select()
-          .single();
+          .single() as any);
 
         if (error) throw error;
         
@@ -158,10 +159,10 @@ export const useCampaignDrafts = () => {
 
   const deleteDraft = useCallback(async (draftId: string) => {
     try {
-      const { error } = await supabase
-        .from('campaign_drafts')
+      const { error } = await (supabase
+        .from('campaign_drafts' as any)
         .delete()
-        .eq('id', draftId);
+        .eq('id', draftId) as any);
 
       if (error) throw error;
       

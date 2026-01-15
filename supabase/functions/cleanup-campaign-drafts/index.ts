@@ -49,13 +49,14 @@ Deno.serve(async (req) => {
         status: 200 
       }
     );
-  } catch (error) {
-    console.error('❌ Cleanup failed:', error);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error('❌ Cleanup failed:', errorMessage);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: errorMessage 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

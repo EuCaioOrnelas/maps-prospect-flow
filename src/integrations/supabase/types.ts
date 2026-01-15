@@ -122,6 +122,69 @@ export type Database = {
           },
         ]
       }
+      campaign_drafts: {
+        Row: {
+          campaign_name: string
+          created_at: string
+          delay_seconds_max: number
+          delay_seconds_min: number
+          enable_smart_pause: boolean
+          id: string
+          is_scheduled: boolean
+          messages: Json
+          name: string
+          pause_after_contacts: number
+          pause_minutes: number
+          scheduled_date: string | null
+          scheduled_time: string
+          selected_leads: Json
+          selected_number_id: string | null
+          step: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_name?: string
+          created_at?: string
+          delay_seconds_max?: number
+          delay_seconds_min?: number
+          enable_smart_pause?: boolean
+          id?: string
+          is_scheduled?: boolean
+          messages?: Json
+          name?: string
+          pause_after_contacts?: number
+          pause_minutes?: number
+          scheduled_date?: string | null
+          scheduled_time?: string
+          selected_leads?: Json
+          selected_number_id?: string | null
+          step?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_name?: string
+          created_at?: string
+          delay_seconds_max?: number
+          delay_seconds_min?: number
+          enable_smart_pause?: boolean
+          id?: string
+          is_scheduled?: boolean
+          messages?: Json
+          name?: string
+          pause_after_contacts?: number
+          pause_minutes?: number
+          scheduled_date?: string | null
+          scheduled_time?: string
+          selected_leads?: Json
+          selected_number_id?: string | null
+          step?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       campaign_incidents: {
         Row: {
           campaign_id: string | null
