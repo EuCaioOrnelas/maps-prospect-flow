@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
-import { KanbanColumnDraggable } from './KanbanColumnDraggable';
+import { KanbanColumn } from './KanbanColumn';
 import { cn } from '@/lib/utils';
 
 interface KanbanBoardWithScrollProps {
@@ -175,7 +175,7 @@ export const KanbanBoardWithScroll = ({
       onDragOver={handleContainerDragOver}
     >
       {displayedStages.map((stage) => (
-        <KanbanColumnDraggable
+        <KanbanColumn
           key={stage.id}
           stage={stage}
           leads={getLeadsByStage(stage.id)}
@@ -185,9 +185,9 @@ export const KanbanBoardWithScroll = ({
           onDragOver={() => handleDragOver(stage.id)}
           onDrop={() => handleDrop(stage.id)}
           isDragOver={dragOverStage === stage.id}
-          selectedLeadId={selectedLead?.id}
           isDragging={!!draggedLead}
           isExpanded={!!filteredStageId}
+          selectedLeadId={selectedLead?.id}
           bulkSelectMode={bulkSelectMode}
           selectedLeadIds={selectedLeadIds}
           onSelectAllInColumn={onSelectAllInColumn}
