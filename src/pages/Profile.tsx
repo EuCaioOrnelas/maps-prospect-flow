@@ -48,6 +48,16 @@ const Profile = () => {
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
 
+  const getNextSearchResetLabel = () => {
+    const now = new Date();
+    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return nextReset.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
   const getPlanName = (plan: string) => {
     switch (plan) {
       case 'start': return 'Start';
@@ -241,6 +251,40 @@ const Profile = () => {
           <p className="text-muted-foreground text-sm">Gerencie suas configurações de conta</p>
         </div>
         <div className="grid gap-6">
+          {/* Security Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Segurança
+              </CardTitle>
+              <CardDescription>
+                Gerencie a segurança da sua conta
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Senha</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Altere sua senha de acesso
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPasswordModal(true)}
+                  className="gap-2"
+                >
+                  <Lock className="h-4 w-4" />
+                  Alterar senha
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Profile Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
@@ -314,40 +358,6 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Security Card */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Segurança
-              </CardTitle>
-              <CardDescription>
-                Gerencie a segurança da sua conta
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Senha</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Altere sua senha de acesso
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowPasswordModal(true)}
-                  className="gap-2"
-                >
-                  <Lock className="h-4 w-4" />
-                  Alterar senha
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Plan Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
@@ -370,6 +380,9 @@ const Profile = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {profile?.searches_used || 0} de {profile?.searches_limit || 10} buscas utilizadas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Reset das buscas mensais: {getNextSearchResetLabel()}
                   </p>
                 </div>
                 {profile?.plan === 'scale' ? (

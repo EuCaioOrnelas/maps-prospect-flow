@@ -11,6 +11,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function normalizeWhatsAppNumber(input: string): string {
+  const digits = (input || '').replace(/\D/g, '');
+  if (!digits) return '';
+
+  // Brasil (10-11 dígitos sem DDI): adiciona 55
+  if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
+    return `55${digits}`;
+  }
+
+  // Internacional (já vem com DDI): mantém
+  return digits;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -87,6 +100,28 @@ serve(async (req) => {
     }
 
     const instanceName = conversation.whatsapp_numbers.instance_name;
+    if (!instanceName) {
+      return new Response(JSON.stringify({ error: 'WhatsApp não conectado para este número' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Destination:
+    // - grupos: usar o remote_jid completo (@g.us)
+    // - chats 1:1: usar número somente dígitos com DDI (ex: 5511999999999 / 447700900000)
+    const isGroup = String(conversation.remote_jid || '').includes('@g.us');
+    const destination = isGroup
+      ? String(conversation.remote_jid)
+      : normalizeWhatsAppNumber(String(conversation.phone || '').trim() || String(conversation.remote_jid || '').split('@')[0]);
+
+    if (!destination) {
+      return new Response(JSON.stringify({ error: 'Destino inválido para envio' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     let apiEndpoint = '';
     let messageBody: Record<string, unknown> = {};
 
@@ -94,7 +129,7 @@ serve(async (req) => {
     if (messageType === 'text') {
       apiEndpoint = `${evolutionApiUrl}/message/sendText/${instanceName}`;
       messageBody = {
-        number: conversation.phone,
+        number: destination,
         text: content,
       };
       
@@ -104,7 +139,7 @@ serve(async (req) => {
     } else if (messageType === 'image') {
       apiEndpoint = `${evolutionApiUrl}/message/sendMedia/${instanceName}`;
       messageBody = {
-        number: conversation.phone,
+        number: destination,
         mediatype: 'image',
         media: mediaUrl,
         caption: content || '',
@@ -112,13 +147,13 @@ serve(async (req) => {
     } else if (messageType === 'audio') {
       apiEndpoint = `${evolutionApiUrl}/message/sendWhatsAppAudio/${instanceName}`;
       messageBody = {
-        number: conversation.phone,
+        number: destination,
         audio: mediaUrl,
       };
     } else if (messageType === 'video') {
       apiEndpoint = `${evolutionApiUrl}/message/sendMedia/${instanceName}`;
       messageBody = {
-        number: conversation.phone,
+        number: destination,
         mediatype: 'video',
         media: mediaUrl,
         caption: content || '',
@@ -126,7 +161,7 @@ serve(async (req) => {
     } else if (messageType === 'document') {
       apiEndpoint = `${evolutionApiUrl}/message/sendMedia/${instanceName}`;
       messageBody = {
-        number: conversation.phone,
+        number: destination,
         mediatype: 'document',
         media: mediaUrl,
         fileName: mediaFilename || 'document',

@@ -86,29 +86,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data as Profile | null;
   };
 
-  // Check subscription status and refresh the profile so UI updates automatically
-  // (especially after returning from checkout / customer portal).
-  const checkAndUpdateSubscription = async (userIdOverride?: string) => {
+  // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
+  const syncAccountState = async (userId: string, reason: string) => {
     try {
-      console.log('[AuthContext] Checking subscription status...');
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      console.log(`[AuthContext] Sync account state (${reason})...`);
 
-      if (error) {
-        console.error('[AuthContext] Error checking subscription:', error);
-        return;
+      const [subResult, resetResult] = await Promise.all([
+        supabase.functions.invoke('check-subscription'),
+        supabase.rpc('check_and_reset_monthly_searches', { user_id: userId }),
+      ]);
+
+      if (subResult?.error) {
+        console.error('[AuthContext] Error checking subscription:', subResult.error);
       }
 
-      if (data) {
-        console.log('[AuthContext] Subscription check result:', data);
+      if (resetResult?.error) {
+        console.error('[AuthContext] Error resetting monthly searches:', resetResult.error);
       }
 
-      const targetUserId = userIdOverride ?? user?.id;
-      if (targetUserId) {
-        const updatedProfile = await fetchProfile(targetUserId);
-        setProfile(updatedProfile);
-      }
+      const updatedProfile = await fetchProfile(userId);
+      setProfile(updatedProfile);
     } catch (err) {
-      console.error('[AuthContext] Subscription check failed:', err);
+      console.error('[AuthContext] Account sync failed:', err);
     }
   };
 
@@ -129,10 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          checkAndUpdateSubscription(session.user.id);
+          syncAccountState(session.user.id, 'refocus');
         }
       } catch (e) {
-        console.error('[AuthContext] Refocus subscription check failed:', e);
+        console.error('[AuthContext] Refocus sync failed:', e);
       }
     };
 
@@ -149,12 +148,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
 
-            // Check subscription after login or token refresh to ensure plan is up to date
+            // Sync account after login or token refresh to ensure plan/searches are up to date
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-              console.log('[AuthContext] Triggering subscription check after', event);
-              // Small delay to ensure profile is set
               setTimeout(() => {
-                checkAndUpdateSubscription(session.user.id);
+                syncAccountState(session.user.id, event);
               }, 500);
             }
           }, 0);
@@ -173,20 +170,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(data);
         setLoading(false);
 
-        // Check subscription on initial load
+        // Sync on initial load
         setTimeout(() => {
-          checkAndUpdateSubscription(session.user.id);
+          syncAccountState(session.user.id, 'initial');
         }, 500);
       } else {
         setLoading(false);
       }
     });
 
-    // When user comes back from Stripe, re-check automatically
+    // Periodic sync (keeps monthly reset working even if user stays logged-in for long time)
+    const intervalId = window.setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        syncAccountState(session.user.id, 'interval');
+      }
+    }, 1000 * 60 * 60 * 6); // 6h
+
+    // When user comes back, re-sync automatically
     window.addEventListener('focus', handleRefocus);
     document.addEventListener('visibilitychange', handleRefocus);
 
     return () => {
+      window.clearInterval(intervalId);
       subscription.unsubscribe();
       window.removeEventListener('focus', handleRefocus);
       document.removeEventListener('visibilitychange', handleRefocus);
