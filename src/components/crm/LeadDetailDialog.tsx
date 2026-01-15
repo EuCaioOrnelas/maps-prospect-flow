@@ -43,6 +43,8 @@ import {
   DollarSign,
   Calendar,
   TrendingUp,
+  Settings2,
+  X,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -84,6 +86,8 @@ interface LeadDetailDialogProps {
   onFetchNotes: (leadId: string) => Promise<LeadNote[]>;
   onFetchActivities: (leadId: string) => Promise<LeadActivity[]>;
   onAddOrigin: (origin: string) => Promise<void>;
+  onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
+  onDeleteOrigin?: (name: string) => Promise<void>;
 }
 
 const formatPhoneNumber = (phone: string) => {
@@ -107,6 +111,8 @@ export const LeadDetailDialog = ({
   onFetchNotes,
   onFetchActivities,
   onAddOrigin,
+  onUpdateOrigin,
+  onDeleteOrigin,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -136,6 +142,10 @@ export const LeadDetailDialog = ({
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
   const [deleteDealId, setDeleteDealId] = useState<string | null>(null);
   const [showDeleteLeadDialog, setShowDeleteLeadDialog] = useState(false);
+  const [showManageOriginsDialog, setShowManageOriginsDialog] = useState(false);
+  const [editingOriginName, setEditingOriginName] = useState<string | null>(null);
+  const [editOriginNewName, setEditOriginNewName] = useState('');
+  const [deleteOriginName, setDeleteOriginName] = useState<string | null>(null);
   
   // Deal closing state
   const [dealValue, setDealValue] = useState<number>(0);
@@ -662,55 +672,22 @@ export const LeadDetailDialog = ({
                       </div>
                     </div>
 
-                    {/* Negotiation Value with Close Deal */}
+                    {/* Origin - Editable (MOVED ABOVE VALUE) */}
                     <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" />
-                        Valor da Negociação
-                      </span>
-                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 flex-1">
-                            <span className="text-primary font-medium text-lg">R$</span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={dealValue ? dealValue.toLocaleString('pt-BR') : ''}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
-                                setDealValue(value);
-                              }}
-                              className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0,00"
-                            />
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-9 w-9 p-0 border-primary/30 hover:bg-primary hover:text-primary-foreground"
-                            onClick={() => setShowDealConfirm(true)}
-                            disabled={!dealValue || dealValue <= 0}
-                            title="Confirmar fechamento"
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Origem</span>
+                        {onUpdateOrigin && onDeleteOrigin && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-6 px-2 text-xs"
+                            onClick={() => setShowManageOriginsDialog(true)}
                           >
-                            <Check className="w-4 h-4" />
+                            <Settings2 className="w-3 h-3 mr-1" />
+                            Gerenciar
                           </Button>
-                        </div>
-                        {deals.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-primary/10">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Total em vendas:</span>
-                              <span className="font-medium text-primary">
-                                R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                          </div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Origin - Editable */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Origem</span>
                       <Select
                         value={lead.origin || ''}
                         onValueChange={async (value) => {
@@ -737,6 +714,49 @@ export const LeadDetailDialog = ({
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Negotiation Value with Close Deal Button */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        Valor da Negociação
+                      </span>
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-primary font-medium text-lg">R$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={dealValue ? dealValue.toLocaleString('pt-BR') : ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.')) || 0;
+                              setDealValue(value);
+                            }}
+                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            placeholder="0,00"
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowDealConfirm(true)}
+                          disabled={!dealValue || dealValue <= 0}
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          Negociação Fechada
+                        </Button>
+                        {deals.length > 0 && (
+                          <div className="pt-2 border-t border-primary/10">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Total em vendas:</span>
+                              <span className="font-medium text-primary">
+                                R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
@@ -1094,6 +1114,127 @@ export const LeadDetailDialog = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Manage Origins Dialog */}
+        <Dialog open={showManageOriginsDialog} onOpenChange={setShowManageOriginsDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Gerenciar Origens</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[400px] pr-2">
+              <div className="space-y-2">
+                {origins.map((origin) => (
+                  <div 
+                    key={origin}
+                    className="flex items-center gap-2 p-2 rounded-lg border bg-card"
+                  >
+                    {editingOriginName === origin ? (
+                      <>
+                        <Input
+                          value={editOriginNewName}
+                          onChange={(e) => setEditOriginNewName(e.target.value)}
+                          className="h-8 flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          onClick={async () => {
+                            if (onUpdateOrigin && editOriginNewName.trim()) {
+                              try {
+                                await onUpdateOrigin(origin, editOriginNewName.trim());
+                                toast.success('Origem atualizada!');
+                                setEditingOriginName(null);
+                              } catch {
+                                toast.error('Erro ao atualizar origem');
+                              }
+                            }
+                          }}
+                          disabled={!editOriginNewName.trim()}
+                        >
+                          <Check className="w-4 h-4 text-green-500" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          onClick={() => setEditingOriginName(null)}
+                        >
+                          <X className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm">{origin}</span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingOriginName(origin);
+                            setEditOriginNewName(origin);
+                          }}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteOriginName(origin)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {origins.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhuma origem personalizada criada
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowManageOriginsDialog(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Origin Confirmation */}
+        <AlertDialog open={!!deleteOriginName} onOpenChange={(open) => !open && setDeleteOriginName(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Origem</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a origem "{deleteOriginName}"? Leads com esta origem não serão afetados, mas a origem não estará mais disponível para seleção.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (deleteOriginName && onDeleteOrigin) {
+                    try {
+                      await onDeleteOrigin(deleteOriginName);
+                      toast.success('Origem excluída!');
+                    } catch {
+                      toast.error('Erro ao excluir origem');
+                    }
+                  }
+                  setDeleteOriginName(null);
+                }}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
