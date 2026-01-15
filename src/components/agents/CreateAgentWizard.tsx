@@ -65,7 +65,8 @@ const STEPS = [
   { id: 8, title: "Estilo", icon: MessageCircle },
   { id: 9, title: "Horário", icon: Clock },
   { id: 10, title: "Aquecimento", icon: Flame },
-  { id: 11, title: "Confirmação", icon: Check },
+  { id: 11, title: "Webhook n8n", icon: Target },
+  { id: 12, title: "Confirmação", icon: Check },
 ];
 
 const MESSAGE_TEMPLATES = {
@@ -108,6 +109,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [operatingHoursStart, setOperatingHoursStart] = useState("08:00");
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
   const [isWarmed, setIsWarmed] = useState(false);
+  const [n8nWebhookUrl, setN8nWebhookUrl] = useState("");
 
   // Fetch WhatsApp numbers
   useEffect(() => {
@@ -183,6 +185,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
+    setN8nWebhookUrl("");
   };
 
   const handleCreate = async (activate: boolean) => {
@@ -206,6 +209,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           operating_hours_start: operatingHoursStart,
           operating_hours_end: operatingHoursEnd,
           is_warmed: isWarmed,
+          n8n_webhook_url: n8nWebhookUrl || null,
           status: activate ? 'active' : 'draft',
           message_templates: MESSAGE_TEMPLATES[objective],
           max_response_chars: 300,
@@ -656,6 +660,40 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
         );
 
       case 11:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Target className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Webhook do n8n (Opcional)</h3>
+              <p className="text-muted-foreground text-sm">
+                Cole a URL do webhook do seu workflow n8n para receber notificações
+              </p>
+            </div>
+            
+            <Input
+              placeholder="https://seu-n8n.com/webhook/..."
+              value={n8nWebhookUrl}
+              onChange={(e) => setN8nWebhookUrl(e.target.value)}
+              type="url"
+            />
+            
+            <div className="p-3 rounded-lg bg-muted/50 text-sm space-y-2">
+              <p className="font-medium">O que você receberá neste webhook:</p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>Notificação quando uma mensagem for enviada</li>
+                <li>Dados do lead (telefone, nome)</li>
+                <li>Conteúdo da mensagem enviada</li>
+                <li>ID da conversa para rastreamento</li>
+              </ul>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              Deixe em branco se não quiser usar integração com n8n
+            </p>
+          </div>
+        );
+
+      case 12:
         const selectedNumber = numbers.find(n => n.id === selectedNumberId);
         return (
           <div className="space-y-4">
@@ -690,6 +728,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Max caracteres</span>
                 <span className="font-medium">300 caracteres</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">n8n Webhook</span>
+                <span className="font-medium truncate max-w-[200px]">
+                  {n8nWebhookUrl ? "Configurado ✓" : "Não configurado"}
+                </span>
               </div>
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Status do número</span>
