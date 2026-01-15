@@ -71,7 +71,7 @@ export const LeadCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 overflow-hidden w-full",
+        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 overflow-hidden w-full min-w-0",
         "hover:shadow-md hover:border-primary/30",
         isSelected && "ring-2 ring-primary border-primary"
       )}
@@ -162,7 +162,7 @@ export const LeadCard = ({
       )}
 
       {/* Footer - Status and Response */}
-      <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+      <div className="flex items-center gap-2 min-w-0">
         {lead.whatsapp_status && (
           <Badge 
             variant="secondary" 
@@ -171,13 +171,11 @@ export const LeadCard = ({
             {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
           </Badge>
         )}
-        
-        <div className="flex-1" />
-        
+
         {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1 shrink-0">
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right">
             <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="whitespace-nowrap">
+            <span className="whitespace-normal break-words leading-tight">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
                 addSuffix: false,
                 locale: ptBR,
