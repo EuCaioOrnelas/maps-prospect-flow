@@ -17,7 +17,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Plus, AlertTriangle } from 'lucide-react';
+import { 
+  Loader2, 
+  Plus, 
+  AlertTriangle, 
+  User, 
+  Phone, 
+  Building2, 
+  MapPin, 
+  Globe, 
+  Tag, 
+  Layers,
+  DollarSign,
+  Navigation,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CountryCodeSelect } from '@/components/chat/CountryCodeSelect';
@@ -43,6 +56,35 @@ interface AddLeadDialogProps {
   checkLeadExists: (phone: string) => Promise<boolean>;
 }
 
+// Format number to Brazilian currency format (1.234,56)
+const formatCurrency = (value: number): string => {
+  if (!value && value !== 0) return '';
+  return value.toLocaleString('pt-BR', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
+
+// Parse Brazilian currency format to number
+const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  const cleaned = value.replace(/\./g, '').replace(',', '.');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+// Format input as user types in Brazilian currency format
+const formatCurrencyInput = (input: string): string => {
+  const digits = input.replace(/\D/g, '');
+  if (!digits) return '';
+  const cents = parseInt(digits, 10);
+  const reais = cents / 100;
+  return reais.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const AddLeadDialog = ({
   open,
   onOpenChange,
@@ -67,7 +109,7 @@ export const AddLeadDialog = ({
     region: '',
     website: '',
     pipeline_stage_id: '',
-    estimated_value: '',
+    estimated_value: 0,
     origin: '',
   });
 
@@ -88,7 +130,7 @@ export const AddLeadDialog = ({
         region: '',
         website: '',
         pipeline_stage_id: stages[0]?.id || '',
-        estimated_value: '',
+        estimated_value: 0,
         origin: '',
       });
       setExistingLeadWarning(false);
@@ -141,13 +183,13 @@ export const AddLeadDialog = ({
       await onAddLead({
         phone: fullPhone,
         company_name: formData.company_name || undefined,
-        contact_name: formData.contact_name || (fullPhone), // Use phone as name if empty
+        contact_name: formData.contact_name || (fullPhone),
         category: formData.category || undefined,
         city: formData.city || undefined,
         region: formData.region || undefined,
         website: formData.website || undefined,
         pipeline_stage_id: formData.pipeline_stage_id || undefined,
-        estimated_value: formData.estimated_value ? parseFloat(formData.estimated_value) : undefined,
+        estimated_value: formData.estimated_value || undefined,
         origin: formData.origin,
       });
       
@@ -167,39 +209,72 @@ export const AddLeadDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Adicionar Lead</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-primary" />
+            Adicionar Lead
+          </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Campos obrigatórios: telefone e origem.
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Phone with Warning */}
-          <div>
-            <Label htmlFor="phone">Telefone (WhatsApp) *</Label>
-            <div className="flex gap-2">
-              <CountryCodeSelect value={countryCode} onValueChange={setCountryCode} />
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                onBlur={handlePhoneBlur}
-                placeholder="11999999999"
-                className="flex-1"
-                required
-              />
-            </div>
-            {existingLeadWarning && (
-              <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
-                <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm text-yellow-600">Este lead já existe no CRM</span>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Primary Fields - Name and Phone with emphasis */}
+          <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            {/* Contact Name - Prominent */}
+            <div>
+              <Label htmlFor="contact_name" className="flex items-center gap-2 text-base font-medium mb-2">
+                <User className="w-4 h-4 text-primary" />
+                Nome do Contato
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="contact_name"
+                  value={formData.contact_name}
+                  onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                  placeholder="Nome do contato"
+                  className="pl-10 h-11 text-base"
+                />
               </div>
-            )}
+            </div>
+
+            {/* Phone - Prominent */}
+            <div>
+              <Label htmlFor="phone" className="flex items-center gap-2 text-base font-medium mb-2">
+                <Phone className="w-4 h-4 text-primary" />
+                Telefone (WhatsApp) *
+              </Label>
+              <div className="flex gap-2">
+                <CountryCodeSelect value={countryCode} onValueChange={setCountryCode} />
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onBlur={handlePhoneBlur}
+                    placeholder="11999999999"
+                    className="pl-10 h-11 text-base"
+                    required
+                  />
+                </div>
+              </div>
+              {existingLeadWarning && (
+                <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm text-yellow-600">Este lead já existe no CRM</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Origin - Required */}
           <div>
-            <Label>Origem *</Label>
+            <Label className="flex items-center gap-2 mb-2">
+              <Navigation className="w-4 h-4 text-muted-foreground" />
+              Origem *
+            </Label>
             {showNewOrigin ? (
               <div className="flex gap-2">
                 <Input
@@ -239,9 +314,13 @@ export const AddLeadDialog = ({
             )}
           </div>
 
+          {/* Secondary Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="company_name">Empresa</Label>
+              <Label htmlFor="company_name" className="flex items-center gap-2 mb-2">
+                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                Empresa
+              </Label>
               <Input
                 id="company_name"
                 value={formData.company_name}
@@ -251,17 +330,10 @@ export const AddLeadDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="contact_name">Contato</Label>
-              <Input
-                id="contact_name"
-                value={formData.contact_name}
-                onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                placeholder="Nome do contato"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="category">Categoria</Label>
+              <Label htmlFor="category" className="flex items-center gap-2 mb-2">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                Categoria
+              </Label>
               <Input
                 id="category"
                 value={formData.category}
@@ -271,7 +343,10 @@ export const AddLeadDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="city">Cidade</Label>
+              <Label htmlFor="city" className="flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                Cidade
+              </Label>
               <Input
                 id="city"
                 value={formData.city}
@@ -281,7 +356,10 @@ export const AddLeadDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="region">Região</Label>
+              <Label htmlFor="region" className="flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                Região
+              </Label>
               <Input
                 id="region"
                 value={formData.region}
@@ -291,7 +369,10 @@ export const AddLeadDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website" className="flex items-center gap-2 mb-2">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                Website
+              </Label>
               <Input
                 id="website"
                 value={formData.website}
@@ -301,7 +382,10 @@ export const AddLeadDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="pipeline_stage">Etapa do Pipeline</Label>
+              <Label htmlFor="pipeline_stage" className="flex items-center gap-2 mb-2">
+                <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                Etapa do Pipeline
+              </Label>
               <Select
                 value={formData.pipeline_stage_id}
                 onValueChange={(value) => setFormData({ ...formData, pipeline_stage_id: value })}
@@ -324,17 +408,30 @@ export const AddLeadDialog = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="estimated_value">Valor Estimado (R$)</Label>
-              <Input
-                id="estimated_value"
-                type="number"
-                step="0.01"
-                value={formData.estimated_value}
-                onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
-                placeholder="0.00"
-              />
+          {/* Negotiation Value - At the end, styled like LeadDetailDialog */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <DollarSign className="w-4 h-4 text-primary" />
+              Valor da Negociação
+            </Label>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-primary font-medium text-lg">R$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={formatCurrency(formData.estimated_value)}
+                  onChange={(e) => {
+                    const formatted = formatCurrencyInput(e.target.value);
+                    const value = parseCurrency(formatted);
+                    setFormData({ ...formData, estimated_value: value });
+                  }}
+                  className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
+                  placeholder="0,00"
+                />
+              </div>
             </div>
           </div>
 
