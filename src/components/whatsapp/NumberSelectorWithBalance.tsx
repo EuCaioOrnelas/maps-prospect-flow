@@ -20,13 +20,16 @@ import {
   AlertTriangle,
   Calendar,
   Crown,
-  Info
+  Info,
+  Flame,
+  Snowflake
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { useCampaignBalance } from "@/hooks/useCampaignBalance";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NumberSelectorWithBalanceProps {
   numbers: WhatsAppNumber[];
@@ -52,6 +55,7 @@ export const NumberSelectorWithBalance = ({
   const { getBalanceForDate, getReservationsForDate, DAILY_LIMIT_PER_NUMBER } = useCampaignBalance();
   
   const [balances, setBalances] = useState<Record<string, { available: number; used: number; reserved: number }>>({});
+  const [warmingStatus, setWarmingStatus] = useState<Record<string, { status: string; level: number }>>({});
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{
     numberId: string;
@@ -64,6 +68,32 @@ export const NumberSelectorWithBalance = ({
   const connectedNumbers = numbers.filter(n => n.is_connected);
   const canAddMoreNumbers = numbers.length < maxNumbers;
   const showUpgradeButton = !canAddMoreNumbers && (userPlan === 'start' || userPlan === 'growth');
+
+  // Fetch warming status for all connected numbers
+  useEffect(() => {
+    const fetchWarmingStatus = async () => {
+      const numberIds = connectedNumbers.map(n => n.id);
+      if (numberIds.length === 0) return;
+
+      const { data } = await supabase
+        .from('warming_sessions')
+        .select('whatsapp_number_id, warming_status, warming_level')
+        .in('whatsapp_number_id', numberIds);
+
+      if (data) {
+        const statusMap: Record<string, { status: string; level: number }> = {};
+        data.forEach(ws => {
+          statusMap[ws.whatsapp_number_id] = {
+            status: ws.warming_status,
+            level: ws.warming_level
+          };
+        });
+        setWarmingStatus(statusMap);
+      }
+    };
+
+    fetchWarmingStatus();
+  }, [connectedNumbers.length]);
 
   // Fetch balances for all connected numbers
   useEffect(() => {
@@ -181,6 +211,27 @@ export const NumberSelectorWithBalance = ({
         </SelectContent>
       </Select>
       
+      {/* Warming Warning */}
+      {selectedNumberId && warmingStatus[selectedNumberId] && 
+       (warmingStatus[selectedNumberId].status === 'cold' || warmingStatus[selectedNumberId].level < 3) && (
+        <div className="flex items-start gap-2 text-xs p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <Snowflake size={14} className="mt-0.5 flex-shrink-0 text-orange-500" />
+          <div className="space-y-1">
+            <p className="font-medium text-orange-600">
+              Chip sem aquecimento detectado
+            </p>
+            <p className="text-muted-foreground">
+              Números não aquecidos têm <strong>maior risco de bloqueio</strong> pelo WhatsApp. 
+              Recomendamos iniciar o aquecimento antes de disparos em massa ou fazer uma quantidade menor de envios (máx. 20-30/dia).
+            </p>
+            <Link to="/warming" className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+              <Flame size={12} />
+              Iniciar aquecimento
+            </Link>
+          </div>
+        </div>
+      )}
+
       {selectedNumberId && balances[selectedNumberId] && (
         <div className="flex items-start gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded">
           <Info size={12} className="mt-0.5 flex-shrink-0" />
