@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +34,8 @@ import {
   Clock,
   Flame,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -87,6 +89,7 @@ const MESSAGE_TEMPLATES = {
 export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgentWizardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -138,6 +141,14 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
         );
 
         setNumbers(numbersWithWarming);
+        
+        // Auto-select if only one number is connected
+        if (numbersWithWarming.length === 1) {
+          setSelectedNumberId(numbersWithWarming[0].id);
+          const isWarm = numbersWithWarming[0].warming_status === 'hot' || 
+            (numbersWithWarming[0].warming_level && numbersWithWarming[0].warming_level >= 3);
+          setIsWarmed(isWarm);
+        }
       } catch (error) {
         console.error('Error fetching numbers:', error);
       } finally {
@@ -263,6 +274,43 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
         );
 
       case 2:
+        // If only one number, show confirmation instead of selection
+        if (numbers.length === 1) {
+          const singleNumber = numbers[0];
+          return (
+            <div className="space-y-4">
+              <div className="text-center space-y-2">
+                <MessageCircle className="h-12 w-12 mx-auto text-primary" />
+                <h3 className="text-xl font-semibold">Número selecionado automaticamente</h3>
+                <p className="text-muted-foreground text-sm">
+                  Você tem apenas um número conectado
+                </p>
+              </div>
+              
+              <div className="p-4 rounded-lg border border-primary bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{singleNumber.name || singleNumber.phone_number}</p>
+                    {singleNumber.phone_number && singleNumber.name && (
+                      <p className="text-sm text-muted-foreground">{singleNumber.phone_number}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {singleNumber.warming_status === 'hot' ? (
+                      <Badge className="bg-green-500/20 text-green-400">Aquecido</Badge>
+                    ) : singleNumber.warming_status === 'warm' ? (
+                      <Badge className="bg-yellow-500/20 text-yellow-400">Morno</Badge>
+                    ) : (
+                      <Badge className="bg-blue-500/20 text-blue-400">Frio</Badge>
+                    )}
+                    <Check className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -283,7 +331,13 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                 <p className="text-muted-foreground">
                   Nenhum número conectado encontrado.
                 </p>
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                <Button 
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate('/dashboard');
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
                   Conectar Número
                 </Button>
               </div>
