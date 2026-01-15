@@ -162,7 +162,7 @@ export const useCRM = () => {
     setStages(data || []);
   };
 
-  // Fetch ALL leads for the user
+  // Fetch ALL leads for the user (excluding invalid phone numbers like group IDs)
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
@@ -180,7 +180,20 @@ export const useCRM = () => {
       return;
     }
 
-    setLeads((data || []) as Lead[]);
+    // Filter out invalid phone numbers (group IDs start with 120363 or contain @g.us pattern)
+    // Valid Brazilian phones should be 10-13 digits starting with country code 55
+    const validLeads = (data || []).filter((lead) => {
+      const phone = (lead.phone as string)?.replace(/\D/g, '') || '';
+      // Exclude if: starts with 120363 (group ID), or phone is too long (>15 digits), or too short (<10 digits)
+      if (phone.startsWith('120363')) return false;
+      if (phone.length > 15) return false;
+      if (phone.length < 10) return false;
+      // Check for group JID patterns (contains hyphen with timestamp)
+      if ((lead.phone as string)?.includes('-') && (lead.phone as string).length > 15) return false;
+      return true;
+    });
+
+    setLeads(validLeads as Lead[]);
     setIsLoading(false);
   }, [user]);
 

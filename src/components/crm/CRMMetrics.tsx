@@ -17,7 +17,9 @@ interface Metric {
 }
 
 export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
-  const totalLeads = leads.length;
+  // Count only leads that are assigned to a pipeline stage (visible in the CRM)
+  const leadsInPipeline = leads.filter(lead => lead.pipeline_stage_id != null);
+  const totalLeads = leadsInPipeline.length;
   
   // Find the "lost" stage (by name pattern) to exclude from total value
   const lostStage = stages.find(s => 
@@ -25,8 +27,8 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
     s.name.toLowerCase().includes('lost')
   );
 
-  // Calculate total value excluding lost leads
-  const totalValue = leads
+  // Calculate total value excluding lost leads (only from leads in pipeline)
+  const totalValue = leadsInPipeline
     .filter(lead => !lostStage || lead.pipeline_stage_id !== lostStage.id)
     .reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
@@ -39,11 +41,11 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
   );
   
   const wonLeads = wonStage 
-    ? leads.filter(lead => lead.pipeline_stage_id === wonStage.id).length 
+    ? leadsInPipeline.filter(lead => lead.pipeline_stage_id === wonStage.id).length 
     : 0;
 
-  // Count leads that have been contacted (not never_contacted)
-  const prospectedLeads = leads.filter(lead => lead.whatsapp_status !== 'never_contacted').length;
+  // Count leads that have been contacted (not never_contacted) - only from pipeline
+  const prospectedLeads = leadsInPipeline.filter(lead => lead.whatsapp_status !== 'never_contacted').length;
 
   // Conversion rate based on total leads vs won leads (rounded to 2 decimal places)
   const conversionRate = totalLeads > 0 
