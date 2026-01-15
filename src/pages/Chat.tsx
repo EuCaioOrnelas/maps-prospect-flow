@@ -703,7 +703,7 @@ const Chat = () => {
               </div>
             ) : (
               <>
-                <div className="h-14 px-4 border-b border-border bg-card/50 flex items-center justify-between">
+                <div className="h-[58px] px-4 border-b border-border bg-card/50 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Número:</span>
