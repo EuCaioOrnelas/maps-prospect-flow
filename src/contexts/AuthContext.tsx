@@ -249,14 +249,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Update profile with IP and fingerprint after signup
+    // Update profile with IP, fingerprint and terms acceptance after signup
     if (!error && data.user) {
       setTimeout(async () => {
         await supabase
           .from('profiles')
           .update({
             signup_ip: clientIP,
-            device_fingerprint: fingerprint
+            device_fingerprint: fingerprint,
+            terms_accepted_at: new Date().toISOString()
           })
           .eq('id', data.user!.id);
       }, 1000);
