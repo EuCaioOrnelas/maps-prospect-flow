@@ -769,6 +769,12 @@ export const LeadDetailDialog = ({
                               const value = parseCurrency(formatted);
                               setDealValue(value);
                             }}
+                            onBlur={() => {
+                              // Save value when user leaves the field
+                              if (lead && dealValue !== (lead.estimated_value || 0)) {
+                                handleValueChange(dealValue);
+                              }
+                            }}
                             className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
                             placeholder="0,00"
                           />
