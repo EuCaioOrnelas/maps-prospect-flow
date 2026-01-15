@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface LogoProps {
@@ -7,6 +9,7 @@ interface LogoProps {
   mobileInitialsOnly?: boolean;
   variant?: "dark" | "light";
   iconOnly?: boolean;
+  asLink?: boolean;
 }
 
 export const Logo = ({ 
@@ -15,8 +18,11 @@ export const Logo = ({
   mobileSize, 
   mobileInitialsOnly = false,
   variant = "dark",
-  iconOnly = false
+  iconOnly = false,
+  asLink = true
 }: LogoProps) => {
+  const { user } = useAuth();
+  
   const sizes = {
     sm: { icon: "h-8 w-8", text: "text-xl" },
     md: { icon: "h-10 w-10", text: "text-[1.7rem]" },
@@ -26,27 +32,17 @@ export const Logo = ({
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
-  // If iconOnly, show only the icon
-  if (iconOnly) {
-    return (
-      <div className="flex items-center justify-center group">
-        <img 
-          src={logoIconNew} 
-          alt="Wiize" 
-          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
-        />
-      </div>
-    );
-  }
+  // Determine destination based on auth status
+  const destination = user ? "/dashboard" : "/";
 
-  return (
+  const logoContent = (
     <div className="flex items-center justify-center gap-0 group">
       <img 
         src={logoIconNew} 
         alt="Wiize" 
         className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0 transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
       />
-      {showText && (
+      {showText && !iconOnly && (
         <>
           {mobileInitialsOnly ? (
             <span 
@@ -67,4 +63,28 @@ export const Logo = ({
       )}
     </div>
   );
+
+  // If iconOnly, show only the icon
+  if (iconOnly) {
+    const iconContent = (
+      <div className="flex items-center justify-center group">
+        <img 
+          src={logoIconNew} 
+          alt="Wiize" 
+          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
+        />
+      </div>
+    );
+
+    if (asLink) {
+      return <Link to={destination}>{iconContent}</Link>;
+    }
+    return iconContent;
+  }
+
+  if (asLink) {
+    return <Link to={destination}>{logoContent}</Link>;
+  }
+  
+  return logoContent;
 };
