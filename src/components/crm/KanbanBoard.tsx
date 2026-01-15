@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useCRM, type Lead, type PipelineStage } from '@/hooks/useCRM';
-import { KanbanColumn } from './KanbanColumn';
-import { LeadDetailPanel } from './LeadDetailPanel';
+import { type Lead, type PipelineStage } from '@/hooks/useCRM';
+import { KanbanColumn, type DensityMode } from './KanbanColumn';
 import { cn } from '@/lib/utils';
 
 interface KanbanBoardProps {
@@ -11,6 +10,7 @@ interface KanbanBoardProps {
   onLeadMove: (leadId: string, stageId: string) => void;
   selectedLead: Lead | null;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
+  density?: DensityMode;
 }
 
 export const KanbanBoard = ({
@@ -20,6 +20,7 @@ export const KanbanBoard = ({
   onLeadMove,
   selectedLead,
   onUpdateLeadName,
+  density = 'normal',
 }: KanbanBoardProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -63,7 +64,9 @@ export const KanbanBoard = ({
           onDrop={() => handleDrop(stage.id)}
           isDragOver={dragOverStage === stage.id}
           selectedLeadId={selectedLead?.id}
+          isDragging={!!draggedLead}
           onUpdateLeadName={onUpdateLeadName}
+          density={density}
         />
       ))}
     </div>
