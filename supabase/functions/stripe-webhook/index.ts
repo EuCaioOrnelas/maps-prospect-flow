@@ -543,6 +543,87 @@ serve(async (req) => {
         break;
       }
 
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        logStep("Invoice paid", { 
+          invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
+          customerEmail: invoice.customer_email,
+          billingReason: invoice.billing_reason
+        });
+
+        // Only reset searches on subscription renewal (not first payment)
+        if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          const customerEmail = invoice.customer_email;
+          
+          if (customerEmail) {
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("id, plan, searches_used, searches_limit")
+              .eq("email", customerEmail)
+              .maybeSingle();
+
+            if (profile) {
+              const priceId = subscription.items.data[0]?.price.id;
+              const plan = PRICE_TO_PLAN[priceId] || profile.plan;
+              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+              
+              // Calculate subscription end date
+              const subscriptionEnd = subscription.current_period_end 
+                ? new Date(subscription.current_period_end * 1000).toISOString()
+                : null;
+
+              // Reset searches on renewal
+              const { error: updateError } = await supabaseClient
+                .from("profiles")
+                .update({ 
+                  searches_used: 0,
+                  searches_limit: basePlanLimit,
+                  last_searches_reset: new Date().toISOString(),
+                  subscription_current_period_end: subscriptionEnd
+                })
+                .eq("id", profile.id);
+
+              if (updateError) {
+                logStep("Error resetting searches on renewal", { error: updateError.message });
+              } else {
+                logStep("Searches reset on subscription renewal", { 
+                  plan,
+                  newLimit: basePlanLimit,
+                  previousUsed: profile.searches_used,
+                  subscriptionEnd
+                });
+              }
+
+              // Log renewal event
+              await logSubscriptionEvent(
+                supabaseClient,
+                "subscription_renewed",
+                "stripe-webhook",
+                customerEmail,
+                profile.id,
+                profile.plan,
+                plan,
+                profile.searches_limit,
+                basePlanLimit,
+                0,
+                subscription.id,
+                invoice.customer as string,
+                event.id,
+                {
+                  priceId,
+                  billing_reason: invoice.billing_reason,
+                  previousSearchesUsed: profile.searches_used,
+                  subscriptionEnd
+                }
+              );
+            }
+          }
+        }
+        break;
+      }
+
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         logStep("Invoice payment succeeded", { 
@@ -550,7 +631,7 @@ serve(async (req) => {
           subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
-        // Subscription renewal handled by subscription.updated event
+        // Main handling is done in invoice.paid event
         break;
       }
 

@@ -233,19 +233,20 @@ serve(async (req) => {
         searchesLimit = basePlanLimit;
       }
 
-      // Update user profile with new plan and limits
+      // Update user profile with new plan, limits, and subscription end date
       const { error: updateError } = await supabaseClient
         .from('profiles')
         .update({
           plan: plan,
           searches_limit: searchesLimit,
+          subscription_current_period_end: subscriptionEnd,
         })
         .eq('id', user.id);
 
       if (updateError) {
         logStep("Error updating profile", { error: updateError.message });
       } else {
-        logStep("Profile updated", { plan, searchesLimit });
+        logStep("Profile updated", { plan, searchesLimit, subscriptionEnd });
       }
     } else {
       logStep("No active subscription found in Stripe");
