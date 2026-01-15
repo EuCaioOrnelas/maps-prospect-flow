@@ -136,7 +136,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
       </nav>
 
       {/* Spacer for fixed navbar + promo banner */}
-      <div className="h-[72px] sm:h-[76px]" />
+      <div className="h-[80px] sm:h-[88px]" />
       <PromoBanner />
     </>
   );
