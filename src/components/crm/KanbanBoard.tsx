@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { type Lead, type PipelineStage } from '@/hooks/useCRM';
+import { useCRM, type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn } from './KanbanColumn';
+import { LeadDetailPanel } from './LeadDetailPanel';
+import { cn } from '@/lib/utils';
 
 interface KanbanBoardProps {
   stages: PipelineStage[];
@@ -61,7 +63,6 @@ export const KanbanBoard = ({
           onDrop={() => handleDrop(stage.id)}
           isDragOver={dragOverStage === stage.id}
           selectedLeadId={selectedLead?.id}
-          isDragging={!!draggedLead}
           onUpdateLeadName={onUpdateLeadName}
         />
       ))}

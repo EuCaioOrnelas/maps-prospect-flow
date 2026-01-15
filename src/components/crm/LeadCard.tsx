@@ -71,7 +71,7 @@ export const LeadCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg cursor-pointer transition-all duration-200 w-full min-w-0 p-2",
+        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 w-full min-w-0",
         "hover:shadow-md hover:border-primary/30",
         isSelected && "ring-2 ring-primary border-primary"
       )}
@@ -90,14 +90,14 @@ export const LeadCard = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header - Name and Score */}
-      <div className="flex items-center justify-between gap-2 mb-1">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
         {isEditingName ? (
           <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="h-6 text-xs"
+              className="h-7 text-sm"
               placeholder="Nome do contato"
               autoFocus
             />
@@ -106,18 +106,18 @@ export const LeadCard = ({
               disabled={!editName.trim()}
               className="p-1 rounded hover:bg-primary/20 text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check className="w-3 h-3" />
+              <Check className="w-4 h-4" />
             </button>
             <button
               onClick={handleCancelEdit}
               className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         ) : (
           <>
-            <h4 className="text-sm font-medium text-foreground truncate flex-1">
+            <h4 className="font-medium text-sm text-foreground truncate flex-1">
               {displayName}
             </h4>
             {onUpdateName && (
@@ -128,12 +128,12 @@ export const LeadCard = ({
                   isHovered ? "opacity-100" : "opacity-0"
                 )}
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3.5 h-3.5" />
               </button>
             )}
             {lead.ai_score > 0 && (
               <span className={cn(
-                "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
                 lead.ai_score >= 80 ? "bg-green-500/20 text-green-400" :
                 lead.ai_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
                 "bg-red-500/20 text-red-400"
@@ -145,19 +145,17 @@ export const LeadCard = ({
         )}
       </div>
 
-      {/* Phone */}
-      <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
+      {/* Phone - Always shown, compact */}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate">{formatPhone(lead.phone)}</span>
       </div>
 
-      {/* Estimated Value */}
+      {/* Estimated Value - if exists and greater than 0 */}
       {Number(lead.estimated_value) > 0 && (
-        <div className="rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1 -mx-1 mb-1 py-1 px-1.5">
-          <span className="text-[8px] text-muted-foreground">
-            Valor em Negociação:
-          </span>
-          <span className="text-[10px] font-semibold text-primary">
+        <div className="mb-2 py-1.5 px-2 -mx-1 rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1">
+          <span className="text-[10px] text-muted-foreground">Valor em Negociação:</span>
+          <span className="text-xs font-semibold text-primary">
             R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
@@ -168,17 +166,14 @@ export const LeadCard = ({
         {lead.whatsapp_status && (
           <Badge 
             variant="secondary" 
-            className={cn(
-              "px-1.5 py-0 shrink-0 text-[9px]", 
-              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
-            )}
+            className={cn("text-[10px] px-1.5 py-0 shrink-0", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
           >
             {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
           </Badge>
         )}
 
         {hasResponse && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right">
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right">
             <MessageCircle className="w-3 h-3 shrink-0" />
             <span className="whitespace-normal break-words leading-tight">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
