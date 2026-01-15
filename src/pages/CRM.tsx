@@ -376,14 +376,14 @@ export default function CRM() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {filteredLeads.length} leads no funil
+                      {filteredLeads.filter(l => l.pipeline_stage_id != null).length} leads no funil
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Metrics */}
-              <CRMMetrics stages={stages} leads={leads} />
+              <CRMMetrics stages={stages} leads={filteredLeads} />
 
               {/* Filters */}
               <div className="mt-4 flex items-center gap-3">
