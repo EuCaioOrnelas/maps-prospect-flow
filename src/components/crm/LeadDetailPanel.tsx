@@ -225,7 +225,7 @@ export const LeadDetailPanel = ({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 group">
+            <div className="flex items-center gap-2">
               <h2 className="font-semibold text-lg truncate flex-1">
                 {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
               </h2>
@@ -233,7 +233,7 @@ export const LeadDetailPanel = ({
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setIsEditingName(true)}
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
               >
                 <Pencil className="w-4 h-4" />
               </Button>
