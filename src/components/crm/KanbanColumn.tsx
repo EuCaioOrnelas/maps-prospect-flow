@@ -2,6 +2,10 @@ import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { type DensityMode } from './types';
+
+export type { DensityMode };
 
 interface KanbanColumnProps {
   stage: PipelineStage;
@@ -13,7 +17,13 @@ interface KanbanColumnProps {
   onDrop: () => void;
   isDragOver: boolean;
   selectedLeadId?: string;
+  isDragging?: boolean;
+  isExpanded?: boolean;
+  bulkSelectMode?: boolean;
+  selectedLeadIds?: Set<string>;
+  onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
+  density?: DensityMode;
 }
 
 export const KanbanColumn = ({
@@ -26,12 +36,20 @@ export const KanbanColumn = ({
   onDrop,
   isDragOver,
   selectedLeadId,
+  isDragging,
+  isExpanded,
+  bulkSelectMode,
+  selectedLeadIds,
+  onSelectAllInColumn,
   onUpdateLeadName,
+  density = 'normal',
 }: KanbanColumnProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
+  const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     onDragOver();
   };
 
@@ -40,33 +58,69 @@ export const KanbanColumn = ({
     onDrop();
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    onDragOver();
+  };
+
   return (
     <div
       className={cn(
-        "flex flex-col w-72 min-w-[288px] bg-muted/30 rounded-xl border border-border/50 transition-all duration-200",
-        isDragOver && "border-primary bg-primary/5 ring-2 ring-primary/20"
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out shrink-0",
+        isExpanded ? "w-full max-w-2xl" : "w-72 min-w-[288px]",
+        isDragOver 
+          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
+          : "border-border/50",
+        isDragging && !isDragOver && "opacity-70"
       )}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div className="p-3 border-b border-border/50">
+      <div className={cn("border-b border-border/50", density === 'compact' ? "p-2" : "p-3")}>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
+            {bulkSelectMode && leads.length > 0 && (
+              <Checkbox
+                checked={allLeadsInColumnSelected}
+                onCheckedChange={() => {
+                  if (onSelectAllInColumn) {
+                    onSelectAllInColumn(stage.id, leads.map(l => l.id));
+                  }
+                }}
+              />
+            )}
             <div
-              className="w-3 h-3 rounded-full"
+              className={cn(
+                "rounded-full transition-transform duration-300",
+                isDragOver && "scale-125",
+                density === 'compact' ? "w-2 h-2" : "w-3 h-3"
+              )}
               style={{ backgroundColor: stage.color }}
             />
-            <h3 className="font-medium text-sm text-foreground truncate">
+            <h3 className={cn(
+              "font-medium text-foreground truncate",
+              density === 'compact' ? "text-xs" : "text-sm"
+            )}>
               {stage.name}
             </h3>
           </div>
-          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+          <span className={cn(
+            "font-medium px-2 py-0.5 rounded-full transition-colors duration-300",
+            isDragOver 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-primary/10 text-primary",
+            density === 'compact' ? "text-[10px]" : "text-xs"
+          )}>
             {leads.length}
           </span>
         </div>
         {totalValue > 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className={cn(
+            "text-muted-foreground",
+            density === 'compact' ? "text-[10px]" : "text-xs"
+          )}>
             R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         )}
@@ -74,21 +128,43 @@ export const KanbanColumn = ({
 
       {/* Cards */}
       <ScrollArea className="flex-1" viewportClassName="pr-3">
-        <div className="space-y-2 p-2 w-full">
+        <div className={cn(
+          "w-full",
+          density === 'compact' ? "space-y-1 p-1.5" : "space-y-2 p-2"
+        )}>
           {leads.map((lead) => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              onClick={() => onLeadClick(lead)}
-              onDragStart={() => onDragStart(lead.id)}
-              onDragEnd={onDragEnd}
-              isSelected={selectedLeadId === lead.id}
-              onUpdateName={onUpdateLeadName}
-            />
+            <div key={lead.id} className="relative">
+              {bulkSelectMode && (
+                <div 
+                  className="absolute top-2 right-2 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Checkbox 
+                    checked={selectedLeadIds?.has(lead.id)}
+                    onCheckedChange={() => onLeadClick(lead)}
+                  />
+                </div>
+              )}
+              <LeadCard
+                lead={lead}
+                onClick={() => onLeadClick(lead)}
+                onDragStart={() => onDragStart(lead.id)}
+                onDragEnd={onDragEnd}
+                isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
+                onUpdateName={onUpdateLeadName}
+                density={density}
+              />
+            </div>
           ))}
           {leads.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhum lead nesta etapa
+            <div className={cn(
+              "text-center text-sm border-2 border-dashed rounded-lg transition-all duration-300",
+              isDragOver 
+                ? "border-primary bg-primary/10 text-primary font-medium" 
+                : "border-muted-foreground/30 text-muted-foreground",
+              density === 'compact' ? "py-4" : "py-8"
+            )}>
+              {isDragOver ? "Solte aqui" : "Nenhum lead"}
             </div>
           )}
         </div>
