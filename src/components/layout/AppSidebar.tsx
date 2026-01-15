@@ -139,32 +139,29 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         )}
       >
         {/* Logo area - aligned with navbar height */}
-        <div className={cn(
-          "h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border transition-all duration-300",
-          isHovered ? "justify-start px-3" : "justify-center"
-        )}>
+        <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4">
           <Link 
             to="/dashboard"
-            className={cn(
-              "flex items-center h-12 group cursor-pointer",
-              isHovered ? "gap-0.5" : "justify-center"
-            )}
+            className="flex items-center gap-1 h-12 group cursor-pointer"
           >
-            {/* Icon logo - always visible with glow on hover */}
+            {/* Icon logo - always visible and fixed position */}
             <img 
               src={logoIconNew} 
               alt="Wiize" 
               className="h-10 w-10 object-contain rounded-lg transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)] shrink-0"
             />
-            {/* Text "wiize" - visible when expanded */}
-            {isHovered && (
-              <span
-                className="text-3xl tracking-tight text-foreground whitespace-nowrap -mt-0.5 transition-opacity duration-150 ease-out opacity-100"
-                style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
-              >
-                wiize
-              </span>
-            )}
+            {/* Text "wiize" - fade in/out when expanded */}
+            <span
+              className={cn(
+                "text-2xl tracking-tight text-foreground whitespace-nowrap -mt-0.5 transition-all duration-200 ease-out",
+                isHovered 
+                  ? "opacity-100 translate-x-0" 
+                  : "opacity-0 -translate-x-2 w-0 overflow-hidden"
+              )}
+              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
+            >
+              wiize
+            </span>
           </Link>
         </div>
 
