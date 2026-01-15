@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatPhoneShort } from '@/lib/phoneUtils';
 
 interface LeadCardProps {
   lead: Lead;
@@ -27,28 +28,8 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
-
-  const formatPhone = (phone: string) => {
-    const digits = phone.replace(/\D/g, '');
-    // Brazilian phone with country code: 55 + DDD (2) + number (8 or 9 digits)
-    if (digits.startsWith('55') && digits.length >= 12) {
-      const ddd = digits.slice(2, 4);
-      const number = digits.slice(4);
-      
-      // 9-digit mobile numbers: XXXXX-XXXX
-      if (number.length === 9) {
-        return `(${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
-      }
-      // 8-digit landline/old mobile: XXXX-XXXX
-      if (number.length === 8) {
-        return `(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
-      }
-    }
-    // Fallback: just show with + prefix
-    return `+${digits}`;
-  };
   
-  const displayName = lead.contact_name || lead.company_name || formatPhone(lead.phone);
+  const displayName = lead.contact_name || lead.company_name || formatPhoneShort(lead.phone);
   const hasResponse = !!lead.last_response_at;
 
   const handleEditClick = (e: React.MouseEvent) => {
@@ -163,7 +144,7 @@ const LeadCardComponent = ({
       {/* Phone */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate min-w-0">{formatPhone(lead.phone)}</span>
+        <span className="truncate min-w-0">{formatPhoneShort(lead.phone)}</span>
       </div>
 
       {/* Estimated Value */}

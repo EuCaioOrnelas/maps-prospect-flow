@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import type { Conversation, Contact } from '@/hooks/useChat';
 import { supabase } from '@/integrations/supabase/client';
 import { GroupParticipantsList } from './GroupParticipantsList';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface ContactInfoPanelProps {
   conversation: Conversation | null;
@@ -211,15 +212,7 @@ export const ContactInfoPanel = ({
     }
   };
 
-  const formatPhoneNumber = (phone: string) => {
-    if (phone.length === 13) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
-    }
-    if (phone.length === 12) {
-      return `+${phone.slice(0, 2)} (${phone.slice(2, 4)}) ${phone.slice(4, 8)}-${phone.slice(8)}`;
-    }
-    return phone;
-  };
+  // formatPhoneNumber is now imported from '@/lib/phoneUtils'
 
   const getDisplayName = () => {
     // For groups, show group name

@@ -22,33 +22,8 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
-
-// Phone validation helper
-const validateAndFormatPhone = (phone: string): { isValid: boolean; formatted: string; display: string } => {
-  // Remove all non-digits
-  const digits = String(phone).replace(/\D/g, '');
-  
-  // Valid Brazilian numbers: 10-13 digits (with or without country code)
-  const isValid = digits.length >= 10 && digits.length <= 13;
-  
-  // Format for display
-  let display = digits;
-  if (digits.length === 11) {
-    // (XX) XXXXX-XXXX
-    display = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  } else if (digits.length === 10) {
-    // (XX) XXXX-XXXX
-    display = `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  } else if (digits.length === 13) {
-    // +55 (XX) XXXXX-XXXX
-    display = `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-  } else if (digits.length === 12) {
-    // +55 (XX) XXXX-XXXX
-    display = `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
-  }
-  
-  return { isValid, formatted: digits, display };
-};
+// Use centralized phone validation helper
+import { validateAndFormatPhone } from '@/lib/phoneUtils';
 
 interface SearchHistoryItem {
   id: string;

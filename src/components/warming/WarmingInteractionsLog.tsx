@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface WarmingInteraction {
   id: string;
@@ -120,16 +121,8 @@ export function WarmingInteractionsLog({ userId, numberId }: WarmingInteractions
     return configs[level] || configs[1];
   };
 
-  const formatPhone = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 13) {
-      return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
-    }
-    if (cleaned.length === 12) {
-      return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
-    }
-    return phone;
-  };
+  // Use centralized phone formatting
+  const formatPhone = (phone: string) => formatPhoneNumber(phone);
 
   const stats = {
     total: interactions.length,

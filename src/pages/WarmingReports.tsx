@@ -10,6 +10,7 @@ import { WarmingStatsPanel } from "@/components/warming/WarmingStatsPanel";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Flame, RefreshCw, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import {
   Select,
   SelectContent,
@@ -61,9 +62,10 @@ export default function WarmingReports() {
     setRefreshKey(prev => prev + 1);
   };
 
+  // Use centralized phone formatting
   const formatPhoneForDisplay = (phone: string | null) => {
     if (!phone) return '';
-    return phone.replace(/^55/, '+55 ');
+    return formatPhoneNumber(phone);
   };
 
   return (

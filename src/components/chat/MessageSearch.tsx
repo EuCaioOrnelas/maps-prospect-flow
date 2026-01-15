@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/hooks/useChat';
 
@@ -20,29 +21,10 @@ interface MessageSearchProps {
 
 type MediaFilter = 'all' | 'text' | 'image' | 'audio' | 'document';
 
-// Format sender phone for groups
+// Format sender phone for groups - uses centralized utility
 const formatSenderPhone = (phone: string | null): string => {
   if (!phone) return 'Desconhecido';
-  const digits = phone.replace(/\D/g, '');
-  
-  // Brazilian phone with country code
-  if (digits.startsWith('55') && digits.length >= 12) {
-    const ddd = digits.slice(2, 4);
-    const number = digits.slice(4);
-    
-    // 9-digit mobile: +55 (XX) XXXXX-XXXX
-    if (number.length === 9) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
-    }
-    // 8-digit landline: +55 (XX) XXXX-XXXX
-    if (number.length === 8) {
-      return `+${digits.slice(0, 2)} (${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
-    }
-  }
-  if (digits.length >= 10) {
-    return `+${digits}`;
-  }
-  return phone;
+  return formatPhoneNumber(phone);
 };
 
 export const MessageSearch = ({ messages, onSelectMessage, onClose, isGroup = false }: MessageSearchProps) => {
