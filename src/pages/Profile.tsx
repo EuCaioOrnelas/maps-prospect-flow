@@ -14,6 +14,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Camera,
   Mail,
@@ -27,7 +33,8 @@ import {
   Shield,
   Loader2,
   Check,
-  AlertCircle
+  AlertCircle,
+  RefreshCcw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -55,6 +62,32 @@ const Profile = () => {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
+    });
+  };
+
+  const getLastResetLabel = () => {
+    if (profile?.last_searches_reset) {
+      const lastReset = new Date(profile.last_searches_reset);
+      return lastReset.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    return 'Nunca';
+  };
+
+  const getNextResetDate = () => {
+    const now = new Date();
+    const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+    return nextReset.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -251,112 +284,115 @@ const Profile = () => {
           <p className="text-muted-foreground text-sm">Gerencie suas configurações de conta</p>
         </div>
         <div className="grid gap-6">
-          {/* Security Card */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Segurança
-              </CardTitle>
-              <CardDescription>
-                Gerencie a segurança da sua conta
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
+          {/* Row: Informações Pessoais (60%) + Segurança (40%) */}
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
+            {/* Profile Card - left 60% */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Informações Pessoais
+                </CardTitle>
+                <CardDescription>
+                  Gerencie suas informações de perfil
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 border-2 border-border">
+                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={handlePhotoClick}
+                      disabled={isUploadingPhoto}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      {isUploadingPhoto ? (
+                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-6 w-6 text-white" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      Membro desde {profile?.created_at ? formatDate(profile.created_at) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    E-mail cadastrado
+                  </Label>
                   <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Senha</span>
+                    <Input 
+                      value={user?.email || ''} 
+                      disabled 
+                      className="bg-muted/50"
+                    />
+                    <div className="flex items-center gap-1 text-xs text-emerald-500">
+                      <Check className="h-3 w-3" />
+                      Verificado
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Altere sua senha de acesso
-                  </p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowPasswordModal(true)}
-                  className="gap-2"
-                >
-                  <Lock className="h-4 w-4" />
-                  Alterar senha
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Profile Card */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Informações Pessoais
-              </CardTitle>
-              <CardDescription>
-                Gerencie suas informações de perfil
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Avatar Section */}
-              <div className="flex items-center gap-6">
-                <div className="relative group">
-                  <Avatar className="h-24 w-24 border-2 border-border">
-                    <AvatarImage src={profile?.avatar_url} />
-                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    onClick={handlePhotoClick}
-                    disabled={isUploadingPhoto}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            {/* Security Card - right 40% */}
+            <Card className="border-border/50 h-fit">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Segurança
+                </CardTitle>
+                <CardDescription>
+                  Gerencie a segurança da sua conta
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Senha</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Altere sua senha de acesso
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPasswordModal(true)}
+                    className="gap-2"
                   >
-                    {isUploadingPhoto ? (
-                      <Loader2 className="h-6 w-6 text-white animate-spin" />
-                    ) : (
-                      <Camera className="h-6 w-6 text-white" />
-                    )}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="hidden"
-                  />
+                    <Lock className="h-4 w-4" />
+                    Alterar senha
+                  </Button>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Membro desde {profile?.created_at ? formatDate(profile.created_at) : 'N/A'}
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Email */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  E-mail cadastrado
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input 
-                    value={user?.email || ''} 
-                    disabled 
-                    className="bg-muted/50"
-                  />
-                  <div className="flex items-center gap-1 text-xs text-emerald-500">
-                    <Check className="h-3 w-3" />
-                    Verificado
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Plan Card */}
           <Card className="border-border/50">
@@ -381,9 +417,22 @@ const Profile = () => {
                   <p className="text-sm text-muted-foreground">
                     {profile?.searches_used || 0} de {profile?.searches_limit || 10} buscas utilizadas
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Reset das buscas mensais: {getNextSearchResetLabel()}
-                  </p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                          <RefreshCcw className="h-3 w-3" />
+                          Reset das buscas mensais: {getNextSearchResetLabel()}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs">
+                        <div className="space-y-1 text-sm">
+                          <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
+                          <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 {profile?.plan === 'scale' ? (
                   <div className="flex items-center gap-2 text-sm text-emerald-500">
