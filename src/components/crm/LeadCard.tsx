@@ -173,9 +173,9 @@ export const LeadCard = ({
         )}
 
         {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1 min-w-0 ml-auto text-right">
-            <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="whitespace-normal break-words leading-tight">
+          <span className="text-[10px] text-muted-foreground flex items-start gap-1 min-w-0 ml-auto text-right overflow-hidden">
+            <MessageCircle className="w-3 h-3 shrink-0 mt-0.5" />
+            <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
                 addSuffix: false,
                 locale: ptBR,
