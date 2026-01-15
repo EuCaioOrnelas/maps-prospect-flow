@@ -71,7 +71,7 @@ export const LeadCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 w-full min-w-0",
+        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 w-full min-w-0 max-w-full",
         "hover:shadow-md hover:border-primary/30",
         isSelected && "ring-2 ring-primary border-primary"
       )}
@@ -90,7 +90,7 @@ export const LeadCard = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header - Name and Score */}
-      <div className="flex items-center justify-between gap-2 mb-1.5">
+      <div className="flex items-center justify-between gap-2 mb-1.5 min-w-0">
         {isEditingName ? (
           <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
             <Input
@@ -117,7 +117,7 @@ export const LeadCard = ({
           </div>
         ) : (
           <>
-            <h4 className="font-medium text-sm text-foreground truncate flex-1">
+            <h4 className="font-medium text-sm text-foreground truncate flex-1 min-w-0">
               {displayName}
             </h4>
             {onUpdateName && (
@@ -146,9 +146,9 @@ export const LeadCard = ({
       </div>
 
       {/* Phone - Always shown, compact */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate">{formatPhone(lead.phone)}</span>
+        <span className="truncate min-w-0">{formatPhone(lead.phone)}</span>
       </div>
 
       {/* Estimated Value - if exists and greater than 0 */}
@@ -173,9 +173,9 @@ export const LeadCard = ({
         )}
 
         {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 min-w-0">
             <MessageCircle className="w-3 h-3 shrink-0" />
-            <span>
+            <span className="min-w-0 whitespace-normal break-words">
               {formatDistanceToNow(new Date(lead.last_response_at!), {
                 addSuffix: true,
                 locale: ptBR,
