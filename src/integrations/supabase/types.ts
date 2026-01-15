@@ -126,12 +126,15 @@ export type Database = {
       }
       ai_agents: {
         Row: {
+          agent_objective: string | null
           communication_style: string
           created_at: string
           daily_limit: number
+          end_conversation_criteria: string | null
           id: string
           is_warmed: boolean
           last_reset_date: string | null
+          max_response_chars: number | null
           message_templates: Json | null
           messages_sent_today: number
           n8n_webhook_url: string | null
@@ -141,18 +144,22 @@ export type Database = {
           operating_hours_end: string
           operating_hours_start: string
           status: string
+          system_prompt: string | null
           target_audience: string | null
           updated_at: string
           user_id: string
           whatsapp_number_id: string | null
         }
         Insert: {
+          agent_objective?: string | null
           communication_style?: string
           created_at?: string
           daily_limit?: number
+          end_conversation_criteria?: string | null
           id?: string
           is_warmed?: boolean
           last_reset_date?: string | null
+          max_response_chars?: number | null
           message_templates?: Json | null
           messages_sent_today?: number
           n8n_webhook_url?: string | null
@@ -162,18 +169,22 @@ export type Database = {
           operating_hours_end?: string
           operating_hours_start?: string
           status?: string
+          system_prompt?: string | null
           target_audience?: string | null
           updated_at?: string
           user_id: string
           whatsapp_number_id?: string | null
         }
         Update: {
+          agent_objective?: string | null
           communication_style?: string
           created_at?: string
           daily_limit?: number
+          end_conversation_criteria?: string | null
           id?: string
           is_warmed?: boolean
           last_reset_date?: string | null
+          max_response_chars?: number | null
           message_templates?: Json | null
           messages_sent_today?: number
           n8n_webhook_url?: string | null
@@ -183,6 +194,7 @@ export type Database = {
           operating_hours_end?: string
           operating_hours_start?: string
           status?: string
+          system_prompt?: string | null
           target_audience?: string | null
           updated_at?: string
           user_id?: string

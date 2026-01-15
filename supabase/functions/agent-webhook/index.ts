@@ -61,7 +61,7 @@ serve(async (req) => {
       .from('ai_agents')
       .select('*, whatsapp_number:whatsapp_numbers(instance_name)')
       .eq('id', agentId)
-      .single();
+      .single() as { data: any; error: any };
 
     if (agentError || !agent) {
       return new Response(
@@ -161,12 +161,32 @@ serve(async (req) => {
           console.log(`Waiting ${delay/1000}s before responding...`);
           await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10000))); // Max 10s in edge function
 
-          // Generate short response with AI
+          // Get max response chars from agent config (default 300)
+          const maxChars = agent.max_response_chars || 300;
+          
+          // Build system prompt from agent configuration
           const stylePrompts = {
             formal: 'Responda de forma formal e profissional.',
             neutral: 'Responda de forma neutra e amigável.',
             informal: 'Responda de forma informal e descontraída.',
           };
+
+          // Use custom system prompt if available, otherwise generate default
+          const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
+          const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
+          const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
+
+          const fullSystemPrompt = `${baseSystemPrompt}
+
+OBJETIVO: ${agentGoal}
+
+CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+
+REGRAS CRÍTICAS:
+- Responda com NO MÁXIMO ${maxChars} caracteres
+- Seja breve e natural
+- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
+- Quando apropriado, encerre a conversa naturalmente`;
 
           const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
@@ -179,31 +199,14 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'system',
-                  content: `Você é um assistente de prospecção via WhatsApp.
-                  
-REGRAS CRÍTICAS:
-- Responda com NO MÁXIMO 40 caracteres
-- NUNCA faça perguntas
-- NUNCA use CTAs agressivos
-- NUNCA peça para entrar em contato
-- Seja breve e natural
-- Encerre a conversa naturalmente
-- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
-
-Exemplo de respostas boas:
-- "Opa, que bom! 👍"
-- "Show, obrigado!"
-- "Entendi, valeu!"
-- "Legal, fico à disposição"
-
-Objetivo: Encerrar a conversa de forma educada após uma única resposta.`
+                  content: fullSystemPrompt
                 },
                 {
                   role: 'user',
-                  content: `Lead respondeu: "${message}"\n\nGere uma resposta curta e final (max 40 chars).`
+                  content: `Lead respondeu: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`
                 }
               ],
-              max_tokens: 50,
+              max_tokens: 200,
             }),
           });
 
@@ -211,9 +214,12 @@ Objetivo: Encerrar a conversa de forma educada após uma única resposta.`
             const aiData = await aiResponse.json();
             let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
             
-            // Ensure max 40 chars
-            if (replyContent.length > 40) {
-              replyContent = replyContent.substring(0, 37) + '...';
+            // Get max chars from agent config
+            const maxChars = agent.max_response_chars || 300;
+            
+            // Ensure max chars limit
+            if (replyContent.length > maxChars) {
+              replyContent = replyContent.substring(0, maxChars - 3) + '...';
             }
 
             // Send via Evolution API
@@ -312,17 +318,7 @@ Objetivo: Encerrar a conversa de forma educada após uma única resposta.`
         );
       }
 
-      // Check daily limit
-      if (agent.messages_sent_today >= agent.daily_limit) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            reason: 'daily_limit_reached',
-            message: `Daily limit of ${agent.daily_limit} messages reached` 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      // No daily limit check - removed per user request
 
       // Check if already contacted this lead
       const { data: existingConv } = await supabase

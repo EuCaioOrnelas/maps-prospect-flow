@@ -57,11 +57,13 @@ const STEPS = [
   { id: 2, title: "Número", icon: MessageCircle },
   { id: 3, title: "Objetivo", icon: Target },
   { id: 4, title: "Público", icon: Users },
-  { id: 5, title: "Estilo", icon: MessageCircle },
-  { id: 6, title: "Horário", icon: Clock },
-  { id: 7, title: "Limite", icon: Target },
-  { id: 8, title: "Aquecimento", icon: Flame },
-  { id: 9, title: "Confirmação", icon: Check },
+  { id: 5, title: "Prompt", icon: Bot },
+  { id: 6, title: "Objetivo IA", icon: Target },
+  { id: 7, title: "Encerramento", icon: Check },
+  { id: 8, title: "Estilo", icon: MessageCircle },
+  { id: 9, title: "Horário", icon: Clock },
+  { id: 10, title: "Aquecimento", icon: Flame },
+  { id: 11, title: "Confirmação", icon: Check },
 ];
 
 const MESSAGE_TEMPLATES = {
@@ -96,10 +98,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [selectedNumberId, setSelectedNumberId] = useState("");
   const [objective, setObjective] = useState<"prospecting" | "warming" | "first_contact">("prospecting");
   const [targetAudience, setTargetAudience] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [agentObjective, setAgentObjective] = useState("");
+  const [endConversationCriteria, setEndConversationCriteria] = useState("");
   const [communicationStyle, setCommunicationStyle] = useState<"formal" | "neutral" | "informal">("neutral");
   const [operatingHoursStart, setOperatingHoursStart] = useState("08:00");
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
-  const [dailyLimit, setDailyLimit] = useState(20);
   const [isWarmed, setIsWarmed] = useState(false);
 
   // Fetch WhatsApp numbers
@@ -146,19 +150,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     }
   }, [user, open]);
 
-  // Suggest daily limit based on warming status
+  // Update warming status based on selected number
   useEffect(() => {
     const selectedNumber = numbers.find(n => n.id === selectedNumberId);
     if (selectedNumber) {
       const isWarm = selectedNumber.warming_status === 'hot' || (selectedNumber.warming_level && selectedNumber.warming_level >= 3);
       setIsWarmed(isWarm);
-      
-      // Suggest conservative limits
-      if (isWarm) {
-        setDailyLimit(30);
-      } else {
-        setDailyLimit(10); // Safe mode for cold numbers
-      }
     }
   }, [selectedNumberId, numbers]);
 
@@ -168,10 +165,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setSelectedNumberId("");
     setObjective("prospecting");
     setTargetAudience("");
+    setSystemPrompt("");
+    setAgentObjective("");
+    setEndConversationCriteria("");
     setCommunicationStyle("neutral");
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
-    setDailyLimit(20);
     setIsWarmed(false);
   };
 
@@ -189,13 +188,16 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           whatsapp_number_id: selectedNumberId,
           objective,
           target_audience: targetAudience,
+          system_prompt: systemPrompt,
+          agent_objective: agentObjective,
+          end_conversation_criteria: endConversationCriteria,
           communication_style: communicationStyle,
           operating_hours_start: operatingHoursStart,
           operating_hours_end: operatingHoursEnd,
-          daily_limit: dailyLimit,
           is_warmed: isWarmed,
           status: activate ? 'active' : 'draft',
           message_templates: MESSAGE_TEMPLATES[objective],
+          max_response_chars: 300,
         })
         .select()
         .single();
@@ -228,10 +230,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       case 2: return !!selectedNumberId;
       case 3: return !!objective;
       case 4: return targetAudience.trim().length >= 3;
-      case 5: return !!communicationStyle;
-      case 6: return !!operatingHoursStart && !!operatingHoursEnd;
-      case 7: return dailyLimit >= 1 && dailyLimit <= 100;
-      case 8: return true;
+      case 5: return systemPrompt.trim().length >= 10;
+      case 6: return agentObjective.trim().length >= 5;
+      case 7: return endConversationCriteria.trim().length >= 5;
+      case 8: return !!communicationStyle;
+      case 9: return !!operatingHoursStart && !!operatingHoursEnd;
+      case 10: return true;
       default: return true;
     }
   };
@@ -405,6 +409,67 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
+              <Bot className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Qual o prompt do agente?</h3>
+              <p className="text-muted-foreground text-sm">
+                Descreva como o agente deve se comportar e responder
+              </p>
+            </div>
+            <Textarea
+              placeholder="Ex: Você é um assistente de vendas amigável. Responda de forma breve e objetiva, sem fazer perguntas desnecessárias. Foque em entender se o lead tem interesse no produto."
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              rows={5}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Este prompt será usado pela IA para gerar respostas. Seja específico sobre o tom e comportamento desejado.
+            </p>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Target className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Qual o objetivo da IA?</h3>
+              <p className="text-muted-foreground text-sm">
+                O que a IA deve tentar alcançar em cada conversa?
+              </p>
+            </div>
+            <Textarea
+              placeholder="Ex: Identificar se o lead tem interesse em nossos serviços e agendar uma demonstração"
+              value={agentObjective}
+              onChange={(e) => setAgentObjective(e.target.value)}
+              rows={3}
+            />
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Check className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Quando encerrar a conversa?</h3>
+              <p className="text-muted-foreground text-sm">
+                Defina os critérios para o agente encerrar a conversa
+              </p>
+            </div>
+            <Textarea
+              placeholder="Ex: Após conseguir o contato do decisor, ou quando o lead demonstrar desinteresse, ou após responder a dúvida principal"
+              value={endConversationCriteria}
+              onChange={(e) => setEndConversationCriteria(e.target.value)}
+              rows={3}
+            />
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
               <MessageCircle className="h-12 w-12 mx-auto text-primary" />
               <h3 className="text-xl font-semibold">Como esse agente deve falar?</h3>
             </div>
@@ -460,7 +525,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 6:
+      case 9:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -492,43 +557,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 7:
-        return (
-          <div className="space-y-4">
-            <div className="text-center space-y-2">
-              <Target className="h-12 w-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Quantas mensagens por dia?</h3>
-              <p className="text-muted-foreground text-sm">
-                {isWarmed 
-                  ? "Número aquecido - limite sugerido: 30/dia"
-                  : "Número frio - modo seguro ativado (máx 15/dia)"
-                }
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <Input
-                type="number"
-                min={1}
-                max={isWarmed ? 100 : 15}
-                value={dailyLimit}
-                onChange={(e) => setDailyLimit(Number(e.target.value))}
-                className="text-center text-2xl font-bold"
-              />
-              
-              {!isWarmed && dailyLimit > 15 && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                  <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-yellow-500">
-                    Número não aquecido. Limite máximo recomendado: 15 mensagens/dia para evitar bloqueios.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 8:
+      case 10:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -563,7 +592,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                   <div>
                     <p className="font-medium">Não (ativar modo seguro)</p>
                     <p className="text-sm text-muted-foreground">
-                      Limites conservadores serão aplicados automaticamente
+                      Delays maiores serão aplicados automaticamente
                     </p>
                   </div>
                 </Label>
@@ -572,7 +601,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 9:
+      case 11:
         const selectedNumber = numbers.find(n => n.id === selectedNumberId);
         return (
           <div className="space-y-4">
@@ -581,7 +610,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
               <h3 className="text-xl font-semibold">Confirme as configurações</h3>
             </div>
             
-            <div className="space-y-3 text-sm">
+            <div className="space-y-2 text-sm max-h-[300px] overflow-y-auto">
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Nome</span>
                 <span className="font-medium">{name}</span>
@@ -605,8 +634,8 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                 <span className="font-medium">{operatingHoursStart} - {operatingHoursEnd}</span>
               </div>
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                <span className="text-muted-foreground">Limite diário</span>
-                <span className="font-medium">{dailyLimit} mensagens</span>
+                <span className="text-muted-foreground">Max caracteres</span>
+                <span className="font-medium">300 caracteres</span>
               </div>
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Status do número</span>
