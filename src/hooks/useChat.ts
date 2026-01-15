@@ -669,7 +669,7 @@ export const useChat = (selectedNumberId?: string | null) => {
     }
   }, []);
 
-  // Edit a message
+  // Edit a message (also edits on WhatsApp)
   const editMessage = useCallback(async (messageId: string, newContent: string) => {
     if (!user) return;
     
@@ -686,6 +686,9 @@ export const useChat = (selectedNumberId?: string | null) => {
       throw new Error('Mensagens só podem ser editadas em até 15 minutos');
     }
     
+    // Store original for rollback
+    const originalContent = message.content;
+    
     // Optimistically update UI
     setMessages(prev => prev.map(m => 
       m.id === messageId 
@@ -693,28 +696,54 @@ export const useChat = (selectedNumberId?: string | null) => {
         : m
     ));
     
+    // Also update conversation last_message optimistically if needed
+    if (selectedConversation) {
+      setConversations(prev => prev.map(c => {
+        if (c.id !== selectedConversation.id) return c;
+        // Check if this is the last message
+        const isLastMessage = c.last_message === originalContent || 
+          (message.created_at && c.last_message_at && 
+           new Date(message.created_at) >= new Date(c.last_message_at));
+        if (isLastMessage) {
+          return { ...c, last_message: newContent };
+        }
+        return c;
+      }));
+    }
+    
     try {
-      // Update in database
-      const { error } = await supabase
-        .from('messages')
-        .update({ content: newContent, updated_at: new Date().toISOString() })
-        .eq('id', messageId)
-        .eq('user_id', user.id);
+      // Call edge function to edit on WhatsApp AND update database
+      const response = await supabase.functions.invoke('evolution-edit-message', {
+        body: { messageId, newContent },
+      });
       
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
       
-      // TODO: Call WhatsApp API to edit message if needed
-      // For now, just update locally
+      if (!response.data?.success) {
+        // Show warning if WhatsApp edit failed but local was saved
+        console.warn('WhatsApp edit may have failed:', response.data?.error);
+      }
       
     } catch (error) {
       // Revert optimistic update
       setMessages(prev => prev.map(m => 
-        m.id === messageId ? message : m
+        m.id === messageId ? { ...m, content: originalContent } : m
       ));
+      
+      // Revert conversation update
+      if (selectedConversation) {
+        setConversations(prev => prev.map(c => {
+          if (c.id !== selectedConversation.id) return c;
+          return { ...c, last_message: originalContent };
+        }));
+      }
+      
       console.error('Error editing message:', error);
       throw error;
     }
-  }, [user, messages]);
+  }, [user, messages, selectedConversation]);
 
   // Select conversation - instantly switch, then load messages
   const selectConversation = useCallback(async (conversation: Conversation) => {
