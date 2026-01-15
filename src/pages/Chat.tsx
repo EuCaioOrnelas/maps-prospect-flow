@@ -593,13 +593,13 @@ const Chat = () => {
         <AppSidebar profile={profile} />
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 lg:pl-14 flex flex-col h-screen">
-          {/* Mobile Nav */}
-          <MobileNav profile={profile} />
+          <main className="flex-1 min-w-0 lg:pl-14 flex flex-col h-screen">
+            {/* Mobile Nav */}
+            <MobileNav profile={profile} />
 
-          {/* Chat Layout */}
-          <div className="flex-1 flex flex-col overflow-hidden lg:p-4">
-            {/* Initial Sync Loading Screen */}
+            {/* Chat Layout */}
+            <div className="flex-1 flex flex-col overflow-hidden lg:px-4">
+              {/* Initial Sync Loading Screen */}
             {initialSyncLoading ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="max-w-md w-full text-center space-y-6">
