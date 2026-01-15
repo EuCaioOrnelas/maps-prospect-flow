@@ -250,6 +250,12 @@ export const NumbersManager = ({
           },
         });
 
+        // Handle auth errors
+        if (response.error?.message?.includes('401') || response.data?.requiresReauth) {
+          console.log('Session expired, skipping connection check');
+          return;
+        }
+
         if (response.data?.connected) {
           // Show success animation
           setShowSuccessAnimation(true);

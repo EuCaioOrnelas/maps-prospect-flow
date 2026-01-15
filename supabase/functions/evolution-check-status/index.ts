@@ -23,7 +23,15 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      console.log('No authorization header provided');
+      return new Response(JSON.stringify({ 
+        error: 'No authorization header',
+        connected: false,
+        requiresReauth: true
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
@@ -32,7 +40,15 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      throw new Error('Invalid user token');
+      console.log('Invalid or expired user token:', userError?.message);
+      return new Response(JSON.stringify({ 
+        error: 'Session expired. Please refresh the page.',
+        connected: false,
+        requiresReauth: true
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { instanceName, numberId } = await req.json();
