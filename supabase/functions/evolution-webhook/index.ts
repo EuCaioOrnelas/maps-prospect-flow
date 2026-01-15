@@ -641,7 +641,7 @@ serve(async (req) => {
                 
                 updateData.unread_count = (conv?.unread_count || 0) + 1;
                 
-                // ===== AUTO-MOVE LEAD TO "RESPONDEU" STAGE =====
+                // ===== AUTO-MOVE LEAD TO "RESPONDEU MENSAGEM" STAGE =====
                 // Find lead by phone or conversation_id
                 const { data: existingLead } = await supabase
                   .from('leads')
@@ -652,18 +652,17 @@ serve(async (req) => {
                   .single();
                 
                 if (existingLead) {
-                  console.log('Found lead to update:', existingLead.id);
+                  console.log('Found lead to update on response:', existingLead.id);
                   
-                  // Get the "Respondeu" stage (position 2)
+                  // Get the "Respondeu Mensagem" stage
                   const { data: respondeuStage } = await supabase
                     .from('pipeline_stages')
                     .select('id, position')
                     .eq('user_id', whatsappNumber.user_id)
-                    .eq('name', 'Respondeu')
+                    .eq('name', 'Respondeu Mensagem')
                     .single();
                   
-                  // Only move to "Respondeu" if current stage is earlier (position < 2)
-                  // Get current stage position
+                  // Only move to "Respondeu Mensagem" if current stage is earlier (position < respondeu position)
                   let shouldMoveToRespondeu = false;
                   if (existingLead.pipeline_stage_id && respondeuStage) {
                     const { data: currentStage } = await supabase
@@ -672,12 +671,12 @@ serve(async (req) => {
                       .eq('id', existingLead.pipeline_stage_id)
                       .single();
                     
-                    // Move only if current position is less than Respondeu position (before it in pipeline)
+                    // Move only if current position is less than Respondeu Mensagem position
                     if (currentStage && currentStage.position < respondeuStage.position) {
                       shouldMoveToRespondeu = true;
                     }
                   } else if (respondeuStage) {
-                    // No current stage, move to Respondeu
+                    // No current stage, move to Respondeu Mensagem
                     shouldMoveToRespondeu = true;
                   }
                   
@@ -691,7 +690,7 @@ serve(async (req) => {
                   
                   if (shouldMoveToRespondeu && respondeuStage) {
                     leadUpdate.pipeline_stage_id = respondeuStage.id;
-                    console.log(`Moving lead ${existingLead.id} to Respondeu stage`);
+                    console.log(`Moving lead ${existingLead.id} to Respondeu Mensagem stage`);
                   }
                   
                   const { error: leadUpdateError } = await supabase
@@ -710,13 +709,88 @@ serve(async (req) => {
                         lead_id: existingLead.id,
                         user_id: whatsappNumber.user_id,
                         activity_type: 'stage_changed',
-                        description: 'Movido automaticamente para Respondeu (recebeu resposta)',
+                        description: 'Movido automaticamente para Respondeu Mensagem (recebeu resposta)',
                         metadata: { automatic: true, trigger: 'webhook_response' },
                       });
                     }
+                  }
+                }
+              } else {
+                // ===== MESSAGE SENT (fromMe=true) - MOVE TO "MENSAGEM ENVIADA" =====
+                // Find lead by phone or conversation_id
+                const { data: existingLead } = await supabase
+                  .from('leads')
+                  .select('id, pipeline_stage_id, whatsapp_status')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},conversation_id.eq.${conversationId}`)
+                  .limit(1)
+                  .single();
+                
+                if (existingLead) {
+                  console.log('Found lead to update on sent message:', existingLead.id);
+                  
+                  // Get the "Mensagem Enviada" stage
+                  const { data: mensagemEnviadaStage } = await supabase
+                    .from('pipeline_stages')
+                    .select('id, position')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('name', 'Mensagem Enviada')
+                    .single();
+                  
+                  // Only move to "Mensagem Enviada" if current stage is "Prospectado" (position 0)
+                  let shouldMoveToMensagemEnviada = false;
+                  if (existingLead.pipeline_stage_id && mensagemEnviadaStage) {
+                    const { data: currentStage } = await supabase
+                      .from('pipeline_stages')
+                      .select('position, name')
+                      .eq('id', existingLead.pipeline_stage_id)
+                      .single();
+                    
+                    // Move only if current stage is "Prospectado" (position 0)
+                    if (currentStage && currentStage.position === 0) {
+                      shouldMoveToMensagemEnviada = true;
+                    }
+                  } else if (mensagemEnviadaStage && !existingLead.pipeline_stage_id) {
+                    // No current stage, move to Mensagem Enviada
+                    shouldMoveToMensagemEnviada = true;
+                  }
+                  
+                  const leadUpdate: Record<string, unknown> = {
+                    whatsapp_status: 'message_sent',
+                    last_message_sent: content || `[${messageType}]`,
+                    last_message_sent_at: new Date().toISOString(),
+                    conversation_id: conversationId,
+                    updated_at: new Date().toISOString(),
+                  };
+                  
+                  if (shouldMoveToMensagemEnviada && mensagemEnviadaStage) {
+                    leadUpdate.pipeline_stage_id = mensagemEnviadaStage.id;
+                    console.log(`Moving lead ${existingLead.id} to Mensagem Enviada stage`);
+                  }
+                  
+                  const { error: leadUpdateError } = await supabase
+                    .from('leads')
+                    .update(leadUpdate)
+                    .eq('id', existingLead.id);
+                  
+                  if (leadUpdateError) {
+                    console.error('Error updating lead on sent message:', leadUpdateError);
+                  } else {
+                    console.log('Lead updated with sent message data');
+                    
+                    // Log activity for the stage change
+                    if (shouldMoveToMensagemEnviada) {
+                      await supabase.from('lead_activities').insert({
+                        lead_id: existingLead.id,
+                        user_id: whatsappNumber.user_id,
+                        activity_type: 'stage_changed',
+                        description: 'Movido automaticamente para Mensagem Enviada (enviou mensagem)',
+                        metadata: { automatic: true, trigger: 'webhook_sent_message' },
+                      });
                     }
                   }
                 }
+              }
                 
                 // ===== WARMING RESPONSE DETECTION =====
                 // Check if this message is a response to a warming interaction
