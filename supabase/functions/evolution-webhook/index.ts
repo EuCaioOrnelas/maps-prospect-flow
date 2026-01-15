@@ -457,6 +457,81 @@ serve(async (req) => {
               }
             }
 
+            // Check if this is a protocolMessage (edit event via upsert)
+            if (messageData.protocolMessage?.editedMessage) {
+              console.log('=== EDIT VIA PROTOCOL MESSAGE IN UPSERT ===');
+              const protocolMessage = messageData.protocolMessage;
+              const editedMsgKey = protocolMessage.key;
+              const editedMessage = protocolMessage.editedMessage;
+              
+              const editMsgId = editedMsgKey?.id || '';
+              const newContent = editedMessage?.message?.conversation || 
+                                editedMessage?.message?.extendedTextMessage?.text ||
+                                editedMessage?.extendedTextMessage?.text ||
+                                editedMessage?.conversation || '';
+              
+              console.log('Edit via upsert - msgId:', editMsgId, 'newContent:', newContent?.substring(0, 100));
+              
+              if (editMsgId && newContent) {
+                // Find and update the message
+                const { data: existingEditMsg } = await supabase
+                  .from('messages')
+                  .select('id, conversation_id')
+                  .eq('message_id', editMsgId)
+                  .eq('user_id', whatsappNumber.user_id)
+                  .maybeSingle();
+                
+                if (existingEditMsg) {
+                  await supabase
+                    .from('messages')
+                    .update({ 
+                      content: newContent,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', existingEditMsg.id);
+                  
+                  console.log('Message edited via protocolMessage:', existingEditMsg.id);
+                  
+                  // Update conversation last_message if needed
+                  const { data: lastMsg } = await supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('conversation_id', existingEditMsg.conversation_id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                  
+                  if (lastMsg && lastMsg.id === existingEditMsg.id) {
+                    await supabase
+                      .from('conversations')
+                      .update({
+                        last_message: newContent.substring(0, 100),
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', existingEditMsg.conversation_id);
+                  }
+                } else {
+                  console.log('Message not found for edit via protocolMessage:', editMsgId);
+                }
+              }
+              
+              // Don't process this as a regular message, it's an edit event
+              break;
+            }
+
+            // Extract quoted message ID from contextInfo
+            const contextInfo = messageData.contextInfo || 
+                               messageData.extendedTextMessage?.contextInfo ||
+                               messageData.imageMessage?.contextInfo ||
+                               messageData.videoMessage?.contextInfo ||
+                               messageData.audioMessage?.contextInfo ||
+                               messageData.documentMessage?.contextInfo;
+            const quotedMessageId = contextInfo?.stanzaId || contextInfo?.quotedStanzaId || null;
+            
+            if (quotedMessageId) {
+              console.log('Message has quoted message ID:', quotedMessageId);
+            }
+
             // Extract message content based on type
             let messageType = 'text';
             let content = '';
@@ -612,6 +687,7 @@ serve(async (req) => {
                   status: fromMe ? 'sent' : 'received',
                   sender_jid: isGroup ? senderJidForGroup : null,
                   sender_name: isGroup ? senderName : null,
+                  quoted_message_id: quotedMessageId,
                 });
 
               if (msgError) {
