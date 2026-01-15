@@ -71,7 +71,7 @@ export const LeadCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-3 pr-6 cursor-pointer transition-all duration-200 w-full min-w-0",
+        "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 w-full min-w-0",
         "hover:shadow-md hover:border-primary/30",
         isSelected && "ring-2 ring-primary border-primary"
       )}
