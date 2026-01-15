@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -244,6 +245,36 @@ export default function CRM() {
     }
   }, [user, refetchOrigins]);
 
+  const handleUpdateOrigin = useCallback(async (oldName: string, newName: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .update({ name: newName })
+        .eq('user_id', user.id)
+        .eq('name', oldName);
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error updating origin:', error);
+      throw error;
+    }
+  }, [user, refetchOrigins]);
+
+  const handleDeleteOrigin = useCallback(async (name: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('name', name);
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error deleting origin:', error);
+      throw error;
+    }
+  }, [user, refetchOrigins]);
+
   const checkLeadExists = useCallback(async (phone: string): Promise<boolean> => {
     if (!user) return false;
     const normalizedPhone = phone.replace(/\D/g, '');
@@ -351,30 +382,51 @@ export default function CRM() {
                   />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => setManageStagesOpen(true)}
-                  >
-                    <Settings2 className="w-4 h-4 mr-2" />
-                    Colunas
-                  </Button>
-                  <Button
-                    variant={bulkSelectMode ? "secondary" : "outline"}
-                    size="icon"
-                    onClick={() => {
-                      setBulkSelectMode(!bulkSelectMode);
-                      if (bulkSelectMode) clearSelection();
-                    }}
-                    title={bulkSelectMode ? 'Cancelar seleção' : 'Excluir em massa'}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                  <ExportLeadsButton leads={filteredLeads} stages={stages} />
-                  <Button size="default" onClick={() => setAddLeadOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Lead
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="default"
+                        onClick={() => setManageStagesOpen(true)}
+                      >
+                        <Settings2 className="w-4 h-4 mr-2" />
+                        Colunas
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Gerenciar colunas do funil</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={bulkSelectMode ? "secondary" : "outline"}
+                        size="icon"
+                        onClick={() => {
+                          setBulkSelectMode(!bulkSelectMode);
+                          if (bulkSelectMode) clearSelection();
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{bulkSelectMode ? 'Cancelar seleção' : 'Excluir em massa'}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <ExportLeadsButton leads={filteredLeads} stages={stages} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Exportar leads para Excel</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="default" onClick={() => setAddLeadOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar Lead
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Adicionar novo lead manualmente</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -417,7 +469,7 @@ export default function CRM() {
       <LeadDetailDialog
         lead={selectedLead}
         stages={stages}
-        origins={availableOrigins}
+        origins={customOrigins}
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         onUpdate={async (id, updates) => {
@@ -436,6 +488,8 @@ export default function CRM() {
           }));
         }}
         onAddOrigin={handleAddOrigin}
+        onUpdateOrigin={handleUpdateOrigin}
+        onDeleteOrigin={handleDeleteOrigin}
       />
 
       {/* Add Lead Dialog */}
