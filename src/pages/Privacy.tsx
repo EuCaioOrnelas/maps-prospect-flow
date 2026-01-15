@@ -27,9 +27,7 @@ const Privacy = () => {
                 <span className="hidden xs:inline">Voltar</span>
               </Button>
               
-              <Link to="/">
-                <Logo size="md" />
-              </Link>
+              <Logo size="md" />
               
               <div className="w-16 sm:w-20" />
             </div>
