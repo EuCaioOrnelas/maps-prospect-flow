@@ -103,7 +103,8 @@ export const LeadCard = ({
             />
             <button
               onClick={handleSaveName}
-              className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
+              disabled={!editName.trim()}
+              className="p-1 rounded hover:bg-primary/20 text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Check className="w-4 h-4" />
             </button>
@@ -119,11 +120,13 @@ export const LeadCard = ({
             <h4 className="font-medium text-sm text-foreground truncate flex-1">
               {displayName}
             </h4>
-            {isHovered && onUpdateName && (
+            {onUpdateName && (
               <button
                 onClick={handleEditClick}
-                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all opacity-0 animate-fade-in"
-                style={{ opacity: isHovered ? 1 : 0 }}
+                className={cn(
+                  "p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-opacity shrink-0",
+                  isHovered ? "opacity-100" : "opacity-0"
+                )}
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
