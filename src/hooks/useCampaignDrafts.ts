@@ -70,6 +70,8 @@ export const useCampaignDrafts = () => {
     fetchDrafts();
   }, [fetchDrafts]);
 
+  const MAX_DRAFTS = 3;
+
   const saveDraft = useCallback(async (draftData: {
     step: 'leads' | 'messages' | 'settings' | 'summary';
     selectedLeads: Lead[];
@@ -93,6 +95,17 @@ export const useCampaignDrafts = () => {
                     draftData.campaignName.trim();
     
     if (!hasData && !currentDraftId) return null;
+
+    // If creating a new draft and already at max, delete the oldest
+    if (!currentDraftId && drafts.length >= MAX_DRAFTS) {
+      const oldestDraft = drafts[drafts.length - 1]; // Last in list is oldest (ordered by updated_at desc)
+      await (supabase
+        .from('campaign_drafts' as any)
+        .delete()
+        .eq('id', oldestDraft.id) as any);
+      
+      setDrafts(prev => prev.filter(d => d.id !== oldestDraft.id));
+    }
 
     const draftPayload = {
       user_id: user.id,
