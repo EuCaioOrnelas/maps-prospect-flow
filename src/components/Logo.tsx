@@ -18,9 +18,9 @@ export const Logo = ({
   iconOnly = false
 }: LogoProps) => {
   const sizes = {
-    sm: { icon: "h-7 w-7", text: "text-lg" },
-    md: { icon: "h-9 w-9", text: "text-xl" },
-    lg: { icon: "h-11 w-11", text: "text-2xl" },
+    sm: { icon: "h-10 w-10", text: "text-2xl" },
+    md: { icon: "h-12 w-12", text: "text-3xl" },
+    lg: { icon: "h-14 w-14", text: "text-4xl" },
   };
 
   const effectiveSize = sizes[size];
@@ -40,7 +40,7 @@ export const Logo = ({
   }
 
   return (
-    <div className="flex items-center justify-center gap-2.5">
+    <div className="flex items-center justify-center -space-x-1">
       <img 
         src={logoIconNew} 
         alt="Wiize" 
@@ -50,14 +50,14 @@ export const Logo = ({
         <>
           {mobileInitialsOnly ? (
             <span 
-              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text}`}
+              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text} -ml-1`}
               style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
             >
               wiize
             </span>
           ) : (
             <span 
-              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text}`}
+              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text} -ml-1`}
               style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500 }}
             >
               wiize
