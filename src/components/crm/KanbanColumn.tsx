@@ -4,6 +4,14 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 
+export type ColumnWidth = 'compact' | 'medium' | 'large';
+
+const COLUMN_WIDTH_CLASSES: Record<ColumnWidth, string> = {
+  compact: 'w-56 min-w-[224px]',
+  medium: 'w-72 min-w-[288px]',
+  large: 'w-80 min-w-[320px]',
+};
+
 interface KanbanColumnProps {
   stage: PipelineStage;
   leads: Lead[];
@@ -22,6 +30,7 @@ interface KanbanColumnProps {
   selectedLeadIds?: Set<string>;
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
+  columnWidth?: ColumnWidth;
 }
 
 export const KanbanColumn = ({
@@ -41,6 +50,7 @@ export const KanbanColumn = ({
   selectedLeadIds,
   onSelectAllInColumn,
   onUpdateLeadName,
+  columnWidth = 'medium',
 }: KanbanColumnProps) => {
   const totalValue = leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
   const allLeadsInColumnSelected = leads.length > 0 && leads.every(l => selectedLeadIds?.has(l.id));
@@ -65,7 +75,7 @@ export const KanbanColumn = ({
     <div
       className={cn(
         "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-300 ease-out",
-        isExpanded ? "w-full max-w-2xl" : "w-64 min-w-[256px] sm:w-72 sm:min-w-[288px]",
+        isExpanded ? "w-full max-w-2xl" : COLUMN_WIDTH_CLASSES[columnWidth],
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",
