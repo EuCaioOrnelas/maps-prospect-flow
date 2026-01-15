@@ -253,14 +253,17 @@ export const CampaignSummary = ({
         </div>
       </div>
 
-      {/* Window System Info */}
-      <div className="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-start gap-3">
-        <Shield size={18} className="text-primary flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="font-medium text-primary">Sistema de janelas ativo</p>
-          <p className="text-muted-foreground">
-            Envio por janelas progressivas com liberação por resposta. Limite de 200/dia por número.
-          </p>
+      {/* Window System Explanation */}
+      <div className="mt-4 p-4 rounded-lg bg-muted/50 border flex items-start gap-3">
+        <Shield size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+        <div className="text-sm space-y-2">
+          <p className="font-medium text-foreground">Como funciona o envio</p>
+          <ul className="text-muted-foreground space-y-1">
+            <li>• Envia em janelas: <strong>20 → 30 → 50 → 100</strong> mensagens</li>
+            <li>• Cada janela só libera após <strong>receber uma resposta</strong></li>
+            <li>• Sem resposta = <strong>pausa automática</strong> até alguém responder</li>
+            <li>• Limite diário: <strong>200 mensagens</strong> por número</li>
+          </ul>
         </div>
       </div>
 
