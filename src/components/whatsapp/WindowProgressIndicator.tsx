@@ -36,7 +36,7 @@ export const WindowProgressIndicator = ({
       case 'waiting_response':
         return {
           icon: Clock,
-          text: "Aguardando resposta para liberar próxima janela",
+          text: "Aguardando resposta de um lead para liberar a próxima janela",
           color: "text-amber-500",
           bgColor: "bg-amber-500/10",
         };
@@ -160,9 +160,13 @@ export const WindowProgressIndicator = ({
 
       {/* Feedback quando aguardando resposta */}
       {status === 'waiting_response' && (
-        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            💡 A próxima janela será liberada assim que um contato responder sua mensagem.
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-2">
+          <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+            ⏳ Aguardando resposta para continuar
+          </p>
+          <p className="text-xs text-muted-foreground">
+            A Janela {currentWindow + 1} será <strong>liberada automaticamente</strong> assim que 
+            qualquer lead da campanha responder sua mensagem. Respostas são detectadas em tempo real.
           </p>
         </div>
       )}

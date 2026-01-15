@@ -839,13 +839,42 @@ serve(async (req) => {
                           
                           // Update campaign total_responses
                           const newTotalResponses = (campaign.total_responses || 0) + 1;
-                          await supabase
+                          
+                          // Check if campaign was waiting for response - if so, resume it and unlock next window!
+                          const { data: campaignStatus } = await supabase
                             .from('whatsapp_campaigns')
-                            .update({ 
-                              total_responses: newTotalResponses,
-                              updated_at: new Date().toISOString()
-                            })
-                            .eq('id', campaign.id);
+                            .select('status, pause_reason, current_window')
+                            .eq('id', campaign.id)
+                            .single();
+                          
+                          if (campaignStatus?.status === 'paused' && campaignStatus?.pause_reason === 'waiting_response') {
+                            // UNLOCK NEXT WINDOW - Campaign was waiting for a response!
+                            const newWindow = Math.min((campaignStatus.current_window || 1) + 1, 4);
+                            
+                            await supabase
+                              .from('whatsapp_campaigns')
+                              .update({ 
+                                status: 'running',
+                                pause_reason: null,
+                                current_window: newWindow,
+                                window_sent_count: 0,
+                                total_responses: newTotalResponses,
+                                window_unlocked_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                              })
+                              .eq('id', campaign.id);
+                            
+                            console.log(`🎉 WINDOW UNLOCKED! Campaign ${campaign.id} resumed, now on Window ${newWindow}`);
+                          } else {
+                            // Just update total_responses
+                            await supabase
+                              .from('whatsapp_campaigns')
+                              .update({ 
+                                total_responses: newTotalResponses,
+                                updated_at: new Date().toISOString()
+                              })
+                              .eq('id', campaign.id);
+                          }
                           
                           console.log('Campaign total_responses updated to:', newTotalResponses);
                         }
