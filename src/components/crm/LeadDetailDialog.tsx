@@ -884,28 +884,6 @@ export const LeadDetailDialog = ({
                   </Select>
                 </div>
 
-                {/* Tags Section */}
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags</span>
-                  <div className="bg-muted/40 rounded-lg p-3">
-                    <div className="flex flex-wrap gap-1">
-                      {(lead.tags || []).map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs cursor-pointer hover:bg-destructive/20 transition-colors"
-                          onClick={() => handleRemoveTag(tag)}
-                        >
-                          {tag} ×
-                        </Badge>
-                      ))}
-                      {(lead.tags || []).length === 0 && (
-                        <span className="text-xs text-muted-foreground">Sem tags</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
                 {/* Negotiation Value with Close Deal Button */}
                 <div className="space-y-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
