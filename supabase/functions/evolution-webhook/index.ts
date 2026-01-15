@@ -812,12 +812,15 @@ serve(async (req) => {
                     // Check if this phone is in the campaign leads
                     for (const campaign of runningCampaigns) {
                       // Check if we've already registered a response from this phone
-                      const { data: existingResponse } = await supabase
+                      // Only the FIRST response from each lead should count
+                      const { data: existingResponses } = await supabase
                         .from('campaign_responses')
                         .select('id')
                         .eq('campaign_id', campaign.id)
                         .eq('contact_phone', normalizedPhone)
-                        .single();
+                        .limit(1);
+                      
+                      const existingResponse = existingResponses && existingResponses.length > 0 ? existingResponses[0] : null;
                       
                       if (!existingResponse) {
                         // Check when the message was sent to this contact (from ignored_contacts)
