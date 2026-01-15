@@ -95,10 +95,11 @@ export const LeadCard = ({
           <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
             <Input
               value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              onChange={(e) => setEditName(e.target.value.slice(0, 50))}
               onKeyDown={handleKeyDown}
               className="h-7 text-sm flex-1 min-w-0"
               placeholder="Nome do contato"
+              maxLength={50}
               autoFocus
             />
             <button
@@ -117,8 +118,8 @@ export const LeadCard = ({
           </div>
         ) : (
           <>
-            <h4 className="font-medium text-sm text-foreground line-clamp-2 flex-1 min-w-0">
-              {displayName}
+            <h4 className="font-medium text-sm text-foreground flex-1 min-w-0 truncate" title={displayName}>
+              {displayName.length > 50 ? `${displayName.slice(0, 50)}...` : displayName}
             </h4>
             <div className="flex items-center gap-1 shrink-0">
               {onUpdateName && (

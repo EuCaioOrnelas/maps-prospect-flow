@@ -269,6 +269,9 @@ export const LeadDetailDialog = ({
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals'>('info');
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
+  const [headerNameValue, setHeaderNameValue] = useState('');
+  const [isSavingHeaderName, setIsSavingHeaderName] = useState(false);
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [deals, setDeals] = useState<LeadDeal[]>([]);
@@ -324,9 +327,11 @@ export const LeadDetailDialog = ({
       const initialValue = lead.estimated_value || 0;
       setDealValue(initialValue);
       setSavedValue(initialValue);
+      setHeaderNameValue(lead.contact_name || lead.company_name || '');
       loadNotesAndActivities();
       loadDeals();
       setIsEditing(false);
+      setIsEditingHeaderName(false);
       setActiveTab('info');
       setShowWhatsAppOptions(false);
       setHistoryPage(1);
@@ -498,6 +503,22 @@ export const LeadDetailDialog = ({
     }
   };
 
+  const handleSaveHeaderName = async () => {
+    if (!lead || !headerNameValue.trim()) return;
+    setIsSavingHeaderName(true);
+    try {
+      // Determine if we're updating contact_name or company_name
+      const updateField = lead.contact_name ? 'contact_name' : 'company_name';
+      await onUpdate(lead.id, { [updateField]: headerNameValue.trim().slice(0, 50) });
+      setIsEditingHeaderName(false);
+      toast.success('Nome atualizado!');
+    } catch {
+      toast.error('Erro ao atualizar nome');
+    } finally {
+      setIsSavingHeaderName(false);
+    }
+  };
+
   if (!lead) return null;
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);
@@ -507,7 +528,7 @@ export const LeadDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5">
+        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5 shrink-0">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
@@ -518,13 +539,68 @@ export const LeadDetailDialog = ({
             </div>
             
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-foreground truncate">
-                {displayName}
-              </h2>
+              {isEditingHeaderName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={headerNameValue}
+                    onChange={(e) => setHeaderNameValue(e.target.value.slice(0, 50))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveHeaderName();
+                      if (e.key === 'Escape') {
+                        setHeaderNameValue(lead.contact_name || lead.company_name || '');
+                        setIsEditingHeaderName(false);
+                      }
+                    }}
+                    className="h-8 text-lg font-semibold"
+                    placeholder="Nome do lead"
+                    maxLength={50}
+                    autoFocus
+                    disabled={isSavingHeaderName}
+                  />
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={handleSaveHeaderName}
+                    className="h-8 w-8 shrink-0 text-primary hover:text-primary hover:bg-primary/10"
+                    disabled={isSavingHeaderName || !headerNameValue.trim()}
+                  >
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => { 
+                      setHeaderNameValue(lead.contact_name || lead.company_name || ''); 
+                      setIsEditingHeaderName(false); 
+                    }}
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    disabled={isSavingHeaderName}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <h2 className="text-lg font-semibold text-foreground truncate" title={displayName}>
+                    {displayName.length > 50 ? `${displayName.slice(0, 50)}...` : displayName}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setHeaderNameValue(lead.contact_name || lead.company_name || '');
+                      setIsEditingHeaderName(true);
+                    }}
+                    className="p-1 rounded hover:bg-white/20 text-muted-foreground hover:text-foreground transition-opacity opacity-0 group-hover:opacity-100 shrink-0"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               {lead.company_name && lead.contact_name && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <Building2 className="w-3 h-3" />
-                  {lead.company_name}
+                  <span className="truncate" title={lead.company_name}>
+                    {lead.company_name.length > 40 ? `${lead.company_name.slice(0, 40)}...` : lead.company_name}
+                  </span>
                 </p>
               )}
               <div className="flex items-center gap-2 mt-2">
@@ -542,7 +618,7 @@ export const LeadDetailDialog = ({
         </div>
 
         {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30">
+        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30 shrink-0">
           <div className="relative flex-1">
             <Button 
               size="sm" 
@@ -618,7 +694,7 @@ export const LeadDetailDialog = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-border shrink-0">
           {[
             { id: 'info', label: 'Informações' },
             { id: 'deals', label: `Vendas (${deals.length})` },
