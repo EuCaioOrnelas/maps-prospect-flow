@@ -142,7 +142,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="h-[57px] min-h-[57px] flex items-center border-b border-sidebar-border px-4">
           <Link 
             to="/dashboard"
-            className="flex items-center gap-2 h-12 group cursor-pointer"
+            className="flex items-center gap-1.5 h-12 group cursor-pointer"
           >
             {/* Icon logo - always visible and fixed position */}
             <img 
