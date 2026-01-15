@@ -102,7 +102,7 @@ const WhatsAppCampaign = () => {
   const [campaignName, setCampaignName] = useState('');
   const [delaySecondsMin, setDelaySecondsMin] = useState(40);
   const [delaySecondsMax, setDelaySecondsMax] = useState(60);
-  const [pauseAfterContacts, setPauseAfterContacts] = useState(50);
+  const [pauseAfterContacts, setPauseAfterContacts] = useState(30);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
   const [isScheduled, setIsScheduled] = useState(false);
