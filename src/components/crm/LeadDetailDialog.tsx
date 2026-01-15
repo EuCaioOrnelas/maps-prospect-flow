@@ -526,7 +526,7 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-xl h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5 shrink-0">
           <div className="flex items-start gap-4">
@@ -720,7 +720,7 @@ export const LeadDetailDialog = ({
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-6">
             {/* Info Tab - All Information Visible */}
             {activeTab === 'info' && (
