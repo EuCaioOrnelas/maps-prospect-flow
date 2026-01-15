@@ -839,9 +839,9 @@ export const NumbersManager = ({
                           <Flame 
                             size={16} 
                             className={
-                              warmingSessions[number.id].warming_status === 'hot' 
+                              warmingSessions[number.id].status === 'completed'
                                 ? 'text-orange-500' 
-                                : warmingSessions[number.id].warming_status === 'warm'
+                                : warmingSessions[number.id].warming_level >= 3
                                   ? 'text-yellow-500'
                                   : 'text-blue-400'
                             } 
@@ -852,14 +852,19 @@ export const NumbersManager = ({
                               <Badge 
                                 variant="secondary" 
                                 className={`text-xs ${
-                                  warmingSessions[number.id].warming_status === 'hot' 
+                                  warmingSessions[number.id].status === 'completed'
                                     ? 'bg-orange-500/20 text-orange-500' 
-                                    : warmingSessions[number.id].warming_status === 'warm'
+                                    : warmingSessions[number.id].warming_level >= 3
                                       ? 'bg-yellow-500/20 text-yellow-500'
                                       : 'bg-blue-500/20 text-blue-400'
                                 }`}
                               >
-                                Nível {warmingSessions[number.id].warming_level}/4
+                                {warmingSessions[number.id].status === 'completed' 
+                                  ? '🔥 Aquecido'
+                                  : warmingSessions[number.id].warming_level >= 3
+                                    ? '🌡️ Morno'
+                                    : '❄️ Frio'
+                                }
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-1">
@@ -868,9 +873,9 @@ export const NumbersManager = ({
                                   key={level}
                                   className={`h-1.5 flex-1 rounded-full transition-colors ${
                                     level <= warmingSessions[number.id].warming_level
-                                      ? warmingSessions[number.id].warming_status === 'hot' 
+                                      ? warmingSessions[number.id].status === 'completed'
                                         ? 'bg-orange-500' 
-                                        : warmingSessions[number.id].warming_status === 'warm'
+                                        : warmingSessions[number.id].warming_level >= 3
                                           ? 'bg-yellow-500'
                                           : 'bg-blue-400'
                                       : 'bg-muted'
@@ -878,6 +883,11 @@ export const NumbersManager = ({
                                 />
                               ))}
                             </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              Nível {warmingSessions[number.id].warming_level}/4 
+                              {warmingSessions[number.id].status === 'running' && ' • Em andamento'}
+                              {warmingSessions[number.id].status === 'paused' && ' • Pausado'}
+                            </p>
                           </div>
                         </div>
                       )}

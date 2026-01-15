@@ -863,28 +863,7 @@ serve(async (req) => {
                         const MIN_RESPONSE_TIME_SECONDS = 60;
                         
                         if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
-                          console.log(`🤖 BOT DETECTED: Response came in ${secondsSinceSent.toFixed(0)}s (< ${MIN_RESPONSE_TIME_SECONDS}s minimum)`);
-                          console.log(`🤖 Ignoring automatic/bot message, waiting for human response...`);
-                          continue;
-                        }
-                        
-                        // Additional bot pattern detection (common auto-reply phrases)
-                        const botPatterns = [
-                          /obrigad[oa] (pelo|por) (contato|mensagem)/i,
-                          /atendimento autom[aá]tico/i,
-                          /resposta autom[aá]tica/i,
-                          /estamos (ausentes|indispon[ií]veis)/i,
-                          /fora do hor[aá]rio/i,
-                          /retornaremos (em breve|logo)/i,
-                          /aguarde (um momento|atendimento)/i,
-                        ];
-                        
-                        const messageContent = content || '';
-                        const isBotPattern = botPatterns.some(pattern => pattern.test(messageContent));
-                        
-                        if (isBotPattern) {
-                          console.log(`🤖 BOT PATTERN DETECTED in message content: "${messageContent.substring(0, 100)}..."`);
-                          console.log(`🤖 Ignoring bot message, waiting for human response...`);
+                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot/auto-reply`);
                           continue;
                         }
                         
