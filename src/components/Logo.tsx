@@ -29,22 +29,22 @@ export const Logo = ({
   // If iconOnly, show only the icon
   if (iconOnly) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center group">
         <img 
           src={logoIconNew} 
           alt="Wiize" 
-          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg`}
+          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center gap-0.5">
+    <div className="flex items-center justify-center gap-0.5 group">
       <img 
         src={logoIconNew} 
         alt="Wiize" 
-        className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0`}
+        className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0 transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
       />
       {showText && (
         <>
