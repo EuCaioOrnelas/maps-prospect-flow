@@ -203,7 +203,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
           }
         }
       },
@@ -216,7 +216,7 @@ serve(async (req) => {
           url: webhookUrl,
           webhookByEvents: false,
           webhookBase64: true,
-          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
         }
       },
       // Format 3: instance/settings
@@ -230,7 +230,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
           }
         }
       }
