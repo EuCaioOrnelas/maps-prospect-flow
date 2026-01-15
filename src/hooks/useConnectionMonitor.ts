@@ -265,20 +265,29 @@ export const useConnectionMonitor = ({
           table: 'whatsapp_numbers',
           filter: `user_id=eq.${user.id}`
         },
-        async (payload) => {
+        (payload) => {
           const updated = payload.new as WhatsAppNumber;
-          const old = payload.old as WhatsAppNumber;
+
+          // payload.old often comes without full row data; track transitions ourselves
+          const prevKnown = lastKnownConnectedRef.current[updated.id];
+          lastKnownConnectedRef.current[updated.id] = updated.is_connected;
+
+          // If we don't have a previous value yet, just store and update local state
+          if (typeof prevKnown === 'undefined') {
+            onNumbersChange(numbers.map(n =>
+              n.id === updated.id ? { ...n, ...updated } : n
+            ));
+            return;
+          }
 
           // If connection was lost
-          if (old.is_connected && !updated.is_connected) {
+          if (prevKnown === true && updated.is_connected === false) {
             console.log(`Realtime: Connection lost for ${updated.name}`);
-            
-            // Update local state
-            onNumbersChange(numbers.map(n => 
+
+            onNumbersChange(numbers.map(n =>
               n.id === updated.id ? { ...n, ...updated } : n
             ));
 
-            // Attempt reconnect if we have instance name
             if (updated.instance_name) {
               const number = { ...updated };
               setTimeout(() => attemptReconnect(number), 2000);
@@ -286,19 +295,17 @@ export const useConnectionMonitor = ({
           }
 
           // If connection was restored
-          if (!old.is_connected && updated.is_connected) {
+          if (prevKnown === false && updated.is_connected === true) {
             console.log(`Realtime: Connection restored for ${updated.name}`);
-            
-            onNumbersChange(numbers.map(n => 
+
+            onNumbersChange(numbers.map(n =>
               n.id === updated.id ? { ...n, ...updated } : n
             ));
 
-            // Clear reconnect state if this was the number being reconnected
             if (reconnectState?.numberId === updated.id) {
               setReconnectState(null);
             }
 
-            // Sync messages
             syncMessages(updated);
           }
         }
