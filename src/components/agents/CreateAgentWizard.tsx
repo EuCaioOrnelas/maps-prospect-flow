@@ -1,0 +1,687 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Bot, 
+  ArrowRight, 
+  ArrowLeft, 
+  Check,
+  Target,
+  Users,
+  MessageCircle,
+  Clock,
+  Flame,
+  Loader2,
+  AlertTriangle
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+interface CreateAgentWizardProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+}
+
+interface WhatsAppNumber {
+  id: string;
+  name: string;
+  phone_number: string | null;
+  is_connected: boolean;
+  warming_status?: string;
+  warming_level?: number;
+}
+
+const STEPS = [
+  { id: 1, title: "Nome", icon: Bot },
+  { id: 2, title: "Número", icon: MessageCircle },
+  { id: 3, title: "Objetivo", icon: Target },
+  { id: 4, title: "Público", icon: Users },
+  { id: 5, title: "Estilo", icon: MessageCircle },
+  { id: 6, title: "Horário", icon: Clock },
+  { id: 7, title: "Limite", icon: Target },
+  { id: 8, title: "Aquecimento", icon: Flame },
+  { id: 9, title: "Confirmação", icon: Check },
+];
+
+const MESSAGE_TEMPLATES = {
+  prospecting: [
+    "Oi {nome}, tudo bem? Vi seu trabalho e achei interessante.",
+    "Olá {nome}! Passando pra conhecer melhor seu negócio.",
+    "{nome}, boa tarde! Vi que você trabalha com {categoria}, certo?",
+  ],
+  warming: [
+    "Oi, tudo bem?",
+    "Olá! Como você está?",
+    "Boa tarde! Tudo certo por aí?",
+  ],
+  first_contact: [
+    "Oi {nome}, prazer em conhecer você!",
+    "Olá {nome}! Vim me apresentar.",
+    "{nome}, boa tarde! Posso tirar uma dúvida rápida?",
+  ],
+};
+
+export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgentWizardProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
+  const [loadingNumbers, setLoadingNumbers] = useState(true);
+
+  // Form state
+  const [name, setName] = useState("");
+  const [selectedNumberId, setSelectedNumberId] = useState("");
+  const [objective, setObjective] = useState<"prospecting" | "warming" | "first_contact">("prospecting");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [communicationStyle, setCommunicationStyle] = useState<"formal" | "neutral" | "informal">("neutral");
+  const [operatingHoursStart, setOperatingHoursStart] = useState("08:00");
+  const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
+  const [dailyLimit, setDailyLimit] = useState(20);
+  const [isWarmed, setIsWarmed] = useState(false);
+
+  // Fetch WhatsApp numbers
+  useEffect(() => {
+    const fetchNumbers = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('whatsapp_numbers')
+          .select('id, name, phone_number, is_connected')
+          .eq('user_id', user.id)
+          .eq('is_connected', true);
+
+        if (error) throw error;
+
+        // Fetch warming status for each number
+        const numbersWithWarming = await Promise.all(
+          (data || []).map(async (num) => {
+            const { data: warmingData } = await supabase
+              .from('warming_sessions')
+              .select('warming_status, warming_level')
+              .eq('whatsapp_number_id', num.id)
+              .single();
+
+            return {
+              ...num,
+              warming_status: warmingData?.warming_status,
+              warming_level: warmingData?.warming_level,
+            };
+          })
+        );
+
+        setNumbers(numbersWithWarming);
+      } catch (error) {
+        console.error('Error fetching numbers:', error);
+      } finally {
+        setLoadingNumbers(false);
+      }
+    };
+
+    if (open) {
+      fetchNumbers();
+    }
+  }, [user, open]);
+
+  // Suggest daily limit based on warming status
+  useEffect(() => {
+    const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+    if (selectedNumber) {
+      const isWarm = selectedNumber.warming_status === 'hot' || (selectedNumber.warming_level && selectedNumber.warming_level >= 3);
+      setIsWarmed(isWarm);
+      
+      // Suggest conservative limits
+      if (isWarm) {
+        setDailyLimit(30);
+      } else {
+        setDailyLimit(10); // Safe mode for cold numbers
+      }
+    }
+  }, [selectedNumberId, numbers]);
+
+  const resetForm = () => {
+    setStep(1);
+    setName("");
+    setSelectedNumberId("");
+    setObjective("prospecting");
+    setTargetAudience("");
+    setCommunicationStyle("neutral");
+    setOperatingHoursStart("08:00");
+    setOperatingHoursEnd("18:00");
+    setDailyLimit(20);
+    setIsWarmed(false);
+  };
+
+  const handleCreate = async (activate: boolean) => {
+    if (!user) return;
+    
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('ai_agents')
+        .insert({
+          user_id: user.id,
+          name,
+          whatsapp_number_id: selectedNumberId,
+          objective,
+          target_audience: targetAudience,
+          communication_style: communicationStyle,
+          operating_hours_start: operatingHoursStart,
+          operating_hours_end: operatingHoursEnd,
+          daily_limit: dailyLimit,
+          is_warmed: isWarmed,
+          status: activate ? 'active' : 'draft',
+          message_templates: MESSAGE_TEMPLATES[objective],
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: activate ? "Agente ativado!" : "Agente salvo como rascunho",
+        description: `${name} foi criado com sucesso.`,
+      });
+
+      resetForm();
+      onOpenChange(false);
+      onCreated();
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      toast({
+        title: "Erro ao criar agente",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canProceed = () => {
+    switch (step) {
+      case 1: return name.trim().length >= 3;
+      case 2: return !!selectedNumberId;
+      case 3: return !!objective;
+      case 4: return targetAudience.trim().length >= 3;
+      case 5: return !!communicationStyle;
+      case 6: return !!operatingHoursStart && !!operatingHoursEnd;
+      case 7: return dailyLimit >= 1 && dailyLimit <= 100;
+      case 8: return true;
+      default: return true;
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Bot className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Qual o nome do seu agente?</h3>
+              <p className="text-muted-foreground text-sm">
+                Escolha um nome que ajude você a identificar este agente
+              </p>
+            </div>
+            <Input
+              placeholder="Ex: Prospector Imobiliário"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-center text-lg"
+              autoFocus
+            />
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <MessageCircle className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Qual número este agente vai usar?</h3>
+              <p className="text-muted-foreground text-sm">
+                Selecione um número de WhatsApp conectado
+              </p>
+            </div>
+            
+            {loadingNumbers ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : numbers.length === 0 ? (
+              <div className="text-center py-8 space-y-3">
+                <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500" />
+                <p className="text-muted-foreground">
+                  Nenhum número conectado encontrado.
+                </p>
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Conectar Número
+                </Button>
+              </div>
+            ) : (
+              <RadioGroup value={selectedNumberId} onValueChange={setSelectedNumberId}>
+                <div className="space-y-2">
+                  {numbers.map((num) => (
+                    <Label
+                      key={num.id}
+                      htmlFor={num.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                        selectedNumberId === num.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem value={num.id} id={num.id} />
+                        <div>
+                          <p className="font-medium">{num.name || num.phone_number}</p>
+                          {num.phone_number && num.name && (
+                            <p className="text-sm text-muted-foreground">{num.phone_number}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {num.warming_status === 'hot' ? (
+                          <Badge className="bg-green-500/20 text-green-400">Aquecido</Badge>
+                        ) : num.warming_status === 'warm' ? (
+                          <Badge className="bg-yellow-500/20 text-yellow-400">Morno</Badge>
+                        ) : (
+                          <Badge className="bg-blue-500/20 text-blue-400">Frio</Badge>
+                        )}
+                      </div>
+                    </Label>
+                  ))}
+                </div>
+              </RadioGroup>
+            )}
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Target className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Qual o objetivo deste agente?</h3>
+            </div>
+            
+            <RadioGroup value={objective} onValueChange={(v) => setObjective(v as any)}>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="prospecting"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    objective === 'prospecting' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="prospecting" id="prospecting" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Prospecção</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enviar mensagens iniciais para novos leads e responder uma vez
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  htmlFor="warming"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    objective === 'warming' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="warming" id="warming" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Aquecimento de Número</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enviar mensagens neutras para aquecer o chip gradualmente
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  htmlFor="first_contact"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    objective === 'first_contact' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="first_contact" id="first_contact" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Primeiro Contato</p>
+                    <p className="text-sm text-muted-foreground">
+                      Iniciar conversa com leads já qualificados
+                    </p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Users className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Com quem esse agente vai falar?</h3>
+              <p className="text-muted-foreground text-sm">
+                Descreva brevemente seu público-alvo
+              </p>
+            </div>
+            <Textarea
+              placeholder="Ex: Donos de imobiliárias na região Sul, interessados em marketing digital"
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              rows={3}
+            />
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <MessageCircle className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Como esse agente deve falar?</h3>
+            </div>
+            
+            <RadioGroup value={communicationStyle} onValueChange={(v) => setCommunicationStyle(v as any)}>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="formal"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    communicationStyle === 'formal' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="formal" id="formal" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Formal</p>
+                    <p className="text-sm text-muted-foreground">
+                      "Prezado Sr. João, espero que esteja bem..."
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  htmlFor="neutral"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    communicationStyle === 'neutral' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="neutral" id="neutral" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Neutro</p>
+                    <p className="text-sm text-muted-foreground">
+                      "Olá João, tudo bem? Vi seu trabalho e achei interessante."
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  htmlFor="informal"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    communicationStyle === 'informal' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="informal" id="informal" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Informal</p>
+                    <p className="text-sm text-muted-foreground">
+                      "E aí João! Beleza? Vi que você manja de..."
+                    </p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Clock className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Em quais horários o agente pode operar?</h3>
+              <p className="text-muted-foreground text-sm">
+                Defina a janela de operação (recomendado: horário comercial)
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Hora inicial</Label>
+                <Input
+                  type="time"
+                  value={operatingHoursStart}
+                  onChange={(e) => setOperatingHoursStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Hora final</Label>
+                <Input
+                  type="time"
+                  value={operatingHoursEnd}
+                  onChange={(e) => setOperatingHoursEnd(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Target className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Quantas mensagens por dia?</h3>
+              <p className="text-muted-foreground text-sm">
+                {isWarmed 
+                  ? "Número aquecido - limite sugerido: 30/dia"
+                  : "Número frio - modo seguro ativado (máx 15/dia)"
+                }
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <Input
+                type="number"
+                min={1}
+                max={isWarmed ? 100 : 15}
+                value={dailyLimit}
+                onChange={(e) => setDailyLimit(Number(e.target.value))}
+                className="text-center text-2xl font-bold"
+              />
+              
+              {!isWarmed && dailyLimit > 15 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-yellow-500">
+                    Número não aquecido. Limite máximo recomendado: 15 mensagens/dia para evitar bloqueios.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Flame className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Este número já está aquecido?</h3>
+            </div>
+            
+            <RadioGroup value={isWarmed ? "yes" : "no"} onValueChange={(v) => setIsWarmed(v === "yes")}>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="warmed-yes"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    isWarmed ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="yes" id="warmed-yes" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Sim, está aquecido</p>
+                    <p className="text-sm text-muted-foreground">
+                      O número já tem histórico de uso e conversas naturais
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  htmlFor="warmed-no"
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    !isWarmed ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="no" id="warmed-no" className="mt-1" />
+                  <div>
+                    <p className="font-medium">Não (ativar modo seguro)</p>
+                    <p className="text-sm text-muted-foreground">
+                      Limites conservadores serão aplicados automaticamente
+                    </p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        );
+
+      case 9:
+        const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Check className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Confirme as configurações</h3>
+            </div>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Nome</span>
+                <span className="font-medium">{name}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Número</span>
+                <span className="font-medium">{selectedNumber?.name || selectedNumber?.phone_number}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Objetivo</span>
+                <span className="font-medium">
+                  {objective === 'prospecting' ? 'Prospecção' : objective === 'warming' ? 'Aquecimento' : 'Primeiro Contato'}
+                </span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Estilo</span>
+                <span className="font-medium capitalize">{communicationStyle}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Horário</span>
+                <span className="font-medium">{operatingHoursStart} - {operatingHoursEnd}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Limite diário</span>
+                <span className="font-medium">{dailyLimit} mensagens</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Status do número</span>
+                <Badge className={isWarmed ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
+                  {isWarmed ? "Aquecido" : "Frio (modo seguro)"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            Criar Agente de IA
+          </DialogTitle>
+          <DialogDescription>
+            Etapa {step} de {STEPS.length}: {STEPS[step - 1]?.title}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Progress */}
+        <Progress value={(step / STEPS.length) * 100} className="h-1" />
+
+        {/* Content */}
+        <div className="py-4 min-h-[280px]">
+          {renderStepContent()}
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => step > 1 ? setStep(step - 1) : onOpenChange(false)}
+            disabled={loading}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            {step === 1 ? "Cancelar" : "Voltar"}
+          </Button>
+
+          {step < STEPS.length ? (
+            <Button
+              onClick={() => setStep(step + 1)}
+              disabled={!canProceed()}
+            >
+              Próximo
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleCreate(false)}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
+              </Button>
+              <Button
+                onClick={() => handleCreate(true)}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ativar Agente"}
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

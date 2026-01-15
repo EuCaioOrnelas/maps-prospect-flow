@@ -14,6 +14,190 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          initial_message_content: string | null
+          initial_message_sent_at: string | null
+          lead_name: string | null
+          lead_phone: string
+          reply_content: string | null
+          reply_sent: boolean
+          reply_sent_at: string | null
+          response_content: string | null
+          response_received: boolean
+          response_received_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          initial_message_content?: string | null
+          initial_message_sent_at?: string | null
+          lead_name?: string | null
+          lead_phone: string
+          reply_content?: string | null
+          reply_sent?: boolean
+          reply_sent_at?: string | null
+          response_content?: string | null
+          response_received?: boolean
+          response_received_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          initial_message_content?: string | null
+          initial_message_sent_at?: string | null
+          lead_name?: string | null
+          lead_phone?: string
+          reply_content?: string | null
+          reply_sent?: boolean
+          reply_sent_at?: string | null
+          response_content?: string | null
+          response_received?: boolean
+          response_received_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_message_logs: {
+        Row: {
+          agent_id: string
+          content: string | null
+          conversation_id: string | null
+          created_at: string
+          direction: string
+          id: string
+          message_type: string | null
+          processed_at: string
+        }
+        Insert: {
+          agent_id: string
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          direction: string
+          id?: string
+          message_type?: string | null
+          processed_at?: string
+        }
+        Update: {
+          agent_id?: string
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          message_type?: string | null
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_message_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_message_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "agent_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          communication_style: string
+          created_at: string
+          daily_limit: number
+          id: string
+          is_warmed: boolean
+          last_reset_date: string | null
+          message_templates: Json | null
+          messages_sent_today: number
+          n8n_webhook_url: string | null
+          n8n_workflow_id: string | null
+          name: string
+          objective: string
+          operating_hours_end: string
+          operating_hours_start: string
+          status: string
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_number_id: string | null
+        }
+        Insert: {
+          communication_style?: string
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          is_warmed?: boolean
+          last_reset_date?: string | null
+          message_templates?: Json | null
+          messages_sent_today?: number
+          n8n_webhook_url?: string | null
+          n8n_workflow_id?: string | null
+          name: string
+          objective: string
+          operating_hours_end?: string
+          operating_hours_start?: string
+          status?: string
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number_id?: string | null
+        }
+        Update: {
+          communication_style?: string
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          is_warmed?: boolean
+          last_reset_date?: string | null
+          message_templates?: Json | null
+          messages_sent_today?: number
+          n8n_webhook_url?: string | null
+          n8n_workflow_id?: string | null
+          name?: string
+          objective?: string
+          operating_hours_end?: string
+          operating_hours_start?: string
+          status?: string
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           content: string
