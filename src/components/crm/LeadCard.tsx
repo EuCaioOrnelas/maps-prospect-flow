@@ -162,11 +162,11 @@ export const LeadCard = ({
       )}
 
       {/* Footer - Response time and Status */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-col gap-1">
         {hasResponse && (
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
             <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="whitespace-nowrap">
+            <span>
               {formatDistanceToNow(new Date(lead.last_response_at!), {
                 addSuffix: true,
                 locale: ptBR,
