@@ -76,9 +76,7 @@ export const ActiveCampaigns = ({
 
   const postponedCampaigns = activeCampaigns.filter(c => c.status === 'postponed');
   const scheduledCampaigns = activeCampaigns.filter(c => c.status === 'scheduled');
-  const runningOrPausedCampaigns = activeCampaigns.filter(c => 
-    c.status === 'running' || c.status === 'paused'
-  );
+  // runningOrPausedCampaigns removed - now shown in RealtimeMonitor component
 
   const remainingToday = dailyLimit - usedToday;
   const limitReached = remainingToday <= 0;
@@ -262,7 +260,7 @@ export const ActiveCampaigns = ({
 
   return (
     <div className="space-y-4 mb-8">
-      {/* Anti-Ban Warning Banner */}
+      {/* Limite Diário Banner */}
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
@@ -270,10 +268,10 @@ export const ActiveCampaigns = ({
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-amber-600 dark:text-amber-400 mb-1">
-              Proteção Anti-Ban Ativa
+              Limite Diário de Disparos
             </h3>
             <p className="text-sm text-muted-foreground">
-              Limite de <strong>{dailyLimit} disparos por dia</strong> para evitar bloqueios do WhatsApp. 
+              Limite de <strong>{dailyLimit} disparos por dia</strong> para reduzir riscos de bloqueio. 
               Campanhas são pausadas automaticamente ao atingir o limite e retomadas no próximo dia.
             </p>
           </div>
@@ -555,171 +553,7 @@ export const ActiveCampaigns = ({
         </div>
       )}
 
-      {/* Running/Paused Campaigns */}
-      {runningOrPausedCampaigns.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Play size={16} className="text-primary" />
-            Em Andamento ({runningOrPausedCampaigns.length})
-          </h3>
-          
-          {runningOrPausedCampaigns.map((campaign) => {
-            const isPausedByLimit = campaign.status === 'paused' && campaign.paused_at_limit;
-            const progress = campaign.total_leads > 0 
-              ? Math.round((campaign.sent_count / campaign.total_leads) * 100) 
-              : 0;
-            const estimatedTime = calculateEstimatedTime(campaign);
-            const hasPauseReason = !!campaign.pause_reason && !isPausedByLimit;
-
-            return (
-              <div 
-                key={campaign.id}
-                className={`glass rounded-xl p-4 border-l-4 ${
-                  isPausedByLimit 
-                    ? 'border-l-destructive' 
-                    : campaign.status === 'running' 
-                      ? 'border-l-primary' 
-                      : 'border-l-yellow-500'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium truncate">{campaign.name}</h4>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        isPausedByLimit 
-                          ? 'bg-destructive/20 text-destructive' 
-                          : campaign.status === 'running' 
-                            ? 'bg-primary/20 text-primary' 
-                            : 'bg-yellow-500/20 text-yellow-500'
-                      }`}>
-                        {isPausedByLimit ? 'Limite Atingido' : 
-                         campaign.status === 'running' ? 'Em Andamento' : 'Pausada'}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <Users size={14} />
-                        <span>{campaign.sent_count}/{campaign.total_leads} leads</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageSquare size={14} />
-                        <span>{campaign.messages.length} variações</span>
-                      </div>
-                      {estimatedTime && campaign.status === 'running' && (
-                        <div className="flex items-center gap-1 text-primary">
-                          <Timer size={14} />
-                          <span>Restante: {estimatedTime}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all ${isPausedByLimit ? 'bg-destructive' : 'bg-primary'}`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {progress}% concluído
-                    </p>
-
-                    {/* Pause reason */}
-                    {hasPauseReason && (
-                      <div className="mt-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg">
-                        <AlertTriangle size={14} />
-                        <span>{campaign.pause_reason}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-shrink-0 flex flex-col gap-2">
-                    {campaign.status === 'running' ? (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => onPause(campaign)}
-                          className="gap-1"
-                        >
-                          <Pause size={14} />
-                          Pausar
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteCampaign(campaign)}
-                          disabled={deletingCampaignId === campaign.id}
-                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          {deletingCampaignId === campaign.id ? (
-                            <RefreshCw size={14} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={14} />
-                          )}
-                          Excluir
-                        </Button>
-                      </>
-                    ) : !isPausedByLimit && (
-                      <>
-                        <Button 
-                          variant="default" 
-                          size="sm"
-                          onClick={() => onResume(campaign)}
-                          className="gap-1"
-                          disabled={limitReached}
-                        >
-                          <Play size={14} />
-                          Retomar
-                        </Button>
-                        {hasPauseReason && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleRetryCampaign(campaign)}
-                            disabled={retryingCampaignId === campaign.id}
-                            className="gap-1"
-                          >
-                            {retryingCampaignId === campaign.id ? (
-                              <RefreshCw size={14} className="animate-spin" />
-                            ) : (
-                              <RefreshCw size={14} />
-                            )}
-                            Reiniciar
-                          </Button>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteCampaign(campaign)}
-                          disabled={deletingCampaignId === campaign.id}
-                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          {deletingCampaignId === campaign.id ? (
-                            <RefreshCw size={14} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={14} />
-                          )}
-                          Excluir
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {isPausedByLimit && (
-                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock size={14} />
-                    <span>Será retomada automaticamente amanhã às 00:00</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Running/Paused Campaigns section removed - RealtimeMonitor already shows them above */}
 
       {/* Estimated time summary for all campaigns */}
       {activeCampaigns.length > 0 && (
