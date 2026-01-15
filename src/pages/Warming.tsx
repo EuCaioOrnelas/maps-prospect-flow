@@ -87,16 +87,25 @@ export default function Warming() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
 
-  // Check if beta warning was already shown
+  // Check if beta warning should be shown (every 30 days)
   useEffect(() => {
-    const betaWarningSeen = localStorage.getItem('warming_beta_warning_seen');
-    if (!betaWarningSeen) {
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const acceptedAt = localStorage.getItem('warming_beta_warning_accepted_at');
+    
+    if (!acceptedAt) {
+      setShowBetaWarning(true);
+      return;
+    }
+    
+    const acceptedDate = new Date(acceptedAt).getTime();
+    const now = Date.now();
+    if (now - acceptedDate > THIRTY_DAYS_MS) {
       setShowBetaWarning(true);
     }
   }, []);
 
   const handleCloseBetaWarning = () => {
-    localStorage.setItem('warming_beta_warning_seen', 'true');
+    localStorage.setItem('warming_beta_warning_accepted_at', new Date().toISOString());
     setShowBetaWarning(false);
   };
 
