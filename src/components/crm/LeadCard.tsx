@@ -161,8 +161,20 @@ export const LeadCard = ({
         </div>
       )}
 
-      {/* Footer - Status and Response stacked */}
-      <div className="flex flex-col gap-1">
+      {/* Footer - Response time and Status */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {hasResponse && (
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <MessageCircle className="w-3 h-3 shrink-0" />
+            <span className="whitespace-nowrap">
+              {formatDistanceToNow(new Date(lead.last_response_at!), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            </span>
+          </span>
+        )}
+
         {lead.whatsapp_status && (
           <Badge 
             variant="secondary" 
@@ -170,18 +182,6 @@ export const LeadCard = ({
           >
             {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
           </Badge>
-        )}
-
-        {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1 min-w-0">
-            <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="min-w-0 whitespace-normal break-words">
-              {formatDistanceToNow(new Date(lead.last_response_at!), {
-                addSuffix: true,
-                locale: ptBR,
-              })}
-            </span>
-          </span>
         )}
       </div>
     </div>

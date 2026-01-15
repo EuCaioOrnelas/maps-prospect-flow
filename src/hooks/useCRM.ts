@@ -101,11 +101,12 @@ export const isLockedStage = (stageName: string) => LOCKED_STAGE_NAMES.includes(
 const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'updated_at'>[] = [
   { name: 'Prospectado', position: 0, color: '#6B7280', is_default: true },
   { name: 'Mensagem Enviada', position: 1, color: '#3B82F6', is_default: true },
-  { name: 'Qualificado', position: 2, color: '#8B5CF6', is_default: true },
-  { name: 'Em Negociação', position: 3, color: '#F59E0B', is_default: true },
-  { name: 'Proposta Enviada', position: 4, color: '#EC4899', is_default: true },
-  { name: 'Fechado (Ganho)', position: 5, color: '#22C55E', is_default: true },
-  { name: 'Perdido', position: 6, color: '#EF4444', is_default: true },
+  { name: 'Respondeu Mensagem', position: 2, color: '#10B981', is_default: true },
+  { name: 'Qualificado', position: 3, color: '#8B5CF6', is_default: true },
+  { name: 'Em Negociação', position: 4, color: '#F59E0B', is_default: true },
+  { name: 'Proposta Enviada', position: 5, color: '#EC4899', is_default: true },
+  { name: 'Fechado (Ganho)', position: 6, color: '#22C55E', is_default: true },
+  { name: 'Perdido', position: 7, color: '#EF4444', is_default: true },
 ];
 
 export const useCRM = () => {
