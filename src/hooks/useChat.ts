@@ -390,8 +390,6 @@ export const useChat = (selectedNumberId?: string | null) => {
       const msg = messageQueueRef.current.shift()!;
       
       try {
-        console.log('[Chat] Sending message to conversation:', msg.conversationId, 'content:', msg.content?.slice(0, 50));
-        
         const response = await supabase.functions.invoke('chat-send-message', {
           body: {
             conversationId: msg.conversationId,
@@ -403,16 +401,13 @@ export const useChat = (selectedNumberId?: string | null) => {
           },
         });
 
-        console.log('[Chat] Response:', response);
-
         if (response.error) {
-          console.error('[Chat] Error sending message:', response.error);
+          console.error('Error sending message:', response.error);
           setMessages(prev => prev.map(m => 
             m.id === msg.id ? { ...m, status: 'failed' } : m
           ));
         } else if (response.data?.error) {
-          // Handle error returned in response body
-          console.error('[Chat] API Error:', response.data.error);
+          console.error('API Error:', response.data.error);
           setMessages(prev => prev.map(m => 
             m.id === msg.id ? { ...m, status: 'failed' } : m
           ));
@@ -424,7 +419,7 @@ export const useChat = (selectedNumberId?: string | null) => {
           ));
         }
       } catch (error) {
-        console.error('[Chat] Exception sending message:', error);
+        console.error('Error sending message:', error);
         setMessages(prev => prev.map(m => 
           m.id === msg.id ? { ...m, status: 'failed' } : m
         ));
