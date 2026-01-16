@@ -781,10 +781,10 @@ const AgentReports = () => {
                 </CardContent>
               </Card>
 
-              {/* Health Score Card - Detalhado */}
+              {/* Health Score Card */}
               <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
                 <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                  <div className="flex items-center justify-between gap-6">
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-muted-foreground">Score de Saúde dos Agentes</h3>
                       <div className="flex items-baseline gap-2 mt-1">
@@ -798,33 +798,12 @@ const AgentReports = () => {
                       </p>
                       
                       {/* Progress bar */}
-                      <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden max-w-md">
                         <div 
                           className={`h-full rounded-full transition-all duration-500 ${getHealthBgColor(healthScoreDetails.totalScore)}`}
                           style={{ width: `${healthScoreDetails.totalScore}%` }}
                         />
                       </div>
-                    </div>
-                    
-                    {/* Métricas detalhadas */}
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {Object.entries(healthScoreDetails.metrics).map(([key, metric]) => (
-                        <div key={key} className="bg-background/50 rounded-lg p-3 border border-border/50">
-                          <p className="text-xs text-muted-foreground truncate">{metric.label}</p>
-                          <p className={`text-lg font-bold ${getStatusColor(metric.status)}`}>
-                            {key === 'avgResponseTime' 
-                              ? metric.value > 0 ? `${metric.value}m` : '-'
-                              : `${metric.value}%`}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">{metric.benchmark}</p>
-                          <div className="mt-1 h-1 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full ${getStatusColor(metric.status).replace('text-', 'bg-')}`}
-                              style={{ width: `${Math.min(100, metric.score)}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
                     </div>
                     
                     <div className="hidden xl:flex items-center justify-center">
@@ -833,6 +812,29 @@ const AgentReports = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Métricas de Saúde */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {Object.entries(healthScoreDetails.metrics).map(([key, metric]) => (
+                  <Card key={key} className="bg-card/50">
+                    <CardContent className="p-4">
+                      <p className="text-xs text-muted-foreground truncate">{metric.label}</p>
+                      <p className={`text-2xl font-bold ${getStatusColor(metric.status)}`}>
+                        {key === 'avgResponseTime' 
+                          ? metric.value > 0 ? `${metric.value}m` : '-'
+                          : `${metric.value}%`}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{metric.benchmark}</p>
+                      <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${getStatusColor(metric.status).replace('text-', 'bg-')}`}
+                          style={{ width: `${Math.min(100, metric.score)}%` }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
               {/* KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
