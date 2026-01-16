@@ -1,7 +1,7 @@
 import { useState, memo, useCallback } from 'react';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, FlaskConical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
@@ -64,7 +64,7 @@ const LeadCardComponent = ({
   return (
     <div
       className={cn(
-        "w-full max-w-full overflow-hidden bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200",
+        "w-full max-w-full overflow-hidden bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 relative",
         "hover:shadow-md hover:border-primary/30",
         isSelected && "ring-2 ring-inset ring-primary border-primary"
       )}
@@ -82,6 +82,10 @@ const LeadCardComponent = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Beta indicator */}
+      <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+        <FlaskConical className="w-2.5 h-2.5 text-amber-500" />
+      </div>
       {/* Header - Name and Score */}
       <div className="flex items-start justify-between gap-2 mb-1.5 overflow-hidden">
         {isEditingName ? (

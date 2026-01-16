@@ -22,7 +22,8 @@ import {
   Clock,
   Target,
   AlertTriangle,
-  FlaskConical
+  FlaskConical,
+  MessageCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
@@ -38,6 +39,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AIAgent {
   id: string;
@@ -98,6 +107,29 @@ export default function AIAgents() {
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
+  const [showBetaWarning, setShowBetaWarning] = useState(false);
+
+  // Check if beta warning should be shown (every 30 days)
+  useEffect(() => {
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const acceptedAt = localStorage.getItem('agents_beta_warning_accepted_at');
+    
+    if (!acceptedAt) {
+      setShowBetaWarning(true);
+      return;
+    }
+    
+    const acceptedDate = new Date(acceptedAt).getTime();
+    const now = Date.now();
+    if (now - acceptedDate > THIRTY_DAYS_MS) {
+      setShowBetaWarning(true);
+    }
+  }, []);
+
+  const handleCloseBetaWarning = () => {
+    localStorage.setItem('agents_beta_warning_accepted_at', new Date().toISOString());
+    setShowBetaWarning(false);
+  };
 
   // Check if user has seen warning before
   useEffect(() => {
@@ -317,8 +349,11 @@ export default function AIAgents() {
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-primary/10">
+                            <div className="p-2 rounded-lg bg-primary/10 relative">
                               <Bot className="h-5 w-5 text-primary" />
+                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                <FlaskConical className="w-2.5 h-2.5 text-amber-500" />
+                              </div>
                             </div>
                             <div>
                               <CardTitle className="text-lg">{agent.name}</CardTitle>
@@ -496,6 +531,50 @@ export default function AIAgents() {
           setShowWizard(true);
         }}
       />
+
+      {/* Beta Warning Dialog */}
+      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle className="text-xl">Agentes de IA em Versão Beta</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                Os <strong>Agentes de IA</strong> estão atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e podem apresentar alguns bugs ou comportamentos inesperados.
+              </p>
+              <p>
+                Estamos trabalhando constantemente para melhorar a experiência, adicionar novas funcionalidades e corrigir possíveis falhas.
+              </p>
+              <div className="bg-muted/50 p-3 rounded-lg border">
+                <p className="text-sm">
+                  <strong>Encontrou algum problema?</strong><br />
+                  Entre em contato conosco pela página de <span className="text-primary font-medium">Contato</span> que vamos trabalhar para corrigir o mais rápido possível!
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/contact')}
+              className="w-full sm:w-auto"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Ir para Contato
+            </Button>
+            <Button 
+              onClick={handleCloseBetaWarning}
+              className="w-full sm:w-auto"
+            >
+              Entendi, continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
