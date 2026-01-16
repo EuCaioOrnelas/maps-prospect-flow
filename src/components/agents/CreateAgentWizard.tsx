@@ -52,6 +52,8 @@ interface WhatsAppNumber {
   is_connected: boolean;
   warming_status?: string;
   warming_level?: number;
+  has_active_agent?: boolean;
+  active_agent_name?: string;
 }
 
 const STEPS = [
@@ -124,30 +126,43 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
 
         if (error) throw error;
 
-        // Fetch warming status for each number
-        const numbersWithWarming = await Promise.all(
+        // Fetch warming status AND check for existing agents for each number
+        const numbersWithData = await Promise.all(
           (data || []).map(async (num) => {
-            const { data: warmingData } = await supabase
-              .from('warming_sessions')
-              .select('warming_status, warming_level')
-              .eq('whatsapp_number_id', num.id)
-              .single();
+            const [warmingResult, agentResult] = await Promise.all([
+              supabase
+                .from('warming_sessions')
+                .select('warming_status, warming_level')
+                .eq('whatsapp_number_id', num.id)
+                .single(),
+              supabase
+                .from('ai_agents')
+                .select('id, name, status')
+                .eq('whatsapp_number_id', num.id)
+                .in('status', ['active', 'paused', 'warming'])
+                .limit(1)
+            ]);
+
+            const activeAgent = agentResult.data?.[0];
 
             return {
               ...num,
-              warming_status: warmingData?.warming_status,
-              warming_level: warmingData?.warming_level,
+              warming_status: warmingResult.data?.warming_status,
+              warming_level: warmingResult.data?.warming_level,
+              has_active_agent: !!activeAgent,
+              active_agent_name: activeAgent?.name,
             };
           })
         );
 
-        setNumbers(numbersWithWarming);
+        setNumbers(numbersWithData);
         
-        // Auto-select if only one number is connected
-        if (numbersWithWarming.length === 1) {
-          setSelectedNumberId(numbersWithWarming[0].id);
-          const isWarm = numbersWithWarming[0].warming_status === 'hot' || 
-            (numbersWithWarming[0].warming_level && numbersWithWarming[0].warming_level >= 3);
+        // Auto-select if only one number is connected AND it doesn't have an agent
+        const availableNumbers = numbersWithData.filter(n => !n.has_active_agent);
+        if (availableNumbers.length === 1) {
+          setSelectedNumberId(availableNumbers[0].id);
+          const isWarm = availableNumbers[0].warming_status === 'hot' || 
+            (availableNumbers[0].warming_level && availableNumbers[0].warming_level >= 3);
           setIsWarmed(isWarm);
         }
       } catch (error) {
@@ -344,6 +359,17 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                   Conectar Número
                 </Button>
               </div>
+            ) : numbers.filter(n => !n.has_active_agent).length === 0 ? (
+              <div className="text-center py-8 space-y-3">
+                <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500" />
+                <p className="text-muted-foreground">
+                  Todos os seus números já têm agentes ativos.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Limite de 1 agente por número para proteção.
+                  Desative um agente existente para criar um novo.
+                </p>
+              </div>
             ) : (
               <RadioGroup value={selectedNumberId} onValueChange={setSelectedNumberId}>
                 <div className="space-y-2">
@@ -351,24 +377,42 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                     <Label
                       key={num.id}
                       htmlFor={num.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                        selectedNumberId === num.id 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border hover:border-primary/50'
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        num.has_active_agent 
+                          ? 'cursor-not-allowed opacity-50 border-border' 
+                          : selectedNumberId === num.id 
+                            ? 'border-primary bg-primary/5 cursor-pointer' 
+                            : 'border-border hover:border-primary/50 cursor-pointer'
                       }`}
+                      onClick={(e) => {
+                        if (num.has_active_agent) {
+                          e.preventDefault();
+                        }
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <RadioGroupItem value={num.id} id={num.id} />
+                        <RadioGroupItem 
+                          value={num.id} 
+                          id={num.id} 
+                          disabled={num.has_active_agent}
+                        />
                         <div>
                           <p className="font-medium">{num.name || num.phone_number}</p>
                           {num.phone_number && num.name && (
                             <p className="text-sm text-muted-foreground">{num.phone_number}</p>
                           )}
+                          {num.has_active_agent && (
+                            <p className="text-xs text-yellow-500 mt-1">
+                              Já tem agente: {num.active_agent_name}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {num.warming_status === 'hot' ? (
+                        {num.has_active_agent ? (
+                          <Badge className="bg-yellow-500/20 text-yellow-400">Ocupado</Badge>
+                        ) : num.warming_status === 'hot' ? (
                           <Badge className="bg-green-500/20 text-green-400">Aquecido</Badge>
                         ) : num.warming_status === 'warm' ? (
                           <Badge className="bg-yellow-500/20 text-yellow-400">Morno</Badge>

@@ -56,6 +56,9 @@ import jsPDF from "jspdf";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { AgentMetricsDashboard } from "@/components/agents/AgentMetricsDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface SearchHistoryItem {
   id: string;
@@ -561,53 +564,64 @@ const Reports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden relative">
-      <BackgroundGlow />
-      {/* Sidebar - Desktop only */}
-      <AppSidebar profile={profile} />
+    <SidebarProvider>
+      <div className="min-h-screen bg-background overflow-x-hidden relative flex w-full">
+        <BackgroundGlow />
+        {/* Sidebar - Desktop only */}
+        <AppSidebar profile={profile} />
 
-      {/* Header */}
-      <AppHeader profile={profile} />
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14" ref={reportRef}>
-        {/* Page Header with filters */}
-        <div className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">Relatórios de Prospecção</h1>
-            <p className="text-muted-foreground text-sm">
-              Acompanhe suas métricas e performance de prospecção
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-28 sm:w-40 h-8 sm:h-9 text-xs sm:text-sm">
-                <Filter size={14} className="mr-1 sm:mr-2 flex-shrink-0" />
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todo período</SelectItem>
-                <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                <SelectItem value="30days">Últimos 30 dias</SelectItem>
-                <SelectItem value="90days">Últimos 90 dias</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
-              <Download size={16} />
-              <span className="hidden sm:inline">Exportar</span>
-            </Button>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto">
-          {/* Stats Cards with staggered animation */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: 'Total de Buscas', value: stats.totalSearches, sub: 'prospecções realizadas', icon: Search },
-              { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR'), sub: 'empresas encontradas', icon: Users },
-              { label: 'Média por Busca', value: stats.avgLeadsPerSearch, sub: 'leads por prospecção', icon: TrendingUp },
-              { label: 'Nichos Explorados', value: stats.topNiches.length, sub: 'segmentos diferentes', icon: Target },
-            ].map((stat, index) => (
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto" ref={reportRef}>
+            {/* Page Header with filters */}
+            <div className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">Relatórios</h1>
+                <p className="text-muted-foreground text-sm">
+                  Acompanhe suas métricas e performance
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-28 sm:w-40 h-8 sm:h-9 text-xs sm:text-sm">
+                    <Filter size={14} className="mr-1 sm:mr-2 flex-shrink-0" />
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todo período</SelectItem>
+                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30days">Últimos 30 dias</SelectItem>
+                    <SelectItem value="90days">Últimos 90 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button variant="outline" size="sm" onClick={handleExportClick} className="gap-2 h-8 sm:h-9 px-2 sm:px-3">
+                  <Download size={16} />
+                  <span className="hidden sm:inline">Exportar</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Tabs for different report sections */}
+            <div className="max-w-7xl mx-auto">
+              <Tabs defaultValue="prospecting" className="space-y-6">
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="prospecting">Prospecção</TabsTrigger>
+                  <TabsTrigger value="agents">Agentes IA</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="prospecting" className="space-y-6">
+                  {/* Stats Cards with staggered animation */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Total de Buscas', value: stats.totalSearches, sub: 'prospecções realizadas', icon: Search },
+                      { label: 'Total de Leads', value: stats.totalLeads.toLocaleString('pt-BR'), sub: 'empresas encontradas', icon: Users },
+                      { label: 'Média por Busca', value: stats.avgLeadsPerSearch, sub: 'leads por prospecção', icon: TrendingUp },
+                      { label: 'Nichos Explorados', value: stats.topNiches.length, sub: 'segmentos diferentes', icon: Target },
+                    ].map((stat, index) => (
               <Card 
                 key={stat.label} 
                 className="glass animate-fade-in"
@@ -910,8 +924,16 @@ const Reports = () => {
               </CardContent>
             </Card>
           </div>
+                </TabsContent>
+
+                <TabsContent value="agents">
+                  <AgentMetricsDashboard dateFilter={dateFilter} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </main>
         </div>
-      </main>
+      </div>
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
@@ -1044,7 +1066,7 @@ const Reports = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </SidebarProvider>
   );
 };
 

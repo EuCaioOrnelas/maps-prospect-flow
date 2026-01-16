@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
 import { AgentDetailsDialog } from "@/components/agents/AgentDetailsDialog";
+import { AgentWarningDialog } from "@/components/agents/AgentWarningDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,6 +95,14 @@ export default function AIAgents() {
   const [showWizard, setShowWizard] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
+  const [showWarningDialog, setShowWarningDialog] = useState(false);
+  const [hasSeenWarning, setHasSeenWarning] = useState(false);
+
+  // Check if user has seen warning before
+  useEffect(() => {
+    const seen = localStorage.getItem('agent_warning_seen');
+    setHasSeenWarning(!!seen);
+  }, []);
 
   const fetchAgents = async () => {
     if (!user) return;
@@ -225,7 +234,13 @@ export default function AIAgents() {
                 </div>
                 
                 <Button 
-                  onClick={() => setShowWizard(true)}
+                  onClick={() => {
+                    if (!hasSeenWarning) {
+                      setShowWarningDialog(true);
+                    } else {
+                      setShowWizard(true);
+                    }
+                  }}
                   className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
@@ -271,7 +286,16 @@ export default function AIAgents() {
                       Crie seu primeiro agente de IA para automatizar a prospecção 
                       via WhatsApp de forma segura e controlada.
                     </p>
-                    <Button onClick={() => setShowWizard(true)} className="gap-2">
+                    <Button 
+                      onClick={() => {
+                        if (!hasSeenWarning) {
+                          setShowWarningDialog(true);
+                        } else {
+                          setShowWizard(true);
+                        }
+                      }} 
+                      className="gap-2"
+                    >
                       <Plus className="h-4 w-4" />
                       Criar Primeiro Agente
                     </Button>
@@ -455,6 +479,18 @@ export default function AIAgents() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Warning Dialog */}
+      <AgentWarningDialog
+        open={showWarningDialog}
+        onOpenChange={setShowWarningDialog}
+        onAccept={() => {
+          localStorage.setItem('agent_warning_seen', 'true');
+          setHasSeenWarning(true);
+          setShowWarningDialog(false);
+          setShowWizard(true);
+        }}
+      />
     </SidebarProvider>
   );
 }
