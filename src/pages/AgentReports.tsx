@@ -865,72 +865,11 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <Reply className="h-8 w-8 text-green-500/60" />
+                      <Target className="h-8 w-8 text-rose-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.responseRate}%</p>
-                      <p className="text-sm text-muted-foreground">Taxa de Resposta</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.responsesReceived} de {kpis.totalConversations}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <CheckCircle className="h-8 w-8 text-teal-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.autoCompletionRate}%</p>
-                      <p className="text-sm text-muted-foreground">Encerramento Auto.</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.autoCompleted} conversas
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <AlertCircle className="h-8 w-8 text-orange-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.escalationRate}%</p>
-                      <p className="text-sm text-muted-foreground">Taxa de Escalonamento</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.escalated} escaladas
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Clock className="h-8 w-8 text-purple-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">
-                        {kpis.avgResponseTime > 60 
-                          ? `${Math.floor(kpis.avgResponseTime / 60)}h ${kpis.avgResponseTime % 60}m`
-                          : `${kpis.avgResponseTime}m`}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Tempo Médio Resposta</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Timer className="h-8 w-8 text-indigo-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.avgConversationDuration}h</p>
-                      <p className="text-sm text-muted-foreground">Tempo até Encerrar</p>
+                      <p className="text-2xl font-bold">{kpis.totalMessagesReceived}</p>
+                      <p className="text-sm text-muted-foreground">Mensagens Recebidas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -960,18 +899,6 @@ const AgentReports = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         {kpis.humanHoursSaved}h de trabalho humano
                       </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Target className="h-8 w-8 text-rose-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.totalMessagesReceived}</p>
-                      <p className="text-sm text-muted-foreground">Mensagens Recebidas</p>
                     </div>
                   </CardContent>
                 </Card>
