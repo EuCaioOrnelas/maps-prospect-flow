@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -26,17 +26,12 @@ import {
   Bot, 
   ArrowRight, 
   ArrowLeft, 
-  Check,
-  MessageCircle,
-  Clock,
-  Flame,
   Loader2,
   AlertTriangle,
   Plus,
-  Sparkles
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AgentPromptBuilder } from "./AgentPromptBuilder";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateAgentWizardProps {
@@ -56,23 +51,13 @@ interface WhatsAppNumber {
   active_agent_name?: string;
 }
 
-type WizardStep = 'name' | 'number' | 'prompt-builder' | 'settings' | 'confirmation';
+type WizardStep = 'basics' | 'behavior' | 'review';
 
 const MESSAGE_TEMPLATES = {
   prospecting: [
     "Oi {nome}, tudo bem? Vi seu trabalho e achei interessante.",
     "Olá {nome}! Passando pra conhecer melhor seu negócio.",
     "{nome}, boa tarde! Vi que você trabalha com {categoria}, certo?",
-  ],
-  warming: [
-    "Oi, tudo bem?",
-    "Olá! Como você está?",
-    "Boa tarde! Tudo certo por aí?",
-  ],
-  first_contact: [
-    "Oi {nome}, prazer em conhecer você!",
-    "Olá {nome}! Vim me apresentar.",
-    "{nome}, boa tarde! Posso tirar uma dúvida rápida?",
   ],
 };
 
@@ -81,21 +66,25 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [currentStep, setCurrentStep] = useState<WizardStep>('name');
+  const [currentStep, setCurrentStep] = useState<WizardStep>('basics');
   const [loading, setLoading] = useState(false);
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
 
-  // Form state
+  // Form state - Basics
   const [name, setName] = useState("");
   const [selectedNumberId, setSelectedNumberId] = useState("");
-  const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const [promptConfig, setPromptConfig] = useState<any>(null);
+  const [companyName, setCompanyName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
+  
+  // Form state - Behavior
+  const [agentObjective, setAgentObjective] = useState("qualify");
+  const [responseStyle, setResponseStyle] = useState("friendly");
+  const [maxReplies, setMaxReplies] = useState<string>("1");
+  const [maxChars, setMaxChars] = useState("300");
   const [operatingHoursStart, setOperatingHoursStart] = useState("08:00");
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
   const [isWarmed, setIsWarmed] = useState(false);
-  const [maxReplies, setMaxReplies] = useState<number | null>(null);
-  const [maxChars, setMaxChars] = useState(300);
 
   // Fetch WhatsApp numbers
   useEffect(() => {
@@ -111,7 +100,6 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
 
         if (error) throw error;
 
-        // Fetch warming status AND check for existing agents for each number
         const numbersWithData = await Promise.all(
           (data || []).map(async (num) => {
             const [warmingResult, agentResult] = await Promise.all([
@@ -142,7 +130,6 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
 
         setNumbers(numbersWithData);
         
-        // Auto-select if only one number is connected AND it doesn't have an agent
         const availableNumbers = numbersWithData.filter(n => !n.has_active_agent);
         if (availableNumbers.length === 1) {
           setSelectedNumberId(availableNumbers[0].id);
@@ -162,7 +149,6 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     }
   }, [user, open]);
 
-  // Update warming status based on selected number
   useEffect(() => {
     const selectedNumber = numbers.find(n => n.id === selectedNumberId);
     if (selectedNumber) {
@@ -172,16 +158,50 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   }, [selectedNumberId, numbers]);
 
   const resetForm = () => {
-    setCurrentStep('name');
+    setCurrentStep('basics');
     setName("");
     setSelectedNumberId("");
-    setGeneratedPrompt("");
-    setPromptConfig(null);
+    setCompanyName("");
+    setProductDescription("");
+    setAgentObjective("qualify");
+    setResponseStyle("friendly");
+    setMaxReplies("1");
+    setMaxChars("300");
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
-    setMaxReplies(null);
-    setMaxChars(300);
+  };
+
+  const generatePrompt = (): string => {
+    const objectiveTexts: Record<string, string> = {
+      qualify: "Você qualifica leads identificando interesse. Se houver interesse, encaminhe para atendimento humano.",
+      educate: "Você educa leads sobre o produto/serviço, gerando interesse e preparando para a venda.",
+      close: "Você conduz a conversa até o fechamento, respondendo dúvidas e finalizando vendas."
+    };
+
+    const styleTexts: Record<string, string> = {
+      friendly: "Seja amigável e acolhedor, use linguagem informal e emojis moderadamente.",
+      professional: "Mantenha tom profissional e objetivo, sem gírias ou emojis.",
+      casual: "Seja descontraído como um amigo, use linguagem bem informal."
+    };
+
+    return `# IDENTIDADE
+Você é um assistente virtual da empresa "${companyName}".
+${productDescription ? `Produto/Serviço: ${productDescription}` : ''}
+
+# OBJETIVO
+${objectiveTexts[agentObjective]}
+
+# ESTILO DE COMUNICAÇÃO
+${styleTexts[responseStyle]}
+
+# REGRAS IMPORTANTES
+- Máximo de ${maxChars} caracteres por resposta
+- Responda de forma concisa e direta
+- NUNCA seja agressivo ou insistente
+- Se o lead disser "não", respeite e encerre educadamente
+- Evite parecer robótico, seja natural
+- Faça no máximo 2 perguntas antes de oferecer algo`;
   };
 
   const handleCreate = async (activate: boolean) => {
@@ -190,33 +210,27 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setLoading(true);
     
     try {
-      // Extract some info from promptConfig if available
-      const objective = promptConfig?.identity?.salesApproach === 'close' ? 'prospecting' : 
-                       promptConfig?.identity?.salesApproach === 'educate' ? 'first_contact' : 'prospecting';
+      const systemPrompt = generatePrompt();
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('ai_agents')
         .insert({
           user_id: user.id,
           name,
           whatsapp_number_id: selectedNumberId,
-          objective,
-          target_audience: promptConfig?.leadContext?.leadAwareness || '',
-          system_prompt: generatedPrompt,
-          agent_objective: promptConfig?.cta?.conversationGoal || '',
-          end_conversation_criteria: promptConfig?.cta?.endConditions?.join(', ') || '',
-          post_response_behavior: promptConfig?.opening?.openingStyle || '',
-          communication_style: 'neutral',
+          objective: agentObjective,
+          target_audience: '',
+          system_prompt: systemPrompt,
+          agent_objective: agentObjective,
+          communication_style: responseStyle,
           operating_hours_start: operatingHoursStart,
           operating_hours_end: operatingHoursEnd,
           is_warmed: isWarmed,
-          max_replies: maxReplies,
+          max_replies: maxReplies === "unlimited" ? null : parseInt(maxReplies),
           status: activate ? 'active' : 'draft',
-          message_templates: MESSAGE_TEMPLATES[objective as keyof typeof MESSAGE_TEMPLATES] || MESSAGE_TEMPLATES.prospecting,
-          max_response_chars: maxChars,
-        })
-        .select()
-        .single();
+          message_templates: MESSAGE_TEMPLATES.prospecting,
+          max_response_chars: parseInt(maxChars),
+        });
 
       if (error) throw error;
 
@@ -240,347 +254,307 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     }
   };
 
-  const getStepProgress = (): number => {
-    const steps: WizardStep[] = ['name', 'number', 'prompt-builder', 'settings', 'confirmation'];
-    const currentIndex = steps.indexOf(currentStep);
-    return ((currentIndex + 1) / steps.length) * 100;
-  };
-
-  const getStepTitle = (): string => {
-    switch (currentStep) {
-      case 'name': return 'Nome do Agente';
-      case 'number': return 'Número WhatsApp';
-      case 'prompt-builder': return 'Construtor de Prompt';
-      case 'settings': return 'Configurações';
-      case 'confirmation': return 'Confirmação';
-      default: return '';
-    }
-  };
-
   const canProceed = (): boolean => {
     switch (currentStep) {
-      case 'name': return name.trim().length >= 3;
-      case 'number': return !!selectedNumberId;
-      case 'prompt-builder': return !!generatedPrompt;
-      case 'settings': return true;
-      case 'confirmation': return true;
-      default: return true;
+      case 'basics':
+        return name.trim().length >= 3 && !!selectedNumberId && companyName.trim().length >= 2;
+      case 'behavior':
+        return !!agentObjective && !!responseStyle && !!maxReplies;
+      case 'review':
+        return true;
+      default:
+        return true;
     }
   };
 
-  const handlePromptComplete = (prompt: string, config: any) => {
-    setGeneratedPrompt(prompt);
-    setPromptConfig(config);
-    
-    // Extract maxChars from config if available
-    if (config?.rules?.maxChars) {
-      setMaxChars(parseInt(config.rules.maxChars));
-    }
-    
-    setCurrentStep('settings');
-  };
+  const availableNumbers = numbers.filter(n => !n.has_active_agent);
 
   const renderStep = () => {
     switch (currentStep) {
-      case 'name':
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Bot className="h-12 w-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Qual o nome do seu agente?</h3>
-              <p className="text-muted-foreground text-sm">
-                Escolha um nome que ajude você a identificar este agente
-              </p>
-            </div>
-            <Input
-              placeholder="Ex: Prospector Imobiliário"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-center text-lg"
-              autoFocus
-            />
-          </div>
-        );
-
-      case 'number':
-        if (numbers.length === 1 && !numbers[0].has_active_agent) {
-          const singleNumber = numbers[0];
-          return (
-            <div className="space-y-4">
-              <div className="text-center space-y-2">
-                <MessageCircle className="h-12 w-12 mx-auto text-primary" />
-                <h3 className="text-xl font-semibold">Número selecionado automaticamente</h3>
-                <p className="text-muted-foreground text-sm">
-                  Você tem apenas um número conectado
-                </p>
-              </div>
-              
-              <div className="p-4 rounded-lg border border-primary bg-primary/5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{singleNumber.name || singleNumber.phone_number}</p>
-                    {singleNumber.phone_number && singleNumber.name && (
-                      <p className="text-sm text-muted-foreground">{singleNumber.phone_number}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {singleNumber.warming_status === 'hot' ? (
-                      <Badge className="bg-green-500/20 text-green-400">Aquecido</Badge>
-                    ) : singleNumber.warming_status === 'warm' ? (
-                      <Badge className="bg-yellow-500/20 text-yellow-400">Morno</Badge>
-                    ) : (
-                      <Badge className="bg-blue-500/20 text-blue-400">Frio</Badge>
-                    )}
-                    <Check className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
+      case 'basics':
         return (
           <div className="space-y-4">
-            <div className="text-center space-y-2">
-              <MessageCircle className="h-12 w-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Qual número este agente vai usar?</h3>
-              <p className="text-muted-foreground text-sm">
-                Selecione um número de WhatsApp conectado
+            {/* Nome do agente */}
+            <div className="space-y-2">
+              <Label htmlFor="agent-name" className="flex items-center gap-1">
+                Nome do Agente
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="agent-name"
+                placeholder="Ex: Assistente de Vendas"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nome para identificar este agente internamente
               </p>
             </div>
-            
-            {loadingNumbers ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : numbers.length === 0 ? (
-              <div className="text-center py-8 space-y-3">
-                <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500" />
-                <p className="text-muted-foreground">
-                  Nenhum número conectado encontrado.
-                </p>
-                <Button 
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate('/dashboard');
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Conectar Número
-                </Button>
-              </div>
-            ) : numbers.filter(n => !n.has_active_agent).length === 0 ? (
-              <div className="text-center py-8 space-y-3">
-                <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500" />
-                <p className="text-muted-foreground">
-                  Todos os seus números já têm agentes ativos.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Limite de 1 agente por número para proteção.
-                </p>
-              </div>
-            ) : (
-              <RadioGroup value={selectedNumberId} onValueChange={setSelectedNumberId}>
-                <div className="space-y-2">
-                  {numbers.map((num) => (
-                    <Label
-                      key={num.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                        num.has_active_agent 
-                          ? 'cursor-not-allowed opacity-50 border-border' 
-                          : selectedNumberId === num.id 
-                            ? 'border-primary bg-primary/5 cursor-pointer' 
-                            : 'border-border hover:border-primary/50 cursor-pointer'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem 
-                          value={num.id} 
-                          disabled={num.has_active_agent}
-                        />
-                        <div>
-                          <p className="font-medium">{num.name || num.phone_number}</p>
-                          {num.phone_number && num.name && (
-                            <p className="text-sm text-muted-foreground">{num.phone_number}</p>
-                          )}
-                          {num.has_active_agent && (
-                            <p className="text-xs text-yellow-500 mt-1">
-                              Já tem agente: {num.active_agent_name}
-                            </p>
+
+            {/* Número WhatsApp */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Número WhatsApp
+                <span className="text-destructive">*</span>
+              </Label>
+              {loadingNumbers ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : numbers.length === 0 ? (
+                <div className="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    <span>Nenhum número conectado.</span>
+                  </div>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate('/dashboard');
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Conectar Número
+                  </Button>
+                </div>
+              ) : availableNumbers.length === 0 ? (
+                <div className="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    <span>Todos os números já têm agentes ativos.</span>
+                  </div>
+                </div>
+              ) : (
+                <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um número" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableNumbers.map((num) => (
+                      <SelectItem key={num.id} value={num.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{num.name || num.phone_number}</span>
+                          {num.warming_status === 'hot' && (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                              Aquecido
+                            </Badge>
                           )}
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {num.has_active_agent ? (
-                          <Badge className="bg-yellow-500/20 text-yellow-400">Ocupado</Badge>
-                        ) : num.warming_status === 'hot' ? (
-                          <Badge className="bg-green-500/20 text-green-400">Aquecido</Badge>
-                        ) : num.warming_status === 'warm' ? (
-                          <Badge className="bg-yellow-500/20 text-yellow-400">Morno</Badge>
-                        ) : (
-                          <Badge className="bg-blue-500/20 text-blue-400">Frio</Badge>
-                        )}
-                      </div>
-                    </Label>
-                  ))}
-                </div>
-              </RadioGroup>
-            )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-muted-foreground">
+                O agente responderá mensagens deste número
+              </p>
+            </div>
+
+            {/* Nome da empresa */}
+            <div className="space-y-2">
+              <Label htmlFor="company-name" className="flex items-center gap-1">
+                Nome da Empresa
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="company-name"
+                placeholder="Ex: Minha Empresa Ltda"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                O agente se apresentará como representante desta empresa
+              </p>
+            </div>
+
+            {/* Descrição do produto */}
+            <div className="space-y-2">
+              <Label htmlFor="product-desc">
+                Produto/Serviço (opcional)
+              </Label>
+              <Textarea
+                id="product-desc"
+                placeholder="Ex: Consultoria em marketing digital para pequenas empresas"
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">
+                Breve descrição do que você vende ou oferece
+              </p>
+            </div>
           </div>
         );
 
-      case 'prompt-builder':
+      case 'behavior':
         return (
-          <AgentPromptBuilder
-            onComplete={handlePromptComplete}
-            onBack={() => setCurrentStep('number')}
-          />
-        );
-
-      case 'settings':
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Clock className="h-12 w-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Configurações de Operação</h3>
-              <p className="text-muted-foreground text-sm">
-                Defina horários e limites do agente
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Hora inicial</Label>
-                <Input
-                  type="time"
-                  value={operatingHoursStart}
-                  onChange={(e) => setOperatingHoursStart(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hora final</Label>
-                <Input
-                  type="time"
-                  value={operatingHoursEnd}
-                  onChange={(e) => setOperatingHoursEnd(e.target.value)}
-                />
-              </div>
-            </div>
-            
+          <div className="space-y-4">
+            {/* Objetivo do agente */}
             <div className="space-y-2">
-              <Label>Máximo de respostas por lead</Label>
-              <Select
-                value={maxReplies === null ? "unlimited" : String(maxReplies)}
-                onValueChange={(v) => setMaxReplies(v === "unlimited" ? null : parseInt(v))}
-              >
+              <Label className="flex items-center gap-1">
+                O que o agente deve fazer?
+                <span className="text-destructive">*</span>
+              </Label>
+              <RadioGroup value={agentObjective} onValueChange={setAgentObjective}>
+                <div className="space-y-2">
+                  <Label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    agentObjective === 'qualify' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}>
+                    <RadioGroupItem value="qualify" className="mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Qualificar leads</p>
+                      <p className="text-xs text-muted-foreground">Identifica interesse e encaminha para você</p>
+                    </div>
+                  </Label>
+                  <Label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    agentObjective === 'educate' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}>
+                    <RadioGroupItem value="educate" className="mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Educar e gerar interesse</p>
+                      <p className="text-xs text-muted-foreground">Explica o produto e prepara para a venda</p>
+                    </div>
+                  </Label>
+                  <Label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    agentObjective === 'close' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}>
+                    <RadioGroupItem value="close" className="mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Conduzir até a venda</p>
+                      <p className="text-xs text-muted-foreground">Responde dúvidas e fecha negócios</p>
+                    </div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Estilo de resposta */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Como o agente deve responder?
+                <span className="text-destructive">*</span>
+              </Label>
+              <Select value={responseStyle} onValueChange={setResponseStyle}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o limite" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unlimited">♾️ Ilimitado (conversa contínua)</SelectItem>
-                  <SelectItem value="1">1 resposta</SelectItem>
-                  <SelectItem value="2">2 respostas</SelectItem>
-                  <SelectItem value="3">3 respostas</SelectItem>
-                  <SelectItem value="5">5 respostas</SelectItem>
-                  <SelectItem value="10">10 respostas</SelectItem>
+                  <SelectItem value="friendly">😊 Amigável - Tom acolhedor e informal</SelectItem>
+                  <SelectItem value="professional">💼 Profissional - Tom objetivo e formal</SelectItem>
+                  <SelectItem value="casual">🤙 Casual - Tom descontraído</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Máximo de respostas */}
             <div className="space-y-2">
-              <Label>Máximo de caracteres por resposta</Label>
-              <Input
-                type="number"
-                value={maxChars}
-                onChange={(e) => setMaxChars(parseInt(e.target.value) || 300)}
-                min={100}
-                max={1000}
-              />
+              <Label className="flex items-center gap-1">
+                Quantas respostas por lead?
+                <span className="text-destructive">*</span>
+              </Label>
+              <Select value={maxReplies} onValueChange={setMaxReplies}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 resposta (recomendado para proteção)</SelectItem>
+                  <SelectItem value="2">2 respostas</SelectItem>
+                  <SelectItem value="3">3 respostas</SelectItem>
+                  <SelectItem value="5">5 respostas</SelectItem>
+                  <SelectItem value="unlimited">Ilimitado (conversa contínua)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Menos respostas = mais segurança para o número
+              </p>
             </div>
 
+            {/* Tamanho da resposta */}
             <div className="space-y-2">
-              <Label>Status do número</Label>
-              <RadioGroup value={isWarmed ? "yes" : "no"} onValueChange={(v) => setIsWarmed(v === "yes")}>
-                <div className="grid grid-cols-2 gap-2">
-                  <Label
-                    className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      isWarmed ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="yes" />
-                    <div>
-                      <p className="font-medium text-sm">Aquecido</p>
-                      <p className="text-xs text-muted-foreground">Delays normais</p>
-                    </div>
-                  </Label>
-                  <Label
-                    className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      !isWarmed ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="no" />
-                    <div>
-                      <p className="font-medium text-sm">Frio</p>
-                      <p className="text-xs text-muted-foreground">Modo seguro</p>
-                    </div>
-                  </Label>
+              <Label htmlFor="max-chars">
+                Tamanho máximo da resposta
+              </Label>
+              <Select value={maxChars} onValueChange={setMaxChars}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="150">Curta (150 caracteres)</SelectItem>
+                  <SelectItem value="300">Média (300 caracteres)</SelectItem>
+                  <SelectItem value="500">Longa (500 caracteres)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Horário de operação */}
+            <div className="space-y-2">
+              <Label>Horário de operação</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Input
+                    type="time"
+                    value={operatingHoursStart}
+                    onChange={(e) => setOperatingHoursStart(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Início</p>
                 </div>
-              </RadioGroup>
+                <div>
+                  <Input
+                    type="time"
+                    value={operatingHoursEnd}
+                    onChange={(e) => setOperatingHoursEnd(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Fim</p>
+                </div>
+              </div>
             </div>
           </div>
         );
 
-      case 'confirmation':
+      case 'review':
         const selectedNumber = numbers.find(n => n.id === selectedNumberId);
         return (
-          <div className="space-y-4">
-            <div className="text-center space-y-2">
-              <Sparkles className="h-12 w-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Tudo pronto!</h3>
-              <p className="text-muted-foreground text-sm">
-                Revise as configurações antes de criar
-              </p>
-            </div>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Confira os dados antes de criar
+            </p>
             
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2 text-sm pr-4">
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Nome</span>
-                  <span className="font-medium">{name}</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Número</span>
-                  <span className="font-medium">{selectedNumber?.name || selectedNumber?.phone_number}</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Horário</span>
-                  <span className="font-medium">{operatingHoursStart} - {operatingHoursEnd}</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Max caracteres</span>
-                  <span className="font-medium">{maxChars} caracteres</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Respostas por lead</span>
-                  <span className="font-medium">
-                    {maxReplies === null ? "♾️ Ilimitado" : `${maxReplies} resposta${maxReplies > 1 ? 's' : ''}`}
-                  </span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground">Status do número</span>
-                  <Badge className={isWarmed ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
-                    {isWarmed ? "Aquecido" : "Frio (modo seguro)"}
-                  </Badge>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground block mb-2">Prompt gerado</span>
-                  <p className="text-xs font-mono bg-background p-2 rounded max-h-24 overflow-y-auto">
-                    {generatedPrompt.substring(0, 300)}...
-                  </p>
-                </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Nome</span>
+                <span className="font-medium">{name}</span>
               </div>
-            </ScrollArea>
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Número</span>
+                <span className="font-medium">{selectedNumber?.name || selectedNumber?.phone_number}</span>
+              </div>
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Empresa</span>
+                <span className="font-medium">{companyName}</span>
+              </div>
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Objetivo</span>
+                <span className="font-medium">
+                  {agentObjective === 'qualify' && 'Qualificar leads'}
+                  {agentObjective === 'educate' && 'Educar e gerar interesse'}
+                  {agentObjective === 'close' && 'Conduzir até a venda'}
+                </span>
+              </div>
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Respostas por lead</span>
+                <span className="font-medium">
+                  {maxReplies === "unlimited" ? "Ilimitado" : `${maxReplies} resposta${parseInt(maxReplies) > 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div className="flex justify-between p-2.5 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Horário</span>
+                <span className="font-medium">{operatingHoursStart} - {operatingHoursEnd}</span>
+              </div>
+            </div>
           </div>
         );
 
@@ -590,101 +564,80 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   };
 
   const handleNext = () => {
-    switch (currentStep) {
-      case 'name':
-        setCurrentStep('number');
-        break;
-      case 'number':
-        setCurrentStep('prompt-builder');
-        break;
-      case 'settings':
-        setCurrentStep('confirmation');
-        break;
-    }
+    if (currentStep === 'basics') setCurrentStep('behavior');
+    else if (currentStep === 'behavior') setCurrentStep('review');
   };
 
   const handleBack = () => {
-    switch (currentStep) {
-      case 'number':
-        setCurrentStep('name');
-        break;
-      case 'prompt-builder':
-        setCurrentStep('number');
-        break;
-      case 'settings':
-        setCurrentStep('prompt-builder');
-        break;
-      case 'confirmation':
-        setCurrentStep('settings');
-        break;
-    }
+    if (currentStep === 'behavior') setCurrentStep('basics');
+    else if (currentStep === 'review') setCurrentStep('behavior');
   };
 
-  // Don't show standard navigation for prompt-builder step (it has its own)
-  const showStandardNavigation = currentStep !== 'prompt-builder';
+  const getStepNumber = () => {
+    if (currentStep === 'basics') return 1;
+    if (currentStep === 'behavior') return 2;
+    return 3;
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className={`${currentStep === 'prompt-builder' ? 'sm:max-w-2xl max-h-[90vh]' : 'sm:max-w-lg'}`}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
-            Criar Agente de IA
+            Criar Agente
           </DialogTitle>
           <DialogDescription>
-            {getStepTitle()}
+            Passo {getStepNumber()} de 3 — {currentStep === 'basics' && 'Informações básicas'}
+            {currentStep === 'behavior' && 'Comportamento'}
+            {currentStep === 'review' && 'Revisão'}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress - hide for prompt-builder as it has its own */}
-        {currentStep !== 'prompt-builder' && (
-          <Progress value={getStepProgress()} className="h-1" />
-        )}
-
-        {/* Content */}
-        <div className={`py-4 ${currentStep === 'prompt-builder' ? '' : 'min-h-[280px]'}`}>
-          {renderStep()}
-        </div>
-
-        {/* Actions - hide for prompt-builder as it has its own */}
-        {showStandardNavigation && (
-          <div className="flex justify-between gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => currentStep === 'name' ? onOpenChange(false) : handleBack()}
-              disabled={loading}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              {currentStep === 'name' ? "Cancelar" : "Voltar"}
-            </Button>
-
-            {currentStep !== 'confirmation' ? (
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-              >
-                Próximo
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleCreate(false)}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
-                </Button>
-                <Button
-                  onClick={() => handleCreate(true)}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ativar Agente"}
-                </Button>
-              </div>
-            )}
+        <ScrollArea className="max-h-[60vh]">
+          <div className="py-2 pr-4">
+            {renderStep()}
           </div>
-        )}
+        </ScrollArea>
+
+        <div className="flex justify-between gap-2 pt-2 border-t">
+          <Button
+            variant="ghost"
+            onClick={() => currentStep === 'basics' ? onOpenChange(false) : handleBack()}
+            disabled={loading}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            {currentStep === 'basics' ? "Cancelar" : "Voltar"}
+          </Button>
+
+          {currentStep !== 'review' ? (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed()}
+            >
+              Próximo
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleCreate(false)}
+                disabled={loading}
+                size="sm"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
+              </Button>
+              <Button
+                onClick={() => handleCreate(true)}
+                disabled={loading}
+                size="sm"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ativar Agente"}
+              </Button>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
