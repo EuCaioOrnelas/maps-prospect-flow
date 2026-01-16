@@ -35,6 +35,7 @@ import CRM from "./pages/CRM";
 import Warming from "./pages/Warming";
 import WarmingReports from "./pages/WarmingReports";
 import AIAgents from "./pages/AIAgents";
+import AgentReports from "./pages/AgentReports";
 import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 
@@ -179,6 +180,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AIAgents />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/agents/reports" 
+                element={
+                  <ProtectedRoute>
+                    <AgentReports />
                   </ProtectedRoute>
                 } 
               />
