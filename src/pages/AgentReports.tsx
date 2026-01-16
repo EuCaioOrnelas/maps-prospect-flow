@@ -813,31 +813,8 @@ const AgentReports = () => {
                 </CardContent>
               </Card>
 
-              {/* Métricas de Saúde */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {Object.entries(healthScoreDetails.metrics).map(([key, metric]) => (
-                  <Card key={key} className="bg-card/50">
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground truncate">{metric.label}</p>
-                      <p className={`text-2xl font-bold ${getStatusColor(metric.status)}`}>
-                        {key === 'avgResponseTime' 
-                          ? metric.value > 0 ? `${metric.value}m` : '-'
-                          : `${metric.value}%`}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">{metric.benchmark}</p>
-                      <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${getStatusColor(metric.status).replace('text-', 'bg-')}`}
-                          style={{ width: `${Math.min(100, metric.score)}%` }}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* KPI Cards - Métricas Detalhadas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -853,14 +830,11 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <Reply className="h-8 w-8 text-green-500/60" />
+                      <Zap className="h-8 w-8 text-blue-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.responseRate}%</p>
-                      <p className="text-sm text-muted-foreground">Taxa de Resposta</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.responsesReceived} de {kpis.totalConversations}
-                      </p>
+                      <p className="text-2xl font-bold">{kpis.totalMessagesSent}</p>
+                      <p className="text-sm text-muted-foreground">Mensagens Enviadas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -868,14 +842,11 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <CheckCircle className="h-8 w-8 text-teal-500/60" />
+                      <Target className="h-8 w-8 text-rose-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.autoCompletionRate}%</p>
-                      <p className="text-sm text-muted-foreground">Encerramento Auto.</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.autoCompleted} conversas
-                      </p>
+                      <p className="text-2xl font-bold">{kpis.totalMessagesReceived}</p>
+                      <p className="text-sm text-muted-foreground">Mensagens Recebidas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -883,30 +854,11 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <AlertCircle className="h-8 w-8 text-orange-500/60" />
+                      <Users className="h-8 w-8 text-cyan-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.escalationRate}%</p>
-                      <p className="text-sm text-muted-foreground">Taxa de Escalonamento</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.escalated} escaladas
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Clock className="h-8 w-8 text-purple-500/60" />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-2xl font-bold">
-                        {kpis.avgResponseTime > 60 
-                          ? `${Math.floor(kpis.avgResponseTime / 60)}h ${kpis.avgResponseTime % 60}m`
-                          : `${kpis.avgResponseTime}m`}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Tempo Médio Resposta</p>
+                      <p className="text-2xl font-bold">{kpis.uniqueLeads}</p>
+                      <p className="text-sm text-muted-foreground">Leads Contactados</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -922,7 +874,7 @@ const AgentReports = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">Economia Estimada</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.humanHoursSaved}h de trabalho
+                        {kpis.humanHoursSaved}h de trabalho humano
                       </p>
                     </div>
                   </CardContent>
