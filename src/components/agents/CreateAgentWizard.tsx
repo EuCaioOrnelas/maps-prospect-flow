@@ -37,7 +37,9 @@ import {
   Zap,
   ShieldAlert,
   CheckCircle,
-  Settings
+  Settings,
+  Link,
+  DollarSign
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,12 +73,14 @@ const MESSAGE_TEMPLATES = {
 const STEPS = [
   { id: 'basics', title: 'Básico', icon: Bot },
   { id: 'identity', title: 'Identidade', icon: User },
+  { id: 'product', title: 'Produto', icon: DollarSign },
   { id: 'lead-context', title: 'Contexto do Lead', icon: Target },
   { id: 'opening', title: 'Abertura', icon: MessageCircle },
   { id: 'diagnosis', title: 'Diagnóstico', icon: Search },
   { id: 'conduct', title: 'Condução', icon: Zap },
   { id: 'objections', title: 'Objeções', icon: ShieldAlert },
   { id: 'cta', title: 'CTA', icon: CheckCircle },
+  { id: 'links', title: 'Links', icon: Link },
   { id: 'rules', title: 'Regras', icon: Settings },
   { id: 'review', title: 'Revisão', icon: CheckCircle },
 ];
@@ -101,6 +105,15 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [productName, setProductName] = useState("");
   const [salesApproach, setSalesApproach] = useState("");
   
+  // Product Info (NEW)
+  const [productDescription, setProductDescription] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [priceType, setPriceType] = useState(""); // monthly, one_time, custom
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [customDifferentials, setCustomDifferentials] = useState("");
+  const [hasFreeTrial, setHasFreeTrial] = useState(false);
+  const [trialDetails, setTrialDetails] = useState("");
+  
   // Lead Context
   const [leadAwareness, setLeadAwareness] = useState("");
   const [messageReason, setMessageReason] = useState("");
@@ -112,22 +125,33 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   
   // Diagnosis
   const [infoToDiscover, setInfoToDiscover] = useState<string[]>([]);
+  const [customInfoToDiscover, setCustomInfoToDiscover] = useState("");
   const [maxQuestions, setMaxQuestions] = useState("2");
   
   // Conduct
   const [presentationStyle, setPresentationStyle] = useState("");
   const [differentials, setDifferentials] = useState<string[]>([]);
   const [pricePolicy, setPricePolicy] = useState("");
+  const [howToTalkPrice, setHowToTalkPrice] = useState("");
   
   // Objections
   const [commonObjections, setCommonObjections] = useState<string[]>([]);
   const [customObjections, setCustomObjections] = useState("");
   const [objectionPosture, setObjectionPosture] = useState("");
+  const [objectionResponses, setObjectionResponses] = useState<Record<string, string>>({});
   
   // CTA
   const [conversationGoal, setConversationGoal] = useState("");
   const [endConditions, setEndConditions] = useState<string[]>([]);
   const [closingStyle, setClosingStyle] = useState("");
+  
+  // Links (NEW)
+  const [schedulingLink, setSchedulingLink] = useState("");
+  const [demoLink, setDemoLink] = useState("");
+  const [websiteLink, setWebsiteLink] = useState("");
+  const [checkoutLink, setCheckoutLink] = useState("");
+  const [whatsappGroupLink, setWhatsappGroupLink] = useState("");
+  const [customLinks, setCustomLinks] = useState<{ name: string; url: string; when: string }[]>([]);
   
   // Rules
   const [canSendAudio, setCanSendAudio] = useState(false);
@@ -221,22 +245,38 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setCompanyName("");
     setProductName("");
     setSalesApproach("");
+    setProductDescription("");
+    setProductPrice("");
+    setPriceType("");
+    setPaymentMethods([]);
+    setCustomDifferentials("");
+    setHasFreeTrial(false);
+    setTrialDetails("");
     setLeadAwareness("");
     setMessageReason("");
     setConsciousnessLevel("");
     setOpeningStyle("");
     setFirstMission("");
     setInfoToDiscover([]);
+    setCustomInfoToDiscover("");
     setMaxQuestions("2");
     setPresentationStyle("");
     setDifferentials([]);
     setPricePolicy("");
+    setHowToTalkPrice("");
     setCommonObjections([]);
     setCustomObjections("");
     setObjectionPosture("");
+    setObjectionResponses({});
     setConversationGoal("");
     setEndConditions([]);
     setClosingStyle("");
+    setSchedulingLink("");
+    setDemoLink("");
+    setWebsiteLink("");
+    setCheckoutLink("");
+    setWhatsappGroupLink("");
+    setCustomLinks([]);
     setCanSendAudio(false);
     setCanSendLinks(true);
     setCanSendLongMessages(false);
@@ -336,13 +376,87 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       offer_later: "Oferecer contato futuro",
     };
 
+    const priceTypeLabels: Record<string, string> = {
+      monthly: "mensal",
+      one_time: "pagamento único",
+      custom: "personalizado conforme necessidade",
+    };
+
+    // Build links section
+    let linksSection = "";
+    const availableLinks: string[] = [];
+    
+    if (schedulingLink) availableLinks.push(`- Link de agendamento: ${schedulingLink}`);
+    if (demoLink) availableLinks.push(`- Link de demonstração: ${demoLink}`);
+    if (websiteLink) availableLinks.push(`- Site: ${websiteLink}`);
+    if (checkoutLink) availableLinks.push(`- Link de pagamento/checkout: ${checkoutLink}`);
+    if (whatsappGroupLink) availableLinks.push(`- Grupo WhatsApp: ${whatsappGroupLink}`);
+    customLinks.forEach(link => {
+      if (link.url) availableLinks.push(`- ${link.name}: ${link.url} (usar quando: ${link.when})`);
+    });
+
+    if (availableLinks.length > 0) {
+      linksSection = `
+---
+
+# LINKS DISPONÍVEIS
+
+Você pode enviar estes links quando apropriado:
+${availableLinks.join('\n')}
+
+**Quando usar cada link:**
+${schedulingLink ? `- Envie o link de agendamento quando o objetivo for agendar uma call` : ''}
+${demoLink ? `- Envie o link de demonstração quando o lead quiser ver o produto funcionando` : ''}
+${checkoutLink ? `- Envie o link de checkout apenas quando o lead confirmar que quer comprar` : ''}
+${websiteLink ? `- Envie o site quando o lead pedir mais informações gerais` : ''}
+`;
+    }
+
+    // Build product section
+    let productSection = "";
+    if (productDescription || productPrice) {
+      productSection = `
+---
+
+# INFORMAÇÕES DO PRODUTO/SERVIÇO
+
+**Descrição:** ${productDescription || 'Não informado'}
+${productPrice ? `
+**Preço:** R$ ${productPrice} ${priceTypeLabels[priceType] || ''}
+${paymentMethods.length > 0 ? `**Formas de pagamento:** ${paymentMethods.join(', ')}` : ''}
+` : ''}
+${hasFreeTrial ? `**Período de teste:** ${trialDetails || 'Disponível'}` : ''}
+
+${customDifferentials ? `**Diferenciais específicos:**
+${customDifferentials.split('\n').filter(d => d.trim()).map(d => `- ${d.trim()}`).join('\n')}` : ''}
+`;
+    }
+
+    // Build objection responses section
+    let objectionResponsesSection = "";
+    const objectionEntriesWithResponses = Object.entries(objectionResponses).filter(([_, response]) => response.trim());
+    if (objectionEntriesWithResponses.length > 0) {
+      objectionResponsesSection = `
+
+**Respostas sugeridas para objeções:**
+${objectionEntriesWithResponses.map(([objection, response]) => `
+Quando disserem "${objection}":
+→ ${response}`).join('\n')}`;
+    }
+
+    // Build custom info to discover
+    const allInfoToDiscover = [...infoToDiscover];
+    if (customInfoToDiscover.trim()) {
+      customInfoToDiscover.split('\n').filter(i => i.trim()).forEach(i => allInfoToDiscover.push(i.trim()));
+    }
+
     return `# IDENTIDADE DO AGENTE
 
 Você é um ${roleLabels[agentRole] || agentRole} da empresa "${companyName || '[Nome da Empresa]'}".
 ${productName ? `Você representa o produto/serviço: "${productName}".` : ''}
 
 **Sua função:** ${approachLabels[salesApproach] || salesApproach}
-
+${productSection}
 ---
 
 # CONTEXTO DO LEAD
@@ -366,7 +480,7 @@ Quando o lead responder, você deve: ${openingLabels[openingStyle] || openingSty
 # DIAGNÓSTICO - INFORMAÇÕES A DESCOBRIR
 
 Antes de apresentar qualquer solução, você DEVE descobrir:
-${infoToDiscover.map(info => `- ${info}`).join('\n') || '- Informações básicas do lead'}
+${allInfoToDiscover.map(info => `- ${info}`).join('\n') || '- Informações básicas do lead'}
 
 **Limite:** Faça no MÁXIMO ${maxQuestions} perguntas antes de oferecer algo. Evite parecer um interrogatório.
 
@@ -380,7 +494,12 @@ ${infoToDiscover.map(info => `- ${info}`).join('\n') || '- Informações básica
 ${differentials.map(diff => `✓ ${diff}`).join('\n') || '- Benefícios do produto/serviço'}
 
 **Política de preço:** ${priceLabels[pricePolicy] || pricePolicy}
-
+${(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && productPrice ? `
+**Como falar do preço:**
+- O preço é R$ ${productPrice} (${priceTypeLabels[priceType] || ''})
+${howToTalkPrice ? `- Abordagem: ${howToTalkPrice}` : '- Sempre contextualize o valor entregue antes de falar o preço'}
+` : ''}
+${linksSection}
 ---
 
 # OBJEÇÕES COMUNS E COMO RESPONDER
@@ -390,7 +509,7 @@ ${commonObjections.map(obj => `- "${obj}"`).join('\n') || '- Objeções gerais'}
 ${customObjections ? `\n**Objeções específicas do negócio:**\n${customObjections.split('\n').filter(o => o.trim()).map(o => `- "${o.trim()}"`).join('\n')}` : ''}
 
 **Postura diante de objeções:** ${postureLabels[objectionPosture] || objectionPosture}
-
+${objectionResponsesSection}
 ---
 
 # CTA - OBJETIVO E ENCERRAMENTO
@@ -485,6 +604,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         return name.trim().length >= 3 && !!selectedNumberId;
       case 'identity':
         return !!agentRole && !!companyName && !!salesApproach;
+      case 'product':
+        return true; // Optional step
       case 'lead-context':
         return !!leadAwareness && !!messageReason && !!consciousnessLevel;
       case 'opening':
@@ -497,6 +618,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         return commonObjections.length > 0 && !!objectionPosture;
       case 'cta':
         return !!conversationGoal && endConditions.length > 0 && !!closingStyle;
+      case 'links':
+        return true; // Optional step
       case 'rules':
         return true;
       case 'review':
@@ -531,6 +654,20 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       <span className="text-sm">{label}</span>
     </Label>
   );
+
+  const addCustomLink = () => {
+    setCustomLinks([...customLinks, { name: '', url: '', when: '' }]);
+  };
+
+  const updateCustomLink = (index: number, field: 'name' | 'url' | 'when', value: string) => {
+    const updated = [...customLinks];
+    updated[index][field] = value;
+    setCustomLinks(updated);
+  };
+
+  const removeCustomLink = (index: number) => {
+    setCustomLinks(customLinks.filter((_, i) => i !== index));
+  };
 
   const renderStep = () => {
     const stepId = STEPS[currentStep].id;
@@ -607,8 +744,9 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
             </div>
 
             <div className="space-y-2">
-              <Label>Nome do produto/serviço (opcional)</Label>
+              <Label>Nome do produto/serviço</Label>
               <Input placeholder="Ex: Plataforma de automação" value={productName} onChange={(e) => setProductName(e.target.value)} />
+              <p className="text-xs text-muted-foreground">O nome que o agente usará para se referir ao produto</p>
             </div>
 
             <div className="space-y-2">
@@ -618,6 +756,90 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 <RadioOption value="educate" label="Educa e gera interesse" description="Prepara o lead para a venda" selected={salesApproach === 'educate'} onSelect={() => setSalesApproach('educate')} />
                 <RadioOption value="close" label="Conduz até o fechamento" description="Faz toda a venda" selected={salesApproach === 'close'} onSelect={() => setSalesApproach('close')} />
               </RadioGroup>
+            </div>
+          </div>
+        );
+
+      case 'product':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                💡 Essas informações ajudam o agente a falar com propriedade sobre seu produto/serviço
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição do produto/serviço</Label>
+              <Textarea
+                placeholder="Descreva brevemente o que seu produto/serviço faz e quais problemas resolve..."
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">O agente usará isso para explicar o produto</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Preço (R$)</Label>
+                <Input
+                  type="text"
+                  placeholder="Ex: 197"
+                  value={productPrice}
+                  onChange={(e) => setProductPrice(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de cobrança</Label>
+                <Select value={priceType} onValueChange={setPriceType}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="one_time">Pagamento único</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Formas de pagamento aceitas</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {["Pix", "Cartão de crédito", "Boleto", "Parcelamento"].map((item) => (
+                  <CheckboxOption
+                    key={item}
+                    label={item}
+                    checked={paymentMethods.includes(item)}
+                    onCheckedChange={() => toggleArrayItem(paymentMethods, item, setPaymentMethods)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={hasFreeTrial} onCheckedChange={(c) => setHasFreeTrial(!!c)} id="trial" />
+                <Label htmlFor="trial" className="cursor-pointer">Oferece período de teste grátis?</Label>
+              </div>
+              {hasFreeTrial && (
+                <Input
+                  placeholder="Ex: 7 dias grátis, teste por 14 dias..."
+                  value={trialDetails}
+                  onChange={(e) => setTrialDetails(e.target.value)}
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Diferenciais do seu produto (além dos padrões)</Label>
+              <Textarea
+                placeholder="Um diferencial por linha..."
+                value={customDifferentials}
+                onChange={(e) => setCustomDifferentials(e.target.value)}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">O agente mencionará esses pontos naturalmente</p>
             </div>
           </div>
         );
@@ -707,6 +929,16 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
             </div>
 
             <div className="space-y-2">
+              <Label>Outras informações importantes (opcional)</Label>
+              <Textarea
+                placeholder="Uma por linha..."
+                value={customInfoToDiscover}
+                onChange={(e) => setCustomInfoToDiscover(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label>Máximo de perguntas antes de oferecer algo</Label>
               <Select value={maxQuestions} onValueChange={setMaxQuestions}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -762,6 +994,24 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 <RadioOption value="with_context" label="Com contexto" description="Sempre contextualiza o valor" selected={pricePolicy === 'with_context'} onSelect={() => setPricePolicy('with_context')} />
               </RadioGroup>
             </div>
+
+            {(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && (
+              <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <Label>Como o agente deve falar sobre o preço?</Label>
+                <Textarea
+                  placeholder="Ex: Primeiro destacar o valor entregue, depois mencionar que o investimento é de R$ X..."
+                  value={howToTalkPrice}
+                  onChange={(e) => setHowToTalkPrice(e.target.value)}
+                  rows={2}
+                />
+                {!productPrice && (
+                  <p className="text-xs text-yellow-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Você não informou o preço na etapa "Produto"
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -788,6 +1038,23 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 ))}
               </div>
             </div>
+
+            {commonObjections.length > 0 && (
+              <div className="space-y-3">
+                <Label>Como responder a cada objeção? (opcional)</Label>
+                <p className="text-xs text-muted-foreground">Personalize as respostas do agente</p>
+                {commonObjections.map((objection) => (
+                  <div key={objection} className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">"{objection}"</p>
+                    <Input
+                      placeholder={`Como responder a "${objection}"...`}
+                      value={objectionResponses[objection] || ''}
+                      onChange={(e) => setObjectionResponses({ ...objectionResponses, [objection]: e.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Outras objeções específicas (opcional)</Label>
@@ -850,6 +1117,100 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 <RadioOption value="not_insist" label="Não insistir" description="Encerrar educadamente" selected={closingStyle === 'not_insist'} onSelect={() => setClosingStyle('not_insist')} />
                 <RadioOption value="offer_later" label="Oferecer contato futuro" description="Deixa opção de retorno" selected={closingStyle === 'offer_later'} onSelect={() => setClosingStyle('offer_later')} />
               </RadioGroup>
+            </div>
+          </div>
+        );
+
+      case 'links':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                💡 Configure os links que o agente pode enviar durante as conversas
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link de agendamento</Label>
+              <Input
+                placeholder="Ex: https://calendly.com/sua-agenda"
+                value={schedulingLink}
+                onChange={(e) => setSchedulingLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Para quando o objetivo for agendar call</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link de demonstração/material</Label>
+              <Input
+                placeholder="Ex: https://seusite.com/demo"
+                value={demoLink}
+                onChange={(e) => setDemoLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Para quando o lead quiser ver o produto</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link do site</Label>
+              <Input
+                placeholder="Ex: https://seusite.com"
+                value={websiteLink}
+                onChange={(e) => setWebsiteLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Para mais informações gerais</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link de checkout/pagamento</Label>
+              <Input
+                placeholder="Ex: https://checkout.seusite.com"
+                value={checkoutLink}
+                onChange={(e) => setCheckoutLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Para quando o lead quiser comprar</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link de grupo WhatsApp</Label>
+              <Input
+                placeholder="Ex: https://chat.whatsapp.com/xxx"
+                value={whatsappGroupLink}
+                onChange={(e) => setWhatsappGroupLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Para convidar para comunidade</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Links personalizados</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addCustomLink}>
+                  <Plus className="h-3 w-3 mr-1" /> Adicionar
+                </Button>
+              </div>
+              {customLinks.map((link, index) => (
+                <div key={index} className="space-y-2 p-3 border rounded-lg">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Nome do link"
+                      value={link.name}
+                      onChange={(e) => updateCustomLink(index, 'name', e.target.value)}
+                    />
+                    <Input
+                      placeholder="URL"
+                      value={link.url}
+                      onChange={(e) => updateCustomLink(index, 'url', e.target.value)}
+                    />
+                  </div>
+                  <Input
+                    placeholder="Quando usar este link?"
+                    value={link.when}
+                    onChange={(e) => updateCustomLink(index, 'when', e.target.value)}
+                  />
+                  <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeCustomLink(index)}>
+                    Remover
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -934,6 +1295,12 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 <span className="text-muted-foreground">Empresa</span>
                 <span className="font-medium">{companyName}</span>
               </div>
+              {productPrice && (
+                <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                  <span className="text-muted-foreground">Preço</span>
+                  <span className="font-medium">R$ {productPrice}</span>
+                </div>
+              )}
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Função</span>
                 <span className="font-medium">
@@ -949,6 +1316,20 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                   {conversationGoal === 'send_demo' && 'Enviar demo'}
                   {conversationGoal === 'forward_human' && 'Encaminhar'}
                   {conversationGoal === 'close_deal' && 'Fechar venda'}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Preço visível</span>
+                <span className="font-medium">
+                  {pricePolicy === 'never' && 'Nunca'}
+                  {pricePolicy === 'if_asked' && 'Se perguntarem'}
+                  {pricePolicy === 'with_context' && 'Com contexto'}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Links configurados</span>
+                <span className="font-medium">
+                  {[schedulingLink, demoLink, websiteLink, checkoutLink, whatsappGroupLink].filter(Boolean).length + customLinks.filter(l => l.url).length}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
