@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
+import { Link } from "react-router-dom";
 
 const ThankYou = () => {
   const [copied, setCopied] = useState(false);
@@ -147,10 +148,10 @@ const ThankYou = () => {
                   asChild
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  <a href="/">
+                  <Link to="/">
                     Reativar Assinatura
                     <ArrowRight className="w-4 h-4 ml-2" />
-                  </a>
+                  </Link>
                 </Button>
               </motion.div>
 
@@ -173,12 +174,12 @@ const ThankYou = () => {
             transition={{ delay: 0.9 }}
             className="text-center mt-6"
           >
-            <a 
-              href="/" 
+            <Link 
+              to="/" 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Voltar para a página inicial
-            </a>
+            </Link>
           </motion.div>
         </motion.div>
       </div>
