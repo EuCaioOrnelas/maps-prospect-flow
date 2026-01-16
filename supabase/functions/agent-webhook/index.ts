@@ -129,13 +129,16 @@ serve(async (req) => {
           // Check warming session status
           const { data: warmingSession } = await supabase
             .from('warming_sessions')
-            .select('status, warming_status')
+            .select('status, warming_status, agent_reply_limit')
             .eq('whatsapp_number_id', whatsappNumber.id)
             .single();
           
           const isWarming = warmingSession && 
             (warmingSession.status === 'active' || warmingSession.status === 'paused') &&
             warmingSession.warming_status !== 'hot';
+          
+          // Get custom reply limit from session, default to 2
+          const warmingReplyLimit = warmingSession?.agent_reply_limit ?? 2;
           
           if (isWarming && warmingAgent) {
             // Number is warming - use warming agent
@@ -150,8 +153,9 @@ serve(async (req) => {
             // If warming is active, apply response limits to user agent
             if (isWarming) {
               agent._warmingLimited = true;
-              agent._effectiveMaxReplies = 2; // Limit to 2 replies during warming
-              console.log('User agent with warming limits:', agent.name);
+              // Use custom limit from session, 0 means no limit
+              agent._effectiveMaxReplies = warmingReplyLimit === 0 ? null : warmingReplyLimit;
+              console.log(`User agent with warming limits: ${agent.name}, limit: ${warmingReplyLimit === 0 ? 'unlimited' : warmingReplyLimit}`);
             } else {
               agent._warmingLimited = false;
               console.log('User agent without limits (warmed):', agent.name);
