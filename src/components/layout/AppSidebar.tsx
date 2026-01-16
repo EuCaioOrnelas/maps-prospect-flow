@@ -86,25 +86,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const reportsSubItems = [
     {
-      title: "Relatórios de Buscas",
+      title: "Buscas",
       url: "/reports",
       icon: FileSearch,
       active: currentPath === "/reports"
     },
     {
-      title: "Relatórios de Disparos",
+      title: "Disparos",
       url: "/whatsapp/reports",
       icon: Send,
       active: currentPath === "/whatsapp/reports"
     },
     {
-      title: "Relatórios de Aquecimento",
+      title: "Aquecimento",
       url: "/warming/reports",
       icon: Flame,
       active: currentPath === "/warming/reports"
     },
     {
-      title: "Relatórios de Agentes IA",
+      title: "Agentes IA",
       url: "/agents/reports",
       icon: Bot,
       active: currentPath === "/agents/reports"
