@@ -24,6 +24,7 @@ export type Database = {
           lead_name: string | null
           lead_phone: string
           reply_content: string | null
+          reply_count: number | null
           reply_sent: boolean
           reply_sent_at: string | null
           response_content: string | null
@@ -41,6 +42,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone: string
           reply_content?: string | null
+          reply_count?: number | null
           reply_sent?: boolean
           reply_sent_at?: string | null
           response_content?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone?: string
           reply_content?: string | null
+          reply_count?: number | null
           reply_sent?: boolean
           reply_sent_at?: string | null
           response_content?: string | null
@@ -134,6 +137,7 @@ export type Database = {
           id: string
           is_warmed: boolean
           last_reset_date: string | null
+          max_replies: number | null
           max_response_chars: number | null
           message_templates: Json | null
           messages_sent_today: number
@@ -159,6 +163,7 @@ export type Database = {
           id?: string
           is_warmed?: boolean
           last_reset_date?: string | null
+          max_replies?: number | null
           max_response_chars?: number | null
           message_templates?: Json | null
           messages_sent_today?: number
@@ -184,6 +189,7 @@ export type Database = {
           id?: string
           is_warmed?: boolean
           last_reset_date?: string | null
+          max_replies?: number | null
           max_response_chars?: number | null
           message_templates?: Json | null
           messages_sent_today?: number

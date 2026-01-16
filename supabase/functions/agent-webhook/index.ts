@@ -151,9 +151,13 @@ serve(async (req) => {
         .single();
 
       if (existingConv) {
-        // Check if already replied - NEVER reply twice
-        if (existingConv.reply_sent) {
-          console.log('Already replied to this lead, ignoring');
+        // Check reply limits - max_replies: null/0 = unlimited, 1+ = limited
+        const maxReplies = agent.max_replies;
+        const currentReplyCount = existingConv.reply_count || 0;
+        
+        // If max_replies is set and we've reached the limit, don't reply
+        if (maxReplies && maxReplies > 0 && currentReplyCount >= maxReplies) {
+          console.log(`Reply limit reached (${currentReplyCount}/${maxReplies}), ignoring`);
           
           // Log the received message anyway
           await supabase.from('agent_message_logs').insert({
@@ -166,8 +170,8 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               success: false, 
-              reason: 'already_replied',
-              message: 'Agent already replied to this lead. Conversation ended.' 
+              reason: 'reply_limit_reached',
+              message: `Agent reached reply limit (${currentReplyCount}/${maxReplies})` 
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
@@ -276,14 +280,22 @@ REGRAS CRÍTICAS:
               });
 
               if (sendResponse.ok) {
-                // Update conversation as completed
+                const newReplyCount = (existingConv.reply_count || 0) + 1;
+                const maxReplies = agent.max_replies;
+                
+                // Determine if conversation should be marked as completed
+                // Complete if: max_replies is set AND we've reached the limit
+                const shouldComplete = maxReplies && maxReplies > 0 && newReplyCount >= maxReplies;
+                
+                // Update conversation with reply count
                 await supabase
                   .from('agent_conversations')
                   .update({
                     reply_sent: true,
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
-                    status: 'completed',
+                    reply_count: newReplyCount,
+                    status: shouldComplete ? 'completed' : 'active',
                   })
                   .eq('id', existingConv.id);
 
@@ -295,7 +307,7 @@ REGRAS CRÍTICAS:
                   content: replyContent,
                 });
 
-                console.log('Reply sent successfully:', replyContent);
+                console.log(`Reply ${newReplyCount}/${maxReplies || '∞'} sent successfully:`, replyContent);
               }
             }
           }
