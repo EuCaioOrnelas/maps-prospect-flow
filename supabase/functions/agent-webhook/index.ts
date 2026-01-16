@@ -301,7 +301,7 @@ REGRAS CRÍTICAS:
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
                     reply_count: newReplyCount,
-                    status: shouldComplete ? 'completed' : 'active',
+                    status: shouldComplete ? 'completed' : 'awaiting_response',
                   })
                   .eq('id', existingConv.id);
 
@@ -338,7 +338,7 @@ REGRAS CRÍTICAS:
             response_received: true,
             response_received_at: new Date().toISOString(),
             response_content: message,
-            status: 'active',
+            status: 'responded',
             reply_count: 0,
           })
           .select()
@@ -442,7 +442,7 @@ REGRAS CRÍTICAS:
                       reply_sent_at: new Date().toISOString(),
                       reply_content: replyContent,
                       reply_count: 1,
-                      status: shouldComplete ? 'completed' : 'active',
+                      status: shouldComplete ? 'completed' : 'awaiting_response',
                     })
                     .eq('id', newConv.id);
 
