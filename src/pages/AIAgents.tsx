@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Clock,
   Target,
-  AlertTriangle
+  AlertTriangle,
+  FlaskConical
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
@@ -218,20 +219,24 @@ export default function AIAgents() {
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">
-          <AppHeader />
+          <AppHeader profile={profile} />
           
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Header */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
+                <div className="flex items-center gap-3">
                   <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                     Agentes de IA
                   </h1>
-                  <p className="text-muted-foreground mt-1">
-                    Automatize sua prospecção com agentes inteligentes e seguros
-                  </p>
+                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 gap-1">
+                    <FlaskConical className="h-3 w-3" />
+                    Beta
+                  </Badge>
                 </div>
+                <p className="text-muted-foreground mt-1">
+                  Automatize sua prospecção com agentes inteligentes e seguros
+                </p>
                 
                 <Button 
                   onClick={() => {

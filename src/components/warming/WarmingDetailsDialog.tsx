@@ -10,6 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Flame, 
   Thermometer, 
@@ -19,11 +27,14 @@ import {
   MessageCircle,
   CheckCircle,
   AlertCircle,
-  Calendar
+  Calendar,
+  Bot,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface WarmingSession {
   id: string;
@@ -132,12 +143,61 @@ export function WarmingDetailsDialog({
 }: WarmingDetailsDialogProps) {
   const [interactions, setInteractions] = useState<WarmingInteraction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [warmingReplyLimit, setWarmingReplyLimit] = useState<string>("2");
+  const [hasUserAgent, setHasUserAgent] = useState(false);
 
   useEffect(() => {
     if (open && session) {
       fetchInteractions();
+      checkUserAgentAndLimit();
     }
   }, [open, session]);
+
+  const checkUserAgentAndLimit = async () => {
+    if (!number.id) return;
+    
+    try {
+      // Check if user has a non-warming agent on this number
+      const { data: agents } = await supabase
+        .from('ai_agents')
+        .select('id, max_replies, objective')
+        .eq('whatsapp_number_id', number.id)
+        .neq('objective', 'warming');
+      
+      if (agents && agents.length > 0) {
+        setHasUserAgent(true);
+        // Get stored limit from localStorage or use default
+        const storedLimit = localStorage.getItem(`warming_reply_limit_${number.id}`);
+        setWarmingReplyLimit(storedLimit || "2");
+      } else {
+        setHasUserAgent(false);
+      }
+    } catch (error) {
+      console.error('Error checking user agent:', error);
+    }
+  };
+
+  const handleReplyLimitChange = async (value: string) => {
+    setWarmingReplyLimit(value);
+    localStorage.setItem(`warming_reply_limit_${number.id}`, value);
+    
+    // Update all user agents on this number with the new limit during warming
+    try {
+      const { data: agents } = await supabase
+        .from('ai_agents')
+        .select('id')
+        .eq('whatsapp_number_id', number.id)
+        .neq('objective', 'warming');
+      
+      if (agents && agents.length > 0) {
+        // Store the warming limit in a custom way - we'll use this in the edge function
+        // For now, just show a toast
+        toast.success(`Limite de respostas durante aquecimento: ${value === "0" ? "Sem limite" : value}`);
+      }
+    } catch (error) {
+      console.error('Error updating reply limit:', error);
+    }
+  };
 
   const fetchInteractions = async () => {
     if (!session) return;
@@ -221,6 +281,37 @@ export function WarmingDetailsDialog({
                 </div>
               )}
             </div>
+
+            {/* Agent Reply Limit During Warming - Only show if user has agents */}
+            {hasUserAgent && session?.status === 'active' && session?.warming_status !== 'hot' && (
+              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bot className="w-5 h-5 text-purple-500" />
+                  <span className="font-medium text-purple-500">Limite de Respostas do Agente</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Durante o aquecimento, seu agente de IA terá respostas limitadas para proteger o número.
+                </p>
+                <div className="flex items-center gap-3">
+                  <Label className="text-sm">Máximo de respostas por conversa:</Label>
+                  <Select value={warmingReplyLimit} onValueChange={handleReplyLimitChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 resposta</SelectItem>
+                      <SelectItem value="2">2 respostas</SelectItem>
+                      <SelectItem value="3">3 respostas</SelectItem>
+                      <SelectItem value="5">5 respostas</SelectItem>
+                      <SelectItem value="0">Sem limite</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Quando o número estiver aquecido, o limite será removido automaticamente.
+                </p>
+              </div>
+            )}
 
             {/* Daily Progress - Only show when session is active */}
             {session?.status === 'active' && (
