@@ -304,16 +304,46 @@ export default function AIAgents() {
                       </CardHeader>
                       
                       <CardContent className="space-y-4">
-                        {/* Stats */}
+                        {/* Stats with real-time indicator */}
                         <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{agent.messages_sent_today}/{agent.daily_limit} hoje</span>
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                              {agent.status === 'active' && (
+                                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                              )}
+                            </div>
+                            <span className={`font-medium ${
+                              agent.messages_sent_today >= agent.daily_limit * 0.9 
+                                ? 'text-yellow-500' 
+                                : agent.messages_sent_today >= agent.daily_limit 
+                                  ? 'text-red-500' 
+                                  : 'text-muted-foreground'
+                            }`}>
+                              {agent.messages_sent_today}/{agent.daily_limit} hoje
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Clock className="h-4 w-4" />
                             <span>{agent.operating_hours_start?.slice(0, 5)} - {agent.operating_hours_end?.slice(0, 5)}</span>
                           </div>
+                        </div>
+                        
+                        {/* Progress bar for daily messages */}
+                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              agent.messages_sent_today >= agent.daily_limit 
+                                ? 'bg-red-500' 
+                                : agent.messages_sent_today >= agent.daily_limit * 0.9 
+                                  ? 'bg-yellow-500' 
+                                  : 'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min((agent.messages_sent_today / agent.daily_limit) * 100, 100)}%` }}
+                          />
                         </div>
 
                         {/* WhatsApp Number */}
