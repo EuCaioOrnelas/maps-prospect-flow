@@ -224,6 +224,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           system_prompt: systemPrompt,
           agent_objective: agentObjective,
           end_conversation_criteria: endConversationCriteria,
+          post_response_behavior: postResponseBehavior,
           communication_style: communicationStyle,
           operating_hours_start: operatingHoursStart,
           operating_hours_end: operatingHoursEnd,
@@ -558,6 +559,33 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
+              <Reply className="h-12 w-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">O que fazer quando o lead responder?</h3>
+              <p className="text-muted-foreground text-sm">
+                Defina como o agente deve agir após receber uma resposta de campanha
+              </p>
+            </div>
+            <Textarea
+              placeholder={`Ex: Quando o lead responder com "oi", "bom dia" ou qualquer saudação, NÃO cumprimente de volta. Vá direto ao ponto apresentando nosso serviço:
+
+"Que bom que respondeu! Aqui é da [empresa], temos uma solução que pode ajudar seu negócio a [benefício]. Posso te mostrar como funciona?"
+
+Se o lead perguntar preço, apresente as opções e tente agendar uma demonstração.`}
+              value={postResponseBehavior}
+              onChange={(e) => setPostResponseBehavior(e.target.value)}
+              rows={6}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Importante: Leads de campanha geralmente respondem com saudações simples. Configure aqui para o agente já entrar vendendo!
+            </p>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
               <Check className="h-12 w-12 mx-auto text-primary" />
               <h3 className="text-xl font-semibold">Quando encerrar a conversa?</h3>
               <p className="text-muted-foreground text-sm">
@@ -573,7 +601,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 8:
+      case 9:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -632,7 +660,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 9:
+      case 10:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -687,7 +715,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 10:
+      case 11:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-2">
@@ -731,7 +759,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           </div>
         );
 
-      case 11:
+      case 12:
         const selectedNumber = numbers.find(n => n.id === selectedNumberId);
         return (
           <div className="space-y-4">

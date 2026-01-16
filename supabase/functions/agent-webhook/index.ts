@@ -262,12 +262,16 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Enhanced prompt for campaign responses
-          const campaignResponseGuide = isCampaignResponse ? `
-CONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
+          // Enhanced prompt for campaign responses - use custom post_response_behavior if set
+          const postResponseBehavior = agent.post_response_behavior;
+          const campaignResponseGuide = isCampaignResponse ? (postResponseBehavior 
+            ? `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção.
+INSTRUÇÃO ESPECÍFICA DO USUÁRIO PARA RESPOSTAS PÓS-CAMPANHA:
+${postResponseBehavior}`
+            : `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
 Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
 ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
-Seja PROATIVO e VENDEDOR, mas não agressivo.` : '';
+Seja PROATIVO e VENDEDOR, mas não agressivo.`) : '';
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
@@ -439,12 +443,16 @@ REGRAS CRÍTICAS:
             const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
             const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-            // Enhanced prompt for campaign responses
-            const campaignResponseGuide = isCampaignResponse ? `
-CONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
+            // Enhanced prompt for campaign responses - use custom post_response_behavior if set
+            const postResponseBehavior = agent.post_response_behavior;
+            const campaignResponseGuide = isCampaignResponse ? (postResponseBehavior 
+              ? `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção.
+INSTRUÇÃO ESPECÍFICA DO USUÁRIO PARA RESPOSTAS PÓS-CAMPANHA:
+${postResponseBehavior}`
+              : `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
 Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
 ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
-Seja PROATIVO e VENDEDOR, mas não agressivo.` : '';
+Seja PROATIVO e VENDEDOR, mas não agressivo.`) : '';
 
             const fullSystemPrompt = `${baseSystemPrompt}
 

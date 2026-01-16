@@ -147,6 +147,7 @@ export type Database = {
           objective: string
           operating_hours_end: string
           operating_hours_start: string
+          post_response_behavior: string | null
           status: string
           system_prompt: string | null
           target_audience: string | null
@@ -173,6 +174,7 @@ export type Database = {
           objective: string
           operating_hours_end?: string
           operating_hours_start?: string
+          post_response_behavior?: string | null
           status?: string
           system_prompt?: string | null
           target_audience?: string | null
@@ -199,6 +201,7 @@ export type Database = {
           objective?: string
           operating_hours_end?: string
           operating_hours_start?: string
+          post_response_behavior?: string | null
           status?: string
           system_prompt?: string | null
           target_audience?: string | null
