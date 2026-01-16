@@ -51,7 +51,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   // Keep reports submenu open if on a reports page
-  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports";
+  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -102,6 +102,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       url: "/warming/reports",
       icon: Flame,
       active: currentPath === "/warming/reports"
+    },
+    {
+      title: "Relatórios de Agentes IA",
+      url: "/agents/reports",
+      icon: Bot,
+      active: currentPath === "/agents/reports"
     },
   ];
 
