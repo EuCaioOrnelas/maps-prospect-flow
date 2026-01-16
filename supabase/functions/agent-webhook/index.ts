@@ -322,7 +322,7 @@ REGRAS CRÍTICAS:
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        // New conversation from unknown lead - just log it
+        // New conversation from unknown lead - create conversation AND respond
         const { data: newConv } = await supabase
           .from('agent_conversations')
           .insert({
@@ -332,7 +332,8 @@ REGRAS CRÍTICAS:
             response_received: true,
             response_received_at: new Date().toISOString(),
             response_content: message,
-            status: 'responded',
+            status: 'active',
+            reply_count: 0,
           })
           .select()
           .single();
@@ -344,12 +345,124 @@ REGRAS CRÍTICAS:
             direction: 'received',
             content: message,
           });
+
+          // Generate and send AI response for new conversation
+          if (lovableApiKey) {
+            // Get max response chars from agent config (default 300)
+            const maxChars = agent.max_response_chars || 300;
+            
+            // Build system prompt from agent configuration
+            const stylePrompts = {
+              formal: 'Responda de forma formal e profissional.',
+              neutral: 'Responda de forma neutra e amigável.',
+              informal: 'Responda de forma informal e descontraída.',
+            };
+
+            // Use custom system prompt if available, otherwise generate default
+            const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
+            const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
+            const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
+
+            const fullSystemPrompt = `${baseSystemPrompt}
+
+OBJETIVO: ${agentGoal}
+
+CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+
+REGRAS CRÍTICAS:
+- Responda com NO MÁXIMO ${maxChars} caracteres
+- Seja breve e natural
+- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
+- Quando apropriado, encerre a conversa naturalmente
+- Esta é a PRIMEIRA mensagem do lead, então seja acolhedor`;
+
+            console.log('Generating AI response for new conversation...');
+            const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${lovableApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash-lite',
+                messages: [
+                  {
+                    role: 'system',
+                    content: fullSystemPrompt
+                  },
+                  {
+                    role: 'user',
+                    content: `Lead enviou primeira mensagem: "${message}"\n\nGere uma resposta acolhedora (max ${maxChars} chars).`
+                  }
+                ],
+                max_tokens: 200,
+              }),
+            });
+
+            if (aiResponse.ok) {
+              const aiData = await aiResponse.json();
+              let replyContent = aiData.choices?.[0]?.message?.content || 'Olá! Como posso ajudar? 👋';
+              
+              // Ensure max chars limit
+              if (replyContent.length > maxChars) {
+                replyContent = replyContent.substring(0, maxChars - 3) + '...';
+              }
+
+              // Send via Evolution API
+              const instanceName = agent.whatsapp_number?.instance_name;
+              if (instanceName) {
+                console.log(`Sending reply to ${phone} via ${instanceName}...`);
+                const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+                  method: 'POST',
+                  headers: {
+                    'apikey': evolutionApiKey,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    number: phone,
+                    text: replyContent,
+                  }),
+                });
+
+                if (sendResponse.ok) {
+                  const maxReplies = agent.max_replies;
+                  const shouldComplete = maxReplies && maxReplies > 0 && 1 >= maxReplies;
+                  
+                  // Update conversation with reply info
+                  await supabase
+                    .from('agent_conversations')
+                    .update({
+                      reply_sent: true,
+                      reply_sent_at: new Date().toISOString(),
+                      reply_content: replyContent,
+                      reply_count: 1,
+                      status: shouldComplete ? 'completed' : 'active',
+                    })
+                    .eq('id', newConv.id);
+
+                  // Log the reply
+                  await supabase.from('agent_message_logs').insert({
+                    agent_id: agentId,
+                    conversation_id: newConv.id,
+                    direction: 'sent',
+                    content: replyContent,
+                  });
+
+                  console.log(`First reply sent successfully:`, replyContent);
+                } else {
+                  console.error('Failed to send first reply:', await sendResponse.text());
+                }
+              }
+            } else {
+              console.error('AI response failed:', await aiResponse.text());
+            }
+          }
         }
 
         return new Response(
           JSON.stringify({ 
             success: true, 
-            action: 'new_conversation_logged',
+            action: 'new_conversation_created_and_replied',
             conversation_id: newConv?.id 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
