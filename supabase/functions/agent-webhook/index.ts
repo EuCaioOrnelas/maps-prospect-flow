@@ -113,18 +113,55 @@ serve(async (req) => {
         .single();
       
       if (whatsappNumber) {
-        // Find active agent using this number
-        const { data, error } = await supabase
+        // Find ALL active agents using this number (warming + user agents can coexist)
+        const { data: agents } = await supabase
           .from('ai_agents')
           .select('*, whatsapp_number:whatsapp_numbers(instance_name, phone_number)')
           .eq('whatsapp_number_id', whatsappNumber.id)
-          .eq('status', 'active')
-          .single();
+          .eq('status', 'active');
         
-        if (data) {
-          agent = data;
-          agentId = data.id;
-          console.log('Found agent by instance:', agent.name, agent.id);
+        if (agents && agents.length > 0) {
+          // Prioritize warming agent if exists, otherwise use user agent
+          const warmingAgent = agents.find((a: any) => a.objective === 'warming');
+          const userAgent = agents.find((a: any) => a.objective !== 'warming');
+          
+          // Use warming agent if number is still warming, otherwise user agent
+          // Check warming session status
+          const { data: warmingSession } = await supabase
+            .from('warming_sessions')
+            .select('status, warming_status')
+            .eq('whatsapp_number_id', whatsappNumber.id)
+            .single();
+          
+          const isWarming = warmingSession && 
+            (warmingSession.status === 'active' || warmingSession.status === 'paused') &&
+            warmingSession.warming_status !== 'hot';
+          
+          if (isWarming && warmingAgent) {
+            // Number is warming - use warming agent
+            agent = warmingAgent;
+            agentId = warmingAgent.id;
+            console.log('Using warming agent:', agent.name, agent.id);
+          } else if (userAgent) {
+            // Number is warmed or no warming agent - use user agent
+            agent = userAgent;
+            agentId = userAgent.id;
+            
+            // If warming is active, apply response limits to user agent
+            if (isWarming) {
+              agent._warmingLimited = true;
+              agent._effectiveMaxReplies = 2; // Limit to 2 replies during warming
+              console.log('User agent with warming limits:', agent.name);
+            } else {
+              agent._warmingLimited = false;
+              console.log('User agent without limits (warmed):', agent.name);
+            }
+          } else if (warmingAgent) {
+            // Only warming agent exists
+            agent = warmingAgent;
+            agentId = warmingAgent.id;
+            console.log('Only warming agent found:', agent.name);
+          }
         }
       }
     }
@@ -184,8 +221,20 @@ serve(async (req) => {
         .single();
 
       if (existingConv) {
-        // Check reply limits - max_replies: null/0 = unlimited, 1+ = limited
-        const maxReplies = agent.max_replies;
+        // Check reply limits - use effective max replies if warming limited
+        // max_replies: null/0 = unlimited, 1+ = limited
+        // _warmingLimited: true means apply warming limits even if agent has no limit
+        let maxReplies = agent.max_replies;
+        
+        // If warming is active and agent is warming limited, use the effective limit
+        if (agent._warmingLimited && agent._effectiveMaxReplies) {
+          // Use the more restrictive limit
+          maxReplies = agent.max_replies 
+            ? Math.min(agent.max_replies, agent._effectiveMaxReplies)
+            : agent._effectiveMaxReplies;
+          console.log(`Warming active - using limited replies: ${maxReplies}`);
+        }
+        
         const currentReplyCount = existingConv.reply_count || 0;
         
         // If max_replies is set and we've reached the limit, don't reply
@@ -204,7 +253,7 @@ serve(async (req) => {
             JSON.stringify({ 
               success: false, 
               reason: 'reply_limit_reached',
-              message: `Agent reached reply limit (${currentReplyCount}/${maxReplies})` 
+              message: `Agent reached reply limit (${currentReplyCount}/${maxReplies})${agent._warmingLimited ? ' (warming active)' : ''}` 
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
