@@ -510,26 +510,141 @@ const AgentReports = () => {
     return insightsList;
   }, [kpis, agentPerformanceData, conversations]);
 
-  // Agent health score
-  const agentHealthScore = useMemo(() => {
-    let score = 50; // Base score
+  // Agent health score - Sistema real baseado em benchmarks
+  const healthScoreDetails = useMemo(() => {
+    // Benchmarks ideais do mercado
+    const BENCHMARKS = {
+      responseRate: { ideal: 40, excellent: 60, weight: 30 }, // % de leads que respondem
+      completionRate: { ideal: 50, excellent: 70, weight: 25 }, // % de conversas concluídas
+      avgResponseTime: { ideal: 30, excellent: 15, weight: 15 }, // minutos (menor = melhor)
+      escalationRate: { ideal: 20, excellent: 10, weight: 15 }, // % (menor = melhor)
+      engagementRate: { ideal: 30, excellent: 50, weight: 15 }, // % de leads com múltiplas interações
+    };
 
-    // Response rate contributes up to 25 points
-    score += Math.min(25, kpis.responseRate / 4);
+    const engagementRate = kpis.totalConversations > 0
+      ? Math.round((conversations.filter(c => c.reply_count && c.reply_count > 1).length / kpis.totalConversations) * 100)
+      : 0;
 
-    // Low escalation rate contributes up to 15 points
-    score += Math.max(0, 15 - (kpis.escalationRate / 2));
+    // Calcular pontuação para cada métrica
+    const calculateMetricScore = (value: number, benchmark: { ideal: number; excellent: number; weight: number }, isInverse: boolean = false) => {
+      if (isInverse) {
+        // Para métricas onde menor é melhor (tempo de resposta, escalonamento)
+        if (value <= benchmark.excellent) return 100;
+        if (value <= benchmark.ideal) return 70 + ((benchmark.ideal - value) / (benchmark.ideal - benchmark.excellent)) * 30;
+        if (value <= benchmark.ideal * 2) return 40 + ((benchmark.ideal * 2 - value) / benchmark.ideal) * 30;
+        return Math.max(0, 40 - (value - benchmark.ideal * 2) / benchmark.ideal * 20);
+      } else {
+        // Para métricas onde maior é melhor
+        if (value >= benchmark.excellent) return 100;
+        if (value >= benchmark.ideal) return 70 + ((value - benchmark.ideal) / (benchmark.excellent - benchmark.ideal)) * 30;
+        if (value >= benchmark.ideal / 2) return 40 + ((value - benchmark.ideal / 2) / (benchmark.ideal / 2)) * 30;
+        return Math.max(0, (value / (benchmark.ideal / 2)) * 40);
+      }
+    };
 
-    // Auto completion rate contributes up to 10 points
-    score += Math.min(10, kpis.autoCompletionRate / 10);
+    const scores = {
+      responseRate: {
+        value: kpis.responseRate,
+        score: calculateMetricScore(kpis.responseRate, BENCHMARKS.responseRate),
+        weight: BENCHMARKS.responseRate.weight,
+        label: 'Taxa de Resposta',
+        benchmark: `Ideal: ${BENCHMARKS.responseRate.ideal}%+`,
+        status: kpis.responseRate >= BENCHMARKS.responseRate.excellent ? 'excellent' : 
+                kpis.responseRate >= BENCHMARKS.responseRate.ideal ? 'good' : 
+                kpis.responseRate >= BENCHMARKS.responseRate.ideal / 2 ? 'regular' : 'poor',
+      },
+      completionRate: {
+        value: kpis.autoCompletionRate,
+        score: calculateMetricScore(kpis.autoCompletionRate, BENCHMARKS.completionRate),
+        weight: BENCHMARKS.completionRate.weight,
+        label: 'Taxa de Conclusão',
+        benchmark: `Ideal: ${BENCHMARKS.completionRate.ideal}%+`,
+        status: kpis.autoCompletionRate >= BENCHMARKS.completionRate.excellent ? 'excellent' : 
+                kpis.autoCompletionRate >= BENCHMARKS.completionRate.ideal ? 'good' : 
+                kpis.autoCompletionRate >= BENCHMARKS.completionRate.ideal / 2 ? 'regular' : 'poor',
+      },
+      avgResponseTime: {
+        value: kpis.avgResponseTime,
+        score: calculateMetricScore(kpis.avgResponseTime, BENCHMARKS.avgResponseTime, true),
+        weight: BENCHMARKS.avgResponseTime.weight,
+        label: 'Tempo de Resposta',
+        benchmark: `Ideal: <${BENCHMARKS.avgResponseTime.ideal}min`,
+        status: kpis.avgResponseTime > 0 && kpis.avgResponseTime <= BENCHMARKS.avgResponseTime.excellent ? 'excellent' : 
+                kpis.avgResponseTime <= BENCHMARKS.avgResponseTime.ideal ? 'good' : 
+                kpis.avgResponseTime <= BENCHMARKS.avgResponseTime.ideal * 2 ? 'regular' : 'poor',
+      },
+      escalationRate: {
+        value: kpis.escalationRate,
+        score: calculateMetricScore(kpis.escalationRate, BENCHMARKS.escalationRate, true),
+        weight: BENCHMARKS.escalationRate.weight,
+        label: 'Taxa de Escalonamento',
+        benchmark: `Ideal: <${BENCHMARKS.escalationRate.ideal}%`,
+        status: kpis.escalationRate <= BENCHMARKS.escalationRate.excellent ? 'excellent' : 
+                kpis.escalationRate <= BENCHMARKS.escalationRate.ideal ? 'good' : 
+                kpis.escalationRate <= BENCHMARKS.escalationRate.ideal * 2 ? 'regular' : 'poor',
+      },
+      engagementRate: {
+        value: engagementRate,
+        score: calculateMetricScore(engagementRate, BENCHMARKS.engagementRate),
+        weight: BENCHMARKS.engagementRate.weight,
+        label: 'Taxa de Engajamento',
+        benchmark: `Ideal: ${BENCHMARKS.engagementRate.ideal}%+`,
+        status: engagementRate >= BENCHMARKS.engagementRate.excellent ? 'excellent' : 
+                engagementRate >= BENCHMARKS.engagementRate.ideal ? 'good' : 
+                engagementRate >= BENCHMARKS.engagementRate.ideal / 2 ? 'regular' : 'poor',
+      },
+    };
 
-    return Math.min(100, Math.round(score));
-  }, [kpis]);
+    // Calcular score total ponderado
+    const totalWeight = Object.values(scores).reduce((sum, s) => sum + s.weight, 0);
+    const weightedScore = Object.values(scores).reduce((sum, s) => sum + (s.score * s.weight), 0);
+    const totalScore = Math.round(weightedScore / totalWeight);
+
+    // Se não há dados, retornar score neutro
+    if (kpis.totalConversations === 0) {
+      return {
+        totalScore: 0,
+        metrics: scores,
+        status: 'no_data' as const,
+        message: 'Sem dados suficientes para calcular o score'
+      };
+    }
+
+    return {
+      totalScore,
+      metrics: scores,
+      status: totalScore >= 75 ? 'excellent' as const : 
+              totalScore >= 50 ? 'good' as const : 
+              totalScore >= 25 ? 'regular' as const : 'poor' as const,
+      message: totalScore >= 75 ? 'Seus agentes estão performando excelentemente!' :
+               totalScore >= 50 ? 'Boa performance, mas há espaço para melhorias.' :
+               totalScore >= 25 ? 'Performance regular. Considere ajustar os prompts.' :
+               'Performance abaixo do esperado. Revise a configuração dos agentes.'
+    };
+  }, [kpis, conversations]);
 
   const getHealthColor = (score: number) => {
-    if (score >= 70) return 'text-green-500';
-    if (score >= 40) return 'text-yellow-500';
+    if (score >= 75) return 'text-green-500';
+    if (score >= 50) return 'text-yellow-500';
+    if (score >= 25) return 'text-orange-500';
     return 'text-red-500';
+  };
+
+  const getHealthBgColor = (score: number) => {
+    if (score >= 75) return 'bg-green-500';
+    if (score >= 50) return 'bg-yellow-500';
+    if (score >= 25) return 'bg-orange-500';
+    return 'bg-red-500';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'excellent': return 'text-green-500';
+      case 'good': return 'text-blue-500';
+      case 'regular': return 'text-yellow-500';
+      case 'poor': return 'text-red-500';
+      default: return 'text-muted-foreground';
+    }
   };
 
   if (loading) {
@@ -538,7 +653,7 @@ const AgentReports = () => {
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar profile={profile} />
           <div className="flex-1 flex flex-col lg:ml-[72px]">
-            <AppHeader />
+            <AppHeader profile={profile} />
             <main className="flex-1 p-6">
               <div className="space-y-6">
                 <Skeleton className="h-10 w-64" />
@@ -566,7 +681,7 @@ const AgentReports = () => {
         <AppSidebar profile={profile} />
         
         <div className="flex-1 flex flex-col lg:ml-[72px]">
-          <AppHeader />
+          <AppHeader profile={profile} />
           
           <main className="flex-1 overflow-auto">
             <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -666,26 +781,54 @@ const AgentReports = () => {
                 </CardContent>
               </Card>
 
-              {/* Health Score Card */}
+              {/* Health Score Card - Detalhado */}
               <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                    <div className="flex-1">
                       <h3 className="text-sm font-medium text-muted-foreground">Score de Saúde dos Agentes</h3>
                       <div className="flex items-baseline gap-2 mt-1">
-                        <span className={`text-4xl font-bold ${getHealthColor(agentHealthScore)}`}>
-                          {agentHealthScore}
+                        <span className={`text-4xl font-bold ${getHealthColor(healthScoreDetails.totalScore)}`}>
+                          {healthScoreDetails.totalScore}
                         </span>
                         <span className="text-muted-foreground">/100</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        {agentHealthScore >= 70 ? 'Seus agentes estão performando bem!' :
-                         agentHealthScore >= 40 ? 'Há espaço para melhorias nos seus agentes.' :
-                         'Atenção: seus agentes precisam de ajustes.'}
+                        {healthScoreDetails.message}
                       </p>
+                      
+                      {/* Progress bar */}
+                      <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${getHealthBgColor(healthScoreDetails.totalScore)}`}
+                          style={{ width: `${healthScoreDetails.totalScore}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="hidden sm:block">
-                      <Activity className={`h-16 w-16 ${getHealthColor(agentHealthScore)}`} />
+                    
+                    {/* Métricas detalhadas */}
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {Object.entries(healthScoreDetails.metrics).map(([key, metric]) => (
+                        <div key={key} className="bg-background/50 rounded-lg p-3 border border-border/50">
+                          <p className="text-xs text-muted-foreground truncate">{metric.label}</p>
+                          <p className={`text-lg font-bold ${getStatusColor(metric.status)}`}>
+                            {key === 'avgResponseTime' 
+                              ? metric.value > 0 ? `${metric.value}m` : '-'
+                              : `${metric.value}%`}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">{metric.benchmark}</p>
+                          <div className="mt-1 h-1 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full ${getStatusColor(metric.status).replace('text-', 'bg-')}`}
+                              style={{ width: `${Math.min(100, metric.score)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="hidden xl:flex items-center justify-center">
+                      <Activity className={`h-16 w-16 ${getHealthColor(healthScoreDetails.totalScore)}`} />
                     </div>
                   </div>
                 </CardContent>
