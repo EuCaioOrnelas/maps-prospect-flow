@@ -977,10 +977,62 @@ serve(async (req) => {
                     console.log('Removed from ignored_contacts (if was there)');
                   }
                 }
+                
+                // ===== AI AGENT INTEGRATION =====
+                // Check if there's an active AI agent configured for this WhatsApp number
+                // and forward the message for automatic processing
+                try {
+                  const { data: activeAgent } = await supabase
+                    .from('ai_agents')
+                    .select('id, name, status')
+                    .eq('whatsapp_number_id', whatsappNumber.id)
+                    .eq('status', 'active')
+                    .single();
+                  
+                  if (activeAgent) {
+                    console.log('=== AI AGENT DETECTED ===');
+                    console.log('Agent:', activeAgent.name, activeAgent.id);
+                    console.log('Forwarding message to agent-webhook...');
+                    
+                    // Get lead name from contact or pushName
+                    const leadName = data.pushName || 'Lead';
+                    
+                    // Forward to agent-webhook asynchronously (don't wait for response)
+                    const agentWebhookUrl = `${SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${activeAgent.id}&action=receive`;
+                    
+                    fetch(agentWebhookUrl, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                      },
+                      body: JSON.stringify({
+                        phone: normalizedPhone,
+                        message: content || `[${messageType}]`,
+                        lead_name: leadName,
+                      }),
+                    })
+                    .then(res => {
+                      console.log('Agent webhook response status:', res.status);
+                      return res.json();
+                    })
+                    .then(data => {
+                      console.log('Agent webhook response:', JSON.stringify(data));
+                    })
+                    .catch(err => {
+                      console.error('Error calling agent webhook:', err);
+                    });
+                    
+                    console.log('Message forwarded to AI agent (async)');
+                  }
+                } catch (agentCheckError) {
+                  // Ignore errors - agent integration is optional
+                  console.log('AI agent check skipped:', agentCheckError);
+                }
               } else {
                 // ===== MESSAGE SENT (fromMe=true) - MOVE TO "MENSAGEM ENVIADA" =====
                 // Find lead by phone or conversation_id
-                const { data: existingLead } = await supabase
+                const { data: existingLeadSent } = await supabase
                   .from('leads')
                   .select('id, pipeline_stage_id, whatsapp_status')
                   .eq('user_id', whatsappNumber.user_id)
@@ -988,8 +1040,8 @@ serve(async (req) => {
                   .limit(1)
                   .single();
                 
-                if (existingLead) {
-                  console.log('Found lead to update on sent message:', existingLead.id);
+                if (existingLeadSent) {
+                  console.log('Found lead to update on sent message:', existingLeadSent.id);
                   
                   // Get the "Mensagem Enviada" stage
                   const { data: mensagemEnviadaStage } = await supabase
@@ -1001,18 +1053,18 @@ serve(async (req) => {
                   
                   // Only move to "Mensagem Enviada" if current stage is "Prospectado" (position 0)
                   let shouldMoveToMensagemEnviada = false;
-                  if (existingLead.pipeline_stage_id && mensagemEnviadaStage) {
+                  if (existingLeadSent.pipeline_stage_id && mensagemEnviadaStage) {
                     const { data: currentStage } = await supabase
                       .from('pipeline_stages')
                       .select('position, name')
-                      .eq('id', existingLead.pipeline_stage_id)
+                      .eq('id', existingLeadSent.pipeline_stage_id)
                       .single();
                     
                     // Move only if current stage is "Prospectado" (position 0)
                     if (currentStage && currentStage.position === 0) {
                       shouldMoveToMensagemEnviada = true;
                     }
-                  } else if (mensagemEnviadaStage && !existingLead.pipeline_stage_id) {
+                  } else if (mensagemEnviadaStage && !existingLeadSent.pipeline_stage_id) {
                     // No current stage, move to Mensagem Enviada
                     shouldMoveToMensagemEnviada = true;
                   }
@@ -1027,13 +1079,13 @@ serve(async (req) => {
                   
                   if (shouldMoveToMensagemEnviada && mensagemEnviadaStage) {
                     leadUpdate.pipeline_stage_id = mensagemEnviadaStage.id;
-                    console.log(`Moving lead ${existingLead.id} to Mensagem Enviada stage`);
+                    console.log(`Moving lead ${existingLeadSent.id} to Mensagem Enviada stage`);
                   }
                   
                   const { error: leadUpdateError } = await supabase
                     .from('leads')
                     .update(leadUpdate)
-                    .eq('id', existingLead.id);
+                    .eq('id', existingLeadSent.id);
                   
                   if (leadUpdateError) {
                     console.error('Error updating lead on sent message:', leadUpdateError);
@@ -1043,7 +1095,7 @@ serve(async (req) => {
                     // Log activity for the stage change
                     if (shouldMoveToMensagemEnviada) {
                       await supabase.from('lead_activities').insert({
-                        lead_id: existingLead.id,
+                        lead_id: existingLeadSent.id,
                         user_id: whatsappNumber.user_id,
                         activity_type: 'stage_changed',
                         description: 'Movido automaticamente para Mensagem Enviada (enviou mensagem)',
@@ -1053,7 +1105,6 @@ serve(async (req) => {
                   }
                 }
               }
-                
                 // ===== WARMING RESPONSE DETECTION =====
                 // Check if this message is a response to a warming interaction
                 const normalizedLeadPhone = rawPhone.replace(/\D/g, '');

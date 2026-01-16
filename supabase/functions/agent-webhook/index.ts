@@ -46,27 +46,65 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const url = new URL(req.url);
-    const agentId = url.searchParams.get('agent_id');
+    let agentId = url.searchParams.get('agent_id');
     const action = url.searchParams.get('action') || 'receive'; // receive, send, process
+    const instanceName = url.searchParams.get('instance'); // Instance name from Evolution webhook
 
-    if (!agentId) {
-      return new Response(
-        JSON.stringify({ error: 'agent_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let agent: any = null;
+
+    // If agent_id provided, fetch directly
+    if (agentId) {
+      const { data, error } = await supabase
+        .from('ai_agents')
+        .select('*, whatsapp_number:whatsapp_numbers(instance_name, phone_number)')
+        .eq('id', agentId)
+        .single();
+      
+      if (error || !data) {
+        return new Response(
+          JSON.stringify({ error: 'Agent not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      agent = data;
+    } 
+    // If instance name provided, find agent by WhatsApp number
+    else if (instanceName) {
+      console.log('Looking up agent by instance name:', instanceName);
+      
+      // First find the whatsapp_number by instance_name
+      const { data: whatsappNumber } = await supabase
+        .from('whatsapp_numbers')
+        .select('id')
+        .eq('instance_name', instanceName)
+        .single();
+      
+      if (whatsappNumber) {
+        // Find active agent using this number
+        const { data, error } = await supabase
+          .from('ai_agents')
+          .select('*, whatsapp_number:whatsapp_numbers(instance_name, phone_number)')
+          .eq('whatsapp_number_id', whatsappNumber.id)
+          .eq('status', 'active')
+          .single();
+        
+        if (data) {
+          agent = data;
+          agentId = data.id;
+          console.log('Found agent by instance:', agent.name, agent.id);
+        }
+      }
     }
 
-    // Fetch agent
-    const { data: agent, error: agentError } = await supabase
-      .from('ai_agents')
-      .select('*, whatsapp_number:whatsapp_numbers(instance_name)')
-      .eq('id', agentId)
-      .single() as { data: any; error: any };
-
-    if (agentError || !agent) {
+    // If no agent found, return appropriate message
+    if (!agent) {
       return new Response(
-        JSON.stringify({ error: 'Agent not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: false, 
+          reason: 'no_agent',
+          message: 'No active agent found for this number' 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
