@@ -263,6 +263,10 @@ export default function Warming() {
           });
 
         if (error) throw error;
+        
+        // Auto-create warming agent for this number
+        await createWarmingAgent(numberId, searchQuery, searchCity);
+        
         toast.success('Aquecimento iniciado');
       }
 
@@ -270,6 +274,117 @@ export default function Warming() {
     } catch (error) {
       console.error('Error starting warming:', error);
       toast.error('Erro ao iniciar aquecimento');
+    }
+  };
+
+  const createWarmingAgent = async (numberId: string, searchQuery: string, searchCity: string | null) => {
+    try {
+      // Check if warming agent already exists for this number
+      const { data: existingAgent } = await supabase
+        .from('ai_agents')
+        .select('id')
+        .eq('whatsapp_number_id', numberId)
+        .eq('objective', 'warming')
+        .single();
+
+      if (existingAgent) {
+        console.log('Warming agent already exists for this number');
+        return;
+      }
+
+      const number = numbers.find(n => n.id === numberId);
+      const numberName = number?.name || number?.phone_number || 'Número';
+      const location = searchCity ? ` em ${searchCity}` : '';
+
+      // Create a natural warming prompt
+      const warmingPrompt = `# AGENTE DE AQUECIMENTO - RESPOSTAS NATURAIS
+
+Você é um assistente que responde leads de forma natural e amigável durante o processo de aquecimento do número de WhatsApp.
+
+## CONTEXTO
+- Este número está em processo de AQUECIMENTO
+- Os leads são do nicho: "${searchQuery}"${location}
+- Seu objetivo é manter conversas naturais para aquecer o chip
+
+## COMO RESPONDER
+
+### Quando o lead responder positivamente ou com interesse:
+- Agradeça de forma casual e amigável
+- Faça uma pergunta simples sobre o negócio deles
+- Mantenha a conversa leve e natural
+- NÃO tente vender nada
+
+### Quando o lead perguntar "quem é você?" ou "como conseguiu meu número?":
+- Seja honesto: "Encontrei seu contato em uma pesquisa de negócios da região"
+- Explique que está fazendo uma pesquisa de mercado
+- Pergunte se pode ajudar com algo
+
+### Quando o lead responder negativamente ou não tiver interesse:
+- Agradeça educadamente pelo tempo
+- Desculpe-se por qualquer inconveniente
+- Encerre a conversa de forma amigável
+- NÃO insista
+
+### Quando o lead pedir para parar de receber mensagens:
+- Peça desculpas sinceras
+- Confirme que não enviará mais mensagens
+- Encerre imediatamente
+
+## REGRAS IMPORTANTES
+
+1. Respostas CURTAS (máximo 100 caracteres quando possível)
+2. Use linguagem INFORMAL e natural
+3. Use emojis com moderação (máximo 1 por mensagem)
+4. NUNCA mencione vendas, produtos ou serviços
+5. NUNCA seja insistente ou agressivo
+6. Responda como se fosse uma pessoa real fazendo networking
+7. Máximo de 2 respostas por conversa - depois encerre educadamente
+
+## EXEMPLOS DE RESPOSTAS
+
+Lead: "Oi, quem é?"
+Você: "Oi! 👋 Vi seu negócio online e achei interessante. Tudo bem por aí?"
+
+Lead: "Não tenho interesse"
+Você: "Sem problemas! Desculpa o incômodo. Boa semana! 🙏"
+
+Lead: "Como conseguiu meu contato?"
+Você: "Encontrei numa pesquisa de ${searchQuery}${location}. Só queria conhecer mais do mercado da região!"
+
+Lead: "Pode falar mais?"
+Você: "Claro! Trabalho com pesquisa de mercado. Como está o movimento aí?"`;
+
+      // Create the warming agent
+      const { error: agentError } = await supabase
+        .from('ai_agents')
+        .insert({
+          user_id: user?.id,
+          name: `🔥 Aquecimento - ${numberName}`,
+          objective: 'warming',
+          whatsapp_number_id: numberId,
+          system_prompt: warmingPrompt,
+          communication_style: 'casual',
+          status: 'active',
+          operating_hours_start: '08:00',
+          operating_hours_end: '20:00',
+          daily_limit: 50,
+          max_replies: 2,
+          max_response_chars: 150,
+          is_warmed: false,
+          post_response_behavior: 'Manter conversa natural e encerrar após 2 respostas. Não tentar vender nada.',
+          agent_objective: `Aquecer o número respondendo leads de ${searchQuery}${location} de forma natural`,
+          target_audience: searchQuery
+        });
+
+      if (agentError) {
+        console.error('Error creating warming agent:', agentError);
+        // Don't fail the warming session creation if agent creation fails
+      } else {
+        console.log('Warming agent created successfully');
+      }
+    } catch (error) {
+      console.error('Error creating warming agent:', error);
+      // Don't fail the warming session creation if agent creation fails
     }
   };
 

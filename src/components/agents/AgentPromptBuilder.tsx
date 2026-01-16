@@ -58,6 +58,7 @@ interface ConductBlock {
 
 interface ObjectionsBlock {
   commonObjections: string[];
+  customObjections: string;
   objectionPosture: string;
 }
 
@@ -130,6 +131,7 @@ const initialState: PromptBuilderState = {
   },
   objections: {
     commonObjections: [],
+    customObjections: "",
     objectionPosture: "",
   },
   cta: {
@@ -330,6 +332,7 @@ ${conduct.differentials.map(diff => `✓ ${diff}`).join('\n') || '- Benefícios 
 
 Esteja preparado para estas objeções:
 ${objections.commonObjections.map(obj => `- "${obj}"`).join('\n') || '- Objeções gerais'}
+${objections.customObjections ? `\n**Objeções específicas do negócio:**\n${objections.customObjections.split('\n').filter(o => o.trim()).map(o => `- "${o.trim()}"`).join('\n')}` : ''}
 
 **Postura diante de objeções:** ${postureLabels[objections.objectionPosture] || objections.objectionPosture}
 
@@ -858,6 +861,19 @@ ${rules.alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continu
                     </Label>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Objeções personalizadas do seu negócio:</Label>
+                <Textarea
+                  placeholder="Digite objeções específicas do seu negócio, uma por linha.&#10;&#10;Exemplo:&#10;Não confio em prospecção automática&#10;Já uso outra ferramenta de WhatsApp&#10;Meu mercado é muito específico"
+                  value={state.objections.customObjections}
+                  onChange={(e) => updateObjections('customObjections', e.target.value)}
+                  className="min-h-[100px] resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  💡 Adicione objeções específicas do seu produto ou mercado que não estão na lista acima.
+                </p>
               </div>
 
               <div className="space-y-2">
