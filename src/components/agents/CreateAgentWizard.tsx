@@ -595,7 +595,7 @@ ${styleTexts[responseStyle]}
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="py-2 pr-4">
+          <div className="py-4 px-1 pr-4">
             {renderStep()}
           </div>
         </ScrollArea>
