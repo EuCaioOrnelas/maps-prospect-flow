@@ -1152,54 +1152,44 @@ export default function AgentReports() {
                 </div>
 
                 {/* Quality Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Taxa de Encerramento Auto.</p>
-                      <p className={`text-2xl font-bold ${aggregatedMetrics.autoClosureRate >= 70 ? 'text-green-500' : aggregatedMetrics.autoClosureRate >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-2">Taxa de Encerramento Auto.</p>
+                      <p className={`text-3xl font-bold ${aggregatedMetrics.autoClosureRate >= 70 ? 'text-green-500' : aggregatedMetrics.autoClosureRate >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
                         {aggregatedMetrics.autoClosureRate}%
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Ideal: ≥70%</p>
+                      <p className="text-xs text-muted-foreground mt-2">Ideal: ≥70%</p>
                     </CardContent>
                   </Card>
                   
                   <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Taxa de Escalonamento</p>
-                      <p className={`text-2xl font-bold ${aggregatedMetrics.escalationRate <= 20 ? 'text-green-500' : aggregatedMetrics.escalationRate <= 30 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-2">Taxa de Escalonamento</p>
+                      <p className={`text-3xl font-bold ${aggregatedMetrics.escalationRate <= 20 ? 'text-green-500' : aggregatedMetrics.escalationRate <= 30 ? 'text-yellow-500' : 'text-red-500'}`}>
                         {aggregatedMetrics.escalationRate}%
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Ideal: ≤20%</p>
+                      <p className="text-xs text-muted-foreground mt-2">Ideal: ≤20%</p>
                     </CardContent>
                   </Card>
                   
                   <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Taxa de Erro da IA</p>
-                      <p className={`text-2xl font-bold ${aggregatedMetrics.errorRate <= 2 ? 'text-green-500' : aggregatedMetrics.errorRate <= 5 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-2">Taxa de Erro da IA</p>
+                      <p className={`text-3xl font-bold ${aggregatedMetrics.errorRate <= 2 ? 'text-green-500' : aggregatedMetrics.errorRate <= 5 ? 'text-yellow-500' : 'text-red-500'}`}>
                         {aggregatedMetrics.errorRate}%
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Ideal: ≤2%</p>
+                      <p className="text-xs text-muted-foreground mt-2">Ideal: ≤2%</p>
                     </CardContent>
                   </Card>
                   
                   <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Mensagens Repetidas</p>
-                      <p className={`text-2xl font-bold ${aggregatedMetrics.repeatedMessagesRate <= 10 ? 'text-green-500' : aggregatedMetrics.repeatedMessagesRate <= 15 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    <CardContent className="p-6">
+                      <p className="text-sm text-muted-foreground mb-2">Mensagens Repetidas</p>
+                      <p className={`text-3xl font-bold ${aggregatedMetrics.repeatedMessagesRate <= 10 ? 'text-green-500' : aggregatedMetrics.repeatedMessagesRate <= 15 ? 'text-yellow-500' : 'text-red-500'}`}>
                         {aggregatedMetrics.repeatedMessagesRate}%
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Ideal: ≤10%</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Palavras Sensíveis</p>
-                      <p className={`text-2xl font-bold ${aggregatedMetrics.sensitiveWordsCount <= 2 ? 'text-green-500' : aggregatedMetrics.sensitiveWordsCount <= 5 ? 'text-yellow-500' : 'text-red-500'}`}>
-                        {aggregatedMetrics.sensitiveWordsCount}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">Ideal: 0</p>
+                      <p className="text-xs text-muted-foreground mt-2">Ideal: ≤10%</p>
                     </CardContent>
                   </Card>
                 </div>
