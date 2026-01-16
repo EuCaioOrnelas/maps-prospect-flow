@@ -39,7 +39,8 @@ import {
   CheckCircle,
   Settings,
   Link,
-  DollarSign
+  DollarSign,
+  X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -105,10 +106,11 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [productName, setProductName] = useState("");
   const [salesApproach, setSalesApproach] = useState("");
   
-  // Product Info (NEW)
+  // Product Info
   const [productDescription, setProductDescription] = useState("");
+  const [wantToTalkPrice, setWantToTalkPrice] = useState(false);
   const [productPrice, setProductPrice] = useState("");
-  const [priceType, setPriceType] = useState(""); // monthly, one_time, custom
+  const [priceType, setPriceType] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [customDifferentials, setCustomDifferentials] = useState("");
   const [hasFreeTrial, setHasFreeTrial] = useState(false);
@@ -123,29 +125,26 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [openingStyle, setOpeningStyle] = useState("");
   const [firstMission, setFirstMission] = useState("");
   
-  // Diagnosis
-  const [infoToDiscover, setInfoToDiscover] = useState<string[]>([]);
-  const [customInfoToDiscover, setCustomInfoToDiscover] = useState("");
+  // Diagnosis - campos abertos
+  const [infoToDiscover, setInfoToDiscover] = useState("");
   const [maxQuestions, setMaxQuestions] = useState("2");
   
-  // Conduct
+  // Conduct - campos abertos
   const [presentationStyle, setPresentationStyle] = useState("");
-  const [differentials, setDifferentials] = useState<string[]>([]);
+  const [differentials, setDifferentials] = useState("");
   const [pricePolicy, setPricePolicy] = useState("");
   const [howToTalkPrice, setHowToTalkPrice] = useState("");
   
-  // Objections
-  const [commonObjections, setCommonObjections] = useState<string[]>([]);
-  const [customObjections, setCustomObjections] = useState("");
+  // Objections - campos abertos
+  const [commonObjections, setCommonObjections] = useState("");
   const [objectionPosture, setObjectionPosture] = useState("");
-  const [objectionResponses, setObjectionResponses] = useState<Record<string, string>>({});
   
   // CTA
   const [conversationGoal, setConversationGoal] = useState("");
   const [endConditions, setEndConditions] = useState<string[]>([]);
   const [closingStyle, setClosingStyle] = useState("");
   
-  // Links (NEW)
+  // Links (opcional)
   const [schedulingLink, setSchedulingLink] = useState("");
   const [demoLink, setDemoLink] = useState("");
   const [websiteLink, setWebsiteLink] = useState("");
@@ -246,6 +245,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setProductName("");
     setSalesApproach("");
     setProductDescription("");
+    setWantToTalkPrice(false);
     setProductPrice("");
     setPriceType("");
     setPaymentMethods([]);
@@ -257,17 +257,14 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setConsciousnessLevel("");
     setOpeningStyle("");
     setFirstMission("");
-    setInfoToDiscover([]);
-    setCustomInfoToDiscover("");
+    setInfoToDiscover("");
     setMaxQuestions("2");
     setPresentationStyle("");
-    setDifferentials([]);
+    setDifferentials("");
     setPricePolicy("");
     setHowToTalkPrice("");
-    setCommonObjections([]);
-    setCustomObjections("");
+    setCommonObjections("");
     setObjectionPosture("");
-    setObjectionResponses({});
     setConversationGoal("");
     setEndConditions([]);
     setClosingStyle("");
@@ -414,14 +411,14 @@ ${websiteLink ? `- Envie o site quando o lead pedir mais informações gerais` :
 
     // Build product section
     let productSection = "";
-    if (productDescription || productPrice) {
+    if (productDescription || (wantToTalkPrice && productPrice)) {
       productSection = `
 ---
 
 # INFORMAÇÕES DO PRODUTO/SERVIÇO
 
 **Descrição:** ${productDescription || 'Não informado'}
-${productPrice ? `
+${wantToTalkPrice && productPrice ? `
 **Preço:** R$ ${productPrice} ${priceTypeLabels[priceType] || ''}
 ${paymentMethods.length > 0 ? `**Formas de pagamento:** ${paymentMethods.join(', ')}` : ''}
 ` : ''}
@@ -432,23 +429,14 @@ ${customDifferentials.split('\n').filter(d => d.trim()).map(d => `- ${d.trim()}`
 `;
     }
 
-    // Build objection responses section
-    let objectionResponsesSection = "";
-    const objectionEntriesWithResponses = Object.entries(objectionResponses).filter(([_, response]) => response.trim());
-    if (objectionEntriesWithResponses.length > 0) {
-      objectionResponsesSection = `
+    // Build info to discover section
+    const infoToDiscoverList = infoToDiscover.split('\n').filter(i => i.trim());
 
-**Respostas sugeridas para objeções:**
-${objectionEntriesWithResponses.map(([objection, response]) => `
-Quando disserem "${objection}":
-→ ${response}`).join('\n')}`;
-    }
+    // Build differentials section
+    const differentialsList = differentials.split('\n').filter(d => d.trim());
 
-    // Build custom info to discover
-    const allInfoToDiscover = [...infoToDiscover];
-    if (customInfoToDiscover.trim()) {
-      customInfoToDiscover.split('\n').filter(i => i.trim()).forEach(i => allInfoToDiscover.push(i.trim()));
-    }
+    // Build objections section
+    const objectionsList = commonObjections.split('\n').filter(o => o.trim());
 
     return `# IDENTIDADE DO AGENTE
 
@@ -480,7 +468,7 @@ Quando o lead responder, você deve: ${openingLabels[openingStyle] || openingSty
 # DIAGNÓSTICO - INFORMAÇÕES A DESCOBRIR
 
 Antes de apresentar qualquer solução, você DEVE descobrir:
-${allInfoToDiscover.map(info => `- ${info}`).join('\n') || '- Informações básicas do lead'}
+${infoToDiscoverList.length > 0 ? infoToDiscoverList.map(info => `- ${info}`).join('\n') : '- Informações básicas do lead'}
 
 **Limite:** Faça no MÁXIMO ${maxQuestions} perguntas antes de oferecer algo. Evite parecer um interrogatório.
 
@@ -491,10 +479,10 @@ ${allInfoToDiscover.map(info => `- ${info}`).join('\n') || '- Informações bás
 **Estilo de apresentação:** ${presentationLabels[presentationStyle] || presentationStyle}
 
 **Diferenciais que DEVEM aparecer naturalmente na conversa:**
-${differentials.map(diff => `✓ ${diff}`).join('\n') || '- Benefícios do produto/serviço'}
+${differentialsList.length > 0 ? differentialsList.map(diff => `✓ ${diff}`).join('\n') : '- Benefícios do produto/serviço'}
 
 **Política de preço:** ${priceLabels[pricePolicy] || pricePolicy}
-${(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && productPrice ? `
+${(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && wantToTalkPrice && productPrice ? `
 **Como falar do preço:**
 - O preço é R$ ${productPrice} (${priceTypeLabels[priceType] || ''})
 ${howToTalkPrice ? `- Abordagem: ${howToTalkPrice}` : '- Sempre contextualize o valor entregue antes de falar o preço'}
@@ -505,11 +493,10 @@ ${linksSection}
 # OBJEÇÕES COMUNS E COMO RESPONDER
 
 Esteja preparado para estas objeções:
-${commonObjections.map(obj => `- "${obj}"`).join('\n') || '- Objeções gerais'}
-${customObjections ? `\n**Objeções específicas do negócio:**\n${customObjections.split('\n').filter(o => o.trim()).map(o => `- "${o.trim()}"`).join('\n')}` : ''}
+${objectionsList.length > 0 ? objectionsList.map(obj => `- "${obj}"`).join('\n') : '- Objeções gerais'}
 
 **Postura diante de objeções:** ${postureLabels[objectionPosture] || objectionPosture}
-${objectionResponsesSection}
+
 ---
 
 # CTA - OBJETIVO E ENCERRAMENTO
@@ -611,11 +598,11 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       case 'opening':
         return !!openingStyle && !!firstMission;
       case 'diagnosis':
-        return infoToDiscover.length > 0;
+        return infoToDiscover.trim().length > 0;
       case 'conduct':
-        return !!presentationStyle && differentials.length > 0 && !!pricePolicy;
+        return !!presentationStyle && differentials.trim().length > 0 && !!pricePolicy;
       case 'objections':
-        return commonObjections.length > 0 && !!objectionPosture;
+        return commonObjections.trim().length > 0 && !!objectionPosture;
       case 'cta':
         return !!conversationGoal && endConditions.length > 0 && !!closingStyle;
       case 'links':
@@ -740,12 +727,12 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1">Nome da empresa <span className="text-destructive">*</span></Label>
-              <Input placeholder="Ex: Minha Empresa" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              <Input placeholder="Ex: Minha Empresa Ltda" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Nome do produto/serviço</Label>
-              <Input placeholder="Ex: Plataforma de automação" value={productName} onChange={(e) => setProductName(e.target.value)} />
+              <Input placeholder="Ex: Plataforma de automação de vendas" value={productName} onChange={(e) => setProductName(e.target.value)} />
               <p className="text-xs text-muted-foreground">O nome que o agente usará para se referir ao produto</p>
             </div>
 
@@ -772,7 +759,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
             <div className="space-y-2">
               <Label>Descrição do produto/serviço</Label>
               <Textarea
-                placeholder="Descreva brevemente o que seu produto/serviço faz e quais problemas resolve..."
+                placeholder="Ex: Uma plataforma que automatiza o disparo de mensagens via WhatsApp, com aquecimento de número e IA para responder leads automaticamente..."
                 value={productDescription}
                 onChange={(e) => setProductDescription(e.target.value)}
                 rows={3}
@@ -780,42 +767,55 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
               <p className="text-xs text-muted-foreground">O agente usará isso para explicar o produto</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Preço (R$)</Label>
-                <Input
-                  type="text"
-                  placeholder="Ex: 197"
-                  value={productPrice}
-                  onChange={(e) => setProductPrice(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Tipo de cobrança</Label>
-                <Select value={priceType} onValueChange={setPriceType}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                    <SelectItem value="one_time">Pagamento único</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Pergunta sobre preço */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={wantToTalkPrice} onCheckedChange={(c) => setWantToTalkPrice(!!c)} id="want-price" />
+                <Label htmlFor="want-price" className="cursor-pointer font-medium">O agente deve falar sobre preço?</Label>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Formas de pagamento aceitas</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {["Pix", "Cartão de crédito", "Boleto", "Parcelamento"].map((item) => (
-                  <CheckboxOption
-                    key={item}
-                    label={item}
-                    checked={paymentMethods.includes(item)}
-                    onCheckedChange={() => toggleArrayItem(paymentMethods, item, setPaymentMethods)}
-                  />
-                ))}
+            {/* Campos condicionais de preço */}
+            {wantToTalkPrice && (
+              <div className="space-y-4 p-3 border border-primary/20 rounded-lg bg-primary/5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Preço (R$) <span className="text-destructive">*</span></Label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: 197,00"
+                      value={productPrice}
+                      onChange={(e) => setProductPrice(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo de cobrança</Label>
+                    <Select value={priceType} onValueChange={setPriceType}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="one_time">Pagamento único</SelectItem>
+                        <SelectItem value="custom">Personalizado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Formas de pagamento aceitas</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["Pix", "Cartão de crédito", "Boleto", "Parcelamento"].map((item) => (
+                      <CheckboxOption
+                        key={item}
+                        label={item}
+                        checked={paymentMethods.includes(item)}
+                        onCheckedChange={() => toggleArrayItem(paymentMethods, item, setPaymentMethods)}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -824,7 +824,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
               </div>
               {hasFreeTrial && (
                 <Input
-                  placeholder="Ex: 7 dias grátis, teste por 14 dias..."
+                  placeholder="Ex: 7 dias grátis para testar todas as funcionalidades"
                   value={trialDetails}
                   onChange={(e) => setTrialDetails(e.target.value)}
                 />
@@ -832,14 +832,18 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
             </div>
 
             <div className="space-y-2">
-              <Label>Diferenciais do seu produto (além dos padrões)</Label>
+              <Label>Diferenciais do seu produto/serviço</Label>
               <Textarea
-                placeholder="Um diferencial por linha..."
+                placeholder="Ex:
+API oficial do WhatsApp (não dá bloqueio)
+Sistema de aquecimento automático
+IA que responde leads 24h
+Suporte humanizado via chat"
                 value={customDifferentials}
                 onChange={(e) => setCustomDifferentials(e.target.value)}
-                rows={2}
+                rows={4}
               />
-              <p className="text-xs text-muted-foreground">O agente mencionará esses pontos naturalmente</p>
+              <p className="text-xs text-muted-foreground">Um diferencial por linha. O agente mencionará esses pontos naturalmente</p>
             </div>
           </div>
         );
@@ -882,21 +886,21 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="flex items-center gap-1">Como iniciar quando o lead responde? <span className="text-destructive">*</span></Label>
+              <Label className="flex items-center gap-1">Como iniciar após o lead responder? <span className="text-destructive">*</span></Label>
               <RadioGroup value={openingStyle} onValueChange={setOpeningStyle} className="space-y-2">
-                <RadioOption value="thank" label="Agradecer a resposta" description="Cria conexão inicial" selected={openingStyle === 'thank'} onSelect={() => setOpeningStyle('thank')} />
-                <RadioOption value="confirm" label="Confirmar se pode explicar" description="Pede permissão" selected={openingStyle === 'confirm'} onSelect={() => setOpeningStyle('confirm')} />
-                <RadioOption value="question" label="Fazer pergunta aberta" description="Entende o contexto" selected={openingStyle === 'question'} onSelect={() => setOpeningStyle('question')} />
-                <RadioOption value="contextualize" label="Contextualizar o contato" description="Explica o motivo" selected={openingStyle === 'contextualize'} onSelect={() => setOpeningStyle('contextualize')} />
+                <RadioOption value="thank" label="Agradecer a resposta" description="Cria conexão positiva" selected={openingStyle === 'thank'} onSelect={() => setOpeningStyle('thank')} />
+                <RadioOption value="confirm" label="Confirmar interesse" description="Pergunta se pode explicar" selected={openingStyle === 'confirm'} onSelect={() => setOpeningStyle('confirm')} />
+                <RadioOption value="question" label="Pergunta aberta" description="Entender o contexto" selected={openingStyle === 'question'} onSelect={() => setOpeningStyle('question')} />
+                <RadioOption value="contextualize" label="Contextualizar" description="Explicar o motivo do contato" selected={openingStyle === 'contextualize'} onSelect={() => setOpeningStyle('contextualize')} />
               </RadioGroup>
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-1">Qual a primeira missão? <span className="text-destructive">*</span></Label>
+              <Label className="flex items-center gap-1">Primeira missão do agente <span className="text-destructive">*</span></Label>
               <RadioGroup value={firstMission} onValueChange={setFirstMission} className="space-y-2">
-                <RadioOption value="connection" label="Criar conexão" description="Estabelecer rapport" selected={firstMission === 'connection'} onSelect={() => setFirstMission('connection')} />
-                <RadioOption value="understand" label="Entender o cenário" description="Descobrir dores" selected={firstMission === 'understand'} onSelect={() => setFirstMission('understand')} />
-                <RadioOption value="value" label="Mostrar valor" description="Antes de vender" selected={firstMission === 'value'} onSelect={() => setFirstMission('value')} />
+                <RadioOption value="connection" label="Criar conexão" description="Rapport e confiança" selected={firstMission === 'connection'} onSelect={() => setFirstMission('connection')} />
+                <RadioOption value="understand" label="Entender cenário" description="Descobrir dores e necessidades" selected={firstMission === 'understand'} onSelect={() => setFirstMission('understand')} />
+                <RadioOption value="value" label="Mostrar valor" description="Antes de qualquer venda" selected={firstMission === 'value'} onSelect={() => setFirstMission('value')} />
               </RadioGroup>
             </div>
           </div>
@@ -907,44 +911,27 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1">O que o agente precisa descobrir? <span className="text-destructive">*</span></Label>
-              <p className="text-xs text-muted-foreground">Selecione as informações importantes</p>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  "Tipo de negócio",
-                  "Se usa WhatsApp para vendas",
-                  "Se já teve bloqueio",
-                  "Volume de contatos por dia",
-                  "Dor principal (tempo, bloqueio, conversão)",
-                  "Orçamento disponível",
-                  "Prazo para decisão",
-                ].map((item) => (
-                  <CheckboxOption
-                    key={item}
-                    label={item}
-                    checked={infoToDiscover.includes(item)}
-                    onCheckedChange={() => toggleArrayItem(infoToDiscover, item, setInfoToDiscover)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Outras informações importantes (opcional)</Label>
               <Textarea
-                placeholder="Uma por linha..."
-                value={customInfoToDiscover}
-                onChange={(e) => setCustomInfoToDiscover(e.target.value)}
-                rows={2}
+                placeholder="Ex:
+Qual tipo de negócio o lead tem
+Se já usa WhatsApp para vendas
+Se já teve problemas com bloqueio de número
+Quantos leads/contatos ele trabalha por dia
+Qual a maior dor hoje (tempo, bloqueios, baixa conversão)"
+                value={infoToDiscover}
+                onChange={(e) => setInfoToDiscover(e.target.value)}
+                rows={5}
               />
+              <p className="text-xs text-muted-foreground">Uma informação por linha. O agente fará perguntas para descobrir esses pontos</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Máximo de perguntas antes de oferecer algo</Label>
+              <Label>Quantas perguntas no máximo?</Label>
               <Select value={maxQuestions} onValueChange={setMaxQuestions}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1 pergunta</SelectItem>
-                  <SelectItem value="2">2 perguntas (recomendado)</SelectItem>
+                  <SelectItem value="2">2 perguntas</SelectItem>
                   <SelectItem value="3">3 perguntas</SelectItem>
                 </SelectContent>
               </Select>
@@ -959,47 +946,42 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
             <div className="space-y-2">
               <Label className="flex items-center gap-1">Como apresentar a solução? <span className="text-destructive">*</span></Label>
               <RadioGroup value={presentationStyle} onValueChange={setPresentationStyle} className="space-y-2">
-                <RadioOption value="educating" label="Educando" description="Sobre o problema e solução" selected={presentationStyle === 'educating'} onSelect={() => setPresentationStyle('educating')} />
-                <RadioOption value="comparing" label="Comparando" description="Com o cenário atual do lead" selected={presentationStyle === 'comparing'} onSelect={() => setPresentationStyle('comparing')} />
-                <RadioOption value="risk" label="Mostrando risco" description="De continuar como está" selected={presentationStyle === 'risk'} onSelect={() => setPresentationStyle('risk')} />
+                <RadioOption value="educating" label="Educando" description="Explica problema e solução" selected={presentationStyle === 'educating'} onSelect={() => setPresentationStyle('educating')} />
+                <RadioOption value="comparing" label="Comparando" description="Cenário atual vs. com solução" selected={presentationStyle === 'comparing'} onSelect={() => setPresentationStyle('comparing')} />
+                <RadioOption value="risk" label="Mostrando risco" description="Consequências de não agir" selected={presentationStyle === 'risk'} onSelect={() => setPresentationStyle('risk')} />
               </RadioGroup>
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1">Quais diferenciais devem aparecer? <span className="text-destructive">*</span></Label>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  "API oficial",
-                  "Aquecimento de número",
-                  "Controle de disparos",
-                  "Segurança contra bloqueios",
-                  "IA que responde automaticamente",
-                  "Suporte dedicado",
-                ].map((item) => (
-                  <CheckboxOption
-                    key={item}
-                    label={item}
-                    checked={differentials.includes(item)}
-                    onCheckedChange={() => toggleArrayItem(differentials, item, setDifferentials)}
-                  />
-                ))}
-              </div>
+              <Textarea
+                placeholder="Ex:
+Suporte humanizado 24h
+Integração com CRM
+Dashboard com métricas em tempo real
+Treinamento incluso
+Garantia de 30 dias"
+                value={differentials}
+                onChange={(e) => setDifferentials(e.target.value)}
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">Um diferencial por linha. O agente mencionará naturalmente na conversa</p>
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-1">Pode citar preço? <span className="text-destructive">*</span></Label>
+              <Label className="flex items-center gap-1">Política de preço <span className="text-destructive">*</span></Label>
               <RadioGroup value={pricePolicy} onValueChange={setPricePolicy} className="space-y-2">
-                <RadioOption value="never" label="Nunca" description="Não menciona preço" selected={pricePolicy === 'never'} onSelect={() => setPricePolicy('never')} />
-                <RadioOption value="if_asked" label="Se perguntarem" description="Apenas se o lead pedir" selected={pricePolicy === 'if_asked'} onSelect={() => setPricePolicy('if_asked')} />
-                <RadioOption value="with_context" label="Com contexto" description="Sempre contextualiza o valor" selected={pricePolicy === 'with_context'} onSelect={() => setPricePolicy('with_context')} />
+                <RadioOption value="never" label="Nunca falar preço" description="Sempre direciona para call" selected={pricePolicy === 'never'} onSelect={() => setPricePolicy('never')} />
+                <RadioOption value="if_asked" label="Só se perguntarem" description="Responde quando questionado" selected={pricePolicy === 'if_asked'} onSelect={() => setPricePolicy('if_asked')} />
+                <RadioOption value="with_context" label="Com contexto" description="Mostra valor antes do preço" selected={pricePolicy === 'with_context'} onSelect={() => setPricePolicy('with_context')} />
               </RadioGroup>
             </div>
 
-            {(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && (
-              <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                <Label>Como o agente deve falar sobre o preço?</Label>
+            {(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && wantToTalkPrice && (
+              <div className="space-y-2">
+                <Label>Como falar do preço?</Label>
                 <Textarea
-                  placeholder="Ex: Primeiro destacar o valor entregue, depois mencionar que o investimento é de R$ X..."
+                  placeholder="Ex: Primeiro destaco os benefícios principais, depois menciono que o investimento é de R$ X por mês, com garantia de 30 dias"
                   value={howToTalkPrice}
                   onChange={(e) => setHowToTalkPrice(e.target.value)}
                   rows={2}
@@ -1020,56 +1002,26 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1">Objeções comuns <span className="text-destructive">*</span></Label>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  "Isso dá bloqueio?",
-                  "Já tentei e não funcionou",
-                  "Não gosto de robô",
-                  "É caro",
-                  "Não tenho tempo",
-                  "Preciso pensar",
-                ].map((item) => (
-                  <CheckboxOption
-                    key={item}
-                    label={item}
-                    checked={commonObjections.includes(item)}
-                    onCheckedChange={() => toggleArrayItem(commonObjections, item, setCommonObjections)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {commonObjections.length > 0 && (
-              <div className="space-y-3">
-                <Label>Como responder a cada objeção? (opcional)</Label>
-                <p className="text-xs text-muted-foreground">Personalize as respostas do agente</p>
-                {commonObjections.map((objection) => (
-                  <div key={objection} className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">"{objection}"</p>
-                    <Input
-                      placeholder={`Como responder a "${objection}"...`}
-                      value={objectionResponses[objection] || ''}
-                      onChange={(e) => setObjectionResponses({ ...objectionResponses, [objection]: e.target.value })}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Outras objeções específicas (opcional)</Label>
               <Textarea
-                placeholder="Uma por linha..."
-                value={customObjections}
-                onChange={(e) => setCustomObjections(e.target.value)}
-                rows={2}
+                placeholder="Ex:
+Isso dá bloqueio no WhatsApp?
+Já tentei automação e não funcionou
+Não gosto de robô, parece artificial
+É muito caro pra mim
+Não tenho tempo de aprender
+Preciso pensar antes
+Meu volume de vendas é muito baixo"
+                value={commonObjections}
+                onChange={(e) => setCommonObjections(e.target.value)}
+                rows={5}
               />
+              <p className="text-xs text-muted-foreground">Uma objeção por linha. O agente saberá como responder cada uma</p>
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1">Postura diante de objeções <span className="text-destructive">*</span></Label>
               <RadioGroup value={objectionPosture} onValueChange={setObjectionPosture} className="space-y-2">
-                <RadioOption value="validate" label="Validar" description="A preocupação do lead" selected={objectionPosture === 'validate'} onSelect={() => setObjectionPosture('validate')} />
+                <RadioOption value="validate" label="Validar" description="Reconhece a preocupação" selected={objectionPosture === 'validate'} onSelect={() => setObjectionPosture('validate')} />
                 <RadioOption value="explain" label="Explicar" description="Com empatia e dados" selected={objectionPosture === 'explain'} onSelect={() => setObjectionPosture('explain')} />
                 <RadioOption value="example" label="Dar exemplo" description="Caso real similar" selected={objectionPosture === 'example'} onSelect={() => setObjectionPosture('example')} />
                 <RadioOption value="invite" label="Convidar" description="Próximo passo sem pressão" selected={objectionPosture === 'invite'} onSelect={() => setObjectionPosture('invite')} />
@@ -1126,18 +1078,17 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
           <div className="space-y-4">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">
-                💡 Configure os links que o agente pode enviar durante as conversas
+                💡 Opcional: Configure os links que o agente pode enviar. Deixe em branco os que não usar.
               </p>
             </div>
 
             <div className="space-y-2">
               <Label>Link de agendamento</Label>
               <Input
-                placeholder="Ex: https://calendly.com/sua-agenda"
+                placeholder="Ex: https://calendly.com/sua-empresa/30min"
                 value={schedulingLink}
                 onChange={(e) => setSchedulingLink(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Para quando o objetivo for agendar call</p>
             </div>
 
             <div className="space-y-2">
@@ -1147,7 +1098,6 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 value={demoLink}
                 onChange={(e) => setDemoLink(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Para quando o lead quiser ver o produto</p>
             </div>
 
             <div className="space-y-2">
@@ -1157,41 +1107,44 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 value={websiteLink}
                 onChange={(e) => setWebsiteLink(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Para mais informações gerais</p>
             </div>
 
             <div className="space-y-2">
               <Label>Link de checkout/pagamento</Label>
               <Input
-                placeholder="Ex: https://checkout.seusite.com"
+                placeholder="Ex: https://checkout.seusite.com/produto"
                 value={checkoutLink}
                 onChange={(e) => setCheckoutLink(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Para quando o lead quiser comprar</p>
             </div>
 
             <div className="space-y-2">
               <Label>Link de grupo WhatsApp</Label>
               <Input
-                placeholder="Ex: https://chat.whatsapp.com/xxx"
+                placeholder="Ex: https://chat.whatsapp.com/abc123"
                 value={whatsappGroupLink}
                 onChange={(e) => setWhatsappGroupLink(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Para convidar para comunidade</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Links personalizados</Label>
+                <Label>Links personalizados (opcional)</Label>
                 <Button type="button" variant="ghost" size="sm" onClick={addCustomLink}>
                   <Plus className="h-3 w-3 mr-1" /> Adicionar
                 </Button>
               </div>
               {customLinks.map((link, index) => (
                 <div key={index} className="space-y-2 p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Link {index + 1}</span>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeCustomLink(index)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
-                      placeholder="Nome do link"
+                      placeholder="Nome (ex: Proposta)"
                       value={link.name}
                       onChange={(e) => updateCustomLink(index, 'name', e.target.value)}
                     />
@@ -1202,13 +1155,10 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                     />
                   </div>
                   <Input
-                    placeholder="Quando usar este link?"
+                    placeholder="Quando usar? (ex: Quando o lead pedir proposta formal)"
                     value={link.when}
                     onChange={(e) => updateCustomLink(index, 'when', e.target.value)}
                   />
-                  <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeCustomLink(index)}>
-                    Remover
-                  </Button>
                 </div>
               ))}
             </div>
@@ -1295,7 +1245,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                 <span className="text-muted-foreground">Empresa</span>
                 <span className="font-medium">{companyName}</span>
               </div>
-              {productPrice && (
+              {wantToTalkPrice && productPrice && (
                 <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                   <span className="text-muted-foreground">Preço</span>
                   <span className="font-medium">R$ {productPrice}</span>
@@ -1350,46 +1300,58 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={(value) => { if (!loading) { onOpenChange(value); if (!value) resetForm(); } }}>
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 pb-2 border-b">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Bot className="h-5 w-5 text-primary" />
-            Criar Agente
+            Criar Agente de IA
           </DialogTitle>
-          <DialogDescription>
-            Passo {currentStep + 1} de {STEPS.length} — {STEPS[currentStep].title}
+          <DialogDescription className="text-xs">
+            Etapa {currentStep + 1} de {STEPS.length}: {STEPS[currentStep].title}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[55vh]">
-          <div className="py-4 px-1 pr-4">
+        {/* Progress bar */}
+        <div className="px-4 pt-2">
+          <div className="flex gap-1">
+            {STEPS.map((_, index) => (
+              <div
+                key={index}
+                className={`flex-1 h-1 rounded-full transition-colors ${
+                  index <= currentStep ? 'bg-primary' : 'bg-muted'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1 px-4">
+          <div className="py-4">
             {renderStep()}
           </div>
         </ScrollArea>
 
-        <div className="flex justify-between gap-2 pt-2 border-t">
-          <Button
-            variant="ghost"
-            onClick={() => currentStep === 0 ? onOpenChange(false) : setCurrentStep(currentStep - 1)}
-            disabled={loading}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            {currentStep === 0 ? "Cancelar" : "Voltar"}
-          </Button>
+        <div className="p-4 pt-2 border-t flex justify-between gap-2">
+          {currentStep > 0 ? (
+            <Button variant="ghost" onClick={() => setCurrentStep(currentStep - 1)} disabled={loading}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+            </Button>
+          ) : (
+            <div />
+          )}
 
           {currentStep < STEPS.length - 1 ? (
             <Button onClick={() => setCurrentStep(currentStep + 1)} disabled={!canProceed()}>
-              Próximo
-              <ArrowRight className="h-4 w-4 ml-1" />
+              Próximo <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => handleCreate(false)} disabled={loading} size="sm">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Rascunho"}
+              <Button variant="outline" onClick={() => handleCreate(false)} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
               </Button>
-              <Button onClick={() => handleCreate(true)} disabled={loading} size="sm">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ativar"}
+              <Button onClick={() => handleCreate(true)} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar e Ativar"}
               </Button>
             </div>
           )}
