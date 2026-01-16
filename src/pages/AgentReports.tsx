@@ -836,8 +836,8 @@ const AgentReports = () => {
                 ))}
               </div>
 
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {/* KPI Cards - Métricas Detalhadas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -853,11 +853,14 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <Zap className="h-8 w-8 text-blue-500/60" />
+                      <Reply className="h-8 w-8 text-green-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.totalMessagesSent}</p>
-                      <p className="text-sm text-muted-foreground">Mensagens Enviadas</p>
+                      <p className="text-2xl font-bold">{kpis.responseRate}%</p>
+                      <p className="text-sm text-muted-foreground">Taxa de Resposta</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {kpis.responsesReceived} de {kpis.totalConversations}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -865,11 +868,14 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <Target className="h-8 w-8 text-rose-500/60" />
+                      <CheckCircle className="h-8 w-8 text-teal-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.totalMessagesReceived}</p>
-                      <p className="text-sm text-muted-foreground">Mensagens Recebidas</p>
+                      <p className="text-2xl font-bold">{kpis.autoCompletionRate}%</p>
+                      <p className="text-sm text-muted-foreground">Encerramento Auto.</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {kpis.autoCompleted} conversas
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -877,11 +883,30 @@ const AgentReports = () => {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <Users className="h-8 w-8 text-cyan-500/60" />
+                      <AlertCircle className="h-8 w-8 text-orange-500/60" />
                     </div>
                     <div className="mt-3">
-                      <p className="text-2xl font-bold">{kpis.uniqueLeads}</p>
-                      <p className="text-sm text-muted-foreground">Leads Contactados</p>
+                      <p className="text-2xl font-bold">{kpis.escalationRate}%</p>
+                      <p className="text-sm text-muted-foreground">Taxa de Escalonamento</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {kpis.escalated} escaladas
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <Clock className="h-8 w-8 text-purple-500/60" />
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-2xl font-bold">
+                        {kpis.avgResponseTime > 60 
+                          ? `${Math.floor(kpis.avgResponseTime / 60)}h ${kpis.avgResponseTime % 60}m`
+                          : `${kpis.avgResponseTime}m`}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Tempo Médio Resposta</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -897,7 +922,7 @@ const AgentReports = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">Economia Estimada</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {kpis.humanHoursSaved}h de trabalho humano
+                        {kpis.humanHoursSaved}h de trabalho
                       </p>
                     </div>
                   </CardContent>
