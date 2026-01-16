@@ -1721,6 +1721,7 @@ export type Database = {
       }
       warming_sessions: {
         Row: {
+          agent_reply_limit: number | null
           assigned_search_city: string | null
           assigned_search_query: string | null
           completed_at: string | null
@@ -1743,6 +1744,7 @@ export type Database = {
           whatsapp_number_id: string
         }
         Insert: {
+          agent_reply_limit?: number | null
           assigned_search_city?: string | null
           assigned_search_query?: string | null
           completed_at?: string | null
@@ -1765,6 +1767,7 @@ export type Database = {
           whatsapp_number_id: string
         }
         Update: {
+          agent_reply_limit?: number | null
           assigned_search_city?: string | null
           assigned_search_query?: string | null
           completed_at?: string | null

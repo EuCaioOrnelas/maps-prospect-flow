@@ -166,9 +166,19 @@ export function WarmingDetailsDialog({
       
       if (agents && agents.length > 0) {
         setHasUserAgent(true);
-        // Get stored limit from localStorage or use default
-        const storedLimit = localStorage.getItem(`warming_reply_limit_${number.id}`);
-        setWarmingReplyLimit(storedLimit || "2");
+        
+        // Get limit from warming session if exists
+        if (session) {
+          const { data: sessionData } = await supabase
+            .from('warming_sessions')
+            .select('agent_reply_limit')
+            .eq('id', session.id)
+            .single();
+          
+          if (sessionData?.agent_reply_limit !== undefined) {
+            setWarmingReplyLimit(String(sessionData.agent_reply_limit));
+          }
+        }
       } else {
         setHasUserAgent(false);
       }
@@ -179,23 +189,22 @@ export function WarmingDetailsDialog({
 
   const handleReplyLimitChange = async (value: string) => {
     setWarmingReplyLimit(value);
-    localStorage.setItem(`warming_reply_limit_${number.id}`, value);
     
-    // Update all user agents on this number with the new limit during warming
-    try {
-      const { data: agents } = await supabase
-        .from('ai_agents')
-        .select('id')
-        .eq('whatsapp_number_id', number.id)
-        .neq('objective', 'warming');
-      
-      if (agents && agents.length > 0) {
-        // Store the warming limit in a custom way - we'll use this in the edge function
-        // For now, just show a toast
+    // Update warming session with new limit
+    if (session) {
+      try {
+        const { error } = await supabase
+          .from('warming_sessions')
+          .update({ agent_reply_limit: parseInt(value) })
+          .eq('id', session.id);
+        
+        if (error) throw error;
+        
         toast.success(`Limite de respostas durante aquecimento: ${value === "0" ? "Sem limite" : value}`);
+      } catch (error) {
+        console.error('Error updating reply limit:', error);
+        toast.error('Erro ao atualizar limite');
       }
-    } catch (error) {
-      console.error('Error updating reply limit:', error);
     }
   };
 
