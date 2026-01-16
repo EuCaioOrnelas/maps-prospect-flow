@@ -56,6 +56,8 @@ interface WhatsAppNumber {
   active_agent_name?: string;
 }
 
+import { Reply } from "lucide-react";
+
 const STEPS = [
   { id: 1, title: "Nome", icon: Bot },
   { id: 2, title: "Número", icon: MessageCircle },
@@ -63,11 +65,12 @@ const STEPS = [
   { id: 4, title: "Público", icon: Users },
   { id: 5, title: "Prompt", icon: Bot },
   { id: 6, title: "Objetivo IA", icon: Target },
-  { id: 7, title: "Encerramento", icon: Check },
-  { id: 8, title: "Estilo", icon: MessageCircle },
-  { id: 9, title: "Horário", icon: Clock },
-  { id: 10, title: "Aquecimento", icon: Flame },
-  { id: 11, title: "Confirmação", icon: Check },
+  { id: 7, title: "Pós-Resposta", icon: Reply },
+  { id: 8, title: "Encerramento", icon: Check },
+  { id: 9, title: "Estilo", icon: MessageCircle },
+  { id: 10, title: "Horário", icon: Clock },
+  { id: 11, title: "Aquecimento", icon: Flame },
+  { id: 12, title: "Confirmação", icon: Check },
 ];
 
 const MESSAGE_TEMPLATES = {
@@ -106,6 +109,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [systemPrompt, setSystemPrompt] = useState("");
   const [agentObjective, setAgentObjective] = useState("");
   const [endConversationCriteria, setEndConversationCriteria] = useState("");
+  const [postResponseBehavior, setPostResponseBehavior] = useState("");
   const [communicationStyle, setCommunicationStyle] = useState<"formal" | "neutral" | "informal">("neutral");
   const [operatingHoursStart, setOperatingHoursStart] = useState("08:00");
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
@@ -195,6 +199,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setSystemPrompt("");
     setAgentObjective("");
     setEndConversationCriteria("");
+    setPostResponseBehavior("");
     setCommunicationStyle("neutral");
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
@@ -261,10 +266,11 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       case 4: return targetAudience.trim().length >= 3;
       case 5: return systemPrompt.trim().length >= 10;
       case 6: return agentObjective.trim().length >= 5;
-      case 7: return endConversationCriteria.trim().length >= 5;
-      case 8: return !!communicationStyle;
-      case 9: return !!operatingHoursStart && !!operatingHoursEnd;
-      case 10: return true;
+      case 7: return postResponseBehavior.trim().length >= 10;
+      case 8: return endConversationCriteria.trim().length >= 5;
+      case 9: return !!communicationStyle;
+      case 10: return !!operatingHoursStart && !!operatingHoursEnd;
+      case 11: return true;
       default: return true;
     }
   };
