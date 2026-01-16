@@ -78,7 +78,7 @@ const ThankYou = () => {
               >
                 Ficamos tristes com a sua decisão, mas respeitamos e agradecemos por 
                 todo o tempo que esteve conosco. Foi uma honra fazer parte da sua jornada 
-                de prospecção.
+                comercial.
               </motion.p>
 
               <motion.p
@@ -147,7 +147,7 @@ const ThankYou = () => {
                   asChild
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  <a href="/upgrade">
+                  <a href="/">
                     Reativar Assinatura
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </a>
