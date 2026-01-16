@@ -205,7 +205,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
                     (isReportsOpen || isOnReportsPage)
-                      ? "max-h-32 opacity-100 mt-1"
+                      ? "max-h-44 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
