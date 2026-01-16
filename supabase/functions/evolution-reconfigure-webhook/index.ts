@@ -50,6 +50,8 @@ serve(async (req) => {
     let successEndpoint = null;
 
     // Try multiple endpoint formats - webhook config must be nested under "webhook" property
+    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDITED", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
+    
     const endpoints = [
       // Format 1: webhook/set with nested webhook object (most common for Evolution API)
       {
@@ -61,7 +63,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: webhookEvents
           }
         }
       },
@@ -74,7 +76,7 @@ serve(async (req) => {
           url: webhookUrl,
           webhookByEvents: false,
           webhookBase64: true,
-          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          events: webhookEvents
         }
       },
       // Format 3: webhook/instance endpoint
@@ -87,7 +89,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: webhookEvents
           }
         }
       },
@@ -101,7 +103,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: webhookEvents
           }
         }
       },
@@ -115,7 +117,7 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: webhookEvents
           }
         }
       }
