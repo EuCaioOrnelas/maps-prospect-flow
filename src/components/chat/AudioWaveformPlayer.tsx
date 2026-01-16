@@ -223,7 +223,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
   if (error) {
     return (
       <div className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-2xl min-w-[240px]",
+        "flex items-center gap-3 px-3 py-2 rounded-2xl w-full max-w-[280px] min-w-0",
         fromMe ? "bg-primary-foreground/10" : "bg-muted"
       )}>
         <div className={cn(
@@ -251,9 +251,9 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full max-w-[280px]">
       <div className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-2xl w-full min-w-[280px] my-1",
+        "flex items-center gap-3 px-3 py-2.5 rounded-2xl w-full min-w-0 my-1",
         fromMe ? "bg-primary-foreground/10" : "bg-muted"
       )}>
         <audio ref={audioRef} src={url} preload="metadata" />
@@ -392,7 +392,7 @@ const AudioWaveformPlayerComponent = ({ url, fromMe }: AudioWaveformPlayerProps)
       {/* Transcription display */}
       {showTranscription && transcription && (
         <div className={cn(
-          "mt-1 px-3 py-2 rounded-xl text-sm max-w-[280px]",
+          "mt-1 px-3 py-2 rounded-xl text-sm w-full max-w-[280px] min-w-0",
           fromMe ? "bg-primary-foreground/5 text-primary-foreground/90" : "bg-muted/50 text-foreground/90"
         )}>
           <p className="whitespace-pre-wrap break-words leading-relaxed">{transcription}</p>

@@ -367,7 +367,7 @@ const MessageBubbleComponent = ({
                   {quotedMessage.from_me ? 'Você' : displayName}
                 </p>
                 <p className={cn(
-                  "line-clamp-2 mt-0.5 flex items-center gap-1",
+                  "mt-0.5 flex flex-wrap items-center gap-1 min-w-0 w-full overflow-hidden break-words [overflow-wrap:anywhere]",
                   message.from_me ? "text-white/70" : "text-muted-foreground"
                 )}>
                   {/* Show media type icon inline if there's media but no text content */}
@@ -400,7 +400,7 @@ const MessageBubbleComponent = ({
                   )}
                   {/* Show content if available, with media type prefix if it's a caption */}
                   {quotedMessage.content && (
-                    <span className="truncate">
+                    <span className="min-w-0 break-words [overflow-wrap:anywhere]">
                       {['image', 'video'].includes(quotedMessage.message_type) && (
                         <span className="inline-flex items-center gap-1">
                           {quotedMessage.message_type === 'image' && <ImageIcon className="h-3 w-3 inline shrink-0" />}

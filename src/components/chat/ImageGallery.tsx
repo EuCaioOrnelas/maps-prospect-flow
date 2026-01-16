@@ -125,11 +125,11 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
   };
 
   return (
-    <>
-      <div className={cn(
-        "rounded-lg overflow-hidden w-full max-w-[220px]",
-        fromMe ? "bg-whatsapp-outgoing" : "bg-card"
-      )}>
+      <>
+        <div className={cn(
+          "rounded-lg overflow-hidden w-fit max-w-[250px] sm:max-w-[280px]",
+          fromMe ? "bg-whatsapp-outgoing" : "bg-card"
+        )}>
         <div className={cn(
           "grid gap-0.5 rounded-lg overflow-hidden",
           getGridClass()
@@ -164,9 +164,9 @@ const ImageGalleryComponent = ({ images, fromMe, onForward }: ImageGalleryProps)
         </div>
         
         {/* Caption for first image with caption or count indicator */}
-        <div className="mt-1 flex items-center justify-between">
+        <div className="mt-1 flex items-center justify-between gap-2 min-w-0">
           {images[0]?.caption && (
-            <p className="text-sm whitespace-pre-wrap break-words flex-1">{images[0].caption}</p>
+            <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere] flex-1 min-w-0 max-w-full">{images[0].caption}</p>
           )}
           {validImages.length > 1 && (
             <span className={cn(
