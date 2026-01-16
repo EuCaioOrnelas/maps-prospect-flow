@@ -261,9 +261,9 @@ export default function AIAgents() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                     Agentes de IA
                   </h1>
-                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 gap-1">
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs font-semibold gap-1">
                     <FlaskConical className="h-3 w-3" />
-                    Beta
+                    BETA
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mt-1">
