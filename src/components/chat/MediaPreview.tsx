@@ -69,20 +69,20 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden max-w-[280px] sm:max-w-[320px]"
+          className="cursor-pointer rounded-lg overflow-hidden w-fit max-w-[250px] sm:max-w-[280px]"
           onClick={() => setIsOpen(true)}
         >
-          <div className="max-h-[350px] overflow-hidden rounded-lg">
+          <div className="max-h-[300px] overflow-hidden rounded-lg">
             <img 
               src={url} 
               alt={filename || 'Image'} 
-              className="w-auto max-w-full h-auto max-h-[350px] object-contain hover:opacity-90 transition-opacity"
+              className="w-auto max-w-full h-auto max-h-[300px] object-contain hover:opacity-90 transition-opacity"
               loading="lazy"
               onError={() => setImageError(true)}
             />
           </div>
           {caption && (
-            <p className="text-sm mt-2 whitespace-pre-wrap break-words max-w-full">{caption}</p>
+            <p className="text-sm mt-2 whitespace-pre-wrap break-words max-w-[250px] sm:max-w-[280px]">{caption}</p>
           )}
         </div>
 
@@ -149,12 +149,12 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     return (
       <>
         <div 
-          className="cursor-pointer rounded-lg overflow-hidden max-w-[280px] sm:max-w-[320px] relative group"
+          className="cursor-pointer rounded-lg overflow-hidden w-fit max-w-[250px] sm:max-w-[280px] relative group"
           onClick={() => setIsOpen(true)}
         >
           <video 
             src={url}
-            className="w-auto max-w-full h-auto max-h-[350px] rounded-lg"
+            className="w-auto max-w-full h-auto max-h-[300px] rounded-lg"
             preload="metadata"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
@@ -163,7 +163,7 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
             </div>
           </div>
           {caption && (
-            <p className="text-sm mt-2 whitespace-pre-wrap break-words max-w-full">{caption}</p>
+            <p className="text-sm mt-2 whitespace-pre-wrap break-words max-w-[250px] sm:max-w-[280px]">{caption}</p>
           )}
         </div>
 
