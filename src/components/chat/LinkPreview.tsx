@@ -88,7 +88,7 @@ const LinkPreviewComponent = ({ url, fromMe }: LinkPreviewProps) => {
     <div
       onClick={handleClick}
       className={cn(
-        'mt-2 rounded-lg overflow-hidden border cursor-pointer transition-opacity hover:opacity-90',
+        'mt-2 rounded-lg overflow-hidden border cursor-pointer transition-opacity hover:opacity-90 max-w-[280px] sm:max-w-[320px]',
         fromMe ? 'border-primary-foreground/20 bg-primary/80' : 'border-border bg-muted/50'
       )}
     >

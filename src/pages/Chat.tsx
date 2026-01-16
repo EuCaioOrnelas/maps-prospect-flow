@@ -585,7 +585,7 @@ const Chat = () => {
         description="Converse com seus leads em tempo real"
       />
       
-      <div className="min-h-screen bg-background flex relative">
+      <div className="min-h-screen bg-background flex relative overflow-x-hidden">
         {/* Background Glows */}
         <BackgroundGlow />
         
