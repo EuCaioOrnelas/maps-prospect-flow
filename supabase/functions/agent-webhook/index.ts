@@ -11,18 +11,24 @@ function getSaoPauloTime(): Date {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 }
 
-// Check if current time is within operating hours
+// Check if current time is within operating hours (supports overnight ranges, e.g. 18:00 -> 00:00)
 function isWithinOperatingHours(startTime: string, endTime: string): boolean {
   const now = getSaoPauloTime();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  
+
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
-  
+
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
-  
-  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+
+  // Normal same-day window (e.g. 08:00 -> 18:00)
+  if (endMinutes >= startMinutes) {
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+
+  // Overnight window (e.g. 18:00 -> 00:00, or 22:00 -> 06:00)
+  return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
 }
 
 // Get random delay between min and max seconds
