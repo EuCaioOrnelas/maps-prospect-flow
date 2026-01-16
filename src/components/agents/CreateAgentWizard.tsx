@@ -40,7 +40,11 @@ import {
   Settings,
   Link,
   DollarSign,
-  X
+  X,
+  Sparkles,
+  Headphones,
+  TrendingUp,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,8 +74,178 @@ const MESSAGE_TEMPLATES = {
   ],
 };
 
+// Template definitions
+interface AgentTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  data: Partial<{
+    agentRole: string;
+    salesApproach: string;
+    leadAwareness: string;
+    messageReason: string;
+    consciousnessLevel: string;
+    openingStyle: string;
+    firstMission: string;
+    infoToDiscover: string;
+    maxQuestions: string;
+    presentationStyle: string;
+    differentials: string;
+    pricePolicy: string;
+    commonObjections: string;
+    objectionPosture: string;
+    conversationGoal: string;
+    endConditions: string[];
+    closingStyle: string;
+    canSendAudio: boolean;
+    canSendLinks: boolean;
+    canSendLongMessages: boolean;
+    alwaysWaitResponse: boolean;
+    maxChars: string;
+    maxConsecutiveMessages: string;
+    maxReplies: number | null;
+  }>;
+}
+
+const AGENT_TEMPLATES: AgentTemplate[] = [
+  {
+    id: 'blank',
+    name: 'Em branco',
+    description: 'Comece do zero e configure tudo manualmente',
+    icon: <FileText className="h-6 w-6" />,
+    data: {}
+  },
+  {
+    id: 'sdr',
+    name: 'SDR',
+    description: 'Qualifica leads e agenda reuniões com decisores',
+    icon: <TrendingUp className="h-6 w-6" />,
+    data: {
+      agentRole: 'sdr',
+      salesApproach: 'qualify',
+      leadAwareness: 'cold',
+      messageReason: 'segmented_list',
+      consciousnessLevel: 'aware_problem',
+      openingStyle: 'question',
+      firstMission: 'understand',
+      infoToDiscover: `Qual é o cargo/função da pessoa?
+Quantas pessoas tem a equipe comercial?
+Quais ferramentas usam hoje para prospecção?
+Qual o principal desafio de vendas?
+Tem interesse em conhecer uma solução?`,
+      maxQuestions: '2',
+      presentationStyle: 'comparing',
+      differentials: `Processo estruturado de qualificação
+Agendamento facilitado
+Sem compromisso para conhecer`,
+      pricePolicy: 'never',
+      commonObjections: `Não tenho tempo agora
+Já tenho fornecedor
+Preciso falar com meu sócio
+Manda mais informações por email
+Não é prioridade no momento`,
+      objectionPosture: 'validate',
+      conversationGoal: 'schedule_call',
+      endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse'],
+      closingStyle: 'offer_later',
+      canSendAudio: false,
+      canSendLinks: true,
+      canSendLongMessages: false,
+      alwaysWaitResponse: true,
+      maxChars: '300',
+      maxConsecutiveMessages: '2',
+      maxReplies: 2
+    }
+  },
+  {
+    id: 'support',
+    name: 'Suporte',
+    description: 'Atende dúvidas e resolve problemas de clientes',
+    icon: <Headphones className="h-6 w-6" />,
+    data: {
+      agentRole: 'specialist',
+      salesApproach: 'educate',
+      leadAwareness: 'contacted',
+      messageReason: 'active_search',
+      consciousnessLevel: 'aware_solution',
+      openingStyle: 'thank',
+      firstMission: 'understand',
+      infoToDiscover: `Qual é o problema ou dúvida exata?
+Quando começou a ter esse problema?
+Já tentou alguma solução?
+Qual a urgência de resolver?`,
+      maxQuestions: '2',
+      presentationStyle: 'educating',
+      differentials: `Suporte humanizado e rápido
+Base de conhecimento completa
+Acompanhamento até a solução`,
+      pricePolicy: 'never',
+      commonObjections: `Isso já aconteceu antes
+Demora muito para resolver
+Prefiro falar com um humano
+Não estou conseguindo usar a ferramenta`,
+      objectionPosture: 'explain',
+      conversationGoal: 'forward_human',
+      endConditions: ['Objetivo atingido', 'Conversa esfriou', 'Lead disse que não tem interesse'],
+      closingStyle: 'thank_open',
+      canSendAudio: false,
+      canSendLinks: true,
+      canSendLongMessages: true,
+      alwaysWaitResponse: true,
+      maxChars: '500',
+      maxConsecutiveMessages: '2',
+      maxReplies: 3
+    }
+  },
+  {
+    id: 'sales',
+    name: 'Vendas',
+    description: 'Conduz todo o processo de venda até o fechamento',
+    icon: <Sparkles className="h-6 w-6" />,
+    data: {
+      agentRole: 'sales',
+      salesApproach: 'close',
+      leadAwareness: 'heard',
+      messageReason: 'active_search',
+      consciousnessLevel: 'aware_solution',
+      openingStyle: 'thank',
+      firstMission: 'value',
+      infoToDiscover: `Qual problema precisa resolver?
+Já conhece nossa solução?
+O que é mais importante para você: preço ou qualidade?
+Quando pretende decidir?
+Tem orçamento disponível?`,
+      maxQuestions: '2',
+      presentationStyle: 'risk',
+      differentials: `Garantia de resultados
+Suporte dedicado
+Implementação rápida
+Casos de sucesso comprovados`,
+      pricePolicy: 'with_context',
+      commonObjections: `É muito caro
+Preciso pensar mais
+Vou comparar com concorrentes
+Não é o momento certo
+Já investi em outra solução`,
+      objectionPosture: 'example',
+      conversationGoal: 'close_deal',
+      endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse', 'Objetivo atingido'],
+      closingStyle: 'offer_later',
+      canSendAudio: false,
+      canSendLinks: true,
+      canSendLongMessages: false,
+      alwaysWaitResponse: true,
+      maxChars: '300',
+      maxConsecutiveMessages: '2',
+      maxReplies: 3
+    }
+  }
+];
+
 // Step definitions
 const STEPS = [
+  { id: 'template', title: 'Template', icon: Sparkles },
   { id: 'basics', title: 'Básico', icon: Bot },
   { id: 'identity', title: 'Identidade', icon: User },
   { id: 'product', title: 'Produto', icon: DollarSign },
@@ -95,6 +269,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [loading, setLoading] = useState(false);
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   // Basics
   const [name, setName] = useState("");
@@ -165,6 +340,41 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
   const [isWarmed, setIsWarmed] = useState(false);
   const [maxReplies, setMaxReplies] = useState<number | null>(1);
+
+  // Apply template data to form fields
+  const applyTemplate = (templateId: string) => {
+    const template = AGENT_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+    
+    setSelectedTemplate(templateId);
+    const data = template.data;
+    
+    // Apply all template values
+    if (data.agentRole) setAgentRole(data.agentRole);
+    if (data.salesApproach) setSalesApproach(data.salesApproach);
+    if (data.leadAwareness) setLeadAwareness(data.leadAwareness);
+    if (data.messageReason) setMessageReason(data.messageReason);
+    if (data.consciousnessLevel) setConsciousnessLevel(data.consciousnessLevel);
+    if (data.openingStyle) setOpeningStyle(data.openingStyle);
+    if (data.firstMission) setFirstMission(data.firstMission);
+    if (data.infoToDiscover) setInfoToDiscover(data.infoToDiscover);
+    if (data.maxQuestions) setMaxQuestions(data.maxQuestions);
+    if (data.presentationStyle) setPresentationStyle(data.presentationStyle);
+    if (data.differentials) setDifferentials(data.differentials);
+    if (data.pricePolicy) setPricePolicy(data.pricePolicy);
+    if (data.commonObjections) setCommonObjections(data.commonObjections);
+    if (data.objectionPosture) setObjectionPosture(data.objectionPosture);
+    if (data.conversationGoal) setConversationGoal(data.conversationGoal);
+    if (data.endConditions) setEndConditions(data.endConditions);
+    if (data.closingStyle) setClosingStyle(data.closingStyle);
+    if (data.canSendAudio !== undefined) setCanSendAudio(data.canSendAudio);
+    if (data.canSendLinks !== undefined) setCanSendLinks(data.canSendLinks);
+    if (data.canSendLongMessages !== undefined) setCanSendLongMessages(data.canSendLongMessages);
+    if (data.alwaysWaitResponse !== undefined) setAlwaysWaitResponse(data.alwaysWaitResponse);
+    if (data.maxChars) setMaxChars(data.maxChars);
+    if (data.maxConsecutiveMessages) setMaxConsecutiveMessages(data.maxConsecutiveMessages);
+    if (data.maxReplies !== undefined) setMaxReplies(data.maxReplies);
+  };
 
   useEffect(() => {
     const fetchNumbers = async () => {
@@ -238,6 +448,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
 
   const resetForm = () => {
     setCurrentStep(0);
+    setSelectedTemplate("");
     setName("");
     setSelectedNumberId("");
     setAgentRole("");
@@ -587,6 +798,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
   const canProceed = (): boolean => {
     switch (STEPS[currentStep].id) {
+      case 'template':
+        return !!selectedTemplate;
       case 'basics':
         return name.trim().length >= 3 && !!selectedNumberId;
       case 'identity':
@@ -660,6 +873,52 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     const stepId = STEPS[currentStep].id;
 
     switch (stepId) {
+      case 'template':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                💡 Escolha um template para começar rapidamente ou crie do zero
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {AGENT_TEMPLATES.map((template) => (
+                <div
+                  key={template.id}
+                  onClick={() => applyTemplate(template.id)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                    selectedTemplate === template.id
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className={`mb-3 w-10 h-10 rounded-lg flex items-center justify-center ${
+                    selectedTemplate === template.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    {template.icon}
+                  </div>
+                  <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
+                  <p className="text-xs text-muted-foreground">{template.description}</p>
+                  {selectedTemplate === template.id && (
+                    <Badge variant="outline" className="mt-2 text-xs">
+                      Selecionado
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {selectedTemplate && selectedTemplate !== 'blank' && (
+              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  ✓ Template aplicado! Você ainda pode editar todos os campos nas próximas etapas.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+
       case 'basics':
         return (
           <div className="space-y-4">
