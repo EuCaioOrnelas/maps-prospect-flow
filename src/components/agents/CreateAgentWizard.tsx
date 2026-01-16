@@ -110,6 +110,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
   const [isWarmed, setIsWarmed] = useState(false);
   const [n8nWebhookUrl, setN8nWebhookUrl] = useState("");
+  const [maxReplies, setMaxReplies] = useState<number | null>(null); // null = unlimited
 
   // Fetch WhatsApp numbers
   useEffect(() => {
@@ -186,6 +187,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
     setN8nWebhookUrl("");
+    setMaxReplies(null);
   };
 
   const handleCreate = async (activate: boolean) => {
@@ -210,6 +212,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
           operating_hours_end: operatingHoursEnd,
           is_warmed: isWarmed,
           n8n_webhook_url: n8nWebhookUrl || null,
+          max_replies: maxReplies,
           status: activate ? 'active' : 'draft',
           message_templates: MESSAGE_TEMPLATES[objective],
           max_response_chars: 300,
@@ -612,6 +615,29 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
                 />
               </div>
             </div>
+            
+            <div className="space-y-2 pt-4 border-t">
+              <Label>Máximo de respostas por lead</Label>
+              <Select
+                value={maxReplies === null ? "unlimited" : String(maxReplies)}
+                onValueChange={(v) => setMaxReplies(v === "unlimited" ? null : parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o limite" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unlimited">♾️ Ilimitado (conversa contínua)</SelectItem>
+                  <SelectItem value="1">1 resposta (padrão)</SelectItem>
+                  <SelectItem value="2">2 respostas</SelectItem>
+                  <SelectItem value="3">3 respostas</SelectItem>
+                  <SelectItem value="5">5 respostas</SelectItem>
+                  <SelectItem value="10">10 respostas</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define quantas vezes o agente responde a cada lead antes de encerrar
+              </p>
+            </div>
           </div>
         );
 
@@ -728,6 +754,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Max caracteres</span>
                 <span className="font-medium">300 caracteres</span>
+              </div>
+              <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Respostas por lead</span>
+                <span className="font-medium">
+                  {maxReplies === null ? "♾️ Ilimitado" : `${maxReplies} resposta${maxReplies > 1 ? 's' : ''}`}
+                </span>
               </div>
               <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">n8n Webhook</span>
