@@ -285,19 +285,13 @@ export default function AIAgents() {
                 </Button>
               </div>
 
-              {/* Warning Card */}
-              <Card className="border-yellow-500/30 bg-yellow-500/5">
-                <CardContent className="flex items-start gap-3 p-4">
-                  <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-yellow-500">Regra de Ouro: Menos inteligência, mais previsibilidade</p>
-                    <p className="text-muted-foreground mt-1">
-                      O agente <strong>não é um chatbot</strong>. Ele responde uma vez e encerra. 
-                      Prioriza segurança do número, não conversão.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Info Card */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
+                <Bot className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground/80">Dica:</span> Agentes respondem de forma controlada para proteger seu número. Configure o limite de respostas conforme sua estratégia de vendas.
+                </p>
+              </div>
 
               {/* Agents Grid */}
               {loading ? (
