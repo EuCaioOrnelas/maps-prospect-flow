@@ -35,6 +35,7 @@ import CRM from "./pages/CRM";
 import Warming from "./pages/Warming";
 import WarmingReports from "./pages/WarmingReports";
 import AIAgents from "./pages/AIAgents";
+import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -182,6 +183,7 @@ const App = () => (
                 } 
               />
               <Route path="/shared-report/:reportId" element={<SharedReport />} />
+              <Route path="/obrigado" element={<ThankYou />} />
               {/* Explicit 404 route */}
               <Route path="/404" element={<NotFound />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
