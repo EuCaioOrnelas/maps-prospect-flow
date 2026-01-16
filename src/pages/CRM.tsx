@@ -371,7 +371,8 @@ export default function CRM() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h1 className="text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
-                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-xs font-semibold">
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs font-semibold gap-1">
+                        <FlaskConical className="h-3 w-3" />
                         BETA
                       </Badge>
                     </div>
