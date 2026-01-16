@@ -840,10 +840,6 @@ const AgentReports = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <MessageSquare className="h-8 w-8 text-primary/60" />
-                      <Badge variant="outline" className="text-xs">
-                        <ArrowUpRight className="h-3 w-3 mr-1" />
-                        +12%
-                      </Badge>
                     </div>
                     <div className="mt-3">
                       <p className="text-2xl font-bold">{kpis.totalConversations}</p>
