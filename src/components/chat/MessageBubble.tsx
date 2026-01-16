@@ -294,11 +294,12 @@ const MessageBubbleComponent = ({
         
         <div
           className={cn(
-            'relative rounded-lg px-3 py-2 shadow-md min-w-0 max-w-full overflow-hidden',
+            'relative rounded-lg px-3 py-2 shadow-md min-w-0 max-w-full overflow-hidden break-words',
             message.from_me
               ? 'bg-whatsapp-outgoing text-whatsapp-outgoing-foreground rounded-tr-none'
               : 'bg-card text-card-foreground rounded-tl-none border border-border'
           )}
+          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
         >
           {/* Sender name for group messages */}
           {isGroup && !message.from_me && (
