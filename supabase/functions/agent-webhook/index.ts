@@ -36,6 +36,33 @@ function getRandomDelay(minSeconds: number, maxSeconds: number): number {
   return Math.floor(Math.random() * (maxSeconds - minSeconds + 1) + minSeconds) * 1000;
 }
 
+// Calculate typing delay based on message length (realistic human typing)
+// Average typing speed: 200 chars per minute = ~3.3 chars per second
+// Add buffer time for "thinking" and reading
+function calculateTypingDelay(messageLength: number): number {
+  const charsPerSecond = 3.5; // slightly faster than average
+  const typingTime = (messageLength / charsPerSecond) * 1000;
+  const thinkingBuffer = Math.random() * 3000 + 2000; // 2-5 seconds "thinking"
+  const readingTime = Math.random() * 2000 + 1000; // 1-3 seconds reading
+  return Math.floor(typingTime + thinkingBuffer + readingTime);
+}
+
+// Check if message appears to be a response to a prospecting campaign
+function isResponseToCampaign(message: string): boolean {
+  const greetingPatterns = [
+    /^(oi|olá|ola|bom dia|boa tarde|boa noite|e ai|eai|fala|hello|hi|hey)/i,
+    /tudo (bem|bom|certo|tranquilo|ótimo)/i,
+    /^(sim|ok|beleza|pode|claro|quero|interesse)/i,
+    /como (funciona|é|faz)/i,
+    /^(qual|quanto|quando|onde|como)\b/i,
+    /mais (informações|informacoes|detalhes|sobre)/i,
+    /^(obrigado|obrigada|valeu|thanks)/i,
+  ];
+  
+  const normalizedMessage = message.toLowerCase().trim();
+  return greetingPatterns.some(pattern => pattern.test(normalizedMessage));
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -204,11 +231,6 @@ serve(async (req) => {
 
         // Generate and send AI response
         if (lovableApiKey) {
-          // Random delay (30s to 3min) to seem human
-          const delay = getRandomDelay(30, 180);
-          console.log(`Waiting ${delay/1000}s before responding...`);
-          await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10000))); // Max 10s in edge function
-
           // Get max response chars from agent config (default 300)
           const maxChars = agent.max_response_chars || 300;
           
@@ -219,23 +241,54 @@ serve(async (req) => {
             informal: 'Responda de forma informal e descontraída.',
           };
 
+          // Check if this is a response to a campaign (greeting/interest)
+          const isCampaignResponse = isResponseToCampaign(message);
+          
+          // Get conversation history for context
+          const { data: messageHistory } = await supabase
+            .from('agent_message_logs')
+            .select('direction, content, created_at')
+            .eq('conversation_id', existingConv.id)
+            .order('created_at', { ascending: true })
+            .limit(10);
+
+          // Build context from history
+          const conversationContext = messageHistory?.map(msg => 
+            `${msg.direction === 'sent' ? 'Você' : 'Lead'}: ${msg.content}`
+          ).join('\n') || '';
+
           // Use custom system prompt if available, otherwise generate default
           const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
+
+          // Enhanced prompt for campaign responses
+          const campaignResponseGuide = isCampaignResponse ? `
+CONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
+Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
+ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
+Seja PROATIVO e VENDEDOR, mas não agressivo.` : '';
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
 OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+${campaignResponseGuide}
 
 REGRAS CRÍTICAS:
 - Responda com NO MÁXIMO ${maxChars} caracteres
 - Seja breve e natural
 - ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
-- Quando apropriado, encerre a conversa naturalmente`;
+- Quando apropriado, encerre a conversa naturalmente
+- Use o histórico da conversa para contexto`;
 
+          const userPrompt = conversationContext 
+            ? `HISTÓRICO DA CONVERSA:\n${conversationContext}\n\nNova mensagem do lead: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`
+            : `Lead respondeu: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`;
+
+          console.log(`Generating AI response. Campaign response: ${isCampaignResponse}`);
+          
           const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -251,7 +304,7 @@ REGRAS CRÍTICAS:
                 },
                 {
                   role: 'user',
-                  content: `Lead respondeu: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`
+                  content: userPrompt
                 }
               ],
               max_tokens: 200,
@@ -269,6 +322,11 @@ REGRAS CRÍTICAS:
             if (replyContent.length > maxChars) {
               replyContent = replyContent.substring(0, maxChars - 3) + '...';
             }
+
+            // Calculate realistic typing delay based on message length
+            const typingDelay = calculateTypingDelay(replyContent.length);
+            console.log(`Waiting ${(typingDelay/1000).toFixed(1)}s (typing delay for ${replyContent.length} chars)...`);
+            await new Promise(resolve => setTimeout(resolve, Math.min(typingDelay, 15000))); // Max 15s in edge function
 
             // Send via Evolution API
             const instanceName = agent.whatsapp_number?.instance_name;
@@ -373,25 +431,36 @@ REGRAS CRÍTICAS:
               informal: 'Responda de forma informal e descontraída.',
             };
 
+            // Check if this is a response to a campaign
+            const isCampaignResponse = isResponseToCampaign(message);
+
             // Use custom system prompt if available, otherwise generate default
             const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
             const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
             const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
+
+            // Enhanced prompt for campaign responses
+            const campaignResponseGuide = isCampaignResponse ? `
+CONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
+Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
+ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
+Seja PROATIVO e VENDEDOR, mas não agressivo.` : '';
 
             const fullSystemPrompt = `${baseSystemPrompt}
 
 OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+${campaignResponseGuide}
 
 REGRAS CRÍTICAS:
 - Responda com NO MÁXIMO ${maxChars} caracteres
 - Seja breve e natural
 - ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
 - Quando apropriado, encerre a conversa naturalmente
-- Esta é a PRIMEIRA mensagem do lead, então seja acolhedor`;
+${!isCampaignResponse ? '- Esta é a PRIMEIRA mensagem do lead, então seja acolhedor' : ''}`;
 
-            console.log('Generating AI response for new conversation...');
+            console.log(`Generating AI response for new conversation. Campaign response: ${isCampaignResponse}`);
             const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -407,7 +476,9 @@ REGRAS CRÍTICAS:
                   },
                   {
                     role: 'user',
-                    content: `Lead enviou primeira mensagem: "${message}"\n\nGere uma resposta acolhedora (max ${maxChars} chars).`
+                    content: isCampaignResponse 
+                      ? `Lead respondeu ao disparo com: "${message}"\n\nGere uma resposta focada em venda (max ${maxChars} chars).`
+                      : `Lead enviou primeira mensagem: "${message}"\n\nGere uma resposta acolhedora (max ${maxChars} chars).`
                   }
                 ],
                 max_tokens: 200,
@@ -422,6 +493,11 @@ REGRAS CRÍTICAS:
               if (replyContent.length > maxChars) {
                 replyContent = replyContent.substring(0, maxChars - 3) + '...';
               }
+
+              // Calculate realistic typing delay based on message length
+              const typingDelay = calculateTypingDelay(replyContent.length);
+              console.log(`Waiting ${(typingDelay/1000).toFixed(1)}s (typing delay for ${replyContent.length} chars)...`);
+              await new Promise(resolve => setTimeout(resolve, Math.min(typingDelay, 15000))); // Max 15s in edge function
 
               // Send via Evolution API
               const instanceName = agent.whatsapp_number?.instance_name;
