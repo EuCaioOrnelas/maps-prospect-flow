@@ -313,7 +313,16 @@ REGRAS CRÍTICAS:
                   content: replyContent,
                 });
 
-                console.log(`Reply ${newReplyCount}/${maxReplies || '∞'} sent successfully:`, replyContent);
+                // Increment daily message count
+                await supabase
+                  .from('ai_agents')
+                  .update({
+                    messages_sent_today: agent.messages_sent_today + 1,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', agentId);
+
+                console.log(`Reply ${newReplyCount}/${maxReplies || '∞'} sent successfully. Daily count: ${agent.messages_sent_today + 1}`);
               }
             }
           }
@@ -454,7 +463,16 @@ REGRAS CRÍTICAS:
                     content: replyContent,
                   });
 
-                  console.log(`First reply sent successfully:`, replyContent);
+                  // Increment daily message count
+                  await supabase
+                    .from('ai_agents')
+                    .update({
+                      messages_sent_today: agent.messages_sent_today + 1,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', agentId);
+
+                  console.log(`First reply sent successfully. Daily count: ${agent.messages_sent_today + 1}`);
                 } else {
                   console.error('Failed to send first reply:', await sendResponse.text());
                 }
