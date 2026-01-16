@@ -1068,6 +1068,7 @@ const ChatAreaComponent = ({
                         onDelete={handleDelete}
                         onEdit={handleEdit}
                         onSelect={handleSelectMessage}
+                        onScrollToMessage={scrollToMessage}
                       />
                     );
                   })}

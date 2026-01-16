@@ -41,6 +41,7 @@ interface MessageBubbleProps {
   onDelete?: (message: Message, forEveryone: boolean) => void;
   onEdit?: (message: Message) => void;
   onSelect?: (message: Message) => void;
+  onScrollToMessage?: (messageId: string) => void;
 }
 
 // Format sender phone for groups - uses centralized utility
@@ -89,6 +90,7 @@ const MessageBubbleComponent = ({
   onDelete,
   onEdit,
   onSelect,
+  onScrollToMessage,
 }: MessageBubbleProps) => {
   // Fetch avatar for group member
   const { avatarUrl: memberAvatarUrl } = useGroupMemberAvatar(
@@ -321,12 +323,20 @@ const MessageBubbleComponent = ({
             </div>
           )}
           {quotedMessage && (
-            <div className={cn(
-              'mb-2 p-2 rounded border-l-4 text-xs flex gap-2',
-              message.from_me 
-                ? 'bg-[hsl(158,37%,6%)] border-primary/70' 
-                : 'bg-muted/80 border-primary/50'
-            )}>
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onScrollToMessage && quotedMessage.id) {
+                  onScrollToMessage(quotedMessage.id);
+                }
+              }}
+              className={cn(
+                'mb-2 p-2 rounded border-l-4 text-xs flex gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-[0.98]',
+                message.from_me 
+                  ? 'bg-[hsl(158,37%,6%)] border-primary/70' 
+                  : 'bg-muted/80 border-primary/50'
+              )}
+            >
               {/* Media thumbnail or icon for quoted message */}
               {quotedMessage.media_url && ['image', 'video', 'sticker'].includes(quotedMessage.message_type) && (
                 <div className="shrink-0 w-12 h-12 rounded overflow-hidden bg-black/20">
@@ -457,6 +467,7 @@ export const MessageBubble = memo(MessageBubbleComponent, (prevProps, nextProps)
     prevProps.isSelectionMode === nextProps.isSelectionMode &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isDeleting === nextProps.isDeleting &&
-    prevProps.isLoadingQuoted === nextProps.isLoadingQuoted
+    prevProps.isLoadingQuoted === nextProps.isLoadingQuoted &&
+    prevProps.onScrollToMessage === nextProps.onScrollToMessage
   );
 });
