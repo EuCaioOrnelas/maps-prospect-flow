@@ -110,13 +110,6 @@ interface AgentTemplate {
 
 const AGENT_TEMPLATES: AgentTemplate[] = [
   {
-    id: 'blank',
-    name: 'Em branco',
-    description: 'Comece do zero e configure tudo manualmente',
-    icon: <FileText className="h-6 w-6" />,
-    data: {}
-  },
-  {
     id: 'sdr',
     name: 'SDR',
     description: 'Qualifica leads e agenda reuniões com decisores',
@@ -245,7 +238,8 @@ Já investi em outra solução`,
 
 // Step definitions
 const STEPS = [
-  { id: 'template', title: 'Template', icon: Sparkles },
+  { id: 'start-choice', title: 'Início', icon: Sparkles },
+  { id: 'template', title: 'Template', icon: FileText },
   { id: 'basics', title: 'Básico', icon: Bot },
   { id: 'identity', title: 'Identidade', icon: User },
   { id: 'product', title: 'Produto', icon: DollarSign },
@@ -270,6 +264,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [creationMode, setCreationMode] = useState<"template" | "scratch" | null>(null);
 
   // Basics
   const [name, setName] = useState("");
@@ -449,6 +444,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const resetForm = () => {
     setCurrentStep(0);
     setSelectedTemplate("");
+    setCreationMode(null);
     setName("");
     setSelectedNumberId("");
     setAgentRole("");
@@ -798,6 +794,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
   const canProceed = (): boolean => {
     switch (STEPS[currentStep].id) {
+      case 'start-choice':
+        return !!creationMode;
       case 'template':
         return !!selectedTemplate;
       case 'basics':
@@ -826,6 +824,30 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         return true;
       default:
         return true;
+    }
+  };
+
+  // Handle next step logic (skip template step if creating from scratch)
+  const handleNextStep = () => {
+    const currentStepId = STEPS[currentStep].id;
+    
+    // If user chose "criar do zero", skip the template step
+    if (currentStepId === 'start-choice' && creationMode === 'scratch') {
+      setCurrentStep(currentStep + 2); // Skip to 'basics' step
+    } else {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  // Handle previous step logic
+  const handlePrevStep = () => {
+    const currentStepId = STEPS[currentStep].id;
+    
+    // If on basics step and user chose "criar do zero", go back to start-choice
+    if (currentStepId === 'basics' && creationMode === 'scratch') {
+      setCurrentStep(0); // Go back to start-choice
+    } else {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -873,16 +895,85 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     const stepId = STEPS[currentStep].id;
 
     switch (stepId) {
+      case 'start-choice':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                💡 Como você quer começar a criar seu agente?
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div
+                onClick={() => setCreationMode('template')}
+                className={`p-5 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                  creationMode === 'template'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    creationMode === 'template' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">Usar um modelo pronto</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Escolha entre SDR, Suporte ou Vendas. Todos os campos serão preenchidos automaticamente e você pode personalizar.
+                    </p>
+                  </div>
+                  {creationMode === 'template' && (
+                    <Badge variant="default" className="text-xs">
+                      Selecionado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div
+                onClick={() => setCreationMode('scratch')}
+                className={`p-5 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                  creationMode === 'scratch'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    creationMode === 'scratch' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">Criar do zero</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Configure cada detalhe do agente manualmente, sem modelo base.
+                    </p>
+                  </div>
+                  {creationMode === 'scratch' && (
+                    <Badge variant="default" className="text-xs">
+                      Selecionado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'template':
         return (
           <div className="space-y-4">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">
-                💡 Escolha um template para começar rapidamente ou crie do zero
+                💡 Escolha um modelo. Todos os campos serão preenchidos, mas você pode editá-los nas próximas etapas.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {AGENT_TEMPLATES.map((template) => (
                 <div
                   key={template.id}
@@ -893,23 +984,27 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className={`mb-3 w-10 h-10 rounded-lg flex items-center justify-center ${
-                    selectedTemplate === template.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                  }`}>
-                    {template.icon}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      selectedTemplate === template.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      {template.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
+                      <p className="text-xs text-muted-foreground">{template.description}</p>
+                    </div>
+                    {selectedTemplate === template.id && (
+                      <Badge variant="outline" className="text-xs">
+                        Selecionado
+                      </Badge>
+                    )}
                   </div>
-                  <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
-                  <p className="text-xs text-muted-foreground">{template.description}</p>
-                  {selectedTemplate === template.id && (
-                    <Badge variant="outline" className="mt-2 text-xs">
-                      Selecionado
-                    </Badge>
-                  )}
                 </div>
               ))}
             </div>
 
-            {selectedTemplate && selectedTemplate !== 'blank' && (
+            {selectedTemplate && (
               <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-xs text-green-600 dark:text-green-400">
                   ✓ Template aplicado! Você ainda pode editar todos os campos nas próximas etapas.
@@ -1593,7 +1688,7 @@ Meu volume de vendas é muito baixo"
 
         <div className="p-4 pt-2 border-t flex justify-between gap-2">
           {currentStep > 0 ? (
-            <Button variant="ghost" onClick={() => setCurrentStep(currentStep - 1)} disabled={loading}>
+            <Button variant="ghost" onClick={handlePrevStep} disabled={loading}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
             </Button>
           ) : (
@@ -1601,7 +1696,7 @@ Meu volume de vendas é muito baixo"
           )}
 
           {currentStep < STEPS.length - 1 ? (
-            <Button onClick={() => setCurrentStep(currentStep + 1)} disabled={!canProceed()}>
+            <Button onClick={handleNextStep} disabled={!canProceed()}>
               Próximo <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
