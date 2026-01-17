@@ -80,6 +80,62 @@ function formatResponseAsParagraphs(text: string): string[] {
   return paragraphs.slice(0, 3);
 }
 
+// Clean up incomplete responses - ensures responses don't end abruptly
+function cleanIncompleteResponse(text: string, maxChars: number): string {
+  let result = text.trim();
+  
+  // If already within limit and ends properly, return as-is
+  if (result.length <= maxChars && /[.!?😊👍🙂)]$/.test(result)) {
+    return result;
+  }
+  
+  // If too long, try to cut at a natural break point
+  if (result.length > maxChars) {
+    // Find the last complete sentence within the limit
+    const truncated = result.substring(0, maxChars);
+    
+    // Look for last sentence-ending punctuation
+    const lastPeriod = Math.max(
+      truncated.lastIndexOf('. '),
+      truncated.lastIndexOf('! '),
+      truncated.lastIndexOf('? '),
+      truncated.lastIndexOf('.\n'),
+      truncated.lastIndexOf('!\n'),
+      truncated.lastIndexOf('?\n')
+    );
+    
+    // Also check for sentence ending at the very end
+    if (/[.!?]$/.test(truncated)) {
+      result = truncated;
+    } else if (lastPeriod > maxChars * 0.5) {
+      // Use the last complete sentence if it's not too short
+      result = truncated.substring(0, lastPeriod + 1).trim();
+    } else {
+      // Otherwise, find a good break point and add a closing
+      const lastComma = truncated.lastIndexOf(', ');
+      const lastSpace = truncated.lastIndexOf(' ');
+      
+      if (lastComma > maxChars * 0.7) {
+        result = truncated.substring(0, lastComma) + '.';
+      } else if (lastSpace > maxChars * 0.8) {
+        result = truncated.substring(0, lastSpace) + '.';
+      } else {
+        result = truncated.trim() + '.';
+      }
+    }
+  }
+  
+  // Remove any trailing "..." or incomplete markers
+  result = result.replace(/\.{2,}$/, '.').replace(/,\s*$/, '.').replace(/:\s*$/, '.');
+  
+  // Ensure it ends with proper punctuation
+  if (!/[.!?😊👍🙂)]$/.test(result)) {
+    result = result.trim() + '.';
+  }
+  
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -222,28 +278,39 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
+          // Calculate tokens based on chars (rough estimate: 1 token ≈ 4 chars in Portuguese)
+          const estimatedMaxTokens = Math.ceil(maxChars / 3);
+
           const fullSystemPrompt = `${baseSystemPrompt}
 
 OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
 
-REGRAS CRÍTICAS:
-- Responda com NO MÁXIMO ${maxChars} caracteres
-- Seja breve e natural
-- ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-- Quando apropriado, encerre a conversa naturalmente
-- Use o histórico da conversa para contexto
-- IMPORTANTE: Divida sua resposta em parágrafos curtos (2-3 frases por parágrafo) para melhor legibilidade no WhatsApp
-- NÃO envie um textão longo - quebre em blocos`;
+REGRAS OBRIGATÓRIAS DE FORMATO:
+1. LIMITE ABSOLUTO: Responda com no máximo ${maxChars} caracteres no total
+2. CADA MENSAGEM DEVE SER COMPLETA - nunca termine com "...", frase incompleta ou assunto inacabado
+3. Se não couber tudo no limite, priorize a informação mais importante e dê uma resposta COMPLETA mais curta
+4. Seja DIRETO e OBJETIVO - vá direto ao ponto
+5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
+6. Para WhatsApp: use frases curtas e parágrafos de 1-2 frases
+7. Finalize sempre com uma frase que faça sentido, mesmo que precise resumir
+
+EXEMPLOS DE BOM FORMATO:
+- "Ótimo! O serviço custa R$99/mês. Quer saber mais detalhes?"
+- "Claro! Trabalhamos com consultoria empresarial. Posso te explicar melhor?"
+
+EXEMPLOS DE MAU FORMATO (NUNCA FAÇA ISSO):
+- "Trabalhamos com diversos serviços como consultoria, marketing, vendas..."
+- "O processo funciona assim: primeiro você..."`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
 
-NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens agrupadas):
+NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-Gere UMA resposta que aborde TODOS os pontos levantados. Divida em parágrafos curtos. (max ${maxChars} chars total)`;
+Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracteres, resuma mas NUNCA deixe incompleto.`;
 
           console.log(`Generating AI response for conv ${conv.id}...`);
           
@@ -259,7 +326,8 @@ Gere UMA resposta que aborde TODOS os pontos levantados. Divida em parágrafos c
                 { role: 'system', content: fullSystemPrompt },
                 { role: 'user', content: userPrompt }
               ],
-              max_tokens: 400,
+              max_tokens: estimatedMaxTokens + 50, // Small buffer for safety
+              temperature: 0.7,
             }),
           });
 
@@ -267,10 +335,8 @@ Gere UMA resposta que aborde TODOS os pontos levantados. Divida em parágrafos c
             const aiData = await aiResponse.json();
             let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
 
-            // Ensure max chars limit
-            if (replyContent.length > maxChars) {
-              replyContent = replyContent.substring(0, maxChars - 3) + '...';
-            }
+            // Clean up incomplete endings (fallback safety)
+            replyContent = cleanIncompleteResponse(replyContent, maxChars);
 
             // Split into multiple messages if needed
             const messages = formatResponseAsParagraphs(replyContent);
