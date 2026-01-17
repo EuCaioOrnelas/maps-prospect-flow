@@ -112,14 +112,23 @@ async function checkInstanceConnection(
   }
 }
 
-// Send a single message
+// Send a single message (or simulate it)
 async function sendMessage(
   evolutionUrl: string,
   apiKey: string,
   instanceName: string,
   phone: string,
-  message: string
-): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  message: string,
+  simulationMode: boolean = false
+): Promise<{ success: boolean; messageId?: string; error?: string; simulated?: boolean }> {
+  // If simulation mode, log and return success without actually sending
+  if (simulationMode) {
+    const simulatedMessageId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    console.log(`[SIMULATION] Would send to ${phone}: "${message.substring(0, 50)}..."`);
+    console.log(`[SIMULATION] Instance: ${instanceName}, MessageId: ${simulatedMessageId}`);
+    return { success: true, messageId: simulatedMessageId, simulated: true };
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -561,26 +570,40 @@ async function processSingleMessage(
     return { processed: false, completed: false, skipped: false };
   }
 
-  // Send the message
+  // Send the message (or simulate it)
+  const isSimulation = campaign.simulation_mode === true;
+  if (isSimulation) {
+    campaignLog('🧪', `SIMULATION MODE ACTIVE - Message will be logged but not sent`);
+  }
+  
   const result = await sendMessage(
     evolutionUrl,
     evolutionApiKey,
     numberData.instance_name,
     formattedPhone,
-    personalizedMessage
+    personalizedMessage,
+    isSimulation
   );
 
   const now = new Date().toISOString();
 
   if (result.success) {
     sentCount++;
-    dailySentCount++;
     windowSentCount++;
     
+    // Only increment daily count for real messages (not simulations)
+    if (!isSimulation) {
+      dailySentCount++;
+    }
+    
     const newWindowLimit = getWindowLimit(currentWindow);
-    campaignLog('✅', `MESSAGE SENT SUCCESSFULLY`, {
+    const logEmoji = isSimulation ? '🧪' : '✅';
+    const logMsg = isSimulation ? 'MESSAGE SIMULATED' : 'MESSAGE SENT SUCCESSFULLY';
+    
+    campaignLog(logEmoji, logMsg, {
       phone: formattedPhone,
       messageId: result.messageId,
+      simulated: isSimulation,
       progress: `${sentCount}/${leads.length}`,
       windowProgress: `${windowSentCount}/${newWindowLimit}`,
       window: currentWindow,
@@ -589,57 +612,62 @@ async function processSingleMessage(
       willTriggerWindowPause: windowSentCount >= newWindowLimit && currentWindow < 4
     });
 
-    // Add to ignored list (will only be removed if contact responds)
-    await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
+    // Skip ignored list and chat sync for simulations
+    if (!isSimulation) {
+      // Add to ignored list (will only be removed if contact responds)
+      await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
+    }
 
-    // Sync to chat
-    try {
-      const remoteJid = `${formattedPhone}@s.whatsapp.net`;
-      
-      const { data: existingConv } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('whatsapp_number_id', numberData.id)
-        .eq('remote_jid', remoteJid)
-        .single();
-
-      let conversationId = existingConv?.id;
-      
-      if (!conversationId) {
-        const { data: newConv } = await supabase
-          .from('conversations')
-          .insert({
-            user_id: campaign.user_id,
-            whatsapp_number_id: numberData.id,
-            remote_jid: remoteJid,
-            phone: formattedPhone,
-            contact_name: lead.name || null,
-          })
-          .select('id')
-          .single();
+    // Sync to chat (skip for simulations to avoid fake data in production)
+    if (!isSimulation) {
+      try {
+        const remoteJid = `${formattedPhone}@s.whatsapp.net`;
         
-        conversationId = newConv?.id;
-      }
+        const { data: existingConv } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('whatsapp_number_id', numberData.id)
+          .eq('remote_jid', remoteJid)
+          .single();
 
-      if (conversationId) {
-        await supabase.from('messages').insert({
-          conversation_id: conversationId,
-          user_id: campaign.user_id,
-          message_id: result.messageId || `campaign_${campaign.id}_${currentIndex}_${Date.now()}`,
-          remote_jid: remoteJid,
-          from_me: true,
-          message_type: 'text',
-          content: personalizedMessage,
-          status: 'sent',
-        });
+        let conversationId = existingConv?.id;
+        
+        if (!conversationId) {
+          const { data: newConv } = await supabase
+            .from('conversations')
+            .insert({
+              user_id: campaign.user_id,
+              whatsapp_number_id: numberData.id,
+              remote_jid: remoteJid,
+              phone: formattedPhone,
+              contact_name: lead.name || null,
+            })
+            .select('id')
+            .single();
+          
+          conversationId = newConv?.id;
+        }
 
-        await supabase.from('conversations').update({
-          last_message: personalizedMessage.substring(0, 100),
-          last_message_at: now,
-        }).eq('id', conversationId);
+        if (conversationId) {
+          await supabase.from('messages').insert({
+            conversation_id: conversationId,
+            user_id: campaign.user_id,
+            message_id: result.messageId || `campaign_${campaign.id}_${currentIndex}_${Date.now()}`,
+            remote_jid: remoteJid,
+            from_me: true,
+            message_type: 'text',
+            content: personalizedMessage,
+            status: 'sent',
+          });
+
+          await supabase.from('conversations').update({
+            last_message: personalizedMessage.substring(0, 100),
+            last_message_at: now,
+          }).eq('id', conversationId);
+        }
+      } catch (syncError) {
+        console.error('Sync error:', syncError);
       }
-    } catch (syncError) {
-      console.error('Sync error:', syncError);
     }
   } else {
     campaignLog('❌', `MESSAGE FAILED`, {
