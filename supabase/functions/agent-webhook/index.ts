@@ -13,6 +13,15 @@ function getSaoPauloTime(): Date {
 
 // Check if current time is within operating hours (supports overnight ranges, e.g. 18:00 -> 00:00)
 function isWithinOperatingHours(startTime: string, endTime: string): boolean {
+  // 24 hours mode: 00:00 to 23:59
+  const startNormalized = startTime.slice(0, 5);
+  const endNormalized = endTime.slice(0, 5);
+  
+  if (startNormalized === "00:00" && (endNormalized === "23:59" || endNormalized === "23:59:00")) {
+    console.log('24-hour mode detected, always within operating hours');
+    return true;
+  }
+  
   const now = getSaoPauloTime();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
