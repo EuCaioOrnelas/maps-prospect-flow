@@ -49,6 +49,11 @@ const ProductionTests = () => {
   const [campaignLeadsCount, setCampaignLeadsCount] = useState(25); // More leads to test windows
   const [selectedNumberId, setSelectedNumberId] = useState<string>("");
   const [numbers, setNumbers] = useState<any[]>([]);
+  
+  // Real message test state
+  const [realTestPhone, setRealTestPhone] = useState("");
+  const [realTestMessage, setRealTestMessage] = useState("Olá! Esta é uma mensagem de teste do sistema. 🚀");
+  const [isRealTestEnabled, setIsRealTestEnabled] = useState(false);
 
   // Agent test state
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
@@ -101,6 +106,111 @@ const ProductionTests = () => {
   };
 
   // ===== CAMPAIGN TESTS =====
+  
+  // Real message send test
+  const runRealMessageTest = async () => {
+    if (!realTestPhone || !realTestMessage) {
+      toast.error("Preencha o telefone e a mensagem para o teste");
+      return;
+    }
+    
+    setIsRunning(true);
+    addLog('info', '🚀 Iniciando teste de envio REAL de mensagem...');
+    
+    const results: TestResult[] = [];
+    const startTime = Date.now();
+
+    try {
+      // 1. Verify number is connected
+      addLog('info', 'Verificando conexão do número...');
+      const { data: numberData } = await supabase
+        .from('whatsapp_numbers')
+        .select('*')
+        .eq('id', selectedNumberId)
+        .single();
+
+      if (!numberData?.is_connected) {
+        results.push({ name: 'Conexão WhatsApp', status: 'error', message: 'Número não conectado' });
+        addLog('error', '❌ Número não está conectado');
+        setTestResults(prev => ({ ...prev, campaigns: results }));
+        setIsRunning(false);
+        return;
+      }
+      results.push({ name: 'Conexão WhatsApp', status: 'success', message: 'Conectado' });
+      addLog('success', '✅ Número conectado');
+
+      if (!numberData?.instance_name) {
+        results.push({ name: 'Instância', status: 'error', message: 'Sem instance_name' });
+        addLog('error', '❌ Número sem instância configurada');
+        setTestResults(prev => ({ ...prev, campaigns: results }));
+        setIsRunning(false);
+        return;
+      }
+      results.push({ name: 'Instância', status: 'success', message: numberData.instance_name });
+      addLog('success', `✅ Instância: ${numberData.instance_name}`);
+
+      // 2. Send real message via edge function
+      addLog('info', `📤 Enviando mensagem REAL para ${realTestPhone}...`);
+      
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke('chat-send-message', {
+        body: {
+          instanceName: numberData.instance_name,
+          phone: realTestPhone.replace(/\D/g, ''),
+          message: realTestMessage,
+          messageType: 'text'
+        }
+      });
+
+      if (sendError) {
+        results.push({ name: 'Envio Real', status: 'error', message: sendError.message });
+        addLog('error', `❌ Erro no envio: ${sendError.message}`);
+      } else if (sendResult?.error) {
+        results.push({ name: 'Envio Real', status: 'error', message: sendResult.error });
+        addLog('error', `❌ Erro no envio: ${sendResult.error}`);
+      } else {
+        results.push({ name: 'Envio Real', status: 'success', message: 'Mensagem enviada!' });
+        addLog('success', `✅ Mensagem enviada com sucesso para ${realTestPhone}`);
+        addLog('info', `📨 MessageId: ${sendResult?.messageId || 'N/A'}`);
+        
+        // Wait and check for delivery
+        addLog('info', '⏳ Aguardando confirmação de entrega (5s)...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Check if message was received in webhook
+        const { data: recentMessages } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('from_me', true)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        const sentMessage = recentMessages?.find(m => 
+          m.content?.includes(realTestMessage.substring(0, 20))
+        );
+        
+        if (sentMessage) {
+          results.push({ name: 'Sync Chat', status: 'success', message: 'Mensagem sincronizada' });
+          addLog('success', '✅ Mensagem sincronizada no chat');
+        } else {
+          results.push({ name: 'Sync Chat', status: 'warning', message: 'Não encontrada no chat' });
+          addLog('warning', '⚠️ Mensagem pode não ter sido sincronizada ainda');
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      addLog('success', `🎉 Teste real concluído em ${(duration / 1000).toFixed(1)}s`);
+      toast.success("Teste de envio real concluído!");
+
+    } catch (error: any) {
+      results.push({ name: 'Erro', status: 'error', message: error.message });
+      addLog('error', `❌ Erro: ${error.message}`);
+      toast.error(`Erro no teste: ${error.message}`);
+    }
+
+    setTestResults(prev => ({ ...prev, campaigns: results }));
+    setIsRunning(false);
+  };
+  
   const runCampaignSimulation = async () => {
     setIsRunning(true);
     addLog('info', '🚀 Iniciando teste de campanha em modo SIMULAÇÃO...');
@@ -630,7 +740,73 @@ const ProductionTests = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="campaigns" className="mt-4">
+            <TabsContent value="campaigns" className="mt-4 space-y-4">
+              {/* Real Message Test */}
+              <Card className="border-green-500/30 bg-green-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="h-5 w-5 text-green-500" />
+                    Teste de Envio REAL
+                  </CardTitle>
+                  <CardDescription>
+                    Envia uma mensagem real para um número de teste para verificar o envio e recebimento
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Número WhatsApp (remetente)</Label>
+                      <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {numbers.map(n => (
+                            <SelectItem key={n.id} value={n.id}>
+                              {n.name || n.phone_number}
+                              {n.is_connected ? ' ✓' : ' (offline)'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Telefone de Teste (destinatário)</Label>
+                      <Input 
+                        placeholder="5511999999999"
+                        value={realTestPhone}
+                        onChange={e => setRealTestPhone(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use seu próprio número para receber a mensagem
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Mensagem de Teste</Label>
+                    <Input 
+                      placeholder="Olá! Esta é uma mensagem de teste."
+                      value={realTestMessage}
+                      onChange={e => setRealTestMessage(e.target.value)}
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={runRealMessageTest} 
+                    disabled={isRunning || !selectedNumberId || !realTestPhone}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {isRunning ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
+                    ) : (
+                      <><Send className="h-4 w-4 mr-2" /> Enviar Mensagem Real</>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Simulation Test */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -638,7 +814,7 @@ const ProductionTests = () => {
                     Teste de Campanhas (Modo Simulação)
                   </CardTitle>
                   <CardDescription>
-                    Cria uma campanha em modo simulação que loga as mensagens sem enviar
+                    Cria uma campanha em modo simulação que loga as mensagens sem enviar realmente
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -664,7 +840,7 @@ const ProductionTests = () => {
                       <Input 
                         type="number" 
                         min={1} 
-                        max={20}
+                        max={50}
                         value={campaignLeadsCount}
                         onChange={e => setCampaignLeadsCount(Number(e.target.value))}
                       />
@@ -675,6 +851,7 @@ const ProductionTests = () => {
                     onClick={runCampaignSimulation} 
                     disabled={isRunning || !selectedNumberId}
                     className="w-full"
+                    variant="outline"
                   >
                     {isRunning ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Executando...</>
