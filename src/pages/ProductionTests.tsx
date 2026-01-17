@@ -46,7 +46,7 @@ const ProductionTests = () => {
   });
 
   // Campaign simulation state
-  const [campaignLeadsCount, setCampaignLeadsCount] = useState(5);
+  const [campaignLeadsCount, setCampaignLeadsCount] = useState(25); // More leads to test windows
   const [selectedNumberId, setSelectedNumberId] = useState<string>("");
   const [numbers, setNumbers] = useState<any[]>([]);
 
@@ -169,33 +169,95 @@ const ProductionTests = () => {
       results.push({ name: 'Iniciar Campanha', status: 'success' });
       addLog('success', '✅ Campanha iniciada');
 
-      // 4. Wait and check processor
-      addLog('info', 'Aguardando processor (10s)...');
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      // 4. Wait and check processor multiple times
+      addLog('info', 'Aguardando processor (verificando a cada 5s)...');
+      
+      let checkCount = 0;
+      const maxChecks = 12; // 60 seconds total
+      let lastSentCount = 0;
+      let windowsUnlocked = 0;
+      
+      while (checkCount < maxChecks) {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        checkCount++;
+        
+        const { data: checkCampaign } = await supabase
+          .from('whatsapp_campaigns')
+          .select('*')
+          .eq('id', campaign.id)
+          .single();
 
-      const { data: updatedCampaign } = await supabase
+        if (!checkCampaign) break;
+
+        const newMessages = checkCampaign.sent_count - lastSentCount;
+        if (newMessages > 0) {
+          addLog('info', `📤 +${newMessages} mensagens | Total: ${checkCampaign.sent_count} | Janela: ${checkCampaign.current_window}`);
+        }
+        
+        // Track window unlocks
+        if (checkCampaign.current_window > windowsUnlocked) {
+          windowsUnlocked = checkCampaign.current_window;
+          addLog('success', `🔓 Janela ${windowsUnlocked} desbloqueada via resposta simulada!`);
+        }
+        
+        lastSentCount = checkCampaign.sent_count;
+
+        // Check if completed or all leads sent
+        if (checkCampaign.status === 'completed' || checkCampaign.sent_count >= fakeLeads.length) {
+          results.push({ 
+            name: 'Processor', 
+            status: 'success', 
+            message: `${checkCampaign.sent_count}/${fakeLeads.length} mensagens | ${windowsUnlocked} janelas` 
+          });
+          addLog('success', `✅ Campanha processada: ${checkCampaign.sent_count} mensagens em ${windowsUnlocked} janelas`);
+          break;
+        }
+
+        // Check if stuck
+        if (checkCampaign.status === 'paused' && checkCampaign.pause_reason !== 'waiting_response') {
+          results.push({ 
+            name: 'Processor', 
+            status: 'warning', 
+            message: `Pausado: ${checkCampaign.pause_reason}` 
+          });
+          addLog('warning', `⚠️ Campanha pausada: ${checkCampaign.pause_reason}`);
+          break;
+        }
+      }
+
+      // Check final state
+      const { data: finalCampaign } = await supabase
         .from('whatsapp_campaigns')
         .select('*')
         .eq('id', campaign.id)
         .single();
 
-      if (updatedCampaign?.sent_count > 0) {
-        results.push({ 
-          name: 'Processor', 
-          status: 'success', 
-          message: `${updatedCampaign.sent_count} mensagens simuladas` 
-        });
-        addLog('success', `✅ Processor funcionando: ${updatedCampaign.sent_count} mensagens`);
-      } else {
-        results.push({ name: 'Processor', status: 'warning', message: 'Nenhuma mensagem processada ainda' });
-        addLog('warning', '⚠️ Processor pode estar lento ou offline');
+      if (finalCampaign && finalCampaign.sent_count === 0) {
+        results.push({ name: 'Processor', status: 'warning', message: 'Nenhuma mensagem processada' });
+        addLog('warning', '⚠️ Processor pode estar offline');
       }
 
-      // 5. Cleanup - delete simulation campaign
-      addLog('info', 'Limpando campanha de teste...');
+      // Check simulated responses
+      const { data: simResponses } = await supabase
+        .from('campaign_responses')
+        .select('*')
+        .eq('campaign_id', campaign.id);
+
+      if (simResponses?.length) {
+        results.push({ 
+          name: 'Respostas Simuladas', 
+          status: 'success', 
+          message: `${simResponses.length} respostas auto-geradas` 
+        });
+        addLog('success', `✅ ${simResponses.length} respostas simuladas criadas para desbloquear janelas`);
+      }
+
+      // 5. Cleanup - delete simulation campaign and responses
+      addLog('info', 'Limpando campanha e respostas de teste...');
+      await supabase.from('campaign_responses').delete().eq('campaign_id', campaign.id);
       await supabase.from('whatsapp_campaigns').delete().eq('id', campaign.id);
       results.push({ name: 'Limpeza', status: 'success' });
-      addLog('success', '✅ Campanha de teste removida');
+      addLog('success', '✅ Campanha e respostas de teste removidas');
 
       const duration = Date.now() - startTime;
       addLog('success', `🎉 Teste concluído em ${(duration / 1000).toFixed(1)}s`);
