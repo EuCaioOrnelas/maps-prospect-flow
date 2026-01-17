@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   Bot,
   MessageSquare,
@@ -213,6 +214,9 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   const [dailyLimit, setDailyLimit] = useState(agent?.daily_limit || 50);
   const [operatingHoursStart, setOperatingHoursStart] = useState(agent?.operating_hours_start?.slice(0, 5) || "08:00");
   const [operatingHoursEnd, setOperatingHoursEnd] = useState(agent?.operating_hours_end?.slice(0, 5) || "18:00");
+  const [is24Hours, setIs24Hours] = useState(
+    agent?.operating_hours_start === "00:00" && agent?.operating_hours_end === "23:59"
+  );
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -244,6 +248,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       setDailyLimit(agent.daily_limit || 50);
       setOperatingHoursStart(agent.operating_hours_start?.slice(0, 5) || "08:00");
       setOperatingHoursEnd(agent.operating_hours_end?.slice(0, 5) || "18:00");
+      setIs24Hours(agent.operating_hours_start === "00:00" && agent.operating_hours_end === "23:59");
     }
   }, [agent, open]);
 
@@ -259,8 +264,8 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           max_replies: maxReplies,
           max_response_chars: maxResponseChars,
           daily_limit: dailyLimit,
-          operating_hours_start: operatingHoursStart,
-          operating_hours_end: operatingHoursEnd,
+          operating_hours_start: is24Hours ? "00:00" : operatingHoursStart,
+          operating_hours_end: is24Hours ? "23:59" : operatingHoursEnd,
         })
         .eq('id', agent.id);
 
@@ -654,26 +659,44 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Início</Label>
-                        <Input
-                          type="time"
-                          value={operatingHoursStart}
-                          onChange={(e) => setOperatingHoursStart(e.target.value)}
-                        />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Funcionar 24 horas</Label>
+                        <p className="text-xs text-muted-foreground">
+                          O bot responde a qualquer momento
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Fim</Label>
-                        <Input
-                          type="time"
-                          value={operatingHoursEnd}
-                          onChange={(e) => setOperatingHoursEnd(e.target.value)}
-                        />
-                      </div>
+                      <Switch
+                        checked={is24Hours}
+                        onCheckedChange={setIs24Hours}
+                      />
                     </div>
+                    
+                    {!is24Hours && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Início</Label>
+                          <Input
+                            type="time"
+                            value={operatingHoursStart}
+                            onChange={(e) => setOperatingHoursStart(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Fim</Label>
+                          <Input
+                            type="time"
+                            value={operatingHoursEnd}
+                            onChange={(e) => setOperatingHoursEnd(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
                     <p className="text-xs text-muted-foreground">
-                      O bot só responde dentro deste horário (horário de Brasília)
+                      {is24Hours 
+                        ? "O bot responderá a qualquer hora do dia" 
+                        : "O bot só responde dentro deste horário (horário de Brasília)"}
                     </p>
                   </CardContent>
                 </Card>
