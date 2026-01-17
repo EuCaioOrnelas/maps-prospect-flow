@@ -180,16 +180,21 @@ export const useCRM = () => {
       return;
     }
 
-    // Filter out invalid phone numbers (group IDs start with 120363 or contain @g.us pattern)
-    // Valid Brazilian phones should be 10-13 digits starting with country code 55
+    // Filter out invalid phone numbers (group IDs, @lid patterns, etc.)
     const validLeads = (data || []).filter((lead) => {
-      const phone = (lead.phone as string)?.replace(/\D/g, '') || '';
-      // Exclude if: starts with 120363 (group ID), or phone is too long (>15 digits), or too short (<10 digits)
-      if (phone.startsWith('120363')) return false;
-      if (phone.length > 15) return false;
-      if (phone.length < 10) return false;
-      // Check for group JID patterns (contains hyphen with timestamp)
-      if ((lead.phone as string)?.includes('-') && (lead.phone as string).length > 15) return false;
+      const phone = (lead.phone as string) || '';
+      const digits = phone.replace(/\D/g, '');
+      // Exclude @lid patterns (Facebook Lead IDs)
+      if (phone.includes('@lid')) return false;
+      // Exclude @g.us patterns (WhatsApp groups)
+      if (phone.includes('@g.us')) return false;
+      // Exclude group IDs (start with 120363)
+      if (digits.startsWith('120363')) return false;
+      // Exclude if phone is too long (>15 digits) or too short (<10 digits)
+      if (digits.length > 15) return false;
+      if (digits.length < 10) return false;
+      // Exclude group JID patterns (contains hyphen with timestamp)
+      if (phone.includes('-') && phone.length > 15) return false;
       return true;
     });
 
@@ -199,10 +204,14 @@ export const useCRM = () => {
 
   // Validate phone number before creating lead
   const isValidPhoneNumber = (phone: string): boolean => {
+    // Reject @lid patterns (Facebook Lead IDs)
+    if (phone.includes('@lid')) return false;
+    // Reject @g.us patterns (WhatsApp groups)
+    if (phone.includes('@g.us')) return false;
     const digits = phone.replace(/\D/g, '');
     // Reject group IDs (start with 120363)
     if (digits.startsWith('120363')) return false;
-    // Reject too long (likely group JIDs)
+    // Reject too long (likely group JIDs or invalid)
     if (digits.length > 15) return false;
     // Reject too short
     if (digits.length < 10) return false;

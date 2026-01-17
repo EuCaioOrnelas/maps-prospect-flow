@@ -159,10 +159,23 @@ export const AddLeadDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const fullPhone = countryCode + formData.phone.replace(/\D/g, '');
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    const fullPhone = countryCode + phoneDigits;
     
-    if (!fullPhone.trim()) {
+    if (!phoneDigits.trim()) {
       toast.error('O telefone é obrigatório');
+      return;
+    }
+
+    // Validate phone format - must have 8-12 digits (without country code)
+    if (phoneDigits.length < 8 || phoneDigits.length > 12) {
+      toast.error('Número de telefone inválido. Use entre 8 e 12 dígitos.');
+      return;
+    }
+
+    // Block group IDs and invalid formats
+    if (fullPhone.includes('@') || fullPhone.includes('-') || fullPhone.length > 15) {
+      toast.error('Formato de telefone inválido');
       return;
     }
 
