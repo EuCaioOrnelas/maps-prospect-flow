@@ -234,23 +234,8 @@ serve(async (req) => {
           });
         }
 
-        // Check reply limits
-        let maxReplies = agent.max_replies;
+        // Reply count tracking (no limits)
         const currentReplyCount = conv.reply_count || 0;
-
-        if (maxReplies && maxReplies > 0 && currentReplyCount >= maxReplies) {
-          console.log(`Reply limit reached for conv ${conv.id}`);
-          
-          // Clean up
-          await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
-          await supabase.from('agent_conversations').update({
-            is_processing: false,
-            process_after: null,
-            status: 'completed',
-          }).eq('id', conv.id);
-          
-          continue;
-        }
 
         // Generate AI response
         if (openaiApiKey) {
@@ -385,9 +370,8 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
 
               if (sentCount > 0) {
                 const newReplyCount = currentReplyCount + 1;
-                const shouldComplete = maxReplies && maxReplies > 0 && newReplyCount >= maxReplies;
 
-                // Update conversation
+                // Update conversation - always keep awaiting_response (no limit)
                 await supabase
                   .from('agent_conversations')
                   .update({
@@ -395,7 +379,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
                     reply_count: newReplyCount,
-                    status: shouldComplete ? 'completed' : 'awaiting_response',
+                    status: 'awaiting_response',
                     is_processing: false,
                     process_after: null,
                   })

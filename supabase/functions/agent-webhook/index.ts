@@ -287,13 +287,9 @@ serve(async (req) => {
         console.log(`Created new conversation ${newConv.id} for ${phone}`);
       }
 
-      // Check reply limits
-      const maxReplies = agent.max_replies;
+      // Reply count tracking (no limits - agent can reply unlimited times)
       const currentReplyCount = existingConv.reply_count || 0;
-      
-      if (maxReplies && maxReplies > 0 && currentReplyCount >= maxReplies) {
-        console.log(`Reply limit reached (${currentReplyCount}/${maxReplies}), buffering but won't reply`);
-      }
+      console.log(`Current reply count: ${currentReplyCount}`);
 
       // Add message to buffer
       await supabase.from('agent_message_buffer').insert({
