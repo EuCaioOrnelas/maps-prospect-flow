@@ -1700,8 +1700,8 @@ Meu volume de vendas é muito baixo"
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-3 sm:px-4">
-          <div className="py-3 sm:py-4">
+        <ScrollArea className="flex-1">
+          <div className="px-4 sm:px-5 py-4 sm:py-5">
             {renderStep()}
           </div>
         </ScrollArea>
