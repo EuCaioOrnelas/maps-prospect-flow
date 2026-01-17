@@ -32,6 +32,7 @@ const WhatsAppReports = lazy(() => import("./pages/WhatsAppReports"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const SecurityFAQ = lazy(() => import("./pages/SecurityFAQ"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutFailed = lazy(() => import("./pages/CheckoutFailed"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -85,6 +86,7 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/seguranca-faq" element={<SecurityFAQ />} />
                 <Route path="/upgrade" element={<Upgrade />} />
                 <Route path="/checkout-success" element={<CheckoutSuccess />} />
                 <Route path="/checkout-failed" element={<CheckoutFailed />} />
