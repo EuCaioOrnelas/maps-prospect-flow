@@ -81,7 +81,11 @@ interface AgentTemplate {
   description: string;
   icon: React.ReactNode;
   data: Partial<{
+    suggestedName: string;
     agentRole: string;
+    companyName: string;
+    productName: string;
+    productDescription: string;
     salesApproach: string;
     leadAwareness: string;
     messageReason: string;
@@ -115,7 +119,11 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
     description: 'Qualifica leads e agenda reuniões com decisores',
     icon: <TrendingUp className="h-6 w-6" />,
     data: {
+      suggestedName: 'Agente SDR',
       agentRole: 'sdr',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Solução completa para aumentar vendas e produtividade do time comercial.',
       salesApproach: 'qualify',
       leadAwareness: 'cold',
       messageReason: 'segmented_list',
@@ -157,7 +165,11 @@ Não é prioridade no momento`,
     description: 'Atende dúvidas e resolve problemas de clientes',
     icon: <Headphones className="h-6 w-6" />,
     data: {
+      suggestedName: 'Agente Suporte',
       agentRole: 'specialist',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Plataforma completa com suporte dedicado para garantir o sucesso dos clientes.',
       salesApproach: 'educate',
       leadAwareness: 'contacted',
       messageReason: 'active_search',
@@ -197,7 +209,11 @@ Não estou conseguindo usar a ferramenta`,
     description: 'Conduz todo o processo de venda até o fechamento',
     icon: <Sparkles className="h-6 w-6" />,
     data: {
+      suggestedName: 'Agente Vendas',
       agentRole: 'sales',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Solução premium que entrega resultados comprovados para nossos clientes.',
       salesApproach: 'close',
       leadAwareness: 'heard',
       messageReason: 'active_search',
@@ -345,7 +361,11 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     const data = template.data;
     
     // Apply all template values
+    if (data.suggestedName) setName(data.suggestedName);
     if (data.agentRole) setAgentRole(data.agentRole);
+    if (data.companyName) setCompanyName(data.companyName);
+    if (data.productName) setProductName(data.productName);
+    if (data.productDescription) setProductDescription(data.productDescription);
     if (data.salesApproach) setSalesApproach(data.salesApproach);
     if (data.leadAwareness) setLeadAwareness(data.leadAwareness);
     if (data.messageReason) setMessageReason(data.messageReason);
