@@ -306,17 +306,23 @@ serve(async (req) => {
       });
 
       // Update conversation: extend process_after deadline (reset 2 min timer)
-      await supabase
+      const { error: updateError } = await supabase
         .from('agent_conversations')
         .update({
           response_received: true,
           response_received_at: new Date().toISOString(),
           response_content: message,
-          status: existingConv.status === 'completed' ? 'completed' : 'buffering',
+          status: 'buffering',
           process_after: processAfter,
           is_processing: false,
         })
         .eq('id', existingConv.id);
+      
+      if (updateError) {
+        console.error('Error updating conversation:', updateError);
+      } else {
+        console.log(`Conversation ${existingConv.id} updated with process_after: ${processAfter}`);
+      }
 
       console.log(`Message buffered for conv ${existingConv.id}. Will process after ${processAfter}`);
 
