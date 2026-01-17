@@ -1886,6 +1886,30 @@ export type Database = {
           },
         ]
       }
+      webhook_secrets: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          secret_hash: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          secret_hash: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          secret_hash?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_campaigns: {
         Row: {
           accepted_window_terms: boolean | null
