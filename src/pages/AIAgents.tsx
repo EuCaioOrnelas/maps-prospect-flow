@@ -306,7 +306,7 @@ export default function AIAgents() {
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
                 <Bot className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground/80">Dica:</span> Agentes respondem de forma controlada para proteger seu número. Configure o limite de respostas conforme sua estratégia de vendas.
+                  <span className="font-medium text-foreground/80">Dica:</span> Agentes respondem automaticamente enquanto o lead continuar interagindo.
                 </p>
               </div>
 

@@ -452,10 +452,6 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                   <span>{agent.operating_hours_start?.slice(0, 5)} - {agent.operating_hours_end?.slice(0, 5)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Limite de respostas</span>
-                  <span>{agent.max_replies || 1} por lead</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">Status do número</span>
                   <Badge className={agent.is_warmed ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
                     {agent.is_warmed ? "Aquecido" : "Frio"}
@@ -472,7 +468,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                   <div className="text-sm">
                     <p className="font-medium text-yellow-500">Regras do Agente</p>
                     <ul className="text-muted-foreground mt-1 space-y-1">
-                      <li>• Responde até {agent.max_replies || 1} vez(es) por lead</li>
+                      <li>• Responde enquanto lead interagir</li>
                       <li>• Delay aleatório de 30s a 3min</li>
                       <li>• Nunca responde fora do horário</li>
                       <li>• Usa GPT para gerar respostas</li>
@@ -597,22 +593,6 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label>Limite de respostas por lead</Label>
-                        <span className="text-sm text-muted-foreground">{maxReplies} resposta(s)</span>
-                      </div>
-                      <Slider
-                        value={[maxReplies]}
-                        onValueChange={(v) => setMaxReplies(v[0])}
-                        min={1}
-                        max={10}
-                        step={1}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Quantas vezes o bot pode responder ao mesmo lead antes de parar
-                      </p>
-                    </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between">
