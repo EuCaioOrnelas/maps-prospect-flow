@@ -49,6 +49,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
 import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
+import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 // Função para verificar admin via banco de dados (seguro)
@@ -1601,6 +1602,11 @@ const Admin = () => {
                   Nenhum usuário encontrado
                 </div>
               )}
+            </div>
+
+            {/* Agents Monitor Panel */}
+            <div className="mt-8">
+              <AgentsMonitorPanel />
             </div>
 
             {/* Terms Acceptance Log */}
