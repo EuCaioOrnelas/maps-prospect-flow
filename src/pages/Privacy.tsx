@@ -93,6 +93,13 @@ const Privacy = () => {
                 Implementamos medidas de segurança técnicas e organizacionais para proteger seus dados, incluindo 
                 criptografia, controle de acesso e monitoramento contínuo.
               </p>
+              <p>
+                Para as funcionalidades de integração com o WhatsApp, utilizamos a API oficial do WhatsApp Business, 
+                que oferece criptografia de ponta a ponta em todas as mensagens. Isso significa que suas comunicações 
+                são protegidas por protocolos de segurança avançados, garantindo que apenas você e o destinatário 
+                tenham acesso ao conteúdo das mensagens. O Wiize não tem acesso ao conteúdo criptografado das 
+                suas conversas.
+              </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">

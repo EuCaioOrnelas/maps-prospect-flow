@@ -114,7 +114,26 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Modificações dos Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Uso do WhatsApp e Responsabilidade sobre Bloqueios</h2>
+              <p>
+                O Wiize oferece funcionalidades de integração com o WhatsApp para facilitar a comunicação comercial. 
+                No entanto, é importante ressaltar que:
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>O WhatsApp é uma plataforma de propriedade da Meta Platforms, Inc. e possui suas próprias políticas de uso e termos de serviço.</li>
+                <li>Bloqueios, suspensões ou restrições de números de telefone são decisões exclusivas do WhatsApp, baseadas em seus algoritmos e políticas internas de combate a spam e uso indevido.</li>
+                <li>O Wiize <strong>não possui controle</strong> sobre as ações do WhatsApp e <strong>não se responsabiliza</strong> por bloqueios ou banimentos de números, independentemente de terem sido usados em nossa plataforma.</li>
+                <li>Bloqueios geralmente ocorrem devido ao envio de mensagens em grande volume, contatos que denunciam como spam, ou uso que o WhatsApp identifica como não orgânico.</li>
+                <li>Oferecemos recursos de aquecimento de números para ajudar a reduzir o risco de bloqueios, porém estes não garantem a ausência de restrições por parte do WhatsApp.</li>
+              </ul>
+              <p>
+                Ao utilizar as funcionalidades de WhatsApp do Wiize, você declara estar ciente destes riscos e assume 
+                total responsabilidade pelo uso de seus números de telefone e pela observância dos termos de uso do WhatsApp.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Modificações dos Termos</h2>
               <p>
                 Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas 
                 serão comunicadas através da plataforma ou por email.
@@ -122,7 +141,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Lei Aplicável</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Lei Aplicável</h2>
               <p>
                 Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será 
                 resolvida nos tribunais competentes do Brasil.
@@ -130,7 +149,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Contato</h2>
               <p>
                 Para dúvidas ou sugestões sobre estes termos,{" "}
                 <Link to="/contato" className="text-primary hover:underline">
