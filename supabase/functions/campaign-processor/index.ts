@@ -364,15 +364,39 @@ async function processSingleMessage(
   
   // Check if we reached the current window limit
   if (windowSentCount >= windowLimit && currentWindow < 4) {
-    const responseCount = await getCampaignResponseCount(supabase, campaign.id);
+    let responseCount = await getCampaignResponseCount(supabase, campaign.id);
     totalResponses = responseCount;
     
     campaignLog('🔒', `Window ${currentWindow} LIMIT REACHED`, {
       windowSentCount,
       windowLimit,
       responseCount,
-      needsResponse: responseCount === 0
+      needsResponse: responseCount === 0,
+      simulationMode: campaign.simulation_mode
     });
+    
+    // In simulation mode, auto-generate fake responses to unlock windows
+    if (campaign.simulation_mode && responseCount === 0) {
+      campaignLog('🧪', `SIMULATION: Auto-generating response to unlock window`);
+      
+      // Create simulated response
+      const { error: simResponseError } = await supabase.from('campaign_responses').insert({
+        campaign_id: campaign.id,
+        user_id: campaign.user_id,
+        contact_phone: `sim_${Date.now()}`,
+        message_content: '[SIMULAÇÃO] Resposta automática de teste',
+        window_number: currentWindow,
+        responded_at: new Date().toISOString()
+      });
+      
+      if (!simResponseError) {
+        responseCount = 1;
+        totalResponses = 1;
+        campaignLog('🧪', `SIMULATION: Response created, window will unlock`);
+      } else {
+        campaignLog('❌', `SIMULATION: Failed to create response`, { error: simResponseError.message });
+      }
+    }
     
     if (responseCount === 0) {
       campaignLog('⏸️', `PAUSING - Waiting for response to unlock Window ${currentWindow + 1}`);
@@ -424,7 +448,24 @@ async function processSingleMessage(
 
   // Check first 10 no-response rule
   if (sentCount >= 10 && sentCount <= 10) {
-    const responseCount = await getCampaignResponseCount(supabase, campaign.id);
+    let responseCount = await getCampaignResponseCount(supabase, campaign.id);
+    
+    // In simulation mode, auto-generate response for first 10 check
+    if (campaign.simulation_mode && responseCount === 0) {
+      campaignLog('🧪', `SIMULATION: Auto-generating response for first 10 check`);
+      
+      await supabase.from('campaign_responses').insert({
+        campaign_id: campaign.id,
+        user_id: campaign.user_id,
+        contact_phone: `sim_first10_${Date.now()}`,
+        message_content: '[SIMULAÇÃO] Resposta automática - check 10 primeiros',
+        window_number: currentWindow,
+        responded_at: new Date().toISOString()
+      });
+      
+      responseCount = 1;
+    }
+    
     if (responseCount === 0) {
       campaignLog('⚠️', `NO RESPONSES in first 10 messages - Pausing`);
       
