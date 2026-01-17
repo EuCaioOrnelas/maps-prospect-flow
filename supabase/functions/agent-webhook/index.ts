@@ -207,12 +207,61 @@ serve(async (req) => {
 
     // === ACTION: RECEIVE MESSAGE (from n8n when lead responds) ===
     if (action === 'receive') {
-      const { phone, message, lead_name } = body;
+      const { phone, message, lead_name, message_id } = body;
 
       if (!phone || !message) {
         return new Response(
           JSON.stringify({ error: 'phone and message are required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // DEDUPLICATION: Check if this exact message was already processed
+      // This prevents duplicate responses when webhook is called multiple times
+      if (message_id) {
+        const { data: existingLog } = await supabase
+          .from('agent_message_logs')
+          .select('id')
+          .eq('agent_id', agentId)
+          .eq('content', message)
+          .eq('direction', 'received')
+          .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Within last 60 seconds
+          .limit(1)
+          .maybeSingle();
+        
+        if (existingLog) {
+          console.log(`Duplicate message detected (message_id: ${message_id}), skipping`);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              reason: 'duplicate_message',
+              message: 'This message was already processed' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      // Additional deduplication: Check for recent identical messages from same phone
+      const { data: recentSameMessage } = await supabase
+        .from('agent_message_logs')
+        .select('id')
+        .eq('agent_id', agentId)
+        .eq('content', message)
+        .eq('direction', 'received')
+        .gte('created_at', new Date(Date.now() - 30000).toISOString()) // Within last 30 seconds
+        .limit(1)
+        .maybeSingle();
+      
+      if (recentSameMessage) {
+        console.log(`Duplicate message detected (same content within 30s), skipping`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'duplicate_message',
+            message: 'Duplicate message detected within 30 seconds' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
