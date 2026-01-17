@@ -1695,19 +1695,6 @@ Preciso falar com meu marido/esposa"
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Respostas por lead</Label>
-              <Select value={maxReplies === null ? "unlimited" : String(maxReplies)} onValueChange={(v) => setMaxReplies(v === "unlimited" ? null : parseInt(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 resposta (mais seguro)</SelectItem>
-                  <SelectItem value="2">2 respostas</SelectItem>
-                  <SelectItem value="3">3 respostas</SelectItem>
-                  <SelectItem value="5">5 respostas</SelectItem>
-                  <SelectItem value="unlimited">Ilimitado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-2">
               <Label>Horário de operação</Label>
