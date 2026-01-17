@@ -62,6 +62,7 @@ const ProductionTests = () => {
 
   // Warming state
   const [warmingSessions, setWarmingSessions] = useState<any[]>([]);
+  const [selectedWarmingNumberId, setSelectedWarmingNumberId] = useState<string>("");
 
   useEffect(() => {
     if (!user) {
@@ -514,23 +515,30 @@ const ProductionTests = () => {
     const results: TestResult[] = [];
 
     try {
+      // If a specific number is selected, filter the session
+      const targetNumberId = selectedWarmingNumberId || null;
+      
       // 1. Check existing sessions
       addLog('info', 'Verificando sessões de aquecimento...');
       await fetchWarmingSessions();
 
-      if (warmingSessions.length === 0) {
-        results.push({ name: 'Sessões Ativas', status: 'warning', message: 'Nenhuma sessão ativa' });
-        addLog('warning', '⚠️ Nenhuma sessão de aquecimento ativa');
+      const sessionsToCheck = targetNumberId 
+        ? warmingSessions.filter(s => s.whatsapp_number_id === targetNumberId)
+        : warmingSessions;
+
+      if (sessionsToCheck.length === 0) {
+        results.push({ name: 'Sessões Ativas', status: 'warning', message: targetNumberId ? 'Nenhuma sessão para este número' : 'Nenhuma sessão ativa' });
+        addLog('warning', targetNumberId ? '⚠️ Nenhuma sessão de aquecimento para o número selecionado' : '⚠️ Nenhuma sessão de aquecimento ativa');
       } else {
         results.push({ 
           name: 'Sessões Ativas', 
           status: 'success', 
-          message: `${warmingSessions.length} sessões` 
+          message: `${sessionsToCheck.length} sessões` 
         });
-        addLog('success', `✅ ${warmingSessions.length} sessões encontradas`);
+        addLog('success', `✅ ${sessionsToCheck.length} sessões encontradas`);
 
         // Check each session status
-        for (const session of warmingSessions) {
+        for (const session of sessionsToCheck) {
           addLog('info', `Verificando sessão ${session.whatsapp_number?.name || session.id.slice(0, 8)}...`);
           
           results.push({
@@ -545,14 +553,20 @@ const ProductionTests = () => {
         }
       }
 
-      // 2. Check warming processor
+      // 2. Check warming processor - filter by number if selected
       addLog('info', 'Verificando processor de aquecimento...');
-      const { data: interactions } = await supabase
+      let interactionsQuery = supabase
         .from('warming_interactions')
-        .select('*')
+        .select('*, warming_session:warming_sessions(whatsapp_number_id)')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
+
+      const { data: allInteractions } = await interactionsQuery;
+      
+      const interactions = targetNumberId 
+        ? allInteractions?.filter(i => i.warming_session?.whatsapp_number_id === targetNumberId)
+        : allInteractions;
 
       if (interactions?.length) {
         results.push({ 
@@ -561,9 +575,31 @@ const ProductionTests = () => {
           message: `${interactions.length} interações recentes` 
         });
         addLog('success', `✅ ${interactions.length} interações encontradas`);
+        
+        // Show last interaction details
+        const lastInteraction = interactions[0];
+        addLog('info', `📋 Última interação: ${lastInteraction.lead_name || lastInteraction.lead_phone} - Status: ${lastInteraction.status}`);
       } else {
         results.push({ name: 'Interações', status: 'warning', message: 'Sem interações recentes' });
         addLog('warning', '⚠️ Nenhuma interação de aquecimento recente');
+      }
+
+      // 3. Check number connection status
+      if (targetNumberId) {
+        addLog('info', 'Verificando conexão do número...');
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('*')
+          .eq('id', targetNumberId)
+          .single();
+        
+        if (numberData?.is_connected) {
+          results.push({ name: 'Conexão WhatsApp', status: 'success', message: `${numberData.name} conectado` });
+          addLog('success', `✅ Número ${numberData.name} está conectado`);
+        } else {
+          results.push({ name: 'Conexão WhatsApp', status: 'error', message: 'Número desconectado' });
+          addLog('error', '❌ Número desconectado');
+        }
       }
 
       addLog('success', '🎉 Verificação de aquecimento concluída!');
@@ -906,6 +942,27 @@ const ProductionTests = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Número WhatsApp (opcional)</Label>
+                    <Select value={selectedWarmingNumberId} onValueChange={setSelectedWarmingNumberId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos os números" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os números</SelectItem>
+                        {numbers.map(n => (
+                          <SelectItem key={n.id} value={n.id}>
+                            {n.name || n.phone_number}
+                            {n.is_connected ? ' ✓' : ' (offline)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Selecione um número para filtrar as sessões ou deixe em "Todos" para ver todas
+                    </p>
+                  </div>
+                  
                   <Button 
                     onClick={runWarmingTests} 
                     disabled={isRunning}
