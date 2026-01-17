@@ -56,7 +56,7 @@ export const useTotalUnread = () => {
 
   // Update document title when unread count changes
   useEffect(() => {
-    const baseTitle = 'WiizeProspect';
+    const baseTitle = 'Wiize';
     if (totalUnread > 0) {
       document.title = `(${totalUnread}) ${baseTitle}`;
     } else {

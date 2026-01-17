@@ -1,5 +1,5 @@
 /**
- * Security utilities for WiizeProspect
+ * Security utilities for Wiize
  * 
  * These functions help protect sensitive data in the frontend
  * by masking phone numbers, emails, and other PII.
