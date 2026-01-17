@@ -312,7 +312,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] w-[95vw] p-4 sm:p-6">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] w-[95vw] p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -323,7 +323,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs defaultValue="overview" className="w-full pt-2">
           <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="overview" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
