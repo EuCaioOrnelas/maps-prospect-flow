@@ -49,6 +49,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
+import { Bot as BotIcon } from "lucide-react";
 
 interface AIAgent {
   id: string;
@@ -111,6 +113,34 @@ export default function AIAgents() {
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
   const [showManageTemplates, setShowManageTemplates] = useState(false);
+
+  // Check if user has access to AI Agents (paid plans only)
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
+
+  // If no access, show premium block
+  if (!hasAccess && !loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+          <BackgroundGlow />
+          <AppSidebar profile={profile} />
+          
+          <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+            <AppHeader profile={profile} />
+            
+            <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+              <PremiumFeatureBlock 
+                featureName="Agentes de IA"
+                description="Automatize sua prospecção com agentes inteligentes que respondem leads automaticamente via WhatsApp. Disponível apenas nos planos pagos."
+                icon={<BotIcon className="h-10 w-10 text-primary" />}
+              />
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   // Check if beta warning should be shown (every 30 days)
   useEffect(() => {

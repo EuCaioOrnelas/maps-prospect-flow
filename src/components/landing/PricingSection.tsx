@@ -39,6 +39,7 @@ const plans: {
     features: [
       "Até 10.000 disparos/mês",
       "Aquecimento de até 2 chips",
+      "Agentes de IA para respostas automáticas",
       "Até 2 Números WhatsApp",
       "CRM integrado",
       "Até 50 leads por busca",
@@ -60,6 +61,7 @@ const plans: {
     features: [
       "Até 30.000 disparos/mês",
       "Aquecimento de até 5 chips",
+      "Agentes de IA para respostas automáticas",
       "Até 5 Números WhatsApp",
       "CRM integrado",
       "Até 50 leads por busca",
@@ -81,6 +83,7 @@ const plans: {
     features: [
       "Até 60.000 disparos/mês",
       "Aquecimento de até 10 chips",
+      "Agentes de IA para respostas automáticas",
       "Até 10 Números WhatsApp",
       "CRM integrado",
       "Até 50 leads por busca",

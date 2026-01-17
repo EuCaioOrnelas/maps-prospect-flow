@@ -14,6 +14,7 @@ import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog"
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
 import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
 import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical, Lock, Crown, Sparkles } from "lucide-react";
+import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -86,6 +87,10 @@ export default function Warming() {
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+
+  // Check if user has access to Warming (paid plans only)
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
 
   // Check if beta warning should be shown (every 30 days)
   useEffect(() => {
