@@ -205,7 +205,7 @@ serve(async (req) => {
 
     const body = await req.json();
 
-    // === ACTION: RECEIVE MESSAGE (from n8n when lead responds) ===
+    // === ACTION: RECEIVE MESSAGE (buffer for delayed response) ===
     if (action === 'receive') {
       const { phone, message, lead_name, message_id } = body;
 
@@ -216,293 +216,44 @@ serve(async (req) => {
         );
       }
 
-      // DEDUPLICATION: Check if this exact message was already processed
-      // This prevents duplicate responses when webhook is called multiple times
-      if (message_id) {
-        const { data: existingLog } = await supabase
-          .from('agent_message_logs')
-          .select('id')
-          .eq('agent_id', agentId)
-          .eq('content', message)
-          .eq('direction', 'received')
-          .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Within last 60 seconds
-          .limit(1)
-          .maybeSingle();
-        
-        if (existingLog) {
-          console.log(`Duplicate message detected (message_id: ${message_id}), skipping`);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              reason: 'duplicate_message',
-              message: 'This message was already processed' 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      }
+      // Buffer delay: 2 minutes
+      const BUFFER_DELAY_MS = 2 * 60 * 1000;
+      const processAfter = new Date(Date.now() + BUFFER_DELAY_MS).toISOString();
 
-      // Additional deduplication: Check for recent identical messages from same phone
+      // Check for duplicate message within last 30 seconds
       const { data: recentSameMessage } = await supabase
-        .from('agent_message_logs')
+        .from('agent_message_buffer')
         .select('id')
         .eq('agent_id', agentId)
-        .eq('content', message)
-        .eq('direction', 'received')
-        .gte('created_at', new Date(Date.now() - 30000).toISOString()) // Within last 30 seconds
+        .eq('lead_phone', phone)
+        .eq('message_content', message)
+        .gte('received_at', new Date(Date.now() - 30000).toISOString())
         .limit(1)
         .maybeSingle();
       
       if (recentSameMessage) {
-        console.log(`Duplicate message detected (same content within 30s), skipping`);
+        console.log(`Duplicate message detected, skipping`);
         return new Response(
           JSON.stringify({ 
             success: false, 
             reason: 'duplicate_message',
-            message: 'Duplicate message detected within 30 seconds' 
+            message: 'Duplicate message detected' 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       // Check if conversation exists
-      const { data: existingConv } = await supabase
+      let { data: existingConv } = await supabase
         .from('agent_conversations')
         .select('*')
         .eq('agent_id', agentId)
         .eq('lead_phone', phone)
         .single();
 
-      if (existingConv) {
-        // Check reply limits - use effective max replies if warming limited
-        // max_replies: null/0 = unlimited, 1+ = limited
-        // _warmingLimited: true means apply warming limits even if agent has no limit
-        let maxReplies = agent.max_replies;
-        
-        // If warming is active and agent is warming limited, use the effective limit
-        if (agent._warmingLimited && agent._effectiveMaxReplies) {
-          // Use the more restrictive limit
-          maxReplies = agent.max_replies 
-            ? Math.min(agent.max_replies, agent._effectiveMaxReplies)
-            : agent._effectiveMaxReplies;
-          console.log(`Warming active - using limited replies: ${maxReplies}`);
-        }
-        
-        const currentReplyCount = existingConv.reply_count || 0;
-        
-        // If max_replies is set and we've reached the limit, don't reply
-        if (maxReplies && maxReplies > 0 && currentReplyCount >= maxReplies) {
-          console.log(`Reply limit reached (${currentReplyCount}/${maxReplies}), ignoring`);
-          
-          // Log the received message anyway
-          await supabase.from('agent_message_logs').insert({
-            agent_id: agentId,
-            conversation_id: existingConv.id,
-            direction: 'received',
-            content: message,
-          });
-
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              reason: 'reply_limit_reached',
-              message: `Agent reached reply limit (${currentReplyCount}/${maxReplies})${agent._warmingLimited ? ' (warming active)' : ''}` 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Update conversation with response
-        await supabase
-          .from('agent_conversations')
-          .update({
-            response_received: true,
-            response_received_at: new Date().toISOString(),
-            response_content: message,
-            status: 'responded',
-          })
-          .eq('id', existingConv.id);
-
-        // Log the message
-        await supabase.from('agent_message_logs').insert({
-          agent_id: agentId,
-          conversation_id: existingConv.id,
-          direction: 'received',
-          content: message,
-        });
-
-        // Generate and send AI response
-        if (openaiApiKey) {
-          // Get max response chars from agent config (default 300)
-          const maxChars = agent.max_response_chars || 300;
-          
-          // Build system prompt from agent configuration
-          const stylePrompts = {
-            formal: 'Responda de forma formal e profissional.',
-            neutral: 'Responda de forma neutra e amigável.',
-            informal: 'Responda de forma informal e descontraída.',
-          };
-
-          // Check if this is a response to a campaign (greeting/interest)
-          const isCampaignResponse = isResponseToCampaign(message);
-          
-          // Get conversation history for context
-          const { data: messageHistory } = await supabase
-            .from('agent_message_logs')
-            .select('direction, content, created_at')
-            .eq('conversation_id', existingConv.id)
-            .order('created_at', { ascending: true })
-            .limit(10);
-
-          // Build context from history
-          const conversationContext = messageHistory?.map((msg: { direction: string; content: string }) => 
-            `${msg.direction === 'sent' ? 'Você' : 'Lead'}: ${msg.content}`
-          ).join('\n') || '';
-
-          // Use custom system prompt if available, otherwise generate default
-          const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
-          const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
-          const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
-
-          // Enhanced prompt for campaign responses - use custom post_response_behavior if set
-          const postResponseBehavior = agent.post_response_behavior;
-          const campaignResponseGuide = isCampaignResponse ? (postResponseBehavior 
-            ? `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção.
-INSTRUÇÃO ESPECÍFICA DO USUÁRIO PARA RESPOSTAS PÓS-CAMPANHA:
-${postResponseBehavior}`
-            : `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
-Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
-ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
-Seja PROATIVO e VENDEDOR, mas não agressivo.`) : '';
-
-          const fullSystemPrompt = `${baseSystemPrompt}
-
-OBJETIVO: ${agentGoal}
-
-CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
-${campaignResponseGuide}
-
-REGRAS CRÍTICAS:
-- Responda com NO MÁXIMO ${maxChars} caracteres
-- Seja breve e natural
-- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
-- Quando apropriado, encerre a conversa naturalmente
-- Use o histórico da conversa para contexto`;
-
-          const userPrompt = conversationContext 
-            ? `HISTÓRICO DA CONVERSA:\n${conversationContext}\n\nNova mensagem do lead: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`
-            : `Lead respondeu: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`;
-
-          console.log(`Generating GPT response. Campaign response: ${isCampaignResponse}`);
-          
-          const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                {
-                  role: 'system',
-                  content: fullSystemPrompt
-                },
-                {
-                  role: 'user',
-                  content: userPrompt
-                }
-              ],
-              max_tokens: 200,
-            }),
-          });
-
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
-            
-            // Get max chars from agent config
-            const maxChars = agent.max_response_chars || 300;
-            
-            // Ensure max chars limit
-            if (replyContent.length > maxChars) {
-              replyContent = replyContent.substring(0, maxChars - 3) + '...';
-            }
-
-            // Calculate realistic typing delay based on message length
-            const typingDelay = calculateTypingDelay(replyContent.length);
-            console.log(`Waiting ${(typingDelay/1000).toFixed(1)}s (typing delay for ${replyContent.length} chars)...`);
-            await new Promise(resolve => setTimeout(resolve, Math.min(typingDelay, 15000))); // Max 15s in edge function
-
-            // Send via Evolution API
-            const instanceName = agent.whatsapp_number?.instance_name;
-            if (instanceName) {
-              const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
-                method: 'POST',
-                headers: {
-                  'apikey': evolutionApiKey,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  number: phone,
-                  text: replyContent,
-                }),
-              });
-
-              if (sendResponse.ok) {
-                const newReplyCount = (existingConv.reply_count || 0) + 1;
-                const maxReplies = agent.max_replies;
-                
-                // Determine if conversation should be marked as completed
-                // Complete if: max_replies is set AND we've reached the limit
-                const shouldComplete = maxReplies && maxReplies > 0 && newReplyCount >= maxReplies;
-                
-                // Update conversation with reply count
-                await supabase
-                  .from('agent_conversations')
-                  .update({
-                    reply_sent: true,
-                    reply_sent_at: new Date().toISOString(),
-                    reply_content: replyContent,
-                    reply_count: newReplyCount,
-                    status: shouldComplete ? 'completed' : 'awaiting_response',
-                  })
-                  .eq('id', existingConv.id);
-
-                // Log the reply
-                await supabase.from('agent_message_logs').insert({
-                  agent_id: agentId,
-                  conversation_id: existingConv.id,
-                  direction: 'sent',
-                  content: replyContent,
-                });
-
-                // Increment daily message count
-                await supabase
-                  .from('ai_agents')
-                  .update({
-                    messages_sent_today: agent.messages_sent_today + 1,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', agentId);
-
-                console.log(`Reply ${newReplyCount}/${maxReplies || '∞'} sent successfully. Daily count: ${agent.messages_sent_today + 1}`);
-              }
-            }
-          }
-        }
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            action: 'response_processed',
-            conversation_id: existingConv.id 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } else {
-        // New conversation from unknown lead - create conversation AND respond
-        const { data: newConv } = await supabase
+      // Create new conversation if doesn't exist
+      if (!existingConv) {
+        const { data: newConv, error: createError } = await supabase
           .from('agent_conversations')
           .insert({
             agent_id: agentId,
@@ -511,173 +262,64 @@ REGRAS CRÍTICAS:
             response_received: true,
             response_received_at: new Date().toISOString(),
             response_content: message,
-            status: 'responded',
+            status: 'buffering',
             reply_count: 0,
+            process_after: processAfter,
+            is_processing: false,
           })
           .select()
           .single();
 
-        if (newConv) {
-          await supabase.from('agent_message_logs').insert({
-            agent_id: agentId,
-            conversation_id: newConv.id,
-            direction: 'received',
-            content: message,
-          });
-
-          // Generate and send AI response for new conversation
-          if (openaiApiKey) {
-            // Get max response chars from agent config (default 300)
-            const maxChars = agent.max_response_chars || 300;
-            
-            // Build system prompt from agent configuration
-            const stylePrompts = {
-              formal: 'Responda de forma formal e profissional.',
-              neutral: 'Responda de forma neutra e amigável.',
-              informal: 'Responda de forma informal e descontraída.',
-            };
-
-            // Check if this is a response to a campaign
-            const isCampaignResponse = isResponseToCampaign(message);
-
-            // Use custom system prompt if available, otherwise generate default
-            const baseSystemPrompt = agent.system_prompt || `Você é um assistente de prospecção via WhatsApp.`;
-            const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
-            const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
-
-            // Enhanced prompt for campaign responses - use custom post_response_behavior if set
-            const postResponseBehavior = agent.post_response_behavior;
-            const campaignResponseGuide = isCampaignResponse ? (postResponseBehavior 
-              ? `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção.
-INSTRUÇÃO ESPECÍFICA DO USUÁRIO PARA RESPOSTAS PÓS-CAMPANHA:
-${postResponseBehavior}`
-              : `\nCONTEXTO IMPORTANTE: Este lead ESTÁ RESPONDENDO A UM DISPARO de prospecção que você enviou anteriormente.
-Isso significa que ELE JÁ demonstrou interesse ao responder. NÃO cumprimente novamente, NÃO pergunte "como posso ajudar?".
-ENTRE DIRETO NO ASSUNTO: apresente o produto/serviço, destaque benefícios, e convide para o próximo passo (demo, call, mais info).
-Seja PROATIVO e VENDEDOR, mas não agressivo.`) : '';
-
-            const fullSystemPrompt = `${baseSystemPrompt}
-
-OBJETIVO: ${agentGoal}
-
-CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
-${campaignResponseGuide}
-
-REGRAS CRÍTICAS:
-- Responda com NO MÁXIMO ${maxChars} caracteres
-- Seja breve e natural
-- ${stylePrompts[agent.communication_style as keyof typeof stylePrompts]}
-- Quando apropriado, encerre a conversa naturalmente
-${!isCampaignResponse ? '- Esta é a PRIMEIRA mensagem do lead, então seja acolhedor' : ''}`;
-
-            console.log(`Generating GPT response for new conversation. Campaign response: ${isCampaignResponse}`);
-            const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${openaiApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [
-                  {
-                    role: 'system',
-                    content: fullSystemPrompt
-                  },
-                  {
-                    role: 'user',
-                    content: isCampaignResponse 
-                      ? `Lead respondeu ao disparo com: "${message}"\n\nGere uma resposta focada em venda (max ${maxChars} chars).`
-                      : `Lead enviou primeira mensagem: "${message}"\n\nGere uma resposta acolhedora (max ${maxChars} chars).`
-                  }
-                ],
-                max_tokens: 200,
-              }),
-            });
-
-            if (aiResponse.ok) {
-              const aiData = await aiResponse.json();
-              let replyContent = aiData.choices?.[0]?.message?.content || 'Olá! Como posso ajudar? 👋';
-              
-              // Ensure max chars limit
-              if (replyContent.length > maxChars) {
-                replyContent = replyContent.substring(0, maxChars - 3) + '...';
-              }
-
-              // Calculate realistic typing delay based on message length
-              const typingDelay = calculateTypingDelay(replyContent.length);
-              console.log(`Waiting ${(typingDelay/1000).toFixed(1)}s (typing delay for ${replyContent.length} chars)...`);
-              await new Promise(resolve => setTimeout(resolve, Math.min(typingDelay, 15000))); // Max 15s in edge function
-
-              // Send via Evolution API
-              const instanceName = agent.whatsapp_number?.instance_name;
-              if (instanceName) {
-                console.log(`Sending reply to ${phone} via ${instanceName}...`);
-                const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
-                  method: 'POST',
-                  headers: {
-                    'apikey': evolutionApiKey,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    number: phone,
-                    text: replyContent,
-                  }),
-                });
-
-                if (sendResponse.ok) {
-                  const maxReplies = agent.max_replies;
-                  const shouldComplete = maxReplies && maxReplies > 0 && 1 >= maxReplies;
-                  
-                  // Update conversation with reply info
-                  await supabase
-                    .from('agent_conversations')
-                    .update({
-                      reply_sent: true,
-                      reply_sent_at: new Date().toISOString(),
-                      reply_content: replyContent,
-                      reply_count: 1,
-                      status: shouldComplete ? 'completed' : 'awaiting_response',
-                    })
-                    .eq('id', newConv.id);
-
-                  // Log the reply
-                  await supabase.from('agent_message_logs').insert({
-                    agent_id: agentId,
-                    conversation_id: newConv.id,
-                    direction: 'sent',
-                    content: replyContent,
-                  });
-
-                  // Increment daily message count
-                  await supabase
-                    .from('ai_agents')
-                    .update({
-                      messages_sent_today: agent.messages_sent_today + 1,
-                      updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', agentId);
-
-                  console.log(`First reply sent successfully. Daily count: ${agent.messages_sent_today + 1}`);
-                } else {
-                  console.error('Failed to send first reply:', await sendResponse.text());
-                }
-              }
-            } else {
-              console.error('AI response failed:', await aiResponse.text());
-            }
-          }
+        if (createError) {
+          console.error('Error creating conversation:', createError);
+          throw createError;
         }
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            action: 'new_conversation_created_and_replied',
-            conversation_id: newConv?.id 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        existingConv = newConv;
+        console.log(`Created new conversation ${newConv.id} for ${phone}`);
       }
+
+      // Check reply limits
+      const maxReplies = agent.max_replies;
+      const currentReplyCount = existingConv.reply_count || 0;
+      
+      if (maxReplies && maxReplies > 0 && currentReplyCount >= maxReplies) {
+        console.log(`Reply limit reached (${currentReplyCount}/${maxReplies}), buffering but won't reply`);
+      }
+
+      // Add message to buffer
+      await supabase.from('agent_message_buffer').insert({
+        agent_id: agentId,
+        conversation_id: existingConv.id,
+        lead_phone: phone,
+        lead_name: lead_name,
+        message_content: message,
+        received_at: new Date().toISOString(),
+      });
+
+      // Update conversation: extend process_after deadline (reset 2 min timer)
+      await supabase
+        .from('agent_conversations')
+        .update({
+          response_received: true,
+          response_received_at: new Date().toISOString(),
+          response_content: message,
+          status: existingConv.status === 'completed' ? 'completed' : 'buffering',
+          process_after: processAfter,
+          is_processing: false,
+        })
+        .eq('id', existingConv.id);
+
+      console.log(`Message buffered for conv ${existingConv.id}. Will process after ${processAfter}`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          action: 'message_buffered',
+          conversation_id: existingConv.id,
+          process_after: processAfter 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // === ACTION: SEND INITIAL MESSAGE (proactive prospecting) ===

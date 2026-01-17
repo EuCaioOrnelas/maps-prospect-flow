@@ -116,3 +116,9 @@ verify_jwt = false
 
 [functions.evolution-edit-message]
 verify_jwt = false
+
+[functions.agent-webhook]
+verify_jwt = false
+
+[functions.agent-buffer-processor]
+verify_jwt = false

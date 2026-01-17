@@ -21,8 +21,10 @@ export type Database = {
           id: string
           initial_message_content: string | null
           initial_message_sent_at: string | null
+          is_processing: boolean | null
           lead_name: string | null
           lead_phone: string
+          process_after: string | null
           reply_content: string | null
           reply_count: number | null
           reply_sent: boolean
@@ -39,8 +41,10 @@ export type Database = {
           id?: string
           initial_message_content?: string | null
           initial_message_sent_at?: string | null
+          is_processing?: boolean | null
           lead_name?: string | null
           lead_phone: string
+          process_after?: string | null
           reply_content?: string | null
           reply_count?: number | null
           reply_sent?: boolean
@@ -57,8 +61,10 @@ export type Database = {
           id?: string
           initial_message_content?: string | null
           initial_message_sent_at?: string | null
+          is_processing?: boolean | null
           lead_name?: string | null
           lead_phone?: string
+          process_after?: string | null
           reply_content?: string | null
           reply_count?: number | null
           reply_sent?: boolean
@@ -75,6 +81,54 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_message_buffer: {
+        Row: {
+          agent_id: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          lead_name: string | null
+          lead_phone: string
+          message_content: string
+          received_at: string
+        }
+        Insert: {
+          agent_id: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          lead_name?: string | null
+          lead_phone: string
+          message_content: string
+          received_at?: string
+        }
+        Update: {
+          agent_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          lead_name?: string | null
+          lead_phone?: string
+          message_content?: string
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_message_buffer_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_message_buffer_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "agent_conversations"
             referencedColumns: ["id"]
           },
         ]
