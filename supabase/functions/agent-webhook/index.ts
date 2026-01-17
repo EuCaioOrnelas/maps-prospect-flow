@@ -74,7 +74,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -283,7 +283,7 @@ serve(async (req) => {
         });
 
         // Generate and send AI response
-        if (lovableApiKey) {
+        if (openaiApiKey) {
           // Get max response chars from agent config (default 300)
           const maxChars = agent.max_response_chars || 300;
           
@@ -306,7 +306,7 @@ serve(async (req) => {
             .limit(10);
 
           // Build context from history
-          const conversationContext = messageHistory?.map(msg => 
+          const conversationContext = messageHistory?.map((msg: { direction: string; content: string }) => 
             `${msg.direction === 'sent' ? 'Você' : 'Lead'}: ${msg.content}`
           ).join('\n') || '';
 
@@ -344,16 +344,16 @@ REGRAS CRÍTICAS:
             ? `HISTÓRICO DA CONVERSA:\n${conversationContext}\n\nNova mensagem do lead: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`
             : `Lead respondeu: "${message}"\n\nGere uma resposta (max ${maxChars} chars).`;
 
-          console.log(`Generating AI response. Campaign response: ${isCampaignResponse}`);
+          console.log(`Generating GPT response. Campaign response: ${isCampaignResponse}`);
           
-          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${lovableApiKey}`,
+              'Authorization': `Bearer ${openaiApiKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-flash-lite',
+              model: 'gpt-4o-mini',
               messages: [
                 {
                   role: 'system',
@@ -477,7 +477,7 @@ REGRAS CRÍTICAS:
           });
 
           // Generate and send AI response for new conversation
-          if (lovableApiKey) {
+          if (openaiApiKey) {
             // Get max response chars from agent config (default 300)
             const maxChars = agent.max_response_chars || 300;
             
@@ -521,15 +521,15 @@ REGRAS CRÍTICAS:
 - Quando apropriado, encerre a conversa naturalmente
 ${!isCampaignResponse ? '- Esta é a PRIMEIRA mensagem do lead, então seja acolhedor' : ''}`;
 
-            console.log(`Generating AI response for new conversation. Campaign response: ${isCampaignResponse}`);
-            const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            console.log(`Generating GPT response for new conversation. Campaign response: ${isCampaignResponse}`);
+            const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${lovableApiKey}`,
+                'Authorization': `Bearer ${openaiApiKey}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                model: 'google/gemini-2.5-flash-lite',
+                model: 'gpt-4o-mini',
                 messages: [
                   {
                     role: 'system',
