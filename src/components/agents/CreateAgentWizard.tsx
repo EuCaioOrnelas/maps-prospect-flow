@@ -1810,7 +1810,7 @@ Preciso falar com meu marido/esposa"
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="px-4 sm:px-5 py-4 sm:py-5">
             {renderStep()}
           </div>
