@@ -4,6 +4,8 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { WarmingSection } from "@/components/landing/WarmingSection";
+import { AIAgentsSection } from "@/components/landing/AIAgentsSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -71,6 +73,8 @@ const LandingPage = () => {
         <HeroSection onSignupClick={trackSignupClick} />
         <HowItWorksSection />
         <FeaturesSection />
+        <WarmingSection />
+        <AIAgentsSection />
         <TestimonialsSection />
         <PricingSection />
         <FAQSection />
