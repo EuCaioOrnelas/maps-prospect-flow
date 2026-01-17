@@ -74,7 +74,7 @@ export default function WarmingReports() {
       <BackgroundGlow />
       
       <SEO 
-        title="Relatórios de Aquecimento | WiizeProspect"
+        title="Relatórios de Aquecimento | Wiize"
         description="Estatísticas e relatórios do sistema de aquecimento de números"
       />
       

@@ -66,7 +66,7 @@ const Login = () => {
     <>
       <SEO 
         title="Login"
-        description="Acesse sua conta WiizeProspect e continue prospectando novos clientes com inteligência artificial."
+        description="Acesse sua conta Wiize e continue prospectando novos clientes com inteligência artificial."
         noIndex
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-x-hidden">

@@ -44,7 +44,7 @@ export const ChatLogo = ({
       
       {showText && (
         <span className={cn("font-display font-bold text-foreground", effectiveSize.text)}>
-          WiizeProspect
+          Wiize
         </span>
       )}
     </div>

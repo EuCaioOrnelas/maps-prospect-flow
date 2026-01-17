@@ -351,7 +351,7 @@ export default function CRM() {
       <BackgroundGlow />
       
       <SEO 
-        title="CRM - WiizeProspect"
+        title="CRM - Wiize"
         description="Gerencie seus leads e vendas com o CRM integrado ao WhatsApp"
       />
       

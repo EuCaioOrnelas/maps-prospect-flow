@@ -581,7 +581,7 @@ const Chat = () => {
   return (
     <>
       <SEO
-        title="Chat - WiizeProspect"
+        title="Chat - Wiize"
         description="Converse com seus leads em tempo real"
       />
       

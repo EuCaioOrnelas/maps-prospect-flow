@@ -22,7 +22,7 @@ const ThankYou = () => {
   return (
     <>
       <SEO 
-        title="Obrigado por fazer parte da WiizeProspect"
+        title="Obrigado por fazer parte da Wiize"
         description="Agradecemos por ter sido nosso cliente. Esperamos te ver em breve!"
         noIndex={true}
       />

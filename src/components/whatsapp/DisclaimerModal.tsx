@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Shield, MessageSquare, Clock, X } from "lucide-react";
 
-const DISCLAIMER_KEY = "wiizeprospect_whatsapp_disclaimer_accepted_at";
+const DISCLAIMER_KEY = "wiize_whatsapp_disclaimer_accepted_at";
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function DisclaimerModal() {
@@ -62,7 +62,7 @@ export function DisclaimerModal() {
 
         <div className="space-y-4 py-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            A WiizeProspect utiliza diversas estratégias para reduzir riscos e prolongar a vida útil dos números, como:
+            A Wiize utiliza diversas estratégias para reduzir riscos e prolongar a vida útil dos números, como:
           </p>
 
           <div className="grid grid-cols-2 gap-3">
@@ -98,7 +98,7 @@ export function DisclaimerModal() {
           </div>
 
           <p className="text-xs text-muted-foreground text-center italic">
-            A WiizeProspect não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
+            A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
           </p>
         </div>
 

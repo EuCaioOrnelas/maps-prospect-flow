@@ -320,7 +320,7 @@ const SharedReport = () => {
 
             {/* Footer */}
             <div className="mt-8 text-center text-sm text-muted-foreground">
-              Relatório gerado por WiizeProspect
+              Relatório gerado por Wiize
             </div>
           </div>
         </main>
@@ -537,7 +537,7 @@ const SharedReport = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-muted-foreground">
-            Relatório gerado por WiizeProspect
+            Relatório gerado por Wiize
           </div>
         </div>
       </main>

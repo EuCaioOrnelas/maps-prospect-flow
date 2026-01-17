@@ -11,8 +11,8 @@ const Privacy = () => {
     <>
       <SEO 
         title="Política de Privacidade"
-        description="Saiba como o WiizeProspect coleta, usa e protege seus dados pessoais. Nossa política de privacidade está em conformidade com a LGPD."
-        keywords="política de privacidade, LGPD, proteção de dados, privacidade, wiizeprospect"
+        description="Saiba como o Wiize coleta, usa e protege seus dados pessoais. Nossa política de privacidade está em conformidade com a LGPD."
+        keywords="política de privacidade, LGPD, proteção de dados, privacidade, wiize"
       />
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -47,7 +47,7 @@ const Privacy = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">1. Introdução</h2>
               <p>
-                Esta Política de Privacidade descreve como o WiizeProspect coleta, usa, armazena e protege suas informações 
+                Esta Política de Privacidade descreve como o Wiize coleta, usa, armazena e protege suas informações 
                 pessoais. Ao usar nosso serviço, você concorda com as práticas descritas nesta política.
               </p>
             </section>

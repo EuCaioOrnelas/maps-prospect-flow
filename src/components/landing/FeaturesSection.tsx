@@ -93,7 +93,7 @@ export const FeaturesSection = () => {
                 Menos leads, mais resultados
               </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                Em vez de entregar centenas de contatos desatualizados, o WiizeProspect entrega até 50 leads 
+                Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 50 leads 
                 estrategicamente selecionados por busca. Empresas com atividade recente, 
                 avaliações positivas e informações de contato verificadas.
               </p>

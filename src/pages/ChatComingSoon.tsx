@@ -7,8 +7,8 @@ const ChatComingSoon = () => {
   return (
     <>
       <SEO 
-        title="Chat WhatsApp - Em Breve | WiizeProspect"
-        description="O Chat integrado do WiizeProspect está sendo desenvolvido e será lançado em breve."
+        title="Chat WhatsApp - Em Breve | Wiize"
+        description="O Chat integrado do Wiize está sendo desenvolvido e será lançado em breve."
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md text-center space-y-6">
@@ -26,7 +26,7 @@ const ChatComingSoon = () => {
               Chat WhatsApp em Breve
             </h1>
             <p className="text-muted-foreground text-lg">
-              Estamos finalizando o chat integrado para você conversar com seus leads diretamente pelo WiizeProspect.
+              Estamos finalizando o chat integrado para você conversar com seus leads diretamente pelo Wiize.
             </p>
           </div>
 

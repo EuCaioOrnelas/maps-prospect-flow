@@ -45,7 +45,7 @@ const ForgotPassword = () => {
     <>
       <SEO 
         title="Recuperar Senha"
-        description="Recupere sua senha do WiizeProspect. Enviaremos um link para redefinir sua senha."
+        description="Recupere sua senha do Wiize. Enviaremos um link para redefinir sua senha."
         noIndex
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8">

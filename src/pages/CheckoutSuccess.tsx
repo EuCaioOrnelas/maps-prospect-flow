@@ -344,7 +344,7 @@ const CheckoutSuccess = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4 }}
         >
-          Obrigado por escolher a WiizeProspect! 💚
+          Obrigado por escolher a Wiize! 💚
         </motion.p>
       </main>
 
