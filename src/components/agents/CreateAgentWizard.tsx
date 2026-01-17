@@ -825,13 +825,21 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     try {
       const systemPrompt = generatePrompt();
       
+      // Map salesApproach to valid objective values (constraint: prospecting, warming, first_contact)
+      const objectiveMap: Record<string, string> = {
+        'qualify': 'prospecting',
+        'educate': 'warming',
+        'close': 'first_contact',
+      };
+      const mappedObjective = objectiveMap[salesApproach] || 'prospecting';
+      
       const { error } = await supabase
         .from('ai_agents')
         .insert({
           user_id: user.id,
           name,
           whatsapp_number_id: selectedNumberId,
-          objective: salesApproach || 'prospecting',
+          objective: mappedObjective,
           target_audience: leadAwareness || '',
           system_prompt: systemPrompt,
           agent_objective: conversationGoal || '',
