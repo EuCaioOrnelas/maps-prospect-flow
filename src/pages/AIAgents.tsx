@@ -23,12 +23,14 @@ import {
   Target,
   AlertTriangle,
   FlaskConical,
-  MessageCircle
+  MessageCircle,
+  FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
 import { AgentDetailsDialog } from "@/components/agents/AgentDetailsDialog";
 import { AgentWarningDialog } from "@/components/agents/AgentWarningDialog";
+import { ManageTemplatesDialog } from "@/components/agents/ManageTemplatesDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,6 +110,7 @@ export default function AIAgents() {
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const [showManageTemplates, setShowManageTemplates] = useState(false);
 
   // Check if beta warning should be shown (every 30 days)
   useEffect(() => {
@@ -267,21 +270,32 @@ export default function AIAgents() {
                       BETA
                     </Badge>
                   </div>
-                  
-                  <Button 
-                    onClick={() => {
-                      if (!hasSeenWarning) {
-                        setShowWarningDialog(true);
-                      } else {
-                        setShowWizard(true);
-                      }
-                    }}
-                    className="gap-2 w-full sm:w-auto"
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Criar Agente
-                  </Button>
+                   
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowManageTemplates(true)}
+                      className="gap-2 flex-1 sm:flex-none"
+                      size="sm"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="hidden sm:inline">Templates</span>
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        if (!hasSeenWarning) {
+                          setShowWarningDialog(true);
+                        } else {
+                          setShowWizard(true);
+                        }
+                      }}
+                      className="gap-2 flex-1 sm:flex-none"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Criar Agente
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Automatize sua prospecção com agentes inteligentes e seguros
@@ -573,6 +587,12 @@ export default function AIAgents() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Manage Templates Dialog */}
+      <ManageTemplatesDialog
+        open={showManageTemplates}
+        onOpenChange={setShowManageTemplates}
+      />
     </SidebarProvider>
   );
 }
