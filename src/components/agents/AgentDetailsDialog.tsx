@@ -11,10 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   Bot,
   Settings,
@@ -23,11 +26,11 @@ import {
   Clock,
   Target,
   Loader2,
-  Copy,
-  ExternalLink,
   CheckCircle2,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Save,
+  Pencil
 } from "lucide-react";
 
 interface AgentDetailsDialogProps {
@@ -53,8 +56,15 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
-  const [n8nWebhookUrl, setN8nWebhookUrl] = useState(agent?.n8n_webhook_url || "");
   const [saving, setSaving] = useState(false);
+  
+  // Editable fields
+  const [systemPrompt, setSystemPrompt] = useState(agent?.system_prompt || "");
+  const [maxReplies, setMaxReplies] = useState(agent?.max_replies || 1);
+  const [maxResponseChars, setMaxResponseChars] = useState(agent?.max_response_chars || 300);
+  const [dailyLimit, setDailyLimit] = useState(agent?.daily_limit || 50);
+  const [operatingHoursStart, setOperatingHoursStart] = useState(agent?.operating_hours_start?.slice(0, 5) || "08:00");
+  const [operatingHoursEnd, setOperatingHoursEnd] = useState(agent?.operating_hours_end?.slice(0, 5) || "18:00");
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -79,30 +89,43 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
 
     if (open && agent) {
       fetchConversations();
-      setN8nWebhookUrl(agent.n8n_webhook_url || "");
+      // Reset form values when agent changes
+      setSystemPrompt(agent.system_prompt || "");
+      setMaxReplies(agent.max_replies || 1);
+      setMaxResponseChars(agent.max_response_chars || 300);
+      setDailyLimit(agent.daily_limit || 50);
+      setOperatingHoursStart(agent.operating_hours_start?.slice(0, 5) || "08:00");
+      setOperatingHoursEnd(agent.operating_hours_end?.slice(0, 5) || "18:00");
     }
   }, [agent, open]);
 
-  const saveWebhookUrl = async () => {
+  const saveSettings = async () => {
     if (!agent?.id) return;
     
     setSaving(true);
     try {
       const { error } = await supabase
         .from('ai_agents')
-        .update({ n8n_webhook_url: n8nWebhookUrl })
+        .update({
+          system_prompt: systemPrompt,
+          max_replies: maxReplies,
+          max_response_chars: maxResponseChars,
+          daily_limit: dailyLimit,
+          operating_hours_start: operatingHoursStart,
+          operating_hours_end: operatingHoursEnd,
+        })
         .eq('id', agent.id);
 
       if (error) throw error;
 
       toast({
-        title: "Webhook salvo",
-        description: "A URL do webhook foi atualizada com sucesso.",
+        title: "Configurações salvas",
+        description: "As configurações do agente foram atualizadas com sucesso.",
       });
       
       onUpdate();
     } catch (error) {
-      console.error('Error saving webhook:', error);
+      console.error('Error saving settings:', error);
       toast({
         title: "Erro ao salvar",
         description: "Tente novamente mais tarde.",
@@ -111,15 +134,6 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
     } finally {
       setSaving(false);
     }
-  };
-
-  const copyWebhookUrl = () => {
-    const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${agent?.id}`;
-    navigator.clipboard.writeText(webhookUrl);
-    toast({
-      title: "URL copiada",
-      description: "Cole esta URL no seu workflow do n8n.",
-    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -179,8 +193,8 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
               Conversas
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Configuração
+              <Pencil className="h-4 w-4" />
+              Editar Bot
             </TabsTrigger>
           </TabsList>
 
@@ -232,6 +246,10 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                   <span>{agent.operating_hours_start?.slice(0, 5)} - {agent.operating_hours_end?.slice(0, 5)}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-muted-foreground">Limite de respostas</span>
+                  <span>{agent.max_replies || 1} por lead</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">Status do número</span>
                   <Badge className={agent.is_warmed ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
                     {agent.is_warmed ? "Aquecido" : "Frio"}
@@ -248,10 +266,10 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                   <div className="text-sm">
                     <p className="font-medium text-yellow-500">Regras do Agente</p>
                     <ul className="text-muted-foreground mt-1 space-y-1">
-                      <li>• Responde apenas 1 vez por lead</li>
+                      <li>• Responde até {agent.max_replies || 1} vez(es) por lead</li>
                       <li>• Delay aleatório de 30s a 3min</li>
                       <li>• Nunca responde fora do horário</li>
-                      <li>• Encerra conversa após responder</li>
+                      <li>• Usa GPT para gerar respostas</li>
                     </ul>
                   </div>
                 </div>
@@ -303,77 +321,138 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4 mt-4">
-            {/* n8n Integration */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Integração n8n
-                </CardTitle>
-                <CardDescription>
-                  Configure a comunicação com seu workflow do n8n
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Webhook URL to receive from n8n */}
-                <div className="space-y-2">
-                  <Label>URL de Entrada (para configurar no n8n)</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${agent.id}`}
-                      readOnly
-                      className="font-mono text-xs"
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-6">
+                {/* System Prompt */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      Prompt do Sistema (Personalidade do Bot)
+                    </CardTitle>
+                    <CardDescription>
+                      Defina como o bot deve se comportar e responder
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={systemPrompt}
+                      onChange={(e) => setSystemPrompt(e.target.value)}
+                      placeholder="Ex: Você é um assistente comercial da empresa XYZ. Seu objetivo é qualificar leads e agendar reuniões. Seja cordial e objetivo..."
+                      className="min-h-[200px] font-mono text-sm"
                     />
-                    <Button variant="outline" size="icon" onClick={copyWebhookUrl}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Use esta URL no nó HTTP Request do n8n para enviar mensagens ao agente
-                  </p>
-                </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Este é o prompt que define a personalidade e comportamento do bot nas conversas.
+                    </p>
+                  </CardContent>
+                </Card>
 
-                {/* Webhook URL to send to n8n */}
-                <div className="space-y-2">
-                  <Label>URL de Saída (Webhook do n8n)</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={n8nWebhookUrl}
-                      onChange={(e) => setN8nWebhookUrl(e.target.value)}
-                      placeholder="https://seu-n8n.com/webhook/xxx"
-                      className="font-mono text-xs"
-                    />
-                    <Button onClick={saveWebhookUrl} disabled={saving}>
-                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    O agente enviará eventos para esta URL quando receber mensagens
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                {/* Response Settings */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Configurações de Resposta
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label>Limite de respostas por lead</Label>
+                        <span className="text-sm text-muted-foreground">{maxReplies} resposta(s)</span>
+                      </div>
+                      <Slider
+                        value={[maxReplies]}
+                        onValueChange={(v) => setMaxReplies(v[0])}
+                        min={1}
+                        max={10}
+                        step={1}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Quantas vezes o bot pode responder ao mesmo lead antes de parar
+                      </p>
+                    </div>
 
-            {/* n8n Setup Guide */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Configuração do Workflow n8n</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm space-y-3">
-                <p className="text-muted-foreground">
-                  Configure seu workflow n8n com os seguintes nós:
-                </p>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li><strong>Webhook Trigger</strong> - Recebe mensagens do agente</li>
-                  <li><strong>IF</strong> - Verifica se está dentro do horário permitido</li>
-                  <li><strong>IF</strong> - Verifica se já respondeu este lead</li>
-                  <li><strong>Wait</strong> - Delay aleatório (30s a 3min)</li>
-                  <li><strong>HTTP Request</strong> - Gera resposta com IA (max 40 chars)</li>
-                  <li><strong>HTTP Request</strong> - Envia resposta via Evolution API</li>
-                  <li><strong>HTTP Request</strong> - Marca lead como respondido</li>
-                </ol>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label>Tamanho máximo da resposta</Label>
+                        <span className="text-sm text-muted-foreground">{maxResponseChars} caracteres</span>
+                      </div>
+                      <Slider
+                        value={[maxResponseChars]}
+                        onValueChange={(v) => setMaxResponseChars(v[0])}
+                        min={100}
+                        max={1000}
+                        step={50}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Tamanho máximo das mensagens geradas pelo bot
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label>Limite diário de mensagens</Label>
+                        <span className="text-sm text-muted-foreground">{dailyLimit} mensagens</span>
+                      </div>
+                      <Slider
+                        value={[dailyLimit]}
+                        onValueChange={(v) => setDailyLimit(v[0])}
+                        min={10}
+                        max={200}
+                        step={10}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Quantas mensagens o bot pode enviar por dia
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Operating Hours */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Horário de Funcionamento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Início</Label>
+                        <Input
+                          type="time"
+                          value={operatingHoursStart}
+                          onChange={(e) => setOperatingHoursStart(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Fim</Label>
+                        <Input
+                          type="time"
+                          value={operatingHoursEnd}
+                          onChange={(e) => setOperatingHoursEnd(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O bot só responde dentro deste horário (horário de Brasília)
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Save Button */}
+                <Button onClick={saveSettings} disabled={saving} className="w-full gap-2">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Salvar Configurações
+                </Button>
+              </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </DialogContent>
