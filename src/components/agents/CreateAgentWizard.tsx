@@ -1655,20 +1655,20 @@ Meu volume de vendas é muito baixo"
 
   return (
     <Dialog open={open} onOpenChange={(value) => { if (!loading) { onOpenChange(value); if (!value) resetForm(); } }}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-4 pb-2 border-b">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Bot className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0 w-[95vw] sm:w-full">
+        <DialogHeader className="p-3 sm:p-4 pb-2 border-b">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Criar Agente de IA
           </DialogTitle>
-          <DialogDescription className="text-xs">
+          <DialogDescription className="text-[10px] sm:text-xs">
             Etapa {currentStep + 1} de {STEPS.length}: {STEPS[currentStep].title}
           </DialogDescription>
         </DialogHeader>
 
         {/* Progress bar */}
-        <div className="px-4 pt-2">
-          <div className="flex gap-1">
+        <div className="px-3 sm:px-4 pt-2">
+          <div className="flex gap-0.5 sm:gap-1">
             {STEPS.map((_, index) => (
               <div
                 key={index}
@@ -1680,32 +1680,45 @@ Meu volume de vendas é muito baixo"
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-4">
-          <div className="py-4">
+        <ScrollArea className="flex-1 px-3 sm:px-4">
+          <div className="py-3 sm:py-4">
             {renderStep()}
           </div>
         </ScrollArea>
 
-        <div className="p-4 pt-2 border-t flex justify-between gap-2">
+        <div className="p-3 sm:p-4 pt-2 border-t flex justify-between gap-2">
           {currentStep > 0 ? (
-            <Button variant="ghost" onClick={handlePrevStep} disabled={loading}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+            <Button variant="ghost" onClick={handlePrevStep} disabled={loading} size="sm" className="h-8 sm:h-9">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> 
+              <span className="hidden xs:inline">Voltar</span>
             </Button>
           ) : (
             <div />
           )}
 
           {currentStep < STEPS.length - 1 ? (
-            <Button onClick={handleNextStep} disabled={!canProceed()}>
-              Próximo <ArrowRight className="h-4 w-4 ml-1" />
+            <Button onClick={handleNextStep} disabled={!canProceed()} size="sm" className="h-8 sm:h-9">
+              <span className="hidden xs:inline">Próximo</span>
+              <span className="xs:hidden">Avançar</span>
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
             </Button>
           ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => handleCreate(false)} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Rascunho"}
+            <div className="flex gap-1.5 sm:gap-2">
+              <Button variant="outline" onClick={() => handleCreate(false)} disabled={loading} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+                {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : (
+                  <>
+                    <span className="hidden sm:inline">Salvar Rascunho</span>
+                    <span className="sm:hidden">Rascunho</span>
+                  </>
+                )}
               </Button>
-              <Button onClick={() => handleCreate(true)} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar e Ativar"}
+              <Button onClick={() => handleCreate(true)} disabled={loading} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+                {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : (
+                  <>
+                    <span className="hidden sm:inline">Criar e Ativar</span>
+                    <span className="sm:hidden">Ativar</span>
+                  </>
+                )}
               </Button>
             </div>
           )}

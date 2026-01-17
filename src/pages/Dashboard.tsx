@@ -494,7 +494,7 @@ const Dashboard = () => {
         onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
       />
 
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-10 lg:pl-14">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-10 lg:pl-[88px]">
         <div className="max-w-4xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-8 sm:mb-12">

@@ -904,7 +904,7 @@ const WhatsAppCampaign = () => {
         <AppSidebar profile={profile} />
         <AppHeader profile={profile} />
 
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-[88px]">
           <NoConnectedNumbers onConnectClick={handleConnectNumber} />
         </main>
 
@@ -946,12 +946,12 @@ const WhatsAppCampaign = () => {
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-14">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-[88px]">
         {/* Page Header */}
-        <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-bold">Disparos em Massa</h1>
-            <p className="text-muted-foreground text-sm">Gerencie suas campanhas de WhatsApp</p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold">Disparos em Massa</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Gerencie suas campanhas de WhatsApp</p>
           </div>
           <div className="flex items-center gap-2">
             <NumbersManager

@@ -250,39 +250,42 @@ export default function AIAgents() {
         <BackgroundGlow />
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
           
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                    Agentes de IA
-                  </h1>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs font-semibold gap-1">
-                    <FlaskConical className="h-3 w-3" />
-                    BETA
-                  </Badge>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                      Agentes de IA
+                    </h1>
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs font-semibold gap-1">
+                      <FlaskConical className="h-3 w-3" />
+                      BETA
+                    </Badge>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => {
+                      if (!hasSeenWarning) {
+                        setShowWarningDialog(true);
+                      } else {
+                        setShowWizard(true);
+                      }
+                    }}
+                    className="gap-2 w-full sm:w-auto"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Criar Agente
+                  </Button>
                 </div>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground">
                   Automatize sua prospecção com agentes inteligentes e seguros
                 </p>
-                
-                <Button 
-                  onClick={() => {
-                    if (!hasSeenWarning) {
-                      setShowWarningDialog(true);
-                    } else {
-                      setShowWizard(true);
-                    }
-                  }}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Criar Agente
-                </Button>
               </div>
 
               {/* Info Card */}
@@ -295,7 +298,7 @@ export default function AIAgents() {
 
               {/* Agents Grid */}
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                   {[1, 2, 3].map((i) => (
                     <Card key={i} className="border-border">
                       <CardHeader>
@@ -310,10 +313,10 @@ export default function AIAgents() {
                 </div>
               ) : agents.length === 0 ? (
                 <Card className="border-dashed border-2">
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <Bot className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Nenhum agente criado</h3>
-                    <p className="text-muted-foreground mb-4 max-w-md">
+                  <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 text-center px-4">
+                    <Bot className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold mb-2">Nenhum agente criado</h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md">
                       Crie seu primeiro agente de IA para automatizar a prospecção 
                       via WhatsApp de forma segura e controlada.
                     </p>
@@ -326,6 +329,7 @@ export default function AIAgents() {
                         }
                       }} 
                       className="gap-2"
+                      size="sm"
                     >
                       <Plus className="h-4 w-4" />
                       Criar Primeiro Agente
@@ -333,7 +337,7 @@ export default function AIAgents() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                   {agents.map((agent) => (
                     <Card 
                       key={agent.id} 

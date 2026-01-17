@@ -593,7 +593,7 @@ const Chat = () => {
         <AppSidebar profile={profile} />
 
         {/* Main Content */}
-          <main className="flex-1 min-w-0 lg:pl-14 flex flex-col h-screen">
+          <main className="flex-1 min-w-0 lg:pl-[72px] flex flex-col h-screen">
             {/* Mobile Nav */}
             <MobileNav profile={profile} />
 

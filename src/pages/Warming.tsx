@@ -767,8 +767,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
         <AppSidebar profile={profile} />
         <MobileNav profile={profile} />
 
-        <main className="lg:pl-14 pt-16 lg:pt-0 min-h-screen">
-          <div className="max-w-2xl mx-auto p-4 lg:p-8">
+        <main className="lg:pl-[72px] pt-16 lg:pt-0 min-h-screen">
+          <div className="max-w-2xl mx-auto p-3 sm:p-4 lg:p-8">
             {/* Header */}
             <div className="mb-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -895,60 +895,66 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
       <AppSidebar profile={profile} />
       <MobileNav profile={profile} />
 
-      <main className="lg:pl-14 pt-16 lg:pt-0 min-h-screen">
-        <div className="max-w-6xl mx-auto p-4 lg:p-8">
+      <main className="lg:pl-[72px] pt-16 lg:pt-0 min-h-screen">
+        <div className="max-w-6xl mx-auto p-3 sm:p-4 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-primary" />
+          <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                  <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                  Aquecimento de Números
-                </h1>
-                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-xs font-semibold">
-                  BETA
-                </Badge>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                      Aquecimento
+                    </h1>
+                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-[10px] sm:text-xs font-semibold">
+                      BETA
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                    Prepare seus números novos para uso comercial de forma segura
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground">
-                Prepare seus números novos para uso comercial de forma segura e automática
-              </p>
-            </div>
 
-            <div className="flex items-center gap-2">
-              {isAdmin && (
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleTestWarming}
+                    disabled={testingWarming || sessions.filter(s => s.status === 'active').length === 0}
+                    title="Executar teste do processador de aquecimento"
+                    className="h-8 sm:h-9"
+                  >
+                    <TestTube className={`w-4 h-4 sm:mr-2 ${testingWarming ? 'animate-pulse' : ''}`} />
+                    <span className="hidden sm:inline">{testingWarming ? 'Testando...' : 'Testar'}</span>
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleTestWarming}
-                  disabled={testingWarming || sessions.filter(s => s.status === 'active').length === 0}
-                  title="Executar teste do processador de aquecimento"
+                  onClick={fetchData}
+                  disabled={loading}
+                  className="h-8 sm:h-9"
                 >
-                  <TestTube className={`w-4 h-4 mr-2 ${testingWarming ? 'animate-pulse' : ''}`} />
-                  {testingWarming ? 'Testando...' : 'Testar'}
+                  <RefreshCw className={`w-4 h-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Atualizar</span>
                 </Button>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={fetchData}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
+              </div>
             </div>
           </div>
 
           {/* Warming Chips Limit Indicator */}
-          <div className="flex flex-wrap items-center gap-4 mb-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
+            <div className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
               <Flame className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                {activeWarmingCount}/{maxWarmingChips} chips em aquecimento
+              <span className="text-xs sm:text-sm font-medium text-foreground">
+                {activeWarmingCount}/{maxWarmingChips} chips
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
                 (Plano {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)})
               </span>
             </div>
@@ -957,46 +963,46 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                 variant="outline" 
                 size="sm" 
                 onClick={() => navigate('/upgrade')}
-                className="text-primary border-primary/30 hover:bg-primary/10"
+                className="text-primary border-primary/30 hover:bg-primary/10 h-8 sm:h-9 text-xs sm:text-sm"
               >
-                <Crown className="w-4 h-4 mr-2" />
+                <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 Aumentar limite
               </Button>
             )}
           </div>
 
           {/* Educational Alert */}
-          <Alert className="mb-6 bg-muted/50 border-muted">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-muted-foreground">
+          <Alert className="mb-4 sm:mb-6 bg-muted/50 border-muted">
+            <Info className="h-4 w-4 shrink-0" />
+            <AlertDescription className="text-xs sm:text-sm text-muted-foreground">
               O aquecimento simula o uso natural do WhatsApp. Nem todas as mensagens recebem resposta, 
-              e isso é esperado. O processo leva cerca de 20 dias para ser concluído. 
-              <strong className="text-foreground"> Cada número usa uma busca de leads diferente.</strong>
+              e isso é esperado. O processo leva cerca de 20 dias.
+              <strong className="text-foreground hidden sm:inline"> Cada número usa uma busca de leads diferente.</strong>
             </AlertDescription>
           </Alert>
 
           {/* Numbers Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 rounded-xl bg-card animate-pulse" />
+                <div key={i} className="h-48 sm:h-64 rounded-xl bg-card animate-pulse" />
               ))}
             </div>
           ) : numbers.length === 0 ? (
-            <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Flame className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
+            <div className="text-center py-12 sm:py-16 bg-card rounded-xl border border-border px-4">
+              <Flame className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
                 Nenhum número conectado
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Conecte um número WhatsApp na página de Disparos para começar o aquecimento
               </p>
-              <Button variant="outline" onClick={() => navigate('/whatsapp')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/whatsapp')}>
                 Ir para Disparos
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {numbers.map((number) => {
                 const assignment = getAssignmentForNumber(number.id);
                 const session = getSessionForNumber(number.id);
