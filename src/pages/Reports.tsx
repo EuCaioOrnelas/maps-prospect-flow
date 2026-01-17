@@ -530,14 +530,14 @@ const Reports = () => {
     pdf.setTextColor(primary.r, primary.g, primary.b);
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('WiizeProspect', margin, footerY + 6);
+    pdf.text('Wiize', margin, footerY + 6);
     
     pdf.setTextColor(gray.r, gray.g, gray.b);
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     pdf.text(`${new Date().getFullYear()} - Todos os direitos reservados`, pageWidth - margin - 42, footerY + 6);
 
-    pdf.save(`relatorio-wiizeprospect-${new Date().toISOString().split('T')[0]}.pdf`);
+    pdf.save(`relatorio-wiize-${new Date().toISOString().split('T')[0]}.pdf`);
     
     setShowExportDialog(false);
     toast({

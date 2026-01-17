@@ -327,7 +327,7 @@ const ChatSettings = () => {
   return (
     <>
       <SEO
-        title="Configurações do Chat - WiizeProspect"
+        title="Configurações do Chat - Wiize"
         description="Configure suas preferências de chat e respostas rápidas"
       />
       

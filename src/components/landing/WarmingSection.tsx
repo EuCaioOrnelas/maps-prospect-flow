@@ -31,13 +31,13 @@ export const WarmingSection = () => {
     },
     {
       icon: Shield,
-      title: "Proteção anti-ban",
-      description: "Sistema inteligente que respeita os limites do WhatsApp automaticamente"
+      title: "Redução de risco",
+      description: "Sistema inteligente que respeita os limites do WhatsApp e prolonga a vida útil do chip"
     },
     {
       icon: TrendingUp,
-      title: "20 dias para ficar pronto",
-      description: "Processo automatizado que libera seu chip para disparos em massa"
+      title: "20 dias de preparação",
+      description: "Processo automatizado que prepara seu chip para maior volume de mensagens"
     }
   ];
 
@@ -45,7 +45,7 @@ export const WarmingSection = () => {
     { day: "Dia 1-5", level: "Frio", color: "bg-blue-500", messages: "5-10 conversas/dia" },
     { day: "Dia 6-12", level: "Morno", color: "bg-yellow-500", messages: "15-25 conversas/dia" },
     { day: "Dia 13-20", level: "Quente", color: "bg-orange-500", messages: "30-50 conversas/dia" },
-    { day: "Dia 21+", level: "Pronto!", color: "bg-green-500", messages: "Liberado para campanhas" },
+    { day: "Dia 21+", level: "Preparado", color: "bg-green-500", messages: "Pronto para campanhas" },
   ];
 
   return (
@@ -67,11 +67,14 @@ export const WarmingSection = () => {
           </div>
           
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Chega de <span className="text-gradient">números bloqueados</span>
+            Reduza o risco de <span className="text-gradient">números bloqueados</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            O WiizeProspect prepara seus chips automaticamente para campanhas de prospecção em massa, 
-            eliminando o risco de banimento.
+            O Wiize prepara seus chips automaticamente para campanhas de prospecção em massa, 
+            ajudando a reduzir o risco de banimento e prolongar a vida útil do seu número.
+          </p>
+          <p className="text-sm text-muted-foreground/70 mt-2 max-w-2xl mx-auto">
+            *O aquecimento diminui significativamente as chances de bloqueio, mas não elimina completamente o risco inerente ao uso intensivo do WhatsApp.
           </p>
         </div>
 

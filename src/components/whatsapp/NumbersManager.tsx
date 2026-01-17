@@ -174,7 +174,7 @@ export const NumbersManager = ({
   const generateInstanceName = useCallback(() => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
-    return `wiizeprospect_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
+    return `wiize_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
   }, [user?.id]);
 
   // Refresh connection status for all numbers

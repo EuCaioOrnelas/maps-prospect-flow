@@ -7,8 +7,8 @@ const CRMComingSoon = () => {
   return (
     <>
       <SEO 
-        title="CRM - Em Breve | WiizeProspect"
-        description="O CRM do WiizeProspect está sendo desenvolvido e será lançado em breve."
+        title="CRM - Em Breve | Wiize"
+        description="O CRM do Wiize está sendo desenvolvido e será lançado em breve."
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md text-center space-y-6">

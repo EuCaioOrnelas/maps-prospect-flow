@@ -301,8 +301,8 @@ const Profile = () => {
     <div className="min-h-screen bg-background overflow-x-hidden relative">
       <BackgroundGlow />
       <SEO 
-        title="Meu Perfil - WiizeProspect"
-        description="Gerencie seu perfil e configurações da conta WiizeProspect"
+        title="Meu Perfil - Wiize"
+        description="Gerencie seu perfil e configurações da conta Wiize"
       />
 
       {/* Sidebar - Desktop only */}

@@ -655,7 +655,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     return (
       <div className="min-h-screen bg-background">
         <SEO 
-          title="Aquecimento de Números | WiizeProspect"
+          title="Aquecimento de Números | Wiize"
           description="Sistema de aquecimento inteligente para números WhatsApp"
         />
         
@@ -765,7 +765,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     return (
       <div className="min-h-screen bg-background">
         <SEO 
-          title="Aquecimento de Números | WiizeProspect"
+          title="Aquecimento de Números | Wiize"
           description="Sistema de aquecimento inteligente para números WhatsApp"
         />
         
@@ -893,7 +893,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
       <SEO 
-        title="Aquecimento de Números | WiizeProspect"
+        title="Aquecimento de Números | Wiize"
         description="Sistema de aquecimento inteligente para números WhatsApp"
       />
       

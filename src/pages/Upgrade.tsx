@@ -331,7 +331,7 @@ const Upgrade = () => {
                 </h2>
                 
                 <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                  Obrigado por testar o WiizeProspect! Para continuar prospectando e acessando todas as funcionalidades, 
+                  Obrigado por testar o Wiize! Para continuar prospectando e acessando todas as funcionalidades, 
                   escolha o plano ideal para o seu negócio.
                 </p>
 

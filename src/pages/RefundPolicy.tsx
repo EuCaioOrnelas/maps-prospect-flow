@@ -11,8 +11,8 @@ const RefundPolicy = () => {
     <>
       <SEO 
         title="Política de Reembolso"
-        description="Conheça nossa Política de Reembolso. Entenda as condições para solicitação de reembolso na plataforma WiizeProspect."
-        keywords="política de reembolso, reembolso, cancelamento, wiizeprospect"
+        description="Conheça nossa Política de Reembolso. Entenda as condições para solicitação de reembolso na plataforma Wiize."
+        keywords="política de reembolso, reembolso, cancelamento, wiize"
       />
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -51,7 +51,7 @@ const RefundPolicy = () => {
             <section className="space-y-3 sm:space-y-4 bg-primary/10 p-4 sm:p-6 rounded-lg border border-primary/30">
               <h2 className="text-lg sm:text-xl font-semibold text-primary">Período de Teste Gratuito</h2>
               <p className="text-foreground">
-                A WiizeProspect oferece <strong>30 dias de teste gratuito</strong> para que você possa explorar e avaliar todas as funcionalidades da plataforma antes de efetuar qualquer pagamento.
+                A Wiize oferece <strong>30 dias de teste gratuito</strong> para que você possa explorar e avaliar todas as funcionalidades da plataforma antes de efetuar qualquer pagamento.
               </p>
               <p>
                 Durante esse período, você tem acesso completo às ferramentas de prospecção, CRM, disparos e automações, permitindo que avalie se a plataforma atende às suas necessidades de forma prática e sem compromisso financeiro.
