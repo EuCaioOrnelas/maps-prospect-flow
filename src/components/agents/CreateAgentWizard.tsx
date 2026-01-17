@@ -121,32 +121,32 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
     data: {
       suggestedName: 'Agente SDR',
       agentRole: 'sdr',
-      companyName: 'Academia FitLife',
-      productName: 'Plano Anual Premium',
-      productDescription: 'Plano completo com acesso ilimitado à academia, aulas de grupo, personal trainer incluso e acompanhamento nutricional.',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Descreva aqui o que você vende e como ajuda seus clientes.',
       salesApproach: 'qualify',
       leadAwareness: 'cold',
       messageReason: 'segmented_list',
       consciousnessLevel: 'aware_problem',
       openingStyle: 'question',
       firstMission: 'understand',
-      infoToDiscover: `Qual é seu objetivo principal? (emagrecer, ganhar massa, saúde)
-Já treinou em academia antes?
-Qual horário você teria disponível para treinar?
-O que te impede de começar hoje?
-Prefere treinar sozinho ou com acompanhamento?`,
+      infoToDiscover: `Qual é o cargo ou função da pessoa
+Qual o tamanho da empresa ou equipe
+Quais ferramentas ou soluções usam hoje
+Qual o principal desafio ou problema
+Tem interesse em conhecer uma solução`,
       maxQuestions: '2',
       presentationStyle: 'comparing',
-      differentials: `Personal trainer incluso no plano
-Nutricionista sem custo adicional
-Funcionamos 24 horas
-Primeira semana grátis para experimentar`,
+      differentials: `Atendimento personalizado
+Garantia de satisfação
+Suporte rápido e humanizado
+Condições especiais para novos clientes`,
       pricePolicy: 'never',
-      commonObjections: `Não tenho tempo para ir
-É muito longe da minha casa
-Academia é muito caro
-Já tentei e não consegui manter
-Vou pensar e depois te procuro`,
+      commonObjections: `Não tenho tempo agora
+Já tenho fornecedor
+Preciso falar com meu sócio
+Manda mais informações por email
+Não é prioridade no momento`,
       objectionPosture: 'validate',
       conversationGoal: 'schedule_call',
       endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse'],
@@ -168,31 +168,30 @@ Vou pensar e depois te procuro`,
     data: {
       suggestedName: 'Agente Suporte',
       agentRole: 'specialist',
-      companyName: 'Pizzaria Bella Napoli',
-      productName: 'Delivery e Pedidos',
-      productDescription: 'Pizzaria tradicional com delivery rápido, pizzas artesanais, combos família e opções vegetarianas e veganas.',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Descreva aqui o que você vende e como ajuda seus clientes.',
       salesApproach: 'educate',
       leadAwareness: 'contacted',
       messageReason: 'active_search',
       consciousnessLevel: 'aware_solution',
       openingStyle: 'thank',
       firstMission: 'understand',
-      infoToDiscover: `Qual foi o problema com seu pedido?
-Qual o número do seu pedido?
-O pedido chegou com atraso ou veio errado?
-Quer que a gente refaça ou prefere reembolso?`,
+      infoToDiscover: `Qual é o problema ou dúvida exata
+Quando começou esse problema
+Já tentou alguma solução
+Qual a urgência de resolver`,
       maxQuestions: '2',
       presentationStyle: 'educating',
-      differentials: `Entrega em até 40 minutos
-Reposição grátis se vier errado
-Ingredientes frescos do dia
-Atendimento 7 dias por semana`,
+      differentials: `Atendimento rápido e humanizado
+Resolução sem burocracia
+Acompanhamento até a solução
+Satisfação garantida`,
       pricePolicy: 'never',
-      commonObjections: `Meu pedido atrasou muito
-A pizza veio fria
-Veio o sabor errado
-O entregador foi mal educado
-Quero meu dinheiro de volta`,
+      commonObjections: `Isso já aconteceu antes
+Demora muito para resolver
+Prefiro falar com um humano
+Não estou conseguindo usar direito`,
       objectionPosture: 'explain',
       conversationGoal: 'forward_human',
       endConditions: ['Objetivo atingido', 'Conversa esfriou', 'Lead disse que não tem interesse'],
@@ -214,33 +213,32 @@ Quero meu dinheiro de volta`,
     data: {
       suggestedName: 'Agente Vendas',
       agentRole: 'sales',
-      companyName: 'Curso de Inglês FastEnglish',
-      productName: 'Curso Completo de Inglês',
-      productDescription: 'Curso de inglês online com aulas ao vivo, material didático incluso, certificado reconhecido e acesso vitalício às gravações.',
+      companyName: 'Minha Empresa',
+      productName: 'Meu Produto/Serviço',
+      productDescription: 'Descreva aqui o que você vende e como ajuda seus clientes.',
       salesApproach: 'close',
       leadAwareness: 'heard',
       messageReason: 'active_search',
       consciousnessLevel: 'aware_solution',
       openingStyle: 'thank',
       firstMission: 'value',
-      infoToDiscover: `Por que você quer aprender inglês? (trabalho, viagem, hobby)
-Já estudou inglês antes? Qual seu nível atual?
-Quanto tempo por dia você pode dedicar aos estudos?
-Quando você gostaria de começar?
-Prefere aulas individuais ou em grupo?`,
+      infoToDiscover: `Qual problema quer resolver
+Já conhece nossa solução
+O que é mais importante: preço ou qualidade
+Quando pretende decidir
+Tem orçamento disponível`,
       maxQuestions: '2',
       presentationStyle: 'risk',
-      differentials: `Aulas ao vivo com professor nativo
-Certificado internacional reconhecido
-Acesso vitalício às aulas gravadas
-Garantia de 30 dias ou seu dinheiro de volta
-Metodologia comprovada com 95% de aprovação`,
+      differentials: `Garantia de satisfação ou dinheiro de volta
+Suporte dedicado e rápido
+Entrega ou implementação rápida
+Clientes satisfeitos e casos de sucesso`,
       pricePolicy: 'with_context',
-      commonObjections: `Já tentei aprender e não consegui
-Não tenho tempo suficiente
-É muito caro pra mim agora
-Vou pesquisar outras opções primeiro
-Preciso falar com meu marido/esposa`,
+      commonObjections: `É muito caro pra mim
+Preciso pensar mais
+Vou comparar com outras opções
+Não é o momento certo
+Já comprei algo parecido antes`,
       objectionPosture: 'example',
       conversationGoal: 'close_deal',
       endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse', 'Objetivo atingido'],
@@ -1213,10 +1211,10 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
               <Label>Diferenciais do seu produto/serviço</Label>
               <Textarea
                 placeholder="Ex:
-API oficial do WhatsApp (não dá bloqueio)
-Sistema de aquecimento automático
-IA que responde leads 24h
-Suporte humanizado via chat"
+Entrega grátis para toda a cidade
+Garantia de 1 ano
+Atendimento 24 horas
+Parcelamento em até 12x sem juros"
                 value={customDifferentials}
                 onChange={(e) => setCustomDifferentials(e.target.value)}
                 rows={4}
@@ -1291,11 +1289,11 @@ Suporte humanizado via chat"
               <Label className="flex items-center gap-1">O que o agente precisa descobrir? <span className="text-destructive">*</span></Label>
               <Textarea
                 placeholder="Ex:
-Qual tipo de negócio o lead tem
-Se já usa WhatsApp para vendas
-Se já teve problemas com bloqueio de número
-Quantos leads/contatos ele trabalha por dia
-Qual a maior dor hoje (tempo, bloqueios, baixa conversão)"
+Qual o problema que o cliente quer resolver
+Se já comprou algo parecido antes
+Qual o orçamento disponível
+Quando pretende tomar a decisão
+Se é ele quem decide a compra"
                 value={infoToDiscover}
                 onChange={(e) => setInfoToDiscover(e.target.value)}
                 rows={5}
@@ -1334,11 +1332,11 @@ Qual a maior dor hoje (tempo, bloqueios, baixa conversão)"
               <Label className="flex items-center gap-1">Quais diferenciais devem aparecer? <span className="text-destructive">*</span></Label>
               <Textarea
                 placeholder="Ex:
-Suporte humanizado 24h
-Integração com CRM
-Dashboard com métricas em tempo real
-Treinamento incluso
-Garantia de 30 dias"
+Frete grátis acima de R$ 100
+Troca sem burocracia em até 30 dias
+Atendimento humanizado e rápido
+Produtos originais com nota fiscal
+Desconto especial para primeira compra"
                 value={differentials}
                 onChange={(e) => setDifferentials(e.target.value)}
                 rows={4}
@@ -1382,13 +1380,12 @@ Garantia de 30 dias"
               <Label className="flex items-center gap-1">Objeções comuns <span className="text-destructive">*</span></Label>
               <Textarea
                 placeholder="Ex:
-Isso dá bloqueio no WhatsApp?
-Já tentei automação e não funcionou
-Não gosto de robô, parece artificial
 É muito caro pra mim
-Não tenho tempo de aprender
-Preciso pensar antes
-Meu volume de vendas é muito baixo"
+Preciso pensar antes de decidir
+Vou ver em outras lojas primeiro
+Não sei se vai funcionar pra mim
+Não é o momento agora
+Preciso falar com meu marido/esposa"
                 value={commonObjections}
                 onChange={(e) => setCommonObjections(e.target.value)}
                 rows={5}
