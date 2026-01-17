@@ -127,6 +127,39 @@ export type Database = {
           },
         ]
       }
+      agent_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          template_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          template_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          template_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_agents: {
         Row: {
           agent_objective: string | null

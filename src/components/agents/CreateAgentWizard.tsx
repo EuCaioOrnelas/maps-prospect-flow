@@ -283,6 +283,8 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [loadingNumbers, setLoadingNumbers] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [creationMode, setCreationMode] = useState<"template" | "scratch" | null>(null);
+  const [userTemplates, setUserTemplates] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   // Basics
   const [name, setName] = useState("");
@@ -354,13 +356,21 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [isWarmed, setIsWarmed] = useState(false);
   const [maxReplies, setMaxReplies] = useState<number | null>(1);
 
-  // Apply template data to form fields
-  const applyTemplate = (templateId: string) => {
-    const template = AGENT_TEMPLATES.find(t => t.id === templateId);
-    if (!template) return;
+  // Apply template data to form fields (works for both default and user templates)
+  const applyTemplate = (templateId: string, isUserTemplate: boolean = false) => {
+    let data: any;
     
-    setSelectedTemplate(templateId);
-    const data = template.data;
+    if (isUserTemplate) {
+      const userTemplate = userTemplates.find(t => t.id === templateId);
+      if (!userTemplate) return;
+      data = userTemplate.template_data;
+      setSelectedTemplate(`user_${templateId}`);
+    } else {
+      const template = AGENT_TEMPLATES.find(t => t.id === templateId);
+      if (!template) return;
+      data = template.data;
+      setSelectedTemplate(templateId);
+    }
     
     // Apply all template values
     if (data.suggestedName) setName(data.suggestedName);
@@ -382,7 +392,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     if (data.commonObjections) setCommonObjections(data.commonObjections);
     if (data.objectionPosture) setObjectionPosture(data.objectionPosture);
     if (data.conversationGoal) setConversationGoal(data.conversationGoal);
-    if (data.endConditions) setEndConditions(data.endConditions);
+    if (data.endConditions) setEndConditions(data.endConditions || []);
     if (data.closingStyle) setClosingStyle(data.closingStyle);
     if (data.canSendAudio !== undefined) setCanSendAudio(data.canSendAudio);
     if (data.canSendLinks !== undefined) setCanSendLinks(data.canSendLinks);
@@ -391,6 +401,31 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     if (data.maxChars) setMaxChars(data.maxChars);
     if (data.maxConsecutiveMessages) setMaxConsecutiveMessages(data.maxConsecutiveMessages);
     if (data.maxReplies !== undefined) setMaxReplies(data.maxReplies);
+    if (data.customDifferentials) setCustomDifferentials(data.customDifferentials);
+  };
+
+  const deleteUserTemplate = async (templateId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agent_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) throw error;
+
+      setUserTemplates(prev => prev.filter(t => t.id !== templateId));
+      toast({
+        title: "Template excluído",
+        description: "O template foi removido com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
@@ -450,8 +485,28 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       }
     };
 
+    const fetchUserTemplates = async () => {
+      if (!user) return;
+      setLoadingTemplates(true);
+      try {
+        const { data, error } = await supabase
+          .from('agent_templates')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setUserTemplates(data || []);
+      } catch (error) {
+        console.error('Error fetching user templates:', error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
     if (open) {
       fetchNumbers();
+      fetchUserTemplates();
     }
   }, [user, open]);
 
@@ -995,35 +1050,89 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              {AGENT_TEMPLATES.map((template) => (
-                <div
-                  key={template.id}
-                  onClick={() => applyTemplate(template.id)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-                    selectedTemplate === template.id
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      selectedTemplate === template.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                    }`}>
-                      {template.icon}
+            {/* User saved templates */}
+            {userTemplates.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Seus Templates Salvos</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {userTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                        selectedTemplate === `user_${template.id}`
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            selectedTemplate === `user_${template.id}` ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                          }`}
+                          onClick={() => applyTemplate(template.id, true)}
+                        >
+                          <Bot className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0" onClick={() => applyTemplate(template.id, true)}>
+                          <h4 className="font-semibold text-sm truncate">{template.name}</h4>
+                          {template.description && (
+                            <p className="text-xs text-muted-foreground truncate">{template.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {selectedTemplate === `user_${template.id}` && (
+                            <Badge variant="outline" className="text-xs">Selecionado</Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteUserTemplate(template.id);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
-                      <p className="text-xs text-muted-foreground">{template.description}</p>
-                    </div>
-                    {selectedTemplate === template.id && (
-                      <Badge variant="outline" className="text-xs">
-                        Selecionado
-                      </Badge>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Default templates */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Templates Padrão</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {AGENT_TEMPLATES.map((template) => (
+                  <div
+                    key={template.id}
+                    onClick={() => applyTemplate(template.id, false)}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                      selectedTemplate === template.id
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        selectedTemplate === template.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      }`}>
+                        {template.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm">{template.name}</h4>
+                        <p className="text-xs text-muted-foreground">{template.description}</p>
+                      </div>
+                      {selectedTemplate === template.id && (
+                        <Badge variant="outline" className="text-xs">Selecionado</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {selectedTemplate && (

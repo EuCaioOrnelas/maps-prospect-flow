@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -31,7 +32,8 @@ import {
   Sparkles,
   TrendingUp,
   Headphones,
-  FileText
+  FileText,
+  Copy
 } from "lucide-react";
 
 // Templates de prompts prontos
@@ -193,11 +195,16 @@ interface Conversation {
 }
 
 export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: AgentDetailsDialogProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingAsTemplate, setSavingAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [showSaveTemplateForm, setShowSaveTemplateForm] = useState(false);
   
   // Editable fields
   const [systemPrompt, setSystemPrompt] = useState(agent?.system_prompt || "");
@@ -274,6 +281,56 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveAsTemplate = async () => {
+    if (!agent || !user || !templateName.trim()) return;
+    
+    setSavingAsTemplate(true);
+    try {
+      const templateData = {
+        suggestedName: agent.name,
+        agentRole: agent.objective === 'prospecting' ? 'sdr' : agent.objective === 'closing' ? 'sales' : 'specialist',
+        companyName: '',
+        productName: '',
+        productDescription: '',
+        salesApproach: agent.objective || '',
+        systemPrompt: systemPrompt,
+        maxReplies: maxReplies,
+        maxChars: String(maxResponseChars),
+        operatingHoursStart: operatingHoursStart,
+        operatingHoursEnd: operatingHoursEnd,
+      };
+
+      const { error } = await supabase
+        .from('agent_templates')
+        .insert({
+          user_id: user.id,
+          name: templateName.trim(),
+          description: templateDescription.trim() || null,
+          template_data: templateData,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Template salvo!",
+        description: "Você pode reutilizar este template ao criar novos agentes.",
+      });
+      
+      setShowSaveTemplateForm(false);
+      setTemplateName("");
+      setTemplateDescription("");
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast({
+        title: "Erro ao salvar template",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingAsTemplate(false);
     }
   };
 
@@ -617,6 +674,71 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                     </div>
                     <p className="text-xs text-muted-foreground">
                       O bot só responde dentro deste horário (horário de Brasília)
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Save as Template Section */}
+                <Card className="border-dashed">
+                  <CardContent className="p-4 space-y-3">
+                    {!showSaveTemplateForm ? (
+                      <Button 
+                        variant="outline" 
+                        className="w-full gap-2"
+                        onClick={() => setShowSaveTemplateForm(true)}
+                      >
+                        <Copy className="h-4 w-4" />
+                        Salvar como Template
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Nome do Template *</Label>
+                          <Input
+                            placeholder="Ex: Meu agente de vendas"
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Descrição (opcional)</Label>
+                          <Input
+                            placeholder="Ex: Para leads de e-commerce"
+                            value={templateDescription}
+                            onChange={(e) => setTemplateDescription(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setShowSaveTemplateForm(false);
+                              setTemplateName("");
+                              setTemplateDescription("");
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-1 gap-1"
+                            disabled={!templateName.trim() || savingAsTemplate}
+                            onClick={saveAsTemplate}
+                          >
+                            {savingAsTemplate ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Save className="h-3 w-3" />
+                            )}
+                            Salvar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      Templates salvos aparecem ao criar novos agentes
                     </p>
                   </CardContent>
                 </Card>
