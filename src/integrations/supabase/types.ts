@@ -1911,6 +1911,7 @@ export type Database = {
           resume_at: string | null
           scheduled_at: string | null
           sent_count: number
+          simulation_mode: boolean | null
           started_at: string | null
           status: string
           total_leads: number
@@ -1945,6 +1946,7 @@ export type Database = {
           resume_at?: string | null
           scheduled_at?: string | null
           sent_count?: number
+          simulation_mode?: boolean | null
           started_at?: string | null
           status?: string
           total_leads?: number
@@ -1979,6 +1981,7 @@ export type Database = {
           resume_at?: string | null
           scheduled_at?: string | null
           sent_count?: number
+          simulation_mode?: boolean | null
           started_at?: string | null
           status?: string
           total_leads?: number

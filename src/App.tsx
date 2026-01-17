@@ -44,6 +44,7 @@ const WarmingReports = lazy(() => import("./pages/WarmingReports"));
 const AIAgents = lazy(() => import("./pages/AIAgents"));
 const AgentReports = lazy(() => import("./pages/AgentReports"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
+const ProductionTests = lazy(() => import("./pages/ProductionTests"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -219,6 +220,14 @@ const App = () => (
                 />
                 <Route path="/shared-report/:reportId" element={<SharedReport />} />
                 <Route path="/obrigado" element={<ThankYou />} />
+                <Route 
+                  path="/admin/tests" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <ProductionTests />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Explicit 404 route */}
                 <Route path="/404" element={<NotFound />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
