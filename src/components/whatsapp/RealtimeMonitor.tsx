@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -13,7 +13,8 @@ import {
   Smartphone,
   Wifi,
   MessageCircle,
-  AlertTriangle
+  AlertTriangle,
+  Bell
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
@@ -21,6 +22,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProcessorHeartbeat } from "./ProcessorHeartbeat";
 import { WindowProgressIndicator } from "./WindowProgressIndicator";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ExtendedCampaign extends Campaign {
   current_window?: number;
@@ -45,6 +48,8 @@ export const RealtimeMonitor = ({
   onStop
 }: RealtimeMonitorProps) => {
   const [now, setNow] = useState(new Date());
+  const { toast } = useToast();
+  const previousCampaignStatesRef = useRef<Map<string, { status: string; pause_reason?: string }>>(new Map());
 
   // Update time every second for live countdowns
   useEffect(() => {
@@ -52,8 +57,66 @@ export const RealtimeMonitor = ({
     return () => clearInterval(timer);
   }, []);
 
+  // Detect status changes and show notifications
+  useEffect(() => {
+    campaigns.forEach(campaign => {
+      const prevState = previousCampaignStatesRef.current.get(campaign.id);
+      const currentStatus = campaign.status;
+      const currentPauseReason = campaign.pause_reason;
+
+      // Check if status changed from running to paused
+      if (prevState?.status === 'running' && currentStatus === 'paused') {
+        // Window-related pauses
+        if (currentPauseReason === 'waiting_response') {
+          toast({
+            title: "🔔 Campanha aguardando resposta",
+            description: `"${campaign.name}" está pausada aguardando uma resposta para liberar a próxima janela de envio.`,
+            duration: 10000,
+          });
+        } else if (currentPauseReason === 'no_response_first_10') {
+          toast({
+            title: "⚠️ Campanha pausada por segurança",
+            description: `"${campaign.name}" foi pausada pois nenhum lead respondeu nos primeiros 10 disparos.`,
+            variant: "destructive",
+            duration: 15000,
+          });
+        } else if (currentPauseReason === 'incident_detected') {
+          toast({
+            title: "🚨 Incidente detectado",
+            description: `"${campaign.name}" foi pausada por segurança. Verifique possíveis bloqueios.`,
+            variant: "destructive",
+            duration: 15000,
+          });
+        } else if (currentPauseReason === 'daily_limit') {
+          toast({
+            title: "📊 Limite diário atingido",
+            description: `"${campaign.name}" atingiu o limite diário. Será retomada automaticamente amanhã.`,
+            duration: 10000,
+          });
+        } else if (currentPauseReason === 'smart_pause') {
+          toast({
+            title: "⏸️ Pausa inteligente",
+            description: `"${campaign.name}" está em pausa inteligente. Retomará automaticamente.`,
+            duration: 8000,
+          });
+        }
+      }
+
+      // Update previous state
+      previousCampaignStatesRef.current.set(campaign.id, {
+        status: currentStatus,
+        pause_reason: currentPauseReason,
+      });
+    });
+  }, [campaigns, toast]);
+
   const runningCampaigns = campaigns.filter(c => c.status === 'running') as ExtendedCampaign[];
   const pausedCampaigns = campaigns.filter(c => c.status === 'paused') as ExtendedCampaign[];
+  
+  // Check for any campaign waiting for response
+  const campaignsWaitingResponse = pausedCampaigns.filter(c => c.pause_reason === 'waiting_response');
+  const campaignsNoResponseFirst10 = pausedCampaigns.filter(c => c.pause_reason === 'no_response_first_10');
+  const campaignsWithIncident = pausedCampaigns.filter(c => c.pause_reason === 'incident_detected');
 
   if (runningCampaigns.length === 0 && pausedCampaigns.length === 0) {
     return null;
@@ -118,6 +181,48 @@ export const RealtimeMonitor = ({
           </div>
         </div>
       </div>
+
+      {/* Global Alerts for Window System Issues */}
+      {campaignsWaitingResponse.length > 0 && (
+        <Alert className="border-amber-500 bg-amber-500/10">
+          <Bell className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-600 dark:text-amber-400">
+            Aguardando resposta para continuar
+          </AlertTitle>
+          <AlertDescription className="text-amber-600/80 dark:text-amber-400/80">
+            {campaignsWaitingResponse.length === 1 
+              ? `A campanha "${campaignsWaitingResponse[0].name}" está aguardando uma resposta de lead para liberar a próxima janela de envio. Respostas são detectadas automaticamente em tempo real.`
+              : `${campaignsWaitingResponse.length} campanhas estão aguardando respostas para liberar as próximas janelas de envio.`
+            }
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {campaignsNoResponseFirst10.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Atenção: Campanha pausada por segurança</AlertTitle>
+          <AlertDescription>
+            {campaignsNoResponseFirst10.length === 1 
+              ? `A campanha "${campaignsNoResponseFirst10[0].name}" foi pausada porque nenhum lead respondeu nos primeiros 10 disparos. Isso pode indicar problemas com as mensagens ou público-alvo.`
+              : `${campaignsNoResponseFirst10.length} campanhas foram pausadas por falta de respostas nos primeiros 10 disparos.`
+            }
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {campaignsWithIncident.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>🚨 Incidente detectado</AlertTitle>
+          <AlertDescription>
+            {campaignsWithIncident.length === 1 
+              ? `A campanha "${campaignsWithIncident[0].name}" foi pausada por detecção de bloqueio ou denúncia. Recomendamos verificar o status do seu número WhatsApp.`
+              : `${campaignsWithIncident.length} campanhas foram pausadas por incidentes detectados. Verifique o status dos seus números.`
+            }
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Running Campaigns */}
       {runningCampaigns.map((campaign) => {
