@@ -25,6 +25,11 @@ import {
 import { format, subDays, parseISO, differenceInSeconds, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { MobileNav } from "@/components/layout/MobileNav";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Types
 interface Agent {
@@ -219,7 +224,7 @@ const calculateHealthScore = (
 };
 
 export default function AgentReports() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -903,17 +908,27 @@ export default function AgentReports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-64" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+          <BackgroundGlow />
+          <AppSidebar profile={profile} />
+          <MobileNav profile={profile} />
+          <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+            <AppHeader profile={profile} />
+            <main className="flex-1 p-6">
+              <div className="max-w-7xl mx-auto space-y-6">
+                <Skeleton className="h-12 w-64" />
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-32" />
+                  ))}
+                </div>
+                <Skeleton className="h-96" />
+              </div>
+            </main>
           </div>
-          <Skeleton className="h-96" />
         </div>
-      </div>
+      </SidebarProvider>
     );
   }
 
@@ -922,8 +937,15 @@ export default function AgentReports() {
   const hasConversations = conversations.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        <BackgroundGlow />
+        <AppSidebar profile={profile} />
+        <MobileNav profile={profile} />
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+          <AppHeader profile={profile} />
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -1568,7 +1590,10 @@ export default function AgentReports() {
             </Tabs>
           </>
         )}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
