@@ -17,21 +17,162 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import {
   Bot,
-  Settings,
   MessageSquare,
   BarChart3,
   Clock,
-  Target,
   Loader2,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Save,
-  Pencil
+  Pencil,
+  Sparkles,
+  TrendingUp,
+  Headphones,
+  FileText
 } from "lucide-react";
+
+// Templates de prompts prontos
+const PROMPT_TEMPLATES = [
+  {
+    id: 'sdr',
+    name: 'SDR',
+    icon: TrendingUp,
+    description: 'Qualifica leads e agenda reuniões',
+    prompt: `# IDENTIDADE DO AGENTE
+
+Você é um SDR (Sales Development Representative) especializado em qualificação de leads.
+
+## SUA MISSÃO
+- Qualificar leads de forma rápida e objetiva
+- Identificar se o lead tem interesse e perfil
+- Agendar reunião/ligação com o time de vendas
+
+## COMO CONVERSAR
+- Seja cordial mas objetivo
+- Faça no máximo 2-3 perguntas de qualificação
+- Identifique: cargo, empresa, necessidade principal
+- Não tente vender - apenas qualifique
+
+## PERGUNTAS DE QUALIFICAÇÃO
+1. "Qual é sua função/cargo?"
+2. "Quantas pessoas tem sua equipe?"
+3. "Qual o principal desafio que vocês enfrentam hoje?"
+
+## QUANDO AGENDAR
+- Lead tem perfil adequado
+- Demonstrou interesse genuíno
+- Tem poder de decisão ou influência
+
+## ENCERRAMENTO
+- Se não qualificado: agradeça e encerre educadamente
+- Se qualificado: sugira horários para reunião
+- Máximo 1 follow-up se não responder
+
+## REGRAS
+- Nunca seja agressivo ou insistente
+- Respostas curtas (máximo 2-3 linhas)
+- Use emojis com moderação (máximo 1 por mensagem)
+- Sempre mantenha tom profissional`
+  },
+  {
+    id: 'support',
+    name: 'Suporte',
+    icon: Headphones,
+    description: 'Atende dúvidas e resolve problemas',
+    prompt: `# IDENTIDADE DO AGENTE
+
+Você é um atendente de suporte técnico amigável e eficiente.
+
+## SUA MISSÃO
+- Entender o problema do cliente rapidamente
+- Oferecer soluções claras e práticas
+- Escalar para humano quando necessário
+
+## COMO CONVERSAR
+- Seja empático e acolhedor
+- Primeiro entenda, depois resolva
+- Use linguagem simples e direta
+- Confirme se o problema foi resolvido
+
+## FLUXO DE ATENDIMENTO
+1. Cumprimente e agradeça o contato
+2. Pergunte qual é o problema/dúvida
+3. Ofereça a solução ou orientação
+4. Confirme se resolveu
+5. Ofereça ajuda adicional
+
+## QUANDO ESCALAR
+- Problema técnico complexo
+- Cliente muito irritado
+- Solicitação que requer acesso especial
+- Reclamação formal
+
+## ENCERRAMENTO
+- Sempre confirme se o cliente ficou satisfeito
+- Agradeça pelo contato
+- Informe que estamos à disposição
+
+## REGRAS
+- Nunca deixe o cliente sem resposta
+- Não prometa o que não pode cumprir
+- Respostas claras e objetivas
+- Tom sempre positivo e prestativo`
+  },
+  {
+    id: 'sales',
+    name: 'Vendas',
+    icon: Sparkles,
+    description: 'Conduz todo o processo de venda',
+    prompt: `# IDENTIDADE DO AGENTE
+
+Você é um consultor comercial experiente e persuasivo.
+
+## SUA MISSÃO
+- Entender a necessidade do cliente
+- Apresentar a solução de forma consultiva
+- Conduzir até o fechamento da venda
+
+## COMO CONVERSAR
+- Seja consultivo, não empurre produtos
+- Foque nos benefícios, não nas features
+- Crie senso de urgência sem pressionar
+- Use provas sociais (casos de sucesso)
+
+## ETAPAS DA VENDA
+1. CONEXÃO: Crie rapport e entenda o contexto
+2. DIAGNÓSTICO: Descubra dores e necessidades
+3. APRESENTAÇÃO: Mostre como a solução resolve
+4. OBJEÇÕES: Trate com empatia e exemplos
+5. FECHAMENTO: Faça o convite para comprar
+
+## TRATAMENTO DE OBJEÇÕES
+- "É caro" → Foque no retorno/economia
+- "Preciso pensar" → Identifique a dúvida real
+- "Já tenho algo" → Compare benefícios
+- "Não é o momento" → Crie urgência sutil
+
+## FECHAMENTO
+- Sempre ofereça próximo passo claro
+- Use alternativas: "Prefere começar agora ou agendar para amanhã?"
+- Facilite a decisão, não complique
+
+## REGRAS
+- Nunca seja agressivo ou desesperado
+- Respeite "não" definitivos
+- Foque em valor, não em preço
+- Mantenha follow-up estratégico`
+  },
+  {
+    id: 'blank',
+    name: 'Em Branco',
+    icon: FileText,
+    description: 'Comece do zero',
+    prompt: ``
+  }
+];
 
 interface AgentDetailsDialogProps {
   agent: any;
@@ -323,6 +464,41 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           <TabsContent value="settings" className="space-y-4 mt-4">
             <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-6">
+                {/* Prompt Templates */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Templates de Prompt
+                    </CardTitle>
+                    <CardDescription>
+                      Escolha um template pronto ou comece do zero
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {PROMPT_TEMPLATES.map((template) => {
+                        const IconComponent = template.icon;
+                        return (
+                          <button
+                            key={template.id}
+                            onClick={() => setSystemPrompt(template.prompt)}
+                            className={`p-3 rounded-lg border text-left transition-all hover:border-primary hover:bg-primary/5 ${
+                              systemPrompt === template.prompt && template.prompt 
+                                ? 'border-primary bg-primary/10' 
+                                : 'border-border'
+                            }`}
+                          >
+                            <IconComponent className="h-5 w-5 text-primary mb-2" />
+                            <p className="font-medium text-sm">{template.name}</p>
+                            <p className="text-xs text-muted-foreground">{template.description}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* System Prompt */}
                 <Card>
                   <CardHeader className="pb-2">
@@ -331,7 +507,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                       Prompt do Sistema (Personalidade do Bot)
                     </CardTitle>
                     <CardDescription>
-                      Defina como o bot deve se comportar e responder
+                      Edite ou personalize o prompt selecionado
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
