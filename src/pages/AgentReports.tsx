@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import {
 } from 'recharts';
 import { 
   Bot, MessageSquare, Zap, Clock, AlertTriangle, Shield, 
-  TrendingUp, TrendingDown, Users, CheckCircle, XCircle,
+  TrendingUp, Users, CheckCircle, XCircle,
   Download, FileSpreadsheet, Lightbulb, Activity, Target,
   AlertCircle, RefreshCw, Calendar, Bell, BellRing, BarChart3
 } from "lucide-react";
@@ -219,6 +220,7 @@ const calculateHealthScore = (
 
 export default function AgentReports() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -238,40 +240,62 @@ export default function AgentReports() {
     const startDate = subDays(new Date(), parseInt(dateRange)).toISOString();
 
     try {
-      const [agentsRes, conversationsRes, messageLogsRes] = await Promise.all([
-        supabase
-          .from('ai_agents')
-          .select('id, name, status, daily_limit, messages_sent_today, max_replies')
-          .eq('user_id', user.id),
+      // First fetch agents
+      const { data: agentsData, error: agentsError } = await supabase
+        .from('ai_agents')
+        .select('id, name, status, daily_limit, messages_sent_today, max_replies')
+        .eq('user_id', user.id);
+
+      if (agentsError) {
+        console.error('[AgentReports] Error fetching agents:', agentsError);
+        toast.error('Erro ao carregar agentes');
+        setLoading(false);
+        return;
+      }
+
+      setAgents(agentsData || []);
+      const agentIds = (agentsData || []).map(a => a.id);
+
+      // If no agents, skip fetching conversations and logs
+      if (agentIds.length === 0) {
+        setConversations([]);
+        setMessageLogs([]);
+        console.log('[AgentReports] No agents found for user');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch conversations and message logs filtered by user's agents
+      const [conversationsRes, messageLogsRes] = await Promise.all([
         supabase
           .from('agent_conversations')
           .select('*')
+          .in('agent_id', agentIds)
           .gte('created_at', startDate)
           .order('created_at', { ascending: false }),
         supabase
           .from('agent_message_logs')
           .select('*')
+          .in('agent_id', agentIds)
           .gte('created_at', startDate)
           .order('created_at', { ascending: false })
       ]);
 
-      if (agentsRes.data) {
-        setAgents(agentsRes.data);
-        
-        // Filter conversations by user's agents
-        const agentIds = agentsRes.data.map(a => a.id);
-        const userConversations = conversationsRes.data?.filter(c => agentIds.includes(c.agent_id)) || [];
-        const userMessageLogs = messageLogsRes.data?.filter(m => agentIds.includes(m.agent_id)) || [];
-        
-        setConversations(userConversations);
-        setMessageLogs(userMessageLogs);
-
-        console.log('[AgentReports] Loaded data:', {
-          agents: agentsRes.data.length,
-          conversations: userConversations.length,
-          messageLogs: userMessageLogs.length
-        });
+      if (conversationsRes.error) {
+        console.error('[AgentReports] Error fetching conversations:', conversationsRes.error);
       }
+      if (messageLogsRes.error) {
+        console.error('[AgentReports] Error fetching message logs:', messageLogsRes.error);
+      }
+
+      setConversations(conversationsRes.data || []);
+      setMessageLogs(messageLogsRes.data || []);
+
+      console.log('[AgentReports] Loaded data:', {
+        agents: agentsData?.length || 0,
+        conversations: conversationsRes.data?.length || 0,
+        messageLogs: messageLogsRes.data?.length || 0
+      });
     } catch (error) {
       console.error('[AgentReports] Error fetching data:', error);
       toast.error('Erro ao carregar dados dos agentes');
@@ -286,11 +310,19 @@ export default function AgentReports() {
     }
   }, [user, dateRange, fetchData]);
 
+  // Reset selected agent when agents change
+  useEffect(() => {
+    if (selectedAgent !== "all" && !agents.find(a => a.id === selectedAgent)) {
+      setSelectedAgent("all");
+    }
+  }, [agents, selectedAgent]);
+
   // Realtime subscriptions for live alerts
   useEffect(() => {
-    if (!user || !realtimeEnabled) return;
+    if (!user || !realtimeEnabled || agents.length === 0) return;
 
-    console.log('[AgentReports] Setting up realtime subscriptions');
+    const agentIds = agents.map(a => a.id);
+    console.log('[AgentReports] Setting up realtime subscriptions for agents:', agentIds);
 
     const channel = supabase
       .channel('agent-reports-realtime')
@@ -302,9 +334,12 @@ export default function AgentReports() {
           table: 'agent_conversations'
         },
         (payload) => {
-          console.log('[AgentReports] Realtime conversation update:', payload);
-          // Refresh data on changes
-          fetchData();
+          // Only refresh if the conversation belongs to one of user's agents
+          const record = payload.new as { agent_id?: string } | undefined;
+          if (record?.agent_id && agentIds.includes(record.agent_id)) {
+            console.log('[AgentReports] Realtime conversation update:', payload);
+            fetchData();
+          }
         }
       )
       .on(
@@ -315,9 +350,12 @@ export default function AgentReports() {
           table: 'agent_message_logs'
         },
         (payload) => {
-          console.log('[AgentReports] Realtime message log update:', payload);
-          // Refresh data on changes
-          fetchData();
+          // Only refresh if the message belongs to one of user's agents
+          const record = payload.new as { agent_id?: string } | undefined;
+          if (record?.agent_id && agentIds.includes(record.agent_id)) {
+            console.log('[AgentReports] Realtime message log update:', payload);
+            fetchData();
+          }
         }
       )
       .subscribe((status) => {
@@ -327,7 +365,7 @@ export default function AgentReports() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, realtimeEnabled, fetchData]);
+  }, [user, realtimeEnabled, agents, fetchData]);
 
   // Calculate metrics for each agent
   const agentMetrics = useMemo((): AgentMetrics[] => {
@@ -989,11 +1027,12 @@ export default function AgentReports() {
             <CardContent className="p-12 text-center">
               <Bot className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Nenhum Agente de IA Configurado</h3>
-              <p className="text-muted-foreground mb-4">
-                Crie seu primeiro agente de IA para começar a ver métricas e relatórios.
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Crie seus agentes de IA para começar a ver métricas e relatórios de desempenho. 
+                Os dados serão atualizados em tempo real conforme os agentes interagirem com leads.
               </p>
-              <Button onClick={() => window.location.href = '/agents'}>
-                Criar Agente
+              <Button onClick={() => navigate('/agents')}>
+                Criar Agente de IA
               </Button>
             </CardContent>
           </Card>
