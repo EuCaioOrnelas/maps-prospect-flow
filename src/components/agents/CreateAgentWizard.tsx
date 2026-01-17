@@ -1785,7 +1785,7 @@ Preciso falar com meu marido/esposa"
 
   return (
     <Dialog open={open} onOpenChange={(value) => { if (!loading) { onOpenChange(value); if (!value) resetForm(); } }}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0 w-[95vw] sm:w-full">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 w-[95vw] sm:w-full">
         <DialogHeader className="p-3 sm:p-4 pb-2 border-b">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
