@@ -93,9 +93,20 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Check if user is admin
-    const { data: isAdmin } = await supabase.rpc('is_current_user_admin');
+    // Check if user is admin using has_role function with user.id
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
+    
+    if (roleError) {
+      console.error('Error checking admin role:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Erro ao verificar permissões' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     if (!isAdmin) {
       return new Response(
         JSON.stringify({ error: 'Apenas administradores podem usar esta função' }),
