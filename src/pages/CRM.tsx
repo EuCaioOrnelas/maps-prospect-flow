@@ -358,25 +358,25 @@ export default function CRM() {
       <AppSidebar profile={profile || sidebarProfile} />
       <MobileNav profile={profile || sidebarProfile} />
 
-      <main className="lg:pl-14 pt-14 lg:pt-0 min-h-screen">
+      <main className="lg:pl-[72px] pt-14 lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 border-b border-border/50 relative z-10">
-            <div className="p-4 lg:p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Users className="w-6 h-6 text-primary" />
+            <div className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h1 className="text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs font-semibold gap-1">
-                        <FlaskConical className="h-3 w-3" />
+                      <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px] sm:text-xs font-semibold gap-1">
+                        <FlaskConical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         BETA
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {filteredLeads.filter(l => l.pipeline_stage_id != null).length} leads no funil
                     </p>
                   </div>
@@ -387,8 +387,8 @@ export default function CRM() {
               <CRMMetrics stages={stages} leads={filteredLeads} />
 
               {/* Filters */}
-              <div className="mt-4 flex items-center gap-3">
-                <div className="flex-1">
+              <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
                   <CRMFilters 
                     stages={stages}
                     filters={filters}
@@ -398,16 +398,17 @@ export default function CRM() {
                     availableOrigins={availableOrigins}
                   />
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
-                        size="default"
+                        size="sm"
                         onClick={() => setManageStagesOpen(true)}
+                        className="h-8 sm:h-9"
                       >
-                        <Settings2 className="w-4 h-4 mr-2" />
-                        Colunas
+                        <Settings2 className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Colunas</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Gerenciar colunas do funil</TooltipContent>
@@ -417,6 +418,7 @@ export default function CRM() {
                       <Button
                         variant={bulkSelectMode ? "secondary" : "outline"}
                         size="icon"
+                        className="h-8 w-8 sm:h-9 sm:w-9"
                         onClick={() => {
                           setBulkSelectMode(!bulkSelectMode);
                           if (bulkSelectMode) clearSelection();
@@ -437,9 +439,9 @@ export default function CRM() {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="default" onClick={() => setAddLeadOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Adicionar Lead
+                      <Button size="sm" onClick={() => setAddLeadOpen(true)} className="h-8 sm:h-9">
+                        <Plus className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Adicionar Lead</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Adicionar novo lead manualmente</TooltipContent>
@@ -450,7 +452,7 @@ export default function CRM() {
           </div>
 
           {/* Kanban Board */}
-          <div className="flex-1 overflow-hidden p-4 lg:p-6">
+          <div className="flex-1 overflow-hidden p-2 sm:p-4 lg:p-6">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

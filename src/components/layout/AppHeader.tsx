@@ -52,7 +52,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
   };
 
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-30 lg:ml-[72px]">
+    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-30">
       <div className="h-[57px] flex items-center px-3 sm:px-4">
         {/* Logo - visible on mobile, spacer on desktop for sidebar */}
         <div className="lg:hidden">

@@ -312,58 +312,61 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] w-[95vw] p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-primary" />
-            {agent.name}
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <span className="truncate">{agent.name}</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             Gerencie configurações, visualize conversas e métricas do agente
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Visão Geral
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="overview" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Visão Geral</span>
+              <span className="xs:hidden">Geral</span>
             </TabsTrigger>
-            <TabsTrigger value="conversations" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Conversas
+            <TabsTrigger value="conversations" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Conversas</span>
+              <span className="xs:hidden">Msgs</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Pencil className="h-4 w-4" />
-              Editar Bot
+            <TabsTrigger value="settings" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Editar Bot</span>
+              <span className="xs:hidden">Editar</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4 mt-4">
+          <TabsContent value="overview" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{agent.messages_sent_today}</p>
-                  <p className="text-xs text-muted-foreground">Enviadas hoje</p>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <p className="text-lg sm:text-2xl font-bold">{agent.messages_sent_today}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Enviadas hoje</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{agent.daily_limit}</p>
-                  <p className="text-xs text-muted-foreground">Limite diário</p>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <p className="text-lg sm:text-2xl font-bold">{agent.daily_limit}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Limite diário</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{responsesReceived}</p>
-                  <p className="text-xs text-muted-foreground">Respostas</p>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <p className="text-lg sm:text-2xl font-bold">{responsesReceived}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Respostas</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{responseRate}%</p>
-                  <p className="text-xs text-muted-foreground">Taxa resposta</p>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <p className="text-lg sm:text-2xl font-bold">{responseRate}%</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Taxa resposta</p>
                 </CardContent>
               </Card>
             </div>
