@@ -121,31 +121,32 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
     data: {
       suggestedName: 'Agente SDR',
       agentRole: 'sdr',
-      companyName: 'Minha Empresa',
-      productName: 'Meu Produto/Serviço',
-      productDescription: 'Solução completa para aumentar vendas e produtividade do time comercial.',
+      companyName: 'Academia FitLife',
+      productName: 'Plano Anual Premium',
+      productDescription: 'Plano completo com acesso ilimitado à academia, aulas de grupo, personal trainer incluso e acompanhamento nutricional.',
       salesApproach: 'qualify',
       leadAwareness: 'cold',
       messageReason: 'segmented_list',
       consciousnessLevel: 'aware_problem',
       openingStyle: 'question',
       firstMission: 'understand',
-      infoToDiscover: `Qual é o cargo/função da pessoa?
-Quantas pessoas tem a equipe comercial?
-Quais ferramentas usam hoje para prospecção?
-Qual o principal desafio de vendas?
-Tem interesse em conhecer uma solução?`,
+      infoToDiscover: `Qual é seu objetivo principal? (emagrecer, ganhar massa, saúde)
+Já treinou em academia antes?
+Qual horário você teria disponível para treinar?
+O que te impede de começar hoje?
+Prefere treinar sozinho ou com acompanhamento?`,
       maxQuestions: '2',
       presentationStyle: 'comparing',
-      differentials: `Processo estruturado de qualificação
-Agendamento facilitado
-Sem compromisso para conhecer`,
+      differentials: `Personal trainer incluso no plano
+Nutricionista sem custo adicional
+Funcionamos 24 horas
+Primeira semana grátis para experimentar`,
       pricePolicy: 'never',
-      commonObjections: `Não tenho tempo agora
-Já tenho fornecedor
-Preciso falar com meu sócio
-Manda mais informações por email
-Não é prioridade no momento`,
+      commonObjections: `Não tenho tempo para ir
+É muito longe da minha casa
+Academia é muito caro
+Já tentei e não consegui manter
+Vou pensar e depois te procuro`,
       objectionPosture: 'validate',
       conversationGoal: 'schedule_call',
       endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse'],
@@ -167,29 +168,31 @@ Não é prioridade no momento`,
     data: {
       suggestedName: 'Agente Suporte',
       agentRole: 'specialist',
-      companyName: 'Minha Empresa',
-      productName: 'Meu Produto/Serviço',
-      productDescription: 'Plataforma completa com suporte dedicado para garantir o sucesso dos clientes.',
+      companyName: 'Pizzaria Bella Napoli',
+      productName: 'Delivery e Pedidos',
+      productDescription: 'Pizzaria tradicional com delivery rápido, pizzas artesanais, combos família e opções vegetarianas e veganas.',
       salesApproach: 'educate',
       leadAwareness: 'contacted',
       messageReason: 'active_search',
       consciousnessLevel: 'aware_solution',
       openingStyle: 'thank',
       firstMission: 'understand',
-      infoToDiscover: `Qual é o problema ou dúvida exata?
-Quando começou a ter esse problema?
-Já tentou alguma solução?
-Qual a urgência de resolver?`,
+      infoToDiscover: `Qual foi o problema com seu pedido?
+Qual o número do seu pedido?
+O pedido chegou com atraso ou veio errado?
+Quer que a gente refaça ou prefere reembolso?`,
       maxQuestions: '2',
       presentationStyle: 'educating',
-      differentials: `Suporte humanizado e rápido
-Base de conhecimento completa
-Acompanhamento até a solução`,
+      differentials: `Entrega em até 40 minutos
+Reposição grátis se vier errado
+Ingredientes frescos do dia
+Atendimento 7 dias por semana`,
       pricePolicy: 'never',
-      commonObjections: `Isso já aconteceu antes
-Demora muito para resolver
-Prefiro falar com um humano
-Não estou conseguindo usar a ferramenta`,
+      commonObjections: `Meu pedido atrasou muito
+A pizza veio fria
+Veio o sabor errado
+O entregador foi mal educado
+Quero meu dinheiro de volta`,
       objectionPosture: 'explain',
       conversationGoal: 'forward_human',
       endConditions: ['Objetivo atingido', 'Conversa esfriou', 'Lead disse que não tem interesse'],
@@ -211,32 +214,33 @@ Não estou conseguindo usar a ferramenta`,
     data: {
       suggestedName: 'Agente Vendas',
       agentRole: 'sales',
-      companyName: 'Minha Empresa',
-      productName: 'Meu Produto/Serviço',
-      productDescription: 'Solução premium que entrega resultados comprovados para nossos clientes.',
+      companyName: 'Curso de Inglês FastEnglish',
+      productName: 'Curso Completo de Inglês',
+      productDescription: 'Curso de inglês online com aulas ao vivo, material didático incluso, certificado reconhecido e acesso vitalício às gravações.',
       salesApproach: 'close',
       leadAwareness: 'heard',
       messageReason: 'active_search',
       consciousnessLevel: 'aware_solution',
       openingStyle: 'thank',
       firstMission: 'value',
-      infoToDiscover: `Qual problema precisa resolver?
-Já conhece nossa solução?
-O que é mais importante para você: preço ou qualidade?
-Quando pretende decidir?
-Tem orçamento disponível?`,
+      infoToDiscover: `Por que você quer aprender inglês? (trabalho, viagem, hobby)
+Já estudou inglês antes? Qual seu nível atual?
+Quanto tempo por dia você pode dedicar aos estudos?
+Quando você gostaria de começar?
+Prefere aulas individuais ou em grupo?`,
       maxQuestions: '2',
       presentationStyle: 'risk',
-      differentials: `Garantia de resultados
-Suporte dedicado
-Implementação rápida
-Casos de sucesso comprovados`,
+      differentials: `Aulas ao vivo com professor nativo
+Certificado internacional reconhecido
+Acesso vitalício às aulas gravadas
+Garantia de 30 dias ou seu dinheiro de volta
+Metodologia comprovada com 95% de aprovação`,
       pricePolicy: 'with_context',
-      commonObjections: `É muito caro
-Preciso pensar mais
-Vou comparar com concorrentes
-Não é o momento certo
-Já investi em outra solução`,
+      commonObjections: `Já tentei aprender e não consegui
+Não tenho tempo suficiente
+É muito caro pra mim agora
+Vou pesquisar outras opções primeiro
+Preciso falar com meu marido/esposa`,
       objectionPosture: 'example',
       conversationGoal: 'close_deal',
       endConditions: ['CTA ignorado 2 vezes', 'Lead disse que não tem interesse', 'Objetivo atingido'],
