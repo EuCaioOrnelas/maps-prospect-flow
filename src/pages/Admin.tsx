@@ -835,19 +835,22 @@ const Admin = () => {
       // Plan filter
       const matchesPlan = userPlanFilter === 'all' || u.plan === userPlanFilter;
       
-      // Activity filter
+      // Activity filter - based on updated_at (last access date)
       let matchesActivity = true;
       const updatedAt = new Date(u.updated_at);
       
       switch (userActivityFilter) {
         case 'active_7d':
-          matchesActivity = updatedAt >= sevenDaysAgo && u.searches_used > 0;
+          // Acessou nos últimos 7 dias
+          matchesActivity = updatedAt >= sevenDaysAgo;
           break;
         case 'active_30d':
-          matchesActivity = updatedAt >= thirtyDaysAgo && u.searches_used > 0;
+          // Acessou nos últimos 30 dias (mas não nos últimos 7)
+          matchesActivity = updatedAt >= thirtyDaysAgo && updatedAt < sevenDaysAgo;
           break;
         case 'inactive_30d':
-          matchesActivity = updatedAt < thirtyDaysAgo || u.searches_used === 0;
+          // Não acessou há mais de 30 dias (31+ dias sem acesso)
+          matchesActivity = updatedAt < thirtyDaysAgo;
           break;
         default:
           matchesActivity = true;
