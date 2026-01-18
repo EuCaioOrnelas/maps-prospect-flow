@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
     const results: Record<string, any> = {};
     
     // 1. Clean old heartbeats (keep only last 3 days)
+    // These are just system logs for monitoring the campaign processor
     console.log('[cleanup-old-data] Cleaning campaign_processor_heartbeats...');
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const { error: heartbeatError } = await supabase
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
     }
     
     // 2. Clean old rate_limits (keep only last 1 hour)
+    // These are temporary rate limiting records, not analytics
     console.log('[cleanup-old-data] Cleaning rate_limits...');
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { error: rateLimitError } = await supabase
@@ -53,37 +55,8 @@ Deno.serve(async (req) => {
       results.rateLimits = { success: true };
     }
     
-    // 3. Clean old landing_page_events (keep only last 90 days)
-    console.log('[cleanup-old-data] Cleaning landing_page_events...');
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const { error: landingError } = await supabase
-      .from('landing_page_events')
-      .delete()
-      .lt('created_at', ninetyDaysAgo);
-    
-    if (landingError) {
-      console.error('[cleanup-old-data] Error cleaning landing_page_events:', landingError);
-      results.landingPageEvents = { error: landingError.message };
-    } else {
-      console.log('[cleanup-old-data] Cleaned old landing page events');
-      results.landingPageEvents = { success: true };
-    }
-
-    // 4. Clean old user_events (keep only last 30 days)
-    console.log('[cleanup-old-data] Cleaning user_events...');
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { error: userEventsError } = await supabase
-      .from('user_events')
-      .delete()
-      .lt('created_at', thirtyDaysAgo);
-    
-    if (userEventsError) {
-      console.error('[cleanup-old-data] Error cleaning user_events:', userEventsError);
-      results.userEvents = { error: userEventsError.message };
-    } else {
-      console.log('[cleanup-old-data] Cleaned old user events');
-      results.userEvents = { success: true };
-    }
+    // NOTE: We keep landing_page_events and user_events for analytics purposes
+    // These contain valuable business data that should not be automatically deleted
     
     console.log('[cleanup-old-data] Cleanup complete:', results);
     
