@@ -308,8 +308,8 @@ const Admin = () => {
         // Cancellation
         monthlyData[monthKey].cancellations++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
-        // Refund - get amount from metadata if available
-        const refundAmount = metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
+        // Refund - get amount from metadata (amount_refunded from Stripe)
+        const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
         monthlyData[monthKey].refundValue += refundAmount;
       }
     }
