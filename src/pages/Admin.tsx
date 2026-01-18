@@ -44,6 +44,10 @@ import {
   Bug,
   Bell,
   FlaskConical,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -52,6 +56,7 @@ import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import * as XLSX from 'xlsx';
 
 // Função para verificar admin via banco de dados (seguro)
 // Preços dos planos (fallback caso Stripe falhe)
@@ -189,6 +194,13 @@ const Admin = () => {
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
   const [checkingApis, setCheckingApis] = useState(false);
+  
+  // User table states - pagination and filters
+  type UserActivityFilter = 'all' | 'active_7d' | 'active_30d' | 'inactive_30d';
+  const [userPlanFilter, setUserPlanFilter] = useState<string>('all');
+  const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const USERS_PER_PAGE = 20;
 
   // Fetch real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
@@ -809,10 +821,76 @@ const Admin = () => {
     navigate("/");
   };
 
-  const filteredUsers = users.filter(u => 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtered and paginated users
+  const filteredUsers = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    return users.filter(u => {
+      // Search filter
+      const matchesSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Plan filter
+      const matchesPlan = userPlanFilter === 'all' || u.plan === userPlanFilter;
+      
+      // Activity filter
+      let matchesActivity = true;
+      const updatedAt = new Date(u.updated_at);
+      
+      switch (userActivityFilter) {
+        case 'active_7d':
+          matchesActivity = updatedAt >= sevenDaysAgo && u.searches_used > 0;
+          break;
+        case 'active_30d':
+          matchesActivity = updatedAt >= thirtyDaysAgo && u.searches_used > 0;
+          break;
+        case 'inactive_30d':
+          matchesActivity = updatedAt < thirtyDaysAgo || u.searches_used === 0;
+          break;
+        default:
+          matchesActivity = true;
+      }
+      
+      return matchesSearch && matchesPlan && matchesActivity;
+    });
+  }, [users, searchTerm, userPlanFilter, userActivityFilter]);
+
+  // Paginated users
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, userPlanFilter, userActivityFilter]);
+
+  // Export users to Excel
+  const exportUsersToExcel = () => {
+    const dataToExport = filteredUsers.map(u => ({
+      Nome: u.name || '-',
+      'E-mail': u.email,
+      Plano: u.plan.charAt(0).toUpperCase() + u.plan.slice(1),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuários');
+    
+    // Generate filename with date
+    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    XLSX.writeFile(workbook, `usuarios_${date}.xlsx`);
+    
+    toast({
+      title: "Exportação concluída",
+      description: `${filteredUsers.length} usuários exportados com sucesso.`,
+    });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -1535,24 +1613,56 @@ const Admin = () => {
 
             {/* Users Table */}
             <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1.1s' }}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Users size={20} className="text-primary" />
-                  <h2 className="font-display font-semibold">Usuários</h2>
-                </div>
-                <div className="flex gap-2">
-                  <div className="relative flex-1 sm:w-64">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar usuário..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 bg-secondary"
-                    />
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Users size={20} className="text-primary" />
+                    <h2 className="font-display font-semibold">Usuários</h2>
+                    <span className="text-sm text-muted-foreground">({filteredUsers.length})</span>
                   </div>
-                  <Button variant="outline" size="icon" onClick={loadData}>
-                    <RefreshCw size={16} />
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="relative flex-1 sm:w-48">
+                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar usuário..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 bg-secondary"
+                      />
+                    </div>
+                    <Select value={userPlanFilter} onValueChange={setUserPlanFilter}>
+                      <SelectTrigger className="w-32 bg-secondary">
+                        <Filter size={14} className="mr-1" />
+                        <SelectValue placeholder="Plano" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="free">Free</SelectItem>
+                        <SelectItem value="start">Start</SelectItem>
+                        <SelectItem value="growth">Growth</SelectItem>
+                        <SelectItem value="scale">Scale</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={userActivityFilter} onValueChange={(v) => setUserActivityFilter(v as typeof userActivityFilter)}>
+                      <SelectTrigger className="w-40 bg-secondary">
+                        <Activity size={14} className="mr-1" />
+                        <SelectValue placeholder="Atividade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="active_7d">Ativos 7 dias</SelectItem>
+                        <SelectItem value="active_30d">Ativos 30 dias</SelectItem>
+                        <SelectItem value="inactive_30d">Inativos +30 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="icon" onClick={loadData} title="Atualizar">
+                      <RefreshCw size={16} />
+                    </Button>
+                    <Button variant="outline" onClick={exportUsersToExcel} className="gap-2" title="Exportar Excel">
+                      <Download size={16} />
+                      <span className="hidden sm:inline">Exportar</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -1569,7 +1679,7 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.map((u) => (
+                      {paginatedUsers.map((u) => (
                         <TableRow key={u.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -1626,9 +1736,38 @@ const Admin = () => {
                 </div>
               </div>
 
-              {filteredUsers.length === 0 && (
+              {paginatedUsers.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum usuário encontrado
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground">
+                    Página {currentPage} de {totalPages} ({filteredUsers.length} usuários)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft size={16} />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Próximo
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
