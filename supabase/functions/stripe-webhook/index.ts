@@ -645,6 +645,59 @@ serve(async (req) => {
         break;
       }
 
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        logStep("Charge refunded", { 
+          chargeId: charge.id,
+          customerId: charge.customer,
+          amountRefunded: charge.amount_refunded / 100
+        });
+
+        // Get customer email
+        if (charge.customer) {
+          const customer = await stripe.customers.retrieve(charge.customer as string);
+          if (customer && !customer.deleted && customer.email) {
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("id, plan, searches_limit")
+              .eq("email", customer.email)
+              .maybeSingle();
+
+            const refundAmount = charge.amount_refunded / 100;
+
+            // Log refund event
+            await logSubscriptionEvent(
+              supabaseClient,
+              "charge_refunded",
+              "stripe-webhook",
+              customer.email,
+              profile?.id || null,
+              profile?.plan || null,
+              profile?.plan || null,
+              profile?.searches_limit || null,
+              profile?.searches_limit || 0,
+              0,
+              null,
+              charge.customer as string,
+              event.id,
+              {
+                charge_id: charge.id,
+                amount_refunded: refundAmount,
+                currency: charge.currency,
+                stripe_event_created: event.created,
+                stripe_event_type: event.type,
+              }
+            );
+
+            logStep("Refund event logged", { 
+              email: customer.email, 
+              amount: refundAmount 
+            });
+          }
+        }
+        break;
+      }
+
       default:
         logStep("Unhandled event type", { type: event.type });
     }
