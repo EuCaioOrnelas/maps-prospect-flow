@@ -165,6 +165,42 @@ serve(async (req) => {
 
     // Track monthly revenue by invoice paid date (not subscription start date)
     const monthlyMRR: { [month: string]: number } = {};
+    
+    // Track monthly refunds by refund date
+    const monthlyRefunds: { [month: string]: number } = {};
+
+    // Process refunds to get monthly breakdown
+    for (const refund of allRefunds) {
+      if (refund.status === "succeeded") {
+        const refundDate = new Date(refund.created * 1000);
+        const monthKey = `${refundDate.getFullYear()}-${String(refundDate.getMonth() + 1).padStart(2, "0")}`;
+        
+        // Check if this refund belongs to a WiizeProspect subscription
+        if (refund.charge) {
+          const charge = typeof refund.charge === "string" 
+            ? await stripe.charges.retrieve(refund.charge)
+            : refund.charge;
+          
+          if (charge.invoice) {
+            const invoice = await stripe.invoices.retrieve(charge.invoice as string);
+            const subId = invoice.subscription;
+            
+            if (subId) {
+              const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === subId);
+              if (sub) {
+                const customer = sub.customer as Stripe.Customer;
+                const customerEmail = customer?.email || "";
+                
+                // Skip admin emails
+                if (!ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
+                  monthlyRefunds[monthKey] = (monthlyRefunds[monthKey] || 0) + (refund.amount / 100);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     // Process WiizeProspect subscriptions
     let activeMRR = 0;
@@ -243,6 +279,7 @@ serve(async (req) => {
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunds: ${wiizeRefundCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
     console.log(`[GET-STRIPE-MRR] Monthly MRR entries: ${Object.keys(monthlyMRR).length}`);
+    console.log(`[GET-STRIPE-MRR] Monthly Refunds entries: ${Object.keys(monthlyRefunds).length}`);
 
     return new Response(
       JSON.stringify({
@@ -254,6 +291,9 @@ serve(async (req) => {
         churnRate: parseFloat(churnRate.toFixed(1)),
         monthlyMRR: Object.entries(monthlyMRR)
           .map(([month, mrr]) => ({ month, mrr }))
+          .sort((a, b) => a.month.localeCompare(b.month)),
+        monthlyRefunds: Object.entries(monthlyRefunds)
+          .map(([month, amount]) => ({ month, amount }))
           .sort((a, b) => a.month.localeCompare(b.month)),
       }),
       {
