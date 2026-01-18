@@ -103,7 +103,7 @@ interface StripeMRRData {
   canceledSubscriptions: number;
   churnRate: number;
   monthlyMRR: Array<{ month: string; mrr: number }>;
-  monthlyRefunds?: Array<{ month: string; amount: number }>;
+  monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
 }
 
 interface SalesChartData {
@@ -325,11 +325,9 @@ const Admin = () => {
           if (!monthlyData[refund.month]) {
             monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
-          // Only add if not already tracked in subscription_events
           // Use Stripe data as the authoritative source for refunds
           monthlyData[refund.month].refundValue = refund.amount;
-          // Use Stripe refundCount if available, otherwise assume 1 per month
-          monthlyData[refund.month].refundCount = stripeMRR?.refundCount ?? 1;
+          monthlyData[refund.month].refundCount = refund.count;
         }
       }
     }
