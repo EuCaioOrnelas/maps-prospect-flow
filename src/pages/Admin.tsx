@@ -103,6 +103,7 @@ interface StripeMRRData {
   canceledSubscriptions: number;
   churnRate: number;
   monthlyMRR: Array<{ month: string; mrr: number }>;
+  monthlyRefunds?: Array<{ month: string; amount: number }>;
 }
 
 interface SalesChartData {
@@ -230,7 +231,7 @@ const Admin = () => {
 
   // Process sales events based on period filter
   const processedSalesChartData = useMemo(() => {
-    if (!allSalesEvents.length) return [];
+    if (!allSalesEvents.length && !stripeMRR?.monthlyRefunds?.length) return [];
 
     // Calculate date range based on filter
     const now = new Date();
@@ -308,9 +309,24 @@ const Admin = () => {
         // Cancellation
         monthlyData[monthKey].cancellations++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
-        // Refund - get amount from metadata (amount_refunded from Stripe)
+        // Refund from subscription_events - get amount from metadata
         const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
         monthlyData[monthKey].refundValue += refundAmount;
+      }
+    }
+    
+    // Merge refund data from Stripe API (historical refunds not in subscription_events)
+    if (stripeMRR?.monthlyRefunds) {
+      for (const refund of stripeMRR.monthlyRefunds) {
+        const refundDate = monthKeyToLocalDate(refund.month);
+        if (refundDate >= startDate) {
+          if (!monthlyData[refund.month]) {
+            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0 };
+          }
+          // Only add if not already tracked in subscription_events
+          // Use Stripe data as the authoritative source for refunds
+          monthlyData[refund.month].refundValue = refund.amount;
+        }
       }
     }
     
@@ -321,7 +337,7 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [allSalesEvents, chartPeriodFilter]);
+  }, [allSalesEvents, chartPeriodFilter, stripeMRR?.monthlyRefunds]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
