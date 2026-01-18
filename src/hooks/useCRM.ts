@@ -95,8 +95,14 @@ export const WHATSAPP_STATUS_COLORS: Record<WhatsAppStatus, string> = {
 // Colunas padrão travadas (não podem ser editadas/excluídas)
 export const LOCKED_STAGE_NAMES = ['Prospectado', 'Fechado (Ganho)', 'Perdido'];
 
-// Verifica se uma coluna é travada
+// Colunas gerenciadas pelo agente IA (não podem ter leads editados/excluídos manualmente)
+export const AGENT_MANAGED_STAGES = ['Mensagem Enviada', 'Respondeu Mensagem'];
+
+// Verifica se uma coluna é travada (não pode ser editada/excluída)
 export const isLockedStage = (stageName: string) => LOCKED_STAGE_NAMES.includes(stageName);
+
+// Verifica se uma coluna é gerenciada pelo agente (leads não podem ser editados/excluídos)
+export const isAgentManagedStage = (stageName: string) => AGENT_MANAGED_STAGES.includes(stageName);
 
 const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'updated_at'>[] = [
   { name: 'Prospectado', position: 0, color: '#6B7280', is_default: true },
