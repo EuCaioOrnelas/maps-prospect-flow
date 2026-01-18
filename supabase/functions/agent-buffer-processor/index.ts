@@ -9,6 +9,13 @@ const corsHeaders = {
 // Buffer delay in milliseconds (2 minutes)
 const BUFFER_DELAY_MS = 2 * 60 * 1000;
 
+// Response limits by warming status
+const RESPONSE_LIMITS = {
+  cold: 50,      // Número frio: 50 leads respondidos
+  warm: 200,     // Número morno: 200 leads respondidos
+  hot: null,     // Número aquecido: sem limite
+};
+
 // Get São Paulo time
 function getSaoPauloTime(): Date {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -136,6 +143,128 @@ function cleanIncompleteResponse(text: string, maxChars: number): string {
   return result;
 }
 
+// Get warming status for a WhatsApp number
+async function getWarmingStatus(supabase: any, whatsappNumberId: string): Promise<'cold' | 'warm' | 'hot'> {
+  const { data: session } = await supabase
+    .from('warming_sessions')
+    .select('warming_status')
+    .eq('whatsapp_number_id', whatsappNumberId)
+    .single();
+  
+  if (!session) return 'cold';
+  return session.warming_status || 'cold';
+}
+
+// Count unique leads responded to by this agent (not total messages)
+async function countUniqueLeadsResponded(supabase: any, agentId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('agent_conversations')
+    .select('*', { count: 'exact', head: true })
+    .eq('agent_id', agentId)
+    .eq('reply_sent', true);
+  
+  if (error) {
+    console.error('Error counting unique leads:', error);
+    return 0;
+  }
+  
+  return count || 0;
+}
+
+// Check if agent has reached response limit based on warming status
+async function hasReachedResponseLimit(
+  supabase: any, 
+  agentId: string, 
+  whatsappNumberId: string
+): Promise<{ reached: boolean; currentCount: number; limit: number | null; warmingStatus: string }> {
+  const warmingStatus = await getWarmingStatus(supabase, whatsappNumberId);
+  const limit = RESPONSE_LIMITS[warmingStatus];
+  const currentCount = await countUniqueLeadsResponded(supabase, agentId);
+  
+  console.log(`Agent ${agentId} - Warming: ${warmingStatus}, Limit: ${limit ?? 'unlimited'}, Current: ${currentCount}`);
+  
+  // No limit for hot numbers
+  if (limit === null) {
+    return { reached: false, currentCount, limit, warmingStatus };
+  }
+  
+  return { 
+    reached: currentCount >= limit, 
+    currentCount, 
+    limit, 
+    warmingStatus 
+  };
+}
+
+// Move lead to CRM stage by stage name
+async function moveLeadToCRMStage(
+  supabase: any, 
+  phone: string, 
+  userId: string, 
+  stageName: string
+): Promise<void> {
+  try {
+    // Find the lead by phone number
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('id, pipeline_stage_id, user_id')
+      .eq('phone', phone)
+      .eq('user_id', userId)
+      .single();
+    
+    if (!lead) {
+      console.log(`No lead found for phone ${phone}`);
+      return;
+    }
+    
+    // Find the target stage
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('id, name')
+      .eq('user_id', userId)
+      .eq('name', stageName)
+      .single();
+    
+    if (!stage) {
+      console.log(`Stage "${stageName}" not found for user ${userId}`);
+      return;
+    }
+    
+    // Don't move if already in target stage
+    if (lead.pipeline_stage_id === stage.id) {
+      console.log(`Lead ${lead.id} already in stage "${stageName}"`);
+      return;
+    }
+    
+    // Update lead's stage
+    const { error } = await supabase
+      .from('leads')
+      .update({ 
+        pipeline_stage_id: stage.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', lead.id);
+    
+    if (error) {
+      console.error(`Error moving lead to ${stageName}:`, error);
+      return;
+    }
+    
+    // Log activity
+    await supabase.from('lead_activities').insert({
+      lead_id: lead.id,
+      user_id: userId,
+      activity_type: 'stage_changed',
+      description: `Movido automaticamente para ${stageName} pelo agente IA`,
+      metadata: { automated: true, source: 'ai_agent' }
+    });
+    
+    console.log(`Lead ${lead.id} moved to "${stageName}"`);
+  } catch (err) {
+    console.error('Error in moveLeadToCRMStage:', err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -158,7 +287,7 @@ serve(async (req) => {
       .from('agent_conversations')
       .select(`
         *,
-        agent:ai_agents(*, whatsapp_number:whatsapp_numbers(instance_name, phone_number))
+        agent:ai_agents(*, whatsapp_number:whatsapp_numbers(id, instance_name, phone_number, user_id))
       `)
       .lte('process_after', now)
       .eq('is_processing', false)
@@ -181,6 +310,7 @@ serve(async (req) => {
 
     let processedCount = 0;
     let errorCount = 0;
+    let skippedDueToLimit = 0;
 
     for (const conv of readyConversations) {
       try {
@@ -189,6 +319,45 @@ serve(async (req) => {
         if (!agent || agent.status !== 'active') {
           console.log(`Skipping conv ${conv.id}: agent not active`);
           continue;
+        }
+
+        const whatsappNumber = agent.whatsapp_number;
+        if (!whatsappNumber) {
+          console.log(`Skipping conv ${conv.id}: no WhatsApp number configured`);
+          continue;
+        }
+
+        // Check if this is a NEW lead (first reply) - only count unique leads
+        const isFirstReplyToLead = !conv.reply_sent;
+        
+        // Check response limits based on warming status (only for new leads)
+        if (isFirstReplyToLead) {
+          const limitCheck = await hasReachedResponseLimit(
+            supabase, 
+            agent.id, 
+            whatsappNumber.id
+          );
+          
+          if (limitCheck.reached) {
+            console.log(`Agent ${agent.id} reached limit: ${limitCheck.currentCount}/${limitCheck.limit} (${limitCheck.warmingStatus})`);
+            skippedDueToLimit++;
+            
+            // Move lead to "Respondeu Mensagem" since we can't respond
+            await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, 'Respondeu Mensagem');
+            
+            // Clear buffer and mark as completed
+            await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
+            await supabase
+              .from('agent_conversations')
+              .update({ 
+                status: 'limit_reached',
+                process_after: null,
+                is_processing: false
+              })
+              .eq('id', conv.id);
+            
+            continue;
+          }
         }
 
         // Check operating hours
@@ -234,7 +403,7 @@ serve(async (req) => {
           });
         }
 
-        // Reply count tracking (no limits)
+        // Reply count tracking
         const currentReplyCount = conv.reply_count || 0;
 
         // Generate AI response
@@ -326,7 +495,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
             // Split into multiple messages if needed
             const messages = formatResponseAsParagraphs(replyContent);
             
-            const instanceName = agent.whatsapp_number?.instance_name;
+            const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
               let sentCount = 0;
               
@@ -371,7 +540,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               if (sentCount > 0) {
                 const newReplyCount = currentReplyCount + 1;
 
-                // Update conversation - always keep awaiting_response (no limit)
+                // Update conversation
                 await supabase
                   .from('agent_conversations')
                   .update({
@@ -393,6 +562,9 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                     updated_at: new Date().toISOString(),
                   })
                   .eq('id', agent.id);
+
+                // CRM Integration: Move lead to "Mensagem Enviada" when agent responds
+                await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, 'Mensagem Enviada');
 
                 // Clear buffer
                 await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
@@ -425,13 +597,14 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
       }
     }
 
-    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}`);
+    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}, Skipped (limit): ${skippedDueToLimit}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         processed: processedCount,
         errors: errorCount,
+        skipped_limit: skippedDueToLimit,
         total: readyConversations.length 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
