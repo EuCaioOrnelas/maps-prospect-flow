@@ -168,25 +168,17 @@ export const TestimonialsSection = () => {
           </p>
         </div>
 
-        {/* Desktop: 3 columns */}
-        <div className="hidden lg:flex justify-center gap-6 max-w-6xl mx-auto h-[600px] mask-gradient">
+        {/* Desktop: 3 columns - all same height */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto h-[600px] mask-gradient">
           <TestimonialsColumn testimonials={firstColumn} duration={25} />
-          <TestimonialsColumn
-            testimonials={secondColumn}
-            className="mt-16"
-            duration={30}
-          />
+          <TestimonialsColumn testimonials={secondColumn} duration={30} />
           <TestimonialsColumn testimonials={thirdColumn} duration={22} />
         </div>
 
-        {/* Tablet: 2 columns */}
-        <div className="hidden md:flex lg:hidden justify-center gap-6 max-w-4xl mx-auto h-[500px] mask-gradient">
+        {/* Tablet: 2 columns - all same height */}
+        <div className="hidden md:grid md:grid-cols-2 lg:hidden gap-6 max-w-4xl mx-auto h-[500px] mask-gradient">
           <TestimonialsColumn testimonials={firstColumn} duration={25} />
-          <TestimonialsColumn
-            testimonials={secondColumn}
-            className="mt-12"
-            duration={30}
-          />
+          <TestimonialsColumn testimonials={secondColumn} duration={30} />
         </div>
 
         {/* Mobile: 1 column */}
