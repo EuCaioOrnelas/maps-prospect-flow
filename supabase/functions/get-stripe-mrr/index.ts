@@ -166,8 +166,8 @@ serve(async (req) => {
     // Track monthly revenue by invoice paid date (not subscription start date)
     const monthlyMRR: { [month: string]: number } = {};
     
-    // Track monthly refunds by refund date
-    const monthlyRefunds: { [month: string]: number } = {};
+    // Track monthly refunds by refund date (amount and count)
+    const monthlyRefunds: { [month: string]: { amount: number; count: number } } = {};
 
     // Process refunds to get monthly breakdown
     for (const refund of allRefunds) {
@@ -193,7 +193,11 @@ serve(async (req) => {
                 
                 // Skip admin emails
                 if (!ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-                  monthlyRefunds[monthKey] = (monthlyRefunds[monthKey] || 0) + (refund.amount / 100);
+                  if (!monthlyRefunds[monthKey]) {
+                    monthlyRefunds[monthKey] = { amount: 0, count: 0 };
+                  }
+                  monthlyRefunds[monthKey].amount += refund.amount / 100;
+                  monthlyRefunds[monthKey].count += 1;
                 }
               }
             }
@@ -293,7 +297,7 @@ serve(async (req) => {
           .map(([month, mrr]) => ({ month, mrr }))
           .sort((a, b) => a.month.localeCompare(b.month)),
         monthlyRefunds: Object.entries(monthlyRefunds)
-          .map(([month, amount]) => ({ month, amount }))
+          .map(([month, data]) => ({ month, amount: data.amount, count: data.count }))
           .sort((a, b) => a.month.localeCompare(b.month)),
       }),
       {
