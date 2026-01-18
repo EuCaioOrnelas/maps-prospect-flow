@@ -2125,6 +2125,10 @@ export type Database = {
         Args: { phone_input: string }
         Returns: string
       }
+      verify_webhook_signature: {
+        Args: { p_payload: string; p_secret_name: string; p_signature: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
