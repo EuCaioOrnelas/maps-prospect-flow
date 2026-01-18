@@ -279,8 +279,11 @@ const Admin = () => {
       const previousPlan = event.previous_plan?.toLowerCase();
       const newPlan = event.new_plan?.toLowerCase();
       
-      // Get plan price for value calculation
-      const planPrice = PLAN_PRICES[newPlan] || 0;
+      // Get REAL amount paid from metadata (includes discounts/coupons)
+      // Fallback to plan price only if amount_paid not available
+      const metadata = event.metadata || {};
+      const realAmountPaid = typeof metadata.amount_paid === 'number' ? metadata.amount_paid : null;
+      const planPrice = realAmountPaid ?? (PLAN_PRICES[newPlan] || 0);
       
       if (eventType === 'checkout_completed') {
         // Check if it's a new sale or upgrade
@@ -291,14 +294,12 @@ const Admin = () => {
         } else if (previousPlan !== newPlan) {
           // Upgrade (from another paid plan to a different plan)
           monthlyData[monthKey].upgrades++;
-          // Add the difference in plan prices for upgrades
-          const previousPrice = PLAN_PRICES[previousPlan] || 0;
-          monthlyData[monthKey].salesValue += Math.max(0, planPrice - previousPrice);
+          // Use real amount paid for upgrades too
+          monthlyData[monthKey].salesValue += planPrice;
         }
       } else if (eventType === 'subscription_upgrade') {
         monthlyData[monthKey].upgrades++;
-        const previousPrice = PLAN_PRICES[previousPlan] || 0;
-        monthlyData[monthKey].salesValue += Math.max(0, planPrice - previousPrice);
+        monthlyData[monthKey].salesValue += planPrice;
       } else if (
         eventType === 'subscription_deleted' || 
         eventType === 'subscription_canceled' ||
@@ -308,7 +309,7 @@ const Admin = () => {
         monthlyData[monthKey].cancellations++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
         // Refund - get amount from metadata if available
-        const refundAmount = event.metadata?.amount || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
+        const refundAmount = metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
         monthlyData[monthKey].refundValue += refundAmount;
       }
     }
