@@ -339,6 +339,16 @@ serve(async (req) => {
     // Check operating hours
     if (!isWithinOperatingHours(agent.operating_hours_start, agent.operating_hours_end)) {
       console.log('Outside operating hours, skipping');
+      
+      // CRM: Move lead to "Respondeu Mensagem" when outside operating hours (agent can't respond)
+      const userId = agent.whatsapp_number?.user_id;
+      if (userId && action === 'receive') {
+        const body = await req.clone().json();
+        if (body.phone) {
+          await moveLeadToCRMStage(supabase, body.phone, userId, 'Respondeu Mensagem');
+        }
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: false, 

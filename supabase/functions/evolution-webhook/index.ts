@@ -1031,6 +1031,63 @@ serve(async (req) => {
                 }
               } else {
                 // ===== MESSAGE SENT (fromMe=true) - MOVE TO "MENSAGEM ENVIADA" =====
+                
+                // ===== PAUSE AI AGENT WHEN USER RESPONDS TO LEAD =====
+                // Check if there's an active AI agent for this number and pause it for this lead
+                // EXCEPTION: "atendimento" objective agents don't follow this rule
+                try {
+                  const { data: activeAgents } = await supabase
+                    .from('ai_agents')
+                    .select('id, name, objective, status')
+                    .eq('whatsapp_number_id', whatsappNumber.id)
+                    .eq('status', 'active');
+                  
+                  if (activeAgents && activeAgents.length > 0) {
+                    for (const activeAgent of activeAgents) {
+                      // Skip atendimento agents - they continue even when user responds
+                      if (activeAgent.objective === 'atendimento') {
+                        console.log(`Skipping pause for atendimento agent: ${activeAgent.name}`);
+                        continue;
+                      }
+                      
+                      // Find conversation for this lead with this agent
+                      const { data: agentConv } = await supabase
+                        .from('agent_conversations')
+                        .select('id, status')
+                        .eq('agent_id', activeAgent.id)
+                        .eq('lead_phone', normalizedPhone)
+                        .single();
+                      
+                      if (agentConv) {
+                        // Pause agent for this lead today (set user_responded_at)
+                        const today = new Date().toISOString().split('T')[0];
+                        
+                        await supabase
+                          .from('agent_conversations')
+                          .update({
+                            status: 'user_responded',
+                            user_responded_at: new Date().toISOString(),
+                            user_responded_date: today,
+                            process_after: null,
+                            is_processing: false,
+                            updated_at: new Date().toISOString()
+                          })
+                          .eq('id', agentConv.id);
+                        
+                        // Clear any buffered messages for this conversation
+                        await supabase
+                          .from('agent_message_buffer')
+                          .delete()
+                          .eq('conversation_id', agentConv.id);
+                        
+                        console.log(`AI Agent ${activeAgent.name} paused for lead ${normalizedPhone} - user responded`);
+                      }
+                    }
+                  }
+                } catch (agentPauseError) {
+                  console.error('Error pausing AI agent:', agentPauseError);
+                }
+                
                 // Find lead by phone or conversation_id
                 const { data: existingLeadSent } = await supabase
                   .from('leads')
