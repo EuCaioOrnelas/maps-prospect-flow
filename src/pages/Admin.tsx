@@ -1186,10 +1186,10 @@ const Admin = () => {
                   <div className="bg-success/10 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-1">Total Vendas</p>
                     <p className="text-lg font-bold text-success">
-                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.salesValue, 0).toLocaleString('pt-BR')}
+                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.salesValue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales + item.upgrades, 0)} transações
+                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales + item.upgrades + item.refundCount, 0)} transações
                     </p>
                   </div>
                   <div className="bg-destructive/10 rounded-lg p-3">
