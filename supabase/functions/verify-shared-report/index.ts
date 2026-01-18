@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { verifyPassword } from "../_shared/password-hash.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,11 +50,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Simple password verification (in production, use bcrypt)
-    // For now, we store a simple hash
-    const inputHash = btoa(password);
+    // Secure password verification using PBKDF2
+    // Also supports legacy base64 format for backward compatibility
+    const isValid = await verifyPassword(password, report.password_hash);
     
-    if (report.password_hash !== inputHash) {
+    if (!isValid) {
       return new Response(
         JSON.stringify({ error: 'Senha incorreta' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
