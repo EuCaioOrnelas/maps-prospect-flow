@@ -28,6 +28,7 @@ import {
   Loader2,
   Lock
 } from "lucide-react";
+import { hashReportPassword } from "@/lib/secureHash";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,11 +252,14 @@ const Reports = () => {
         generatedAt: new Date().toISOString()
       };
 
+      // Use secure password hashing instead of btoa
+      const secureHash = await hashReportPassword(linkPassword);
+
       const { data, error } = await supabase
         .from('shared_reports')
         .insert([{
           user_id: user?.id as string,
-          password_hash: btoa(linkPassword),
+          password_hash: secureHash,
           filter_type: dateFilter,
           report_data: reportData as any
         }])

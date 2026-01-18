@@ -8,6 +8,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -45,10 +46,10 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (!isPasswordStrong(password)) {
       toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres.",
+        title: "Senha muito fraca",
+        description: "Sua senha precisa atender pelo menos 4 critérios de segurança.",
         variant: "destructive",
       });
       return;
@@ -131,6 +132,7 @@ const ResetPassword = () => {
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                     </div>
+                    <PasswordStrength password={password} />
                   </div>
 
                   <div className="space-y-2">
