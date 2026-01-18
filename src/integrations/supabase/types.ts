@@ -2117,6 +2117,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_sensitive_access: {
+        Args: { p_action: string; p_details?: Json; p_table_name: string }
+        Returns: undefined
+      }
       normalize_brazilian_phone: {
         Args: { phone_input: string }
         Returns: string
