@@ -407,6 +407,44 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
+      // Check if user (owner) responded to this lead today - agent should not respond
+      // EXCEPTION: "atendimento" objective agents continue responding even if user responded
+      if (existingConv && agent.objective !== 'atendimento') {
+        const today = new Date().toISOString().split('T')[0];
+        if (existingConv.user_responded_date === today) {
+          console.log(`User responded to lead ${phone} today, agent ${agentId} paused for this lead`);
+          
+          // CRM: Move to "Respondeu Mensagem" since agent won't respond
+          const userId = agent.whatsapp_number?.user_id;
+          if (userId) {
+            await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              reason: 'user_responded_today',
+              message: 'User already responded to this lead today, agent paused' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // If user responded yesterday or before, reset the flag and allow agent to continue
+        if (existingConv.user_responded_date && existingConv.user_responded_date !== today) {
+          console.log(`User responded on ${existingConv.user_responded_date}, but today is ${today}. Resetting flag.`);
+          await supabase
+            .from('agent_conversations')
+            .update({
+              user_responded_date: null,
+              user_responded_at: null,
+              status: 'buffering',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingConv.id);
+        }
+      }
+
       // Create new conversation if doesn't exist
       if (!existingConv) {
         // Check response limits BEFORE creating conversation

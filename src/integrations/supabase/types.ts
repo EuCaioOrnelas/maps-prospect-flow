@@ -34,6 +34,8 @@ export type Database = {
           response_received_at: string | null
           status: string
           updated_at: string
+          user_responded_at: string | null
+          user_responded_date: string | null
         }
         Insert: {
           agent_id: string
@@ -54,6 +56,8 @@ export type Database = {
           response_received_at?: string | null
           status?: string
           updated_at?: string
+          user_responded_at?: string | null
+          user_responded_date?: string | null
         }
         Update: {
           agent_id?: string
@@ -74,6 +78,8 @@ export type Database = {
           response_received_at?: string | null
           status?: string
           updated_at?: string
+          user_responded_at?: string | null
+          user_responded_date?: string | null
         }
         Relationships: [
           {
