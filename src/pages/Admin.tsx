@@ -113,6 +113,7 @@ interface SalesChartData {
   cancellations: number;
   salesValue: number;
   refundValue: number;
+  refundCount: number;
 }
 
 type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all';
@@ -265,14 +266,14 @@ const Admin = () => {
     );
 
     // Group events by month
-    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number } } = {};
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
     
     for (const event of filteredEvents) {
       const eventDate = new Date(event.created_at);
       const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0 };
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
       }
       
       // Categorize events based on actual event_type from webhook
@@ -312,6 +313,7 @@ const Admin = () => {
         // Refund from subscription_events - get amount from metadata
         const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
         monthlyData[monthKey].refundValue += refundAmount;
+        monthlyData[monthKey].refundCount++;
       }
     }
     
@@ -321,11 +323,13 @@ const Admin = () => {
         const refundDate = monthKeyToLocalDate(refund.month);
         if (refundDate >= startDate) {
           if (!monthlyData[refund.month]) {
-            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0 };
+            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
           // Only add if not already tracked in subscription_events
           // Use Stripe data as the authoritative source for refunds
           monthlyData[refund.month].refundValue = refund.amount;
+          // Use Stripe refundCount if available, otherwise assume 1 per month
+          monthlyData[refund.month].refundCount = stripeMRR?.refundCount ?? 1;
         }
       }
     }
@@ -1191,7 +1195,10 @@ const Admin = () => {
                   <div className="bg-destructive/10 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-1">Total Reembolsos</p>
                     <p className="text-lg font-bold text-destructive">
-                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.refundValue, 0).toLocaleString('pt-BR')}
+                      R$ {processedSalesChartData.reduce((sum, item) => sum + item.refundValue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {processedSalesChartData.reduce((sum, item) => sum + item.refundCount, 0)} reembolso(s)
                     </p>
                   </div>
                   <div className="bg-primary/10 rounded-lg p-3">
