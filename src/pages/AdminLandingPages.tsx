@@ -658,12 +658,14 @@ const AdminLandingPages = () => {
             <p className="text-2xl font-bold">{filteredStats.trialNoUpgrade.toLocaleString()}</p>
           </div>
 
-          <div className="glass rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={18} className="text-emerald-400" />
               <span className="text-sm text-muted-foreground">Faturamento</span>
             </div>
-            <p className="text-2xl font-bold">{formatCurrency(filteredStats.totalRevenue)}</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(stripeMRR?.totalMRR || filteredStats.totalRevenue)}
+            </p>
           </div>
         </div>
 
@@ -707,12 +709,14 @@ const AdminLandingPages = () => {
 
           <div className="glass rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <DollarSign size={20} className="text-primary" />
-              <h3 className="font-semibold">MRR por Página (Eventos)</h3>
+              <ShoppingCart size={20} className="text-primary" />
+              <h3 className="font-semibold">Compras Reais</h3>
             </div>
-            <p className="text-3xl font-bold text-primary">{formatCurrency(averageMRR)}</p>
+            <p className="text-3xl font-bold text-primary">
+              {stripeMRR?.activeSubscriptions || filteredStats.purchases}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Média de {pages.length} página(s)
+              Assinaturas ativas no Stripe
             </p>
           </div>
         </div>
@@ -887,7 +891,9 @@ const AdminLandingPages = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(pageStats.totalRevenue)}
+                        {page.slug === 'index' 
+                          ? formatCurrency(stripeMRR?.totalMRR || pageStats.totalRevenue)
+                          : formatCurrency(pageStats.totalRevenue)}
                       </TableCell>
                       <TableCell>
                         <Button
