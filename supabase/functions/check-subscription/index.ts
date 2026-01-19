@@ -74,21 +74,40 @@ serve(async (req) => {
     logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new Error("No authorization header provided");
+    }
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    
+    // Try getClaims first (faster, doesn't require network call)
+    let userId: string;
+    let userEmail: string;
+    
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub || !claimsData?.claims?.email) {
+      // Fallback to getUser if getClaims fails
+      logStep("getClaims failed, falling back to getUser", { error: claimsError?.message });
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+      if (userError) throw new Error(`Authentication error: ${userError.message}`);
+      if (!userData.user?.email) throw new Error("User not authenticated or email not available");
+      
+      userId = userData.user.id;
+      userEmail = userData.user.email;
+      logStep("User authenticated via getUser", { userId, email: userEmail });
+    } else {
+      userId = claimsData.claims.sub as string;
+      userEmail = claimsData.claims.email as string;
+      logStep("User authenticated via getClaims", { userId, email: userEmail });
+    }
 
     // Get current profile to check existing searches
     const { data: currentProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('searches_used, searches_limit, plan')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (profileError) {
@@ -104,7 +123,7 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     
     if (customers.data.length === 0) {
       logStep("No customer found, user is on free plan - keeping current profile state");
@@ -241,7 +260,7 @@ serve(async (req) => {
           searches_limit: searchesLimit,
           subscription_current_period_end: subscriptionEnd,
         })
-        .eq('id', user.id);
+        .eq('id', userId);
 
       if (updateError) {
         logStep("Error updating profile", { error: updateError.message });
