@@ -657,23 +657,45 @@ const ChatAreaComponent = ({
 
   // Handle paste for images (Ctrl+V)
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
+    const clipboardData = e.clipboardData;
+    if (!clipboardData) return;
 
-    const imageFiles: File[] = [];
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file) {
+    const items = clipboardData.items;
+    const files = clipboardData.files;
+    
+    // First try to get files directly from clipboardData.files (works better for screenshots)
+    if (files && files.length > 0) {
+      const imageFiles: File[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/')) {
           imageFiles.push(file);
         }
       }
+      if (imageFiles.length > 0 && mediaUploaderRef.current) {
+        e.preventDefault();
+        mediaUploaderRef.current.handleDroppedFiles(imageFiles);
+        return;
+      }
     }
 
-    if (imageFiles.length > 0 && mediaUploaderRef.current) {
-      e.preventDefault();
-      mediaUploaderRef.current.handleDroppedFiles(imageFiles);
+    // Fallback to items for browsers that don't support files directly
+    if (items) {
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            imageFiles.push(file);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0 && mediaUploaderRef.current) {
+        e.preventDefault();
+        mediaUploaderRef.current.handleDroppedFiles(imageFiles);
+      }
     }
   }, []);
 
