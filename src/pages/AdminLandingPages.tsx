@@ -137,101 +137,113 @@ const AdminLandingPages = () => {
     return data === true;
   };
 
-  const loadPages = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("landing_pages")
-      .select("*")
-      .order("created_at", { ascending: false });
+  // Load all data in parallel for better performance
+  const loadAllData = useCallback(async () => {
+    try {
+      // Fetch pages and events in parallel
+      const [pagesResult, eventsResult] = await Promise.all([
+        supabase
+          .from("landing_pages")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("landing_page_events")
+          .select("*")
+      ]);
 
-    if (error) {
-      console.error("Error loading pages:", error);
-      return;
+      if (pagesResult.error) {
+        console.error("Error loading pages:", pagesResult.error);
+        return;
+      }
+
+      if (eventsResult.error) {
+        console.error("Error loading events:", eventsResult.error);
+        return;
+      }
+
+      const loadedPages = pagesResult.data || [];
+      const events = eventsResult.data || [];
+
+      setPages(loadedPages);
+
+      // Calculate stats per page
+      const statsMap: { [key: string]: PageStats } = {};
+      const mrrMap: { [key: string]: { [month: string]: { mrr: number; purchases: number } } } = {};
+
+      for (const page of loadedPages) {
+        const pageEvents = events.filter((e) => e.landing_page_id === page.id);
+
+        const pageViews = pageEvents.filter((e) => e.event_type === "page_view").length;
+        const signupClicks = pageEvents.filter((e) => e.event_type === "signup_click").length;
+        const signupCompleted = pageEvents.filter((e) => e.event_type === "signup_completed").length;
+        const purchaseEvents = pageEvents.filter((e) => e.event_type === "purchase");
+        const purchases = purchaseEvents.length;
+        const trialNoUpgrade = pageEvents.filter((e) => e.event_type === "trial_no_upgrade").length;
+
+        // Calculate total revenue from purchases
+        let totalRevenue = 0;
+        purchaseEvents.forEach((e) => {
+          const metadata = e.metadata as { plan?: string; amount?: number } | null;
+          if (metadata?.plan) {
+            totalRevenue += PLAN_PRICES[metadata.plan] || 0;
+          }
+        });
+
+        const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
+
+        statsMap[page.id] = {
+          pageViews,
+          signupClicks,
+          signupCompleted,
+          purchases,
+          trialNoUpgrade,
+          totalRevenue,
+          conversionRate,
+        };
+
+        // Calculate monthly MRR
+        mrrMap[page.id] = {};
+        purchaseEvents.forEach((e) => {
+          const date = new Date(e.created_at);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          const metadata = e.metadata as { plan?: string } | null;
+          const revenue = metadata?.plan ? PLAN_PRICES[metadata.plan] || 0 : 0;
+
+          if (!mrrMap[page.id][monthKey]) {
+            mrrMap[page.id][monthKey] = { mrr: 0, purchases: 0 };
+          }
+          mrrMap[page.id][monthKey].mrr += revenue;
+          mrrMap[page.id][monthKey].purchases += 1;
+        });
+      }
+
+      setStats(statsMap);
+
+      // Convert monthly MRR to array format
+      const monthlyMRRMap: { [key: string]: MonthlyMRR[] } = {};
+      for (const pageId in mrrMap) {
+        monthlyMRRMap[pageId] = Object.entries(mrrMap[pageId])
+          .map(([month, data]) => ({
+            month,
+            mrr: data.mrr,
+            purchases: data.purchases,
+          }))
+          .sort((a, b) => a.month.localeCompare(b.month));
+      }
+      setMonthlyMRR(monthlyMRRMap);
+
+      // Calculate total and average MRR from page events (fallback)
+      const allMRR = Object.values(statsMap).reduce((sum, s) => sum + s.totalRevenue, 0);
+      setTotalMRR(allMRR);
+      setAverageMRR(loadedPages.length > 0 ? allMRR / loadedPages.length : 0);
+    } catch (error) {
+      console.error("Error loading data:", error);
     }
-
-    setPages(data || []);
   }, []);
 
-  const loadStats = useCallback(async () => {
-    const { data: events, error } = await supabase
-      .from("landing_page_events")
-      .select("*");
-
-    if (error) {
-      console.error("Error loading events:", error);
-      return;
-    }
-
-    // Calculate stats per page
-    const statsMap: { [key: string]: PageStats } = {};
-    const mrrMap: { [key: string]: { [month: string]: { mrr: number; purchases: number } } } = {};
-
-    for (const page of pages) {
-      const pageEvents = events?.filter((e) => e.landing_page_id === page.id) || [];
-
-      const pageViews = pageEvents.filter((e) => e.event_type === "page_view").length;
-      const signupClicks = pageEvents.filter((e) => e.event_type === "signup_click").length;
-      const signupCompleted = pageEvents.filter((e) => e.event_type === "signup_completed").length;
-      const purchaseEvents = pageEvents.filter((e) => e.event_type === "purchase");
-      const purchases = purchaseEvents.length;
-      const trialNoUpgrade = pageEvents.filter((e) => e.event_type === "trial_no_upgrade").length;
-
-      // Calculate total revenue from purchases
-      let totalRevenue = 0;
-      purchaseEvents.forEach((e) => {
-        const metadata = e.metadata as { plan?: string; amount?: number } | null;
-        if (metadata?.plan) {
-          totalRevenue += PLAN_PRICES[metadata.plan] || 0;
-        }
-      });
-
-      const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
-
-      statsMap[page.id] = {
-        pageViews,
-        signupClicks,
-        signupCompleted,
-        purchases,
-        trialNoUpgrade,
-        totalRevenue,
-        conversionRate,
-      };
-
-      // Calculate monthly MRR
-      mrrMap[page.id] = {};
-      purchaseEvents.forEach((e) => {
-        const date = new Date(e.created_at);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-        const metadata = e.metadata as { plan?: string } | null;
-        const revenue = metadata?.plan ? PLAN_PRICES[metadata.plan] || 0 : 0;
-
-        if (!mrrMap[page.id][monthKey]) {
-          mrrMap[page.id][monthKey] = { mrr: 0, purchases: 0 };
-        }
-        mrrMap[page.id][monthKey].mrr += revenue;
-        mrrMap[page.id][monthKey].purchases += 1;
-      });
-    }
-
-    setStats(statsMap);
-
-    // Convert monthly MRR to array format
-    const monthlyMRRMap: { [key: string]: MonthlyMRR[] } = {};
-    for (const pageId in mrrMap) {
-      monthlyMRRMap[pageId] = Object.entries(mrrMap[pageId])
-        .map(([month, data]) => ({
-          month,
-          mrr: data.mrr,
-          purchases: data.purchases,
-        }))
-        .sort((a, b) => a.month.localeCompare(b.month));
-    }
-    setMonthlyMRR(monthlyMRRMap);
-
-    // Calculate total and average MRR from page events (fallback)
-    const allMRR = Object.values(statsMap).reduce((sum, s) => sum + s.totalRevenue, 0);
-    setTotalMRR(allMRR);
-    setAverageMRR(pages.length > 0 ? allMRR / pages.length : 0);
-  }, [pages]);
+  const loadPages = useCallback(async () => {
+    await loadAllData();
+  }, [loadAllData]);
 
   // Load real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
@@ -273,24 +285,18 @@ const AdminLandingPages = () => {
       }
 
       setIsAdmin(true);
-      await loadPages();
+      
+      // Load all data in parallel for faster loading
+      await Promise.all([
+        loadAllData(),
+        loadStripeMRR()
+      ]);
+      
       setLoading(false);
     };
 
     init();
-  }, [user, profile, navigate, toast, loadPages]);
-
-  useEffect(() => {
-    if (pages.length > 0) {
-      loadStats();
-    }
-  }, [pages, loadStats]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadStripeMRR();
-    }
-  }, [isAdmin, loadStripeMRR]);
+  }, [user, profile, navigate, toast, loadAllData, loadStripeMRR]);
 
   const createPage = async () => {
     if (!newPageName.trim() || !newPageSlug.trim()) {
