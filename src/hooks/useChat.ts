@@ -401,21 +401,30 @@ export const useChat = (selectedNumberId?: string | null) => {
           },
         });
 
-        if (response.error) {
-          console.error('Error sending message:', response.error);
+        // Handle FunctionsHttpError (e.g. 500 errors) - the error will be in response.error
+        // And the response body will be in response.data
+        const hasError = response.error || response.data?.error;
+        
+        if (hasError) {
+          const errorMessage = response.error?.message || response.data?.error || 'Unknown error';
+          console.error('[chat-send] Error sending message:', errorMessage, response);
           setMessages(prev => prev.map(m => 
             m.id === msg.id ? { ...m, status: 'failed' } : m
           ));
-        } else if (response.data?.error) {
-          console.error('API Error:', response.data.error);
-          setMessages(prev => prev.map(m => 
-            m.id === msg.id ? { ...m, status: 'failed' } : m
-          ));
-        } else {
+        } else if (response.data?.success) {
+          // Message sent successfully - update status to 'sent' and store message_id for realtime matching
+          const evolutionMessageId = response.data?.message?.message_id || null;
+          console.log('[chat-send] Message sent successfully:', evolutionMessageId);
           setMessages(prev => prev.map(m => 
             m.id === msg.id 
-              ? { ...m, status: 'sent', message_id: response.data?.message?.message_id || null }
+              ? { ...m, status: 'sent', message_id: evolutionMessageId }
               : m
+          ));
+        } else {
+          // Unexpected response format - treat as error
+          console.error('[chat-send] Unexpected response:', response);
+          setMessages(prev => prev.map(m => 
+            m.id === msg.id ? { ...m, status: 'failed' } : m
           ));
         }
       } catch (error) {
