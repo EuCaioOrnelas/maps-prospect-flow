@@ -14,10 +14,26 @@ const getSessionId = (): string => {
 // Store the landing page slug for later use
 export const setLandingPageSlug = (slug: string) => {
   sessionStorage.setItem('landing_page_slug', slug);
+  // Also store in localStorage for persistence across sessions
+  localStorage.setItem('landing_page_slug', slug);
 };
 
 export const getLandingPageSlug = (): string => {
-  return sessionStorage.getItem('landing_page_slug') || 'index';
+  // Try sessionStorage first, then localStorage
+  return sessionStorage.getItem('landing_page_slug') || 
+         localStorage.getItem('landing_page_slug') || 
+         'index';
+};
+
+// Store the landing page ID for faster lookups
+const setLandingPageId = (id: string) => {
+  sessionStorage.setItem('landing_page_id', id);
+  localStorage.setItem('landing_page_id', id);
+};
+
+const getLandingPageId = (): string | null => {
+  return sessionStorage.getItem('landing_page_id') || 
+         localStorage.getItem('landing_page_id');
 };
 
 export const useLandingPageTracking = (pageSlug: string = 'index') => {
@@ -48,6 +64,9 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
 
         if (!page) return;
 
+        // Store the page ID for faster lookups
+        setLandingPageId(page.id);
+
         // Insert page view event
         await supabase.from('landing_page_events').insert({
           landing_page_id: page.id,
@@ -65,17 +84,24 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
   // Track signup button click
   const trackSignupClick = useCallback(async () => {
     try {
-      const { data: page } = await supabase
-        .from('landing_pages')
-        .select('id')
-        .eq('slug', pageSlug)
-        .eq('is_active', true)
-        .maybeSingle();
+      // Try to use stored page ID first for performance
+      let pageId = getLandingPageId();
+      
+      if (!pageId) {
+        const { data: page } = await supabase
+          .from('landing_pages')
+          .select('id')
+          .eq('slug', pageSlug)
+          .eq('is_active', true)
+          .maybeSingle();
 
-      if (!page) return;
+        if (!page) return;
+        pageId = page.id;
+        setLandingPageId(pageId);
+      }
 
       await supabase.from('landing_page_events').insert({
-        landing_page_id: page.id,
+        landing_page_id: pageId,
         event_type: 'signup_click',
         session_id: sessionId,
       });
@@ -91,19 +117,35 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
 export const trackSignupCompleted = async (userId: string) => {
   const sessionId = getSessionId();
   const pageSlug = getLandingPageSlug();
+  let pageId = getLandingPageId();
 
   try {
-    const { data: page } = await supabase
-      .from('landing_pages')
-      .select('id')
-      .eq('slug', pageSlug)
-      .maybeSingle();
+    // Get page ID if not cached
+    if (!pageId) {
+      const { data: page } = await supabase
+        .from('landing_pages')
+        .select('id')
+        .eq('slug', pageSlug)
+        .maybeSingle();
 
-    if (!page) return;
+      if (!page) {
+        // Fallback to index page
+        const { data: indexPage } = await supabase
+          .from('landing_pages')
+          .select('id')
+          .eq('slug', 'index')
+          .maybeSingle();
+        
+        if (!indexPage) return;
+        pageId = indexPage.id;
+      } else {
+        pageId = page.id;
+      }
+    }
 
     // Insert signup completed event
     await supabase.from('landing_page_events').insert({
-      landing_page_id: page.id,
+      landing_page_id: pageId,
       event_type: 'signup_completed',
       session_id: sessionId,
       user_id: userId,
@@ -112,9 +154,11 @@ export const trackSignupCompleted = async (userId: string) => {
     // Link user to landing page source
     await supabase.from('user_landing_source').insert({
       user_id: userId,
-      landing_page_id: page.id,
+      landing_page_id: pageId,
       session_id: sessionId,
     });
+    
+    console.log('Signup tracked successfully for landing page:', pageSlug);
   } catch (error) {
     console.error('Error tracking signup completion:', error);
   }
