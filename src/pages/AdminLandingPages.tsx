@@ -137,18 +137,36 @@ const AdminLandingPages = () => {
     return data === true;
   };
 
-  // Load all data in parallel for better performance
+  // Load all data (fetch events with pagination to avoid the 1000-row default limit)
   const loadAllData = useCallback(async () => {
     try {
+      const PAGE_SIZE = 1000;
+
+      const fetchAllEvents = async () => {
+        const all: any[] = [];
+        for (let offset = 0; offset < 50000; offset += PAGE_SIZE) {
+          const { data, error } = await supabase
+            .from("landing_page_events")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .range(offset, offset + PAGE_SIZE - 1);
+
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+
+          all.push(...data);
+          if (data.length < PAGE_SIZE) break;
+        }
+        return all;
+      };
+
       // Fetch pages and events in parallel
-      const [pagesResult, eventsResult] = await Promise.all([
+      const [pagesResult, events] = await Promise.all([
         supabase
           .from("landing_pages")
           .select("*")
           .order("created_at", { ascending: false }),
-        supabase
-          .from("landing_page_events")
-          .select("*")
+        fetchAllEvents(),
       ]);
 
       if (pagesResult.error) {
@@ -156,14 +174,7 @@ const AdminLandingPages = () => {
         return;
       }
 
-      if (eventsResult.error) {
-        console.error("Error loading events:", eventsResult.error);
-        return;
-      }
-
       const loadedPages = pagesResult.data || [];
-      const events = eventsResult.data || [];
-
       setPages(loadedPages);
 
       // Calculate stats per page
