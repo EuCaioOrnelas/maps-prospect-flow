@@ -33,8 +33,13 @@ const MediaPreviewComponent = ({ type, url, filename, caption, fromMe }: MediaPr
     document.body.removeChild(link);
   }, [url, filename]);
 
-  // Check if URL is valid (not a temporary WhatsApp URL or undefined)
-  const isValidUrl = url && url.length > 0 && !url.includes('mmg.whatsapp.net') && !url.includes('.enc');
+  // Check if URL is valid - allow all URLs that start with http/https or are data URLs
+  const isValidUrl = url && url.length > 0 && (
+    url.startsWith('http://') || 
+    url.startsWith('https://') || 
+    url.startsWith('data:') ||
+    url.startsWith('blob:')
+  );
 
   if (type === 'image') {
     if (!isValidUrl || imageError) {
