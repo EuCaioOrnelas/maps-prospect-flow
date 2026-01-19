@@ -39,27 +39,41 @@ serve(async (req) => {
 
     // Get auth user
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    const token = authHeader.replace('Bearer ', '');
+    
     // Parse body first while auth is being checked (parallel)
     const bodyPromise = req.json();
-    const authPromise = supabase.auth.getUser(authHeader.replace('Bearer ', ''));
     
-    const [body, authResult] = await Promise.all([bodyPromise, authPromise]);
-
-    if (authResult.error || !authResult.data.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Try getClaims first (faster, works even with expired access tokens if refresh works)
+    let userId: string;
+    
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub) {
+      // Fallback to getUser
+      console.log('[chat-send-message] getClaims failed, trying getUser:', claimsError?.message);
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      
+      if (userError || !userData.user) {
+        console.log('[chat-send-message] getUser also failed:', userError?.message);
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = userData.user.id;
+    } else {
+      userId = claimsData.claims.sub as string;
     }
 
-    const user = authResult.data.user;
+    const body = await bodyPromise;
     const { conversationId, content, messageType = 'text', mediaUrl, mediaFilename, quotedMessageId } = body;
 
     // Parallel fetch: conversation and quoted message (if needed)
@@ -67,7 +81,7 @@ serve(async (req) => {
       .from('conversations')
       .select('*, whatsapp_numbers!inner(instance_name)')
       .eq('id', conversationId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     const quotedMsgPromise = quotedMessageId 
@@ -229,7 +243,7 @@ serve(async (req) => {
           .from('messages')
           .insert({
             conversation_id: conversationId,
-            user_id: user.id,
+            user_id: userId,
             message_id: messageId,
             remote_jid: conversation.remote_jid,
             from_me: true,
