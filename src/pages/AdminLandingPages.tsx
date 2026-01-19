@@ -807,8 +807,10 @@ const AdminLandingPages = () => {
                   <TableHead>Página</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead className="text-center">Views</TableHead>
-                  <TableHead className="text-center">Signups</TableHead>
+                  <TableHead className="text-center">Cliques</TableHead>
+                  <TableHead className="text-center">Cadastros</TableHead>
                   <TableHead className="text-center">Compras</TableHead>
+                  <TableHead className="text-center">CTR %</TableHead>
                   <TableHead className="text-center">Conv. %</TableHead>
                   <TableHead className="text-right">Faturamento</TableHead>
                   <TableHead>Status</TableHead>
@@ -819,15 +821,22 @@ const AdminLandingPages = () => {
                 {pages.map((page) => {
                   const pageStats = stats[page.id] || {
                     pageViews: 0,
+                    signupClicks: 0,
                     signupCompleted: 0,
                     purchases: 0,
                     totalRevenue: 0,
                     conversionRate: 0,
                   };
-                  const convRate =
-                    pageStats.pageViews > 0
-                      ? ((pageStats.purchases / pageStats.pageViews) * 100).toFixed(2)
-                      : "0.00";
+                  
+                  // CTR: Cliques de signup / Views
+                  const ctr = pageStats.pageViews > 0
+                    ? ((pageStats.signupClicks / pageStats.pageViews) * 100).toFixed(1)
+                    : "0.0";
+                  
+                  // Conversão: Compras / Views
+                  const convRate = pageStats.pageViews > 0
+                    ? ((pageStats.purchases / pageStats.pageViews) * 100).toFixed(2)
+                    : "0.00";
 
                   return (
                     <TableRow key={page.id}>
@@ -848,12 +857,24 @@ const AdminLandingPages = () => {
                         {pageStats.pageViews.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-center">
+                        {pageStats.signupClicks.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-center">
                         {pageStats.signupCompleted.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-center">
                         {pageStats.purchases.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-center">{convRate}%</TableCell>
+                      <TableCell className="text-center">
+                        <span className={ctr !== "0.0" ? "text-blue-400" : "text-muted-foreground"}>
+                          {ctr}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={convRate !== "0.00" ? "text-green-400" : "text-muted-foreground"}>
+                          {convRate}%
+                        </span>
+                      </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(pageStats.totalRevenue)}
                       </TableCell>
