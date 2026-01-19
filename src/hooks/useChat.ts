@@ -390,6 +390,20 @@ export const useChat = (selectedNumberId?: string | null) => {
       const msg = messageQueueRef.current.shift()!;
       
       try {
+        // Ensure session is fresh before sending
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // Try to refresh
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('[chat-send] Session expired, cannot refresh:', refreshError);
+            setMessages(prev => prev.map(m => 
+              m.id === msg.id ? { ...m, status: 'failed' } : m
+            ));
+            continue;
+          }
+        }
+
         const response = await supabase.functions.invoke('chat-send-message', {
           body: {
             conversationId: msg.conversationId,
@@ -405,7 +419,41 @@ export const useChat = (selectedNumberId?: string | null) => {
         // And the response body will be in response.data
         const hasError = response.error || response.data?.error;
         
-        if (hasError) {
+        // Check for auth errors specifically - try to refresh and retry once
+        if (hasError && (response.error?.message?.includes('Unauthorized') || response.data?.error?.includes('Unauthorized'))) {
+          console.log('[chat-send] Auth error, attempting session refresh...');
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (!refreshError) {
+            // Retry the request
+            const retryResponse = await supabase.functions.invoke('chat-send-message', {
+              body: {
+                conversationId: msg.conversationId,
+                content: msg.content,
+                messageType: msg.messageType,
+                quotedMessageId: msg.quotedMessageId,
+                mediaUrl: msg.mediaUrl,
+                mediaFilename: msg.mediaFilename,
+              },
+            });
+            
+            if (!retryResponse.error && retryResponse.data?.success) {
+              const evolutionMessageId = retryResponse.data?.message?.message_id || null;
+              console.log('[chat-send] Message sent successfully after retry:', evolutionMessageId);
+              setMessages(prev => prev.map(m => 
+                m.id === msg.id 
+                  ? { ...m, status: 'sent', message_id: evolutionMessageId }
+                  : m
+              ));
+              continue;
+            }
+          }
+          
+          // Retry failed
+          setMessages(prev => prev.map(m => 
+            m.id === msg.id ? { ...m, status: 'failed' } : m
+          ));
+        } else if (hasError) {
           const errorMessage = response.error?.message || response.data?.error || 'Unknown error';
           console.error('[chat-send] Error sending message:', errorMessage, response);
           setMessages(prev => prev.map(m => 
