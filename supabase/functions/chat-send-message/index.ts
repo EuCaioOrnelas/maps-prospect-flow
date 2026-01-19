@@ -184,9 +184,22 @@ serve(async (req) => {
     });
     
     clearTimeout(timeoutId);
-    const evolutionData = await evolutionResponse.json();
+    
+    const responseText = await evolutionResponse.text();
+    console.log(`Evolution API response status: ${evolutionResponse.status}`);
+    console.log(`Evolution API response: ${responseText.substring(0, 500)}`);
+    
+    let evolutionData;
+    try {
+      evolutionData = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse Evolution API response as JSON');
+      throw new Error(`Evolution API error: ${responseText.substring(0, 200)}`);
+    }
 
     if (!evolutionResponse.ok) {
+      console.error('Evolution API error details:', JSON.stringify(evolutionData));
+      
       let errorMessage = 'Failed to send message';
       
       if (evolutionData.response?.message) {
@@ -198,6 +211,8 @@ serve(async (req) => {
         }
       } else if (evolutionData.message) {
         errorMessage = evolutionData.message;
+      } else if (evolutionData.error) {
+        errorMessage = typeof evolutionData.error === 'string' ? evolutionData.error : JSON.stringify(evolutionData.error);
       }
       
       throw new Error(errorMessage);
