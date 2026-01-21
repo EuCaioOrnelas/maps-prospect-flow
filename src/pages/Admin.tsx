@@ -55,6 +55,7 @@ import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog"
 import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
+import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import * as XLSX from 'xlsx';
 
@@ -1665,6 +1666,7 @@ const Admin = () => {
                       <Download size={16} />
                       <span className="hidden sm:inline">Exportar</span>
                     </Button>
+                    <CreateUserDialog onUserCreated={loadData} />
                   </div>
                 </div>
               </div>

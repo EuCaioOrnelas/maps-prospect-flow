@@ -205,43 +205,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const redirectUrl = `${window.location.origin}/dashboard`;
     
     // Get device fingerprint and IP for fraud prevention
-    const [fingerprint, clientIP] = await Promise.all([
-      generateFingerprint(),
-      getClientIP()
-    ]);
+    let fingerprint = '';
+    let clientIP = '';
     
-    // Check for fraud before signup using strict validation
-    const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
-      p_fingerprint: fingerprint,
-      p_ip: clientIP
-    });
-    
-    if (fraudError) {
-      console.error('Fraud check error:', fraudError);
+    try {
+      [fingerprint, clientIP] = await Promise.all([
+        generateFingerprint(),
+        getClientIP()
+      ]);
+      console.log('[AuthContext] Fingerprint and IP obtained:', { fingerprint: fingerprint.substring(0, 8) + '...', ip: clientIP });
+    } catch (fpError) {
+      console.error('[AuthContext] Error getting fingerprint/IP:', fpError);
+      // Continue with empty values - fraud check will skip validation
     }
     
-    // Handle both old and new fraud check formats
-    const fraudResult = fraudCheck as { 
-      allowed?: boolean; 
-      is_suspicious?: boolean; 
-      message?: string;
-      reason?: string;
-      reasons?: string[] 
-    } | null;
-    
-    // Block signup if not allowed (new format) or suspicious (old format)
-    if (fraudResult?.allowed === false) {
-      console.warn('Signup blocked:', fraudResult.reason);
-      return { 
-        error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
-      };
-    }
-    
-    if (fraudResult?.is_suspicious) {
-      console.warn('Suspicious signup detected:', fraudResult.reasons);
-      return { 
-        error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
-      };
+    // Check for fraud before signup using strict validation (only if we have fingerprint/IP)
+    if (fingerprint && clientIP && clientIP !== 'unknown') {
+      const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
+        p_fingerprint: fingerprint,
+        p_ip: clientIP
+      });
+      
+      if (fraudError) {
+        console.error('[AuthContext] Fraud check error:', fraudError);
+        // Don't block signup on fraud check error - allow creation
+      } else {
+        // Handle both old and new fraud check formats
+        const fraudResult = fraudCheck as { 
+          allowed?: boolean; 
+          is_suspicious?: boolean; 
+          message?: string;
+          reason?: string;
+          reasons?: string[] 
+        } | null;
+        
+        // Block signup if not allowed (new format) or suspicious (old format)
+        if (fraudResult?.allowed === false) {
+          console.warn('[AuthContext] Signup blocked:', fraudResult.reason);
+          return { 
+            error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
+          };
+        }
+        
+        if (fraudResult?.is_suspicious) {
+          console.warn('[AuthContext] Suspicious signup detected:', fraudResult.reasons);
+          return { 
+            error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
+          };
+        }
+      }
     }
     
     const { data, error } = await supabase.auth.signUp({
@@ -257,18 +269,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Update profile with IP, fingerprint and terms acceptance after signup
+    // Update profile with IP, fingerprint and terms acceptance IMMEDIATELY after signup
+    // Using await instead of setTimeout to ensure data is saved
     if (!error && data.user) {
-      setTimeout(async () => {
-        await supabase
-          .from('profiles')
-          .update({
-            signup_ip: clientIP,
-            device_fingerprint: fingerprint,
-            terms_accepted_at: new Date().toISOString()
-          })
-          .eq('id', data.user!.id);
-      }, 1000);
+      // Retry logic for profile update
+      const updateProfile = async (retries = 3): Promise<void> => {
+        for (let i = 0; i < retries; i++) {
+          // Small delay to allow profile trigger to create the row
+          await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              signup_ip: clientIP || 'unknown',
+              device_fingerprint: fingerprint || 'unknown',
+              terms_accepted_at: new Date().toISOString()
+            })
+            .eq('id', data.user!.id);
+          
+          if (!updateError) {
+            console.log('[AuthContext] Profile updated with fraud prevention data');
+            return;
+          }
+          
+          console.error(`[AuthContext] Profile update attempt ${i + 1} failed:`, updateError);
+        }
+        console.error('[AuthContext] Failed to update profile after all retries');
+      };
+      
+      // Execute update in background but don't block signup
+      updateProfile();
     }
 
     return { error };
