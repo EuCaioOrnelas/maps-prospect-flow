@@ -51,22 +51,13 @@ export const BlockedUserModal = ({ onLogout }: BlockedUserModalProps) => {
         {/* Actions */}
         <div className="space-y-3 pt-4">
           <Button 
-            onClick={handleContactSupport}
+            onClick={() => window.location.href = '/contact'}
             variant="default"
             size="lg"
             className="w-full gap-2"
           >
             <MessageCircle size={18} />
-            Falar com Suporte
-          </Button>
-          
-          <Button 
-            onClick={handleEmailSupport}
-            variant="outline"
-            size="lg"
-            className="w-full"
-          >
-            Enviar Email
+            Entrar em Contato
           </Button>
           
           <Button 
