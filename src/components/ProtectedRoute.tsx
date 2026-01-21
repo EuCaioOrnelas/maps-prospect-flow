@@ -1,7 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Loader2, ShieldX, ShieldAlert } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { BlockedUserModal } from '@/components/BlockedUserModal';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -28,30 +29,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Block access for blocked users
+  // Block access for blocked users - show modal
   if (isBlocked) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
-            <ShieldX size={32} className="text-destructive" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">Conta Suspensa</h1>
-            <p className="text-muted-foreground">
-              Sua conta foi suspensa devido a atividades suspeitas ou violação dos termos de uso.
-              Entre em contato com o suporte se acredita ser um erro.
-            </p>
-          </div>
-          <button
-            onClick={() => signOut()}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Sair
-          </button>
-        </div>
-      </div>
-    );
+    return <BlockedUserModal onLogout={signOut} />;
   }
 
   // Show 404 for non-admin users on admin routes (hide existence of admin pages)
