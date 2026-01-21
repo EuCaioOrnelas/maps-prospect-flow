@@ -270,10 +270,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Update profile with IP, fingerprint and terms acceptance IMMEDIATELY after signup
-    // Using await instead of setTimeout to ensure data is saved
+    // We await this to ensure data is saved before the function returns
     if (!error && data.user) {
       // Retry logic for profile update
-      const updateProfile = async (retries = 3): Promise<void> => {
+      const updateProfile = async (retries = 3): Promise<boolean> => {
         for (let i = 0; i < retries; i++) {
           // Small delay to allow profile trigger to create the row
           await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
@@ -289,16 +289,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (!updateError) {
             console.log('[AuthContext] Profile updated with fraud prevention data');
-            return;
+            return true;
           }
           
           console.error(`[AuthContext] Profile update attempt ${i + 1} failed:`, updateError);
         }
         console.error('[AuthContext] Failed to update profile after all retries');
+        return false;
       };
       
-      // Execute update in background but don't block signup
-      updateProfile();
+      // AWAIT the update to ensure it completes before signup flow continues
+      await updateProfile();
     }
 
     return { error };
