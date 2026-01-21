@@ -56,6 +56,7 @@ import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
+import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import * as XLSX from 'xlsx';
 
@@ -99,6 +100,7 @@ interface UserProfile {
   plan: string;
   created_at: string;
   updated_at: string;
+  is_blocked?: boolean;
 }
 
 interface StripeMRRData {
@@ -1685,9 +1687,12 @@ const Admin = () => {
                     </TableHeader>
                     <TableBody>
                       {paginatedUsers.map((u) => (
-                        <TableRow key={u.id}>
+                        <TableRow key={u.id} className={u.is_blocked ? 'opacity-60 bg-destructive/5' : ''}>
                           <TableCell>
                             <div className="flex items-center gap-2">
+                              {u.is_blocked && (
+                                <div className="w-2 h-2 rounded-full bg-destructive flex-shrink-0" title="Usuário bloqueado" />
+                              )}
                               <div>
                                 <p className="font-medium">{u.name || '-'}</p>
                                 <p className="text-sm text-muted-foreground">{u.email}</p>
@@ -1721,18 +1726,27 @@ const Admin = () => {
                             {formatDate(u.created_at)}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => resetUserSearches(u.id)}
-                              disabled={updating === u.id}
-                            >
-                              {updating === u.id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                'Resetar'
-                              )}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => resetUserSearches(u.id)}
+                                disabled={updating === u.id}
+                              >
+                                {updating === u.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  'Resetar'
+                                )}
+                              </Button>
+                              <UserActionsMenu
+                                userId={u.id}
+                                userEmail={u.email}
+                                userName={u.name}
+                                isBlocked={u.is_blocked || false}
+                                onActionComplete={loadData}
+                              />
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
