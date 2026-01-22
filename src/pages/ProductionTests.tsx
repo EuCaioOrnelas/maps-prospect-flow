@@ -153,12 +153,11 @@ const ProductionTests = () => {
       // 2. Send real message via edge function
       addLog('info', `📤 Enviando mensagem REAL para ${realTestPhone}...`);
       
-      const { data: sendResult, error: sendError } = await supabase.functions.invoke('chat-send-message', {
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke('evolution-send-message', {
         body: {
           instanceName: numberData.instance_name,
           phone: realTestPhone.replace(/\D/g, ''),
-          message: realTestMessage,
-          messageType: 'text'
+          text: realTestMessage
         }
       });
 
