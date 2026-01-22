@@ -67,7 +67,7 @@ interface SearchHistoryItem {
 
 const RESULTS_PER_PAGE = 10;
 const HISTORY_PER_PAGE = 6;
-const MAX_HISTORY_ITEMS = 60;
+const MAX_HISTORY_ITEMS = 10; // Limite reduzido para economia de espaço
 
 const Dashboard = () => {
   const [keyword, setKeyword] = useState("");
@@ -80,6 +80,7 @@ const Dashboard = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsAppUpgradeModal, setShowWhatsAppUpgradeModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showHistoryWarning, setShowHistoryWarning] = useState(false);
   
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
@@ -294,14 +295,14 @@ const Dashboard = () => {
       setLeads(data.leads || []);
       await refreshProfile();
       
-      // Refresh history
+      // Refresh history (limit to MAX_HISTORY_ITEMS)
       if (user) {
         const { data: historyData } = await supabase
           .from('search_history')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(MAX_HISTORY_ITEMS);
         
         if (historyData) {
           setSearchHistory(historyData.map(item => ({
@@ -326,6 +327,11 @@ const Dashboard = () => {
           description: `${resultsCount} leads encontrados para "${keyword}" em ${location}`,
         });
       }
+      
+      // Show history warning popup after successful search
+      if (resultsCount > 0) {
+        setShowHistoryWarning(true);
+      }
     } catch (error: any) {
       console.error('Search error:', error);
       toast({
@@ -341,16 +347,14 @@ const Dashboard = () => {
   const handleExport = () => {
     if (leads.length === 0) return;
 
-    // Create worksheet data
+    // Create worksheet data with only essential columns (reduces file size)
     const worksheetData = leads.map(lead => ({
       'Nome': lead.name,
-      'Categoria': lead.category,
-      'Endereço': lead.address,
-      'Cidade': lead.city,
       'Telefone': lead.phone,
-      'Site': lead.website,
+      'Categoria': lead.category,
+      'Cidade': lead.city,
+      'Site': lead.website || '',
       'Avaliação': lead.rating,
-      'Nº Avaliações': lead.reviewCount,
       'Link Maps': lead.mapsLink,
     }));
 
@@ -358,23 +362,24 @@ const Dashboard = () => {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
 
-    // Set column widths
+    // Set optimized column widths
     worksheet['!cols'] = [
       { wch: 30 }, // Nome
-      { wch: 20 }, // Categoria
-      { wch: 40 }, // Endereço
-      { wch: 20 }, // Cidade
       { wch: 15 }, // Telefone
-      { wch: 30 }, // Site
-      { wch: 10 }, // Avaliação
-      { wch: 12 }, // Nº Avaliações
-      { wch: 50 }, // Link Maps
+      { wch: 20 }, // Categoria
+      { wch: 15 }, // Cidade
+      { wch: 25 }, // Site
+      { wch: 8 },  // Avaliação
+      { wch: 40 }, // Link Maps
     ];
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
 
-    // Generate and download file
-    XLSX.writeFile(workbook, `leads-${keyword}-${location}.xlsx`);
+    // Generate and download file with compression
+    XLSX.writeFile(workbook, `leads-${keyword}-${location}.xlsx`, { 
+      compression: true,
+      bookType: 'xlsx'
+    });
 
     toast({
       title: "Download iniciado!",
@@ -922,6 +927,44 @@ const Dashboard = () => {
 
       {/* Trial Feedback Modal */}
       <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
+
+      {/* History Warning Modal */}
+      <Dialog open={showHistoryWarning} onOpenChange={setShowHistoryWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-warning" />
+              Exporte seus resultados!
+            </DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p>
+                Para economizar espaço, o histórico armazena <strong>apenas as 10 últimas buscas</strong> por até 7 dias.
+              </p>
+              <p>
+                Recomendamos que você <strong>exporte os resultados</strong> para o seu computador para consultas futuras.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-4">
+            <Button 
+              onClick={() => {
+                handleExport();
+                setShowHistoryWarning(false);
+              }}
+              className="w-full"
+            >
+              <Download size={16} className="mr-2" />
+              Exportar Resultados Agora
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowHistoryWarning(false)}
+            >
+              Entendi, exportar depois
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
