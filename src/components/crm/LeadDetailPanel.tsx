@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
+import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,6 @@ import {
   Calendar,
   Activity,
   FileText,
-  Send,
-  ExternalLink,
   Trash2,
   Save,
   Plus,

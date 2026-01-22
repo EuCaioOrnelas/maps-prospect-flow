@@ -6,12 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Play, CheckCircle, XCircle, AlertTriangle, Loader2, 
   MessageSquare, Users, Flame, Bot, RefreshCw, Clock, 
-  Send, Database, Zap, ArrowRight
+  Send, Database, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,7 +31,7 @@ interface TestLog {
 }
 
 const ProductionTests = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState("campaigns");
@@ -53,12 +52,10 @@ const ProductionTests = () => {
   // Real message test state
   const [realTestPhone, setRealTestPhone] = useState("");
   const [realTestMessage, setRealTestMessage] = useState("Olá! Esta é uma mensagem de teste do sistema. 🚀");
-  const [isRealTestEnabled, setIsRealTestEnabled] = useState(false);
 
   // Agent test state
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [agents, setAgents] = useState<any[]>([]);
-  const [testPhone, setTestPhone] = useState("");
 
   // Warming state
   const [warmingSessions, setWarmingSessions] = useState<any[]>([]);
