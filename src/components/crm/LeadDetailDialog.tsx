@@ -49,7 +49,6 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -260,7 +259,6 @@ export const LeadDetailDialog = ({
   onUpdateOrigin,
   onDeleteOrigin,
 }: LeadDetailDialogProps) => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals'>('info');
   const [isEditing, setIsEditing] = useState(false);

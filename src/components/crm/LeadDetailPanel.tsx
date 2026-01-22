@@ -17,7 +17,6 @@ import {
   MapPin,
   Globe,
   Tag,
-  MessageCircle,
   Calendar,
   Activity,
   FileText,
@@ -30,7 +29,6 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface LeadDetailPanelProps {
@@ -257,7 +255,6 @@ export const LeadDetailPanel = ({
   onFetchNotes,
   onFetchActivities,
 }: LeadDetailPanelProps) => {
-  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName] = useState(lead.contact_name || '');
@@ -348,9 +345,6 @@ export const LeadDetailPanel = ({
     }
   };
 
-  const handleOpenChat = () => {
-    navigate(`/chat?phone=${lead.phone}`);
-  };
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);
 
@@ -493,22 +487,14 @@ export const LeadDetailPanel = ({
 
           {/* Quick Actions */}
           <div className="flex gap-2">
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="flex-1"
-              onClick={handleOpenChat}
-            >
-              <MessageCircle className="w-4 h-4 mr-1" />
-              Abrir Chat
-            </Button>
             {lead.google_maps_link && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(lead.google_maps_link!, '_blank')}
               >
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4 mr-1" />
+                Mapa
               </Button>
             )}
             {lead.website && (
@@ -517,7 +503,8 @@ export const LeadDetailPanel = ({
                 size="sm"
                 onClick={() => window.open(lead.website!, '_blank')}
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-4 h-4 mr-1" />
+                Site
               </Button>
             )}
           </div>
