@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, BarChart3, Megaphone, Crown, Clock, AlertCircle, MessageCircle, Users } from "lucide-react";
+import { Menu, X, BarChart3, Megaphone, Crown, Clock, AlertCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -126,12 +126,6 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   </Button>
                 </Link>
 
-                <Link to="/chat" onClick={() => setIsOpen(false)}>
-                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                    <MessageCircle size={16} />
-                    Chat
-                  </Button>
-                </Link>
 
                 {profile?.plan !== 'scale' && (
                   <Link to="/upgrade" onClick={() => setIsOpen(false)}>

@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { CountryCodeSelect } from '@/components/chat/CountryCodeSelect';
+import { CountryCodeSelect } from '@/components/crm/CountryCodeSelect';
 
 interface AddLeadDialogProps {
   open: boolean;
