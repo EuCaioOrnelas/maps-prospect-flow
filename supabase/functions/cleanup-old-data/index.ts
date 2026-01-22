@@ -55,6 +55,68 @@ Deno.serve(async (req) => {
       results.rateLimits = { success: true };
     }
     
+    // 3. Clean old search_history (keep only last 7 days AND limit to 10 per user)
+    console.log('[cleanup-old-data] Cleaning search_history older than 7 days...');
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { error: searchHistoryError, count: deletedSearchCount } = await supabase
+      .from('search_history')
+      .delete()
+      .lt('created_at', sevenDaysAgo);
+    
+    if (searchHistoryError) {
+      console.error('[cleanup-old-data] Error cleaning search_history:', searchHistoryError);
+      results.searchHistory = { error: searchHistoryError.message };
+    } else {
+      console.log('[cleanup-old-data] Cleaned old search history entries');
+      results.searchHistory = { success: true, deleted: deletedSearchCount };
+    }
+    
+    // 4. Enforce max 10 entries per user for search_history
+    console.log('[cleanup-old-data] Enforcing max 10 search history entries per user...');
+    const MAX_HISTORY_PER_USER = 10;
+    
+    // Get all users with search history
+    const { data: usersWithHistory } = await supabase
+      .from('search_history')
+      .select('user_id')
+      .order('user_id');
+    
+    if (usersWithHistory) {
+      // Get unique user IDs
+      const uniqueUserIds = [...new Set(usersWithHistory.map(u => u.user_id))];
+      let totalTrimmed = 0;
+      
+      for (const userId of uniqueUserIds) {
+        // Get count for this user
+        const { count } = await supabase
+          .from('search_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        
+        if (count && count > MAX_HISTORY_PER_USER) {
+          // Get IDs of oldest entries to delete
+          const { data: oldEntries } = await supabase
+            .from('search_history')
+            .select('id')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true })
+            .limit(count - MAX_HISTORY_PER_USER);
+          
+          if (oldEntries && oldEntries.length > 0) {
+            const idsToDelete = oldEntries.map(e => e.id);
+            await supabase
+              .from('search_history')
+              .delete()
+              .in('id', idsToDelete);
+            totalTrimmed += idsToDelete.length;
+          }
+        }
+      }
+      
+      results.searchHistoryTrimmed = { success: true, trimmed: totalTrimmed };
+      console.log(`[cleanup-old-data] Trimmed ${totalTrimmed} excess search history entries`);
+    }
+    
     // NOTE: We keep landing_page_events and user_events for analytics purposes
     // These contain valuable business data that should not be automatically deleted
     
