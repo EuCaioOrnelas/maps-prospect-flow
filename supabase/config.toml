@@ -51,20 +51,7 @@ verify_jwt = false
 [functions.get-stripe-mrr]
 verify_jwt = false
 
-
-[functions.evolution-fetch-avatar]
-verify_jwt = false
-
-[functions.evolution-send-read-receipt]
-verify_jwt = false
-
 [functions.start-scheduled-campaigns]
-verify_jwt = false
-
-[functions.evolution-delete-message]
-verify_jwt = false
-
-[functions.evolution-get-group-participants]
 verify_jwt = false
 
 [functions.campaign-processor]
@@ -74,9 +61,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.cleanup-invalid-phones]
-verify_jwt = false
-
-[functions.evolution-edit-message]
 verify_jwt = false
 
 [functions.agent-webhook]
@@ -92,4 +76,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.admin-create-user]
+verify_jwt = false
+
+[functions.hash-report-password]
+verify_jwt = false
+
+[functions.evolution-reconnect]
+verify_jwt = false
+
+[functions.evolution-reconfigure-webhook]
 verify_jwt = false
