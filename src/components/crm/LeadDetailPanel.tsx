@@ -349,11 +349,7 @@ export const LeadDetailPanel = ({
   };
 
   const handleOpenChat = () => {
-    if (lead.conversation_id) {
-      navigate(`/chat?conversation=${lead.conversation_id}`);
-    } else {
-      navigate(`/chat?phone=${lead.phone}`);
-    }
+    navigate(`/chat?phone=${lead.phone}`);
   };
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);

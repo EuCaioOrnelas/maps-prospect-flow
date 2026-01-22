@@ -177,11 +177,11 @@ const ProductionTests = () => {
         addLog('info', '⏳ Aguardando confirmação de entrega (5s)...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Check if message was received in webhook
+        // Check if message was recorded in agent_message_logs
         const { data: recentMessages } = await supabase
-          .from('messages')
+          .from('agent_message_logs')
           .select('*')
-          .eq('from_me', true)
+          .eq('direction', 'outbound')
           .order('created_at', { ascending: false })
           .limit(5);
         
