@@ -85,7 +85,6 @@ export default function Warming() {
   const [showTestLogs, setShowTestLogs] = useState(false);
   const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
 
   // Check if user has access to Warming (paid plans only)
@@ -507,26 +506,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     setReconnectDialogOpen(false);
     setReconnectingNumber(null);
     
-    toast.success('Número reconectado! Sincronizando mensagens...');
-    
-    // Sync messages after reconnection
-    if (reconnectingNumber?.instance_name) {
-      setIsSyncing(true);
-      try {
-        await supabase.functions.invoke('evolution-sync-messages', {
-          body: {
-            instanceName: reconnectingNumber.instance_name,
-            numberId: reconnectingNumber.id,
-            lastSyncAt: new Date().toISOString()
-          }
-        });
-        toast.success('Mensagens sincronizadas!');
-      } catch (error) {
-        console.error('Error syncing messages:', error);
-      } finally {
-        setIsSyncing(false);
-      }
-    }
+    toast.success('Número reconectado!');
     
     // Refresh data and auto-resume warming if it was paused due to disconnection
     await fetchData();
