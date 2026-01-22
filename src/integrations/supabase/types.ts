@@ -608,156 +608,6 @@ export type Database = {
           },
         ]
       }
-      contacts: {
-        Row: {
-          avatar_url: string | null
-          company: string | null
-          created_at: string
-          email: string | null
-          id: string
-          name: string | null
-          notes: string | null
-          origin: string | null
-          phone: string
-          tags: string[] | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string | null
-          notes?: string | null
-          origin?: string | null
-          phone: string
-          tags?: string[] | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string | null
-          notes?: string | null
-          origin?: string | null
-          phone?: string
-          tags?: string[] | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      conversations: {
-        Row: {
-          avatar_url: string | null
-          contact_id: string | null
-          contact_name: string | null
-          created_at: string
-          group_name: string | null
-          id: string
-          is_archived: boolean
-          is_group: boolean | null
-          last_message: string | null
-          last_message_at: string | null
-          manually_marked_unread: boolean | null
-          phone: string
-          pinned_at: string | null
-          remote_jid: string
-          unread_count: number
-          updated_at: string
-          user_id: string
-          whatsapp_number_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          contact_id?: string | null
-          contact_name?: string | null
-          created_at?: string
-          group_name?: string | null
-          id?: string
-          is_archived?: boolean
-          is_group?: boolean | null
-          last_message?: string | null
-          last_message_at?: string | null
-          manually_marked_unread?: boolean | null
-          phone: string
-          pinned_at?: string | null
-          remote_jid: string
-          unread_count?: number
-          updated_at?: string
-          user_id: string
-          whatsapp_number_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          contact_id?: string | null
-          contact_name?: string | null
-          created_at?: string
-          group_name?: string | null
-          id?: string
-          is_archived?: boolean
-          is_group?: boolean | null
-          last_message?: string | null
-          last_message_at?: string | null
-          manually_marked_unread?: boolean | null
-          phone?: string
-          pinned_at?: string | null
-          remote_jid?: string
-          unread_count?: number
-          updated_at?: string
-          user_id?: string
-          whatsapp_number_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_whatsapp_number_id_fkey"
-            columns: ["whatsapp_number_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_numbers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_member_avatars: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          id: string
-          phone: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          phone: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          phone?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       ignored_contacts: {
         Row: {
           campaign_id: string | null
@@ -1011,7 +861,6 @@ export type Database = {
           company_name: string | null
           contact_id: string | null
           contact_name: string | null
-          conversation_id: string | null
           created_at: string
           estimated_value: number | null
           first_message_sent: boolean | null
@@ -1043,7 +892,6 @@ export type Database = {
           company_name?: string | null
           contact_id?: string | null
           contact_name?: string | null
-          conversation_id?: string | null
           created_at?: string
           estimated_value?: number | null
           first_message_sent?: boolean | null
@@ -1075,7 +923,6 @@ export type Database = {
           company_name?: string | null
           contact_id?: string | null
           contact_name?: string | null
-          conversation_id?: string | null
           created_at?: string
           estimated_value?: number | null
           first_message_sent?: boolean | null
@@ -1102,20 +949,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "leads_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leads_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "leads_pipeline_stage_id_fkey"
             columns: ["pipeline_stage_id"]
             isOneToOne: false
@@ -1127,77 +960,6 @@ export type Database = {
             columns: ["whatsapp_number_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_numbers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content: string | null
-          conversation_id: string
-          created_at: string
-          from_me: boolean
-          id: string
-          interactive: Json | null
-          media_filename: string | null
-          media_mimetype: string | null
-          media_url: string | null
-          message_id: string | null
-          message_type: string
-          quoted_message_id: string | null
-          remote_jid: string
-          sender_jid: string | null
-          sender_name: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content?: string | null
-          conversation_id: string
-          created_at?: string
-          from_me?: boolean
-          id?: string
-          interactive?: Json | null
-          media_filename?: string | null
-          media_mimetype?: string | null
-          media_url?: string | null
-          message_id?: string | null
-          message_type?: string
-          quoted_message_id?: string | null
-          remote_jid: string
-          sender_jid?: string | null
-          sender_name?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: string | null
-          conversation_id?: string
-          created_at?: string
-          from_me?: boolean
-          id?: string
-          interactive?: Json | null
-          media_filename?: string | null
-          media_mimetype?: string | null
-          media_url?: string | null
-          message_id?: string | null
-          message_type?: string
-          quoted_message_id?: string | null
-          remote_jid?: string
-          sender_jid?: string | null
-          sender_name?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -1295,45 +1057,6 @@ export type Database = {
           trial_messages_sent?: number | null
           trial_start_at?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      quick_replies: {
-        Row: {
-          audio_url: string | null
-          created_at: string
-          delay_seconds: number | null
-          id: string
-          image_url: string | null
-          name: string
-          tag: string
-          text_content: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          audio_url?: string | null
-          created_at?: string
-          delay_seconds?: number | null
-          id?: string
-          image_url?: string | null
-          name: string
-          tag: string
-          text_content?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          audio_url?: string | null
-          created_at?: string
-          delay_seconds?: number | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          tag?: string
-          text_content?: string | null
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }

@@ -37,8 +37,6 @@ const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutFailed = lazy(() => import("./pages/CheckoutFailed"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Profile = lazy(() => import("./pages/Profile"));
-const Chat = lazy(() => import("./pages/Chat"));
-const ChatSettings = lazy(() => import("./pages/ChatSettings"));
 const CRM = lazy(() => import("./pages/CRM"));
 const Warming = lazy(() => import("./pages/Warming"));
 const WarmingReports = lazy(() => import("./pages/WarmingReports"));
@@ -161,22 +159,6 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Profile />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/chat" 
-                  element={
-                    <ProtectedRoute>
-                      <Chat />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/chat/settings" 
-                  element={
-                    <ProtectedRoute>
-                      <ChatSettings />
                     </ProtectedRoute>
                   } 
                 />

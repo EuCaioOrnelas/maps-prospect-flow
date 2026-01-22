@@ -7,7 +7,7 @@ import {
   LogOut,
   FileSearch,
   Send,
-  MessageCircle,
+  
   Megaphone,
   Users,
   Flame,
@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTotalUnread } from "@/hooks/useTotalUnread";
+
 import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
@@ -42,7 +42,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
-  const { totalUnread } = useTotalUnread();
+  
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements } = useUnreadAnnouncements();
   const expandTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -284,17 +284,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Chat */}
-            <li>
-              <SidebarNavItem
-                title="Chat"
-                icon={MessageCircle}
-                url="/chat"
-                isActive={currentPath === "/chat"}
-                isExpanded={isExpanded}
-                tooltip="Chat"
-              />
-            </li>
 
             {/* Agentes de IA */}
             <li>

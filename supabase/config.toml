@@ -51,40 +51,8 @@ verify_jwt = false
 [functions.get-stripe-mrr]
 verify_jwt = false
 
-[functions.chat-webhook]
-verify_jwt = false
-
-[functions.chat-send-message]
-verify_jwt = false
-
-[functions.chat-start-conversation]
-verify_jwt = false
-
-[functions.evolution-reconfigure-webhook]
-verify_jwt = false
-
-[functions.test-webhook]
-verify_jwt = false
-
-[functions.chat-validate-number]
-verify_jwt = false
-
-[functions.evolution-reconnect]
-verify_jwt = false
-
-[functions.evolution-sync-messages]
-verify_jwt = false
 
 [functions.evolution-fetch-avatar]
-verify_jwt = false
-
-[functions.redownload-media]
-verify_jwt = false
-
-[functions.merge-conversations]
-verify_jwt = false
-
-[functions.audio-transcribe]
 verify_jwt = false
 
 [functions.evolution-send-read-receipt]
@@ -96,13 +64,7 @@ verify_jwt = false
 [functions.evolution-delete-message]
 verify_jwt = false
 
-[functions.fetch-link-preview]
-verify_jwt = false
-
 [functions.evolution-get-group-participants]
-verify_jwt = false
-
-[functions.cleanup-expired-avatars]
 verify_jwt = false
 
 [functions.campaign-processor]
