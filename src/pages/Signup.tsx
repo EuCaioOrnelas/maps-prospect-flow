@@ -34,8 +34,17 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formStartTime = Date.now();
+    
+    console.log('[Signup Form] Submit started', { 
+      timestamp: new Date().toISOString(),
+      email: email.substring(0, 3) + '***',
+      hasName: !!name,
+      acceptedTerms
+    });
     
     if (!acceptedTerms) {
+      console.log('[Signup Form] Blocked: Terms not accepted');
       toast({
         title: "Termos não aceitos",
         description: "Você precisa aceitar os Termos de Uso e a Política de Reembolso para criar sua conta.",
@@ -45,6 +54,7 @@ const Signup = () => {
     }
 
     if (!isPasswordStrong(password)) {
+      console.log('[Signup Form] Blocked: Weak password');
       toast({
         title: "Senha muito fraca",
         description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
@@ -54,37 +64,76 @@ const Signup = () => {
     }
 
     setIsLoading(true);
+    console.log('[Signup Form] Validation passed, calling signUp...');
 
-    const { error } = await signUp(email, password, name);
-
-    if (error) {
-      setIsLoading(false);
-      let errorMessage = "Erro ao criar conta. Tente novamente.";
+    try {
+      const { error } = await signUp(email, password, name);
       
-      if (error.message.includes("User already registered")) {
-        errorMessage = "Este email já está cadastrado. Faça login.";
-      } else if (error.message.includes("Invalid email")) {
-        errorMessage = "Email inválido. Verifique o formato.";
+      console.log('[Signup Form] signUp returned', { 
+        hasError: !!error,
+        errorMessage: error?.message,
+        duration: Date.now() - formStartTime + 'ms'
+      });
+
+      if (error) {
+        setIsLoading(false);
+        let errorMessage = "Erro ao criar conta. Tente novamente.";
+        
+        // Log the full error for debugging
+        console.error('[Signup Form] Signup error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+        
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Este email já está cadastrado. Faça login.";
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "Email inválido. Verifique o formato.";
+        } else if (error.message.includes("suspeita") || error.message.includes("suporte")) {
+          // Fraud-related errors - show the exact message
+          errorMessage = error.message;
+        } else if (error.message.includes("limite") || error.message.includes("atingido")) {
+          // Limit-related errors
+          errorMessage = error.message;
+        }
+
+        toast({
+          title: "Erro no cadastro",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
+      console.log('[Signup Form] Signup successful, tracking analytics...');
+      
+      // Track signup completion for landing page analytics
+      // Get the user that was just created
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        console.log('[Signup Form] Tracking signup for user:', newUser.id);
+        await trackSignupCompleted(newUser.id);
+      } else {
+        console.log('[Signup Form] Warning: No user found after signup');
+      }
+
+      console.log('[Signup Form] Complete, showing email verification dialog', {
+        totalDuration: Date.now() - formStartTime + 'ms'
+      });
+      
+      // Show email verification dialog
+      setShowEmailVerification(true);
+      setIsLoading(false);
+    } catch (unexpectedError) {
+      console.error('[Signup Form] Unexpected exception:', unexpectedError);
+      setIsLoading(false);
       toast({
-        title: "Erro no cadastro",
-        description: errorMessage,
+        title: "Erro inesperado",
+        description: "Ocorreu um erro inesperado. Por favor, recarregue a página e tente novamente.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Track signup completion for landing page analytics
-    // Get the user that was just created
-    const { data: { user: newUser } } = await supabase.auth.getUser();
-    if (newUser) {
-      await trackSignupCompleted(newUser.id);
-    }
-
-    // Show email verification dialog
-    setShowEmailVerification(true);
-    setIsLoading(false);
   };
 
   const handleRetry = () => {

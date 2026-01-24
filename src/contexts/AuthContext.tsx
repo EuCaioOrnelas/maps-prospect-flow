@@ -202,6 +202,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
+    const signupStartTime = Date.now();
+    const signupLogs: string[] = [];
+    
+    const log = (step: string, data?: any) => {
+      const elapsed = Date.now() - signupStartTime;
+      const message = `[SIGNUP ${elapsed}ms] ${step}`;
+      signupLogs.push(message);
+      console.log(message, data || '');
+    };
+    
+    log('START', { email, name: name.substring(0, 3) + '***' });
+    
     const redirectUrl = `${window.location.origin}/dashboard`;
     
     // Get device fingerprint and IP for fraud prevention
@@ -209,52 +221,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let clientIP = '';
     
     try {
+      log('STEP 1: Getting fingerprint and IP...');
+      const fpStartTime = Date.now();
+      
       [fingerprint, clientIP] = await Promise.all([
         generateFingerprint(),
         getClientIP()
       ]);
-      console.log('[AuthContext] Fingerprint and IP obtained:', { fingerprint: fingerprint.substring(0, 8) + '...', ip: clientIP });
+      
+      log('STEP 1 COMPLETE: Fingerprint and IP obtained', { 
+        fingerprint: fingerprint.substring(0, 8) + '...', 
+        ip: clientIP,
+        duration: Date.now() - fpStartTime + 'ms'
+      });
     } catch (fpError) {
-      console.error('[AuthContext] Error getting fingerprint/IP:', fpError);
+      log('STEP 1 ERROR: Error getting fingerprint/IP', { 
+        error: fpError instanceof Error ? fpError.message : String(fpError),
+        stack: fpError instanceof Error ? fpError.stack : undefined
+      });
       // Continue with empty values - fraud check will skip validation
     }
     
     // Check for fraud before signup using strict validation (only if we have fingerprint/IP)
     if (fingerprint && clientIP && clientIP !== 'unknown') {
-      const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
-        p_fingerprint: fingerprint,
-        p_ip: clientIP
-      });
-      
-      if (fraudError) {
-        console.error('[AuthContext] Fraud check error:', fraudError);
-        // Don't block signup on fraud check error - allow creation
-      } else {
-        // Handle both old and new fraud check formats
-        const fraudResult = fraudCheck as { 
-          allowed?: boolean; 
-          is_suspicious?: boolean; 
-          message?: string;
-          reason?: string;
-          reasons?: string[] 
-        } | null;
+      try {
+        log('STEP 2: Running fraud check...', { fingerprint: fingerprint.substring(0, 8), ip: clientIP });
+        const fraudStartTime = Date.now();
         
-        // Block signup if not allowed (new format) or suspicious (old format)
-        if (fraudResult?.allowed === false) {
-          console.warn('[AuthContext] Signup blocked:', fraudResult.reason);
-          return { 
-            error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
-          };
-        }
+        const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
+          p_fingerprint: fingerprint,
+          p_ip: clientIP
+        });
         
-        if (fraudResult?.is_suspicious) {
-          console.warn('[AuthContext] Suspicious signup detected:', fraudResult.reasons);
-          return { 
-            error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
-          };
+        if (fraudError) {
+          log('STEP 2 ERROR: Fraud check RPC error', { 
+            error: fraudError.message,
+            code: fraudError.code,
+            details: fraudError.details,
+            hint: fraudError.hint,
+            duration: Date.now() - fraudStartTime + 'ms'
+          });
+          // Don't block signup on fraud check error - allow creation
+        } else {
+          log('STEP 2 COMPLETE: Fraud check result', { 
+            result: fraudCheck,
+            duration: Date.now() - fraudStartTime + 'ms'
+          });
+          
+          // Handle both old and new fraud check formats
+          const fraudResult = fraudCheck as { 
+            allowed?: boolean; 
+            is_suspicious?: boolean; 
+            message?: string;
+            reason?: string;
+            reasons?: string[] 
+          } | null;
+          
+          // Block signup if not allowed (new format) or suspicious (old format)
+          if (fraudResult?.allowed === false) {
+            log('BLOCKED: Signup blocked by fraud check', { reason: fraudResult.reason, message: fraudResult.message });
+            console.error('[SIGNUP BLOCKED]', signupLogs.join('\n'));
+            return { 
+              error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
+            };
+          }
+          
+          if (fraudResult?.is_suspicious) {
+            log('BLOCKED: Suspicious signup detected', { reasons: fraudResult.reasons });
+            console.error('[SIGNUP BLOCKED]', signupLogs.join('\n'));
+            return { 
+              error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
+            };
+          }
         }
+      } catch (fraudCatchError) {
+        log('STEP 2 EXCEPTION: Unexpected error in fraud check', { 
+          error: fraudCatchError instanceof Error ? fraudCatchError.message : String(fraudCatchError),
+          stack: fraudCatchError instanceof Error ? fraudCatchError.stack : undefined
+        });
       }
+    } else {
+      log('STEP 2 SKIPPED: No fingerprint/IP available', { fingerprint: !!fingerprint, clientIP });
     }
+    
+    // Proceed with Supabase signup
+    log('STEP 3: Creating user in Supabase Auth...', { email });
+    const authStartTime = Date.now();
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -269,14 +321,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    if (error) {
+      log('STEP 3 ERROR: Supabase Auth signup failed', { 
+        error: error.message,
+        code: error.status,
+        name: error.name,
+        duration: Date.now() - authStartTime + 'ms'
+      });
+      console.error('[SIGNUP FAILED]', signupLogs.join('\n'));
+      return { error };
+    }
+    
+    log('STEP 3 COMPLETE: User created in Auth', { 
+      userId: data.user?.id,
+      email: data.user?.email,
+      confirmationSentAt: data.user?.confirmation_sent_at,
+      duration: Date.now() - authStartTime + 'ms'
+    });
+
     // Update profile with IP, fingerprint and terms acceptance IMMEDIATELY after signup
     // We await this to ensure data is saved before the function returns
-    if (!error && data.user) {
+    if (data.user) {
+      log('STEP 4: Updating profile with fraud prevention data...');
+      
       // Retry logic for profile update
       const updateProfile = async (retries = 3): Promise<boolean> => {
         for (let i = 0; i < retries; i++) {
+          const attemptStart = Date.now();
           // Small delay to allow profile trigger to create the row
-          await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+          const delay = 500 * (i + 1);
+          log(`STEP 4.${i + 1}: Waiting ${delay}ms before attempt ${i + 1}...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           
           const { error: updateError } = await supabase
             .from('profiles')
@@ -288,19 +363,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('id', data.user!.id);
           
           if (!updateError) {
-            console.log('[AuthContext] Profile updated with fraud prevention data');
+            log(`STEP 4.${i + 1} COMPLETE: Profile updated successfully`, { 
+              attempt: i + 1,
+              duration: Date.now() - attemptStart + 'ms'
+            });
             return true;
           }
           
-          console.error(`[AuthContext] Profile update attempt ${i + 1} failed:`, updateError);
+          log(`STEP 4.${i + 1} ERROR: Profile update failed`, { 
+            attempt: i + 1,
+            error: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            duration: Date.now() - attemptStart + 'ms'
+          });
         }
-        console.error('[AuthContext] Failed to update profile after all retries');
+        log('STEP 4 FAILED: All profile update attempts failed');
         return false;
       };
       
       // AWAIT the update to ensure it completes before signup flow continues
-      await updateProfile();
+      const profileUpdated = await updateProfile();
+      
+      if (!profileUpdated) {
+        log('WARNING: Profile not updated, but signup will continue');
+      }
     }
+
+    log('SIGNUP COMPLETE', { 
+      totalDuration: Date.now() - signupStartTime + 'ms',
+      userId: data.user?.id
+    });
+    
+    // Log full signup trace for debugging
+    console.log('[SIGNUP SUCCESS TRACE]', signupLogs.join('\n'));
 
     return { error };
   };
