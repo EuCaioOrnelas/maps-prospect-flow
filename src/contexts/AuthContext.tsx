@@ -204,35 +204,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
-    // Get device fingerprint and IP for fraud prevention
+    // STEP 1: Check if email is whitelisted (Stripe paying customer)
+    let isWhitelisted = false;
+    try {
+      console.log('[AuthContext] Checking Stripe whitelist for:', email);
+      const { data: whitelistData, error: whitelistError } = await supabase.functions.invoke('check-stripe-whitelist', {
+        body: { email }
+      });
+      
+      if (!whitelistError && whitelistData?.whitelisted) {
+        isWhitelisted = true;
+        console.log('[AuthContext] Email is whitelisted - Stripe paying customer:', whitelistData.reason);
+      } else {
+        console.log('[AuthContext] Email not whitelisted:', whitelistData?.reason || whitelistError?.message);
+      }
+    } catch (e) {
+      console.error('[AuthContext] Whitelist check error (continuing):', e);
+      // Don't block signup on whitelist check error
+    }
+    
+    // STEP 2: Get device fingerprint and IP for fraud prevention (only if not whitelisted)
     let fingerprint = '';
     let clientIP = '';
     
-    try {
-      // Use Promise.allSettled to not fail if one service is down
-      const [fpResult, ipResult] = await Promise.allSettled([
-        generateFingerprint(),
-        getClientIP()
-      ]);
-      
-      fingerprint = fpResult.status === 'fulfilled' ? fpResult.value : '';
-      clientIP = ipResult.status === 'fulfilled' ? ipResult.value : 'unknown';
-      
-      console.log('[AuthContext] Fingerprint and IP obtained:', { 
-        fingerprint: fingerprint ? fingerprint.substring(0, 8) + '...' : 'none', 
-        ip: clientIP 
-      });
-    } catch (fpError) {
-      console.error('[AuthContext] Error getting fingerprint/IP:', fpError);
-      // Continue with empty values - signup should NOT be blocked
+    if (!isWhitelisted) {
+      try {
+        // Use Promise.allSettled to not fail if one service is down
+        const [fpResult, ipResult] = await Promise.allSettled([
+          generateFingerprint(),
+          getClientIP()
+        ]);
+        
+        fingerprint = fpResult.status === 'fulfilled' ? fpResult.value : '';
+        clientIP = ipResult.status === 'fulfilled' ? ipResult.value : 'unknown';
+        
+        console.log('[AuthContext] Fingerprint and IP obtained:', { 
+          fingerprint: fingerprint ? fingerprint.substring(0, 8) + '...' : 'none', 
+          ip: clientIP 
+        });
+      } catch (fpError) {
+        console.error('[AuthContext] Error getting fingerprint/IP:', fpError);
+        // Continue with empty values - signup should NOT be blocked
+      }
+    } else {
+      console.log('[AuthContext] Skipping fingerprint collection - user is whitelisted');
     }
     
-    // IMPROVED FRAUD CHECK: Only run if we have valid fingerprint AND IP
-    // And make it non-blocking for first-time users
-    let fraudCheckPassed = true;
+    // STEP 3: FRAUD CHECK - Skip entirely if whitelisted
     let fraudCheckSkipped = false;
     
-    if (fingerprint && clientIP && clientIP !== 'unknown') {
+    if (isWhitelisted) {
+      fraudCheckSkipped = true;
+      console.log('[AuthContext] Fraud check SKIPPED - user is Stripe paying customer (whitelisted)');
+    } else if (fingerprint && clientIP && clientIP !== 'unknown') {
       try {
         const { data: fraudCheck, error: fraudError } = await supabase.rpc('check_signup_fraud', {
           p_fingerprint: fingerprint,
@@ -257,7 +281,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Don't block for minor suspicions
           if (fraudResult.allowed === false && fraudResult.reason === 'blocked_fingerprint') {
             console.warn('[AuthContext] Signup blocked - fingerprint blocked:', fraudResult.reason);
-            fraudCheckPassed = false;
             return { 
               error: new Error(fraudResult.message || 'Não foi possível criar a conta. Entre em contato com o suporte.') 
             };
@@ -280,7 +303,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthContext] Fraud check skipped - missing fingerprint or IP');
     }
     
-    // Proceed with signup
+    // STEP 4: Proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -290,10 +313,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name,
           signup_ip: clientIP || 'unknown',
           device_fingerprint: fingerprint || 'unknown',
-          fraud_check_skipped: fraudCheckSkipped
+          fraud_check_skipped: fraudCheckSkipped,
+          stripe_whitelisted: isWhitelisted
         }
       }
     });
+
 
     // Update profile with IP, fingerprint and terms acceptance
     if (!error && data.user) {
