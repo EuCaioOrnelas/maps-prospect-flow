@@ -41,9 +41,11 @@ import {
   Flame
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
-import { invokeWithRetry } from "@/lib/supabaseWithRetry";
+import { externalSupabase, invokeExternalFunction } from "@/lib/externalSupabase";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Usa o cliente externo para operações de WhatsApp
+const supabase = externalSupabase;
 import { useToast } from "@/hooks/use-toast";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 
@@ -185,7 +187,7 @@ export const NumbersManager = ({
       for (const number of numbers) {
         if (number.is_connected && number.instance_name) {
           try {
-            const response = await supabase.functions.invoke('evolution-check-status', {
+            const response = await invokeExternalFunction<{ connected?: boolean }>('evolution-check-status', {
               body: { instanceName: number.instance_name, numberId: number.id },
             });
 
@@ -244,7 +246,7 @@ export const NumbersManager = ({
       try {
         setCheckingConnection(true);
         
-        const { data, error } = await invokeWithRetry<{
+        const { data, error } = await invokeExternalFunction<{
           connected: boolean;
           phoneNumber?: string;
           requiresReauth?: boolean;
@@ -253,11 +255,6 @@ export const NumbersManager = ({
             instanceName: connectingInstanceName,
             numberId: isNewNumber ? null : connectingNumberId 
           },
-        }, {
-          maxRetries: 1,
-          onSessionRefreshed: () => {
-            console.log('[NumbersManager] Session refreshed during connection check');
-          }
         });
 
         if (error) {
@@ -364,7 +361,7 @@ export const NumbersManager = ({
 
     try {
       // Create instance in Evolution API
-      const createResponse = await supabase.functions.invoke('evolution-create-instance', {
+      const createResponse = await invokeExternalFunction<{ qrcode?: string }>('evolution-create-instance', {
         body: { 
           numberId,
           instanceName 
@@ -385,7 +382,7 @@ export const NumbersManager = ({
       }
 
       // Get QR code
-      const qrResponse = await supabase.functions.invoke('evolution-get-qrcode', {
+      const qrResponse = await invokeExternalFunction<{ qrcode?: string }>('evolution-get-qrcode', {
         body: { instanceName },
       });
 
@@ -472,7 +469,7 @@ export const NumbersManager = ({
       if (numberToRemove?.instance_name) {
         try {
           console.log('Disconnecting instance:', numberToRemove.instance_name);
-          const response = await supabase.functions.invoke('evolution-disconnect', {
+          const response = await invokeExternalFunction('evolution-disconnect', {
             body: { 
               instanceName: numberToRemove.instance_name,
               numberId: numberToDelete 
@@ -539,7 +536,7 @@ export const NumbersManager = ({
       // If there's an instance name, try to disconnect from Evolution API
       if (numberToDisconnect.instance_name) {
         try {
-          const response = await supabase.functions.invoke('evolution-disconnect', {
+          const response = await invokeExternalFunction('evolution-disconnect', {
             body: { 
               instanceName: numberToDisconnect.instance_name,
               numberId 
@@ -589,7 +586,7 @@ export const NumbersManager = ({
   const handleReconfigureWebhook = async (instanceName: string) => {
     setLoading(true);
     try {
-      const response = await supabase.functions.invoke('evolution-reconfigure-webhook', {
+      const response = await invokeExternalFunction<{ success?: boolean; message?: string }>('evolution-reconfigure-webhook', {
         body: { instanceName },
       });
 
@@ -1026,7 +1023,7 @@ export const NumbersManager = ({
           if (connectingInstanceName) {
             try {
               // Delete the orphan instance from Evolution API
-              await supabase.functions.invoke('evolution-disconnect', {
+              await invokeExternalFunction('evolution-disconnect', {
                 body: { 
                   instanceName: connectingInstanceName,
                   numberId: connectingNumberId // null for new numbers

@@ -21,7 +21,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase, invokeExternalFunction } from "@/lib/externalSupabase";
+
+// Usa o cliente externo para operações de campanhas WhatsApp
+const supabase = externalSupabase;
 import { LeadSelector } from "@/components/whatsapp/LeadSelector";
 import { MessageVariations } from "@/components/whatsapp/MessageVariations";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
@@ -503,7 +506,7 @@ const WhatsAppCampaign = () => {
 
       // Fire-and-forget: trigger the campaign processor without waiting
       // The cron job will pick it up and continue processing
-      supabase.functions.invoke('campaign-processor', {
+      invokeExternalFunction('campaign-processor', {
         body: {
           campaignId,
           action: 'start'
