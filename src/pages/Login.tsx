@@ -1,3 +1,26 @@
+/**
+ * =============================================================================
+ * Login.tsx - Página de Login
+ * =============================================================================
+ * 
+ * Página de autenticação para usuários existentes.
+ * 
+ * FUNCIONALIDADES:
+ * 1. Login com email/senha
+ * 2. Redirecionamento automático se já logado
+ * 3. Redirecionamento para /upgrade se trial expirado
+ * 4. Link para recuperação de senha
+ * 
+ * FLUXO:
+ * - Usuário digita credenciais
+ * - AuthContext.signIn() autentica via Supabase
+ * - Se trial expirado → /upgrade?expired=true
+ * - Se ok → /dashboard
+ * 
+ * @see src/contexts/AuthContext.tsx para lógica de auth
+ * =============================================================================
+ */
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";

@@ -1370,8 +1370,17 @@ const Admin = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    <p className="text-sm">Nenhum dado de vendas disponível</p>
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                    <AlertTriangle size={24} className="text-warning" />
+                    <p className="text-sm font-medium">Dados históricos limitados</p>
+                    <p className="text-xs text-center max-w-md">
+                      Os eventos de vendas são registrados a partir do momento que o sistema foi configurado.
+                      {stripeMRR && stripeMRR.activeSubscriptions > 0 && (
+                        <span className="block mt-1 text-primary">
+                          O MRR real (R$ {stripeMRR.totalMRR.toLocaleString('pt-BR')}) vem direto do Stripe.
+                        </span>
+                      )}
+                    </p>
                   </div>
                 )}
               </div>
@@ -1465,11 +1474,29 @@ const Admin = () => {
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                       {stripeMRRError ? (
-                        <p className="text-sm">Erro ao carregar dados do Stripe</p>
+                        <>
+                          <XCircle size={24} className="text-destructive" />
+                          <p className="text-sm font-medium">Erro ao carregar do Stripe</p>
+                          <p className="text-xs">{stripeMRRError}</p>
+                        </>
+                      ) : loadingMRR ? (
+                        <>
+                          <Loader2 size={24} className="animate-spin text-primary" />
+                          <p className="text-sm">Carregando dados do Stripe...</p>
+                        </>
                       ) : (
-                        <p className="text-sm">Nenhum dado de MRR disponível para o período</p>
+                        <>
+                          <AlertTriangle size={24} className="text-warning" />
+                          <p className="text-sm font-medium">Sem histórico de MRR</p>
+                          <p className="text-xs text-center">
+                            {stripeMRR && stripeMRR.totalMRR > 0 
+                              ? `MRR atual: R$ ${stripeMRR.totalMRR.toLocaleString('pt-BR')} (sem dados históricos para este período)`
+                              : 'Nenhum pagamento registrado no período selecionado'
+                            }
+                          </p>
+                        </>
                       )}
                     </div>
                   )}

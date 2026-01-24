@@ -1,3 +1,31 @@
+/**
+ * =============================================================================
+ * Signup.tsx - Página de Cadastro (Conta Gratuita)
+ * =============================================================================
+ * 
+ * Esta página permite criar conta gratuita no Wiize.
+ * 
+ * FUNCIONALIDADES:
+ * 1. Formulário de cadastro (nome, email, senha)
+ * 2. Validação de força da senha
+ * 3. Aceite de termos obrigatório
+ * 4. Progress steps visuais durante o processo
+ * 5. Debug panel com logs copiáveis em caso de erro
+ * 
+ * PREVENÇÃO DE FRAUDE (para contas gratuitas):
+ * - Coleta fingerprint do dispositivo
+ * - Coleta IP do usuário
+ * - Executa check_signup_fraud() no banco
+ * - Limita: 1 conta free por dispositivo, 2 por IP
+ * 
+ * DIFERENÇA DO CheckoutSuccess:
+ * - Este NÃO usa skipFraudCheck (verifica fraude)
+ * - CheckoutSuccess usa skipFraudCheck=true (usuário já pagou)
+ * 
+ * @see docs/CHECKOUT_FLOW.md para fluxo completo
+ * =============================================================================
+ */
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
