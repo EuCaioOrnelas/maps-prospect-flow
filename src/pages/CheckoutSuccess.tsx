@@ -1,3 +1,29 @@
+/**
+ * =============================================================================
+ * CheckoutSuccess.tsx - Página de Sucesso Pós-Pagamento
+ * =============================================================================
+ * 
+ * Esta página é exibida após o usuário completar um pagamento no Stripe.
+ * 
+ * FUNCIONALIDADES:
+ * 1. Exibe confirmação visual de pagamento (confetti + animações)
+ * 2. Permite criar conta (para guests) ou fazer login (usuários existentes)
+ * 3. Usa skipFraudCheck=true no signup (usuário já pagou, não bloquear)
+ * 4. Mostra progress steps e logs para debug
+ * 
+ * FLUXO:
+ * - Stripe redireciona aqui após checkout bem-sucedido
+ * - stripe-webhook já processou o pagamento (profile.plan atualizado ou pendente)
+ * - Usuário cria conta → plano vinculado automaticamente pelo email
+ * 
+ * IMPORTANTE:
+ * - O email do signup DEVE ser o mesmo usado no checkout Stripe
+ * - skipFraudCheck evita bloqueio de usuários legítimos
+ * 
+ * @see docs/CHECKOUT_FLOW.md para fluxo completo
+ * =============================================================================
+ */
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

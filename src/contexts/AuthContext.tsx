@@ -1,3 +1,30 @@
+/**
+ * =============================================================================
+ * AuthContext.tsx - Gerenciamento de Autenticação e Estado do Usuário
+ * =============================================================================
+ * 
+ * Este arquivo é o CORE do sistema de autenticação do Wiize. Ele:
+ * 
+ * 1. Gerencia o estado de autenticação (user, session, profile)
+ * 2. Fornece métodos de signup, signin, signout
+ * 3. Sincroniza dados de assinatura com Stripe
+ * 4. Verifica trial expirado e status de bloqueio
+ * 5. Implementa prevenção de fraude para contas gratuitas
+ * 
+ * FLUXO DE SIGNUP:
+ * - Coleta fingerprint do dispositivo e IP
+ * - Executa check_signup_fraud() para contas gratuitas
+ * - Cria usuário no Supabase Auth
+ * - Atualiza profile com dados de fraude
+ * 
+ * IMPORTANTE:
+ * - skipFraudCheck=true para signups pós-checkout (usuário já pagou)
+ * - Sync automático de assinatura a cada 6h e no refocus
+ * 
+ * @see docs/CHECKOUT_FLOW.md para detalhes do fluxo de compra
+ * =============================================================================
+ */
+
 // Auth context - provides authentication state and methods
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';

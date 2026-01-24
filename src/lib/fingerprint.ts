@@ -1,3 +1,30 @@
+/**
+ * =============================================================================
+ * fingerprint.ts - Coleta de Dados para Prevenção de Fraude
+ * =============================================================================
+ * 
+ * Este arquivo fornece funções para coletar identificadores de dispositivo
+ * usados na prevenção de fraude de contas gratuitas.
+ * 
+ * FUNCIONALIDADES:
+ * - generateFingerprint(): Gera hash único do dispositivo
+ * - getClientIP(): Obtém IP público do usuário
+ * 
+ * USO:
+ * - Chamado durante signup para identificar dispositivo
+ * - Dados armazenados em profiles.device_fingerprint e profiles.signup_ip
+ * - check_signup_fraud() usa esses dados para limitar contas free
+ * 
+ * LIMITAÇÕES:
+ * - Fingerprint pode variar com atualizações de browser
+ * - IP pode ser compartilhado (NAT, VPN)
+ * - Por isso usamos combinação dos dois + limites generosos
+ * 
+ * @see src/contexts/AuthContext.tsx - onde é chamado
+ * @see check_signup_fraud() - função do banco que valida
+ * =============================================================================
+ */
+
 // Simple device fingerprinting for fraud prevention
 export const generateFingerprint = async (): Promise<string> => {
   try {
