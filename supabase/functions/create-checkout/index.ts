@@ -1,44 +1,12 @@
-/**
- * =============================================================================
- * create-checkout - Edge Function para Criar Sessão de Checkout Stripe
- * =============================================================================
- * 
- * Esta função cria uma sessão de checkout do Stripe para assinaturas.
- * 
- * ENDPOINTS:
- * - POST: Cria sessão de checkout
- * 
- * PARÂMETROS (body JSON):
- * - priceId: ID do preço Stripe (obrigatório)
- * - couponCode: Código de cupom (opcional)
- * - guestEmail: Email para checkout sem login (opcional)
- * 
- * FLUXO:
- * 1. Valida rate limit por IP
- * 2. Se autenticado → usa email do usuário
- * 3. Se guestEmail → usa email fornecido
- * 4. Verifica se cliente já existe no Stripe
- * 5. Cria sessão de checkout
- * 6. Retorna URL do checkout
- * 
- * APÓS CHECKOUT:
- * - Stripe redireciona para /checkout-success ou /checkout-failed
- * - stripe-webhook processa o evento
- * 
- * @see supabase/functions/stripe-webhook/index.ts
- * =============================================================================
- */
-
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function for logging with timestamp
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -122,7 +90,7 @@ serve(async (req) => {
     logStep("Request data received", { priceId, hasCoupon: !!couponCode, guestEmail });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
-      apiVersion: "2025-08-27.basil" 
+      apiVersion: "2023-10-16" 
     });
 
     const origin = req.headers.get("origin") || "https://leadspro.lovable.app";

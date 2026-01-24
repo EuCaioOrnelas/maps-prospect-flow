@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Play, CheckCircle, XCircle, AlertTriangle, Loader2, 
   MessageSquare, Users, Flame, Bot, RefreshCw, Clock, 
-  Send, Database, Zap
+  Send, Database, Zap, ArrowRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +32,7 @@ interface TestLog {
 }
 
 const ProductionTests = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState("campaigns");
@@ -52,10 +53,12 @@ const ProductionTests = () => {
   // Real message test state
   const [realTestPhone, setRealTestPhone] = useState("");
   const [realTestMessage, setRealTestMessage] = useState("Olá! Esta é uma mensagem de teste do sistema. 🚀");
+  const [isRealTestEnabled, setIsRealTestEnabled] = useState(false);
 
   // Agent test state
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [agents, setAgents] = useState<any[]>([]);
+  const [testPhone, setTestPhone] = useState("");
 
   // Warming state
   const [warmingSessions, setWarmingSessions] = useState<any[]>([]);
@@ -150,11 +153,12 @@ const ProductionTests = () => {
       // 2. Send real message via edge function
       addLog('info', `📤 Enviando mensagem REAL para ${realTestPhone}...`);
       
-      const { data: sendResult, error: sendError } = await supabase.functions.invoke('evolution-send-message', {
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke('chat-send-message', {
         body: {
           instanceName: numberData.instance_name,
           phone: realTestPhone.replace(/\D/g, ''),
-          text: realTestMessage
+          message: realTestMessage,
+          messageType: 'text'
         }
       });
 
@@ -173,11 +177,11 @@ const ProductionTests = () => {
         addLog('info', '⏳ Aguardando confirmação de entrega (5s)...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Check if message was recorded in agent_message_logs
+        // Check if message was received in webhook
         const { data: recentMessages } = await supabase
-          .from('agent_message_logs')
+          .from('messages')
           .select('*')
-          .eq('direction', 'outbound')
+          .eq('from_me', true)
           .order('created_at', { ascending: false })
           .limit(5);
         

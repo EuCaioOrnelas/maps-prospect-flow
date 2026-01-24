@@ -11,9 +11,29 @@ import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
+import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
+import { useState, useEffect } from "react";
 
 const Index = () => {
+  const [isReady, setIsReady] = useState(false);
   const { trackSignupClick } = useLandingPageTracking('index');
+
+  // Wait for fonts and critical assets to load
+  useEffect(() => {
+    // Check if document fonts are ready
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        setIsReady(true);
+      });
+    } else {
+      // Fallback for browsers without Font Loading API
+      setIsReady(true);
+    }
+  }, []);
+
+  if (!isReady) {
+    return <LandingPageSkeleton />;
+  }
 
   return (
     <>

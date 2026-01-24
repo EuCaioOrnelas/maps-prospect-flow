@@ -85,6 +85,7 @@ export default function Warming() {
   const [showTestLogs, setShowTestLogs] = useState(false);
   const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
 
   // Check if user has access to Warming (paid plans only)
@@ -164,30 +165,14 @@ export default function Warming() {
       const connectedNumbers = (numbersData || []).filter(n => n.is_connected);
       setHasConnectedNumber(connectedNumbers.length > 0);
 
-      // Fetch leads count from search_history (where warming gets leads from)
-      const { data: searchHistoryData, error: searchHistoryError } = await supabase
-        .from('search_history')
-        .select('leads')
-        .eq('user_id', user?.id)
-        .not('leads', 'is', null);
+      // Fetch leads count
+      const { count: leadsTotal, error: leadsError } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
 
-      if (searchHistoryError) throw searchHistoryError;
-      
-      // Count total leads from search history and check if any search has 50+ leads
-      let totalLeads = 0;
-      let hasSearchWith50Leads = false;
-      
-      (searchHistoryData || []).forEach((s: any) => {
-        const leadsArray = Array.isArray(s.leads) ? s.leads : [];
-        const count = leadsArray.length;
-        totalLeads += count;
-        if (count >= 50) {
-          hasSearchWith50Leads = true;
-        }
-      });
-      
-      // For warming, we need at least one search with 50+ leads
-      setLeadsCount(hasSearchWith50Leads ? 50 : totalLeads);
+      if (leadsError) throw leadsError;
+      setLeadsCount(leadsTotal || 0);
 
       // Fetch warming sessions
       const { data: sessionsData, error: sessionsError } = await supabase
@@ -522,7 +507,26 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     setReconnectDialogOpen(false);
     setReconnectingNumber(null);
     
-    toast.success('Número reconectado!');
+    toast.success('Número reconectado! Sincronizando mensagens...');
+    
+    // Sync messages after reconnection
+    if (reconnectingNumber?.instance_name) {
+      setIsSyncing(true);
+      try {
+        await supabase.functions.invoke('evolution-sync-messages', {
+          body: {
+            instanceName: reconnectingNumber.instance_name,
+            numberId: reconnectingNumber.id,
+            lastSyncAt: new Date().toISOString()
+          }
+        });
+        toast.success('Mensagens sincronizadas!');
+      } catch (error) {
+        console.error('Error syncing messages:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
     
     // Refresh data and auto-resume warming if it was paused due to disconnection
     await fetchData();

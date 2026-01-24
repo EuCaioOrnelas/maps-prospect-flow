@@ -1,35 +1,3 @@
-/**
- * =============================================================================
- * stripe-webhook - Edge Function para Processar Eventos do Stripe
- * =============================================================================
- * 
- * Esta função recebe webhooks do Stripe e atualiza o banco de dados.
- * 
- * EVENTOS PROCESSADOS:
- * - checkout.session.completed: Novo pagamento
- * - customer.subscription.updated: Mudança de plano
- * - customer.subscription.deleted: Cancelamento
- * - invoice.payment_succeeded: Renovação
- * - invoice.payment_failed: Falha de pagamento
- * - charge.refunded: Reembolso
- * 
- * FLUXO PRINCIPAL (checkout.session.completed):
- * 1. Valida assinatura do webhook
- * 2. Obtém email do cliente
- * 3. Busca profile pelo email
- * 4. Se profile existe → atualiza plan, searches_limit
- * 5. Se não existe → dados ficam pendentes (serão vinculados no signup)
- * 6. Registra evento em subscription_events
- * 
- * CARRY-OVER DE BUSCAS:
- * - Upgrade: Buscas restantes são adicionadas ao novo plano
- * - Downgrade: Buscas são resetadas para o limite do novo plano
- * - Mesmo plano: Mantém limite atual ou base (o maior)
- * 
- * @see supabase/functions/create-checkout/index.ts
- * =============================================================================
- */
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -39,7 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
-// Helper function for logging with timestamp
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);

@@ -1,34 +1,3 @@
-/**
- * =============================================================================
- * Upgrade.tsx - Página de Planos e Checkout
- * =============================================================================
- * 
- * Esta página exibe os planos disponíveis e inicia o checkout Stripe.
- * 
- * FUNCIONALIDADES:
- * 1. Exibe cards de planos (Start, Growth, Scale)
- * 2. Destaca plano atual do usuário
- * 3. Permite upgrade para plano superior
- * 4. Gerenciar assinatura via portal Stripe
- * 
- * FLUXO DE CHECKOUT:
- * - Logado: Vai direto para create-checkout
- * - Não logado: Abre EmailCaptureModal primeiro
- * - Após pagamento: Redireciona para /checkout-success
- * 
- * PRICE_IDS:
- * - Mapeados para os preços criados no Stripe
- * - IMPORTANTE: Atualizar aqui se criar novos preços
- * 
- * VERIFICAÇÃO AUTOMÁTICA:
- * - Após retorno do checkout, verifica status a cada 5s por 2min
- * - Atualiza plano automaticamente quando detecta mudança
- * 
- * @see supabase/functions/create-checkout/index.ts
- * @see supabase/functions/check-subscription/index.ts
- * =============================================================================
- */
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2 } from "lucide-react";
@@ -41,14 +10,6 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import type { LucideIcon } from "lucide-react";
 
-/**
- * PRICE_IDS - Mapeamento de planos para IDs de preço do Stripe
- * 
- * IMPORTANTE: Se criar novos preços no Stripe, atualizar aqui!
- * Também atualizar em:
- * - supabase/functions/stripe-webhook/index.ts (PRICE_TO_PLAN)
- * - supabase/functions/get-stripe-mrr/index.ts (WIIZE_PRICE_IDS)
- */
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
   growth: "price_1SlykkK8CM0R6xMMZu7WJesV",

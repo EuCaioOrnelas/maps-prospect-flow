@@ -36,11 +36,8 @@ export interface Lead {
   last_response_at: string | null;
   whatsapp_status: WhatsAppStatus;
   contact_id: string | null;
+  conversation_id: string | null;
   whatsapp_number_id: string | null;
-  first_message_sent: boolean | null;
-  first_message_sent_at: string | null;
-  has_responded: boolean | null;
-  responded_at: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -269,6 +266,7 @@ export const useCRM = () => {
         tags: lead.tags || [],
         estimated_value: lead.estimated_value || 0,
         contact_id: lead.contact_id,
+        conversation_id: lead.conversation_id,
       })
       .select()
       .single();
