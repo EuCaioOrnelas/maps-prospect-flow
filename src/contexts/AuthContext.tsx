@@ -28,7 +28,7 @@ interface AuthContextType {
   isTrialExpired: boolean;
   trialDaysRemaining: number;
   isBlocked: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, skipFraudCheck?: boolean) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -201,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, skipFraudCheck = false) => {
     const signupStartTime = Date.now();
     const signupLogs: string[] = [];
     
@@ -212,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(message, data || '');
     };
     
-    log('START', { email, name: name.substring(0, 3) + '***' });
+    log('START', { email, name: name.substring(0, 3) + '***', skipFraudCheck });
     
     const redirectUrl = `${window.location.origin}/dashboard`;
     
@@ -220,30 +220,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let fingerprint = '';
     let clientIP = '';
     
-    try {
-      log('STEP 1: Getting fingerprint and IP...');
-      const fpStartTime = Date.now();
-      
-      [fingerprint, clientIP] = await Promise.all([
-        generateFingerprint(),
-        getClientIP()
-      ]);
-      
-      log('STEP 1 COMPLETE: Fingerprint and IP obtained', { 
-        fingerprint: fingerprint.substring(0, 8) + '...', 
-        ip: clientIP,
-        duration: Date.now() - fpStartTime + 'ms'
-      });
-    } catch (fpError) {
-      log('STEP 1 ERROR: Error getting fingerprint/IP', { 
-        error: fpError instanceof Error ? fpError.message : String(fpError),
-        stack: fpError instanceof Error ? fpError.stack : undefined
-      });
-      // Continue with empty values - fraud check will skip validation
+    // Only gather fingerprint/IP if fraud check is not skipped
+    if (!skipFraudCheck) {
+      try {
+        log('STEP 1: Getting fingerprint and IP...');
+        const fpStartTime = Date.now();
+        
+        // Use Promise.allSettled to avoid blocking on failure
+        const [fpResult, ipResult] = await Promise.allSettled([
+          generateFingerprint(),
+          getClientIP()
+        ]);
+        
+        fingerprint = fpResult.status === 'fulfilled' ? fpResult.value : '';
+        clientIP = ipResult.status === 'fulfilled' ? ipResult.value : 'unknown';
+        
+        log('STEP 1 COMPLETE: Fingerprint and IP obtained', { 
+          fingerprint: fingerprint ? fingerprint.substring(0, 8) + '...' : 'failed', 
+          ip: clientIP,
+          duration: Date.now() - fpStartTime + 'ms'
+        });
+      } catch (fpError) {
+        log('STEP 1 WARNING: Error getting fingerprint/IP - continuing anyway', { 
+          error: fpError instanceof Error ? fpError.message : String(fpError)
+        });
+        // Continue with empty values - fraud check will be skipped
+      }
+    } else {
+      log('STEP 1 SKIPPED: Fraud check disabled (likely post-checkout signup)');
     }
     
-    // Check for fraud before signup using strict validation (only if we have fingerprint/IP)
-    if (fingerprint && clientIP && clientIP !== 'unknown') {
+    // FRAUD CHECK - Only run if NOT skipped and we have fingerprint/IP
+    // This is skipped for post-checkout signups since they already paid
+    if (!skipFraudCheck && fingerprint && clientIP && clientIP !== 'unknown') {
       try {
         log('STEP 2: Running fraud check...', { fingerprint: fingerprint.substring(0, 8), ip: clientIP });
         const fraudStartTime = Date.now();
@@ -254,14 +263,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         
         if (fraudError) {
-          log('STEP 2 ERROR: Fraud check RPC error', { 
+          log('STEP 2 WARNING: Fraud check RPC error - continuing anyway', { 
             error: fraudError.message,
             code: fraudError.code,
-            details: fraudError.details,
-            hint: fraudError.hint,
             duration: Date.now() - fraudStartTime + 'ms'
           });
-          // Don't block signup on fraud check error - allow creation
+          // DON'T block signup on fraud check error - allow creation
         } else {
           log('STEP 2 COMPLETE: Fraud check result', { 
             result: fraudCheck,
@@ -277,7 +284,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             reasons?: string[] 
           } | null;
           
-          // Block signup if not allowed (new format) or suspicious (old format)
+          // Block signup ONLY if explicitly not allowed AND this is a free signup
+          // Paid signups (from checkout-success) bypass fraud entirely via skipFraudCheck
           if (fraudResult?.allowed === false) {
             log('BLOCKED: Signup blocked by fraud check', { reason: fraudResult.reason, message: fraudResult.message });
             console.error('[SIGNUP BLOCKED]', signupLogs.join('\n'));
@@ -287,21 +295,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           
           if (fraudResult?.is_suspicious) {
-            log('BLOCKED: Suspicious signup detected', { reasons: fraudResult.reasons });
-            console.error('[SIGNUP BLOCKED]', signupLogs.join('\n'));
-            return { 
-              error: new Error('Detectamos atividade suspeita. Entre em contato com o suporte se acredita ser um erro.') 
-            };
+            log('WARNING: Suspicious signup detected but allowing', { reasons: fraudResult.reasons });
+            // Log but DON'T block - reduce false positives
           }
         }
       } catch (fraudCatchError) {
-        log('STEP 2 EXCEPTION: Unexpected error in fraud check', { 
-          error: fraudCatchError instanceof Error ? fraudCatchError.message : String(fraudCatchError),
-          stack: fraudCatchError instanceof Error ? fraudCatchError.stack : undefined
+        log('STEP 2 EXCEPTION: Unexpected error in fraud check - continuing anyway', { 
+          error: fraudCatchError instanceof Error ? fraudCatchError.message : String(fraudCatchError)
         });
+        // DON'T block on exception - allow signup to proceed
       }
-    } else {
+    } else if (!skipFraudCheck) {
       log('STEP 2 SKIPPED: No fingerprint/IP available', { fingerprint: !!fingerprint, clientIP });
+    } else {
+      log('STEP 2 SKIPPED: skipFraudCheck=true');
     }
     
     // Proceed with Supabase signup

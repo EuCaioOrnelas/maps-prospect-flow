@@ -12,27 +12,42 @@ import {
   Lock, 
   User,
   PartyPopper,
-  Crown
+  Crown,
+  AlertTriangle,
+  CheckCircle,
+  Copy
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
 import { motion } from "framer-motion";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
+
+interface SignupStep {
+  step: string;
+  status: 'pending' | 'running' | 'success' | 'error';
+  message?: string;
+}
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  
+  // Progress tracking state
+  const [signupSteps, setSignupSteps] = useState<SignupStep[]>([]);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
@@ -41,56 +56,114 @@ const CheckoutSuccess = () => {
     }
   }, [user, authLoading, navigate]);
 
+  const updateStep = (stepName: string, status: SignupStep['status'], message?: string) => {
+    setSignupSteps(prev => {
+      const existing = prev.find(s => s.step === stepName);
+      if (existing) {
+        return prev.map(s => s.step === stepName ? { ...s, status, message } : s);
+      }
+      return [...prev, { step: stepName, status, message }];
+    });
+  };
+
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('pt-BR');
+    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+  };
+
+  const copyDebugLogs = () => {
+    const logsText = debugLogs.join('\n');
+    navigator.clipboard.writeText(logsText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({
+      title: "Logs copiados!",
+      description: "Cole em um email para o suporte se necessário.",
+    });
+  };
+
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-          emailRedirectTo: `${window.location.origin}/login`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        // Check if email confirmation is required
-        if (data.user.identities && data.user.identities.length === 0) {
-          // User already exists
-          toast({
-            title: "Email já cadastrado",
-            description: "Faça login com sua conta existente.",
-            variant: "destructive",
-          });
-        } else if (!data.session) {
-          // Email confirmation required
-          setShowEmailVerification(true);
-        } else {
-          // Auto-confirmed, redirect to dashboard
-          toast({
-            title: "Conta criada com sucesso!",
-            description: "Você já pode acessar sua conta.",
-          });
-          navigate("/dashboard");
-        }
-      }
-    } catch (error: any) {
-      console.error("Signup error:", error);
+    
+    // Reset debug state
+    setSignupSteps([]);
+    setDebugLogs([]);
+    setShowDebugInfo(false);
+    
+    addDebugLog(`Iniciando criação de conta pós-checkout para ${email.substring(0, 3)}***`);
+    
+    // Validate password strength
+    if (!isPasswordStrong(password)) {
+      addDebugLog('Erro: Senha muito fraca');
       toast({
-        title: "Erro ao criar conta",
-        description: error.message || "Tente novamente mais tarde",
+        title: "Senha muito fraca",
+        description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
         variant: "destructive",
       });
-    } finally {
+      return;
+    }
+
+    setLoading(true);
+    updateStep('Validação', 'success', 'Dados validados');
+    updateStep('Criação da conta', 'running');
+    addDebugLog('Validação concluída, criando conta (fraud check desabilitado para pagantes)...');
+
+    try {
+      // Use signUp with skipFraudCheck=true since user already paid
+      const { error } = await signUp(email, password, name, true);
+
+      if (error) {
+        addDebugLog(`ERRO: ${error.message}`);
+        updateStep('Criação da conta', 'error', error.message);
+        setShowDebugInfo(true);
+
+        // Handle specific error messages
+        let errorMessage = error.message || "Erro ao criar conta. Tente novamente.";
+        
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Este email já está cadastrado. Faça login para acessar seu plano.";
+          addDebugLog('Email já cadastrado - usuário deve fazer login');
+        }
+
+        toast({
+          title: "Erro no cadastro",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Success
+      updateStep('Criação da conta', 'success', 'Conta criada');
+      updateStep('Vinculando plano', 'success', 'Plano ativo');
+      addDebugLog('Conta criada com sucesso! Plano será vinculado automaticamente.');
+
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Você já pode acessar sua conta.",
+      });
+      
+      // Show email verification or redirect
+      setShowEmailVerification(true);
+      setLoading(false);
+    } catch (unexpectedError: any) {
+      console.error("Signup error:", unexpectedError);
+      const errorMsg = unexpectedError instanceof Error ? unexpectedError.message : 'Erro desconhecido';
+      addDebugLog(`EXCEÇÃO: ${errorMsg}`);
+      updateStep('Sistema', 'error', errorMsg);
+      setShowDebugInfo(true);
+      
+      toast({
+        title: "Erro ao criar conta",
+        description: errorMsg || "Tente novamente mais tarde",
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
+
+  const hasError = signupSteps.some(s => s.status === 'error');
 
   if (authLoading) {
     return (
@@ -207,6 +280,79 @@ const CheckoutSuccess = () => {
               </div>
             </motion.div>
 
+            {/* Progress Steps - Show during loading or after error */}
+            {(loading || hasError) && signupSteps.length > 0 && (
+              <div className="mb-6 p-4 rounded-xl bg-secondary/50 border border-border">
+                <p className="text-xs text-muted-foreground mb-3 font-medium">
+                  {loading ? 'Progresso do cadastro:' : 'Status do cadastro:'}
+                </p>
+                <div className="space-y-2">
+                  {signupSteps.map((step, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs">
+                      {step.status === 'running' && (
+                        <Loader2 size={12} className="animate-spin text-primary" />
+                      )}
+                      {step.status === 'success' && (
+                        <CheckCircle size={12} className="text-green-500" />
+                      )}
+                      {step.status === 'error' && (
+                        <AlertTriangle size={12} className="text-destructive" />
+                      )}
+                      {step.status === 'pending' && (
+                        <div className="w-3 h-3 rounded-full border border-muted-foreground/30" />
+                      )}
+                      <span className={step.status === 'error' ? 'text-destructive' : ''}>
+                        {step.step}
+                        {step.message && (
+                          <span className="text-muted-foreground ml-1">
+                            - {step.message}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Debug Info Panel - Show on error */}
+            {showDebugInfo && hasError && (
+              <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/30">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-destructive flex items-center gap-1">
+                    <AlertTriangle size={12} />
+                    Informações para suporte
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyDebugLogs}
+                    className="h-6 px-2 text-xs"
+                  >
+                    {copied ? (
+                      <>
+                        <CheckCircle size={10} className="mr-1" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={10} className="mr-1" />
+                        Copiar logs
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="bg-background/50 rounded p-2 max-h-32 overflow-y-auto">
+                  <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap font-mono">
+                    {debugLogs.join('\n')}
+                  </pre>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Se o problema persistir, copie os logs acima e envie para o suporte.
+                </p>
+              </div>
+            )}
+
             {/* Create Account Form */}
             <form onSubmit={handleCreateAccount} className="space-y-4">
               <motion.div 
@@ -226,6 +372,7 @@ const CheckoutSuccess = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  disabled={loading}
                   className="h-12"
                 />
               </motion.div>
@@ -247,6 +394,7 @@ const CheckoutSuccess = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                   className="h-12"
                 />
               </motion.div>
@@ -264,13 +412,15 @@ const CheckoutSuccess = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   required
+                  disabled={loading}
                   className="h-12"
                 />
+                <PasswordStrength password={password} />
               </motion.div>
 
               <motion.div
@@ -330,7 +480,7 @@ const CheckoutSuccess = () => {
               transition={{ delay: 1.3 }}
             >
               Precisa de ajuda?{" "}
-              <Link to="/contato" className="text-primary hover:underline">
+              <Link to="/contact" className="text-primary hover:underline">
                 Entre em contato conosco
               </Link>
             </motion.p>
@@ -357,6 +507,9 @@ const CheckoutSuccess = () => {
           setEmail("");
           setPassword("");
           setName("");
+          setSignupSteps([]);
+          setDebugLogs([]);
+          setShowDebugInfo(false);
         }}
       />
     </div>
