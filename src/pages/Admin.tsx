@@ -57,6 +57,7 @@ import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
+import { SyncStripeSubscriptions } from "@/components/admin/SyncStripeSubscriptions";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import * as XLSX from 'xlsx';
 
@@ -1831,6 +1832,11 @@ const Admin = () => {
             {/* Subscription Events Debug Log */}
             <div className="mt-8">
               <SubscriptionEventsLog />
+            </div>
+
+            {/* Sync Stripe Subscriptions Tool */}
+            <div className="mt-8">
+              <SyncStripeSubscriptions />
             </div>
 
             {/* Phone Cleanup Tool */}
