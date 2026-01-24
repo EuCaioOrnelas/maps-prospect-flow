@@ -2,7 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, WifiOff, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase, invokeExternalFunction, EXTERNAL_FUNCTIONS_URL, getExternalAnonKey } from "@/lib/externalSupabase";
+
+// Usa o cliente externo para operações de WhatsApp
+const supabase = externalSupabase;
 
 interface ReconnectDialogProps {
   open: boolean;
@@ -59,7 +62,7 @@ export const ReconnectDialog = ({
 
     const checkStatus = async () => {
       try {
-        const response = await supabase.functions.invoke('evolution-check-status', {
+        const response = await invokeExternalFunction<{ connected?: boolean }>('evolution-check-status', {
           body: { instanceName, numberId },
         });
 
@@ -82,7 +85,7 @@ export const ReconnectDialog = ({
   const handleRefreshQR = async () => {
     setLoading(true);
     try {
-      const response = await supabase.functions.invoke('evolution-reconnect', {
+      const response = await invokeExternalFunction<{ qrCode?: string; connected?: boolean }>('evolution-reconnect', {
         body: { instanceName, numberId },
       });
 

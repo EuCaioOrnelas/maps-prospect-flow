@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/lib/externalSupabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Campaign, Lead } from "@/pages/WhatsAppCampaign";
+
+// Usa o cliente externo para operações de campanhas
+const supabase = externalSupabase;
 
 export interface RealtimeCampaign extends Campaign {
   isRealtime?: boolean;

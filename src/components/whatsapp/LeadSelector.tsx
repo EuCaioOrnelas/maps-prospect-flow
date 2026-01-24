@@ -18,7 +18,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/lib/externalSupabase";
+
+// Usa o cliente externo para operações de WhatsApp
+const supabase = externalSupabase;
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
