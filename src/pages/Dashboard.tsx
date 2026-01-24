@@ -1,3 +1,4 @@
+// Dashboard - Main search and lead management page
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
