@@ -36,7 +36,7 @@ export interface Lead {
   last_response_at: string | null;
   whatsapp_status: WhatsAppStatus;
   contact_id: string | null;
-  conversation_id: string | null;
+  conversation_id?: string | null;
   whatsapp_number_id: string | null;
   created_at: string;
   updated_at: string;
