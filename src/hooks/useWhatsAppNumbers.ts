@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { externalSupabase, invokeExternalFunction } from "@/lib/externalSupabase";
+import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
-
-// Usa o cliente externo para operações de WhatsApp
-const supabase = externalSupabase;
 
 export interface WhatsAppNumber {
   id: string;
@@ -196,11 +194,13 @@ export const useWhatsAppNumbers = () => {
     try {
       console.log(`Verifying connection status for ${instanceName}...`);
 
-      const { data, error } = await invokeExternalFunction<{
+      const { data, error } = await invokeWithRetry<{
         connected: boolean | null;
         requiresReauth?: boolean;
       }>('evolution-check-status', {
         body: { instanceName, numberId },
+      }, {
+        maxRetries: 1,
       });
 
       if (error) {

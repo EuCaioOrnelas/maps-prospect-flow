@@ -21,10 +21,7 @@ import {
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { externalSupabase, invokeExternalFunction } from "@/lib/externalSupabase";
-
-// Usa o cliente externo para operações de campanhas
-const supabase = externalSupabase;
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -147,7 +144,7 @@ export const ActiveCampaigns = ({
       let messages = campaign.messages;
 
       // Invoke the run campaign function
-      const { error: runError } = await invokeExternalFunction('evolution-run-campaign', {
+      const { error: runError } = await supabase.functions.invoke('evolution-run-campaign', {
         body: {
           campaignId: campaign.id,
           numberId: campaign.whatsapp_number_id,

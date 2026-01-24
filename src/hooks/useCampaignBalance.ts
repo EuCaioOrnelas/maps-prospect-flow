@@ -1,8 +1,5 @@
 import { useState, useCallback } from "react";
-import { externalSupabase } from "@/lib/externalSupabase";
-
-// Usa o cliente externo para operações de campanhas
-const supabase = externalSupabase;
+import { supabase } from "@/integrations/supabase/client";
 
 const DAILY_LIMIT_PER_NUMBER = 200;
 

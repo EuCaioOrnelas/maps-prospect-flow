@@ -11,12 +11,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Eager load critical pages
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
 // Lazy load all other pages
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLandingPages = lazy(() => import("./pages/AdminLandingPages"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));

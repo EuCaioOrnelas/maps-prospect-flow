@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { externalSupabase } from "@/lib/externalSupabase";
-
-// Usa o cliente externo para operações de campanhas
-const supabase = externalSupabase;
+import { supabase } from "@/integrations/supabase/client";
 import { Heart, AlertTriangle, CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";

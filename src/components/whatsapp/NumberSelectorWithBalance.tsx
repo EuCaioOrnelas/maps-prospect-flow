@@ -29,10 +29,7 @@ import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { useCampaignBalance } from "@/hooks/useCampaignBalance";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { externalSupabase } from "@/lib/externalSupabase";
-
-// Usa o cliente externo para operações de WhatsApp
-const supabase = externalSupabase;
+import { supabase } from "@/integrations/supabase/client";
 
 interface NumberSelectorWithBalanceProps {
   numbers: WhatsAppNumber[];

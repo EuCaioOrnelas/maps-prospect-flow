@@ -17,10 +17,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
-import { externalSupabase } from "@/lib/externalSupabase";
-
-// Usa o cliente externo para operações de campanhas
-const supabase = externalSupabase;
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
