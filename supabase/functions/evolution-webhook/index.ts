@@ -324,111 +324,129 @@ serve(async (req) => {
           
           if (whatsappNumber) {
             // Get or create conversation - try multiple matching strategies
+            // NOTE: The 'conversations' and 'messages' tables may not exist in all setups
+            // We wrap these in try-catch to allow the AI agent flow to continue
             let conversationId: string | null = null;
+            let hasConversationsTable = true;
             
-            // Strategy 1: Match by exact remote_jid
-            let { data: existingConv } = await supabase
-              .from('conversations')
-              .select('id')
-              .eq('remote_jid', remoteJid)
-              .eq('whatsapp_number_id', whatsappNumber.id)
-              .single();
-            
-            if (existingConv) {
-              conversationId = existingConv.id;
-              console.log('Found conversation by exact remote_jid match');
-            }
-            
-            // Strategy 2: Match by normalized phone number (Brazilian format handling)
-            if (!conversationId && normalizedPhone.length >= 10) {
-              // For Brazilian numbers, handle the 9th digit variation
-              // 55 44 9 91236180 vs 55 44 91236180
-              const phoneToMatch = normalizedPhone.slice(-11);
-              const phoneToMatch8 = normalizedPhone.slice(-8); // Last 8 digits (most unique part)
-              
-              const { data: convsByPhone } = await supabase
+            try {
+              // Strategy 1: Match by exact remote_jid
+              let { data: existingConv, error: convError } = await supabase
                 .from('conversations')
-                .select('id, phone, remote_jid')
-                .eq('whatsapp_number_id', whatsappNumber.id);
-              
-              if (convsByPhone && convsByPhone.length > 0) {
-                // Find conversation where phone matches (considering 9th digit variations)
-                const matchingConv = convsByPhone.find(c => {
-                  const convPhone = c.phone.replace(/\D/g, '');
-                  const convLast8 = convPhone.slice(-8);
-                  const convLast11 = convPhone.slice(-11);
-                  
-                  // Exact match on last 11 digits
-                  if (convLast11 === phoneToMatch) return true;
-                  
-                  // Match on last 8 digits (ignores 9th digit and area code variations)
-                  if (convLast8 === phoneToMatch8) return true;
-                  
-                  // Brazilian mobile: compare without the 9th digit
-                  // 9XXXXXXXX -> XXXXXXXX
-                  const removeBrazilian9 = (p: string) => {
-                    const last9 = p.slice(-9);
-                    if (last9.startsWith('9')) {
-                      return p.slice(0, -9) + last9.slice(1);
-                    }
-                    return p;
-                  };
-                  
-                  const normalizedConv = removeBrazilian9(convPhone);
-                  const normalizedNew = removeBrazilian9(normalizedPhone);
-                  
-                  // Compare last 10 digits after removing the Brazilian 9
-                  if (normalizedConv.slice(-10) === normalizedNew.slice(-10)) return true;
-                  
-                  return false;
-                });
-                
-                if (matchingConv) {
-                  conversationId = matchingConv.id;
-                  console.log('Found conversation by phone number match:', matchingConv.phone, '-> new:', rawPhone);
-                  
-                  // Update the remote_jid to the new one for future matches
-                  await supabase
-                    .from('conversations')
-                    .update({ remote_jid: remoteJid, updated_at: new Date().toISOString() })
-                    .eq('id', conversationId);
-                }
-              }
-            }
-            
-            // Strategy 3: Create new conversation if not found
-            if (!conversationId) {
-              // For groups, use the group jid directly; for individuals, normalize
-              const phoneForStorage = isGroup ? rawPhone : normalizePhoneNumber(rawPhone);
-              const jidForStorage = isGroup ? remoteJid : (phoneForStorage + '@s.whatsapp.net');
-              
-              // For groups, try to get the group name from the data
-              const groupName = isGroup ? (data.pushName || data.subject || null) : null;
-              
-              console.log('Creating new conversation for:', rawPhone, '-> is_group:', isGroup, 'groupName:', groupName);
-              const { data: newConv, error: convError } = await supabase
-                .from('conversations')
-                .insert({
-                  user_id: whatsappNumber.user_id,
-                  whatsapp_number_id: whatsappNumber.id,
-                  remote_jid: jidForStorage,
-                  phone: phoneForStorage,
-                  contact_name: isGroup ? null : (data.pushName || null),
-                  is_group: isGroup,
-                  group_name: groupName,
-                })
                 .select('id')
+                .eq('remote_jid', remoteJid)
+                .eq('whatsapp_number_id', whatsappNumber.id)
                 .single();
               
-              if (convError || !newConv) {
-                console.error('Error creating conversation:', convError);
-                break;
+              // Check if table doesn't exist
+              if (convError?.code === 'PGRST205') {
+                console.log('conversations table not found - skipping conversation tracking');
+                hasConversationsTable = false;
+              } else if (existingConv) {
+                conversationId = existingConv.id;
+                console.log('Found conversation by exact remote_jid match');
               }
-              conversationId = newConv.id;
+              
+              // Strategy 2: Match by normalized phone number (Brazilian format handling)
+              if (hasConversationsTable && !conversationId && normalizedPhone.length >= 10) {
+                // For Brazilian numbers, handle the 9th digit variation
+                // 55 44 9 91236180 vs 55 44 91236180
+                const phoneToMatch = normalizedPhone.slice(-11);
+                const phoneToMatch8 = normalizedPhone.slice(-8); // Last 8 digits (most unique part)
+                
+                const { data: convsByPhone } = await supabase
+                  .from('conversations')
+                  .select('id, phone, remote_jid')
+                  .eq('whatsapp_number_id', whatsappNumber.id);
+                
+                if (convsByPhone && convsByPhone.length > 0) {
+                  // Find conversation where phone matches (considering 9th digit variations)
+                  const matchingConv = convsByPhone.find(c => {
+                    const convPhone = c.phone.replace(/\D/g, '');
+                    const convLast8 = convPhone.slice(-8);
+                    const convLast11 = convPhone.slice(-11);
+                    
+                    // Exact match on last 11 digits
+                    if (convLast11 === phoneToMatch) return true;
+                    
+                    // Match on last 8 digits (ignores 9th digit and area code variations)
+                    if (convLast8 === phoneToMatch8) return true;
+                    
+                    // Brazilian mobile: compare without the 9th digit
+                    // 9XXXXXXXX -> XXXXXXXX
+                    const removeBrazilian9 = (p: string) => {
+                      const last9 = p.slice(-9);
+                      if (last9.startsWith('9')) {
+                        return p.slice(0, -9) + last9.slice(1);
+                      }
+                      return p;
+                    };
+                    
+                    const normalizedConv = removeBrazilian9(convPhone);
+                    const normalizedNew = removeBrazilian9(normalizedPhone);
+                    
+                    // Compare last 10 digits after removing the Brazilian 9
+                    if (normalizedConv.slice(-10) === normalizedNew.slice(-10)) return true;
+                    
+                    return false;
+                  });
+                  
+                  if (matchingConv) {
+                    conversationId = matchingConv.id;
+                    console.log('Found conversation by phone number match:', matchingConv.phone, '-> new:', rawPhone);
+                    
+                    // Update the remote_jid to the new one for future matches
+                    await supabase
+                      .from('conversations')
+                      .update({ remote_jid: remoteJid, updated_at: new Date().toISOString() })
+                      .eq('id', conversationId);
+                  }
+                }
+              }
+              
+              // Strategy 3: Create new conversation if not found
+              if (hasConversationsTable && !conversationId) {
+                // For groups, use the group jid directly; for individuals, normalize
+                const phoneForStorage = isGroup ? rawPhone : normalizePhoneNumber(rawPhone);
+                const jidForStorage = isGroup ? remoteJid : (phoneForStorage + '@s.whatsapp.net');
+                
+                // For groups, try to get the group name from the data
+                const groupName = isGroup ? (data.pushName || data.subject || null) : null;
+                
+                console.log('Creating new conversation for:', rawPhone, '-> is_group:', isGroup, 'groupName:', groupName);
+                const { data: newConv, error: createConvError } = await supabase
+                  .from('conversations')
+                  .insert({
+                    user_id: whatsappNumber.user_id,
+                    whatsapp_number_id: whatsappNumber.id,
+                    remote_jid: jidForStorage,
+                    phone: phoneForStorage,
+                    contact_name: isGroup ? null : (data.pushName || null),
+                    is_group: isGroup,
+                    group_name: groupName,
+                  })
+                  .select('id')
+                  .single();
+                
+                if (createConvError) {
+                  if (createConvError.code === 'PGRST205') {
+                    console.log('conversations table not found - skipping conversation creation');
+                    hasConversationsTable = false;
+                  } else {
+                    console.error('Error creating conversation:', createConvError);
+                  }
+                } else if (newConv) {
+                  conversationId = newConv.id;
+                }
+              }
+            } catch (convTableError) {
+              console.log('Conversation table operations failed (table may not exist):', convTableError);
+              hasConversationsTable = false;
             }
 
             // If message is received (not from me), try to fetch profile picture
-            if (!fromMe && rawPhone) {
+            // Only do this if conversations table exists
+            if (!fromMe && rawPhone && hasConversationsTable) {
               try {
                 const profilePicture = await fetchProfilePicture(instance, rawPhone);
                 if (profilePicture) {
@@ -445,7 +463,7 @@ serve(async (req) => {
                     .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone}`)
                     .limit(1);
                     
-                  if (contactByPhone && contactByPhone.length > 0) {
+                  if (contactByPhone && contactByPhone.length > 0 && conversationId) {
                     // Update conversation with contact_id
                     await supabase
                       .from('conversations')
@@ -466,7 +484,8 @@ serve(async (req) => {
             }
 
             // Check if this is a protocolMessage (edit event via upsert)
-            if (messageData.protocolMessage?.editedMessage) {
+            // Only process if we have conversations/messages tables
+            if (hasConversationsTable && messageData.protocolMessage?.editedMessage) {
               console.log('=== EDIT VIA PROTOCOL MESSAGE IN UPSERT ===');
               const protocolMessage = messageData.protocolMessage;
               const editedMsgKey = protocolMessage.key;
@@ -481,45 +500,49 @@ serve(async (req) => {
               console.log('Edit via upsert - msgId:', editMsgId, 'newContent:', newContent?.substring(0, 100));
               
               if (editMsgId && newContent) {
-                // Find and update the message
-                const { data: existingEditMsg } = await supabase
-                  .from('messages')
-                  .select('id, conversation_id')
-                  .eq('message_id', editMsgId)
-                  .eq('user_id', whatsappNumber.user_id)
-                  .maybeSingle();
-                
-                if (existingEditMsg) {
-                  await supabase
+                try {
+                  // Find and update the message
+                  const { data: existingEditMsg } = await supabase
                     .from('messages')
-                    .update({ 
-                      content: newContent,
-                      updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', existingEditMsg.id);
-                  
-                  console.log('Message edited via protocolMessage:', existingEditMsg.id);
-                  
-                  // Update conversation last_message if needed
-                  const { data: lastMsg } = await supabase
-                    .from('messages')
-                    .select('id')
-                    .eq('conversation_id', existingEditMsg.conversation_id)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
+                    .select('id, conversation_id')
+                    .eq('message_id', editMsgId)
+                    .eq('user_id', whatsappNumber.user_id)
                     .maybeSingle();
                   
-                  if (lastMsg && lastMsg.id === existingEditMsg.id) {
+                  if (existingEditMsg) {
                     await supabase
-                      .from('conversations')
-                      .update({
-                        last_message: newContent.substring(0, 100),
+                      .from('messages')
+                      .update({ 
+                        content: newContent,
                         updated_at: new Date().toISOString(),
                       })
-                      .eq('id', existingEditMsg.conversation_id);
+                      .eq('id', existingEditMsg.id);
+                    
+                    console.log('Message edited via protocolMessage:', existingEditMsg.id);
+                    
+                    // Update conversation last_message if needed
+                    const { data: lastMsg } = await supabase
+                      .from('messages')
+                      .select('id')
+                      .eq('conversation_id', existingEditMsg.conversation_id)
+                      .order('created_at', { ascending: false })
+                      .limit(1)
+                      .maybeSingle();
+                    
+                    if (lastMsg && lastMsg.id === existingEditMsg.id) {
+                      await supabase
+                        .from('conversations')
+                        .update({
+                          last_message: newContent.substring(0, 100),
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', existingEditMsg.conversation_id);
+                    }
+                  } else {
+                    console.log('Message not found for edit via protocolMessage:', editMsgId);
                   }
-                } else {
-                  console.log('Message not found for edit via protocolMessage:', editMsgId);
+                } catch (editError) {
+                  console.log('Error processing edit (messages table may not exist):', editError);
                 }
               }
               
@@ -670,366 +693,328 @@ serve(async (req) => {
               }
             }
 
-            // Check if message already exists IN THIS CONVERSATION
-            // We check by conversation_id because the same message_id can exist in multiple instances
-            const { data: existingMsg } = await supabase
-              .from('messages')
-              .select('id')
-              .eq('message_id', messageId)
-              .eq('conversation_id', conversationId)
-              .single();
-
-            if (!existingMsg) {
-              // Insert the message
-              const { error: msgError } = await supabase
-                .from('messages')
-                .insert({
-                  conversation_id: conversationId,
-                  user_id: whatsappNumber.user_id,
-                  message_id: messageId,
-                  remote_jid: remoteJid,
-                  from_me: fromMe,
-                  message_type: messageType,
-                  content: content || (hasMedia ? `[${messageType}]` : ''),
-                  media_url: mediaUrl,
-                  media_filename: mediaFilename,
-                  media_mimetype: mediaMimetype,
-                  interactive: interactive,
-                  status: fromMe ? 'sent' : 'received',
-                  sender_jid: isGroup ? senderJidForGroup : null,
-                  sender_name: isGroup ? senderName : null,
-                  quoted_message_id: quotedMessageId,
-                });
-
-              if (msgError) {
-                console.error('Error inserting message:', msgError);
-              } else {
-                console.log('Message inserted successfully');
-              }
-
-              // Update conversation
-              const updateData: Record<string, unknown> = {
-                last_message: content || `[${messageType}]`,
-                last_message_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              };
-              
-              if (data.pushName) {
-                updateData.contact_name = data.pushName;
-              }
-              
-              // If message is from lead (not from me), increment unread count and update lead status
-              if (!fromMe) {
-                const { data: conv } = await supabase
-                  .from('conversations')
-                  .select('unread_count')
-                  .eq('id', conversationId)
+            // ===== MESSAGE STORAGE (only if conversations/messages tables exist) =====
+            // These operations are wrapped to allow the AI agent flow to continue even if tables don't exist
+            if (hasConversationsTable && conversationId) {
+              try {
+                // Check if message already exists IN THIS CONVERSATION
+                const { data: existingMsg, error: existingMsgError } = await supabase
+                  .from('messages')
+                  .select('id')
+                  .eq('message_id', messageId)
+                  .eq('conversation_id', conversationId)
                   .single();
                 
-                updateData.unread_count = (conv?.unread_count || 0) + 1;
-                
-                // ===== AUTO-MOVE LEAD TO "RESPONDEU MENSAGEM" STAGE =====
-                // Find lead by phone or conversation_id
-                const { data: existingLead } = await supabase
-                  .from('leads')
-                  .select('id, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id)
-                  .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},conversation_id.eq.${conversationId}`)
-                  .limit(1)
-                  .single();
-                
-                if (existingLead) {
-                  console.log('Found lead to update on response:', existingLead.id);
-                  
-                  // Get the "Respondeu Mensagem" stage
-                  const { data: respondeuStage } = await supabase
-                    .from('pipeline_stages')
-                    .select('id, position')
-                    .eq('user_id', whatsappNumber.user_id)
-                    .eq('name', 'Respondeu Mensagem')
-                    .single();
-                  
-                  // Only move to "Respondeu Mensagem" if current stage is earlier (position < respondeu position)
-                  let shouldMoveToRespondeu = false;
-                  if (existingLead.pipeline_stage_id && respondeuStage) {
-                    const { data: currentStage } = await supabase
-                      .from('pipeline_stages')
-                      .select('position')
-                      .eq('id', existingLead.pipeline_stage_id)
-                      .single();
-                    
-                    // Move only if current position is less than Respondeu Mensagem position
-                    if (currentStage && currentStage.position < respondeuStage.position) {
-                      shouldMoveToRespondeu = true;
+                // Skip message storage if messages table doesn't exist
+                if (existingMsgError?.code === 'PGRST205') {
+                  console.log('messages table not found - skipping message storage');
+                } else if (!existingMsg) {
+                  // Insert the message
+                  const { error: msgError } = await supabase
+                    .from('messages')
+                    .insert({
+                      conversation_id: conversationId,
+                      user_id: whatsappNumber.user_id,
+                      message_id: messageId,
+                      remote_jid: remoteJid,
+                      from_me: fromMe,
+                      message_type: messageType,
+                      content: content || (hasMedia ? `[${messageType}]` : ''),
+                      media_url: mediaUrl,
+                      media_filename: mediaFilename,
+                      media_mimetype: mediaMimetype,
+                      interactive: interactive,
+                      status: fromMe ? 'sent' : 'received',
+                      sender_jid: isGroup ? senderJidForGroup : null,
+                      sender_name: isGroup ? senderName : null,
+                      quoted_message_id: quotedMessageId,
+                    });
+
+                  if (msgError) {
+                    if (msgError.code !== 'PGRST205') {
+                      console.error('Error inserting message:', msgError);
                     }
-                  } else if (respondeuStage) {
-                    // No current stage, move to Respondeu Mensagem
-                    shouldMoveToRespondeu = true;
+                  } else {
+                    console.log('Message inserted successfully');
                   }
-                  
-                  const leadUpdate: Record<string, unknown> = {
-                    whatsapp_status: 'replied',
-                    last_response: content || `[${messageType}]`,
-                    last_response_at: new Date().toISOString(),
-                    has_responded: true,
-                    responded_at: new Date().toISOString(),
-                    conversation_id: conversationId,
+
+                  // Update conversation
+                  const updateData: Record<string, unknown> = {
+                    last_message: content || `[${messageType}]`,
+                    last_message_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                   };
                   
-                  if (shouldMoveToRespondeu && respondeuStage) {
-                    leadUpdate.pipeline_stage_id = respondeuStage.id;
-                    console.log(`Moving lead ${existingLead.id} to Respondeu Mensagem stage`);
+                  if (data.pushName) {
+                    updateData.contact_name = data.pushName;
                   }
                   
-                  const { error: leadUpdateError } = await supabase
-                    .from('leads')
-                    .update(leadUpdate)
-                    .eq('id', existingLead.id);
-                  
-                  if (leadUpdateError) {
-                    console.error('Error updating lead:', leadUpdateError);
-                  } else {
-                    console.log('Lead updated with response data');
+                  // If message is from lead (not from me), increment unread count
+                  if (!fromMe) {
+                    const { data: conv } = await supabase
+                      .from('conversations')
+                      .select('unread_count')
+                      .eq('id', conversationId)
+                      .single();
                     
-                    // Log activity for the stage change
-                    if (shouldMoveToRespondeu) {
-                      await supabase.from('lead_activities').insert({
-                        lead_id: existingLead.id,
-                        user_id: whatsappNumber.user_id,
-                        activity_type: 'stage_changed',
-                        description: 'Movido automaticamente para Respondeu Mensagem (recebeu resposta)',
-                        metadata: { automatic: true, trigger: 'webhook_response' },
-                      });
-                    }
+                    updateData.unread_count = (conv?.unread_count || 0) + 1;
                   }
                   
-                  // ===== CAMPAIGN RESPONSE DETECTION =====
-                  // Check if this response is from a campaign contact and register it
-                  const { data: runningCampaigns } = await supabase
-                    .from('whatsapp_campaigns')
-                    .select('id, name, current_window, total_responses')
-                    .eq('user_id', whatsappNumber.user_id)
-                    .eq('whatsapp_number_id', whatsappNumber.id)
-                    .in('status', ['running', 'paused']);
+                  await supabase
+                    .from('conversations')
+                    .update(updateData)
+                    .eq('id', conversationId);
+                }
+              } catch (msgTableError) {
+                console.log('Message storage operations failed (tables may not exist):', msgTableError);
+              }
+            }
+            
+            // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
+            if (!fromMe) {
+              // Find lead by phone
+              const { data: existingLead } = await supabase
+                .from('leads')
+                .select('id, pipeline_stage_id, whatsapp_status')
+                .eq('user_id', whatsappNumber.user_id)
+                .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone}`)
+                .limit(1)
+                .single();
+              
+              if (existingLead) {
+                console.log('Found lead to update on response:', existingLead.id);
+                
+                // Get the "Respondeu Mensagem" stage
+                const { data: respondeuStage } = await supabase
+                  .from('pipeline_stages')
+                  .select('id, position')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .eq('name', 'Respondeu Mensagem')
+                  .single();
+                
+                // Only move to "Respondeu Mensagem" if current stage is earlier
+                let shouldMoveToRespondeu = false;
+                if (existingLead.pipeline_stage_id && respondeuStage) {
+                  const { data: currentStage } = await supabase
+                    .from('pipeline_stages')
+                    .select('position')
+                    .eq('id', existingLead.pipeline_stage_id)
+                    .single();
                   
-                  if (runningCampaigns && runningCampaigns.length > 0) {
-                    console.log('=== CAMPAIGN RESPONSE CHECK ===');
-                    console.log('Found', runningCampaigns.length, 'running/paused campaigns');
-                    
-                    // Check if this phone is in the campaign leads
-                    for (const campaign of runningCampaigns) {
-                      // Check if we've already registered a response from this phone
-                      // Only the FIRST response from each lead should count
-                      const { data: existingResponses } = await supabase
-                        .from('campaign_responses')
-                        .select('id')
-                        .eq('campaign_id', campaign.id)
-                        .eq('contact_phone', normalizedPhone)
-                        .limit(1);
-                      
-                      const existingResponse = existingResponses && existingResponses.length > 0 ? existingResponses[0] : null;
-                      
-                      if (!existingResponse) {
-                        // Check when the message was sent to this contact (from ignored_contacts)
-                        const { data: ignoredContacts } = await supabase
-                          .from('ignored_contacts')
-                          .select('first_message_sent_at')
-                          .eq('user_id', whatsappNumber.user_id)
-                          .eq('phone', normalizedPhone)
-                          .eq('campaign_id', campaign.id)
-                          .limit(1);
-                        
-                        const ignoredContact = ignoredContacts && ignoredContacts.length > 0 ? ignoredContacts[0] : null;
-                        
-                        // If no record of message being sent to this phone, don't count as campaign response
-                        if (!ignoredContact || !ignoredContact.first_message_sent_at) {
-                          console.log(`⚠️ No message record found for ${normalizedPhone} in campaign ${campaign.id}, not counting as campaign response`);
-                          continue;
-                        }
-                        
-                        // Use the message timestamp from WhatsApp for accurate timing
-                        const messageTimestamp = data?.messageTimestamp 
-                          ? new Date(Number(data.messageTimestamp) * 1000) 
-                          : new Date();
-                        
-                        const messageSentAt = new Date(ignoredContact.first_message_sent_at);
-                        const secondsSinceSent = (messageTimestamp.getTime() - messageSentAt.getTime()) / 1000;
-                        
-                        console.log(`=== BOT DETECTION CHECK ===`);
-                        console.log(`Campaign: ${campaign.id}`);
-                        console.log(`Phone: ${normalizedPhone}`);
-                        console.log(`Message sent at: ${messageSentAt.toISOString()}`);
-                        console.log(`Response received at: ${messageTimestamp.toISOString()}`);
-                        console.log(`Time difference: ${secondsSinceSent.toFixed(0)} seconds`);
-                        
-                        // ANTI-BOT FILTER: Only count responses that came at least 60 seconds after the message was sent
-                        // This filters out:
-                        // - Automatic "Away" messages
-                        // - Bot auto-replies
-                        // - Quick automated responses
-                        const MIN_RESPONSE_TIME_SECONDS = 60;
-                        
-                        if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
-                          console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s < ${MIN_RESPONSE_TIME_SECONDS}s), ignoring as potential bot/auto-reply`);
-                          continue;
-                        }
-                        
-                        console.log(`✅ HUMAN RESPONSE VALIDATED: ${secondsSinceSent.toFixed(0)}s after campaign message`);
-                        
-                        // Register new campaign response (valid human response)
-                        const { error: responseError } = await supabase
-                          .from('campaign_responses')
-                          .insert({
-                            campaign_id: campaign.id,
-                            user_id: whatsappNumber.user_id,
-                            contact_phone: normalizedPhone,
-                            window_number: campaign.current_window || 1,
-                            message_content: content?.substring(0, 500) || null,
-                            responded_at: new Date().toISOString(),
-                          });
-                        
-                        if (responseError) {
-                          console.error('Error inserting campaign response:', responseError);
-                        } else {
-                          console.log('✅ Valid human response registered for campaign:', campaign.id);
-                          
-                          // Update campaign total_responses
-                          const newTotalResponses = (campaign.total_responses || 0) + 1;
-                          
-                          // Get current campaign status
-                          const { data: campaignStatus } = await supabase
-                            .from('whatsapp_campaigns')
-                            .select('status, pause_reason, current_window')
-                            .eq('id', campaign.id)
-                            .single();
-                          
-                          const currentWindow = campaignStatus?.current_window || 1;
-                          
-                          // PROGRESSIVE WINDOW UNLOCK: Unlock next window immediately when valid response is received
-                          // This works even if not at the end of current window
-                          if (currentWindow < 4) {
-                            const newWindow = currentWindow + 1;
-                            
-                            if (campaignStatus?.status === 'paused' && campaignStatus?.pause_reason === 'waiting_response') {
-                              // Campaign was paused waiting for response - resume it
-                              await supabase
-                                .from('whatsapp_campaigns')
-                                .update({ 
-                                  status: 'running',
-                                  pause_reason: null,
-                                  current_window: newWindow,
-                                  window_sent_count: 0,
-                                  total_responses: newTotalResponses,
-                                  window_unlocked_at: new Date().toISOString(),
-                                  updated_at: new Date().toISOString()
-                                })
-                                .eq('id', campaign.id);
-                              
-                              console.log(`🎉 WINDOW UNLOCKED! Campaign ${campaign.id} resumed, now on Window ${newWindow}`);
-                            } else if (campaignStatus?.status === 'running') {
-                              // Campaign is still running - just unlock next window for when current one completes
-                              await supabase
-                                .from('whatsapp_campaigns')
-                                .update({ 
-                                  current_window: newWindow,
-                                  window_sent_count: 0,
-                                  total_responses: newTotalResponses,
-                                  window_unlocked_at: new Date().toISOString(),
-                                  updated_at: new Date().toISOString()
-                                })
-                                .eq('id', campaign.id);
-                              
-                              console.log(`🎉 WINDOW PRE-UNLOCKED! Campaign ${campaign.id} progressed to Window ${newWindow} (mid-window unlock)`);
-                            } else {
-                              // Just update total_responses
-                              await supabase
-                                .from('whatsapp_campaigns')
-                                .update({ 
-                                  total_responses: newTotalResponses,
-                                  updated_at: new Date().toISOString()
-                                })
-                                .eq('id', campaign.id);
-                            }
-                          } else {
-                            // Already at max window, just update total_responses
-                            await supabase
-                              .from('whatsapp_campaigns')
-                              .update({ 
-                                total_responses: newTotalResponses,
-                                updated_at: new Date().toISOString()
-                              })
-                              .eq('id', campaign.id);
-                          }
-                          
-                          console.log('Campaign total_responses updated to:', newTotalResponses);
-                        }
-                      }
-                    }
-                    
-                    // Remove from ignored_contacts if present (contact responded, allow future messages)
-                    await supabase
-                      .from('ignored_contacts')
-                      .delete()
-                      .eq('user_id', whatsappNumber.user_id)
-                      .eq('phone', normalizedPhone);
-                    
-                    console.log('Removed from ignored_contacts (if was there)');
+                  if (currentStage && currentStage.position < respondeuStage.position) {
+                    shouldMoveToRespondeu = true;
+                  }
+                } else if (respondeuStage) {
+                  shouldMoveToRespondeu = true;
+                }
+                
+                const leadUpdate: Record<string, unknown> = {
+                  whatsapp_status: 'replied',
+                  last_response: content || `[${messageType}]`,
+                  last_response_at: new Date().toISOString(),
+                  has_responded: true,
+                  responded_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                
+                if (shouldMoveToRespondeu && respondeuStage) {
+                  leadUpdate.pipeline_stage_id = respondeuStage.id;
+                  console.log(`Moving lead ${existingLead.id} to Respondeu Mensagem stage`);
+                }
+                
+                const { error: leadUpdateError } = await supabase
+                  .from('leads')
+                  .update(leadUpdate)
+                  .eq('id', existingLead.id);
+                
+                if (leadUpdateError) {
+                  console.error('Error updating lead:', leadUpdateError);
+                } else {
+                  console.log('Lead updated with response data');
+                  
+                  // Log activity for the stage change
+                  if (shouldMoveToRespondeu) {
+                    await supabase.from('lead_activities').insert({
+                      lead_id: existingLead.id,
+                      user_id: whatsappNumber.user_id,
+                      activity_type: 'stage_changed',
+                      description: 'Movido automaticamente para Respondeu Mensagem (recebeu resposta)',
+                      metadata: { automatic: true, trigger: 'webhook_response' },
+                    });
                   }
                 }
                 
-                // ===== AI AGENT INTEGRATION =====
-                // Check if there's an active AI agent configured for this WhatsApp number
-                // and forward the message for automatic processing
-                try {
-                  const { data: activeAgent } = await supabase
-                    .from('ai_agents')
-                    .select('id, name, status')
-                    .eq('whatsapp_number_id', whatsappNumber.id)
-                    .eq('status', 'active')
-                    .single();
+                // ===== CAMPAIGN RESPONSE DETECTION =====
+                const { data: runningCampaigns } = await supabase
+                  .from('whatsapp_campaigns')
+                  .select('id, name, current_window, total_responses')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .eq('whatsapp_number_id', whatsappNumber.id)
+                  .in('status', ['running', 'paused']);
+                
+                if (runningCampaigns && runningCampaigns.length > 0) {
+                  console.log('=== CAMPAIGN RESPONSE CHECK ===');
                   
-                  if (activeAgent) {
-                    console.log('=== AI AGENT DETECTED ===');
-                    console.log('Agent:', activeAgent.name, activeAgent.id);
-                    console.log('Forwarding message to agent-webhook...');
+                  for (const campaign of runningCampaigns) {
+                    const { data: existingResponses } = await supabase
+                      .from('campaign_responses')
+                      .select('id')
+                      .eq('campaign_id', campaign.id)
+                      .eq('contact_phone', normalizedPhone)
+                      .limit(1);
                     
-                    // Get lead name from contact or pushName
-                    const leadName = data.pushName || 'Lead';
-                    
-                    // Forward to agent-webhook asynchronously (don't wait for response)
-                    const agentWebhookUrl = `${SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${activeAgent.id}&action=receive`;
-                    
-                    fetch(agentWebhookUrl, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-                      },
-                      body: JSON.stringify({
-                        phone: normalizedPhone,
-                        message: content || `[${messageType}]`,
-                        lead_name: leadName,
-                      }),
-                    })
-                    .then(res => {
-                      console.log('Agent webhook response status:', res.status);
-                      return res.json();
-                    })
-                    .then(data => {
-                      console.log('Agent webhook response:', JSON.stringify(data));
-                    })
-                    .catch(err => {
-                      console.error('Error calling agent webhook:', err);
-                    });
-                    
-                    console.log('Message forwarded to AI agent (async)');
+                    if (!existingResponses || existingResponses.length === 0) {
+                      const { data: ignoredContacts } = await supabase
+                        .from('ignored_contacts')
+                        .select('first_message_sent_at')
+                        .eq('user_id', whatsappNumber.user_id)
+                        .eq('phone', normalizedPhone)
+                        .eq('campaign_id', campaign.id)
+                        .limit(1);
+                      
+                      const ignoredContact = ignoredContacts && ignoredContacts.length > 0 ? ignoredContacts[0] : null;
+                      
+                      if (!ignoredContact?.first_message_sent_at) {
+                        continue;
+                      }
+                      
+                      const messageTimestamp = data?.messageTimestamp 
+                        ? new Date(Number(data.messageTimestamp) * 1000) 
+                        : new Date();
+                      
+                      const messageSentAt = new Date(ignoredContact.first_message_sent_at);
+                      const secondsSinceSent = (messageTimestamp.getTime() - messageSentAt.getTime()) / 1000;
+                      
+                      const MIN_RESPONSE_TIME_SECONDS = 60;
+                      
+                      if (secondsSinceSent < MIN_RESPONSE_TIME_SECONDS) {
+                        console.log(`⚠️ Response too fast (${secondsSinceSent.toFixed(0)}s), ignoring as bot`);
+                        continue;
+                      }
+                      
+                      console.log(`✅ HUMAN RESPONSE VALIDATED`);
+                      
+                      await supabase
+                        .from('campaign_responses')
+                        .insert({
+                          campaign_id: campaign.id,
+                          user_id: whatsappNumber.user_id,
+                          contact_phone: normalizedPhone,
+                          window_number: campaign.current_window || 1,
+                          message_content: content?.substring(0, 500) || null,
+                          responded_at: new Date().toISOString(),
+                        });
+                      
+                      const newTotalResponses = (campaign.total_responses || 0) + 1;
+                      const { data: campaignStatus } = await supabase
+                        .from('whatsapp_campaigns')
+                        .select('status, pause_reason, current_window')
+                        .eq('id', campaign.id)
+                        .single();
+                      
+                      const currentWindow = campaignStatus?.current_window || 1;
+                      
+                      if (currentWindow < 4) {
+                        const newWindow = currentWindow + 1;
+                        
+                        if (campaignStatus?.status === 'paused' && campaignStatus?.pause_reason === 'waiting_response') {
+                          await supabase
+                            .from('whatsapp_campaigns')
+                            .update({ 
+                              status: 'running',
+                              pause_reason: null,
+                              current_window: newWindow,
+                              window_sent_count: 0,
+                              total_responses: newTotalResponses,
+                              window_unlocked_at: new Date().toISOString(),
+                              updated_at: new Date().toISOString()
+                            })
+                            .eq('id', campaign.id);
+                          
+                          console.log(`🎉 WINDOW UNLOCKED! Campaign resumed on Window ${newWindow}`);
+                        } else {
+                          await supabase
+                            .from('whatsapp_campaigns')
+                            .update({ 
+                              total_responses: newTotalResponses,
+                              updated_at: new Date().toISOString()
+                            })
+                            .eq('id', campaign.id);
+                        }
+                      } else {
+                        await supabase
+                          .from('whatsapp_campaigns')
+                          .update({ 
+                            total_responses: newTotalResponses,
+                            updated_at: new Date().toISOString()
+                          })
+                          .eq('id', campaign.id);
+                      }
+                    }
                   }
-                } catch (agentCheckError) {
-                  // Ignore errors - agent integration is optional
-                  console.log('AI agent check skipped:', agentCheckError);
+                  
+                  // Remove from ignored_contacts
+                  await supabase
+                    .from('ignored_contacts')
+                    .delete()
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('phone', normalizedPhone);
                 }
-              } else {
+              }
+              
+              // ===== AI AGENT INTEGRATION =====
+              // Check if there's an active AI agent configured for this WhatsApp number
+              // and forward the message for automatic processing
+              // This runs for ALL received messages (not from me), regardless of lead existence
+              try {
+                const { data: activeAgent } = await supabase
+                  .from('ai_agents')
+                  .select('id, name, status')
+                  .eq('whatsapp_number_id', whatsappNumber.id)
+                  .eq('status', 'active')
+                  .single();
+                
+                if (activeAgent) {
+                  console.log('=== AI AGENT DETECTED ===');
+                  console.log('Agent:', activeAgent.name, activeAgent.id);
+                  console.log('Forwarding message to agent-webhook...');
+                  
+                  // Get lead name from contact or pushName
+                  const leadName = data.pushName || 'Lead';
+                  
+                  // Forward to agent-webhook asynchronously (don't wait for response)
+                  const agentWebhookUrl = `${SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${activeAgent.id}&action=receive`;
+                  
+                  fetch(agentWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                      phone: normalizedPhone,
+                      message: content || `[${messageType}]`,
+                      lead_name: leadName,
+                    }),
+                  })
+                  .then(res => {
+                    console.log('Agent webhook response status:', res.status);
+                    return res.json();
+                  })
+                  .then(agentData => {
+                    console.log('Agent webhook response:', JSON.stringify(agentData));
+                  })
+                  .catch(err => {
+                    console.error('Error calling agent webhook:', err);
+                  });
+                  
+                  console.log('Message forwarded to AI agent (async)');
+                }
+              } catch (agentCheckError) {
+                // Ignore errors - agent integration is optional
+                console.log('AI agent check skipped:', agentCheckError);
+              }
+            } else {
                 // ===== MESSAGE SENT (fromMe=true) - MOVE TO "MENSAGEM ENVIADA" =====
                 
                 // ===== PAUSE AI AGENT WHEN USER RESPONDS TO LEAD =====
@@ -1162,22 +1147,24 @@ serve(async (req) => {
                   }
                 }
               }
-                // ===== WARMING RESPONSE DETECTION =====
-                // Check if this message is a response to a warming interaction
-                const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
-                const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
-                
-                // Find warming interactions from this phone - include completed ones too
-                // so we can track responses even if we're not waiting for them
+            }
+            
+            // ===== WARMING RESPONSE DETECTION (runs for all received messages) =====
+            // This is OUTSIDE the if/else block, so it runs for both fromMe and !fromMe
+            // We only process for received messages (!fromMe)
+            if (!fromMe) {
+              const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
+              const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
+              
+              try {
                 const { data: warmingInteractions } = await supabase
                   .from('warming_interactions')
                   .select('*, warming_sessions!inner(*)')
                   .eq('warming_sessions.user_id', whatsappNumber.user_id)
                   .in('status', ['in_progress', 'completed', 'pending_response'])
-                  .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()); // Last 7 days
+                  .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
                 
                 if (warmingInteractions && warmingInteractions.length > 0) {
-                  // Find matching interaction by phone (compare last 8 digits)
                   const matchingInteraction = warmingInteractions.find((i: any) => {
                     const interactionPhoneLast8 = i.lead_phone.replace(/\D/g, '').slice(-8);
                     return interactionPhoneLast8 === leadPhoneLast8;
@@ -1185,18 +1172,8 @@ serve(async (req) => {
                   
                   if (matchingInteraction) {
                     console.log('=== WARMING RESPONSE DETECTED ===');
-                    console.log('Interaction ID:', matchingInteraction.id);
-                    console.log('Lead phone:', matchingInteraction.lead_phone);
-                    console.log('Response:', content?.substring(0, 100));
-                    console.log('Current status:', matchingInteraction.status);
-                    console.log('Conversation ended:', matchingInteraction.conversation_ended);
-                    
-                    const currentLevel = matchingInteraction.warming_level;
-                    const messagesSent = matchingInteraction.messages_sent;
                     const messagesReceived = matchingInteraction.messages_received + 1;
-                    const wasAlreadyCompleted = matchingInteraction.status === 'completed';
                     
-                    // Always update the response count first
                     await supabase
                       .from('warming_interactions')
                       .update({
@@ -1207,194 +1184,11 @@ serve(async (req) => {
                       .eq('id', matchingInteraction.id);
                     
                     console.log(`Updated messages_received to ${messagesReceived}`);
-                    
-                    // If conversation was already completed, don't process further
-                    // Just log the response for statistics
-                    if (wasAlreadyCompleted && matchingInteraction.conversation_ended) {
-                      console.log('Interaction was already completed, response logged for stats only');
-                      // Continue to next check
-                    } else {
-                      // Process response and potentially send follow-up
-                      let shouldRespond = false;
-                      let responseMessages: string[] = [];
-                      let responseDelay: [number, number] = [3, 10];
-                      let shouldEndConversation = false;
-                      
-                      const leadMessage = (content || '').toLowerCase().trim();
-                      
-                      // Contextual response patterns
-                      const CONTEXTUAL_RESPONSES = {
-                        positive: {
-                          patterns: [
-                            /^tudo\s*(bem|certo|ótimo|otimo|bom|joia|beleza|tranquilo)?[.!?]?\s*$/i,
-                            /^bem\s*(obrigad[oa])?[.!?]?\s*$/i,
-                            /^ótimo[.!?]?\s*$/i,
-                            /^blz[.!?]?\s*$/i,
-                            /^sim[.!?]?\s*$/i,
-                            /^ok[.!?]?\s*$/i,
-                            /^pode\s*(sim|mandar)?[.!?]?\s*$/i,
-                            /^claro[.!?]?\s*$/i,
-                            /^tranquilo[.!?]?\s*$/i,
-                            /e\s*vc[.!?]?\s*$/i,
-                            /e\s*você[.!?]?\s*$/i,
-                            /e\s*voce[.!?]?\s*$/i,
-                            /e\s*tu[.!?]?\s*$/i
-                          ],
-                          responses: [
-                            'Que bom!', 'que bom!', 'Ótimo!', 'ótimo!', 'Legal!', 'legal!',
-                            'Que ótimo!', 'que ótimo!', 'Perfeito!', 'perfeito!', 'Show!', 'show!',
-                            'Por aqui também!', 'por aqui também!', 'Tudo certo também!', 'tudo certo também!',
-                            'Aqui também tudo bem!', 'aqui também tudo bem!'
-                          ]
-                        },
-                        whoAreYou: {
-                          patterns: [
-                            /quem\s*(é|e)\s*(voce|você|vc)/i,
-                            /quem\s*fala/i,
-                            /de\s*onde\s*(é|e)/i,
-                            /te\s*conheço/i,
-                            /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i
-                          ],
-                          responses: [
-                            'Desculpa, acho que errei o número!', 'desculpa, acho que errei o número!',
-                            'Opa, desculpa! Acho que peguei o número errado', 'opa, desculpa! acho que peguei o número errado',
-                            'Ih, desculpa! Número errado', 'ih, desculpa! número errado'
-                          ],
-                          shouldEnd: true
-                        },
-                        stopRequest: {
-                          patterns: [
-                            /para\s*(de\s*)?mandar/i,
-                            /não\s*mande\s*mais/i,
-                            /spam/i,
-                            /me\s*bloqueia/i
-                          ],
-                          responses: [
-                            'Desculpa pelo incômodo!', 'desculpa pelo incômodo!'
-                          ],
-                          shouldEnd: true
-                        }
-                      };
-                      
-                      // Check contextual responses
-                      let contextualResponse: string[] | null = null;
-                      let forceEndConversation = false;
-                      
-                      for (const [key, ctx] of Object.entries(CONTEXTUAL_RESPONSES)) {
-                        const ctxData = ctx as { patterns: RegExp[]; responses: string[]; shouldEnd?: boolean };
-                        if (ctxData.patterns.some(p => p.test(leadMessage))) {
-                          contextualResponse = ctxData.responses;
-                          forceEndConversation = ctxData.shouldEnd || false;
-                          console.log(`Matched contextual response: ${key}`);
-                          break;
-                        }
-                      }
-                      
-                      // Use contextual response if matched (only on first response if not already completed)
-                      if (contextualResponse && !matchingInteraction.conversation_ended) {
-                        shouldRespond = true;
-                        responseMessages = contextualResponse;
-                        responseDelay = [2, 8];
-                        shouldEndConversation = forceEndConversation || (currentLevel <= 2 && messagesReceived >= 1);
-                      }
-                      // Level-based logic (only if conversation not ended and no contextual match)
-                      else if (!matchingInteraction.conversation_ended) {
-                        // Level 1: Simple greeting - always end after first response
-                        if (currentLevel === 1) {
-                          // Don't respond at level 1, just mark as completed
-                          shouldEndConversation = true;
-                        }
-                        // Level 2: Light conversation - respond once then end
-                        else if (currentLevel === 2) {
-                          if (messagesReceived >= 1 && messagesSent === 1) {
-                            shouldRespond = true;
-                            responseMessages = [
-                              'Tudo sim, obrigado!', 'tudo sim, obrigado!',
-                              'Tudo certo por aqui', 'tudo certo por aqui',
-                              'Tudo bem sim!', 'tudo bem sim!',
-                              'Por aqui tudo bem!', 'por aqui tudo bem!',
-                              'Tudo tranquilo!', 'tudo tranquilo!'
-                            ];
-                            responseDelay = [3, 10];
-                            shouldEndConversation = true;
-                          } else if (messagesSent >= 2) {
-                            shouldEndConversation = true;
-                          }
-                        }
-                        // Level 3: Natural interaction - up to 3 exchanges
-                        else if (currentLevel === 3) {
-                          if (messagesReceived >= 1 && messagesSent === 1) {
-                            shouldRespond = true;
-                            responseMessages = [
-                              'Tudo bem por aí?', 'tudo bem por aí?',
-                              'Tudo certo hoje?', 'tudo certo hoje?',
-                              'Por aqui tudo bem!', 'por aqui tudo bem!',
-                              'Aqui também!', 'aqui também!',
-                              'Tudo ótimo!', 'tudo ótimo!'
-                            ];
-                            responseDelay = [2, 8];
-                            shouldEndConversation = false;
-                          }
-                          else if (messagesReceived >= 2 && messagesSent === 2) {
-                            shouldRespond = true;
-                            responseMessages = [
-                              'Que bom!', 'que bom!',
-                              'Perfeito!', 'perfeito!',
-                              'Legal!', 'legal!',
-                              'Show!', 'show!',
-                              'Ótimo!', 'ótimo!'
-                            ];
-                            responseDelay = [3, 10];
-                            shouldEndConversation = true;
-                          } else if (messagesSent >= 3) {
-                            shouldEndConversation = true;
-                          }
-                        }
-                        // Level 4: Pre-commercial - respond naturally then end
-                        else if (currentLevel === 4) {
-                          if (messagesReceived >= 1 && messagesSent === 1) {
-                            shouldRespond = true;
-                            responseMessages = [
-                              'Perfeito, obrigado!', 'perfeito, obrigado!',
-                              'Combinado, agradeço!', 'combinado, agradeço!',
-                              'Show, obrigado!', 'show, obrigado!',
-                              'Legal, valeu!', 'legal, valeu!',
-                              'Ótimo, obrigado pela atenção!', 'ótimo, obrigado pela atenção!'
-                            ];
-                            responseDelay = [5, 15];
-                            shouldEndConversation = true;
-                          } else if (messagesSent >= 2) {
-                            shouldEndConversation = true;
-                          }
-                        }
-                        // Fallback: end conversation if too many messages
-                        else if (messagesSent >= 3) {
-                          shouldEndConversation = true;
-                        }
-                      }
-                      
-                      // Update status based on response decision
-                      if (shouldRespond || shouldEndConversation) {
-                        await supabase
-                          .from('warming_interactions')
-                          .update({
-                            status: shouldEndConversation && !shouldRespond ? 'completed' : (shouldRespond ? 'pending_response' : 'in_progress'),
-                            conversation_ended: shouldEndConversation && !shouldRespond,
-                            last_message_sent: shouldRespond ? responseMessages[Math.floor(Math.random() * responseMessages.length)] : matchingInteraction.last_message_sent
-                          })
-                          .eq('id', matchingInteraction.id);
-                        
-                        if (shouldRespond) {
-                          console.log(`Scheduled response: ${responseMessages[0]}`);
-                        }
-                      }
-                    }
                   }
                 }
-              await supabase
-                .from('conversations')
-                .update(updateData)
-                .eq('id', conversationId);
+              } catch (warmingError) {
+                console.log('Warming detection skipped:', warmingError);
+              }
             }
           }
         }
