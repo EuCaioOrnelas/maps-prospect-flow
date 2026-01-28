@@ -372,7 +372,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       setSelectedTemplate(templateId);
     }
     
-    // Apply all template values
+    // Apply all template values - only set if value exists and is not empty
     if (data.suggestedName) setName(data.suggestedName);
     if (data.agentRole) setAgentRole(data.agentRole);
     if (data.companyName) setCompanyName(data.companyName);
@@ -392,7 +392,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     if (data.commonObjections) setCommonObjections(data.commonObjections);
     if (data.objectionPosture) setObjectionPosture(data.objectionPosture);
     if (data.conversationGoal) setConversationGoal(data.conversationGoal);
-    if (data.endConditions) setEndConditions(data.endConditions || []);
+    if (data.endConditions && data.endConditions.length > 0) setEndConditions(data.endConditions);
     if (data.closingStyle) setClosingStyle(data.closingStyle);
     if (data.canSendAudio !== undefined) setCanSendAudio(data.canSendAudio);
     if (data.canSendLinks !== undefined) setCanSendLinks(data.canSendLinks);
@@ -402,6 +402,10 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     if (data.maxConsecutiveMessages) setMaxConsecutiveMessages(data.maxConsecutiveMessages);
     if (data.maxReplies !== undefined) setMaxReplies(data.maxReplies);
     if (data.customDifferentials) setCustomDifferentials(data.customDifferentials);
+    
+    // Handle operating hours if saved in template
+    if (data.operatingHoursStart) setOperatingHoursStart(data.operatingHoursStart);
+    if (data.operatingHoursEnd) setOperatingHoursEnd(data.operatingHoursEnd);
   };
 
   const deleteUserTemplate = async (templateId: string) => {
