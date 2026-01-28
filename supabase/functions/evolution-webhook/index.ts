@@ -1153,16 +1153,19 @@ serve(async (req) => {
             // This is OUTSIDE the if/else block, so it runs for both fromMe and !fromMe
             // We only process for received messages (!fromMe)
             if (!fromMe) {
-              const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
-              const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
-              
-              try {
-                const { data: warmingInteractions } = await supabase
-                  .from('warming_interactions')
-                  .select('*, warming_sessions!inner(*)')
-                  .eq('warming_sessions.user_id', whatsappNumber.user_id)
-                  .in('status', ['in_progress', 'completed', 'pending_response'])
-                  .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+              if (!whatsappNumber) {
+                console.log('Warming detection skipped: whatsapp number not found');
+              } else {
+                const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
+                const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
+                
+                try {
+                  const { data: warmingInteractions } = await supabase
+                    .from('warming_interactions')
+                    .select('*, warming_sessions!inner(*)')
+                    .eq('warming_sessions.user_id', whatsappNumber.user_id)
+                    .in('status', ['in_progress', 'completed', 'pending_response'])
+                    .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
                 
                 if (warmingInteractions && warmingInteractions.length > 0) {
                   const matchingInteraction = warmingInteractions.find((i: any) => {
@@ -1186,12 +1189,12 @@ serve(async (req) => {
                     console.log(`Updated messages_received to ${messagesReceived}`);
                   }
                 }
-              } catch (warmingError) {
-                console.log('Warming detection skipped:', warmingError);
+                } catch (warmingError) {
+                  console.log('Warming detection skipped:', warmingError);
+                }
               }
             }
           }
-        }
         break;
 
       case 'messages.edit':
