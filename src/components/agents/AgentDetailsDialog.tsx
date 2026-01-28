@@ -294,18 +294,74 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
     
     setSavingAsTemplate(true);
     try {
+      // Determine role based on objective
+      let agentRole = 'specialist';
+      if (agent.objective === 'prospecting') agentRole = 'sdr';
+      else if (agent.objective === 'closing') agentRole = 'sales';
+      
+      // Determine sales approach
+      let salesApproach = 'educate';
+      if (agent.objective === 'prospecting') salesApproach = 'qualify';
+      else if (agent.objective === 'closing') salesApproach = 'close';
+      
+      // Build comprehensive template data with all wizard fields
       const templateData = {
+        // Basic info
         suggestedName: agent.name,
-        agentRole: agent.objective === 'prospecting' ? 'sdr' : agent.objective === 'closing' ? 'sales' : 'specialist',
-        companyName: '',
-        productName: '',
-        productDescription: '',
-        salesApproach: agent.objective || '',
+        agentRole: agentRole,
+        salesApproach: salesApproach,
+        
+        // System prompt (most important - contains all agent behavior)
         systemPrompt: systemPrompt,
-        maxReplies: maxReplies,
-        maxChars: String(maxResponseChars),
+        
+        // Operating hours
         operatingHoursStart: operatingHoursStart,
         operatingHoursEnd: operatingHoursEnd,
+        
+        // Message limits
+        maxReplies: maxReplies,
+        maxChars: String(maxResponseChars),
+        maxConsecutiveMessages: '2',
+        
+        // Rules - defaults based on communication style
+        canSendAudio: false,
+        canSendLinks: true,
+        canSendLongMessages: agent.communication_style === 'formal',
+        alwaysWaitResponse: true,
+        
+        // Communication style mapping
+        communicationStyle: agent.communication_style,
+        
+        // Lead context defaults
+        leadAwareness: 'heard',
+        messageReason: 'active_search',
+        consciousnessLevel: 'aware_solution',
+        
+        // Opening defaults
+        openingStyle: 'thank',
+        firstMission: 'understand',
+        
+        // CTA defaults based on objective
+        conversationGoal: agent.objective === 'prospecting' ? 'schedule_call' : 
+                          agent.objective === 'closing' ? 'close_deal' : 'forward_human',
+        closingStyle: 'offer_later',
+        endConditions: agent.end_conversation_criteria 
+          ? agent.end_conversation_criteria.split('\n').filter((c: string) => c.trim())
+          : ['Objetivo atingido', 'Lead disse que não tem interesse'],
+        
+        // Objection handling defaults
+        objectionPosture: 'validate',
+        
+        // Presentation defaults
+        presentationStyle: 'educating',
+        pricePolicy: 'never',
+        maxQuestions: '2',
+        
+        // Store the original objective and target audience
+        objective: agent.objective,
+        targetAudience: agent.target_audience,
+        agentObjective: agent.agent_objective,
+        postResponseBehavior: agent.post_response_behavior,
       };
 
       const { error } = await supabase
