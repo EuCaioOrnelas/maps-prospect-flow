@@ -330,7 +330,7 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  // Check warming status and show warning if not heated
+  // Check warming status and show warning if not heated, then proceed to start
   const checkWarmingAndProceed = async () => {
     if (!selectedNumberId) {
       toast({
@@ -367,18 +367,17 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    // If no warming session or fully heated, proceed to window modal
-    setShowWindowModal(true);
+    // Proceed directly to start campaign (no window modal)
+    handleStartCampaign();
   };
 
-  // Show window modal before starting (after warming warning is accepted)
+  // Called after warming warning is accepted - proceed to start campaign directly
   const handleShowWindowModal = () => {
     setShowWarmingWarningModal(false);
-    setShowWindowModal(true);
+    handleStartCampaign();
   };
 
   const handleStartCampaign = async () => {
-    setShowWindowModal(false);
     
     if (!selectedNumberId) {
       toast({
