@@ -13,23 +13,17 @@ import {
   Smartphone,
   Wifi,
   MessageCircle,
-  AlertTriangle,
-  Bell
+  AlertTriangle
 } from "lucide-react";
 import type { Campaign } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProcessorHeartbeat } from "./ProcessorHeartbeat";
-import { WindowProgressIndicator } from "./WindowProgressIndicator";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ExtendedCampaign extends Campaign {
-  current_window?: number;
-  window_sent_count?: number;
   total_responses?: number;
-  is_first_stage?: boolean;
 }
 
 interface RealtimeMonitorProps {
@@ -66,21 +60,7 @@ export const RealtimeMonitor = ({
 
       // Check if status changed from running to paused
       if (prevState?.status === 'running' && currentStatus === 'paused') {
-        // Window-related pauses
-        if (currentPauseReason === 'waiting_response') {
-          toast({
-            title: "🔔 Campanha aguardando resposta",
-            description: `"${campaign.name}" está pausada aguardando uma resposta para liberar a próxima janela de envio.`,
-            duration: 10000,
-          });
-        } else if (currentPauseReason === 'no_response_first_10') {
-          toast({
-            title: "⚠️ Campanha pausada por segurança",
-            description: `"${campaign.name}" foi pausada pois nenhum lead respondeu nos primeiros 10 disparos.`,
-            variant: "destructive",
-            duration: 15000,
-          });
-        } else if (currentPauseReason === 'incident_detected') {
+        if (currentPauseReason === 'incident_detected') {
           toast({
             title: "🚨 Incidente detectado",
             description: `"${campaign.name}" foi pausada por segurança. Verifique possíveis bloqueios.`,
@@ -113,9 +93,7 @@ export const RealtimeMonitor = ({
   const runningCampaigns = campaigns.filter(c => c.status === 'running') as ExtendedCampaign[];
   const pausedCampaigns = campaigns.filter(c => c.status === 'paused') as ExtendedCampaign[];
   
-  // Check for any campaign waiting for response
-  const campaignsWaitingResponse = pausedCampaigns.filter(c => c.pause_reason === 'waiting_response');
-  const campaignsNoResponseFirst10 = pausedCampaigns.filter(c => c.pause_reason === 'no_response_first_10');
+  // Check for campaigns with incidents
   const campaignsWithIncident = pausedCampaigns.filter(c => c.pause_reason === 'incident_detected');
 
   if (runningCampaigns.length === 0 && pausedCampaigns.length === 0) {
@@ -182,46 +160,20 @@ export const RealtimeMonitor = ({
         </div>
       </div>
 
-      {/* Global Alerts for Window System Issues */}
-      {campaignsWaitingResponse.length > 0 && (
-        <Alert className="border-amber-500 bg-amber-500/10">
-          <Bell className="h-4 w-4 text-amber-500" />
-          <AlertTitle className="text-amber-600 dark:text-amber-400">
-            Aguardando resposta para continuar
-          </AlertTitle>
-          <AlertDescription className="text-amber-600/80 dark:text-amber-400/80">
-            {campaignsWaitingResponse.length === 1 
-              ? `A campanha "${campaignsWaitingResponse[0].name}" está aguardando uma resposta de lead para liberar a próxima janela de envio. Respostas são detectadas automaticamente em tempo real.`
-              : `${campaignsWaitingResponse.length} campanhas estão aguardando respostas para liberar as próximas janelas de envio.`
-            }
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {campaignsNoResponseFirst10.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Atenção: Campanha pausada por segurança</AlertTitle>
-          <AlertDescription>
-            {campaignsNoResponseFirst10.length === 1 
-              ? `A campanha "${campaignsNoResponseFirst10[0].name}" foi pausada porque nenhum lead respondeu nos primeiros 10 disparos. Isso pode indicar problemas com as mensagens ou público-alvo.`
-              : `${campaignsNoResponseFirst10.length} campanhas foram pausadas por falta de respostas nos primeiros 10 disparos.`
-            }
-          </AlertDescription>
-        </Alert>
-      )}
-
+      {/* Alert for incidents */}
       {campaignsWithIncident.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>🚨 Incidente detectado</AlertTitle>
-          <AlertDescription>
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+          <div className="flex items-center gap-2 text-destructive font-medium mb-1">
+            <AlertTriangle className="h-4 w-4" />
+            <span>🚨 Incidente detectado</span>
+          </div>
+          <p className="text-sm text-destructive/80">
             {campaignsWithIncident.length === 1 
               ? `A campanha "${campaignsWithIncident[0].name}" foi pausada por detecção de bloqueio ou denúncia. Recomendamos verificar o status do seu número WhatsApp.`
               : `${campaignsWithIncident.length} campanhas foram pausadas por incidentes detectados. Verifique o status dos seus números.`
             }
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
 
       {/* Running Campaigns */}
@@ -297,20 +249,6 @@ export const RealtimeMonitor = ({
               </div>
             </div>
 
-            {/* Window Progress Indicator */}
-            {campaign.current_window !== undefined && (
-              <div className="mb-4">
-                <WindowProgressIndicator
-                  currentWindow={campaign.current_window || 1}
-                  windowSentCount={campaign.window_sent_count || 0}
-                  totalSent={campaign.sent_count}
-                  totalResponses={campaign.total_responses || 0}
-                  totalLeads={campaign.total_leads}
-                  failedCount={campaign.failed_count}
-                  status="running"
-                />
-              </div>
-            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-4 gap-3">
@@ -349,15 +287,7 @@ export const RealtimeMonitor = ({
               </div>
             </div>
 
-            {/* First Stage Warning */}
-            {campaign.is_first_stage && (
-              <div className="mt-3 flex items-center gap-2 text-xs p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <AlertTriangle size={14} className="text-amber-600" />
-                <span className="text-amber-600">
-                  Primeiro estágio: apenas 1 mensagem por contato até receber resposta
-                </span>
-              </div>
-            )}
+
 
             {/* Message Variations Info */}
             <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
@@ -462,22 +392,6 @@ export const RealtimeMonitor = ({
               )}
             </div>
 
-            {/* Window Progress Indicator for paused campaigns */}
-            {campaign.current_window !== undefined && (
-              <div className="mb-3">
-                <WindowProgressIndicator
-                  currentWindow={campaign.current_window || 1}
-                  windowSentCount={campaign.window_sent_count || 0}
-                  totalSent={campaign.sent_count}
-                  totalResponses={campaign.total_responses || 0}
-                  totalLeads={campaign.total_leads}
-                  failedCount={campaign.failed_count}
-                  status="paused"
-                  pauseReason={campaign.pause_reason}
-                />
-              </div>
-            )}
-
             {/* Progress Bar */}
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
@@ -504,19 +418,6 @@ export const RealtimeMonitor = ({
             {isPausedManually && (
               <div className="mt-3 pt-3 border-t border-border text-sm text-blue-500">
                 <p>Clique em "Retomar" para continuar os disparos de onde parou.</p>
-              </div>
-            )}
-
-            {/* Window system pause reasons */}
-            {campaign.pause_reason === 'waiting_response' && (
-              <div className="mt-3 pt-3 border-t border-border text-sm text-amber-600">
-                <p>Aguardando resposta para liberar próxima janela de envio.</p>
-              </div>
-            )}
-
-            {campaign.pause_reason === 'no_response_first_10' && (
-              <div className="mt-3 pt-3 border-t border-border text-sm text-destructive">
-                <p>Pausado por segurança: nenhuma resposta nos primeiros 10 disparos.</p>
               </div>
             )}
 

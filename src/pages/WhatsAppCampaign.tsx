@@ -39,7 +39,6 @@ import { useCampaignDrafts, CampaignDraft } from "@/hooks/useCampaignDrafts";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
-import { WindowSystemModal } from "@/components/whatsapp/WindowSystemModal";
 import { WarmingWarningModal } from "@/components/whatsapp/WarmingWarningModal";
 import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -79,13 +78,7 @@ export interface Campaign {
   pause_reason?: string;
   resume_at?: string | null;
   whatsapp_number_id?: string | null;
-  // Window system fields
-  current_window?: number;
-  window_sent_count?: number;
   total_responses?: number;
-  is_first_stage?: boolean;
-  accepted_window_terms?: boolean;
-  first_10_no_response_count?: number;
 }
 
 export interface CampaignState {
@@ -137,7 +130,6 @@ const WhatsAppCampaign = () => {
   // Show upgrade modal only if trial expired (not for free trial users who can still use)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
-  const [showWindowModal, setShowWindowModal] = useState(false);
   const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
   const [warmingInfo, setWarmingInfo] = useState<{ level: number; status: 'cold' | 'warm' | 'hot' } | null>(null);
   
@@ -933,14 +925,6 @@ const WhatsAppCampaign = () => {
         onConfirm={handleShowWindowModal}
         warmingLevel={warmingInfo?.level || 0}
         warmingStatus={warmingInfo?.status || 'cold'}
-      />
-      
-      {/* Window System Modal */}
-      <WindowSystemModal
-        isOpen={showWindowModal}
-        onClose={() => setShowWindowModal(false)}
-        onAccept={handleStartCampaign}
-        totalLeads={selectedLeads.length}
       />
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
