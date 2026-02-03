@@ -97,6 +97,53 @@ export const isValidPhoneNumber = (phone: string): boolean => {
 };
 
 /**
+ * Check if a Brazilian phone number is a landline (fixed line)
+ * Landlines don't work with WhatsApp
+ * 
+ * Brazilian landlines have 10 digits (with country code = 12 digits)
+ * Mobile numbers have 11 digits (with country code = 13 digits)
+ * Mobile numbers start with 9 after the DDD
+ */
+export const isLandlinePhone = (phone: string): boolean => {
+  const digits = phone.replace(/\D/g, '');
+  
+  // Remove country code if present
+  let localNumber = digits;
+  if (digits.startsWith('55') && digits.length >= 12) {
+    localNumber = digits.slice(2);
+  }
+  
+  // Brazilian landline: 10 digits (DDD + 8 digit number)
+  // The number after DDD does NOT start with 9
+  if (localNumber.length === 10) {
+    const afterDDD = localNumber.slice(2);
+    // If it starts with 9, it's likely an old mobile format
+    if (!afterDDD.startsWith('9')) {
+      return true; // Landline
+    }
+  }
+  
+  // Mobile: 11 digits, number after DDD starts with 9
+  if (localNumber.length === 11) {
+    const afterDDD = localNumber.slice(2);
+    // If it doesn't start with 9, it might be invalid or landline with extra digit
+    if (!afterDDD.startsWith('9')) {
+      return true; // Likely not a valid mobile
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * Check if phone is a mobile number (works with WhatsApp)
+ */
+export const isMobilePhone = (phone: string): boolean => {
+  if (!isValidPhoneNumber(phone)) return false;
+  return !isLandlinePhone(phone);
+};
+
+/**
  * Normalize phone number - supports international numbers
  * For Brazilian numbers (10-11 digits without country code), adds 55
  * For international numbers (already has country code), keeps as-is
@@ -119,14 +166,24 @@ export const normalizePhone = (phone: string): string => {
 export const validateAndFormatPhone = (phone: string): { 
   isValid: boolean; 
   formatted: string; 
-  display: string 
+  display: string;
+  isLandline: boolean;
 } => {
   const digits = String(phone).replace(/\D/g, '');
   const isValid = digits.length >= 10 && digits.length <= 13 && !digits.startsWith('120363');
+  const isLandline = isLandlinePhone(digits);
   
   return { 
     isValid, 
     formatted: digits, 
-    display: formatPhoneNumber(digits) 
+    display: formatPhoneNumber(digits),
+    isLandline
   };
+};
+
+/**
+ * Count landline phones in a list of leads
+ */
+export const countLandlinePhones = (leads: Array<{ phone?: string }>): number => {
+  return leads.filter(lead => lead.phone && isLandlinePhone(lead.phone)).length;
 };
