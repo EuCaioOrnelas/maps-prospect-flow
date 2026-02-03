@@ -64,31 +64,76 @@ function normalizePhone(phone: string): string {
   return normalized;
 }
 
-// Check if instance is connected
+// Check if instance is connected with retry logic
 async function checkInstanceConnection(
   evolutionUrl: string, 
   apiKey: string, 
-  instanceName: string
+  instanceName: string,
+  maxRetries: number = 3
 ): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const response = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
-      method: 'GET',
-      headers: { 'apikey': apiKey },
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
+  let lastError: string | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': apiKey },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!response.ok) return false;
+      if (!response.ok) {
+        lastError = `HTTP ${response.status}`;
+        console.log(`⚠️ Connection check attempt ${attempt}/${maxRetries} failed: ${lastError}`);
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        return false;
+      }
 
-    const data = await response.json();
-    return data.state === 'open' || data.instance?.state === 'open';
-  } catch {
-    return false;
+      const data = await response.json();
+      const isConnected = data.state === 'open' || data.instance?.state === 'open';
+      
+      if (isConnected) {
+        return true;
+      }
+      
+      // If not connected but API responded, check if it's a temporary state
+      const state = data.state || data.instance?.state;
+      
+      // States that might be temporary - retry
+      if (state === 'connecting' || state === 'close') {
+        console.log(`⏳ Instance state is "${state}", waiting... (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+      }
+      
+      console.log(`📱 Instance connection state: ${state}`);
+      return false;
+      
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'Unknown error';
+      console.log(`⚠️ Connection check attempt ${attempt}/${maxRetries} error: ${lastError}`);
+      
+      // Wait before retry
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+    }
   }
+  
+  console.log(`❌ Connection check failed after ${maxRetries} attempts: ${lastError}`);
+  return false;
 }
 
 // Send a single message (or simulate it)
@@ -744,13 +789,28 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Check connection with more retries for running campaigns
         const isConnected = await checkInstanceConnection(
           EVOLUTION_API_URL,
           EVOLUTION_API_KEY,
-          numberData.instance_name
+          numberData.instance_name,
+          3 // 3 retry attempts
         );
 
         if (!isConnected) {
+          console.log(`⚠️ Connection check failed for ${numberData.instance_name}, but checking if already was sending...`);
+          
+          // If campaign has already sent messages successfully, don't immediately disconnect
+          // This prevents false disconnections from API hiccups
+          const hasRecentlySent = campaign.last_message_sent_at && 
+            (Date.now() - new Date(campaign.last_message_sent_at).getTime()) < 60000; // Less than 1 minute ago
+          
+          if (hasRecentlySent) {
+            console.log(`📤 Campaign recently sent a message, skipping this cycle but not disconnecting`);
+            continue; // Skip this cycle but don't mark as disconnected
+          }
+          
+          // If no recent sends, mark as disconnected
           await supabase.from('whatsapp_numbers').update({
             is_connected: false,
             updated_at: now.toISOString()
@@ -760,6 +820,8 @@ Deno.serve(async (req) => {
             status: 'paused',
             pause_reason: 'WhatsApp desconectado'
           }).eq('id', campaign.id);
+          
+          console.log(`🔴 Campaign ${campaign.name} paused due to disconnection`);
           continue;
         }
 
