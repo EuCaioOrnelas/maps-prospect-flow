@@ -44,49 +44,77 @@ function normalizePhone(phone: string): string {
   return normalized;
 }
 
-// Check if instance is connected
+// Check if instance is connected with retry logic
 async function checkInstanceConnection(
   evolutionUrl: string, 
   apiKey: string, 
-  instanceName: string
+  instanceName: string,
+  maxRetries: number = 3
 ): Promise<{ connected: boolean; error?: string }> {
-  try {
-    console.log(`Verifying connection for instance: ${instanceName}`);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const statusResponse = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
-      method: 'GET',
-      headers: { 'apikey': apiKey },
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
+  let lastError: string = 'Unknown error';
+  
+  console.log(`Verifying connection for instance: ${instanceName} (max ${maxRetries} attempts)`);
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const statusResponse = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': apiKey },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text();
-      console.error('Evolution API status check error:', errorText);
-      return { connected: false, error: `API error: ${errorText}` };
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        lastError = `API error: ${errorText}`;
+        console.log(`[run-campaign] Connection check attempt ${attempt}/${maxRetries} failed: ${lastError}`);
+        
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        return { connected: false, error: lastError };
+      }
+
+      const statusData = await statusResponse.json();
+      const state = statusData.state || statusData.instance?.state;
+      console.log(`Connection status (attempt ${attempt}):`, state);
+      
+      const isConnected = state === 'open';
+      
+      if (isConnected) {
+        return { connected: true };
+      }
+      
+      // States that might be temporary - retry
+      if (state === 'connecting' || state === 'close') {
+        console.log(`[run-campaign] Instance state is "${state}", waiting... (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+      }
+      
+      lastError = `Instance not connected. State: ${state || 'unknown'}`;
+      return { connected: false, error: lastError };
+      
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'Unknown error';
+      console.log(`[run-campaign] Connection check attempt ${attempt}/${maxRetries} error: ${lastError}`);
+      
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
     }
-
-    const statusData = await statusResponse.json();
-    console.log('Connection status:', JSON.stringify(statusData));
-
-    const isConnected = statusData.state === 'open' || statusData.instance?.state === 'open';
-    
-    if (!isConnected) {
-      return { 
-        connected: false, 
-        error: `Instance not connected. State: ${statusData.state || statusData.instance?.state || 'unknown'}` 
-      };
-    }
-
-    return { connected: true };
-  } catch (error) {
-    console.error('Error checking connection:', error);
-    return { connected: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
+  
+  console.log(`[run-campaign] Connection check failed after ${maxRetries} attempts: ${lastError}`);
+  return { connected: false, error: lastError };
 }
 
 // Start the next postponed campaign for a number
