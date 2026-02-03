@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, DragEvent } from "react";
+import { useState, useEffect, useRef, DragEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +14,8 @@ import {
   Plus,
   Download,
   AlertCircle,
-  Phone
+  Phone,
+  PhoneOff
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +24,7 @@ import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
 // Use centralized phone validation helper
-import { validateAndFormatPhone } from '@/lib/phoneUtils';
+import { validateAndFormatPhone, isLandlinePhone } from '@/lib/phoneUtils';
 
 interface SearchHistoryItem {
   id: string;
@@ -65,7 +66,7 @@ export const LeadSelector = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
-  const [importStats, setImportStats] = useState<{ valid: number; invalid: number } | null>(null);
+  const [importStats, setImportStats] = useState<{ valid: number; invalid: number; landlines: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -204,26 +205,38 @@ export const LeadSelector = ({
           };
         });
 
-        // Validate phones and separate valid/invalid
+        // Validate phones, filter landlines, and separate valid/invalid
         const validLeads: Lead[] = [];
         const invalidPhones: string[] = [];
+        const landlineLeads: Lead[] = [];
 
         leads.forEach(lead => {
           const phoneStatus = validateAndFormatPhone(lead.phone);
           if (phoneStatus.isValid) {
-            validLeads.push({
-              ...lead,
-              phone: phoneStatus.formatted
-            });
+            // Check if it's a landline (Brazilian fixed line)
+            if (isLandlinePhone(lead.phone)) {
+              landlineLeads.push({
+                ...lead,
+                phone: phoneStatus.formatted
+              });
+            } else {
+              validLeads.push({
+                ...lead,
+                phone: phoneStatus.formatted
+              });
+            }
           } else if (lead.phone) {
             invalidPhones.push(lead.name || lead.phone);
           }
         });
 
         if (validLeads.length === 0) {
+          const landlineMsg = landlineLeads.length > 0 
+            ? ` (${landlineLeads.length} números fixos excluídos)` 
+            : '';
           toast({
-            title: "Nenhum contato válido encontrado",
-            description: `A planilha deve ter Nome na 1ª coluna e Telefone (10-13 dígitos) na 2ª coluna`,
+            title: "Nenhum celular válido encontrado",
+            description: `A planilha deve ter Nome na 1ª coluna e Telefone (celular) na 2ª coluna${landlineMsg}`,
             variant: "destructive",
           });
           setImportStats(null);
@@ -233,15 +246,24 @@ export const LeadSelector = ({
         // Set import stats for visual feedback
         setImportStats({
           valid: validLeads.length,
-          invalid: invalidPhones.length
+          invalid: invalidPhones.length,
+          landlines: landlineLeads.length
         });
 
         onLeadsChange(validLeads);
         
-        if (invalidPhones.length > 0) {
+        if (invalidPhones.length > 0 || landlineLeads.length > 0) {
+          const parts = [];
+          parts.push(`${validLeads.length} celulares válidos`);
+          if (landlineLeads.length > 0) {
+            parts.push(`${landlineLeads.length} fixos excluídos`);
+          }
+          if (invalidPhones.length > 0) {
+            parts.push(`${invalidPhones.length} inválidos`);
+          }
           toast({
-            title: "Planilha importada com avisos",
-            description: `${validLeads.length} contatos válidos, ${invalidPhones.length} ignorados por telefone inválido`,
+            title: "Planilha importada com filtros",
+            description: parts.join(', '),
           });
         } else {
           toast({
@@ -313,17 +335,35 @@ export const LeadSelector = ({
     
     setSelectedHistoryIds(newSelected);
     
-    // Merge all leads from selected history items
+    // Merge all leads from selected history items, filtering out landlines
     const allLeads: Lead[] = [];
+    let totalLandlines = 0;
+    
     searchHistory.forEach(h => {
       if (newSelected.has(h.id) && h.leads) {
         h.leads.forEach(lead => {
           if (lead.phone && !allLeads.some(l => l.phone === lead.phone)) {
-            allLeads.push(lead);
+            // Check if it's a landline
+            if (isLandlinePhone(lead.phone)) {
+              totalLandlines++;
+            } else {
+              allLeads.push(lead);
+            }
           }
         });
       }
     });
+    
+    // Update import stats for history selection
+    if (newSelected.size > 0) {
+      setImportStats({
+        valid: allLeads.length,
+        invalid: 0,
+        landlines: totalLandlines
+      });
+    } else {
+      setImportStats(null);
+    }
     
     onLeadsChange(allLeads);
   };
@@ -338,9 +378,14 @@ export const LeadSelector = ({
       return;
     }
     
+    const landlineCount = importStats?.landlines || 0;
+    const msg = landlineCount > 0 
+      ? `${selectedLeads.length} celulares de ${selectedHistoryIds.size} buscas (${landlineCount} fixos excluídos)`
+      : `${selectedLeads.length} contatos selecionados de ${selectedHistoryIds.size} buscas`;
+    
     toast({
       title: "Leads carregados!",
-      description: `${selectedLeads.length} contatos selecionados de ${selectedHistoryIds.size} buscas`,
+      description: msg,
     });
     setSource(null);
   };
@@ -583,15 +628,21 @@ export const LeadSelector = ({
 
           {/* Import stats feedback */}
           {importStats && (
-            <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 text-sm">
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 text-sm flex-wrap">
+              <div className="flex items-center gap-2 text-primary">
                 <CheckCircle2 size={16} />
-                <span>{importStats.valid} válidos</span>
+                <span>{importStats.valid} celulares</span>
               </div>
+              {importStats.landlines > 0 && (
+                <div className="flex items-center gap-2 text-warning">
+                  <PhoneOff size={16} />
+                  <span>{importStats.landlines} fixos excluídos</span>
+                </div>
+              )}
               {importStats.invalid > 0 && (
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle size={16} />
-                  <span>{importStats.invalid} ignorados (telefone inválido)</span>
+                  <span>{importStats.invalid} inválidos</span>
                 </div>
               )}
             </div>
@@ -608,7 +659,7 @@ export const LeadSelector = ({
                     <span>{lead.name}</span>
                     <div className="flex items-center gap-2">
                       {phoneStatus.isValid ? (
-                        <CheckCircle2 size={14} className="text-green-500" />
+                        <CheckCircle2 size={14} className="text-primary" />
                       ) : (
                         <AlertCircle size={14} className="text-destructive" />
                       )}

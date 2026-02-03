@@ -10,14 +10,10 @@ import {
   Pause,
   Smartphone,
   Shuffle,
-  Shield,
-  AlertTriangle,
-  Phone
+  Shield
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
-import { countLandlinePhones, isLandlinePhone } from "@/lib/phoneUtils";
-import { useMemo } from "react";
 
 interface CampaignSummaryProps {
   campaignName: string;
@@ -95,11 +91,6 @@ export const CampaignSummary = ({
   // Check if messages use name variable
   const usesNameVariable = messages.some(m => m.includes('{nome}'));
 
-  // Count landline phones that won't work with WhatsApp
-  const landlineCount = useMemo(() => countLandlinePhones(selectedLeads), [selectedLeads]);
-  const mobileCount = selectedLeads.length - landlineCount;
-  const hasLandlines = landlineCount > 0;
-
   return (
     <div className="glass rounded-2xl p-6">
       <div className="text-center mb-6">
@@ -146,22 +137,6 @@ export const CampaignSummary = ({
           </div>
           <span className="font-medium text-lg">{selectedLeads.length}</span>
         </div>
-
-        {/* Landline Warning */}
-        {hasLandlines && (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/30">
-            <AlertTriangle size={20} className="text-warning flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-warning">
-                {landlineCount} número{landlineCount > 1 ? 's' : ''} fixo{landlineCount > 1 ? 's' : ''} detectado{landlineCount > 1 ? 's' : ''}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Telefones fixos não funcionam com WhatsApp e serão marcados como falha.
-                Apenas <strong className="text-foreground">{mobileCount} celular{mobileCount > 1 ? 'es' : ''}</strong> receberão as mensagens.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Messages */}
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
