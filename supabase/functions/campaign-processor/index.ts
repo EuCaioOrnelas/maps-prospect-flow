@@ -487,62 +487,9 @@ async function processSingleMessage(
       dailyProgress: `${dailySentCount}/${DAILY_LIMIT_PER_NUMBER}`
     });
 
-    // Skip ignored list and chat sync for simulations
+    // Add to ignored list (will only be removed if contact responds) - skip for simulations
     if (!isSimulation) {
-      // Add to ignored list (will only be removed if contact responds)
       await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
-    }
-
-    // Sync to chat (skip for simulations to avoid fake data in production)
-    if (!isSimulation) {
-      try {
-        const remoteJid = `${formattedPhone}@s.whatsapp.net`;
-        
-        const { data: existingConv } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('whatsapp_number_id', numberData.id)
-          .eq('remote_jid', remoteJid)
-          .single();
-
-        let conversationId = existingConv?.id;
-        
-        if (!conversationId) {
-          const { data: newConv } = await supabase
-            .from('conversations')
-            .insert({
-              user_id: campaign.user_id,
-              whatsapp_number_id: numberData.id,
-              remote_jid: remoteJid,
-              phone: formattedPhone,
-              contact_name: lead.name || null,
-            })
-            .select('id')
-            .single();
-          
-          conversationId = newConv?.id;
-        }
-
-        if (conversationId) {
-          await supabase.from('messages').insert({
-            conversation_id: conversationId,
-            user_id: campaign.user_id,
-            message_id: result.messageId || `campaign_${campaign.id}_${currentIndex}_${Date.now()}`,
-            remote_jid: remoteJid,
-            from_me: true,
-            message_type: 'text',
-            content: personalizedMessage,
-            status: 'sent',
-          });
-
-          await supabase.from('conversations').update({
-            last_message: personalizedMessage.substring(0, 100),
-            last_message_at: now,
-          }).eq('id', conversationId);
-        }
-      } catch (syncError) {
-        console.error('Sync error:', syncError);
-      }
     }
   } else {
     campaignLog('❌', `MESSAGE FAILED`, {
