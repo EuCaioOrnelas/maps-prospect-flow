@@ -10,12 +10,10 @@ import {
   Pause,
   Smartphone,
   Shuffle,
-  Shield,
-  Layers
+  Shield
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
-import { SENDING_WINDOWS } from "./WindowSystemModal";
 
 interface CampaignSummaryProps {
   campaignName: string;
@@ -93,24 +91,6 @@ export const CampaignSummary = ({
   // Check if messages use name variable
   const usesNameVariable = messages.some(m => m.includes('{nome}'));
 
-  // Calculate which windows will be used
-  const getWindowsUsed = () => {
-    const leadCount = selectedLeads.length;
-    let remaining = leadCount;
-    const windows: { window: number; count: number }[] = [];
-    
-    for (let i = 0; i < SENDING_WINDOWS.length && remaining > 0; i++) {
-      const windowLimit = SENDING_WINDOWS[i].limit;
-      const toSend = Math.min(windowLimit, remaining);
-      windows.push({ window: i + 1, count: toSend });
-      remaining -= toSend;
-    }
-    
-    return windows;
-  };
-
-  const windowsUsed = getWindowsUsed();
-
   return (
     <div className="glass rounded-2xl p-6">
       <div className="text-center mb-6">
@@ -156,40 +136,6 @@ export const CampaignSummary = ({
             <span className="text-muted-foreground">Total de contatos</span>
           </div>
           <span className="font-medium text-lg">{selectedLeads.length}</span>
-        </div>
-
-        {/* Window System Info */}
-        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
-          <div className="flex items-center gap-2">
-            <Layers size={18} className="text-amber-600" />
-            <span className="font-medium text-amber-600">Sistema de Janelas Ativo</span>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {SENDING_WINDOWS.map((windowItem, idx) => {
-              const windowInfo = windowsUsed.find(w => w.window === idx + 1);
-              const isActive = !!windowInfo;
-              return (
-                <div 
-                  key={idx}
-                  className={`text-center p-2 rounded-lg text-xs ${
-                    isActive 
-                      ? 'bg-amber-500/20 border border-amber-500/30' 
-                      : 'bg-muted/30 border border-border opacity-50'
-                  }`}
-                >
-                  <div className={`font-semibold ${isActive ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                    Janela {idx + 1}
-                  </div>
-                  <div className={isActive ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}>
-                    {windowInfo ? `${windowInfo.count}/${windowItem.limit}` : `0/${windowItem.limit}`}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Cada janela só é liberada após receber resposta. Sem resposta = pausa automática.
-          </p>
         </div>
 
         {/* Messages */}
@@ -253,16 +199,16 @@ export const CampaignSummary = ({
         </div>
       </div>
 
-      {/* Window System Explanation */}
+      {/* System Info */}
       <div className="mt-4 p-4 rounded-lg bg-muted/50 border flex items-start gap-3">
         <Shield size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
         <div className="text-sm space-y-2">
-          <p className="font-medium text-foreground">Como funciona o envio</p>
+          <p className="font-medium text-foreground">Proteções ativas</p>
           <ul className="text-muted-foreground space-y-1">
-            <li>• Envia em janelas: <strong>20 → 30 → 50 → 100</strong> mensagens</li>
-            <li>• Cada janela só libera após <strong>receber uma resposta</strong></li>
-            <li>• Sem resposta = <strong>pausa automática</strong> até alguém responder</li>
+            <li>• <strong>Delay inteligente</strong> entre mensagens</li>
+            {enableSmartPause && <li>• <strong>Pausa inteligente</strong> a cada {pauseAfterContacts} contatos</li>}
             <li>• Limite diário: <strong>200 mensagens</strong> por número</li>
+            <li>• Detecção automática de bloqueios</li>
           </ul>
         </div>
       </div>
