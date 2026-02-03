@@ -798,68 +798,10 @@ Deno.serve(async (req) => {
         );
 
         if (!isConnected) {
-          console.log(`⚠️ Connection check failed for ${numberData.instance_name}, evaluating if we should disconnect...`);
-          
-          // If campaign has already sent messages successfully, don't immediately disconnect
-          // This prevents false disconnections from API hiccups
-          const lastMessageTime = campaign.last_message_sent_at ? 
-            new Date(campaign.last_message_sent_at).getTime() : 0;
-          const timeSinceLastMessage = Date.now() - lastMessageTime;
-          
-          // Increased tolerance: 3 minutes instead of 1 minute
-          const hasRecentlySent = campaign.last_message_sent_at && timeSinceLastMessage < 180000;
-          
-          // NEW: If campaign has sent messages successfully (sent_count > 0), be more tolerant
-          // Only disconnect if connection fails for 3+ cycles AND no recent messages
-          const hasSentAny = (campaign.sent_count || 0) > 0;
-          
-          if (hasRecentlySent) {
-            console.log(`📤 Campaign recently sent a message (${Math.round(timeSinceLastMessage/1000)}s ago), skipping this cycle`);
-            continue; // Skip this cycle but don't mark as disconnected
-          }
-          
-          // NEW: For campaigns that have just started (few sends), be extra tolerant
-          // Try to send a test message before declaring disconnection
-          if (hasSentAny && (campaign.sent_count || 0) < 10) {
-            console.log(`🔄 Campaign has sent ${campaign.sent_count} messages, trying one more connection check...`);
-            
-            // Wait a bit and try one more time
-            await new Promise(r => setTimeout(r, 3000));
-            const retryConnected = await checkInstanceConnection(
-              EVOLUTION_API_URL,
-              EVOLUTION_API_KEY,
-              numberData.instance_name,
-              2 // Quick retry
-            );
-            
-            if (retryConnected) {
-              console.log(`✅ Retry successful, continuing campaign`);
-              // Continue to process this campaign
-            } else {
-              console.log(`❌ Retry also failed, but campaign is new - skipping this cycle without disconnecting`);
-              continue; // Don't disconnect new campaigns, just skip the cycle
-            }
-          } else if (!hasSentAny) {
-            // Campaign hasn't sent anything yet - could be initial connection issue
-            // Just skip this cycle and try again next time
-            console.log(`⏳ Campaign hasn't sent any messages yet, skipping cycle without disconnecting`);
-            continue;
-          } else {
-            // Campaign has been running for a while and connection really seems down
-            // Mark as disconnected
-            await supabase.from('whatsapp_numbers').update({
-              is_connected: false,
-              updated_at: now.toISOString()
-            }).eq('id', numberData.id);
-
-            await supabase.from('whatsapp_campaigns').update({
-              status: 'paused',
-              pause_reason: 'WhatsApp desconectado'
-            }).eq('id', campaign.id);
-            
-            console.log(`🔴 Campaign ${campaign.name} paused due to disconnection (sent ${campaign.sent_count} messages before issue)`);
-            continue;
-          }
+          // NEVER disconnect the number from campaign-processor
+          // Just skip this cycle and try again next time
+          console.log(`⏳ Connection check failed for ${numberData.instance_name}, skipping this cycle (will retry next cycle)`);
+          continue;
         }
 
         const result = await processSingleMessage(
