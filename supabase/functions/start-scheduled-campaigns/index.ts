@@ -19,35 +19,72 @@ function normalizePhone(phone: string): string {
   return normalized;
 }
 
-// Check if instance is connected
+// Check if instance is connected with retry logic
 async function checkInstanceConnection(
   evolutionUrl: string, 
   apiKey: string, 
-  instanceName: string
+  instanceName: string,
+  maxRetries: number = 3
 ): Promise<{ connected: boolean; error?: string }> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const statusResponse = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
-      method: 'GET',
-      headers: { 'apikey': apiKey },
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
+  let lastError: string = 'Unknown error';
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const statusResponse = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': apiKey },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!statusResponse.ok) {
-      return { connected: false, error: 'API error' };
+      if (!statusResponse.ok) {
+        lastError = `API error: HTTP ${statusResponse.status}`;
+        console.log(`[start-scheduled-campaigns] Connection check attempt ${attempt}/${maxRetries} failed: ${lastError}`);
+        
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        return { connected: false, error: lastError };
+      }
+
+      const statusData = await statusResponse.json();
+      const state = statusData.state || statusData.instance?.state;
+      const isConnected = state === 'open';
+      
+      if (isConnected) {
+        return { connected: true };
+      }
+      
+      // States that might be temporary - retry
+      if (state === 'connecting' || state === 'close') {
+        console.log(`[start-scheduled-campaigns] Instance state is "${state}", waiting... (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+      }
+      
+      lastError = `Instance state: ${state}`;
+      return { connected: false, error: lastError };
+      
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'Connection check failed';
+      console.log(`[start-scheduled-campaigns] Connection check attempt ${attempt}/${maxRetries} error: ${lastError}`);
+      
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
     }
-
-    const statusData = await statusResponse.json();
-    const isConnected = statusData.state === 'open' || statusData.instance?.state === 'open';
-    
-    return { connected: isConnected, error: isConnected ? undefined : 'Not connected' };
-  } catch (error) {
-    return { connected: false, error: 'Connection check failed' };
   }
+  
+  console.log(`[start-scheduled-campaigns] Connection check failed after ${maxRetries} attempts: ${lastError}`);
+  return { connected: false, error: lastError };
 }
 
 // Send a single message
