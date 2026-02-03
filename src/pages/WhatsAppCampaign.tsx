@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   MessageSquare,
   Send,
   Pause,
@@ -16,7 +16,7 @@ import {
   Plus,
   BarChart3,
   Crown,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -82,7 +82,7 @@ export interface Campaign {
 }
 
 export interface CampaignState {
-  status: 'idle' | 'connecting' | 'connected' | 'running' | 'paused' | 'completed' | 'error';
+  status: "idle" | "connecting" | "connected" | "running" | "paused" | "completed" | "error";
   currentIndex: number;
   totalSent: number;
   totalFailed: number;
@@ -91,11 +91,11 @@ export interface CampaignState {
 }
 
 const WhatsAppCampaign = () => {
-  const [activeTab, setActiveTab] = useState<'new' | 'active' | 'history'>('new');
-  const [step, setStep] = useState<'leads' | 'messages' | 'settings' | 'summary' | 'running'>('leads');
+  const [activeTab, setActiveTab] = useState<"new" | "active" | "history">("new");
+  const [step, setStep] = useState<"leads" | "messages" | "settings" | "summary" | "running">("leads");
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
-  const [messages, setMessages] = useState<string[]>(['', '', '', '', '']);
-  const [campaignName, setCampaignName] = useState('');
+  const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
+  const [campaignName, setCampaignName] = useState("");
   const [delaySecondsMin, setDelaySecondsMin] = useState(40);
   const [delaySecondsMax, setDelaySecondsMax] = useState(60);
   const [pauseAfterContacts, setPauseAfterContacts] = useState(30);
@@ -103,26 +103,26 @@ const WhatsAppCampaign = () => {
   const [enableSmartPause, setEnableSmartPause] = useState(true);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
-  const [scheduledTime, setScheduledTime] = useState('09:00');
-  
+  const [scheduledTime, setScheduledTime] = useState("09:00");
+
   const [campaignState, setCampaignState] = useState<CampaignState>({
-    status: 'idle',
+    status: "idle",
     currentIndex: 0,
     totalSent: 0,
     totalFailed: 0,
     isPausing: false,
-    campaignId: null
+    campaignId: null,
   });
 
   const [isStartingCampaign, setIsStartingCampaign] = useState(false);
-  
+
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile, isTrialExpired, refreshProfile } = useAuth();
 
   // Free trial limits
   const FREE_TRIAL_MESSAGE_LIMIT = 400;
-  const isFreePlan = profile?.plan === 'free' || !profile?.plan;
+  const isFreePlan = profile?.plan === "free" || !profile?.plan;
   const trialMessagesUsed = profile?.trial_messages_sent || 0;
   const hasReachedTrialLimit = isFreePlan && trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT;
   const remainingTrialMessages = FREE_TRIAL_MESSAGE_LIMIT - trialMessagesUsed;
@@ -131,8 +131,11 @@ const WhatsAppCampaign = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
   const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
-  const [warmingInfo, setWarmingInfo] = useState<{ level: number; status: 'cold' | 'warm' | 'hot' } | null>(null);
-  
+  const [warmingInfo, setWarmingInfo] = useState<{
+    level: number;
+    status: "cold" | "warm" | "hot";
+  } | null>(null);
+
   useEffect(() => {
     // If trial expired, show upgrade modal
     if (isFreePlan && isTrialExpired) {
@@ -143,14 +146,9 @@ const WhatsAppCampaign = () => {
       setShowTrialLimitModal(true);
     }
   }, [isFreePlan, isTrialExpired, hasReachedTrialLimit]);
-  
+
   // Use realtime hook for campaigns
-  const { 
-    campaigns, 
-    setCampaigns, 
-    loading: loadingCampaigns, 
-    fetchCampaigns 
-  } = useCampaignRealtime();
+  const { campaigns, setCampaigns, loading: loadingCampaigns, fetchCampaigns } = useCampaignRealtime();
 
   const {
     numbers,
@@ -166,51 +164,52 @@ const WhatsAppCampaign = () => {
     hasNumberPendingReset,
     canSendMessages,
     refreshConnectionStatus,
-    DAILY_LIMIT_PER_NUMBER
+    DAILY_LIMIT_PER_NUMBER,
   } = useWhatsAppNumbers();
 
   const { getBalanceForDate } = useCampaignBalance();
 
-  const { 
-    drafts, 
-    loading: loadingDrafts, 
-    saveDraft, 
-    deleteDraft, 
-    loadDraft, 
+  const {
+    drafts,
+    loading: loadingDrafts,
+    saveDraft,
+    deleteDraft,
+    loadDraft,
     clearCurrentDraft,
     resetDraftState,
-    currentDraftId
+    currentDraftId,
   } = useCampaignDrafts();
 
   const [showConnectModal, setShowConnectModal] = useState(false);
 
-  const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+  const selectedNumber = numbers.find((n) => n.id === selectedNumberId);
   const isConnected = selectedNumber?.is_connected || false;
   const usedToday = selectedNumber?.daily_sent_count || 0;
   const dailyLimit = DAILY_LIMIT_PER_NUMBER;
   const hasPendingReset = hasNumberPendingReset(selectedNumberId || undefined);
 
-  const canProceedToMessages = selectedLeads.length > 0 && selectedLeads.length <= (dailyLimit - usedToday) && !hasPendingReset;
-  
+  const canProceedToMessages =
+    selectedLeads.length > 0 && selectedLeads.length <= dailyLimit - usedToday && !hasPendingReset;
+
   // Validation for messages: all 5 filled, no links, no duplicates
   const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
   const MAX_MESSAGE_CHARS = 120;
-  
+
   const messagesValidation = (() => {
-    const filledMessages = messages.filter(m => m.trim());
+    const filledMessages = messages.filter((m) => m.trim());
     const allFilled = filledMessages.length === 5;
-    
+
     // Check for links
-    const hasLinks = messages.some(m => LINK_REGEX.test(m));
-    
+    const hasLinks = messages.some((m) => LINK_REGEX.test(m));
+
     // Check for over limit
-    const hasOverLimit = messages.some(m => m.length > MAX_MESSAGE_CHARS);
-    
+    const hasOverLimit = messages.some((m) => m.length > MAX_MESSAGE_CHARS);
+
     // Check for duplicates
-    const normalizedMessages = messages.map(m => m.trim().toLowerCase().replace(/\s+/g, ' '));
+    const normalizedMessages = messages.map((m) => m.trim().toLowerCase().replace(/\s+/g, " "));
     const seen = new Set<string>();
     let hasDuplicates = false;
-    normalizedMessages.forEach(msg => {
+    normalizedMessages.forEach((msg) => {
       if (msg.length > 0) {
         if (seen.has(msg)) {
           hasDuplicates = true;
@@ -219,50 +218,55 @@ const WhatsAppCampaign = () => {
         }
       }
     });
-    
+
     return { allFilled, hasLinks, hasOverLimit, hasDuplicates };
   })();
-  
-  const canProceedToSettings = messagesValidation.allFilled && 
-                               !messagesValidation.hasLinks && 
-                               !messagesValidation.hasDuplicates && 
-                               !messagesValidation.hasOverLimit;
-  const canStartCampaign = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && (isConnected || isScheduled) && !!selectedNumberId && !hasPendingReset;
+
+  const canProceedToSettings =
+    messagesValidation.allFilled &&
+    !messagesValidation.hasLinks &&
+    !messagesValidation.hasDuplicates &&
+    !messagesValidation.hasOverLimit;
+  const canStartCampaign =
+    delaySecondsMin >= 40 &&
+    delaySecondsMax >= delaySecondsMin &&
+    (isConnected || isScheduled) &&
+    !!selectedNumberId &&
+    !hasPendingReset;
 
   const isValidSchedule = () => {
     if (!isScheduled) return true;
     if (!scheduledDate || !scheduledTime) return false;
-    
-    const [hours, minutes] = scheduledTime.split(':').map(Number);
+
+    const [hours, minutes] = scheduledTime.split(":").map(Number);
     const scheduled = new Date(scheduledDate);
     scheduled.setHours(hours, minutes, 0, 0);
-    
+
     return scheduled > new Date();
   };
 
   const canStart = canStartCampaign && (!isScheduled || isValidSchedule());
 
-
   const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
     if (!user || !selectedNumberId) return null;
 
-    const name = campaignName || `Campanha ${new Date().toLocaleDateString('pt-BR')}`;
-    
+    const name = campaignName || `Campanha ${new Date().toLocaleDateString("pt-BR")}`;
+
     let scheduledAt: string | null = null;
     if (scheduled && scheduledDate && scheduledTime) {
-      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const [hours, minutes] = scheduledTime.split(":").map(Number);
       const schedDate = new Date(scheduledDate);
       schedDate.setHours(hours, minutes, 0, 0);
       scheduledAt = schedDate.toISOString();
     }
-    
+
     try {
       const { data, error } = await supabase
-        .from('whatsapp_campaigns')
+        .from("whatsapp_campaigns")
         .insert({
           user_id: user.id,
           name,
-          status: scheduled ? 'scheduled' : 'running',
+          status: scheduled ? "scheduled" : "running",
           total_leads: selectedLeads.length,
           delay_seconds: delaySecondsMin,
           delay_seconds_max: delaySecondsMax,
@@ -274,7 +278,7 @@ const WhatsAppCampaign = () => {
           started_at: scheduled ? null : new Date().toISOString(),
           scheduled_at: scheduledAt,
           whatsapp_number_id: selectedNumberId,
-          current_lead_index: 0
+          current_lead_index: 0,
         })
         .select()
         .single();
@@ -284,17 +288,17 @@ const WhatsAppCampaign = () => {
       // If scheduled, create a reservation for the balance
       if (scheduled && scheduledAt && data) {
         const scheduleDate = new Date(scheduledAt);
-        await supabase.from('campaign_daily_reservations').insert({
+        await supabase.from("campaign_daily_reservations").insert({
           campaign_id: data.id,
           whatsapp_number_id: selectedNumberId,
-          reserved_date: scheduleDate.toISOString().split('T')[0],
-          reserved_count: selectedLeads.length
+          reserved_date: scheduleDate.toISOString().split("T")[0],
+          reserved_count: selectedLeads.length,
         });
       }
 
       return data.id;
     } catch (err) {
-      console.error('Error creating campaign:', err);
+      console.error("Error creating campaign:", err);
       toast({
         title: "Erro",
         description: "Não foi possível criar a campanha",
@@ -304,21 +308,21 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  const updateCampaign = async (campaignId: string, updates: {
-    status?: string;
-    sent_count?: number;
-    failed_count?: number;
-    completed_at?: string;
-    paused_at_limit?: boolean;
-    pause_reason?: string;
-  }) => {
+  const updateCampaign = async (
+    campaignId: string,
+    updates: {
+      status?: string;
+      sent_count?: number;
+      failed_count?: number;
+      completed_at?: string;
+      paused_at_limit?: boolean;
+      pause_reason?: string;
+    },
+  ) => {
     try {
-      await supabase
-        .from('whatsapp_campaigns')
-        .update(updates)
-        .eq('id', campaignId);
+      await supabase.from("whatsapp_campaigns").update(updates).eq("id", campaignId);
     } catch (err) {
-      console.error('Error updating campaign:', err);
+      console.error("Error updating campaign:", err);
     }
   };
 
@@ -335,25 +339,25 @@ const WhatsAppCampaign = () => {
 
     // Check warming session for selected number
     const { data: warmingSession } = await supabase
-      .from('warming_sessions')
-      .select('warming_level, status')
-      .eq('whatsapp_number_id', selectedNumberId)
+      .from("warming_sessions")
+      .select("warming_level, status")
+      .eq("whatsapp_number_id", selectedNumberId)
       .maybeSingle();
 
     // Determine warming status based on level and completion
-    let warmingStatus: 'cold' | 'warm' | 'hot' = 'cold';
+    let warmingStatus: "cold" | "warm" | "hot" = "cold";
     const warmingLevel = warmingSession?.warming_level || 0;
-    
-    if (warmingSession?.status === 'completed') {
-      warmingStatus = 'hot';
+
+    if (warmingSession?.status === "completed") {
+      warmingStatus = "hot";
     } else if (warmingLevel >= 3) {
-      warmingStatus = 'warm';
+      warmingStatus = "warm";
     } else {
-      warmingStatus = 'cold';
+      warmingStatus = "cold";
     }
 
     // If not fully heated, show warning modal
-    if (warmingStatus !== 'hot' && warmingLevel > 0) {
+    if (warmingStatus !== "hot" && warmingLevel > 0) {
       setWarmingInfo({ level: warmingLevel, status: warmingStatus });
       setShowWarmingWarningModal(true);
       return;
@@ -370,7 +374,6 @@ const WhatsAppCampaign = () => {
   };
 
   const handleStartCampaign = async () => {
-    
     if (!selectedNumberId) {
       toast({
         title: "Selecione um número",
@@ -392,12 +395,12 @@ const WhatsAppCampaign = () => {
       }
 
       // Validate balance for the scheduled date
-      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const [hours, minutes] = scheduledTime.split(":").map(Number);
       const targetDate = new Date(scheduledDate);
       targetDate.setHours(hours, minutes, 0, 0);
-      
+
       const balanceInfo = await getBalanceForDate(selectedNumberId, targetDate, selectedLeads.length);
-      
+
       if (!balanceInfo.canSend) {
         toast({
           title: "Saldo insuficiente",
@@ -414,15 +417,15 @@ const WhatsAppCampaign = () => {
         title: "Campanha agendada!",
         description: `A campanha será iniciada no horário programado`,
       });
-      
+
       handleNewCampaign();
-      setActiveTab('history');
+      setActiveTab("history");
       return;
     }
 
     // Validate balance for immediate campaign (today)
     const balanceInfo = await getBalanceForDate(selectedNumberId, new Date(), selectedLeads.length);
-    
+
     if (!balanceInfo.canSend) {
       toast({
         title: "Limite diário excedido",
@@ -456,7 +459,7 @@ const WhatsAppCampaign = () => {
 
     // VALIDATE BEFORE creating campaign - check instance_name first
     const instanceName = selectedNumber?.instance_name;
-    
+
     if (!instanceName) {
       toast({
         title: "Erro",
@@ -466,8 +469,8 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    const validMessages = messages.filter(m => m.trim());
-    
+    const validMessages = messages.filter((m) => m.trim());
+
     if (validMessages.length < 5) {
       toast({
         title: "Erro",
@@ -486,53 +489,51 @@ const WhatsAppCampaign = () => {
         setIsStartingCampaign(false);
         return;
       }
-      
+
       // Clear draft after successful campaign creation
       await handleCampaignCreatedFromDraft();
 
-      setCampaignState(prev => ({ ...prev, status: 'running', campaignId }));
+      setCampaignState((prev) => ({ ...prev, status: "running", campaignId }));
 
       // Fire-and-forget: trigger the campaign processor without waiting
       // The cron job will pick it up and continue processing
-      supabase.functions.invoke('campaign-processor', {
-        body: {
-          campaignId,
-          action: 'start'
-        }
-      }).catch(err => {
-        // Log but don't block - cron will pick up the campaign
-        console.log('Initial campaign trigger (cron will continue):', err?.message || 'triggered');
-      });
-      
+      supabase.functions
+        .invoke("campaign-processor", {
+          body: {
+            campaignId,
+            action: "start",
+          },
+        })
+        .catch((err) => {
+          // Log but don't block - cron will pick up the campaign
+          console.log("Initial campaign trigger (cron will continue):", err?.message || "triggered");
+        });
+
       // Update trial messages sent for free trial users
       if (isFreePlan && !isTrialExpired && user) {
         const newCount = trialMessagesUsed + selectedLeads.length;
-        await supabase
-          .from('profiles')
-          .update({ trial_messages_sent: newCount })
-          .eq('id', user.id);
-        
+        await supabase.from("profiles").update({ trial_messages_sent: newCount }).eq("id", user.id);
+
         // Refresh profile to get updated count
         await refreshProfile();
-        
+
         // Check if limit reached after this campaign
         if (newCount >= FREE_TRIAL_MESSAGE_LIMIT) {
           setShowTrialLimitModal(true);
         }
       }
-      
+
       toast({
         title: "Campanha iniciada!",
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
-      
+
       // Reset form state and redirect immediately
       handleNewCampaign();
       setIsStartingCampaign(false);
-      setActiveTab('active');
-      
+      setActiveTab("active");
     } catch (err) {
-      console.error('Error in handleStartCampaign:', err);
+      console.error("Error in handleStartCampaign:", err);
       toast({
         title: "Erro",
         description: "Não foi possível iniciar a campanha",
@@ -543,12 +544,16 @@ const WhatsAppCampaign = () => {
   };
 
   const handlePauseCampaign = async () => {
-    setCampaignState(prev => ({ ...prev, status: 'paused', isPausing: true }));
-    
+    setCampaignState((prev) => ({
+      ...prev,
+      status: "paused",
+      isPausing: true,
+    }));
+
     if (campaignState.campaignId) {
-      await updateCampaign(campaignState.campaignId, { status: 'paused' });
+      await updateCampaign(campaignState.campaignId, { status: "paused" });
     }
-    
+
     toast({
       title: "Campanha pausada",
       description: "A campanha foi pausada. Clique em continuar para retomar.",
@@ -556,12 +561,16 @@ const WhatsAppCampaign = () => {
   };
 
   const handleResumeCampaign = async () => {
-    setCampaignState(prev => ({ ...prev, status: 'running', isPausing: false }));
-    
+    setCampaignState((prev) => ({
+      ...prev,
+      status: "running",
+      isPausing: false,
+    }));
+
     if (campaignState.campaignId) {
-      await updateCampaign(campaignState.campaignId, { status: 'running' });
+      await updateCampaign(campaignState.campaignId, { status: "running" });
     }
-    
+
     toast({
       title: "Campanha retomada",
       description: "Continuando os disparos...",
@@ -569,19 +578,19 @@ const WhatsAppCampaign = () => {
   };
 
   const handleStopCampaign = async () => {
-    setCampaignState(prev => ({ ...prev, status: 'completed' }));
-    
+    setCampaignState((prev) => ({ ...prev, status: "completed" }));
+
     if (campaignState.campaignId) {
-      await updateCampaign(campaignState.campaignId, { 
-        status: 'completed',
+      await updateCampaign(campaignState.campaignId, {
+        status: "completed",
         completed_at: new Date().toISOString(),
         sent_count: campaignState.totalSent,
-        failed_count: campaignState.totalFailed
+        failed_count: campaignState.totalFailed,
       });
     }
-    
+
     await fetchCampaigns();
-    
+
     toast({
       title: "Campanha encerrada",
       description: `${campaignState.totalSent} mensagens enviadas`,
@@ -590,40 +599,40 @@ const WhatsAppCampaign = () => {
 
   const handleUpdateStats = async (sent: number, failed: number) => {
     if (campaignState.campaignId) {
-      await updateCampaign(campaignState.campaignId, { 
+      await updateCampaign(campaignState.campaignId, {
         sent_count: sent,
-        failed_count: failed
+        failed_count: failed,
       });
     }
   };
 
   const handleNewCampaign = () => {
-    setStep('leads');
+    setStep("leads");
     setSelectedLeads([]);
-    setMessages(['', '', '', '', '']);
-    setCampaignName('');
+    setMessages(["", "", "", "", ""]);
+    setCampaignName("");
     setDelaySecondsMin(40);
     setDelaySecondsMax(60);
     setIsScheduled(false);
     setScheduledDate(undefined);
-    setScheduledTime('09:00');
+    setScheduledTime("09:00");
     setCampaignState({
-      status: isConnected ? 'connected' : 'idle',
+      status: isConnected ? "connected" : "idle",
       currentIndex: 0,
       totalSent: 0,
       totalFailed: 0,
       isPausing: false,
-      campaignId: null
+      campaignId: null,
     });
-    setActiveTab('new');
+    setActiveTab("new");
     resetDraftState();
   };
 
   // Auto-save draft when step changes or data changes
   const saveDraftDebounced = useCallback(async () => {
-    if (step === 'running') return;
-    if (activeTab !== 'new') return;
-    
+    if (step === "running") return;
+    if (activeTab !== "new") return;
+
     await saveDraft({
       step,
       selectedLeads,
@@ -639,11 +648,27 @@ const WhatsAppCampaign = () => {
       scheduledTime,
       selectedNumberId,
     });
-  }, [step, selectedLeads, messages, campaignName, delaySecondsMin, delaySecondsMax, pauseAfterContacts, pauseMinutes, enableSmartPause, isScheduled, scheduledDate, scheduledTime, selectedNumberId, saveDraft, activeTab]);
+  }, [
+    step,
+    selectedLeads,
+    messages,
+    campaignName,
+    delaySecondsMin,
+    delaySecondsMax,
+    pauseAfterContacts,
+    pauseMinutes,
+    enableSmartPause,
+    isScheduled,
+    scheduledDate,
+    scheduledTime,
+    selectedNumberId,
+    saveDraft,
+    activeTab,
+  ]);
 
   // Save draft when navigating between steps
   useEffect(() => {
-    if (step !== 'leads' || selectedLeads.length > 0 || messages.some(m => m.trim()) || campaignName) {
+    if (step !== "leads" || selectedLeads.length > 0 || messages.some((m) => m.trim()) || campaignName) {
       const timer = setTimeout(saveDraftDebounced, 2000);
       return () => clearTimeout(timer);
     }
@@ -653,8 +678,8 @@ const WhatsAppCampaign = () => {
     loadDraft(draft);
     setStep(draft.step);
     setSelectedLeads(draft.selected_leads || []);
-    setMessages(draft.messages || ['', '', '', '', '']);
-    setCampaignName(draft.campaign_name || '');
+    setMessages(draft.messages || ["", "", "", "", ""]);
+    setCampaignName(draft.campaign_name || "");
     setDelaySecondsMin(draft.delay_seconds_min || 40);
     setDelaySecondsMax(draft.delay_seconds_max || 60);
     setPauseAfterContacts(draft.pause_after_contacts || 30);
@@ -662,9 +687,9 @@ const WhatsAppCampaign = () => {
     setEnableSmartPause(draft.enable_smart_pause ?? true);
     setIsScheduled(draft.is_scheduled || false);
     setScheduledDate(draft.scheduled_date ? new Date(draft.scheduled_date) : undefined);
-    setScheduledTime(draft.scheduled_time || '09:00');
+    setScheduledTime(draft.scheduled_time || "09:00");
     setSelectedNumberId(draft.selected_number_id);
-    
+
     toast({
       title: "Rascunho carregado",
       description: "Continue de onde parou",
@@ -680,20 +705,17 @@ const WhatsAppCampaign = () => {
 
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
-      const { error } = await supabase
-        .from('whatsapp_campaigns')
-        .delete()
-        .eq('id', campaignId);
+      const { error } = await supabase.from("whatsapp_campaigns").delete().eq("id", campaignId);
 
       if (error) throw error;
 
-      setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+      setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
       toast({
         title: "Campanha excluída",
         description: "A campanha foi removida do histórico",
       });
     } catch (err) {
-      console.error('Error deleting campaign:', err);
+      console.error("Error deleting campaign:", err);
       toast({
         title: "Erro",
         description: "Não foi possível excluir a campanha",
@@ -705,47 +727,55 @@ const WhatsAppCampaign = () => {
   const handleStopCampaignFromList = async (campaign: Campaign) => {
     try {
       await supabase
-        .from('whatsapp_campaigns')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
+        .from("whatsapp_campaigns")
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
         })
-        .eq('id', campaign.id);
+        .eq("id", campaign.id);
 
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, status: 'completed', completed_at: new Date().toISOString() } : c
-      ));
-      
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === campaign.id
+            ? {
+                ...c,
+                status: "completed",
+                completed_at: new Date().toISOString(),
+              }
+            : c,
+        ),
+      );
+
       toast({
         title: "Campanha encerrada",
         description: `Campanha "${campaign.name}" foi encerrada`,
       });
     } catch (err) {
-      console.error('Error stopping campaign:', err);
+      console.error("Error stopping campaign:", err);
     }
   };
 
   const handlePauseCampaignFromList = async (campaign: Campaign) => {
     try {
       await supabase
-        .from('whatsapp_campaigns')
-        .update({ 
-          status: 'paused',
-          pause_reason: 'manual',
-          updated_at: new Date().toISOString()
+        .from("whatsapp_campaigns")
+        .update({
+          status: "paused",
+          pause_reason: "manual",
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', campaign.id);
+        .eq("id", campaign.id);
 
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, status: 'paused', pause_reason: 'manual' } : c
-      ));
-      
+      setCampaigns((prev) =>
+        prev.map((c) => (c.id === campaign.id ? { ...c, status: "paused", pause_reason: "manual" } : c)),
+      );
+
       toast({
         title: "Campanha pausada",
         description: "Clique em 'Retomar' para continuar os disparos a qualquer momento.",
       });
     } catch (err) {
-      console.error('Error pausing campaign:', err);
+      console.error("Error pausing campaign:", err);
       toast({
         title: "Erro",
         description: "Não foi possível pausar a campanha",
@@ -756,8 +786,8 @@ const WhatsAppCampaign = () => {
 
   const handleResumeCampaignFromList = async (campaign: Campaign) => {
     // Find the number associated with this campaign
-    const campaignNumber = numbers.find(n => n.id === campaign.whatsapp_number_id);
-    
+    const campaignNumber = numbers.find((n) => n.id === campaign.whatsapp_number_id);
+
     if (!campaignNumber) {
       toast({
         title: "Erro",
@@ -789,32 +819,36 @@ const WhatsAppCampaign = () => {
 
     try {
       await supabase
-        .from('whatsapp_campaigns')
-        .update({ 
-          status: 'running',
+        .from("whatsapp_campaigns")
+        .update({
+          status: "running",
           paused_at_limit: false,
           pause_reason: null,
           resume_at: null,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', campaign.id);
+        .eq("id", campaign.id);
 
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { 
-          ...c, 
-          status: 'running', 
-          paused_at_limit: false,
-          pause_reason: undefined,
-          resume_at: undefined
-        } : c
-      ));
-      
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === campaign.id
+            ? {
+                ...c,
+                status: "running",
+                paused_at_limit: false,
+                pause_reason: undefined,
+                resume_at: undefined,
+              }
+            : c,
+        ),
+      );
+
       toast({
         title: "Campanha retomada",
         description: `Continuando os disparos. Saldo disponível: ${dailyLimit - campaignNumber.daily_sent_count} mensagens.`,
       });
     } catch (err) {
-      console.error('Error resuming campaign:', err);
+      console.error("Error resuming campaign:", err);
       toast({
         title: "Erro",
         description: "Não foi possível retomar a campanha",
@@ -825,22 +859,29 @@ const WhatsAppCampaign = () => {
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {['leads', 'messages', 'settings', 'summary'].map((s, i) => {
-        const stepLabels = ['Leads', 'Mensagens', 'Configurações', 'Resumo'];
-        const stepIndex = ['leads', 'messages', 'settings', 'summary'].indexOf(step);
+      {["leads", "messages", "settings", "summary"].map((s, i) => {
+        const stepLabels = ["Leads", "Mensagens", "Configurações", "Resumo"];
+        const stepIndex = ["leads", "messages", "settings", "summary"].indexOf(step);
         const isActive = s === step;
         const isCompleted = i < stepIndex;
-        
+
         return (
           <div key={s} className="flex items-center">
-            <div className={`
+            <div
+              className={`
               flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all
-              ${isActive ? 'bg-primary text-primary-foreground' : 
-                isCompleted ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}
-            `}>
+              ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : isCompleted
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+              }
+            `}
+            >
               {isCompleted ? <CheckCircle2 size={16} /> : i + 1}
             </div>
-            <span className={`ml-2 text-sm hidden sm:inline ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+            <span className={`ml-2 text-sm hidden sm:inline ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
               {stepLabels[i]}
             </span>
             {i < 3 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
@@ -855,7 +896,7 @@ const WhatsAppCampaign = () => {
   if (isFreePlan && isTrialExpired) {
     return (
       <div className="min-h-screen bg-background">
-        <UpgradeModal isOpen={showUpgradeModal} onClose={() => navigate('/dashboard')} />
+        <UpgradeModal isOpen={showUpgradeModal} onClose={() => navigate("/dashboard")} />
       </div>
     );
   }
@@ -864,9 +905,9 @@ const WhatsAppCampaign = () => {
   if (hasReachedTrialLimit && !isTrialExpired) {
     return (
       <div className="min-h-screen bg-background">
-        <FreeTrialLimitModal 
-          isOpen={showTrialLimitModal} 
-          onClose={() => setShowTrialLimitModal(false)} 
+        <FreeTrialLimitModal
+          isOpen={showTrialLimitModal}
+          onClose={() => setShowTrialLimitModal(false)}
           usedMessages={trialMessagesUsed}
           limit={FREE_TRIAL_MESSAGE_LIMIT}
         />
@@ -877,7 +918,7 @@ const WhatsAppCampaign = () => {
   if (!hasMassMessagingAccess && !isFreePlan) {
     return (
       <div className="min-h-screen bg-background">
-        <UpgradeModal isOpen={true} onClose={() => navigate('/dashboard')} />
+        <UpgradeModal isOpen={true} onClose={() => navigate("/dashboard")} />
       </div>
     );
   }
@@ -917,14 +958,14 @@ const WhatsAppCampaign = () => {
     <div className="min-h-screen bg-background overflow-x-hidden relative">
       <BackgroundGlow />
       <DisclaimerModal />
-      
+
       {/* Warming Warning Modal */}
       <WarmingWarningModal
         isOpen={showWarmingWarningModal}
         onClose={() => setShowWarmingWarningModal(false)}
         onConfirm={handleShowWindowModal}
         warmingLevel={warmingInfo?.level || 0}
-        warmingStatus={warmingInfo?.status || 'cold'}
+        warmingStatus={warmingInfo?.status || "cold"}
       />
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
@@ -933,7 +974,7 @@ const WhatsAppCampaign = () => {
         {/* Page Header */}
         <div className="max-w-4xl mx-auto mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold">Disparos em Massa</h1>
+            <h1 className="font-display text-xl sm:text-2xl font-bold">Campanhas de Mensagens</h1>
             <p className="text-muted-foreground text-xs sm:text-sm">Gerencie suas campanhas de WhatsApp</p>
           </div>
           <div className="flex items-center gap-2">
@@ -956,16 +997,11 @@ const WhatsAppCampaign = () => {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-destructive">Reset pendente</p>
                   <p className="text-xs text-muted-foreground">
-                    O contador de disparos do número "{selectedNumber.name}" precisa ser resetado. 
-                    O reset ocorre automaticamente à meia-noite. Aguarde o horário de reset para continuar os disparos.
+                    O contador de disparos do número "{selectedNumber.name}" precisa ser resetado. O reset ocorre
+                    automaticamente à meia-noite. Aguarde o horário de reset para continuar os disparos.
                   </p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={refreshConnectionStatus}
-                  className="flex-shrink-0"
-                >
+                <Button variant="outline" size="sm" onClick={refreshConnectionStatus} className="flex-shrink-0">
                   Verificar novamente
                 </Button>
               </div>
@@ -991,21 +1027,23 @@ const WhatsAppCampaign = () => {
                 <div className="flex items-center gap-4">
                   <div className="flex-1 sm:flex-none">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-foreground">{trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {remainingTrialMessages} restantes
+                      <span className="text-sm font-bold text-foreground">
+                        {trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}
                       </span>
+                      <span className="text-xs text-muted-foreground ml-2">{remainingTrialMessages} restantes</span>
                     </div>
                     <div className="w-full sm:w-48 h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9 
-                            ? 'bg-destructive' 
-                            : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7 
-                              ? 'bg-yellow-500' 
-                              : 'bg-primary'
+                          trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9
+                            ? "bg-destructive"
+                            : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7
+                              ? "bg-yellow-500"
+                              : "bg-primary"
                         }`}
-                        style={{ width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%` }}
+                        style={{
+                          width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -1016,8 +1054,12 @@ const WhatsAppCampaign = () => {
         )}
 
         <div className="max-w-4xl mx-auto">
-          {step !== 'running' && (
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'new' | 'active' | 'history')} className="mb-8">
+          {step !== "running" && (
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as "new" | "active" | "history")}
+              className="mb-8"
+            >
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="new" className="gap-2">
                   <Plus size={16} />
@@ -1026,9 +1068,14 @@ const WhatsAppCampaign = () => {
                 <TabsTrigger value="active" className="gap-2">
                   <Play size={16} />
                   Em Andamento
-                  {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length > 0 && (
+                  {campaigns.filter((c) => c.status === "running" || c.status === "paused" || c.status === "scheduled")
+                    .length > 0 && (
                     <span className="ml-1 min-w-5 h-5 px-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full inline-flex items-center justify-center">
-                      {campaigns.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'scheduled').length}
+                      {
+                        campaigns.filter(
+                          (c) => c.status === "running" || c.status === "paused" || c.status === "scheduled",
+                        ).length
+                      }
                     </span>
                   )}
                 </TabsTrigger>
@@ -1040,9 +1087,9 @@ const WhatsAppCampaign = () => {
             </Tabs>
           )}
 
-          {activeTab === 'history' && step !== 'running' ? (
+          {activeTab === "history" && step !== "running" ? (
             <CampaignHistory
-              campaigns={campaigns.filter(c => c.status === 'completed' || c.status === 'failed')}
+              campaigns={campaigns.filter((c) => c.status === "completed" || c.status === "failed")}
               loading={loadingCampaigns}
               onDelete={handleDeleteCampaign}
               onNewCampaign={handleNewCampaign}
@@ -1050,7 +1097,7 @@ const WhatsAppCampaign = () => {
               onResume={handleResumeCampaignFromList}
               numbers={numbers}
             />
-          ) : activeTab === 'active' && step !== 'running' ? (
+          ) : activeTab === "active" && step !== "running" ? (
             <>
               <RealtimeMonitor
                 campaigns={campaigns}
@@ -1059,7 +1106,7 @@ const WhatsAppCampaign = () => {
                 onResume={handleResumeCampaignFromList}
                 onStop={handleStopCampaignFromList}
               />
-              
+
               <ActiveCampaigns
                 campaigns={campaigns}
                 usedToday={usedToday}
@@ -1071,7 +1118,7 @@ const WhatsAppCampaign = () => {
           ) : (
             <>
               {/* Drafts Section */}
-              {step === 'leads' && activeTab === 'new' && (
+              {step === "leads" && activeTab === "new" && (
                 <CampaignDrafts
                   drafts={drafts}
                   onLoadDraft={handleLoadDraft}
@@ -1079,15 +1126,15 @@ const WhatsAppCampaign = () => {
                   loading={loadingDrafts}
                 />
               )}
-              
-              {step !== 'running' && activeTab === 'new' && renderStepIndicator()}
+
+              {step !== "running" && activeTab === "new" && renderStepIndicator()}
 
               {/* Step: Select Leads */}
-              {step === 'leads' && (
+              {step === "leads" && (
                 <LeadSelector
                   selectedLeads={selectedLeads}
                   onLeadsChange={setSelectedLeads}
-                  onNext={() => setStep('messages')}
+                  onNext={() => setStep("messages")}
                   canProceed={canProceedToMessages}
                   dailyLimit={dailyLimit}
                   usedToday={usedToday}
@@ -1099,19 +1146,19 @@ const WhatsAppCampaign = () => {
               )}
 
               {/* Step: Message Variations */}
-              {step === 'messages' && (
+              {step === "messages" && (
                 <MessageVariations
                   messages={messages}
                   onMessagesChange={setMessages}
-                  onBack={() => setStep('leads')}
-                  onNext={() => setStep('settings')}
+                  onBack={() => setStep("leads")}
+                  onNext={() => setStep("settings")}
                   canProceed={canProceedToSettings}
                   selectedLeads={selectedLeads}
                 />
               )}
 
               {/* Step: Campaign Settings */}
-              {step === 'settings' && (
+              {step === "settings" && (
                 <CampaignSettings
                   campaignName={campaignName}
                   onCampaignNameChange={setCampaignName}
@@ -1131,8 +1178,8 @@ const WhatsAppCampaign = () => {
                   onScheduledDateChange={setScheduledDate}
                   scheduledTime={scheduledTime}
                   onScheduledTimeChange={setScheduledTime}
-                  onBack={() => setStep('messages')}
-                  onNext={() => setStep('summary')}
+                  onBack={() => setStep("messages")}
+                  onNext={() => setStep("summary")}
                   isConnected={isConnected}
                   totalLeads={selectedLeads.length}
                   numbers={numbers}
@@ -1140,12 +1187,12 @@ const WhatsAppCampaign = () => {
                   onSelectNumber={setSelectedNumberId}
                   dailyLimit={dailyLimit}
                   maxNumbers={maxNumbers}
-                  userPlan={profile?.plan || 'free'}
+                  userPlan={profile?.plan || "free"}
                 />
               )}
 
               {/* Step: Campaign Summary */}
-              {step === 'summary' && (
+              {step === "summary" && (
                 <CampaignSummary
                   campaignName={campaignName}
                   selectedLeads={selectedLeads}
@@ -1160,7 +1207,7 @@ const WhatsAppCampaign = () => {
                   scheduledTime={scheduledTime}
                   selectedNumber={selectedNumber}
                   isConnected={isConnected}
-                  onBack={() => setStep('settings')}
+                  onBack={() => setStep("settings")}
                   onStartCampaign={checkWarmingAndProceed}
                   canStart={canStart}
                   isStarting={isStartingCampaign}
@@ -1168,7 +1215,7 @@ const WhatsAppCampaign = () => {
               )}
 
               {/* Step: Campaign Running */}
-              {step === 'running' && (
+              {step === "running" && (
                 <CampaignProgress
                   campaignState={campaignState}
                   totalLeads={selectedLeads.length}
