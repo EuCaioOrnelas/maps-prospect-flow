@@ -297,16 +297,14 @@ serve(async (req) => {
       );
 
       if (!connectionCheck.connected) {
-        console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} not connected`);
+        console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} connection check failed: ${connectionCheck.error}. Skipping campaign (status unchanged).`);
         
         await supabase
-          .from('whatsapp_numbers')
-          .update({ is_connected: false, updated_at: new Date().toISOString() })
-          .eq('id', numberData.id);
-
-        await supabase
           .from('whatsapp_campaigns')
-          .update({ pause_reason: 'WhatsApp desconectado - reconecte para iniciar' })
+          .update({ 
+            pause_reason: `Falha ao verificar conexão: ${connectionCheck.error}. Verifique se está conectado.`,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', campaign.id);
         
         numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
