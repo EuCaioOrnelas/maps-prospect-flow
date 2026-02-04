@@ -411,16 +411,29 @@ async function processSingleMessage(
     return { processed: false, completed: false, skipped: false, error: 'Daily limit reached' };
   }
 
-  // Smart pause check
+  // Smart pause check - trigger BEFORE sending the message that would hit the threshold
+  // This means if pause_after_contacts=10, we pause AFTER sending message #10, #20, #30...
   if (campaign.enable_smart_pause && campaign.pause_after_contacts > 0) {
-    const messagesSinceLastPause = sentCount % campaign.pause_after_contacts;
-    if (messagesSinceLastPause === 0 && sentCount > 0) {
-      const pauseMs = (campaign.pause_minutes || 5) * 60 * 1000;
+    // sentCount represents messages already successfully sent
+    // If sentCount is divisible by pause_after_contacts and > 0, it's time to pause
+    const shouldPause = sentCount > 0 && sentCount % campaign.pause_after_contacts === 0;
+    
+    campaignLog('🔍', `Smart pause check`, {
+      sentCount,
+      pauseAfterContacts: campaign.pause_after_contacts,
+      moduloResult: sentCount % campaign.pause_after_contacts,
+      shouldPause
+    });
+    
+    if (shouldPause) {
+      const pauseMinutes = campaign.pause_minutes || 5;
+      const pauseMs = pauseMinutes * 60 * 1000;
       const resumeAt = new Date(Date.now() + pauseMs).toISOString();
       
-      campaignLog('☕', `SMART PAUSE activated`, {
+      campaignLog('☕', `SMART PAUSE ACTIVATED`, {
+        messagesSent: sentCount,
         pauseAfter: campaign.pause_after_contacts,
-        pauseMinutes: campaign.pause_minutes,
+        pauseMinutes: pauseMinutes,
         resumeAt
       });
       
@@ -653,19 +666,13 @@ Deno.serve(async (req) => {
       );
 
       if (!isConnected) {
-        await supabase.from('whatsapp_numbers').update({
-          is_connected: false,
-          updated_at: new Date().toISOString()
-        }).eq('id', numberData.id);
-
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'paused',
-          pause_reason: 'WhatsApp desconectado'
-        }).eq('id', campaignId);
+        // NEVER update is_connected = false from backend
+        // Only skip this action and let the user know
+        console.log(`⚠️ Connection check failed for ${numberData.instance_name}, but NOT marking as disconnected`);
 
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'WhatsApp disconnected' 
+          error: 'Não foi possível verificar a conexão do WhatsApp. Tente novamente.' 
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

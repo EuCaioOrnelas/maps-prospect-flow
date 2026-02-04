@@ -88,28 +88,19 @@ serve(async (req) => {
       const errorText = statusResponse ? await statusResponse.text() : 'No response';
       console.error('Evolution API error after retries:', errorText);
       
-      // Don't immediately mark as disconnected - could be temporary API issue
-      // Only update if we're confident the instance doesn't exist
-      if (errorText.includes('not found') || errorText.includes('not exists')) {
-        await supabase
-          .from('whatsapp_numbers')
-          .update({ 
-            is_connected: false,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', numberId)
-          .eq('user_id', user.id);
+      // NEVER mark as disconnected from backend - this causes unwanted UI flicker
+      // Just report the state and let the webhook handle real disconnection events
+      console.log(`⚠️ Instance ${instanceName} might not exist, but NOT updating database`);
 
-        return new Response(JSON.stringify({
-          success: true,
-          connected: false,
-          state: 'disconnected',
-          phoneNumber: null,
-          error: 'Instance not found'
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      return new Response(JSON.stringify({
+        success: false,
+        connected: null, // Return null to indicate uncertain state
+        state: 'unknown',
+        phoneNumber: null,
+        error: 'Could not verify instance - will retry later'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
 
       // For other errors, return uncertain state without updating DB
       return new Response(JSON.stringify({
@@ -129,24 +120,18 @@ serve(async (req) => {
     const state = statusData.state || statusData.instance?.state;
     const isConnected = state === 'open';
     
-    // Se não está conectado, atualizar o banco imediatamente
+    // NEVER mark as disconnected automatically from this endpoint
+    // Only the webhook should handle real disconnection events
     if (!isConnected) {
-      console.log(`Instance ${instanceName} is not connected (state: ${state}). Updating database.`);
-      
-      await supabase
-        .from('whatsapp_numbers')
-        .update({ 
-          is_connected: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', numberId)
-        .eq('user_id', user.id);
+      console.log(`Instance ${instanceName} is not connected (state: ${state}). Returning status but NOT updating database.`);
 
       return new Response(JSON.stringify({
         success: true,
         connected: false,
         state: state || 'unknown',
         phoneNumber: null,
+        // Important: we do NOT update the database here
+        // The webhook will handle real disconnection events
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
