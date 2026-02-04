@@ -196,7 +196,7 @@ async function hasReachedResponseLimit(
   };
 }
 
-// Move lead to CRM stage by stage name
+// Move lead to CRM stage by stage name - with flexible phone matching
 async function moveLeadToCRMStage(
   supabase: any, 
   phone: string, 
@@ -204,18 +204,55 @@ async function moveLeadToCRMStage(
   stageName: string
 ): Promise<void> {
   try {
-    // Find the lead by phone number
-    const { data: lead } = await supabase
+    // Normalize phone to match leads table format
+    const phoneDigitsOnly = phone.replace(/\D/g, '');
+    const last8Digits = phoneDigitsOnly.slice(-8);
+    
+    // Build multiple format attempts for matching
+    let normalizedPhone = phoneDigitsOnly;
+    if (phoneDigitsOnly.length >= 10 && phoneDigitsOnly.length <= 11 && !phoneDigitsOnly.startsWith('55')) {
+      normalizedPhone = '55' + phoneDigitsOnly;
+    }
+    
+    console.log(`=== MOVE LEAD TO CRM STAGE: ${stageName} ===`);
+    console.log('Input phone:', phone);
+    console.log('Last 8 digits:', last8Digits);
+    
+    // First try exact match with multiple formats
+    let { data: leads } = await supabase
       .from('leads')
-      .select('id, pipeline_stage_id, user_id')
-      .eq('phone', phone)
+      .select('id, pipeline_stage_id, user_id, phone')
       .eq('user_id', userId)
-      .single();
+      .or(`phone.eq.${normalizedPhone},phone.eq.${phone},phone.eq.${phoneDigitsOnly},phone.eq.55${phoneDigitsOnly.slice(-11)},phone.eq.55${phoneDigitsOnly.slice(-10)}`);
+    
+    let lead = leads?.[0];
+    
+    // If no exact match, try matching by last 8 digits
+    if (!lead && last8Digits.length === 8) {
+      const { data: allUserLeads } = await supabase
+        .from('leads')
+        .select('id, pipeline_stage_id, user_id, phone')
+        .eq('user_id', userId);
+      
+      if (allUserLeads && allUserLeads.length > 0) {
+        lead = allUserLeads.find((l: any) => {
+          const leadPhone = l.phone?.replace(/\D/g, '') || '';
+          const leadLast8 = leadPhone.slice(-8);
+          return leadLast8 === last8Digits;
+        }) || null;
+        
+        if (lead) {
+          console.log('Lead found by last 8 digits match:', lead.phone);
+        }
+      }
+    }
     
     if (!lead) {
-      console.log(`No lead found for phone ${phone}`);
+      console.log(`No lead found for phone ${phone} (last 8: ${last8Digits})`);
       return;
     }
+    
+    console.log('Found lead:', lead.id, 'phone:', lead.phone);
     
     // Find the target stage
     const { data: stage } = await supabase
