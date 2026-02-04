@@ -303,26 +303,20 @@ serve(async (req) => {
     
     if (!connectionCheck.connected) {
       activeCampaignLocks.delete(numberId);
-      console.log(`Instance ${instanceName} not connected. Failing campaign.`);
+      console.log(`Instance ${instanceName} connection check failed: ${connectionCheck.error}. Skipping campaign (status unchanged).`);
       
-      await supabase
-        .from('whatsapp_numbers')
-        .update({ is_connected: false, updated_at: new Date().toISOString() })
-        .eq('id', numberId)
-        .eq('user_id', user.id);
-
       await supabase
         .from('whatsapp_campaigns')
         .update({ 
           status: 'failed',
-          pause_reason: `Número WhatsApp desconectado: ${connectionCheck.error}`,
+          pause_reason: `Falha ao verificar conexão: ${connectionCheck.error}. Verifique se o WhatsApp está conectado.`,
           updated_at: new Date().toISOString()
         })
         .eq('id', campaignId);
 
       return new Response(JSON.stringify({
         success: false,
-        error: 'WhatsApp não está conectado. Reconecte antes de iniciar.',
+        error: 'Não foi possível verificar a conexão do WhatsApp. Tente novamente.',
         needsReconnect: true,
         connectionError: connectionCheck.error
       }), {
