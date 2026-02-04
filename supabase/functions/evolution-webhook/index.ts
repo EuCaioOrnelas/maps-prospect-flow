@@ -772,17 +772,47 @@ serve(async (req) => {
             
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
-              // Find lead by phone
-              const { data: existingLead } = await supabase
+              // Find lead by phone - use flexible matching strategy
+              // Strategy: match by last 8 digits (most reliable for Brazilian numbers)
+              const phoneDigitsOnly = normalizedPhone.replace(/\D/g, '');
+              const last8Digits = phoneDigitsOnly.slice(-8);
+              
+              console.log('=== LEAD LOOKUP ===');
+              console.log('Raw phone:', rawPhone);
+              console.log('Normalized phone:', normalizedPhone);
+              console.log('Last 8 digits for matching:', last8Digits);
+              
+              // First try exact match with multiple formats
+              let { data: existingLead } = await supabase
                 .from('leads')
-                .select('id, pipeline_stage_id, whatsapp_status')
+                .select('id, phone, pipeline_stage_id, whatsapp_status')
                 .eq('user_id', whatsappNumber.user_id)
-                .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone}`)
+                .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},phone.eq.55${phoneDigitsOnly.slice(-11)},phone.eq.55${phoneDigitsOnly.slice(-10)}`)
                 .limit(1)
-                .single();
+                .maybeSingle();
+              
+              // If no exact match, try matching by last 8 digits
+              if (!existingLead && last8Digits.length === 8) {
+                const { data: allUserLeads } = await supabase
+                  .from('leads')
+                  .select('id, phone, pipeline_stage_id, whatsapp_status')
+                  .eq('user_id', whatsappNumber.user_id);
+                
+                if (allUserLeads && allUserLeads.length > 0) {
+                  existingLead = allUserLeads.find(lead => {
+                    const leadPhone = lead.phone?.replace(/\D/g, '') || '';
+                    const leadLast8 = leadPhone.slice(-8);
+                    return leadLast8 === last8Digits;
+                  }) || null;
+                  
+                  if (existingLead) {
+                    console.log('Lead found by last 8 digits match:', existingLead.phone, '->', normalizedPhone);
+                  }
+                }
+              }
               
               if (existingLead) {
-                console.log('Found lead to update on response:', existingLead.id);
+                console.log('Found lead to update on response:', existingLead.id, 'phone:', existingLead.phone);
                 
                 // Get the "Respondeu Mensagem" stage
                 const { data: respondeuStage } = await supabase
@@ -843,7 +873,12 @@ serve(async (req) => {
                     });
                   }
                 }
-                
+              } else {
+                console.log('No lead found for phone:', normalizedPhone, '(last 8:', last8Digits, ')');
+              }
+              
+              // Continue with campaign detection only if lead was found
+              if (existingLead) {
                 // ===== CAMPAIGN RESPONSE DETECTION =====
                 const { data: runningCampaigns } = await supabase
                   .from('whatsapp_campaigns')
