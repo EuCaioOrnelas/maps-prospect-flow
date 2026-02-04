@@ -189,7 +189,8 @@ export const useWhatsAppNumbers = () => {
   }, [user, hasMassMessagingAccess, fetchNumbers]);
 
   // Verify and update connection status from Evolution API
-  // IMPORTANT: never flip to disconnected on transient/API errors to avoid UI flicker.
+  // IMPORTANT: This function should NEVER flip is_connected to false
+  // Only webhooks from WhatsApp can trigger real disconnections
   const verifyAndUpdateConnectionStatus = async (numberId: string, instanceName: string): Promise<boolean> => {
     try {
       console.log(`Verifying connection status for ${instanceName}...`);
@@ -205,32 +206,23 @@ export const useWhatsAppNumbers = () => {
 
       if (error) {
         console.log(`[useWhatsAppNumbers] Could not verify status for ${instanceName}:`, error);
-        // Keep previous state on errors
+        // Keep previous state on errors - never disconnect
         return true;
       }
 
-      // If API couldn't determine state, keep previous state
+      // If API couldn't determine state (null), keep previous state
       if (data?.connected === null) {
         console.log(`[useWhatsAppNumbers] Uncertain status for ${instanceName}, keeping previous state`);
         return true;
       }
 
+      // IMPORTANT: We no longer mark as disconnected here
+      // Only return true/false for informational purposes
+      // The database state is managed by webhooks only
       const isReallyConnected = data?.connected === true;
+      console.log(`[useWhatsAppNumbers] Status for ${instanceName}: ${isReallyConnected ? 'connected' : 'not connected (but NOT updating DB)'}`);
 
-      // Only mark disconnected when we're sure
-      if (!isReallyConnected) {
-        console.log(`Number ${numberId} (${instanceName}) is NOT connected. Updating local state.`);
-
-        setNumbers(prev => prev.map(n =>
-          n.id === numberId
-            ? { ...n, is_connected: false }
-            : n
-        ));
-
-        return false;
-      }
-
-      return true;
+      return isReallyConnected;
     } catch (err) {
       console.error('Error verifying connection status:', err);
       // Keep previous state on unexpected errors
