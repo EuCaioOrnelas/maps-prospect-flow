@@ -31,7 +31,7 @@ interface MessageVariationsProps {
 const MAX_CHARS = 120;
 
 // Regex to detect links
-const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
+const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+/i;
 
 export const MessageVariations = ({ 
   messages, 
