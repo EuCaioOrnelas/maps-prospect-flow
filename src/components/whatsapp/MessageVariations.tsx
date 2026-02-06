@@ -64,16 +64,13 @@ export const MessageVariations = ({
       .filter(item => item.hasLink);
     const hasLinks = messagesWithLinks.length > 0;
 
-    // Check for duplicates (normalize whitespace and variables for comparison)
-    const MIN_LENGTH_FOR_DUPLICATE = 10;
-    const normalizedMessages = messages.map(m => 
-      m.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\{nome\}/gi, '')
-    );
+    // Check for exact duplicates only - 1 char difference = not duplicate
+    const normalizedMessages = messages.map(m => m.trim().toLowerCase());
     const duplicates: number[] = [];
     const seen = new Map<string, number>();
     
     normalizedMessages.forEach((msg, index) => {
-      if (msg.length >= MIN_LENGTH_FOR_DUPLICATE) {
+      if (msg.length > 0) {
         if (seen.has(msg)) {
           const originalIndex = seen.get(msg)!;
           if (!duplicates.includes(originalIndex)) {
