@@ -120,7 +120,8 @@ export const MessageVariations = ({
     return message.replace(/\{nome\}/gi, firstLead.name || 'Cliente');
   };
 
-  const canProceedFinal = canProceed && validationResult.isValid;
+  // Only require all 5 filled - warnings are visual only, don't block advancement
+  const canProceedFinal = canProceed && validationResult.allFilled;
 
   return (
     <div className="glass rounded-2xl p-6">
@@ -160,29 +161,29 @@ export const MessageVariations = ({
         </div>
       )}
 
-      {/* Warning - Links detected */}
+      {/* Warning - Links detected (visual only, does not block) */}
       {validationResult.hasLinks && (
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20 mb-4">
-          <LinkIcon size={18} className="text-destructive mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
+          <LinkIcon size={18} className="text-warning mt-0.5 flex-shrink-0" />
           <div className="text-sm">
-            <p className="font-medium text-destructive">Links não são permitidos</p>
+            <p className="font-medium text-warning">⚠️ Links detectados nas mensagens</p>
             <p className="text-muted-foreground">
               Mensagens {validationResult.messagesWithLinks.map(m => m.index + 1).join(', ')} contêm links. 
-              Remova os links para continuar.
+              Enviar links pode causar o <strong>bloqueio do seu chip</strong> pelo WhatsApp. Prossiga por sua conta e risco.
             </p>
           </div>
         </div>
       )}
 
-      {/* Warning - Duplicates detected */}
+      {/* Warning - Duplicates detected (visual only, does not block) */}
       {validationResult.hasDuplicates && (
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20 mb-4">
-          <Copy size={18} className="text-destructive mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
+          <Copy size={18} className="text-warning mt-0.5 flex-shrink-0" />
           <div className="text-sm">
-            <p className="font-medium text-destructive">Mensagens duplicadas detectadas</p>
+            <p className="font-medium text-warning">⚠️ Mensagens duplicadas detectadas</p>
             <p className="text-muted-foreground">
-              Mensagens {[...new Set(validationResult.duplicates)].map(i => i + 1).sort((a, b) => a - b).join(', ')} são iguais ou muito semelhantes. 
-              Cada variação deve ser diferente.
+              Mensagens {[...new Set(validationResult.duplicates)].map(i => i + 1).sort((a, b) => a - b).join(', ')} são iguais. 
+              Isso pode causar o <strong>bloqueio do seu chip</strong> por detecção de spam.
             </p>
           </div>
         </div>
@@ -285,8 +286,6 @@ export const MessageVariations = ({
         </Button>
         <Button onClick={onNext} disabled={!canProceedFinal} className="gap-2">
           {!validationResult.allFilled ? `Falta ${5 - validationResult.filledCount} mensagem${5 - validationResult.filledCount > 1 ? 's' : ''}` : 
-           validationResult.hasLinks ? 'Remova os links' :
-           validationResult.hasDuplicates ? 'Corrija duplicadas' :
            'Próximo'}
           <ArrowRight size={16} />
         </Button>
