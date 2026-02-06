@@ -28,7 +28,7 @@ interface MessageVariationsProps {
   selectedLeads?: Lead[];
 }
 
-const MAX_CHARS = 120;
+const MAX_CHARS = 500;
 
 // Regex to detect links
 const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+/i;
