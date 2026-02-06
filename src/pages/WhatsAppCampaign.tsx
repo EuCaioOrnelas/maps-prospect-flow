@@ -223,11 +223,8 @@ const WhatsAppCampaign = () => {
     return { allFilled, hasLinks, hasOverLimit, hasDuplicates };
   })();
 
-  const canProceedToSettings =
-    messagesValidation.allFilled &&
-    !messagesValidation.hasLinks &&
-    !messagesValidation.hasDuplicates &&
-    !messagesValidation.hasOverLimit;
+  // Only require all 5 messages filled - warnings are visual only, don't block
+  const canProceedToSettings = messagesValidation.allFilled;
   const canStartCampaign =
     delaySecondsMin >= 40 &&
     delaySecondsMax >= delaySecondsMin &&
