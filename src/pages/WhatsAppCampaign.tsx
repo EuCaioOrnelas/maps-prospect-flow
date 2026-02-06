@@ -192,21 +192,22 @@ const WhatsAppCampaign = () => {
     selectedLeads.length > 0 && selectedLeads.length <= dailyLimit - usedToday && !hasPendingReset;
 
   // Validation for messages: all 5 filled, no links, no duplicates
-  const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
-  const MAX_MESSAGE_CHARS = 120;
+  // IMPORTANT: Must match the same rules as MessageVariations.tsx component
+  const LINK_REGEX_PAGE = /(?:https?:\/\/|www\.)[^\s]+/i;
+  const MAX_MESSAGE_CHARS = 500;
 
   const messagesValidation = (() => {
     const filledMessages = messages.filter((m) => m.trim());
     const allFilled = filledMessages.length === 5;
 
-    // Check for links
-    const hasLinks = messages.some((m) => LINK_REGEX.test(m));
+    // Check for links - same regex as MessageVariations component
+    const hasLinks = messages.some((m) => LINK_REGEX_PAGE.test(m));
 
     // Check for over limit
     const hasOverLimit = messages.some((m) => m.length > MAX_MESSAGE_CHARS);
 
-    // Check for duplicates
-    const normalizedMessages = messages.map((m) => m.trim().toLowerCase().replace(/\s+/g, " "));
+    // Check for exact duplicates only (same logic as MessageVariations)
+    const normalizedMessages = messages.map((m) => m.trim().toLowerCase());
     const seen = new Set<string>();
     let hasDuplicates = false;
     normalizedMessages.forEach((msg) => {
