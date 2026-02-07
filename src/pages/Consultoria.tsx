@@ -80,17 +80,17 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
       exit={{ opacity: 0 }}
       className="min-h-[calc(100vh-58px)]"
     >
-      {/* ===== HERO ÉPICO ===== */}
-      <div className="relative overflow-hidden">
-        {/* Background image with overlay */}
+      {/* ===== HERO ===== */}
+      <div className="relative">
+        {/* Background image with smooth fade into page */}
         <div className="absolute inset-0">
           <img
             src={fases[0].capa}
             alt=""
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-full object-cover opacity-15"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/90 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
@@ -112,10 +112,10 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
             transition={{ delay: 0.2 }}
             className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1] mb-6"
           >
-            Consultoria Estratégica
+            Geração e Ativação
             <br />
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-              de Disparos em Massa
+              Inteligente de Leads
             </span>
           </motion.h1>
 
@@ -126,10 +126,10 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
             transition={{ delay: 0.3 }}
             className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8"
           >
-            O passo a passo definitivo para dominar disparos via WhatsApp com segurança, 
-            escalar sua operação sem correr riscos de bloqueio, e transformar a Wiize 
-            na máquina de prospecção que gera resultados reais para o seu negócio — 
-            do primeiro chip à operação com múltiplos números.
+            A metodologia completa para prospectar, ativar e converter leads 
+            com a Wiize — desde a configuração segura até a operação em escala. 
+            Aprenda a construir um fluxo de prospecção previsível, profissional 
+            e que gera resultados reais para o seu negócio.
           </motion.p>
 
           {/* Stats */}
@@ -182,7 +182,7 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
 
         <div
           ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12"
+          className="flex gap-5 overflow-x-auto pb-10 pt-2 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12"
         >
           {fases.map((fase, i) => (
             <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
@@ -205,10 +205,10 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -8 }}
       whileTap={{ scale: 0.97 }}
-      className="group relative flex-shrink-0 w-[300px] md:w-[360px] rounded-2xl snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors duration-300"
+      className="group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl overflow-hidden snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors duration-300"
     >
-      {/* Capa — aspect ratio vertical (2:3) */}
-      <div className="relative aspect-[2/3] rounded-2xl overflow-hidden">
+      {/* Capa — aspect ratio vertical (3:4) */}
+      <div className="relative aspect-[3/4]">
         <img
           src={fase.capa}
           alt={fase.titulo}
