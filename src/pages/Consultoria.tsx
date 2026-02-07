@@ -202,7 +202,7 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
         isComingSoon ? "cursor-pointer border border-border/20" : "border border-border/30 hover:border-primary/40"
       }`}
     >
-      <div className="relative aspect-square rounded-2xl overflow-hidden">
+      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
         <img src={fase.capa} alt={fase.titulo}
           className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${
             isComingSoon ? "grayscale brightness-[0.35]" : "group-hover:scale-110"
