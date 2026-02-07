@@ -7,7 +7,6 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComingSoonDialog } from "@/components/consultoria/ComingSoonDialog";
-import { VideoComments } from "@/components/consultoria/VideoComments";
 
 const FASE_ICONS = [Shield, Zap, TrendingUp, BarChart3, Award];
 
@@ -481,11 +480,6 @@ const PlayerView = ({
           ) : <div />}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-border/30" />
-
-        {/* Comments */}
-        <VideoComments />
       </div>
     </motion.div>
   );
