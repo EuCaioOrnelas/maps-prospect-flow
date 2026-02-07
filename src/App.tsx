@@ -42,6 +42,7 @@ const Warming = lazy(() => import("./pages/Warming"));
 const WarmingReports = lazy(() => import("./pages/WarmingReports"));
 const AIAgents = lazy(() => import("./pages/AIAgents"));
 const AgentReports = lazy(() => import("./pages/AgentReports"));
+const Consultoria = lazy(() => import("./pages/Consultoria"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const ProductionTests = lazy(() => import("./pages/ProductionTests"));
 
@@ -199,6 +200,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <AgentReports />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/consultoria" 
+                  element={
+                    <ProtectedRoute>
+                      <Consultoria />
                     </ProtectedRoute>
                   } 
                 />

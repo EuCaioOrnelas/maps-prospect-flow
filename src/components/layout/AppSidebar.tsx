@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Bell,
   Bot,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -294,6 +295,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/agents"}
                 isExpanded={isExpanded}
                 tooltip="Agentes de IA"
+              />
+            </li>
+
+            {/* Consultoria */}
+            <li>
+              <SidebarNavItem
+                title="Consultoria"
+                icon={GraduationCap}
+                url="/consultoria"
+                isActive={currentPath === "/consultoria"}
+                isExpanded={isExpanded}
+                tooltip="Consultoria Estratégica"
               />
             </li>
           </ul>
