@@ -297,21 +297,23 @@ const FaseDetailView = ({
             Voltar
           </button>
 
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-                <Icon size={20} className="text-primary" />
-              </div>
-              <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                FASE {faseIndex + 1}
-              </span>
+          <div className="flex items-center gap-4 max-w-2xl">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Icon size={20} className="text-primary" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-foreground tracking-tight">{fase.titulo}</h1>
-            <p className="text-muted-foreground text-sm md:text-base max-w-xl">{fase.descricao}</p>
-            <span className="inline-block text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full border border-border/50">
-              {fase.videos.length} vídeos disponíveis
-            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+                  FASE {faseIndex + 1}
+                </span>
+                <span className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-0.5 rounded-full border border-border/50">
+                  {fase.videos.length} vídeos
+                </span>
+              </div>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">{fase.titulo}</h1>
+            </div>
           </div>
+          <p className="text-muted-foreground text-sm md:text-base max-w-xl mt-3">{fase.descricao}</p>
         </div>
       </div>
 
