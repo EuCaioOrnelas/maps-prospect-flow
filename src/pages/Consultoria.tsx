@@ -302,7 +302,7 @@ const FaseDetailView = ({
               <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
                 <Icon size={20} className="text-primary" />
               </div>
-              <span className="text-xs font-bold text-primary bg-primary/10 px-4 h-10 flex items-center rounded-xl border border-primary/20">
+              <span className="text-xs font-bold text-primary bg-primary/20 px-4 h-10 flex items-center rounded-xl border border-primary/30">
                 FASE {faseIndex + 1}
               </span>
             </div>
