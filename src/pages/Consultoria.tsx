@@ -93,7 +93,7 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
         </div>
 
-        <div className="relative z-10 px-6 md:px-12 pt-12 md:pt-20 pb-16 md:pb-24 max-w-4xl">
+        <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -203,12 +203,12 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      whileHover={{ scale: 1.03, y: -8 }}
+      whileHover={{ y: -8 }}
       whileTap={{ scale: 0.97 }}
-      className="group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl overflow-hidden snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors duration-300"
+      className="group relative flex-shrink-0 w-[300px] md:w-[360px] rounded-2xl snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors duration-300"
     >
-      {/* Capa — aspect ratio vertical (3:4) */}
-      <div className="relative aspect-[3/4]">
+      {/* Capa — aspect ratio vertical (2:3) */}
+      <div className="relative aspect-[2/3] rounded-2xl overflow-hidden">
         <img
           src={fase.capa}
           alt={fase.titulo}
