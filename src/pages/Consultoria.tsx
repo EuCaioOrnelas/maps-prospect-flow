@@ -1,15 +1,11 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award } from "lucide-react";
+import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock } from "lucide-react";
 import { fases, type Fase, type Video } from "@/data/consultoriaContent";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-
-/**
- * Página de Consultoria Educacional — Experiência Netflix
- * Fluxo: Home (fases) → Detalhe da fase (vídeos) → Player
- */
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const FASE_ICONS = [Shield, Zap, TrendingUp, BarChart3, Award];
 
@@ -32,7 +28,10 @@ const Consultoria = () => {
             {view.screen === "home" && (
               <HomeView
                 key="home"
-                onSelectFase={(fase, i) => setView({ screen: "fase", fase, faseIndex: i })}
+                onSelectFase={(fase, i) => {
+                  if (fase.status === "em_breve") return;
+                  setView({ screen: "fase", fase, faseIndex: i });
+                }}
               />
             )}
             {view.screen === "fase" && (
@@ -41,9 +40,10 @@ const Consultoria = () => {
                 fase={view.fase}
                 faseIndex={view.faseIndex}
                 onBack={() => setView({ screen: "home" })}
-                onPlayVideo={(video) =>
-                  setView({ screen: "player", fase: view.fase, faseIndex: view.faseIndex, video })
-                }
+                onPlayVideo={(video) => {
+                  if (video.status === "em_breve") return;
+                  setView({ screen: "player", fase: view.fase, faseIndex: view.faseIndex, video });
+                }}
               />
             )}
             {view.screen === "player" && (
@@ -61,7 +61,7 @@ const Consultoria = () => {
 };
 
 /* ================================================================
-   HOME — Hero épico + Cards verticais de Fases
+   HOME — Hero + Cards verticais de Fases
    ================================================================ */
 const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -80,16 +80,17 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
       exit={{ opacity: 0 }}
       className="min-h-[calc(100vh-58px)]"
     >
-      {/* ===== HERO ===== */}
+      {/* ===== HERO with smooth blended background ===== */}
       <div className="relative">
-        {/* Background image with smooth fade into page */}
-        <div className="absolute inset-0">
+        {/* Background image — extends beyond hero and fades smoothly */}
+        <div className="absolute inset-0 h-[140%] pointer-events-none">
           <img
             src={fases[0].capa}
             alt=""
-            className="w-full h-full object-cover opacity-15"
+            className="w-full h-full object-cover opacity-[0.12]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
+          {/* Smooth vertical fade — no hard cut */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 via-[70%] to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
         </div>
 
@@ -126,9 +127,9 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
             transition={{ delay: 0.3 }}
             className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8"
           >
-            A metodologia completa para prospectar, ativar e converter leads 
-            com a Wiize — desde a configuração segura até a operação em escala. 
-            Aprenda a construir um fluxo de prospecção previsível, profissional 
+            A metodologia completa para prospectar, ativar e converter leads
+            com a Wiize — desde a configuração segura até a operação em escala.
+            Aprenda a construir um fluxo de prospecção previsível, profissional
             e que gera resultados reais para o seu negócio.
           </motion.p>
 
@@ -153,8 +154,8 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
         </div>
       </div>
 
-      {/* ===== CARROSSEL DE FASES — Cards Verticais ===== */}
-      <div className="px-6 md:px-12 pb-20 space-y-6">
+      {/* ===== CARROSSEL DE FASES ===== */}
+      <div className="relative z-10 px-6 md:px-12 pb-20 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
@@ -182,87 +183,126 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
 
         <div
           ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-10 pt-2 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12"
+          className="flex gap-5 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12"
         >
-          {fases.map((fase, i) => (
-            <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
-          ))}
+          <TooltipProvider delayDuration={200}>
+            {fases.map((fase, i) => (
+              <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
+            ))}
+          </TooltipProvider>
         </div>
       </div>
     </motion.div>
   );
 };
 
-/* ===== CARD DE FASE — Vertical, grande ===== */
+/* ===== CARD DE FASE ===== */
 const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick: () => void }) => {
   const Icon = FASE_ICONS[index] || Shield;
+  const isComingSoon = fase.status === "em_breve";
 
-  return (
+  const card = (
     <motion.button
       onClick={onClick}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -8 }}
-      whileTap={{ scale: 0.97 }}
-      className="group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl overflow-hidden snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors duration-300"
+      whileHover={isComingSoon ? {} : { y: -8 }}
+      whileTap={isComingSoon ? {} : { scale: 0.97 }}
+      className={`group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-300 ${
+        isComingSoon
+          ? "cursor-default border border-border/20"
+          : "border border-border/30 hover:border-primary/40"
+      }`}
     >
-      {/* Capa — aspect ratio vertical (3:4) */}
-      <div className="relative aspect-[3/4]">
+      {/* Capa — overflow hidden inside, not on button, so hover lift doesn't clip */}
+      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
         <img
           src={fase.capa}
           alt={fase.titulo}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${
+            isComingSoon ? "grayscale brightness-[0.35]" : "group-hover:scale-110"
+          }`}
         />
 
         {/* Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-primary/5" />
+        {!isComingSoon && (
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-primary/5" />
+        )}
 
-        {/* Top badge */}
-        <div className="absolute top-4 left-4 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center">
-            <Icon size={16} className="text-primary" />
+        {/* Top area: icon + fase badge + video count */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center">
+              <Icon size={14} className="text-primary" />
+            </div>
+            <span className="text-[11px] font-bold text-primary bg-primary/10 backdrop-blur-sm px-2 h-7 flex items-center rounded-md border border-primary/20">
+              FASE {index + 1}
+            </span>
           </div>
-          <span className="text-[11px] font-bold text-primary bg-primary/10 backdrop-blur-sm px-2 py-0.5 rounded-md border border-primary/20">
-            FASE {index + 1}
+          <span className="text-[10px] text-muted-foreground bg-card/60 backdrop-blur-sm px-2 py-1 rounded-md border border-border/30">
+            {fase.videos.length} vídeos
           </span>
         </div>
 
-        {/* Play center on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/40"
-          >
-            <Play size={28} className="text-primary-foreground ml-1" />
-          </motion.div>
-        </div>
+        {/* Center: Play or Lock */}
+        {isComingSoon ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
+              <Lock size={28} className="text-white/60" />
+            </div>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/40"
+            >
+              <Play size={28} className="text-primary-foreground ml-1" />
+            </motion.div>
+          </div>
+        )}
+
+        {/* "Em breve" badge */}
+        {isComingSoon && (
+          <div className="absolute bottom-14 left-0 right-0 flex justify-center">
+            <span className="text-[11px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+              Em breve
+            </span>
+          </div>
+        )}
 
         {/* Bottom content */}
         <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
-          <h3 className="font-bold text-foreground text-sm md:text-base leading-snug">
+          <h3 className={`font-bold text-sm md:text-base leading-snug ${isComingSoon ? "text-foreground/50" : "text-foreground"}`}>
             {fase.titulo}
           </h3>
-          <p className="text-muted-foreground text-xs line-clamp-2">
+          <p className={`text-xs line-clamp-2 ${isComingSoon ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
             {fase.descricao}
           </p>
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-primary/80 font-medium">
-              {fase.subtitulo}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {fase.videos.length} vídeos
-            </span>
-          </div>
         </div>
       </div>
     </motion.button>
   );
+
+  if (isComingSoon) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{card}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[200px] text-center">
+          <p className="text-xs font-medium">Conteúdo em desenvolvimento</p>
+          <p className="text-xs text-muted-foreground">Será liberado em breve!</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return card;
 };
 
 /* ================================================================
-   FASE DETAIL — Hero + Grid/Carrossel de Vídeos
+   FASE DETAIL — Hero + Grid de Vídeos
    ================================================================ */
 const FaseDetailView = ({
   fase,
@@ -310,7 +350,7 @@ const FaseDetailView = ({
                 <Icon size={20} className="text-primary" />
               </div>
               <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                FASE {faseIndex + 1} • {fase.subtitulo}
+                FASE {faseIndex + 1}
               </span>
             </div>
             <h1 className="text-2xl md:text-4xl font-bold text-foreground tracking-tight">
@@ -333,9 +373,11 @@ const FaseDetailView = ({
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {fase.videos.map((video, i) => (
-            <VideoCard key={i} video={video} index={i} onClick={() => onPlayVideo(video)} />
-          ))}
+          <TooltipProvider delayDuration={200}>
+            {fase.videos.map((video, i) => (
+              <VideoCard key={i} video={video} index={i} onClick={() => onPlayVideo(video)} />
+            ))}
+          </TooltipProvider>
         </div>
       </div>
     </motion.div>
@@ -351,51 +393,94 @@ const VideoCard = ({
   video: Video;
   index: number;
   onClick: () => void;
-}) => (
-  <motion.button
-    onClick={onClick}
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
-    whileHover={{ scale: 1.02, y: -4 }}
-    whileTap={{ scale: 0.98 }}
-    className="group relative rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/30 hover:border-primary/40 transition-colors bg-card"
-  >
-    {/* Capa */}
-    <div className="relative aspect-video">
-      <img
-        src={video.capa}
-        alt={video.titulo}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
+}) => {
+  const isComingSoon = video.status === "em_breve";
 
-      {/* Play */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-primary/90 group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
-          <Play size={20} className="text-foreground ml-0.5 group-hover:text-primary-foreground" />
+  const card = (
+    <motion.button
+      onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      whileHover={isComingSoon ? {} : { scale: 1.02, y: -4 }}
+      whileTap={isComingSoon ? {} : { scale: 0.98 }}
+      className={`group relative rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors bg-card ${
+        isComingSoon
+          ? "cursor-default border border-border/20"
+          : "border border-border/30 hover:border-primary/40"
+      }`}
+    >
+      {/* Capa */}
+      <div className="relative aspect-video">
+        <img
+          src={video.capa}
+          alt={video.titulo}
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${
+            isComingSoon ? "grayscale brightness-[0.35]" : "group-hover:scale-105"
+          }`}
+        />
+        <div className={`absolute inset-0 transition-colors ${isComingSoon ? "bg-black/50" : "bg-black/30 group-hover:bg-black/50"}`} />
+
+        {/* Center icon */}
+        {isComingSoon ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
+              <Lock size={20} className="text-white/60" />
+            </div>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-primary/90 group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
+              <Play size={20} className="text-foreground ml-0.5 group-hover:text-primary-foreground" />
+            </div>
+          </div>
+        )}
+
+        {/* Episode number */}
+        <div className="absolute top-3 left-3">
+          <span className="text-[11px] font-bold text-foreground/80 bg-card/60 backdrop-blur-sm px-2 py-0.5 rounded-md border border-border/30">
+            {String(index + 1).padStart(2, "0")}
+          </span>
         </div>
+
+        {/* Em breve badge */}
+        {isComingSoon && (
+          <div className="absolute top-3 right-3">
+            <span className="text-[10px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-md border border-white/10">
+              Em breve
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Episode number */}
-      <div className="absolute top-3 left-3">
-        <span className="text-[11px] font-bold text-foreground/80 bg-card/60 backdrop-blur-sm px-2 py-0.5 rounded-md border border-border/30">
-          {String(index + 1).padStart(2, "0")}
-        </span>
+      {/* Título */}
+      <div className="p-4 text-left">
+        <h4 className={`text-sm font-semibold transition-colors line-clamp-2 ${
+          isComingSoon ? "text-foreground/40" : "text-foreground group-hover:text-primary"
+        }`}>
+          {video.titulo}
+        </h4>
       </div>
-    </div>
+    </motion.button>
+  );
 
-    {/* Título */}
-    <div className="p-4 text-left">
-      <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-        {video.titulo}
-      </h4>
-    </div>
-  </motion.button>
-);
+  if (isComingSoon) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{card}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[200px] text-center">
+          <p className="text-xs font-medium">Conteúdo em desenvolvimento</p>
+          <p className="text-xs text-muted-foreground">Será liberado em breve!</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return card;
+};
 
 /* ================================================================
-   PLAYER — Vídeo em destaque com fundo escuro
+   PLAYER
    ================================================================ */
 const PlayerView = ({
   video,
