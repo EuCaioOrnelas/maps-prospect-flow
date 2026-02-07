@@ -318,7 +318,7 @@ const FaseDetailView = ({
       {/* VÍDEOS */}
       <div className="relative z-10 px-6 md:px-12 py-10 space-y-6">
         <h2 className="text-lg font-semibold text-foreground">Conteúdos desta fase</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="flex flex-col gap-2 max-w-2xl">
           {fase.videos.map((video, i) => (
             <VideoCard key={i} video={video} index={i} onClick={() => onPlayVideo(video, i)} />
           ))}
@@ -335,57 +335,42 @@ const VideoCard = ({ video, index, onClick }: { video: Video; index: number; onC
   return (
     <motion.button
       onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={isComingSoon ? {} : { scale: 1.02, y: -4 }}
-      whileTap={isComingSoon ? {} : { scale: 0.98 }}
-      className={`group relative rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors bg-card ${
+      transition={{ delay: index * 0.06 }}
+      whileHover={isComingSoon ? {} : { x: 4 }}
+      whileTap={isComingSoon ? {} : { scale: 0.99 }}
+      className={`group flex items-center gap-4 w-full rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors bg-card ${
         isComingSoon ? "cursor-pointer border border-border/20" : "border border-border/30 hover:border-primary/40"
       }`}
     >
-      <div className="relative aspect-video">
-        <img src={video.capa} alt={video.titulo}
-          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${
-            isComingSoon ? "grayscale brightness-[0.35]" : "group-hover:scale-105"
-          }`}
-        />
-        <div className={`absolute inset-0 transition-colors ${isComingSoon ? "bg-black/50" : "bg-black/30 group-hover:bg-black/50"}`} />
-
+      {/* Play / Lock icon */}
+      <div className="flex-shrink-0">
         {isComingSoon ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
-              <Lock size={20} className="text-white/60" />
-            </div>
+          <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center border border-border/30">
+            <Lock size={16} className="text-muted-foreground/50" />
           </div>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-primary/90 group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
-              <Play size={20} className="text-foreground ml-0.5 group-hover:text-primary-foreground" />
-            </div>
-          </div>
-        )}
-
-        <div className="absolute top-3 left-3">
-          <span className="text-[11px] font-bold text-foreground/80 bg-card/60 backdrop-blur-sm px-2 py-0.5 rounded-md border border-border/30">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
-
-        {isComingSoon && (
-          <div className="absolute top-3 right-3">
-            <span className="text-[10px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-md border border-white/10">Em breve</span>
+          <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/90 group-hover:border-primary/40 transition-all duration-300">
+            <Play size={16} className="text-primary ml-0.5 group-hover:text-primary-foreground" />
           </div>
         )}
       </div>
 
-      <div className="p-4 text-left">
-        <h4 className={`text-sm font-semibold transition-colors line-clamp-2 ${
+      {/* Number + Title */}
+      <div className="flex-1 min-w-0 text-left">
+        <h4 className={`text-sm font-semibold transition-colors truncate ${
           isComingSoon ? "text-foreground/40" : "text-foreground group-hover:text-primary"
         }`}>
+          <span className="text-muted-foreground font-mono mr-2">{String(index + 1).padStart(2, "0")}</span>
           {video.titulo}
         </h4>
       </div>
+
+      {/* Badge */}
+      {isComingSoon && (
+        <span className="flex-shrink-0 text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">Em breve</span>
+      )}
     </motion.button>
   );
 };
