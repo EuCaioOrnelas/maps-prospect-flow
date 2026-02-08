@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock, Crown } from "lucide-react";
 import { fases, type Fase, type Video } from "@/data/consultoriaContent";
@@ -134,6 +134,17 @@ const Consultoria = () => {
    HOME
    ================================================================ */
 const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = useCallback((dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({
+      left: dir === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  }, []);
 
   return (
     <motion.div
@@ -188,14 +199,32 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
         </div>
       </div>
 
-      {/* FASES GRID */}
+      {/* CARROSSEL */}
       <div className="relative z-10 px-6 md:px-12 pb-20 space-y-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-foreground">Sua jornada completa</h2>
           <p className="text-sm text-muted-foreground mt-1">Escolha uma fase para começar</p>
         </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            <ChevronRight size={18} />
+          </button>
+        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-4">
+        <div
+          ref={scrollRef}
+          className="flex gap-5 overflow-x-auto pb-12 pt-4 scrollbar-none"
+          style={{ scrollBehavior: "smooth" }}
+        >
           <TooltipProvider delayDuration={200}>
             {fases.map((fase, i) => (
               <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
@@ -220,7 +249,7 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
       transition={{ delay: index * 0.1 }}
       whileHover={isComingSoon ? {} : { y: -8 }}
       whileTap={isComingSoon ? {} : { scale: 0.97 }}
-      className={`group relative w-full rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-300 ${
+      className={`group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-300 ${
         isComingSoon ? "cursor-pointer" : ""
       }`}
     >
