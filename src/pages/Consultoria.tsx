@@ -259,14 +259,14 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
         {/* Top area */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/20 backdrop-blur-sm border border-primary/30 flex items-center justify-center">
-              <Icon size={14} className="text-primary" />
+            <div className="w-7 h-7 rounded-lg bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+              <Icon size={14} className="text-white" />
             </div>
-            <span className="text-[11px] font-bold text-primary bg-primary/10 backdrop-blur-sm px-2 h-7 flex items-center rounded-md border border-primary/20">
+            <span className="text-[11px] font-bold text-white bg-black/40 backdrop-blur-sm px-2 h-7 flex items-center rounded-md border border-white/20">
               FASE {index + 1}
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground bg-card/60 backdrop-blur-sm px-2 py-1 rounded-md border border-border/30">
+          <span className="text-[10px] text-white/90 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md border border-white/20">
             {fase.videos.length} vídeos
           </span>
         </div>
