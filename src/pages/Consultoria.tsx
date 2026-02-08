@@ -1,12 +1,15 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock } from "lucide-react";
+import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock, Crown } from "lucide-react";
 import { fases, type Fase, type Video } from "@/data/consultoriaContent";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComingSoonDialog } from "@/components/consultoria/ComingSoonDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const FASE_ICONS = [Shield, Zap, TrendingUp, BarChart3, Award];
 
@@ -15,15 +18,57 @@ type View =
   | { screen: "fase"; fase: Fase; faseIndex: number }
   | { screen: "player"; fase: Fase; faseIndex: number; video: Video; videoIndex: number };
 
+const PAID_PLANS = ["start", "growth", "scale"];
+
 const Consultoria = () => {
   const [view, setView] = useState<View>({ screen: "home" });
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const [comingSoonTitle, setComingSoonTitle] = useState("");
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+
+  const isPaidUser = profile?.plan ? PAID_PLANS.includes(profile.plan) : false;
 
   const showComingSoon = (title: string) => {
     setComingSoonTitle(title);
     setComingSoonOpen(true);
   };
+
+  if (!isPaidUser) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <AppSidebar />
+        <div className="flex-1 lg:ml-[72px] relative">
+          <BackgroundGlow />
+          <div className="relative z-10">
+            <AppHeader />
+            <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-md space-y-6"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto">
+                  <Crown size={40} className="text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold text-foreground">Conteúdo Exclusivo</h1>
+                <p className="text-muted-foreground">
+                  A Consultoria Wiize é um conteúdo exclusivo para assinantes dos planos <strong className="text-foreground">Start</strong>, <strong className="text-foreground">Growth</strong> ou <strong className="text-foreground">Scale</strong>.
+                </p>
+                <Button
+                  onClick={() => navigate("/upgrade")}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-semibold"
+                >
+                  <Crown size={18} className="mr-2" />
+                  Ver Planos
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
