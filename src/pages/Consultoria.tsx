@@ -74,7 +74,6 @@ const Consultoria = () => {
     <div className="flex min-h-screen bg-background">
       <AppSidebar />
       <div className="flex-1 lg:ml-[72px] relative">
-        <BackgroundGlow />
         <div className="relative z-10">
           <AppHeader />
           <AnimatePresence mode="wait">
@@ -153,10 +152,8 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
     >
       {/* HERO with smooth blended background */}
       <div className="relative">
-        <div className="absolute inset-0 h-[160%] pointer-events-none overflow-hidden">
-          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.15] blur-xl scale-110" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 via-[60%] to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent" />
+        <div className="absolute inset-0 h-full pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-primary/[0.03] to-transparent" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
