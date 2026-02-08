@@ -41,28 +41,30 @@ export interface Fase {
   status?: ContentStatus;
 }
 
+const CACHE_BUSTER = "v2";
+
 export const fases: Fase[] = [
   {
     titulo: "FASE 1 — ATIVAÇÃO SEGURA",
     descricao: "Evitar bloqueios, gerar confiança e garantir o primeiro resultado rápido.",
-    capa: "/assets/capas/fase1.jpg",
+    capa: `/assets/capas/fase1.jpg?${CACHE_BUSTER}`,
     status: "ativo",
     videos: [
       {
         titulo: "Mentalidade Anti-Bloqueio",
-        capa: "/assets/capas/fase1.jpg",
+        capa: `/assets/capas/fase1.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       },
       {
         titulo: "Setup Correto da Wiize (Prático)",
-        capa: "/assets/capas/fase1.jpg",
+        capa: `/assets/capas/fase1.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       },
       {
         titulo: "Primeiro Resultado em 7 Dias",
-        capa: "/assets/capas/fase1.jpg",
+        capa: `/assets/capas/fase1.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       }
@@ -71,24 +73,24 @@ export const fases: Fase[] = [
   {
     titulo: "FASE 2 — ORGANIZAÇÃO E CONTROLE",
     descricao: "Organizar leads, dominar o CRM e controlar números com precisão.",
-    capa: "/assets/capas/fase2.jpg",
+    capa: `/assets/capas/fase2.jpg?${CACHE_BUSTER}`,
     status: "ativo",
     videos: [
       {
         titulo: "Uso Estratégico da Ferramenta",
-        capa: "/assets/capas/fase2.jpg",
+        capa: `/assets/capas/fase2.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       },
       {
         titulo: "CRM na Prática (Essencial)",
-        capa: "/assets/capas/fase2.jpg",
+        capa: `/assets/capas/fase2.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       },
       {
         titulo: "Gestão de Números e Contas",
-        capa: "/assets/capas/fase2.jpg",
+        capa: `/assets/capas/fase2.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "ativo"
       }
@@ -97,24 +99,24 @@ export const fases: Fase[] = [
   {
     titulo: "FASE 3 — CRESCIMENTO CONTROLADO",
     descricao: "Escalar volume de disparos com segurança e consistência.",
-    capa: "/assets/capas/fase3.jpg",
+    capa: `/assets/capas/fase3.jpg?${CACHE_BUSTER}`,
     status: "em_breve",
     videos: [
       {
         titulo: "Estratégias de Crescimento Progressivo",
-        capa: "/assets/capas/fase3.jpg",
+        capa: `/assets/capas/fase3.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       },
       {
         titulo: "Impulsionamento Sem Risco",
-        capa: "/assets/capas/fase3.jpg",
+        capa: `/assets/capas/fase3.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       },
       {
         titulo: "Gestão de Múltiplos Números",
-        capa: "/assets/capas/fase3.jpg",
+        capa: `/assets/capas/fase3.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       }
@@ -123,18 +125,18 @@ export const fases: Fase[] = [
   {
     titulo: "FASE 4 — MÉTRICAS, RELATÓRIOS E DECISÃO",
     descricao: "Interpretar dados reais e tomar decisões estratégicas baseadas em métricas.",
-    capa: "/assets/capas/fase4.jpg",
+    capa: `/assets/capas/fase4.jpg?${CACHE_BUSTER}`,
     status: "em_breve",
     videos: [
       {
         titulo: "Relatórios da Wiize",
-        capa: "/assets/capas/fase4.jpg",
+        capa: `/assets/capas/fase4.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       },
       {
         titulo: "Tomada de Decisão Baseada em Dados",
-        capa: "/assets/capas/fase4.jpg",
+        capa: `/assets/capas/fase4.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       }
@@ -143,18 +145,18 @@ export const fases: Fase[] = [
   {
     titulo: "FASE 5 — MATURIDADE E LONGEVIDADE",
     descricao: "Manter a operação saudável a longo prazo e evitar erros fatais.",
-    capa: "/assets/capas/fase5.jpg",
+    capa: `/assets/capas/fase5.jpg?${CACHE_BUSTER}`,
     status: "em_breve",
     videos: [
       {
         titulo: "Rotina Mensal Ideal",
-        capa: "/assets/capas/fase5.jpg",
+        capa: `/assets/capas/fase5.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       },
       {
         titulo: "Erros Avançados que Geram Bloqueio Tardio",
-        capa: "/assets/capas/fase5.jpg",
+        capa: `/assets/capas/fase5.jpg?${CACHE_BUSTER}`,
         videoId: "r_cbh4-SOmI",
         status: "em_breve"
       }
