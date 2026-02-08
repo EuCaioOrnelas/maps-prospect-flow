@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock, Crown } from "lucide-react";
 import { fases, type Fase, type Video } from "@/data/consultoriaContent";
@@ -135,11 +135,32 @@ const Consultoria = () => {
    ================================================================ */
 const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(true);
+
+  const updateFades = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setShowLeftFade(el.scrollLeft > 20);
+    setShowRightFade(el.scrollLeft < el.scrollWidth - el.clientWidth - 20);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateFades();
+    el.addEventListener("scroll", updateFades, { passive: true });
+    window.addEventListener("resize", updateFades);
+    return () => {
+      el.removeEventListener("scroll", updateFades);
+      window.removeEventListener("resize", updateFades);
+    };
+  }, [updateFades]);
 
   const scroll = (dir: "left" | "right") => {
     const container = scrollRef.current;
     if (!container) return;
-    const cardWidth = 300; // card width + gap
+    const cardWidth = 300;
     const newPos = container.scrollLeft + (dir === "left" ? -cardWidth : cardWidth);
     container.scrollTo({ left: newPos, behavior: "smooth" });
   };
@@ -228,9 +249,13 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
                 <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
               ))}
             </div>
-            {/* Fade edges */}
-            <div className="absolute top-0 left-0 bottom-0 w-8 pointer-events-none bg-gradient-to-r from-background to-transparent z-10" />
-            <div className="absolute top-0 right-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-background to-transparent z-10" />
+            {/* Fade edges — only when cards are cut */}
+            {showLeftFade && (
+              <div className="absolute top-0 left-0 bottom-0 w-12 pointer-events-none bg-gradient-to-r from-background to-transparent z-10 transition-opacity duration-300" />
+            )}
+            {showRightFade && (
+              <div className="absolute top-0 right-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-background to-transparent z-10 transition-opacity duration-300" />
+            )}
           </div>
         </TooltipProvider>
       </div>
