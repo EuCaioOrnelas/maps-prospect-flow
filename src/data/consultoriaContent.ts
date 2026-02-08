@@ -41,7 +41,7 @@ export interface Fase {
   status?: ContentStatus;
 }
 
-const CACHE_BUSTER = "v2";
+const CACHE_BUSTER = "v3";
 
 export const fases: Fase[] = [
   {
