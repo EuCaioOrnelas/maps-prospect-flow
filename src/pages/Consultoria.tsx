@@ -153,11 +153,10 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
     >
       {/* HERO with smooth blended background */}
       <div className="relative">
-        <div className="absolute inset-0 h-[140%] pointer-events-none">
-          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.12] blur-sm" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/50 via-[55%] to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/30" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute inset-0 h-[160%] pointer-events-none overflow-hidden">
+          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.15] blur-xl scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 via-[60%] to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
@@ -259,7 +258,7 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
       whileHover={isComingSoon ? {} : { y: -8 }}
       whileTap={isComingSoon ? {} : { scale: 0.97 }}
       className={`group relative flex-shrink-0 w-[240px] md:w-[280px] rounded-2xl snap-start focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-300 ${
-        isComingSoon ? "cursor-pointer border border-border/20" : "border border-border/30 hover:border-primary/40"
+        isComingSoon ? "cursor-pointer" : ""
       }`}
     >
       <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
