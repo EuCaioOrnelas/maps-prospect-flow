@@ -137,8 +137,9 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: "left" | "right") => {
+    const cardWidth = 300; // ~280px card + 20px gap
     scrollRef.current?.scrollBy({
-      left: dir === "left" ? -400 : 400,
+      left: dir === "left" ? -cardWidth * 2 : cardWidth * 2,
       behavior: "smooth",
     });
   };
