@@ -215,27 +215,13 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
           </div>
         </div>
 
-        <div className="relative">
-          {/* Seta esquerda flutuante */}
-          <button onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50 shadow-lg -ml-2 hidden lg:flex">
-            <ChevronLeft size={20} />
-          </button>
-
-          <div ref={scrollRef}
-            className="flex gap-5 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12 lg:mx-0 lg:px-8">
-            <TooltipProvider delayDuration={200}>
-              {fases.map((fase, i) => (
-                <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
-              ))}
-            </TooltipProvider>
-          </div>
-
-          {/* Seta direita flutuante */}
-          <button onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50 shadow-lg -mr-2 hidden lg:flex">
-            <ChevronRight size={20} />
-          </button>
+        <div ref={scrollRef}
+          className="flex gap-5 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12">
+          <TooltipProvider delayDuration={200}>
+            {fases.map((fase, i) => (
+              <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
+            ))}
+          </TooltipProvider>
         </div>
       </div>
     </motion.div>
