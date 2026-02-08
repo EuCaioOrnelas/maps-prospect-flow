@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, ChevronLeft, ChevronRight, Shield, TrendingUp, BarChart3, Zap, Award, Lock, Crown } from "lucide-react";
 import { fases, type Fase, type Video } from "@/data/consultoriaContent";
@@ -38,7 +38,7 @@ const Consultoria = () => {
     return (
       <div className="flex min-h-screen bg-background">
         <AppSidebar />
-        <div className="flex-1 lg:ml-[72px] relative">
+        <div className="flex-1 min-w-0 lg:ml-[72px] relative">
           <BackgroundGlow />
           <div className="relative z-10">
             <AppHeader />
@@ -73,7 +73,7 @@ const Consultoria = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <AppSidebar />
-      <div className="flex-1 lg:ml-[72px] relative">
+      <div className="flex-1 min-w-0 lg:ml-[72px] relative">
         <div className="relative z-10">
           <AppHeader />
           <AnimatePresence mode="wait">
@@ -136,15 +136,13 @@ const Consultoria = () => {
 const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const scroll = useCallback((dir: "left" | "right") => {
-    if (!scrollRef.current) return;
+  const scroll = (dir: "left" | "right") => {
     const container = scrollRef.current;
-    const scrollAmount = container.clientWidth * 0.8;
-    container.scrollBy({
-      left: dir === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  }, []);
+    if (!container) return;
+    const cardWidth = 300; // card width + gap
+    const newPos = container.scrollLeft + (dir === "left" ? -cardWidth : cardWidth);
+    container.scrollTo({ left: newPos, behavior: "smooth" });
+  };
 
   return (
     <motion.div
@@ -220,17 +218,17 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
           </button>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-12 pt-4 scrollbar-none"
-          style={{ scrollBehavior: "smooth" }}
-        >
-          <TooltipProvider delayDuration={200}>
+        <TooltipProvider delayDuration={200}>
+          <div
+            ref={scrollRef}
+            className="flex gap-5 pb-12 pt-4"
+            style={{ overflowX: "auto", scrollBehavior: "smooth" }}
+          >
             {fases.map((fase, i) => (
               <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
             ))}
-          </TooltipProvider>
-        </div>
+          </div>
+        </TooltipProvider>
       </div>
     </motion.div>
   );
