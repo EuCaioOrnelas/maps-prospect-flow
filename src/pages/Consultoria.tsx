@@ -197,22 +197,20 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
       </div>
 
       {/* CARROSSEL */}
-      <div className="relative z-10 px-6 md:px-12 pb-20 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">Sua jornada completa</h2>
-            <p className="text-sm text-muted-foreground mt-1">Escolha uma fase para começar</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => scroll("left")}
-              className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
-              <ChevronLeft size={18} />
-            </button>
-            <button onClick={() => scroll("right")}
-              className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
-              <ChevronRight size={18} />
-            </button>
-          </div>
+      <div className="relative z-10 px-6 md:px-12 pb-20 space-y-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">Sua jornada completa</h2>
+          <p className="text-sm text-muted-foreground mt-1">Escolha uma fase para começar</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => scroll("left")}
+            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            <ChevronLeft size={18} />
+          </button>
+          <button onClick={() => scroll("right")}
+            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            <ChevronRight size={18} />
+          </button>
         </div>
 
         <div ref={scrollRef}
