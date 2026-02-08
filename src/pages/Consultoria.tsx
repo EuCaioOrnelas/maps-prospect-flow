@@ -153,8 +153,8 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
       {/* HERO with smooth blended background */}
       <div className="relative">
         <div className="absolute inset-0 h-full pointer-events-none overflow-hidden">
-          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.10] blur-2xl scale-125" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
+          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.25] blur-xl scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
@@ -342,8 +342,8 @@ const FaseDetailView = ({
       {/* HERO — smooth blended background like home */}
       <div className="relative">
         <div className="absolute inset-0 h-[130%] pointer-events-none overflow-hidden">
-          <img src={fase.capa} alt={fase.titulo} className="w-full h-full object-cover opacity-[0.10] blur-2xl scale-125" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
+          <img src={fase.capa} alt={fase.titulo} className="w-full h-full object-cover opacity-[0.25] blur-xl scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-8 pb-16 md:pb-20">
