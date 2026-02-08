@@ -154,9 +154,10 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
       {/* HERO with smooth blended background */}
       <div className="relative">
         <div className="absolute inset-0 h-[140%] pointer-events-none">
-          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.12]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 via-[70%] to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
+          <img src={fases[0].capa} alt="" className="w-full h-full object-cover opacity-[0.12] blur-sm" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/50 via-[55%] to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/30" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
         </div>
 
         <div className="relative z-10 px-6 md:px-12 pt-16 md:pt-28 pb-20 md:pb-32 max-w-4xl">
@@ -217,13 +218,27 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
           </div>
         </div>
 
-        <div ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12">
-          <TooltipProvider delayDuration={200}>
-            {fases.map((fase, i) => (
-              <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
-            ))}
-          </TooltipProvider>
+        <div className="relative">
+          {/* Seta esquerda flutuante */}
+          <button onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50 shadow-lg -ml-2 hidden lg:flex">
+            <ChevronLeft size={20} />
+          </button>
+
+          <div ref={scrollRef}
+            className="flex gap-5 overflow-x-auto pb-12 pt-4 snap-x snap-mandatory scrollbar-none -mx-6 px-6 md:-mx-12 md:px-12 lg:mx-0 lg:px-8">
+            <TooltipProvider delayDuration={200}>
+              {fases.map((fase, i) => (
+                <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
+              ))}
+            </TooltipProvider>
+          </div>
+
+          {/* Seta direita flutuante */}
+          <button onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50 shadow-lg -mr-2 hidden lg:flex">
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
     </motion.div>
