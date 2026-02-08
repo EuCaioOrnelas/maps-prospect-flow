@@ -219,13 +219,18 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
         </div>
 
         <TooltipProvider delayDuration={200}>
-          <div
-            ref={scrollRef}
-            className="flex gap-5 pb-12 pt-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
-          >
-            {fases.map((fase, i) => (
-              <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
-            ))}
+          <div className="relative">
+            <div
+              ref={scrollRef}
+              className="flex gap-5 pb-12 pt-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
+            >
+              {fases.map((fase, i) => (
+                <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
+              ))}
+            </div>
+            {/* Fade edges */}
+            <div className="absolute top-0 left-0 bottom-0 w-8 pointer-events-none bg-gradient-to-r from-background to-transparent z-10" />
+            <div className="absolute top-0 right-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-background to-transparent z-10" />
           </div>
         </TooltipProvider>
       </div>
