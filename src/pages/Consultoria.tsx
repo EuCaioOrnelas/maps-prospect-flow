@@ -221,8 +221,7 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
         <TooltipProvider delayDuration={200}>
           <div
             ref={scrollRef}
-            className="flex gap-5 pb-12 pt-4"
-            style={{ overflowX: "auto", scrollBehavior: "smooth" }}
+            className="flex gap-5 pb-12 pt-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
           >
             {fases.map((fase, i) => (
               <FaseCard key={i} fase={fase} index={i} onClick={() => onSelectFase(fase, i)} />
