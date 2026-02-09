@@ -25,6 +25,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const Reports = lazy(() => import("./pages/Reports"));
+const CRMComingSoon = lazy(() => import("./pages/CRMComingSoon"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
 const WhatsAppCampaign = lazy(() => import("./pages/WhatsAppCampaign"));
 const UserInsights = lazy(() => import("./pages/UserInsights"));
@@ -94,6 +95,14 @@ const App = () => (
                   path="/dashboard" 
                   element={
                     <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route
+                  path="/prospeccao" 
+                  element={
+                    <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
                   } 
@@ -131,14 +140,7 @@ const App = () => (
                   } 
                 />
                 <Route path="/lp/:slug" element={<LandingPage />} />
-                <Route 
-                  path="/reports"
-                  element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  } 
-                />
+                {/* /reports now redirects to /dashboard */}
                 <Route 
                   path="/whatsapp" 
                   element={
