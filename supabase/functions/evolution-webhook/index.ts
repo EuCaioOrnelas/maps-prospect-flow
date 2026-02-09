@@ -226,6 +226,8 @@ serve(async (req) => {
       warmingLevel: number,
       messagesReceived: number
     ): Promise<string | null> {
+      console.log(`Generating AI warming response for level ${warmingLevel}, msg: "${leadMessage}"`);
+      
       if (!OPENAI_API_KEY) {
         console.log('OPENAI_API_KEY not configured, falling back to templates');
         return null;
@@ -1306,17 +1308,21 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                 console.log(`Checking warming interactions for lead ${normalizedLeadPhone} (last8: ${leadPhoneLast8}) on user ${whatsappNumber.user_id}`);
 
                 try {
+                  // Fetch interactions directly using user_id which is present on the table
                   const { data: warmingInteractions, error: warmingError } = await supabase
                     .from('warming_interactions')
-                    .select('*, warming_sessions!inner(*)')
-                    .eq('warming_sessions.user_id', whatsappNumber.user_id)
+                    .select('*')
+                    .eq('user_id', whatsappNumber.user_id)
                     .in('status', ['in_progress', 'completed', 'pending_response'])
                     .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
                   
                   if (warmingError) {
                     console.error('Error fetching warming interactions:', warmingError);
                   } else {
-                    console.log(`Found ${warmingInteractions?.length || 0} active warming interactions for user`);
+                    console.log(`Found ${warmingInteractions?.length || 0} interactions for user ${whatsappNumber.user_id}`);
+                    if (warmingInteractions && warmingInteractions.length > 0) {
+                      console.log('Sample interaction phone:', warmingInteractions[0].lead_phone);
+                    }
                   }
                 
                 if (warmingInteractions && warmingInteractions.length > 0) {
