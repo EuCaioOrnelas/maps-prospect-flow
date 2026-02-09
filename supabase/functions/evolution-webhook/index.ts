@@ -17,7 +17,7 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -226,8 +226,8 @@ serve(async (req) => {
       warmingLevel: number,
       messagesReceived: number
     ): Promise<string | null> {
-      if (!LOVABLE_API_KEY) {
-        console.log('LOVABLE_API_KEY not configured, falling back to templates');
+      if (!OPENAI_API_KEY) {
+        console.log('OPENAI_API_KEY not configured, falling back to templates');
         return null;
       }
       
@@ -252,14 +252,14 @@ REGRAS OBRIGATÓRIAS:
 
 ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
 
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-lite',
+            model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: `O lead respondeu: "${leadMessage}"` }
