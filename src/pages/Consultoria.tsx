@@ -250,12 +250,8 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
               ))}
             </div>
             {/* Fade edges — only when cards are cut */}
-            {showLeftFade && (
-              <div className="absolute top-0 left-0 bottom-0 w-12 pointer-events-none bg-gradient-to-r from-background to-transparent z-10 transition-opacity duration-300" />
-            )}
-            {showRightFade && (
-              <div className="absolute top-0 right-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-background to-transparent z-10 transition-opacity duration-300" />
-            )}
+            <div className={`absolute top-0 left-0 bottom-0 w-12 pointer-events-none bg-gradient-to-r from-background to-transparent z-10 transition-opacity duration-500 ${showLeftFade ? 'opacity-100' : 'opacity-0'}`} />
+            <div className={`absolute top-0 right-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-background to-transparent z-10 transition-opacity duration-500 ${showRightFade ? 'opacity-100' : 'opacity-0'}`} />
           </div>
         </TooltipProvider>
       </div>
