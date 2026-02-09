@@ -15,6 +15,7 @@ import {
   Bell,
   Bot,
   GraduationCap,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,7 +53,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   // Keep reports submenu open if on a reports page
-  const isOnReportsPage = currentPath === "/reports" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
+  const isOnReportsPage = currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -86,12 +87,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   };
 
   const reportsSubItems = [
-    {
-      title: "Buscas",
-      url: "/reports",
-      icon: FileSearch,
-      active: currentPath === "/reports"
-    },
     {
       title: "Disparos",
       url: "/whatsapp/reports",
@@ -176,13 +171,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
+            {/* Dashboard / Relatórios de Prospecção */}
+            <li>
+              <SidebarNavItem
+                title="Dashboard"
+                icon={LayoutDashboard}
+                url="/dashboard"
+                isActive={currentPath === "/dashboard"}
+                isExpanded={isExpanded}
+                tooltip="Dashboard"
+              />
+            </li>
+
             {/* Prospecção */}
             <li>
               <SidebarNavItem
                 title="Prospecção"
                 icon={Search}
-                url="/dashboard"
-                isActive={currentPath === "/dashboard"}
+                url="/prospeccao"
+                isActive={currentPath === "/prospeccao"}
                 isExpanded={isExpanded}
                 tooltip="Prospecção"
               />
