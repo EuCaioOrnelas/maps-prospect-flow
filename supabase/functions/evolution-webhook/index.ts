@@ -234,25 +234,19 @@ serve(async (req) => {
       }
       
       try {
-        const levelContext: Record<number, string> = {
-          2: 'Você mandou "Oi, tudo bem?" e o lead respondeu. Responda de forma breve e natural, como "Tudo sim, obrigado!" ou similar. Encerre a conversa naturalmente.',
-          3: messagesReceived === 1
-            ? 'Você mandou uma saudação e o lead respondeu. Faça uma pergunta leve e casual como "tudo bem por aí?" ou "como tá o dia?". Máximo 1 frase curta.'
-            : 'O lead já respondeu duas vezes na conversa casual. Encerre a conversa de forma positiva com algo como "Que bom!", "Show!", "Legal!". Máximo 2 palavras.',
-          4: 'Você abordou o lead dizendo que trabalha com empresas da região e perguntou se poderia enviar uma informação. O lead respondeu. Agradeça brevemente e encerre. Algo como "Perfeito, obrigado!" ou "Combinado, valeu!".',
-        };
-
         const systemPrompt = `Você é uma pessoa REAL conversando pelo WhatsApp no Brasil. Gere APENAS a mensagem de resposta, sem aspas, sem explicações.
 
+CONTEXTO: Você mandou uma mensagem para essa pessoa por engano (número errado). O lead respondeu e agora você precisa encerrar a conversa de forma educada dizendo que errou o número.
+
 REGRAS OBRIGATÓRIAS:
-- Máximo 8 palavras
+- Máximo 10 palavras
 - Linguagem informal brasileira natural
 - SEM emojis (ou no máximo 1)
-- Varie entre maiúsculas e minúsculas naturalmente
 - Pareça uma pessoa real digitando rápido no celular
-- NÃO seja formal, NÃO use "prezado", "senhor", etc.
-
-${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
+- Diga que foi engano, número errado, ou que confundiu o contato
+- Peça desculpas brevemente
+- Exemplos de respostas: "opa desculpa, errei o número!", "ih foi mal, número errado", "desculpa, confundi o contato!", "eita errei o número, desculpa!"
+- NÃO continue a conversa, NÃO faça perguntas`;
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -1340,14 +1334,11 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                     const messagesReceived = matchingInteraction.messages_received + 1;
                     const warmingLevel = matchingInteraction.warming_level || 1;
                     
-                    // Determine if we should send a follow-up response
-                    // Only respond if: level >= 2 (levels that wait for response), 
-                    // conversation not ended, and we haven't exceeded max messages for the level
-                    const maxMessagesPerLevel: Record<number, number> = { 1: 1, 2: 2, 3: 3, 4: 2 };
-                    const maxMessages = maxMessagesPerLevel[warmingLevel] || 2;
+                    // SIMPLIFIED: After lead responds, send ONE reply saying it was wrong number, then end
+                    // Only respond once per interaction - if we already sent more than the initial message, don't respond again
                     const shouldRespond = warmingLevel >= 2 
                       && !matchingInteraction.conversation_ended 
-                      && matchingInteraction.messages_sent < maxMessages;
+                      && messagesReceived === 1; // Only respond to the FIRST reply from the lead
                     
                     let responseMessage: string | null = null;
                     let shouldEndConversation = false;
@@ -1356,7 +1347,7 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                       const messageText = content.trim();
                       
                       // Safety pattern 1: Stop/block requests (hardcoded for safety)
-                      const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /para/i, /chega/i];
+                      const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /chega/i];
                       const isStopRequest = stopPatterns.some(p => p.test(messageText));
                       
                       if (isStopRequest) {
@@ -1366,7 +1357,7 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                         console.log('Stop request detected, ending conversation');
                       }
                       
-                      // Safety pattern 2: "Who are you" questions (hardcoded for safety)
+                      // Safety pattern 2: "Who are you" questions
                       if (!responseMessage) {
                         const whoPatterns = [/quem\s*(é|e)\s*(voce|você|vc)/i, /quem\s*fala/i, /de\s*onde/i, /te\s*conheço/i, /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i];
                         if (whoPatterns.some(p => p.test(messageText))) {
@@ -1377,21 +1368,21 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                         }
                       }
                       
-                      // Safety pattern 3: Bot responses (hardcoded bypass)
+                      // Safety pattern 3: Bot responses
                       if (!responseMessage) {
                         const botPatterns = [/mensagem automática/i, /resposta automática/i, /fora do horário/i, /digite.*opção/i, /selecione.*opção/i, /menu.*opções/i, /assistente virtual/i, /bem-vindo.*atendimento/i, /retornaremos.*breve/i];
                         if (botPatterns.some(p => p.test(messageText))) {
-                          const botResponses = ['Oi, é com você mesmo que falo?', 'Tem alguém disponível pra conversar?', 'Olá, é atendimento humano?', 'Oi! Posso falar com uma pessoa?'];
-                          responseMessage = botResponses[Math.floor(Math.random() * botResponses.length)];
-                          console.log('Bot response detected, sending bypass');
+                          // For bots, just end silently - no point engaging
+                          shouldEndConversation = true;
+                          console.log('Bot response detected, ending conversation silently');
                         }
                       }
                       
-                      // For all other responses: use AI to generate natural reply
-                      if (!responseMessage) {
-                        console.log('Generating AI response for warming level', warmingLevel);
+                      // For ALL other responses: always say it was wrong number and end
+                      if (!responseMessage && !shouldEndConversation) {
+                        console.log('Generating "wrong number" response for warming');
                         
-                        // Try AI first
+                        // Try AI first for natural variation
                         const aiResponse = await generateWarmingAIResponse(
                           messageText,
                           warmingLevel,
@@ -1400,38 +1391,25 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
                         
                         if (aiResponse) {
                           responseMessage = aiResponse;
-                          // Determine if conversation should end based on level and messages
-                          if (warmingLevel === 2) {
-                            shouldEndConversation = true;
-                          } else if (warmingLevel === 3) {
-                            shouldEndConversation = messagesReceived >= 2;
-                          } else if (warmingLevel === 4) {
-                            shouldEndConversation = true;
-                          }
-                          console.log(`AI response generated: "${responseMessage}" (end: ${shouldEndConversation})`);
                         } else {
-                          // Fallback to templates if AI fails
-                          console.log('AI failed, falling back to templates');
-                          if (warmingLevel === 2) {
-                            const fallbacks = ['Tudo sim, obrigado!', 'Tudo certo por aqui!', 'Tudo ótimo, valeu!', 'Tudo bem sim!', 'Tudo tranquilo!'];
-                            responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-                            shouldEndConversation = true;
-                          } else if (warmingLevel === 3) {
-                            if (messagesReceived === 1) {
-                              const fallbacks = ['Tudo bem por aí?', 'Tudo certo hoje?', 'Como está?', 'Tudo tranquilo?'];
-                              responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-                            } else {
-                              const fallbacks = ['Que bom!', 'Ótimo!', 'Legal!', 'Show!', 'Bacana!'];
-                              responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-                              shouldEndConversation = true;
-                            }
-                          } else if (warmingLevel === 4) {
-                            const fallbacks = ['Perfeito, obrigado!', 'Combinado, agradeço!', 'Ótimo, valeu!', 'Show, obrigado!'];
-                            responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-                            shouldEndConversation = true;
-                          }
+                          // Fallback templates - all say it was wrong number
+                          const wrongNumberResponses = [
+                            'opa desculpa, errei o número!',
+                            'ih foi mal, número errado',
+                            'desculpa, confundi o contato!',
+                            'eita errei o número, desculpa!',
+                            'opa desculpa, não era pra vc!',
+                            'foi mal, mandei pro número errado!',
+                          ];
+                          responseMessage = wrongNumberResponses[Math.floor(Math.random() * wrongNumberResponses.length)];
                         }
+                        shouldEndConversation = true; // ALWAYS end after responding
+                        console.log(`Response: "${responseMessage}" - ending conversation`);
                       }
+                    } else if (messagesReceived > 1 && !matchingInteraction.conversation_ended) {
+                      // Lead sent another message after we already responded - just end silently
+                      shouldEndConversation = true;
+                      console.log('Lead sent follow-up after our response, ending conversation silently');
                     }
                     
                     // Update the interaction
