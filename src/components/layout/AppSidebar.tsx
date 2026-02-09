@@ -52,7 +52,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
-  // Keep reports submenu open if on a reports page
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
 
   // Sync expanded state with hover, but with delay to prevent glitches
@@ -126,9 +125,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if (!isOnReportsPage) {
-      setIsReportsOpen(false);
-    }
+    setIsReportsOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
@@ -186,7 +183,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={isOnReportsPage || currentPath === "/dashboard"}
                 isExpanded={isExpanded}
                 hasSubmenu
-                isSubmenuOpen={isReportsOpen || isOnReportsPage || currentPath === "/dashboard"}
+                isSubmenuOpen={isReportsOpen}
                 tooltip="Dashboard"
               />
 
@@ -194,7 +191,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <div
                   className={cn(
                     "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
-                    (isReportsOpen || isOnReportsPage || currentPath === "/dashboard")
+                    (isReportsOpen)
                       ? "max-h-56 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
