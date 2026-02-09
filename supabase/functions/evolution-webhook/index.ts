@@ -1298,18 +1298,26 @@ ${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
             // We only process for received messages (!fromMe)
             if (!fromMe) {
               if (!whatsappNumber) {
-                console.log('Warming detection skipped: whatsapp number not found');
+                console.log('Warming detection skipped: whatsapp number not found for instance', instance);
               } else {
                 const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
                 const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
                 
+                console.log(`Checking warming interactions for lead ${normalizedLeadPhone} (last8: ${leadPhoneLast8}) on user ${whatsappNumber.user_id}`);
+
                 try {
-                  const { data: warmingInteractions } = await supabase
+                  const { data: warmingInteractions, error: warmingError } = await supabase
                     .from('warming_interactions')
                     .select('*, warming_sessions!inner(*)')
                     .eq('warming_sessions.user_id', whatsappNumber.user_id)
                     .in('status', ['in_progress', 'completed', 'pending_response'])
                     .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+                  
+                  if (warmingError) {
+                    console.error('Error fetching warming interactions:', warmingError);
+                  } else {
+                    console.log(`Found ${warmingInteractions?.length || 0} active warming interactions for user`);
+                  }
                 
                 if (warmingInteractions && warmingInteractions.length > 0) {
                   const matchingInteraction = warmingInteractions.find((i: any) => {
