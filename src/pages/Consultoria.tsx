@@ -302,10 +302,11 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
 
         {/* Center */}
         {isComingSoon ? (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 -translate-y-8">
             <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
               <Lock size={28} className="text-white/60" />
             </div>
+            <span className="text-[11px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">Em breve</span>
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -314,13 +315,6 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
             </motion.div>
           </div>
         )}
-
-        {isComingSoon && (
-          <div className="absolute bottom-[6.5rem] left-0 right-0 flex justify-center">
-            <span className="text-[11px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">Em breve</span>
-          </div>
-        )}
-
         {/* Bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
           <h3 className={`font-bold text-sm md:text-base leading-snug ${isComingSoon ? "text-foreground/50" : "text-foreground"}`}>
