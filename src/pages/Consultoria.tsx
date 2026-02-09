@@ -40,8 +40,7 @@ const Consultoria = () => {
         <AppSidebar />
         <div className="flex-1 min-w-0 lg:ml-[72px] relative">
           <BackgroundGlow />
-          <div className="relative z-10">
-            <AppHeader />
+           <div className="relative z-10">
             <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -75,7 +74,6 @@ const Consultoria = () => {
       <AppSidebar />
       <div className="flex-1 min-w-0 lg:ml-[72px] relative">
         <div className="relative z-10">
-          <AppHeader />
           <AnimatePresence mode="wait">
             {view.screen === "home" && (
               <HomeView
