@@ -53,7 +53,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   // Keep reports submenu open if on a reports page
-  const isOnReportsPage = currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
+  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -86,7 +86,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     return 'U';
   };
 
-  const reportsSubItems = [
+  const dashboardSubItems = [
+    {
+      title: "Prospecção",
+      url: "/dashboard",
+      icon: FileSearch,
+      active: currentPath === "/dashboard"
+    },
     {
       title: "Disparos",
       url: "/whatsapp/reports",
@@ -171,54 +177,30 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
-            {/* Dashboard / Relatórios de Prospecção */}
+            {/* Dashboard with submenu */}
             <li>
               <SidebarNavItem
                 title="Dashboard"
                 icon={LayoutDashboard}
-                url="/dashboard"
-                isActive={currentPath === "/dashboard"}
-                isExpanded={isExpanded}
-                tooltip="Dashboard"
-              />
-            </li>
-
-            {/* Prospecção */}
-            <li>
-              <SidebarNavItem
-                title="Prospecção"
-                icon={Search}
-                url="/prospeccao"
-                isActive={currentPath === "/prospeccao"}
-                isExpanded={isExpanded}
-                tooltip="Prospecção"
-              />
-            </li>
-
-            {/* Relatórios with submenu */}
-            <li>
-              <SidebarNavItem
-                title="Relatórios"
-                icon={BarChart3}
                 onClick={handleReportsClick}
-                isActive={isOnReportsPage}
+                isActive={isOnReportsPage || currentPath === "/dashboard"}
                 isExpanded={isExpanded}
                 hasSubmenu
-                isSubmenuOpen={isReportsOpen || isOnReportsPage}
-                tooltip="Relatórios"
+                isSubmenuOpen={isReportsOpen || isOnReportsPage || currentPath === "/dashboard"}
+                tooltip="Dashboard"
               />
 
               {isExpanded && (
                 <div
                   className={cn(
                     "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
-                    (isReportsOpen || isOnReportsPage)
-                      ? "max-h-44 opacity-100 mt-1"
+                    (isReportsOpen || isOnReportsPage || currentPath === "/dashboard")
+                      ? "max-h-56 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
                   <ul className="pl-4 space-y-0.5">
-                    {reportsSubItems.map((subItem) => (
+                    {dashboardSubItems.map((subItem) => (
                       <li key={subItem.title}>
                         <Link
                           to={subItem.url}
@@ -239,6 +221,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   </ul>
                 </div>
               )}
+            </li>
+
+            {/* Prospecção */}
+            <li>
+              <SidebarNavItem
+                title="Prospecção"
+                icon={Search}
+                url="/prospeccao"
+                isActive={currentPath === "/prospeccao"}
+                isExpanded={isExpanded}
+                tooltip="Prospecção"
+              />
             </li>
 
             {/* Disparos */}
