@@ -316,7 +316,7 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
         )}
 
         {isComingSoon && (
-          <div className="absolute bottom-14 left-0 right-0 flex justify-center">
+          <div className="absolute bottom-[6.5rem] left-0 right-0 flex justify-center">
             <span className="text-[11px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">Em breve</span>
           </div>
         )}
