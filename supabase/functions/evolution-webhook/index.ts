@@ -17,6 +17,7 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -216,6 +217,114 @@ serve(async (req) => {
             console.log(`Updated avatar for contact ${phone}`);
           }
         }
+      }
+    }
+
+    // === WARMING AI RESPONSE HELPERS ===
+    async function generateWarmingAIResponse(
+      leadMessage: string,
+      warmingLevel: number,
+      messagesReceived: number
+    ): Promise<string | null> {
+      if (!LOVABLE_API_KEY) {
+        console.log('LOVABLE_API_KEY not configured, falling back to templates');
+        return null;
+      }
+      
+      try {
+        const levelContext: Record<number, string> = {
+          2: 'Você mandou "Oi, tudo bem?" e o lead respondeu. Responda de forma breve e natural, como "Tudo sim, obrigado!" ou similar. Encerre a conversa naturalmente.',
+          3: messagesReceived === 1
+            ? 'Você mandou uma saudação e o lead respondeu. Faça uma pergunta leve e casual como "tudo bem por aí?" ou "como tá o dia?". Máximo 1 frase curta.'
+            : 'O lead já respondeu duas vezes na conversa casual. Encerre a conversa de forma positiva com algo como "Que bom!", "Show!", "Legal!". Máximo 2 palavras.',
+          4: 'Você abordou o lead dizendo que trabalha com empresas da região e perguntou se poderia enviar uma informação. O lead respondeu. Agradeça brevemente e encerre. Algo como "Perfeito, obrigado!" ou "Combinado, valeu!".',
+        };
+
+        const systemPrompt = `Você é uma pessoa REAL conversando pelo WhatsApp no Brasil. Gere APENAS a mensagem de resposta, sem aspas, sem explicações.
+
+REGRAS OBRIGATÓRIAS:
+- Máximo 8 palavras
+- Linguagem informal brasileira natural
+- SEM emojis (ou no máximo 1)
+- Varie entre maiúsculas e minúsculas naturalmente
+- Pareça uma pessoa real digitando rápido no celular
+- NÃO seja formal, NÃO use "prezado", "senhor", etc.
+
+${levelContext[warmingLevel] || 'Responda brevemente de forma casual.'}`;
+
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-lite',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `O lead respondeu: "${leadMessage}"` }
+            ],
+            max_tokens: 30,
+            temperature: 0.9,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('AI warming response error:', response.status, await response.text());
+          return null;
+        }
+
+        const result = await response.json();
+        let aiMessage = result.choices?.[0]?.message?.content?.trim();
+        
+        // Clean up AI response - remove quotes if present
+        if (aiMessage) {
+          aiMessage = aiMessage.replace(/^["']|["']$/g, '').trim();
+        }
+        
+        console.log('AI generated warming response:', aiMessage);
+        return aiMessage || null;
+      } catch (error) {
+        console.error('Error generating AI warming response:', error);
+        return null;
+      }
+    }
+
+    async function sendWarmingResponseDirect(
+      instanceName: string,
+      phone: string,
+      message: string
+    ): Promise<boolean> {
+      try {
+        // Add a small random delay to simulate human typing (1-4 seconds)
+        const typingDelay = Math.floor(Math.random() * 3000) + 1000;
+        await new Promise(resolve => setTimeout(resolve, typingDelay));
+        
+        const formattedPhone = phone.replace(/\D/g, '');
+        console.log(`Sending warming response to ${formattedPhone}: "${message}"`);
+        
+        const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY!,
+          },
+          body: JSON.stringify({
+            number: formattedPhone,
+            text: message,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to send warming response:', await response.text());
+          return false;
+        }
+        
+        console.log('✓ Warming response sent successfully');
+        return true;
+      } catch (error) {
+        console.error('Error sending warming response:', error);
+        return false;
       }
     }
 
@@ -1230,11 +1339,10 @@ serve(async (req) => {
                     let shouldEndConversation = false;
                     
                     if (shouldRespond && content) {
-                      // Contextual response patterns
                       const messageText = content.trim();
                       
-                      // Check for stop/block requests
-                      const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i];
+                      // Safety pattern 1: Stop/block requests (hardcoded for safety)
+                      const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /para/i, /chega/i];
                       const isStopRequest = stopPatterns.some(p => p.test(messageText));
                       
                       if (isStopRequest) {
@@ -1244,7 +1352,7 @@ serve(async (req) => {
                         console.log('Stop request detected, ending conversation');
                       }
                       
-                      // Check for "who are you" questions
+                      // Safety pattern 2: "Who are you" questions (hardcoded for safety)
                       if (!responseMessage) {
                         const whoPatterns = [/quem\s*(é|e)\s*(voce|você|vc)/i, /quem\s*fala/i, /de\s*onde/i, /te\s*conheço/i, /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i];
                         if (whoPatterns.some(p => p.test(messageText))) {
@@ -1255,7 +1363,7 @@ serve(async (req) => {
                         }
                       }
                       
-                      // Check for automated bot responses
+                      // Safety pattern 3: Bot responses (hardcoded bypass)
                       if (!responseMessage) {
                         const botPatterns = [/mensagem automática/i, /resposta automática/i, /fora do horário/i, /digite.*opção/i, /selecione.*opção/i, /menu.*opções/i, /assistente virtual/i, /bem-vindo.*atendimento/i, /retornaremos.*breve/i];
                         if (botPatterns.some(p => p.test(messageText))) {
@@ -1265,29 +1373,50 @@ serve(async (req) => {
                         }
                       }
                       
-                      // Positive/neutral response - send a closing/follow-up message
+                      // For all other responses: use AI to generate natural reply
                       if (!responseMessage) {
-                        if (warmingLevel === 2) {
-                          // Level 2: send follow-up like "Tudo sim, obrigado!"
-                          const followUps = ['Tudo sim, obrigado!', 'Tudo certo por aqui!', 'Tudo ótimo, valeu!', 'Tudo bem sim!', 'Tudo tranquilo!', 'Por aqui tudo bem!', 'Tudo certo!', 'Tudo joia!'];
-                          responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
-                          shouldEndConversation = true;
-                        } else if (warmingLevel === 3) {
-                          // Level 3: if first response, send follow-up; if second, send closing
-                          if (messagesReceived === 1) {
-                            const followUps = ['Tudo bem por aí?', 'Tudo certo hoje?', 'Como está?', 'Tudo tranquilo?', 'Como vão as coisas?'];
-                            responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
-                          } else {
-                            const closings = ['Que bom!', 'Perfeito, obrigado!', 'Ótimo!', 'Que ótimo!', 'Legal!', 'Show!', 'Muito bom!', 'Bacana!'];
-                            responseMessage = closings[Math.floor(Math.random() * closings.length)];
+                        console.log('Generating AI response for warming level', warmingLevel);
+                        
+                        // Try AI first
+                        const aiResponse = await generateWarmingAIResponse(
+                          messageText,
+                          warmingLevel,
+                          messagesReceived
+                        );
+                        
+                        if (aiResponse) {
+                          responseMessage = aiResponse;
+                          // Determine if conversation should end based on level and messages
+                          if (warmingLevel === 2) {
+                            shouldEndConversation = true;
+                          } else if (warmingLevel === 3) {
+                            shouldEndConversation = messagesReceived >= 2;
+                          } else if (warmingLevel === 4) {
                             shouldEndConversation = true;
                           }
-                        } else if (warmingLevel === 4) {
-                          const followUps = ['Perfeito, obrigado!', 'Combinado, agradeço!', 'Ótimo, valeu!', 'Show, obrigado!', 'Beleza, obrigado!', 'Combinado!'];
-                          responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
-                          shouldEndConversation = true;
+                          console.log(`AI response generated: "${responseMessage}" (end: ${shouldEndConversation})`);
+                        } else {
+                          // Fallback to templates if AI fails
+                          console.log('AI failed, falling back to templates');
+                          if (warmingLevel === 2) {
+                            const fallbacks = ['Tudo sim, obrigado!', 'Tudo certo por aqui!', 'Tudo ótimo, valeu!', 'Tudo bem sim!', 'Tudo tranquilo!'];
+                            responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                            shouldEndConversation = true;
+                          } else if (warmingLevel === 3) {
+                            if (messagesReceived === 1) {
+                              const fallbacks = ['Tudo bem por aí?', 'Tudo certo hoje?', 'Como está?', 'Tudo tranquilo?'];
+                              responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                            } else {
+                              const fallbacks = ['Que bom!', 'Ótimo!', 'Legal!', 'Show!', 'Bacana!'];
+                              responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                              shouldEndConversation = true;
+                            }
+                          } else if (warmingLevel === 4) {
+                            const fallbacks = ['Perfeito, obrigado!', 'Combinado, agradeço!', 'Ótimo, valeu!', 'Show, obrigado!'];
+                            responseMessage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                            shouldEndConversation = true;
+                          }
                         }
-                        console.log('Positive response detected, queuing follow-up');
                       }
                     }
                     
@@ -1299,15 +1428,35 @@ serve(async (req) => {
                     };
                     
                     if (responseMessage) {
-                      // Queue the response for the warming-processor to send
-                      updateData.status = 'pending_response';
-                      updateData.last_message_sent = responseMessage;
-                      if (shouldEndConversation) {
-                        updateData.conversation_ended = true;
+                      // SEND RESPONSE IMMEDIATELY via Evolution API (no more queuing)
+                      console.log(`Sending warming response immediately: "${responseMessage}"`);
+                      
+                      const sent = await sendWarmingResponseDirect(
+                        instance,
+                        normalizedLeadPhone,
+                        responseMessage
+                      );
+                      
+                      if (sent) {
+                        // Response sent successfully - update status directly
+                        updateData.status = shouldEndConversation ? 'completed' : 'in_progress';
+                        updateData.last_message_sent = responseMessage;
+                        updateData.messages_sent = matchingInteraction.messages_sent + 1;
+                        updateData.last_message_at = new Date().toISOString();
+                        if (shouldEndConversation) {
+                          updateData.conversation_ended = true;
+                        }
+                        console.log(`✓ Warming response sent and interaction updated (end: ${shouldEndConversation})`);
+                      } else {
+                        // Failed to send - queue for warming-processor as fallback
+                        updateData.status = 'pending_response';
+                        updateData.last_message_sent = responseMessage;
+                        if (shouldEndConversation) {
+                          updateData.conversation_ended = true;
+                        }
+                        console.log('✗ Failed to send immediately, queued for warming-processor');
                       }
-                      console.log(`Queued warming response: "${responseMessage}" (end: ${shouldEndConversation})`);
                     } else if (!shouldRespond) {
-                      // No more responses needed
                       updateData.conversation_ended = true;
                       updateData.status = 'completed';
                       console.log('Conversation completed (max messages reached or level 1)');
