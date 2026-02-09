@@ -1210,18 +1210,115 @@ serve(async (req) => {
                   
                   if (matchingInteraction) {
                     console.log('=== WARMING RESPONSE DETECTED ===');
+                    console.log('Lead message:', content);
+                    console.log('Interaction status:', matchingInteraction.status);
+                    console.log('Messages sent so far:', matchingInteraction.messages_sent);
+                    
                     const messagesReceived = matchingInteraction.messages_received + 1;
+                    const warmingLevel = matchingInteraction.warming_level || 1;
+                    
+                    // Determine if we should send a follow-up response
+                    // Only respond if: level >= 2 (levels that wait for response), 
+                    // conversation not ended, and we haven't exceeded max messages for the level
+                    const maxMessagesPerLevel: Record<number, number> = { 1: 1, 2: 2, 3: 3, 4: 2 };
+                    const maxMessages = maxMessagesPerLevel[warmingLevel] || 2;
+                    const shouldRespond = warmingLevel >= 2 
+                      && !matchingInteraction.conversation_ended 
+                      && matchingInteraction.messages_sent < maxMessages;
+                    
+                    let responseMessage: string | null = null;
+                    let shouldEndConversation = false;
+                    
+                    if (shouldRespond && content) {
+                      // Contextual response patterns
+                      const messageText = content.trim();
+                      
+                      // Check for stop/block requests
+                      const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i];
+                      const isStopRequest = stopPatterns.some(p => p.test(messageText));
+                      
+                      if (isStopRequest) {
+                        const stopResponses = ['Desculpa pelo incômodo!', 'Desculpa, não vou mais incomodar!', 'Foi mal, desculpa!'];
+                        responseMessage = stopResponses[Math.floor(Math.random() * stopResponses.length)];
+                        shouldEndConversation = true;
+                        console.log('Stop request detected, ending conversation');
+                      }
+                      
+                      // Check for "who are you" questions
+                      if (!responseMessage) {
+                        const whoPatterns = [/quem\s*(é|e)\s*(voce|você|vc)/i, /quem\s*fala/i, /de\s*onde/i, /te\s*conheço/i, /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i];
+                        if (whoPatterns.some(p => p.test(messageText))) {
+                          const whoResponses = ['Desculpa, acho que errei o número!', 'Opa, desculpa! Número errado', 'Ih, desculpa! Número errado'];
+                          responseMessage = whoResponses[Math.floor(Math.random() * whoResponses.length)];
+                          shouldEndConversation = true;
+                          console.log('Who-are-you detected, ending conversation');
+                        }
+                      }
+                      
+                      // Check for automated bot responses
+                      if (!responseMessage) {
+                        const botPatterns = [/mensagem automática/i, /resposta automática/i, /fora do horário/i, /digite.*opção/i, /selecione.*opção/i, /menu.*opções/i, /assistente virtual/i, /bem-vindo.*atendimento/i, /retornaremos.*breve/i];
+                        if (botPatterns.some(p => p.test(messageText))) {
+                          const botResponses = ['Oi, é com você mesmo que falo?', 'Tem alguém disponível pra conversar?', 'Olá, é atendimento humano?', 'Oi! Posso falar com uma pessoa?'];
+                          responseMessage = botResponses[Math.floor(Math.random() * botResponses.length)];
+                          console.log('Bot response detected, sending bypass');
+                        }
+                      }
+                      
+                      // Positive/neutral response - send a closing/follow-up message
+                      if (!responseMessage) {
+                        if (warmingLevel === 2) {
+                          // Level 2: send follow-up like "Tudo sim, obrigado!"
+                          const followUps = ['Tudo sim, obrigado!', 'Tudo certo por aqui!', 'Tudo ótimo, valeu!', 'Tudo bem sim!', 'Tudo tranquilo!', 'Por aqui tudo bem!', 'Tudo certo!', 'Tudo joia!'];
+                          responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
+                          shouldEndConversation = true;
+                        } else if (warmingLevel === 3) {
+                          // Level 3: if first response, send follow-up; if second, send closing
+                          if (messagesReceived === 1) {
+                            const followUps = ['Tudo bem por aí?', 'Tudo certo hoje?', 'Como está?', 'Tudo tranquilo?', 'Como vão as coisas?'];
+                            responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
+                          } else {
+                            const closings = ['Que bom!', 'Perfeito, obrigado!', 'Ótimo!', 'Que ótimo!', 'Legal!', 'Show!', 'Muito bom!', 'Bacana!'];
+                            responseMessage = closings[Math.floor(Math.random() * closings.length)];
+                            shouldEndConversation = true;
+                          }
+                        } else if (warmingLevel === 4) {
+                          const followUps = ['Perfeito, obrigado!', 'Combinado, agradeço!', 'Ótimo, valeu!', 'Show, obrigado!', 'Beleza, obrigado!', 'Combinado!'];
+                          responseMessage = followUps[Math.floor(Math.random() * followUps.length)];
+                          shouldEndConversation = true;
+                        }
+                        console.log('Positive response detected, queuing follow-up');
+                      }
+                    }
+                    
+                    // Update the interaction
+                    const updateData: Record<string, unknown> = {
+                      messages_received: messagesReceived,
+                      last_response_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    };
+                    
+                    if (responseMessage) {
+                      // Queue the response for the warming-processor to send
+                      updateData.status = 'pending_response';
+                      updateData.last_message_sent = responseMessage;
+                      if (shouldEndConversation) {
+                        updateData.conversation_ended = true;
+                      }
+                      console.log(`Queued warming response: "${responseMessage}" (end: ${shouldEndConversation})`);
+                    } else if (!shouldRespond) {
+                      // No more responses needed
+                      updateData.conversation_ended = true;
+                      updateData.status = 'completed';
+                      console.log('Conversation completed (max messages reached or level 1)');
+                    }
                     
                     await supabase
                       .from('warming_interactions')
-                      .update({
-                        messages_received: messagesReceived,
-                        last_response_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                      })
+                      .update(updateData)
                       .eq('id', matchingInteraction.id);
                     
-                    console.log(`Updated messages_received to ${messagesReceived}`);
+                    console.log(`Updated warming interaction ${matchingInteraction.id}: received=${messagesReceived}, status=${updateData.status || 'unchanged'}`);
                   }
                 }
                 } catch (warmingError) {
