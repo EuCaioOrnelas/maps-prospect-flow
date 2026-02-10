@@ -608,32 +608,43 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                       <p className="text-muted-foreground text-sm">Nenhuma mensagem registrada</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {messageLogs.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`p-3 rounded-lg max-w-[85%] text-sm ${
-                            msg.direction === 'outgoing'
-                              ? 'ml-auto bg-primary/10 border border-primary/20'
-                              : 'mr-auto bg-muted border border-border'
-                          }`}
-                        >
-                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            {msg.direction === 'outgoing' ? (
-                              <><Bot className="h-3 w-3" /> Agente</>
-                            ) : (
-                              <><User className="h-3 w-3" /> Lead</>
-                            )}
-                            <span className="ml-auto">
-                              {new Date(msg.created_at).toLocaleTimeString('pt-BR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </p>
-                          <p className="whitespace-pre-wrap break-words">{msg.content || '(sem conteúdo)'}</p>
-                        </div>
-                      ))}
+                    <div className="space-y-3 py-2">
+                      {messageLogs.map((msg) => {
+                        const isAgent = msg.direction === 'outgoing';
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div className={`flex items-end gap-1.5 max-w-[80%] ${isAgent ? 'flex-row-reverse' : 'flex-row'}`}>
+                              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                                isAgent ? 'bg-primary/20' : 'bg-muted-foreground/20'
+                              }`}>
+                                {isAgent ? (
+                                  <Bot className="h-3.5 w-3.5 text-primary" />
+                                ) : (
+                                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className={`rounded-2xl px-3 py-2 text-sm ${
+                                isAgent
+                                  ? 'bg-primary text-primary-foreground rounded-br-sm'
+                                  : 'bg-muted border border-border rounded-bl-sm'
+                              }`}>
+                                <p className="whitespace-pre-wrap break-words">{msg.content || '(sem conteúdo)'}</p>
+                                <p className={`text-[10px] mt-1 text-right ${
+                                  isAgent ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                                }`}>
+                                  {new Date(msg.created_at).toLocaleTimeString('pt-BR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
