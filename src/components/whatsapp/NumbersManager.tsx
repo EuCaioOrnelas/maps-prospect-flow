@@ -644,6 +644,8 @@ export const NumbersManager = ({
     
     setConnectingNumberId(numberId);
     setConnectingInstanceName(instanceName);
+    connectionHandledRef.current = false;
+    isInsertingRef.current = false;
     setConnectDialogOpen(true);
     setManageDialogOpen(false);
 
