@@ -24,7 +24,8 @@ import {
   AlertTriangle,
   FlaskConical,
   MessageCircle,
-  FileText
+  FileText,
+  Copy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
@@ -490,6 +491,23 @@ export default function AIAgents() {
                                 Ativar
                               </>
                             )}
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Salvar como template"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAgent(agent);
+                              // Small delay to let dialog open, then switch to settings tab
+                              setTimeout(() => {
+                                const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
+                                settingsTab?.click();
+                              }, 300);
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
                           </Button>
                           
                           <Button
