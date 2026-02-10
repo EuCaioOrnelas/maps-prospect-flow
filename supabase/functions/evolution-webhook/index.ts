@@ -672,6 +672,25 @@ REGRAS OBRIGATÓRIAS:
             }
 
             // Extract message content based on type
+            // Handle wrapper message types first (ephemeral, viewOnce, etc.)
+            let actualMessageData = messageData;
+            if (messageData.ephemeralMessage?.message) {
+              actualMessageData = messageData.ephemeralMessage.message;
+              console.log('Unwrapped ephemeral message');
+            } else if (messageData.viewOnceMessage?.message) {
+              actualMessageData = messageData.viewOnceMessage.message;
+              console.log('Unwrapped viewOnce message');
+            } else if (messageData.viewOnceMessageV2?.message) {
+              actualMessageData = messageData.viewOnceMessageV2.message;
+              console.log('Unwrapped viewOnceV2 message');
+            } else if (messageData.documentWithCaptionMessage?.message) {
+              actualMessageData = messageData.documentWithCaptionMessage.message;
+              console.log('Unwrapped documentWithCaption message');
+            } else if (messageData.editedMessage?.message) {
+              actualMessageData = messageData.editedMessage.message;
+              console.log('Unwrapped edited message');
+            }
+
             let messageType = 'text';
             let content = '';
             let mediaUrl: string | null = null;
@@ -680,49 +699,41 @@ REGRAS OBRIGATÓRIAS:
             let hasMedia = false;
             let interactive: Record<string, unknown> | null = null;
 
-            if (messageData.conversation) {
-              content = messageData.conversation;
-            } else if (messageData.extendedTextMessage?.text) {
-              content = messageData.extendedTextMessage.text;
-            } else if (messageData.imageMessage) {
+            if (actualMessageData.conversation) {
+              content = actualMessageData.conversation;
+            } else if (actualMessageData.extendedTextMessage?.text) {
+              content = actualMessageData.extendedTextMessage.text;
+            } else if (actualMessageData.imageMessage) {
               messageType = 'image';
-              content = messageData.imageMessage.caption || '';
-              mediaMimetype = messageData.imageMessage.mimetype;
+              content = actualMessageData.imageMessage.caption || '';
+              mediaMimetype = actualMessageData.imageMessage.mimetype;
               hasMedia = true;
-            } else if (messageData.videoMessage) {
+            } else if (actualMessageData.videoMessage) {
               messageType = 'video';
-              content = messageData.videoMessage.caption || '';
-              mediaMimetype = messageData.videoMessage.mimetype;
+              content = actualMessageData.videoMessage.caption || '';
+              mediaMimetype = actualMessageData.videoMessage.mimetype;
               hasMedia = true;
-            } else if (messageData.audioMessage) {
+            } else if (actualMessageData.audioMessage) {
               messageType = 'audio';
-              mediaMimetype = messageData.audioMessage.mimetype;
+              mediaMimetype = actualMessageData.audioMessage.mimetype;
               hasMedia = true;
-            } else if (messageData.documentMessage) {
+            } else if (actualMessageData.documentMessage) {
               messageType = 'document';
-              mediaFilename = messageData.documentMessage.fileName;
-              mediaMimetype = messageData.documentMessage.mimetype;
+              mediaFilename = actualMessageData.documentMessage.fileName;
+              mediaMimetype = actualMessageData.documentMessage.mimetype;
               hasMedia = true;
-            } else if (messageData.interactiveMessage) {
-              // Handle interactive messages (bots with buttons/lists)
+            } else if (actualMessageData.interactiveMessage) {
               messageType = 'interactive';
-              const interactiveMsg = messageData.interactiveMessage;
-              
-              // Extract header text (usually the main content)
+              const interactiveMsg = actualMessageData.interactiveMessage;
               const header = interactiveMsg.header;
               const body = interactiveMsg.body;
               const footer = interactiveMsg.footer;
-              
-              // Build content from parts
               const contentParts: string[] = [];
               if (header?.title) contentParts.push(header.title);
               if (header?.subtitle) contentParts.push(header.subtitle);
               if (body?.text) contentParts.push(body.text);
               if (footer?.text) contentParts.push(footer.text);
-              
               content = contentParts.join('\n\n') || '[Mensagem interativa]';
-              
-              // Store full interactive data
               interactive = {
                 type: interactiveMsg.nativeFlowMessage ? 'flow' : 
                       interactiveMsg.collectionMessage ? 'collection' : 
@@ -734,49 +745,50 @@ REGRAS OBRIGATÓRIAS:
                 collectionMessage: interactiveMsg.collectionMessage || null,
                 shopStorefrontMessage: interactiveMsg.shopStorefrontMessage || null,
               };
-              
               console.log('Interactive message detected:', JSON.stringify(interactive).slice(0, 500));
-            } else if (messageData.buttonsMessage) {
-              // Legacy buttons message
+            } else if (actualMessageData.buttonsMessage) {
               messageType = 'buttons';
-              content = messageData.buttonsMessage.contentText || 
-                        messageData.buttonsMessage.text || 
+              content = actualMessageData.buttonsMessage.contentText || 
+                        actualMessageData.buttonsMessage.text || 
                         '[Mensagem com botões]';
               interactive = {
                 type: 'buttons',
-                buttons: messageData.buttonsMessage.buttons || [],
-                headerType: messageData.buttonsMessage.headerType,
+                buttons: actualMessageData.buttonsMessage.buttons || [],
+                headerType: actualMessageData.buttonsMessage.headerType,
               };
-            } else if (messageData.listMessage) {
-              // List message
+            } else if (actualMessageData.listMessage) {
               messageType = 'list';
-              content = messageData.listMessage.description || 
-                        messageData.listMessage.title || 
+              content = actualMessageData.listMessage.description || 
+                        actualMessageData.listMessage.title || 
                         '[Mensagem de lista]';
               interactive = {
                 type: 'list',
-                title: messageData.listMessage.title,
-                buttonText: messageData.listMessage.buttonText,
-                sections: messageData.listMessage.sections || [],
+                title: actualMessageData.listMessage.title,
+                buttonText: actualMessageData.listMessage.buttonText,
+                sections: actualMessageData.listMessage.sections || [],
               };
-            } else if (messageData.buttonResponseMessage) {
-              // Response to buttons
+            } else if (actualMessageData.buttonResponseMessage) {
               messageType = 'text';
-              content = messageData.buttonResponseMessage.selectedDisplayText || 
-                        messageData.buttonResponseMessage.selectedButtonId || 
+              content = actualMessageData.buttonResponseMessage.selectedDisplayText || 
+                        actualMessageData.buttonResponseMessage.selectedButtonId || 
                         '[Resposta de botão]';
-            } else if (messageData.listResponseMessage) {
-              // Response to list
+            } else if (actualMessageData.listResponseMessage) {
               messageType = 'text';
-              content = messageData.listResponseMessage.title || 
-                        messageData.listResponseMessage.singleSelectReply?.selectedRowId ||
+              content = actualMessageData.listResponseMessage.title || 
+                        actualMessageData.listResponseMessage.singleSelectReply?.selectedRowId ||
                         '[Resposta de lista]';
-            } else if (messageData.templateButtonReplyMessage) {
-              // Template button reply
+            } else if (actualMessageData.templateButtonReplyMessage) {
               messageType = 'text';
-              content = messageData.templateButtonReplyMessage.selectedDisplayText ||
-                        messageData.templateButtonReplyMessage.selectedId ||
+              content = actualMessageData.templateButtonReplyMessage.selectedDisplayText ||
+                        actualMessageData.templateButtonReplyMessage.selectedId ||
                         '[Resposta de template]';
+            } else if (actualMessageData.stickerMessage) {
+              messageType = 'sticker';
+              hasMedia = true;
+              mediaMimetype = actualMessageData.stickerMessage.mimetype;
+            } else if (actualMessageData.reactionMessage) {
+              messageType = 'text';
+              content = actualMessageData.reactionMessage.text || '';
             }
 
             // If message has media, download it and store in Supabase Storage

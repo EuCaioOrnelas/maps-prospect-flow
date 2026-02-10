@@ -537,7 +537,13 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Objetivo</span>
-                  <span>{agent.agent_objective || agent.objective || 'Não definido'}</span>
+                  <span>
+                    {agent.agent_objective === 'schedule_call' ? 'Agendar call' :
+                     agent.agent_objective === 'send_demo' ? 'Enviar demo' :
+                     agent.agent_objective === 'forward_human' ? 'Encaminhar p/ humano' :
+                     agent.agent_objective === 'close_deal' ? 'Fechar venda' :
+                     agent.agent_objective || agent.objective || 'Não definido'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Estilo</span>
