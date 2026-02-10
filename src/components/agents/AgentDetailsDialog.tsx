@@ -34,7 +34,9 @@ import {
   TrendingUp,
   Headphones,
   FileText,
-  Copy
+  Copy,
+  ArrowLeft,
+  User
 } from "lucide-react";
 
 // Templates de prompts prontos
@@ -192,6 +194,15 @@ interface Conversation {
   initial_message_sent_at: string | null;
   response_received: boolean;
   reply_sent: boolean;
+  reply_count: number | null;
+  created_at: string;
+}
+
+interface MessageLog {
+  id: string;
+  direction: string;
+  content: string | null;
+  message_type: string | null;
   created_at: string;
 }
 
@@ -206,6 +217,9 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
   const [showSaveTemplateForm, setShowSaveTemplateForm] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   
   // Editable fields
   const [systemPrompt, setSystemPrompt] = useState(agent?.system_prompt || "");
@@ -241,6 +255,8 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
 
     if (open && agent) {
       fetchConversations();
+      setSelectedConversation(null);
+      setMessageLogs([]);
       // Reset form values when agent changes
       setSystemPrompt(agent.system_prompt || "");
       setMaxReplies(agent.max_replies || 1);
@@ -251,6 +267,30 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       setIs24Hours(agent.operating_hours_start === "00:00" && agent.operating_hours_end === "23:59");
     }
   }, [agent, open]);
+
+  const fetchMessageLogs = async (conversationId: string) => {
+    setLoadingMessages(true);
+    try {
+      const { data, error } = await supabase
+        .from('agent_message_logs')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      if (error) throw error;
+      setMessageLogs(data || []);
+    } catch (error) {
+      console.error('Error fetching message logs:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const handleSelectConversation = (conv: Conversation) => {
+    setSelectedConversation(conv);
+    fetchMessageLogs(conv.id);
+  };
 
   const saveSettings = async () => {
     if (!agent?.id) return;
@@ -537,7 +577,67 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
 
           <TabsContent value="conversations" className="mt-4">
             <ScrollArea className="h-[400px] pr-4">
-              {loadingConversations ? (
+              {selectedConversation ? (
+                // Message log view
+                <div className="space-y-3">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => { setSelectedConversation(null); setMessageLogs([]); }}
+                    className="gap-1 mb-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar
+                  </Button>
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">
+                      {selectedConversation.lead_name || selectedConversation.lead_phone}
+                    </span>
+                    <Badge variant="outline" className="text-xs ml-auto">
+                      {selectedConversation.reply_count || 0} respostas
+                    </Badge>
+                  </div>
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : messageLogs.length === 0 ? (
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground text-sm">Nenhuma mensagem registrada</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {messageLogs.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`p-3 rounded-lg max-w-[85%] text-sm ${
+                            msg.direction === 'outgoing'
+                              ? 'ml-auto bg-primary/10 border border-primary/20'
+                              : 'mr-auto bg-muted border border-border'
+                          }`}
+                        >
+                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            {msg.direction === 'outgoing' ? (
+                              <><Bot className="h-3 w-3" /> Agente</>
+                            ) : (
+                              <><User className="h-3 w-3" /> Lead</>
+                            )}
+                            <span className="ml-auto">
+                              {new Date(msg.created_at).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </p>
+                          <p className="whitespace-pre-wrap break-words">{msg.content || '(sem conteúdo)'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : loadingConversations ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
@@ -549,7 +649,11 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
               ) : (
                 <div className="space-y-2">
                   {conversations.map((conv) => (
-                    <Card key={conv.id} className="p-3">
+                    <Card 
+                      key={conv.id} 
+                      className="p-3 cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={() => handleSelectConversation(conv)}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {getStatusIcon(conv.status)}
@@ -567,9 +671,14 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {getStatusLabel(conv.status)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {(conv.reply_count || 0) > 0 && (
+                            <span className="text-xs text-muted-foreground">{conv.reply_count} msgs</span>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            {getStatusLabel(conv.status)}
+                          </Badge>
+                        </div>
                       </div>
                     </Card>
                   ))}

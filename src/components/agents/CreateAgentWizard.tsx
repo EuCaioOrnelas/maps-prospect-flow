@@ -406,6 +406,13 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     // Handle operating hours if saved in template
     if (data.operatingHoursStart) setOperatingHoursStart(data.operatingHoursStart);
     if (data.operatingHoursEnd) setOperatingHoursEnd(data.operatingHoursEnd);
+
+    // If template has a pre-built systemPrompt, store it for use during creation
+    if (data.systemPrompt) {
+      (window as any).__agentTemplateSystemPrompt = data.systemPrompt;
+    } else {
+      delete (window as any).__agentTemplateSystemPrompt;
+    }
   };
 
   const deleteUserTemplate = async (templateId: string) => {
@@ -572,6 +579,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
     setMaxReplies(1);
+    delete (window as any).__agentTemplateSystemPrompt;
   };
 
   const toggleArrayItem = (arr: string[], item: string, setter: (arr: string[]) => void) => {
@@ -827,7 +835,9 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setLoading(true);
     
     try {
-      const systemPrompt = generatePrompt();
+      // Use pre-built systemPrompt from template if available, otherwise generate
+      const templateSystemPrompt = (window as any).__agentTemplateSystemPrompt;
+      const systemPrompt = templateSystemPrompt || generatePrompt();
       
       // Map salesApproach to valid objective values (constraint: prospecting, warming, first_contact)
       const objectiveMap: Record<string, string> = {
@@ -860,6 +870,31 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         });
 
       if (error) throw error;
+
+      // Reconfigure webhook for the selected number to ensure agent receives messages
+      try {
+        const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+        if (selectedNumber) {
+          const { data: numberData } = await supabase
+            .from('whatsapp_numbers')
+            .select('instance_name')
+            .eq('id', selectedNumberId)
+            .single();
+          
+          if (numberData?.instance_name) {
+            console.log('Reconfiguring webhook for instance:', numberData.instance_name);
+            const { data: session } = await supabase.auth.getSession();
+            await supabase.functions.invoke('evolution-reconfigure-webhook', {
+              body: { instanceName: numberData.instance_name },
+            });
+          }
+        }
+      } catch (webhookErr) {
+        console.error('Failed to reconfigure webhook (non-blocking):', webhookErr);
+      }
+
+      // Clean up template prompt
+      delete (window as any).__agentTemplateSystemPrompt;
 
       toast({
         title: activate ? "Agente ativado!" : "Agente salvo como rascunho",
