@@ -264,7 +264,45 @@ serve(async (req) => {
     }
 
     if (!webhookConfigured) {
-      console.error('Failed to configure webhook on all endpoints');
+      console.error('Failed to configure webhook on all endpoints - will retry via find/set');
+      
+      // Last resort: try to verify and set webhook via find endpoint
+      try {
+        const findResponse = await fetch(`${EVOLUTION_API_URL}/webhook/find/${instanceName}`, {
+          method: 'GET',
+          headers: { 'apikey': EVOLUTION_API_KEY },
+        });
+        
+        if (findResponse.ok) {
+          const currentWebhook = await findResponse.json();
+          console.log('Current webhook config:', JSON.stringify(currentWebhook));
+          
+          // If webhook URL doesn't match, force set it
+          if (!currentWebhook?.url || currentWebhook.url !== webhookUrl) {
+            const retryResponse = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': EVOLUTION_API_KEY,
+              },
+              body: JSON.stringify({
+                enabled: true,
+                url: webhookUrl,
+                webhookByEvents: false,
+                webhookBase64: false,
+                events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+              }),
+            });
+            
+            if (retryResponse.ok) {
+              console.log('Webhook configured on retry!');
+              webhookConfigured = true;
+            }
+          }
+        }
+      } catch (retryErr) {
+        console.error('Webhook retry failed:', retryErr);
+      }
     }
 
     return new Response(JSON.stringify({
