@@ -1107,12 +1107,16 @@ REGRAS OBRIGATÓRIAS:
               // and forward the message for automatic processing
               // This runs for ALL received messages (not from me), regardless of lead existence
               try {
-                const { data: activeAgent } = await supabase
+              const { data: activeAgents } = await supabase
                   .from('ai_agents')
-                  .select('id, name, status')
+                  .select('id, name, status, objective')
                   .eq('whatsapp_number_id', whatsappNumber.id)
-                  .eq('status', 'active')
-                  .single();
+                  .eq('status', 'active');
+                
+                // Prioritize non-warming agents over warming agents
+                const activeAgent = activeAgents?.find((a: any) => a.objective !== 'warming') 
+                  || activeAgents?.[0] 
+                  || null;
                 
                 if (activeAgent) {
                   console.log('=== AI AGENT DETECTED ===');
