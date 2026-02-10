@@ -822,7 +822,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
   };
 
   const handleCreate = async (activate: boolean) => {
-    if (!user) return;
+    if (!user || loading) return;
     
     setLoading(true);
     
