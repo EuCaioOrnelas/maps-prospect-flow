@@ -92,6 +92,7 @@ export const NumbersManager = ({
   // Track if we're creating a NEW number (not saved to DB yet) vs connecting existing one
   const [pendingNumberName, setPendingNumberName] = useState<string | null>(null);
   const isInsertingRef = useRef(false);
+  const connectionHandledRef = useRef(false);
   
   // Warming sessions for each number
   const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
@@ -267,8 +268,9 @@ export const NumbersManager = ({
         }
 
         if (data?.connected) {
-          // Prevent duplicate processing - clear interval immediately
-          if (showSuccessAnimation) return;
+          // Prevent duplicate processing using ref (synchronous, no race condition)
+          if (connectionHandledRef.current) return;
+          connectionHandledRef.current = true;
           
           // Show success animation
           setShowSuccessAnimation(true);
@@ -445,6 +447,8 @@ export const NumbersManager = ({
       // Open connection dialog - NO numberId since it doesn't exist yet
       setConnectingNumberId(null);
       setConnectingInstanceName(instanceName);
+      connectionHandledRef.current = false;
+      isInsertingRef.current = false;
       setConnectDialogOpen(true);
 
       // Create instance in Evolution API and get QR
