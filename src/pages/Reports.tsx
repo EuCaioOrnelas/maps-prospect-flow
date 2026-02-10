@@ -569,12 +569,12 @@ const Reports = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background overflow-x-hidden relative flex w-full">
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
         {/* Sidebar - Desktop only */}
         <AppSidebar profile={profile} />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           {/* Header */}
           <AppHeader profile={profile} />
 
