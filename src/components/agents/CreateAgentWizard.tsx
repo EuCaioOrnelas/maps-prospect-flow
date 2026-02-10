@@ -44,7 +44,8 @@ import {
   Sparkles,
   Headphones,
   TrendingUp,
-  FileText
+  FileText,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -355,6 +356,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [operatingHoursEnd, setOperatingHoursEnd] = useState("18:00");
   const [isWarmed, setIsWarmed] = useState(false);
   const [maxReplies, setMaxReplies] = useState<number | null>(1);
+  const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
 
   // Apply template data to form fields (works for both default and user templates)
   const applyTemplate = (templateId: string, isUserTemplate: boolean = false) => {
@@ -1765,9 +1767,31 @@ Preciso falar com meu marido/esposa"
 
       case 'review':
         const selectedNumber = numbers.find(n => n.id === selectedNumberId);
+        const warmingStatus = selectedNumber?.warming_status || 'cold';
+        const warmingLabel = warmingStatus === 'hot' ? 'Aquecido 🟢' : warmingStatus === 'warm' ? 'Morno 🟡' : 'Frio 🔴';
+        const leadsLimit = warmingStatus === 'hot' ? 'Ilimitado' : warmingStatus === 'warm' ? '100 leads' : '20 leads';
+        const showWarmingAlert = warmingStatus !== 'hot';
         return (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground text-center">Confira antes de criar</p>
+
+            {/* Warming Alert */}
+            {showWarmingAlert && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-medium text-amber-500 mb-1">
+                      Seu chip está {warmingStatus === 'warm' ? 'morno' : 'frio'} — limite de {leadsLimit}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Continue o aquecimento para desbloquear leads ilimitados. Quando seu número estiver aquecido (🟢), o agente poderá responder sem limite de leads.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 text-sm">
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Nome</span>
@@ -1819,6 +1843,25 @@ Preciso falar com meu marido/esposa"
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  Limite de leads
+                  <button
+                    type="button"
+                    onClick={() => setShowLeadsLimitInfo(true)}
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <span className={warmingStatus === 'hot' ? 'text-green-500' : warmingStatus === 'warm' ? 'text-yellow-500' : 'text-red-500'}>
+                    {warmingLabel}
+                  </span>
+                  <span className="text-muted-foreground">•</span>
+                  {leadsLimit}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Respostas</span>
                 <span className="font-medium">{maxReplies === null ? "Ilimitado" : maxReplies}</span>
               </div>
@@ -1840,6 +1883,7 @@ Preciso falar com meu marido/esposa"
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(value) => { if (!loading) { onOpenChange(value); if (!value) resetForm(); } }}>
       <DialogContent className="max-w-lg h-[90vh] h-[90dvh] max-h-[90vh] max-h-[90dvh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 w-[95vw] sm:w-full">
         <DialogHeader className="p-3 sm:p-4 pb-2 border-b">
@@ -1911,5 +1955,43 @@ Preciso falar com meu marido/esposa"
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Leads Limit Info Dialog */}
+      <Dialog open={showLeadsLimitInfo} onOpenChange={setShowLeadsLimitInfo}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Info className="h-4 w-4 text-primary" />
+              Limite progressivo de leads
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Para proteger a saúde do seu número, o sistema limita a quantidade de leads que o agente pode responder de acordo com o nível de aquecimento:
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/10">
+                <span className="flex items-center gap-2">🔴 Frio</span>
+                <span className="font-medium">20 leads</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-500/10">
+                <span className="flex items-center gap-2">🟡 Morno</span>
+                <span className="font-medium">100 leads</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/10">
+                <span className="flex items-center gap-2">🟢 Aquecido</span>
+                <span className="font-medium">Ilimitado ∞</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Esse sistema existe como uma ferramenta de proteção para ajudar a evitar bloqueios e preservar a reputação do seu número. Quanto mais aquecido o chip, mais seguro é enviar mensagens em maior volume.
+            </p>
+            <Button variant="outline" className="w-full" size="sm" onClick={() => setShowLeadsLimitInfo(false)}>
+              Entendi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
