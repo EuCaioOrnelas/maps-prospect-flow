@@ -537,15 +537,28 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Objetivo</span>
-                  <span>{agent.objective === 'prospecting' ? 'Prospecção' : agent.objective === 'warming' ? 'Aquecimento' : 'Primeiro Contato'}</span>
+                  <span>{agent.agent_objective || agent.objective || 'Não definido'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Estilo</span>
-                  <span className="capitalize">{agent.communication_style}</span>
+                  <span>
+                    {agent.communication_style === 'formal' ? 'Formal' :
+                     agent.communication_style === 'informal' ? 'Informal' :
+                     agent.communication_style === 'neutral' ? 'Neutro' :
+                     agent.communication_style || 'Não definido'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Horário</span>
-                  <span>{agent.operating_hours_start?.slice(0, 5)} - {agent.operating_hours_end?.slice(0, 5)}</span>
+                  <span>
+                    {agent.operating_hours_start?.slice(0, 5) === '00:00' && agent.operating_hours_end?.slice(0, 5) === '23:59'
+                      ? '24 horas'
+                      : `${agent.operating_hours_start?.slice(0, 5)} - ${agent.operating_hours_end?.slice(0, 5)}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Máx. respostas</span>
+                  <span>{agent.max_replies === null ? 'Ilimitado' : agent.max_replies}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status do número</span>
@@ -610,7 +623,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                   ) : (
                     <div className="space-y-3 py-2">
                       {messageLogs.map((msg) => {
-                        const isAgent = msg.direction === 'outgoing';
+                        const isAgent = msg.direction === 'sent';
                         return (
                           <div
                             key={msg.id}

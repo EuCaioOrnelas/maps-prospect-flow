@@ -1737,10 +1737,28 @@ Preciso falar com meu marido/esposa"
 
             <div className="space-y-2">
               <Label>Horário de operação</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="time" value={operatingHoursStart} onChange={(e) => setOperatingHoursStart(e.target.value)} />
-                <Input type="time" value={operatingHoursEnd} onChange={(e) => setOperatingHoursEnd(e.target.value)} />
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox 
+                  id="is24h" 
+                  checked={operatingHoursStart === "00:00" && operatingHoursEnd === "23:59"} 
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setOperatingHoursStart("00:00");
+                      setOperatingHoursEnd("23:59");
+                    } else {
+                      setOperatingHoursStart("08:00");
+                      setOperatingHoursEnd("18:00");
+                    }
+                  }}
+                />
+                <Label htmlFor="is24h" className="text-sm font-normal cursor-pointer">Funcionar 24 horas</Label>
               </div>
+              {!(operatingHoursStart === "00:00" && operatingHoursEnd === "23:59") && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="time" value={operatingHoursStart} onChange={(e) => setOperatingHoursStart(e.target.value)} />
+                  <Input type="time" value={operatingHoursEnd} onChange={(e) => setOperatingHoursEnd(e.target.value)} />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1806,7 +1824,11 @@ Preciso falar com meu marido/esposa"
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Horário</span>
-                <span className="font-medium">{operatingHoursStart} - {operatingHoursEnd}</span>
+                <span className="font-medium">
+                  {operatingHoursStart === "00:00" && operatingHoursEnd === "23:59" 
+                    ? "24 horas" 
+                    : `${operatingHoursStart} - ${operatingHoursEnd}`}
+                </span>
               </div>
             </div>
           </div>
