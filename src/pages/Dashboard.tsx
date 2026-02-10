@@ -44,6 +44,7 @@ import { useOnboardingModals } from "@/hooks/useOnboardingModals";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { SidebarProvider } from "@/components/ui/sidebar";
 interface Lead {
   name: string;
   category: string;
@@ -484,23 +485,22 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden relative">
-      {/* Background Glows */}
-      <BackgroundGlow />
-      {/* Sidebar - Desktop only */}
-      <AppSidebar 
-        profile={profile} 
-        onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
-      />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        <BackgroundGlow />
+        <AppSidebar 
+          profile={profile} 
+          onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
+        />
 
-      {/* Header */}
-      <AppHeader 
-        profile={profile} 
-        onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
-      />
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+          <AppHeader 
+            profile={profile} 
+            onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
+          />
 
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-10 lg:pl-[88px]">
-        <div className="max-w-4xl mx-auto">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+            <div className="max-w-4xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
@@ -965,7 +965,9 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 

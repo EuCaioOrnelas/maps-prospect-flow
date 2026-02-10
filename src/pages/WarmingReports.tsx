@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WarmingStatsPanel } from "@/components/warming/WarmingStatsPanel";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Flame, RefreshCw, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber } from '@/lib/phoneUtils';
@@ -69,20 +70,21 @@ export default function WarmingReports() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background Glows */}
-      <BackgroundGlow />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        <BackgroundGlow />
       
-      <SEO 
-        title="Relatórios de Aquecimento | Wiize"
-        description="Estatísticas e relatórios do sistema de aquecimento de números"
-      />
+        <SEO 
+          title="Relatórios de Aquecimento | Wiize"
+          description="Estatísticas e relatórios do sistema de aquecimento de números"
+        />
       
-      <AppSidebar profile={profile} />
-      <MobileNav profile={profile} />
+        <AppSidebar profile={profile} />
 
-      <main className="lg:pl-14 pt-16 lg:pt-0 min-h-screen">
-        <div className="max-w-7xl mx-auto p-4 lg:p-8">
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+          <AppHeader profile={profile} />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+            <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div>
@@ -155,7 +157,9 @@ export default function WarmingReports() {
             />
           )}
         </div>
-      </main>
-    </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

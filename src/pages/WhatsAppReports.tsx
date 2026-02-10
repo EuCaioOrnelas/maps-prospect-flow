@@ -62,6 +62,7 @@ import { ptBR } from "date-fns/locale";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 
 interface Campaign {
@@ -313,18 +314,14 @@ const WhatsAppReports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background Glows */}
-      <BackgroundGlow />
-      
-      {/* Sidebar - Desktop only */}
-      <AppSidebar profile={profile} />
-
-      {/* Header */}
-      <AppHeader profile={profile} />
-
-      <main className="container mx-auto px-4 py-8 lg:pl-14">
-        <div className="max-w-6xl mx-auto">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        <BackgroundGlow />
+        <AppSidebar profile={profile} />
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+          <AppHeader profile={profile} />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+            <div className="max-w-7xl mx-auto">
           {/* Header with filter */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div>
@@ -655,7 +652,7 @@ const WhatsAppReports = () => {
             </div>
           </Card>
         </div>
-      </main>
+          </main>
 
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
@@ -779,7 +776,9 @@ const WhatsAppReports = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
