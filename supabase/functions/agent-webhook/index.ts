@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Response limits by warming status
 const RESPONSE_LIMITS = {
-  cold: 50,      // Número frio: 50 leads respondidos
-  warm: 200,     // Número morno: 200 leads respondidos
+  cold: 20,      // Número frio: 20 leads respondidos
+  warm: 100,     // Número morno: 100 leads respondidos
   hot: null,     // Número aquecido: sem limite
 };
 
