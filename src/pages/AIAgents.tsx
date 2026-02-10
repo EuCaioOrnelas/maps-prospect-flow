@@ -405,75 +405,84 @@ export default function AIAgents() {
                   {agents.map((agent) => (
                     <Card 
                       key={agent.id} 
-                      className="border-border hover:border-primary/50 transition-colors cursor-pointer group"
+                      className="border-border hover:border-primary/30 transition-all cursor-pointer group overflow-hidden"
                       onClick={() => setSelectedAgent(agent)}
                     >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-primary/10 relative">
-                              <Bot className="h-5 w-5 text-primary" />
-                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                                <FlaskConical className="w-2.5 h-2.5 text-amber-500" />
-                              </div>
+                      {/* Header: Name + Status */}
+                      <div className="p-4 pb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+                              <Bot className="h-4 w-4 text-primary" />
                             </div>
-                            <div>
-                              <CardTitle className="text-lg">{agent.name}</CardTitle>
-                              <CardDescription className="flex items-center gap-1">
-                                <Target className="h-3 w-3" />
-                                {getObjectiveLabel(agent.objective)}
-                              </CardDescription>
-                            </div>
+                            <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
                           </div>
-                          {getStatusBadge(agent.status)}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {agent.status === 'active' && (
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                              </span>
+                            )}
+                            {getStatusBadge(agent.status)}
+                          </div>
                         </div>
-                      </CardHeader>
-                      
-                      <CardContent className="space-y-4">
-                        {/* Stats with real-time indicator */}
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                              {agent.status === 'active' && (
-                                <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                </span>
-                              )}
-                            </div>
-                            <span className={`font-medium ${
-                              agent.messages_sent_today >= agent.daily_limit * 0.9 
-                                ? 'text-yellow-500' 
-                                : agent.messages_sent_today >= agent.daily_limit 
-                                  ? 'text-red-500' 
-                                  : 'text-muted-foreground'
-                            }`}>
-                              {agent.messages_sent_today}/{agent.daily_limit} hoje
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 pl-9">
+                          <Target className="h-3 w-3 shrink-0" />
+                          {getObjectiveLabel(agent.objective)}
+                        </p>
+                      </div>
+
+                      {/* Stats Row */}
+                      <div className="px-4 pb-3">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                          {/* Messages today */}
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-muted-foreground flex items-center gap-1.5">
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              Mensagens
                             </span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowLeadsLimitInfo(true);
-                                  }}
-                                  className="text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  <Info className="h-3.5 w-3.5" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Sobre limites progressivos</TooltipContent>
-                            </Tooltip>
+                            <div className="flex items-center gap-1">
+                              <span className={`font-semibold tabular-nums ${
+                                agent.messages_sent_today >= agent.daily_limit 
+                                  ? 'text-red-500' 
+                                  : agent.messages_sent_today >= agent.daily_limit * 0.9 
+                                    ? 'text-yellow-500' 
+                                    : 'text-foreground'
+                              }`}>
+                                {agent.messages_sent_today}/{agent.daily_limit}
+                              </span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowLeadsLimitInfo(true);
+                                    }}
+                                    className="text-muted-foreground/60 hover:text-foreground transition-colors"
+                                  >
+                                    <Info className="h-3 w-3" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Sobre limites progressivos</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>{agent.operating_hours_start?.slice(0, 5)} - {agent.operating_hours_end?.slice(0, 5)}</span>
+
+                          {/* Operating hours */}
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-muted-foreground flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" />
+                              Horário
+                            </span>
+                            <span className="font-medium text-foreground tabular-nums">
+                              {agent.operating_hours_start?.slice(0, 5)}-{agent.operating_hours_end?.slice(0, 5)}
+                            </span>
                           </div>
                         </div>
-                        
-                        {/* Progress bar for daily messages */}
-                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+
+                        {/* Progress bar */}
+                        <div className="w-full h-1 bg-muted rounded-full overflow-hidden mt-3">
                           <div 
                             className={`h-full transition-all duration-500 rounded-full ${
                               agent.messages_sent_today >= agent.daily_limit 
@@ -485,91 +494,105 @@ export default function AIAgents() {
                             style={{ width: `${Math.min((agent.messages_sent_today / agent.daily_limit) * 100, 100)}%` }}
                           />
                         </div>
+                      </div>
 
-                        {/* WhatsApp Number */}
-                        {agent.whatsapp_number && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <div className={`w-2 h-2 rounded-full ${agent.is_warmed ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                            <span className="text-muted-foreground">
+                      {/* WhatsApp Number */}
+                      {agent.whatsapp_number && (
+                        <div className="px-4 pb-3">
+                          <div className="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-md bg-muted/50">
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${agent.is_warmed ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                            <span className="text-muted-foreground truncate">
                               {agent.whatsapp_number.name || agent.whatsapp_number.phone_number}
                             </span>
                             {!agent.is_warmed && (
-                              <Badge variant="outline" className="text-xs">
-                                <Flame className="h-3 w-3 mr-1" />
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-auto shrink-0">
+                                <Flame className="h-2.5 w-2.5 mr-0.5" />
                                 Frio
                               </Badge>
                             )}
                           </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-2 pt-2 border-t border-border">
-                          <Button
-                            variant={agent.status === 'active' ? 'destructive' : 'default'}
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleAgentStatus(agent);
-                            }}
-                          >
-                            {agent.status === 'active' ? (
-                              <>
-                                <Pause className="h-4 w-4 mr-1" />
-                                Pausar
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-1" />
-                                Ativar
-                              </>
-                            )}
-                          </Button>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedAgent(agent);
-                                  setTimeout(() => {
-                                    const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
-                                    settingsTab?.click();
-                                  }, 300);
-                                }}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Salvar como template</TooltipContent>
-                          </Tooltip>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAgent(agent);
-                            }}
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAgentToDelete(agent);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
-                      </CardContent>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 px-4 py-2.5 border-t border-border bg-muted/20">
+                        <Button
+                          variant={agent.status === 'active' ? 'destructive' : 'default'}
+                          size="sm"
+                          className="flex-1 h-8 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleAgentStatus(agent);
+                          }}
+                        >
+                          {agent.status === 'active' ? (
+                            <>
+                              <Pause className="h-3.5 w-3.5 mr-1" />
+                              Pausar
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3.5 w-3.5 mr-1" />
+                              Ativar
+                            </>
+                          )}
+                        </Button>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAgent(agent);
+                                setTimeout(() => {
+                                  const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
+                                  settingsTab?.click();
+                                }, 300);
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Salvar como template</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAgent(agent);
+                              }}
+                            >
+                              <Settings className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Configurações</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAgentToDelete(agent);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Excluir agente</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </Card>
                   ))}
                 </div>
