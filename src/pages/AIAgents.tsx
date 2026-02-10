@@ -26,7 +26,8 @@ import {
   FlaskConical,
   MessageCircle,
   FileText,
-  Copy
+  Copy,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
@@ -115,6 +116,8 @@ export default function AIAgents() {
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
   const [showManageTemplates, setShowManageTemplates] = useState(false);
+  const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
+  const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
 
   // Check if user has access to AI Agents (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
@@ -199,8 +202,23 @@ export default function AIAgents() {
     }
   };
 
+  // Fetch warming statuses for agent numbers
+  const fetchWarmingStatuses = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('warming_sessions')
+      .select('whatsapp_number_id, warming_status')
+      .eq('user_id', user.id);
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach(s => { map[s.whatsapp_number_id] = s.warming_status; });
+      setWarmingStatuses(map);
+    }
+  };
+
   useEffect(() => {
     fetchAgents();
+    fetchWarmingStatuses();
 
     // Subscribe to realtime updates
     const channel = supabase
@@ -433,6 +451,20 @@ export default function AIAgents() {
                             }`}>
                               {agent.messages_sent_today}/{agent.daily_limit} hoje
                             </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowLeadsLimitInfo(true);
+                                  }}
+                                  className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <Info className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Sobre limites progressivos</TooltipContent>
+                            </Tooltip>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Clock className="h-4 w-4" />
@@ -645,6 +677,55 @@ export default function AIAgents() {
         open={showManageTemplates}
         onOpenChange={setShowManageTemplates}
       />
+
+      {/* Leads Limit Info Dialog */}
+      <Dialog open={showLeadsLimitInfo} onOpenChange={setShowLeadsLimitInfo}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              Limite Progressivo de Leads
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-4 pt-3">
+              <p>
+                Para ajudar a proteger seu número contra bloqueios, o limite de leads respondidos pelo agente aumenta conforme o aquecimento do chip:
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <span className="text-lg">🔴</span>
+                  <div>
+                    <p className="font-medium text-sm">Frio — até 20 leads/dia</p>
+                    <p className="text-xs text-muted-foreground">Chip novo ou pouco usado</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <span className="text-lg">🟡</span>
+                  <div>
+                    <p className="font-medium text-sm">Morno — até 100 leads/dia</p>
+                    <p className="text-xs text-muted-foreground">Chip com algum histórico</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <span className="text-lg">🟢</span>
+                  <div>
+                    <p className="font-medium text-sm">Quente — Ilimitado</p>
+                    <p className="text-xs text-muted-foreground">Chip bem aquecido e confiável</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Essa proteção ajuda a evitar que envios em massa prejudiquem a reputação do seu número. 
+                Aqueça seu chip na seção de <strong>Aquecimento</strong> para desbloquear limites maiores.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowLeadsLimitInfo(false)} className="w-full">
+              Entendi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
