@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,6 +91,7 @@ export const NumbersManager = ({
   
   // Track if we're creating a NEW number (not saved to DB yet) vs connecting existing one
   const [pendingNumberName, setPendingNumberName] = useState<string | null>(null);
+  const isInsertingRef = useRef(false);
   
   // Warming sessions for each number
   const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
@@ -266,11 +267,16 @@ export const NumbersManager = ({
         }
 
         if (data?.connected) {
+          // Prevent duplicate processing - clear interval immediately
+          if (showSuccessAnimation) return;
+          
           // Show success animation
           setShowSuccessAnimation(true);
           
           if (isNewNumber && user) {
-            // NOW create the number in database since connection succeeded
+            // Guard against duplicate inserts
+            if (isInsertingRef.current) return;
+            isInsertingRef.current = true;
             const { data: newNumber, error: insertError } = await supabase
               .from('whatsapp_numbers')
               .insert({
@@ -290,6 +296,7 @@ export const NumbersManager = ({
                 description: "Conexão bem-sucedida mas erro ao salvar. Tente novamente.",
                 variant: "destructive",
               });
+              isInsertingRef.current = false;
               return;
             }
             
@@ -304,6 +311,7 @@ export const NumbersManager = ({
               
               // Reset all states
               setPendingNumberName(null);
+              isInsertingRef.current = false;
             }, 2000);
           } else {
             // Existing number - just update local state
