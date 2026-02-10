@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Bot, 
   Plus, 
@@ -493,22 +494,25 @@ export default function AIAgents() {
                             )}
                           </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            title="Salvar como template"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAgent(agent);
-                              // Small delay to let dialog open, then switch to settings tab
-                              setTimeout(() => {
-                                const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
-                                settingsTab?.click();
-                              }, 300);
-                            }}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedAgent(agent);
+                                  setTimeout(() => {
+                                    const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
+                                    settingsTab?.click();
+                                  }, 300);
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Salvar como template</TooltipContent>
+                          </Tooltip>
                           
                           <Button
                             variant="ghost"
