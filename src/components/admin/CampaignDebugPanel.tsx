@@ -19,6 +19,9 @@ import {
   Smartphone,
   Activity,
   RefreshCw,
+  Server,
+  Database,
+  Zap,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -61,8 +64,29 @@ interface NumberInfo {
   id: string;
   name: string;
   phone_number: string | null;
+  instance_name: string | null;
   is_connected: boolean;
   daily_sent_count: number;
+  last_sent_at: string | null;
+}
+
+interface HeartbeatInfo {
+  id: string;
+  action: string;
+  status: string;
+  started_at: string;
+  completed_at: string | null;
+  campaigns_processed: number | null;
+  messages_sent: number | null;
+  error_message: string | null;
+}
+
+interface DiagnosticItem {
+  type: "error" | "warning" | "info";
+  message: string;
+  cause: string;
+  fix: string;
+  category?: string;
 }
 
 export const CampaignDebugPanel = () => {
@@ -72,6 +96,8 @@ export const CampaignDebugPanel = () => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [heartbeats, setHeartbeats] = useState<HeartbeatInfo[]>([]);
+  const [ignoredCounts, setIgnoredCounts] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const searchCampaigns = async () => {
@@ -92,6 +118,8 @@ export const CampaignDebugPanel = () => {
         setCampaigns([]);
         setNumbers([]);
         setUserName(null);
+        setHeartbeats([]);
+        setIgnoredCounts({});
         toast({ title: "Usuário não encontrado", variant: "destructive" });
         setLoading(false);
         return;
@@ -99,23 +127,48 @@ export const CampaignDebugPanel = () => {
 
       setUserName(profile.name || profile.email);
 
-      // Fetch active campaigns (not completed/cancelled)
+      // Fetch ALL campaigns (include completed/cancelled for full picture)
       const { data: campaignsData, error: campaignsError } = await supabase
         .from("whatsapp_campaigns")
         .select("*")
         .eq("user_id", profile.id)
-        .in("status", ["pending", "running", "paused", "scheduled"])
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(20);
 
       if (campaignsError) throw campaignsError;
 
-      // Fetch user's numbers
+      // Fetch user's numbers with instance_name
       const { data: numbersData, error: numbersError } = await supabase
         .from("whatsapp_numbers")
-        .select("id, name, phone_number, is_connected, daily_sent_count")
+        .select("id, name, phone_number, instance_name, is_connected, daily_sent_count, last_sent_at")
         .eq("user_id", profile.id);
 
       if (numbersError) throw numbersError;
+
+      // Fetch recent heartbeats (last 5)
+      const { data: heartbeatData } = await supabase
+        .from("campaign_processor_heartbeats")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(5);
+
+      setHeartbeats((heartbeatData || []) as HeartbeatInfo[]);
+
+      // Fetch ignored contacts count per campaign
+      const activeCampaigns = (campaignsData || []).filter(c => 
+        ["pending", "running", "paused", "scheduled"].includes(c.status)
+      );
+      
+      const counts: Record<string, number> = {};
+      for (const c of activeCampaigns) {
+        const { count } = await supabase
+          .from("ignored_contacts")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", profile.id)
+          .eq("campaign_id", c.id);
+        counts[c.id] = count || 0;
+      }
+      setIgnoredCounts(counts);
 
       setCampaigns((campaignsData || []) as unknown as CampaignDebug[]);
       setNumbers(numbersData || []);
@@ -138,6 +191,9 @@ export const CampaignDebugPanel = () => {
       paused: { label: "Pausada", variant: "secondary", icon: <Pause size={12} /> },
       scheduled: { label: "Agendada", variant: "outline", icon: <Calendar size={12} /> },
       pending: { label: "Pendente", variant: "outline", icon: <Clock size={12} /> },
+      completed: { label: "Concluída", variant: "default", icon: <CheckCircle2 size={12} /> },
+      cancelled: { label: "Cancelada", variant: "destructive", icon: <XCircle size={12} /> },
+      failed: { label: "Falhou", variant: "destructive", icon: <XCircle size={12} /> },
     };
     const s = statusMap[campaign.status] || { label: campaign.status, variant: "outline" as const, icon: null };
     return (
@@ -148,40 +204,249 @@ export const CampaignDebugPanel = () => {
     );
   };
 
-  const getDiagnostics = (campaign: CampaignDebug) => {
-    const issues: { type: "error" | "warning" | "info"; message: string; cause: string; fix: string }[] = [];
+  const getDiagnostics = (campaign: CampaignDebug): DiagnosticItem[] => {
+    const issues: DiagnosticItem[] = [];
     const now = new Date();
+    const numberInfo = getNumberInfo(campaign.whatsapp_number_id);
 
-    // Running but no messages sent
+    // ===== INFRASTRUCTURE CHECKS =====
+
+    // Check if processor is running at all
+    if (heartbeats.length > 0) {
+      const lastHeartbeat = heartbeats[0];
+      const lastHeartbeatAge = now.getTime() - new Date(lastHeartbeat.started_at).getTime();
+      const minutesSinceHeartbeat = Math.floor(lastHeartbeatAge / 60000);
+      
+      if (minutesSinceHeartbeat > 3) {
+        issues.push({
+          type: "error",
+          message: `⚙️ Campaign Processor PARADO — último heartbeat há ${minutesSinceHeartbeat} min`,
+          cause: "O cron job que executa o campaign-processor não está rodando. Sem ele, NENHUMA campanha será processada. Causa: cron job deletado, Edge Function com erro de deploy, ou infraestrutura Supabase indisponível.",
+          fix: "1) Verificar se o cron job 'campaign-processor' existe no pg_cron. 2) Verificar se a Edge Function 'campaign-processor' está deployada sem erros. 3) Testar manualmente via curl: POST /functions/v1/campaign-processor com body {\"action\":\"process\"}.",
+          category: "infra"
+        });
+      }
+
+      if (lastHeartbeat.status === "running" && lastHeartbeat.completed_at === null) {
+        const runningFor = Math.floor(lastHeartbeatAge / 60000);
+        if (runningFor > 2) {
+          issues.push({
+            type: "error",
+            message: `⚙️ Processor travou na última execução (rodando há ${runningFor} min sem completar)`,
+            cause: "A última execução do campaign-processor iniciou mas nunca finalizou. Possível timeout na Edge Function, erro não capturado, ou loop infinito.",
+            fix: "1) Verificar logs do campaign-processor para a execução com ID: " + lastHeartbeat.id.slice(0, 8) + ". 2) Próxima execução do cron deve criar um novo heartbeat normalmente.",
+            category: "infra"
+          });
+        }
+      }
+
+      if (lastHeartbeat.error_message) {
+        issues.push({
+          type: "error",
+          message: `⚙️ Último processamento teve erro: ${lastHeartbeat.error_message}`,
+          cause: "O campaign-processor encontrou um erro na última execução.",
+          fix: "Verificar os logs da Edge Function para detalhes do erro.",
+          category: "infra"
+        });
+      }
+    } else if (campaign.status === "running" || campaign.status === "pending") {
+      issues.push({
+        type: "error",
+        message: "⚙️ Nenhum heartbeat do processador encontrado",
+        cause: "O campaign-processor nunca foi executado ou a tabela de heartbeats está vazia. Sem o processador, campanhas não serão processadas.",
+        fix: "1) Verificar se o cron job está configurado. 2) Executar manualmente o processador para testar.",
+        category: "infra"
+      });
+    }
+
+    // ===== NUMBER/CONNECTION CHECKS =====
+
+    if (!campaign.whatsapp_number_id) {
+      issues.push({
+        type: "error",
+        message: "📱 Nenhum número WhatsApp atribuído à campanha",
+        cause: "A campanha foi criada sem selecionar um número de envio. Bug no fluxo de criação de campanha (código frontend).",
+        fix: "Esta campanha não pode funcionar. O usuário precisa cancelar e criar uma nova campanha selecionando um número. Verificar o código do componente de criação de campanha.",
+        category: "number"
+      });
+    } else if (!numberInfo) {
+      issues.push({
+        type: "error",
+        message: "📱 Número atribuído não existe mais no banco de dados",
+        cause: `O whatsapp_number_id "${campaign.whatsapp_number_id}" não foi encontrado. O número pode ter sido deletado após a criação da campanha.`,
+        fix: "Campanha irrecuperável. O processador vai pausá-la com 'Número não configurado'. Cancelar e recriar com um número válido.",
+        category: "number"
+      });
+    } else {
+      if (!numberInfo.is_connected) {
+        issues.push({
+          type: "error",
+          message: `📱 Número "${numberInfo.name}" está DESCONECTADO`,
+          cause: "O WhatsApp perdeu a conexão. O processador vai pular esta campanha a cada ciclo até reconectar. Causas: WhatsApp Web deslogado, celular sem internet, sessão expirada.",
+          fix: "1) Pedir ao usuário para reconectar via QR Code na tela 'Números'. 2) Verificar se o celular está ligado e com internet. 3) Se não funcionar, reconectar a instância manualmente.",
+          category: "number"
+        });
+      }
+
+      if (!numberInfo.instance_name) {
+        issues.push({
+          type: "error",
+          message: `📱 Número "${numberInfo.name}" sem instance_name`,
+          cause: "O número não tem uma instância na Evolution API. O processador vai pausar a campanha com 'Número não configurado'. Causas: instância nunca criada, ou foi deletada.",
+          fix: "1) O usuário precisa ir em 'Números', deletar e recriar este número. 2) Após criar, reconectar via QR Code. 3) Depois, retomar a campanha.",
+          category: "number"
+        });
+      }
+
+      // Check daily limit
+      if (numberInfo.daily_sent_count >= 200) {
+        issues.push({
+          type: "warning",
+          message: `📱 Número atingiu limite diário (${numberInfo.daily_sent_count}/200)`,
+          cause: "O número já enviou 200 mensagens hoje. O processador pausa a campanha automaticamente até a meia-noite (São Paulo).",
+          fix: "Comportamento esperado. O contador reseta à meia-noite (horário de São Paulo) e a campanha retoma automaticamente.",
+          category: "number"
+        });
+      }
+    }
+
+    // ===== CAMPAIGN DATA CHECKS =====
+
+    // Parse and validate leads
+    let leads: any[] = [];
+    try {
+      leads = Array.isArray(campaign.leads) ? campaign.leads : 
+              typeof campaign.leads === 'string' ? JSON.parse(campaign.leads as string) : [];
+    } catch { leads = []; }
+
+    let messages: string[] = [];
+    try {
+      messages = Array.isArray(campaign.messages) ? campaign.messages as string[] :
+                 typeof campaign.messages === 'string' ? JSON.parse(campaign.messages as string) : [];
+    } catch { messages = []; }
+
+    const validMessages = messages.filter(m => m?.trim());
+
+    if (leads.length === 0) {
+      issues.push({
+        type: "error",
+        message: "📋 Campanha sem leads (lista vazia)",
+        cause: "O campo 'leads' da campanha está vazio ou é inválido. Possível bug no salvamento da campanha: leads não foram persistidos no JSON, ou o formato da planilha estava incorreto.",
+        fix: "1) Verificar no banco o campo 'leads' desta campanha (pode estar como '[]' ou null). 2) Cancelar e recriar com leads válidos. 3) Verificar se a planilha importada tinha colunas 'name' e 'phone'.",
+        category: "data"
+      });
+    } else {
+      // Check leads with no phone
+      const leadsNoPhone = leads.filter(l => !l?.phone && !l?.telefone);
+      if (leadsNoPhone.length > 0) {
+        const pct = Math.round((leadsNoPhone.length / leads.length) * 100);
+        issues.push({
+          type: leadsNoPhone.length === leads.length ? "error" : "warning",
+          message: `📋 ${leadsNoPhone.length}/${leads.length} leads sem telefone (${pct}%)`,
+          cause: leadsNoPhone.length === leads.length
+            ? "NENHUM lead tem telefone. A campanha vai falhar em todos. Causa provável: planilha importada sem coluna 'phone' ou 'telefone', ou colunas mapeadas incorretamente."
+            : "Alguns leads não têm telefone e serão contados como falha pelo processador.",
+          fix: leadsNoPhone.length === leads.length
+            ? "Cancelar campanha. Reimportar planilha verificando que a coluna de telefone está como 'phone' ou 'telefone'. Exemplo de lead esperado: {\"name\": \"João\", \"phone\": \"11999998888\"}."
+            : "Leads sem telefone serão pulados automaticamente. Se forem muitos, reimportar com dados corretos.",
+          category: "data"
+        });
+      }
+
+      // Check for all leads being ignored
+      const ignoredCount = ignoredCounts[campaign.id] || 0;
+      if (ignoredCount > 0 && campaign.status === "running") {
+        const remainingLeads = leads.length - campaign.current_lead_index;
+        if (ignoredCount >= remainingLeads && remainingLeads > 0) {
+          issues.push({
+            type: "error",
+            message: `🚫 ${ignoredCount} contatos ignorados — possivelmente todos os leads restantes já foram contatados`,
+            cause: "Os leads restantes já estão na lista de 'ignored_contacts' (já receberam mensagem anteriormente). O processador pula contatos ignorados e conta como falha.",
+            fix: "1) Se é uma segunda campanha para os mesmos leads, isso é esperado — apenas leads que responderam são removidos da lista ignorados. 2) Para reenviar, é necessário limpar a tabela 'ignored_contacts' para este usuário.",
+            category: "data"
+          });
+        } else if (ignoredCount > 0) {
+          issues.push({
+            type: "info",
+            message: `🚫 ${ignoredCount} contatos já na lista de ignorados para esta campanha`,
+            cause: "Contatos que já receberam mensagem de campanhas anteriores são pulados automaticamente.",
+            fix: "Comportamento esperado. Leads ignorados são contados como falha no progresso.",
+            category: "data"
+          });
+        }
+      }
+
+      // Check current lead at index
+      if (campaign.current_lead_index < leads.length && campaign.status === "running") {
+        const currentLead = leads[campaign.current_lead_index];
+        const currentPhone = currentLead?.phone || currentLead?.telefone;
+        if (!currentPhone) {
+          issues.push({
+            type: "warning",
+            message: `📋 Lead atual (#${campaign.current_lead_index + 1}) não tem telefone: ${JSON.stringify(currentLead).slice(0, 100)}`,
+            cause: "O próximo lead a ser processado não tem telefone. O processador vai contar como falha e pular para o próximo.",
+            fix: "O processador avança automaticamente. Se todos os próximos leads estão sem telefone, a campanha vai 'completar' com muitas falhas.",
+            category: "data"
+          });
+        }
+      }
+    }
+
+    if (validMessages.length === 0) {
+      issues.push({
+        type: "error",
+        message: "💬 Campanha sem mensagens válidas",
+        cause: "O campo 'messages' está vazio ou todas as mensagens são strings vazias. Bug no fluxo de criação: as mensagens não foram salvas corretamente.",
+        fix: "Campanha não vai funcionar. Cancelar e recriar com mensagens válidas. Verificar código do componente MessageVariations.",
+        category: "data"
+      });
+    }
+
+    // ===== CAMPAIGN STATE CHECKS =====
+
+    // Running but no messages sent for a while
     if (campaign.status === "running" && campaign.sent_count === 0 && campaign.started_at) {
       const startedAgo = now.getTime() - new Date(campaign.started_at).getTime();
       const minutesAgo = Math.floor(startedAgo / 60000);
       if (minutesAgo > 5) {
-        const numberInfo = getNumberInfo(campaign.whatsapp_number_id);
-        const isDisconnected = numberInfo && !numberInfo.is_connected;
+        // Build detailed cause
+        const causes: string[] = [];
+        if (numberInfo && !numberInfo.is_connected) causes.push("número desconectado");
+        if (numberInfo && !numberInfo.instance_name) causes.push("sem instance_name");
+        if (leads.length === 0) causes.push("sem leads");
+        if (validMessages.length === 0) causes.push("sem mensagens");
+        const leadsNoPhone = leads.filter(l => !l?.phone && !l?.telefone);
+        if (leadsNoPhone.length === leads.length && leads.length > 0) causes.push("nenhum lead tem telefone");
+        
+        const processorOk = heartbeats.length > 0 && 
+          (now.getTime() - new Date(heartbeats[0].started_at).getTime()) < 3 * 60000;
+        if (!processorOk) causes.push("processador pode estar parado");
+
         issues.push({
           type: "error",
-          message: `Rodando há ${minutesAgo} min sem enviar nenhuma mensagem`,
-          cause: isDisconnected
-            ? "O número WhatsApp está desconectado. O processador não consegue enviar mensagens sem conexão ativa."
-            : "O campaign-processor pode não estar processando esta campanha. Possíveis causas: cron job parado, erro no Edge Function, ou leads inválidos.",
-          fix: isDisconnected
-            ? "1) Reconectar o número via QR Code. 2) Após reconectar, a campanha deve retomar automaticamente no próximo ciclo do processador (~30s)."
-            : "1) Verificar logs do campaign-processor no painel de Edge Functions. 2) Verificar se os leads têm telefones válidos. 3) Tentar pausar e retomar a campanha manualmente."
+          message: `🔴 Rodando há ${minutesAgo} min sem enviar NENHUMA mensagem`,
+          cause: causes.length > 0
+            ? `Problemas detectados: ${causes.join(", ")}. O processador busca campanhas 'running', obtém o número, verifica conexão, e tenta enviar ao lead atual.`
+            : "Nenhum problema óbvio detectado nos dados. O erro pode estar no código do campaign-processor, na Evolution API, ou na rede.",
+          fix: causes.length > 0
+            ? "Resolver os problemas listados acima primeiro."
+            : "1) Verificar logs do campaign-processor (Edge Function logs). 2) Testar envio manual via evolution-send-message. 3) Verificar se a Evolution API está acessível.",
+          category: "state"
         });
       }
     }
 
     // Running but stuck (no message sent recently)
-    if (campaign.status === "running" && campaign.last_message_sent_at) {
+    if (campaign.status === "running" && campaign.last_message_sent_at && campaign.sent_count > 0) {
       const lastSentAgo = now.getTime() - new Date(campaign.last_message_sent_at).getTime();
       const minutesSinceLastSent = Math.floor(lastSentAgo / 60000);
       if (minutesSinceLastSent > 10) {
         issues.push({
           type: "warning",
-          message: `Última mensagem enviada há ${minutesSinceLastSent} min (pode estar travada)`,
-          cause: "A campanha enviou mensagens antes mas parou. Possíveis causas: smart pause ativa, erro na Evolution API, lead atual com telefone inválido, ou limite diário atingido.",
-          fix: "1) Verificar se smart_pause está ativa e o tempo de pausa. 2) Checar se o número atingiu o limite diário. 3) Verificar logs do campaign-processor para erros. 4) Se persistir, pausar e retomar a campanha."
+          message: `⏱️ Última mensagem enviada há ${minutesSinceLastSent} min (campanha pode estar travada)`,
+          cause: "A campanha parou de enviar. Possíveis causas: smart pause ativa, lead atual sem telefone, todos os leads restantes ignorados, ou erro na Evolution API.",
+          fix: "1) Verificar se smart_pause está ativa. 2) Checar o lead atual no índice " + campaign.current_lead_index + ". 3) Verificar logs do processador. 4) Se persistir, pausar e retomar manualmente.",
+          category: "state"
         });
       }
     }
@@ -192,9 +457,10 @@ export const CampaignDebugPanel = () => {
       if (failRate > 0.3) {
         issues.push({
           type: "error",
-          message: `Taxa de falha alta: ${Math.round(failRate * 100)}% (${campaign.failed_count} falhas de ${campaign.sent_count + campaign.failed_count})`,
-          cause: "Muitas mensagens falharam ao enviar. Possíveis causas: leads com telefones inválidos/inexistentes no WhatsApp, número bloqueado pela Meta, ou instabilidade na Evolution API.",
-          fix: "1) Verificar se os leads importados têm telefones válidos com DDD+9 dígitos. 2) Checar se o número não foi banido (verificar no WhatsApp Web). 3) Verificar status da instância na Evolution API."
+          message: `📊 Taxa de falha alta: ${Math.round(failRate * 100)}% (${campaign.failed_count} falhas de ${campaign.sent_count + campaign.failed_count})`,
+          cause: "Muitas mensagens falharam. Causas: telefones inválidos na planilha (sem DDD, formato errado), contatos sem WhatsApp, número bloqueado pela Meta, ou instabilidade da Evolution API.",
+          fix: "1) Verificar os leads importados — telefones devem ter DDD+9 dígitos (ex: 11999998888). 2) Checar se o número não foi banido. 3) Testar envio manual para um número válido.",
+          category: "state"
         });
       }
     }
@@ -203,9 +469,10 @@ export const CampaignDebugPanel = () => {
     if (campaign.pause_reason === "incident_detected") {
       issues.push({
         type: "error",
-        message: "Pausada por incidente (bloqueio/denúncia detectado)",
-        cause: "O sistema detectou que um contato denunciou ou bloqueou o número durante o envio. A campanha foi pausada automaticamente como medida de segurança.",
-        fix: "1) NÃO retomar imediatamente — esperar pelo menos 24h. 2) Revisar o conteúdo das mensagens (pode estar gerando denúncias). 3) Reduzir o volume diário. 4) Se o número foi banido, será necessário usar outro número."
+        message: "🚨 Pausada por incidente (bloqueio/denúncia detectado)",
+        cause: "Um contato denunciou/bloqueou o número durante o envio. Campanha pausada automaticamente como proteção.",
+        fix: "1) NÃO retomar imediatamente — esperar 24h+. 2) Revisar conteúdo das mensagens. 3) Reduzir volume diário. 4) Se o número foi banido, usar outro número.",
+        category: "state"
       });
     }
 
@@ -213,9 +480,21 @@ export const CampaignDebugPanel = () => {
     if (campaign.paused_at_limit) {
       issues.push({
         type: "warning",
-        message: "Pausada por limite diário atingido",
-        cause: "O número atingiu o limite diário de envios configurado. A campanha será retomada automaticamente no próximo dia.",
-        fix: `Comportamento esperado. A campanha retomará automaticamente após a meia-noite (reset do contador diário).${campaign.resume_at ? ` Retoma prevista: ${formatDate(campaign.resume_at)}` : ""}`
+        message: "⏸️ Pausada por limite diário atingido",
+        cause: "O número atingiu 200 envios hoje. A campanha retoma automaticamente após a meia-noite (São Paulo).",
+        fix: `Comportamento esperado.${campaign.resume_at ? ` Retoma prevista: ${formatDate(campaign.resume_at)}` : ""}`,
+        category: "state"
+      });
+    }
+
+    // Paused with smart_pause reason
+    if (campaign.status === "paused" && campaign.pause_reason === "smart_pause") {
+      issues.push({
+        type: "info",
+        message: `⏸️ Pausada por Smart Pause (pausa de ${campaign.pause_minutes || 5} min a cada ${campaign.pause_after_contacts || 50} contatos)`,
+        cause: "Comportamento esperado. A campanha faz pausas periódicas para parecer mais natural e evitar bloqueios.",
+        fix: campaign.resume_at ? `Retoma automática em: ${formatDate(campaign.resume_at)} (${formatRelative(campaign.resume_at)})` : "Retoma automática no próximo ciclo do processador.",
+        category: "state"
       });
     }
 
@@ -227,42 +506,13 @@ export const CampaignDebugPanel = () => {
         if (minutesLate > 2) {
           issues.push({
             type: "error",
-            message: `Agendada para ${format(scheduledTime, "dd/MM HH:mm")} mas não iniciou (${minutesLate} min de atraso)`,
-            cause: "O cron job start-scheduled-campaigns deveria ter iniciado esta campanha. Possíveis causas: Edge Function com erro, número desconectado no momento do agendamento, ou fuso horário incorreto.",
-            fix: "1) Verificar logs do start-scheduled-campaigns. 2) Confirmar que o número está conectado. 3) Se persistir, cancelar e recriar a campanha. 4) O atraso normal é de até 60s — acima disso indica problema."
+            message: `📅 Agendada para ${format(scheduledTime, "dd/MM HH:mm")} mas não iniciou (${minutesLate} min de atraso)`,
+            cause: "O campaign-processor deveria ter mudado o status para 'running'. Possíveis causas: processador parado, erro na query de campanhas agendadas.",
+            fix: "1) Verificar se o processador está rodando (ver heartbeats acima). 2) Verificar logs. 3) Se necessário, mudar status manualmente para 'running' no banco.",
+            category: "state"
           });
         }
       }
-    }
-
-    // Number not connected
-    const numberInfo = getNumberInfo(campaign.whatsapp_number_id);
-    if (numberInfo && !numberInfo.is_connected) {
-      issues.push({
-        type: "error",
-        message: `Número "${numberInfo.name}" desconectado`,
-        cause: "O número WhatsApp perdeu a conexão. Nenhuma mensagem será enviada enquanto estiver desconectado. Causas comuns: WhatsApp Web deslogado, celular sem internet, ou instância expirada.",
-        fix: "1) Pedir ao usuário para reconectar via QR Code na tela de Números. 2) Verificar se o celular está com internet. 3) Se não reconectar, deletar e recriar a instância."
-      });
-    }
-
-    if (!campaign.whatsapp_number_id) {
-      issues.push({
-        type: "error",
-        message: "Nenhum número WhatsApp atribuído",
-        cause: "A campanha foi criada sem selecionar um número de envio. Isso não deveria acontecer — pode ser um bug no fluxo de criação.",
-        fix: "1) Esta campanha não pode ser recuperada. 2) O usuário precisa cancelar e criar uma nova campanha selecionando um número."
-      });
-    }
-
-    // current_lead_index vs sent_count mismatch
-    if (campaign.current_lead_index > campaign.sent_count + campaign.failed_count + 5) {
-      issues.push({
-        type: "warning",
-        message: `Index (${campaign.current_lead_index}) muito à frente de enviados+falhas (${campaign.sent_count + campaign.failed_count})`,
-        cause: "O índice do lead atual está desalinhado com o total processado. Alguns leads podem ter sido pulados sem registro de envio ou falha.",
-        fix: "Monitorar — se a campanha continuar avançando e enviando, não é crítico. Se parar, pode ser necessário cancelar e recriar."
-      });
     }
 
     // Pending for too long
@@ -271,31 +521,51 @@ export const CampaignDebugPanel = () => {
       if (createdAgo > 10 * 60000) {
         issues.push({
           type: "warning",
-          message: "Campanha pendente há mais de 10 min",
-          cause: "A campanha deveria ter sido iniciada pelo processador. Possíveis causas: campaign-processor não está rodando ou há um erro ao processar campanhas pendentes.",
-          fix: "1) Verificar logs do campaign-processor. 2) Tentar mudar o status manualmente para 'running' no banco. 3) Se não funcionar, pedir ao usuário para cancelar e recriar."
+          message: "⏳ Campanha pendente há mais de 10 min",
+          cause: "Campanhas 'pending' precisam ser iniciadas pelo frontend (via campaign-processor action: 'start'). Se nunca foi chamado, a campanha ficará pendente indefinidamente.",
+          fix: "1) Verificar se o frontend chamou a action 'start' do campaign-processor. 2) O usuário pode ter saído da página antes de confirmar. 3) Tentar iniciar manualmente via curl.",
+          category: "state"
         });
       }
     }
 
-    // Updated recently but no progress
-    if (campaign.status === "running" && campaign.sent_count === 0 && campaign.updated_at) {
-      const updatedAgo = now.getTime() - new Date(campaign.updated_at).getTime();
-      if (updatedAgo < 2 * 60000 && campaign.started_at) {
-        const startedAgo = now.getTime() - new Date(campaign.started_at).getTime();
-        if (startedAgo > 5 * 60000) {
-          issues.push({
-            type: "warning",
-            message: "Processador está atualizando a campanha mas sem enviar mensagens",
-            cause: "O campaign-processor está processando esta campanha (updated_at recente) mas não consegue enviar. Possível erro no envio via Evolution API ou todos os leads já foram contatados anteriormente.",
-            fix: "1) Verificar logs detalhados do campaign-processor para esta campanha. 2) Checar se os leads não estão na lista de ignorados (ignored_contacts). 3) Verificar se a Evolution API está respondendo."
-          });
-        }
-      }
+    // Index ahead of progress
+    if (campaign.current_lead_index > campaign.sent_count + campaign.failed_count + 5) {
+      issues.push({
+        type: "warning",
+        message: `📋 Index (${campaign.current_lead_index}) muito à frente de enviados+falhas (${campaign.sent_count + campaign.failed_count})`,
+        cause: "Desalinhamento entre o índice do lead e o progresso registrado. Leads podem ter sido pulados sem contagem.",
+        fix: "Monitorar — se a campanha continua avançando, não é crítico. Pode indicar leads sem telefone sendo pulados rapidamente.",
+        category: "data"
+      });
+    }
+
+    // Campaign completed or cancelled — just show summary
+    if (campaign.status === "completed") {
+      const successRate = campaign.sent_count + campaign.failed_count > 0
+        ? Math.round((campaign.sent_count / (campaign.sent_count + campaign.failed_count)) * 100)
+        : 0;
+      issues.push({
+        type: successRate > 70 ? "info" : "warning",
+        message: `✅ Campanha concluída — ${campaign.sent_count} enviadas, ${campaign.failed_count} falhas (${successRate}% sucesso)`,
+        cause: "",
+        fix: "",
+        category: "state"
+      });
+    }
+
+    if (campaign.status === "cancelled") {
+      issues.push({
+        type: "info",
+        message: "❌ Campanha foi cancelada pelo usuário",
+        cause: "",
+        fix: "",
+        category: "state"
+      });
     }
 
     if (issues.length === 0) {
-      issues.push({ type: "info", message: "Sem problemas detectados", cause: "", fix: "" });
+      issues.push({ type: "info", message: "✅ Sem problemas detectados — campanha parece saudável", cause: "", fix: "" });
     }
 
     return issues;
@@ -339,8 +609,40 @@ export const CampaignDebugPanel = () => {
 
       {searched && userName && (
         <p className="text-sm text-muted-foreground mb-4">
-          Usuário: <strong>{userName}</strong> · {campaigns.length} campanha(s) ativa(s)/pendente(s)
+          Usuário: <strong>{userName}</strong> · {campaigns.length} campanha(s) encontrada(s)
         </p>
+      )}
+
+      {/* Processor Health */}
+      {searched && heartbeats.length > 0 && (
+        <div className="mb-4 p-3 rounded-lg border border-border bg-muted/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Server size={14} className="text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">Saúde do Processador (últimos 5 heartbeats)</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {heartbeats.map((hb) => {
+              const age = Math.floor((Date.now() - new Date(hb.started_at).getTime()) / 60000);
+              const isRecent = age < 3;
+              const isFailed = hb.status !== "completed" && hb.completed_at === null && age > 2;
+              return (
+                <div key={hb.id} className={`text-xs px-2 py-1 rounded border ${
+                  isFailed ? "border-destructive/50 bg-destructive/10 text-destructive" :
+                  isRecent ? "border-green-500/30 bg-green-500/10 text-green-600" :
+                  "border-border bg-muted/40 text-muted-foreground"
+                }`}>
+                  <span>{age}m atrás</span>
+                  <span className="mx-1">·</span>
+                  <span>{hb.campaigns_processed ?? 0} camp</span>
+                  <span className="mx-1">·</span>
+                  <span>{hb.messages_sent ?? 0} msgs</span>
+                  <span className="mx-1">·</span>
+                  <span>{isFailed ? "❌ travou" : hb.status === "completed" ? "✅" : "⏳"}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Numbers status */}
@@ -361,7 +663,8 @@ export const CampaignDebugPanel = () => {
               <span>·</span>
               <span>{n.is_connected ? "Conectado" : "Desconectado"}</span>
               <span>·</span>
-              <span>{n.daily_sent_count} enviados hoje</span>
+              <span>{n.daily_sent_count}/200 hoje</span>
+              {!n.instance_name && <span className="text-destructive font-medium">· Sem instância!</span>}
             </div>
           ))}
         </div>
@@ -371,7 +674,7 @@ export const CampaignDebugPanel = () => {
       {searched && campaigns.length === 0 && !loading && (
         <div className="text-center py-8 text-muted-foreground">
           <CheckCircle2 size={32} className="mx-auto mb-2 opacity-50" />
-          <p>Nenhuma campanha ativa/pendente/agendada encontrada.</p>
+          <p>Nenhuma campanha encontrada para este usuário.</p>
         </div>
       )}
 
@@ -411,6 +714,16 @@ export const CampaignDebugPanel = () => {
                 </div>
               </div>
 
+              {/* Progress bar */}
+              <div className="w-full bg-muted/40 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    hasErrors ? "bg-destructive" : hasWarnings ? "bg-yellow-500" : "bg-green-500"
+                  }`}
+                  style={{ width: `${Math.min(100, progress)}%` }}
+                />
+              </div>
+
               {/* Diagnostics */}
               <div className="space-y-2">
                 {diagnostics.map((d, i) => (
@@ -439,6 +752,11 @@ export const CampaignDebugPanel = () => {
                         <CheckCircle2 size={14} />
                       )}
                       <span>{d.message}</span>
+                      {d.category && (
+                        <Badge variant="outline" className="text-[10px] ml-auto px-1.5 py-0">
+                          {d.category}
+                        </Badge>
+                      )}
                     </div>
                     {d.cause && (
                       <div className="mt-2 ml-5 space-y-1">
@@ -480,8 +798,8 @@ export const CampaignDebugPanel = () => {
                   <p className="font-semibold">{campaign.current_lead_index}</p>
                 </div>
                 <div className="bg-muted/40 rounded-lg p-2">
-                  <span className="text-muted-foreground">Janela</span>
-                  <p className="font-semibold">{campaign.current_window || 1} (enviados: {campaign.window_sent_count || 0})</p>
+                  <span className="text-muted-foreground">Ignorados</span>
+                  <p className="font-semibold">{ignoredCounts[campaign.id] ?? "—"}</p>
                 </div>
               </div>
 
@@ -516,7 +834,7 @@ export const CampaignDebugPanel = () => {
                 {campaign.resume_at && (
                   <div className="flex justify-between">
                     <span>Retoma em:</span>
-                    <span>{formatDate(campaign.resume_at)}</span>
+                    <span>{formatDate(campaign.resume_at)} <span className="opacity-60">({formatRelative(campaign.resume_at)})</span></span>
                   </div>
                 )}
               </div>
@@ -531,6 +849,7 @@ export const CampaignDebugPanel = () => {
                 {numberInfo && (
                   <span>
                     Número: {numberInfo.name} {numberInfo.phone_number ? `(${numberInfo.phone_number})` : ""} — {numberInfo.is_connected ? "✅" : "❌ Desconectado"}
+                    {numberInfo.instance_name ? ` — inst: ${numberInfo.instance_name}` : " — ⚠️ SEM INSTÂNCIA"}
                   </span>
                 )}
                 {campaign.is_first_stage !== null && <span>1º estágio: {campaign.is_first_stage ? "Sim" : "Não"}</span>}
