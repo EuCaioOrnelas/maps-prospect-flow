@@ -130,11 +130,19 @@ async function hasReachedResponseLimit(
 }
 
 // Move lead to CRM stage by stage name - with flexible phone matching
+// Also updates message timestamps and whatsapp_status on the lead
 async function moveLeadToCRMStage(
   supabase: any, 
   phone: string, 
   userId: string, 
-  stageName: string
+  stageName: string,
+  extras?: {
+    last_message_sent?: string;
+    last_message_sent_at?: string;
+    last_response?: string;
+    last_response_at?: string;
+    whatsapp_status?: string;
+  }
 ): Promise<void> {
   try {
     // Normalize phone to match leads table format
@@ -201,19 +209,29 @@ async function moveLeadToCRMStage(
       return;
     }
     
-    // Don't move if already in target stage
-    if (lead.pipeline_stage_id === stage.id) {
+    // Don't move if already in target stage (but still update extras)
+    if (lead.pipeline_stage_id === stage.id && !extras) {
       console.log(`Lead ${lead.id} already in stage "${stageName}"`);
       return;
     }
     
-    // Update lead's stage
+    // Update lead's stage and optional message fields
+    const updatePayload: Record<string, any> = { 
+      pipeline_stage_id: stage.id,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (extras) {
+      if (extras.last_message_sent !== undefined) updatePayload.last_message_sent = extras.last_message_sent;
+      if (extras.last_message_sent_at !== undefined) updatePayload.last_message_sent_at = extras.last_message_sent_at;
+      if (extras.last_response !== undefined) updatePayload.last_response = extras.last_response;
+      if (extras.last_response_at !== undefined) updatePayload.last_response_at = extras.last_response_at;
+      if (extras.whatsapp_status !== undefined) updatePayload.whatsapp_status = extras.whatsapp_status;
+    }
+    
     const { error } = await supabase
       .from('leads')
-      .update({ 
-        pipeline_stage_id: stage.id,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', lead.id);
     
     if (error) {
@@ -377,7 +395,11 @@ serve(async (req) => {
         const body = await req.clone().json();
         if (body.phone) {
           const crmStageNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
-          await moveLeadToCRMStage(supabase, body.phone, userId, crmStageNewLead);
+          await moveLeadToCRMStage(supabase, body.phone, userId, crmStageNewLead, {
+            last_response: body.message,
+            last_response_at: new Date().toISOString(),
+            whatsapp_status: 'replied',
+          });
         }
       }
       
@@ -470,7 +492,11 @@ serve(async (req) => {
           // CRM: Move to configured stage since agent won't respond
           const userId = agent.whatsapp_number?.user_id;
           if (userId) {
-            await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
+            await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+              last_response: message,
+              last_response_at: new Date().toISOString(),
+              whatsapp_status: 'replied',
+            });
           }
           
           return new Response(
@@ -510,7 +536,11 @@ serve(async (req) => {
              // CRM: Move to configured stage since we can't respond
             const userId = agent.whatsapp_number?.user_id;
             if (userId) {
-              await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
+              await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+                last_response: message,
+                last_response_at: new Date().toISOString(),
+                whatsapp_status: 'replied',
+              });
             }
             
             return new Response(
@@ -551,14 +581,22 @@ serve(async (req) => {
         // CRM Integration: Move lead to configured stage when lead responds (new conversation)
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
-          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+            last_response: message,
+            last_response_at: new Date().toISOString(),
+            whatsapp_status: 'replied',
+          });
         }
       } else {
         // Existing conversation - lead is responding again
         // CRM Integration: Move lead to configured stage
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
-          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+            last_response: message,
+            last_response_at: new Date().toISOString(),
+            whatsapp_status: 'in_conversation',
+          });
         }
       }
 
@@ -727,7 +765,11 @@ serve(async (req) => {
       const userId = agent.whatsapp_number?.user_id;
       if (userId) {
         const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
-        await moveLeadToCRMStage(supabase, phone, userId, crmStageReply);
+        await moveLeadToCRMStage(supabase, phone, userId, crmStageReply, {
+          last_message_sent: messageToSend,
+          last_message_sent_at: new Date().toISOString(),
+          whatsapp_status: 'message_sent',
+        });
       }
 
       // Forward to n8n webhook if configured
