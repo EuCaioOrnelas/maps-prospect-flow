@@ -479,20 +479,20 @@ export const NumbersManager = ({
       // Find the number to get instance name
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
       
-      // Always try to disconnect from Evolution API if there's an instance name
-      // This ensures the WhatsApp session is terminated even if is_connected is false
+      // Delete the instance entirely from Evolution API since the number is being removed
       if (numberToRemove?.instance_name) {
         try {
-          console.log('Disconnecting instance:', numberToRemove.instance_name);
+          console.log('Deleting instance:', numberToRemove.instance_name);
           const response = await supabase.functions.invoke('evolution-disconnect', {
             body: { 
               instanceName: numberToRemove.instance_name,
-              numberId: numberToDelete 
+              numberId: numberToDelete,
+              deleteInstance: true // Fully delete since number is being removed
             },
           });
-          console.log('Disconnect response:', response);
+          console.log('Delete instance response:', response);
         } catch (e) {
-          console.error('Error disconnecting from Evolution:', e);
+          console.error('Error deleting instance from Evolution:', e);
         }
       }
 
@@ -548,13 +548,14 @@ export const NumbersManager = ({
 
     setLoading(true);
     try {
-      // If there's an instance name, try to disconnect from Evolution API
+      // If there's an instance name, disconnect from WhatsApp but KEEP the instance
       if (numberToDisconnect.instance_name) {
         try {
           const response = await supabase.functions.invoke('evolution-disconnect', {
             body: { 
               instanceName: numberToDisconnect.instance_name,
-              numberId 
+              numberId,
+              deleteInstance: false // Keep instance for future reconnection
             },
           });
           console.log('Disconnect response:', response);
@@ -564,22 +565,21 @@ export const NumbersManager = ({
         }
       }
 
-      // Update in database directly as a fallback
+      // Update in database - KEEP instance_name for reconnection
       const { error } = await supabase
         .from('whatsapp_numbers')
         .update({ 
           is_connected: false,
           phone_number: null,
-          instance_name: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', numberId);
 
       if (error) throw error;
 
-      // Update local state
+      // Update local state - keep instance_name
       onNumbersChange(numbers.map(n => 
-        n.id === numberId ? { ...n, is_connected: false, phone_number: null, instance_name: null } : n
+        n.id === numberId ? { ...n, is_connected: false, phone_number: null } : n
       ));
 
       toast({
@@ -630,17 +630,16 @@ export const NumbersManager = ({
   };
 
   const handleRefreshQR = async () => {
-    if (!connectingNumberId) return;
-    const instanceName = generateInstanceName();
-    setConnectingInstanceName(instanceName);
-    await createInstanceAndGetQR(connectingNumberId, instanceName);
+    // Reuse the current instance name instead of generating a new one
+    await createInstanceAndGetQR(connectingNumberId, connectingInstanceName);
   };
 
   const openConnectDialog = async (numberId: string) => {
     const number = numbers.find(n => n.id === numberId);
     if (!number) return;
 
-    const instanceName = generateInstanceName();
+    // Reuse existing instance_name if available, otherwise generate a new one
+    const instanceName = number.instance_name || generateInstanceName();
     
     setConnectingNumberId(numberId);
     setConnectingInstanceName(instanceName);
