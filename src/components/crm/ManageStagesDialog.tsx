@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type PipelineStage, type Lead, isLockedStage } from '@/hooks/useCRM';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -87,6 +89,9 @@ export const ManageStagesDialog = ({
   // Delete confirmation state
   const [deleteConfirmStage, setDeleteConfirmStage] = useState<PipelineStage | null>(null);
   const [moveToStageId, setMoveToStageId] = useState<string>('');
+  const [agentsUsingStage, setAgentsUsingStage] = useState<string[]>([]);
+  
+  const { user } = useAuth();
 
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
 
@@ -181,10 +186,21 @@ export const ManageStagesDialog = ({
     setEditColor('');
   };
 
-  const handleRequestDelete = (stage: PipelineStage) => {
+  const handleRequestDelete = async (stage: PipelineStage) => {
     if (isLockedStage(stage.name)) {
       toast.error('Esta coluna não pode ser excluída');
       return;
+    }
+    
+    // Check if any agent uses this stage name
+    if (user) {
+      const { data: agents } = await supabase
+        .from('ai_agents')
+        .select('name')
+        .eq('user_id', user.id)
+        .or(`crm_stage_on_new_lead.eq.${stage.name},crm_stage_on_reply.eq.${stage.name},crm_stage_on_end.eq.${stage.name}`);
+      
+      setAgentsUsingStage(agents?.map(a => a.name) || []);
     }
     
     // Find leads in this stage
@@ -441,37 +457,55 @@ export const ManageStagesDialog = ({
               <AlertTriangle className="w-5 h-5 text-destructive" />
               Excluir coluna "{deleteConfirmStage?.name}"?
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              {deleteConfirmStage && getLeadsCountInStage(deleteConfirmStage.id) > 0 ? (
-                <>
-                  <p>
-                    Esta coluna possui <strong>{getLeadsCountInStage(deleteConfirmStage.id)} lead(s)</strong>. 
-                    Escolha para qual coluna deseja mover esses leads:
-                  </p>
-                  <Select value={moveToStageId} onValueChange={setMoveToStageId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a coluna de destino" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sortedStages
-                        .filter(s => s.id !== deleteConfirmStage?.id)
-                        .map((stage) => (
-                          <SelectItem key={stage.id} value={stage.id}>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: stage.color }}
-                              />
-                              {stage.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              ) : (
-                <p>Esta ação não pode ser desfeita.</p>
-              )}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {agentsUsingStage.length > 0 && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-medium text-amber-500 mb-1">
+                          ⚠️ Agente(s) de IA usando esta coluna
+                        </p>
+                        <p className="text-muted-foreground">
+                          Os agentes <strong>{agentsUsingStage.join(', ')}</strong> estão configurados para mover leads para esta coluna. 
+                          Excluir pode causar erros no agente. Atualize a configuração do agente antes ou depois de excluir.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {deleteConfirmStage && getLeadsCountInStage(deleteConfirmStage.id) > 0 ? (
+                  <>
+                    <p>
+                      Esta coluna possui <strong>{getLeadsCountInStage(deleteConfirmStage.id)} lead(s)</strong>. 
+                      Escolha para qual coluna deseja mover esses leads:
+                    </p>
+                    <Select value={moveToStageId} onValueChange={setMoveToStageId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a coluna de destino" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortedStages
+                          .filter(s => s.id !== deleteConfirmStage?.id)
+                          .map((stage) => (
+                            <SelectItem key={stage.id} value={stage.id}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: stage.color }}
+                                />
+                                {stage.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                ) : (
+                  <p>Esta ação não pode ser desfeita.</p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

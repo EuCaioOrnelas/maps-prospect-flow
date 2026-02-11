@@ -231,6 +231,12 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   const [is24Hours, setIs24Hours] = useState(
     agent?.operating_hours_start === "00:00" && agent?.operating_hours_end === "23:59"
   );
+  
+  // CRM stage config
+  const [crmStageOnNewLead, setCrmStageOnNewLead] = useState(agent?.crm_stage_on_new_lead || "Respondeu Mensagem");
+  const [crmStageOnReply, setCrmStageOnReply] = useState(agent?.crm_stage_on_reply || "Mensagem Enviada");
+  const [crmStageOnEnd, setCrmStageOnEnd] = useState(agent?.crm_stage_on_end || "");
+  const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -253,8 +259,19 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       }
     };
 
+    const fetchPipelineStages = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('pipeline_stages')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('position');
+      setPipelineStages(data || []);
+    };
+
     if (open && agent) {
       fetchConversations();
+      fetchPipelineStages();
       setSelectedConversation(null);
       setMessageLogs([]);
       // Reset form values when agent changes
@@ -265,8 +282,11 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       setOperatingHoursStart(agent.operating_hours_start?.slice(0, 5) || "08:00");
       setOperatingHoursEnd(agent.operating_hours_end?.slice(0, 5) || "18:00");
       setIs24Hours(agent.operating_hours_start === "00:00" && agent.operating_hours_end === "23:59");
+      setCrmStageOnNewLead(agent.crm_stage_on_new_lead || "Respondeu Mensagem");
+      setCrmStageOnReply(agent.crm_stage_on_reply || "Mensagem Enviada");
+      setCrmStageOnEnd(agent.crm_stage_on_end || "");
     }
-  }, [agent, open]);
+  }, [agent, open, user]);
 
   const fetchMessageLogs = async (conversationId: string) => {
     setLoadingMessages(true);
@@ -306,6 +326,9 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           daily_limit: dailyLimit,
           operating_hours_start: is24Hours ? "00:00" : operatingHoursStart,
           operating_hours_end: is24Hours ? "23:59" : operatingHoursEnd,
+          crm_stage_on_new_lead: crmStageOnNewLead || null,
+          crm_stage_on_reply: crmStageOnReply || null,
+          crm_stage_on_end: crmStageOnEnd || null,
         })
         .eq('id', agent.id);
 
@@ -872,6 +895,63 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                       {is24Hours 
                         ? "O bot responderá a qualquer hora do dia" 
                         : "O bot só responde dentro deste horário (horário de Brasília)"}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* CRM Stage Configuration */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Integração com CRM
+                    </CardTitle>
+                    <CardDescription>
+                      Escolha para quais colunas do funil o lead será movido automaticamente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Quando lead responde (nova conversa)</Label>
+                      <select
+                        value={crmStageOnNewLead}
+                        onChange={(e) => setCrmStageOnNewLead(e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      >
+                        <option value="">Nenhuma</option>
+                        {pipelineStages.map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Quando agente responde</Label>
+                      <select
+                        value={crmStageOnReply}
+                        onChange={(e) => setCrmStageOnReply(e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      >
+                        <option value="">Nenhuma</option>
+                        {pipelineStages.map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Quando conversa é encerrada</Label>
+                      <select
+                        value={crmStageOnEnd}
+                        onChange={(e) => setCrmStageOnEnd(e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      >
+                        <option value="">Nenhuma (manter na coluna atual)</option>
+                        {pipelineStages.map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O agente move automaticamente os leads entre as colunas do seu funil conforme a conversa avança.
                     </p>
                   </CardContent>
                 </Card>

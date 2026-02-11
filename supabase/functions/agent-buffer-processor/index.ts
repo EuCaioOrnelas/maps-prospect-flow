@@ -379,8 +379,9 @@ serve(async (req) => {
             console.log(`Agent ${agent.id} reached limit: ${limitCheck.currentCount}/${limitCheck.limit} (${limitCheck.warmingStatus})`);
             skippedDueToLimit++;
             
-            // Move lead to "Respondeu Mensagem" since we can't respond
-            await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, 'Respondeu Mensagem');
+            // Move lead to configured stage since we can't respond
+            const crmStageNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+            await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageNewLead);
             
             // Clear buffer and mark as completed
             await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
@@ -625,8 +626,15 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                   })
                   .eq('id', agent.id);
 
-                // CRM Integration: Move lead to "Mensagem Enviada" when agent responds
-                await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, 'Mensagem Enviada');
+                // CRM Integration: Move lead based on conversation state
+                const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
+                const crmStageEnd = agent.crm_stage_on_end;
+                
+                if (isConversationEnded && crmStageEnd) {
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd);
+                } else {
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply);
+                }
 
                 // Clear buffer
                 await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
