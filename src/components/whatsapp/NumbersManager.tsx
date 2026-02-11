@@ -194,21 +194,20 @@ export const NumbersManager = ({
             const isReallyConnected = response.data?.connected === true;
             
             if (!isReallyConnected) {
-              // Update database
+              // Update database - KEEP instance_name for reconnection
               await supabase
                 .from('whatsapp_numbers')
                 .update({ 
                   is_connected: false,
                   phone_number: null,
-                  instance_name: null,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', number.id);
 
-              // Update local state
+              // Update local state - keep instance_name
               onNumbersChange(numbers.map(n => 
                 n.id === number.id 
-                  ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
+                  ? { ...n, is_connected: false, phone_number: null } 
                   : n
               ));
 
