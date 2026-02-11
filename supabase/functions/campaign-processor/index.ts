@@ -6,6 +6,38 @@ const corsHeaders = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
+
+// Start next postponed campaign for a number when the current one finishes
+async function startNextPostponedCampaign(
+  supabase: any,
+  numberId: string,
+  userId: string
+): Promise<void> {
+  try {
+    const { data: postponedCampaign } = await supabase
+      .from('whatsapp_campaigns')
+      .select('id, name')
+      .eq('whatsapp_number_id', numberId)
+      .eq('status', 'postponed')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!postponedCampaign) return;
+
+    console.log(`[Queue] Starting postponed campaign: ${postponedCampaign.name}`);
+
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'running',
+      started_at: new Date().toISOString(),
+      pause_reason: null,
+      updated_at: new Date().toISOString()
+    }).eq('id', postponedCampaign.id);
+  } catch (e) {
+    console.error('Error starting postponed campaign:', e);
+  }
+}
 const SAO_PAULO_OFFSET_HOURS = -3; // UTC-3
 
 interface Lead {
@@ -592,6 +624,10 @@ async function processSingleMessage(
       totalFailed: failedCount,
       successRate: `${Math.round((sentCount / (sentCount + failedCount)) * 100)}%`
     });
+
+    // Check for postponed campaigns on the same number
+    await startNextPostponedCampaign(supabase, campaign.whatsapp_number_id, campaign.user_id);
+
     return { processed: true, completed: true, skipped: false };
   }
 

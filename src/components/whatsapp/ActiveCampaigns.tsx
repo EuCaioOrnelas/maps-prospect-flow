@@ -126,33 +126,12 @@ export const ActiveCampaigns = ({
         return;
       }
 
-      // Update campaign to running and trigger edge function
-      const { error: updateError } = await supabase
-        .from('whatsapp_campaigns')
-        .update({ 
-          status: 'running',
-          started_at: new Date().toISOString(),
-          pause_reason: null,
-          paused_at_limit: false
-        })
-        .eq('id', campaign.id);
-
-      if (updateError) throw updateError;
-
-      // Parse leads and messages
-      let leads = campaign.leads;
-      let messages = campaign.messages;
-
-      // Invoke the run campaign function
-      const { error: runError } = await supabase.functions.invoke('evolution-run-campaign', {
+      // Invoke campaign-processor to validate connection and set to running
+      // The cron job will handle all message sending
+      const { data: startResult, error: runError } = await supabase.functions.invoke('campaign-processor', {
         body: {
           campaignId: campaign.id,
-          numberId: campaign.whatsapp_number_id,
-          instanceName: numberData.instance_name,
-          leads: leads,
-          messages: messages,
-          delaySecondsMin: campaign.delay_seconds,
-          delaySecondsMax: campaign.delay_seconds + 20
+          action: 'start',
         }
       });
 
