@@ -22,7 +22,9 @@ import {
   Server,
   Database,
   Zap,
+  Download,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -581,6 +583,49 @@ export const CampaignDebugPanel = () => {
     return formatDistanceToNow(new Date(date), { addSuffix: true, locale: ptBR });
   };
 
+  const downloadLeads = (campaign: CampaignDebug) => {
+    try {
+      const leads = Array.isArray(campaign.leads) ? campaign.leads : [];
+      if (leads.length === 0) {
+        toast({ title: "Campanha sem leads para exportar", variant: "destructive" });
+        return;
+      }
+
+      // Flatten lead objects for spreadsheet
+      const data = leads.map((lead: any, idx: number) => {
+        const flat: Record<string, unknown> = {};
+        Object.keys(lead).forEach(key => {
+          const val = lead[key];
+          flat[key] = typeof val === 'object' ? JSON.stringify(val) : val;
+        });
+        flat['_index'] = idx + 1;
+        return flat;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+
+      // Also add messages sheet
+      const messages = Array.isArray(campaign.messages) ? campaign.messages : [];
+      if (messages.length > 0) {
+        const msgData = messages.map((m: any, i: number) => ({
+          '#': i + 1,
+          'Mensagem': typeof m === 'string' ? m : JSON.stringify(m),
+        }));
+        const msgsWs = XLSX.utils.json_to_sheet(msgData);
+        XLSX.utils.book_append_sheet(wb, msgsWs, 'Mensagens');
+      }
+
+      const safeName = campaign.name.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
+      XLSX.writeFile(wb, `debug_leads_${safeName}_${campaign.id.slice(0, 8)}.xlsx`);
+      toast({ title: `${leads.length} leads exportados para análise` });
+    } catch (err) {
+      console.error('Download error:', err);
+      toast({ title: "Erro ao exportar leads", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="glass rounded-xl p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -712,6 +757,15 @@ export const CampaignDebugPanel = () => {
                   </div>
                   <p className="text-xs text-muted-foreground font-mono">{campaign.id}</p>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={() => downloadLeads(campaign)}
+                >
+                  <Download size={14} />
+                  Baixar Planilha
+                </Button>
               </div>
 
               {/* Progress bar */}
