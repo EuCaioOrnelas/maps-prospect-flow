@@ -315,6 +315,27 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   const saveSettings = async () => {
     if (!agent?.id) return;
     
+    // Validate CRM stages still exist
+    const stageNames = pipelineStages.map(s => s.name);
+    const invalidStages: string[] = [];
+    if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
+    if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
+    if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    
+    if (invalidStages.length > 0) {
+      // Clear invalid values
+      if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
+      if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
+      if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      
+      toast({
+        title: "⚠️ Colunas CRM inválidas",
+        description: `As seguintes colunas não existem mais no CRM: ${invalidStages.join(", ")}. Selecione novas colunas e salve novamente.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSaving(true);
     try {
       const { error } = await supabase

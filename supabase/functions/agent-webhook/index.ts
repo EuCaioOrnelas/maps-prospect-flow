@@ -371,12 +371,13 @@ serve(async (req) => {
     if (!isWithinOperatingHours(agent.operating_hours_start, agent.operating_hours_end)) {
       console.log('Outside operating hours, skipping');
       
-      // CRM: Move lead to "Respondeu Mensagem" when outside operating hours (agent can't respond)
+      // CRM: Move lead to configured stage when outside operating hours (agent can't respond)
       const userId = agent.whatsapp_number?.user_id;
       if (userId && action === 'receive') {
         const body = await req.clone().json();
         if (body.phone) {
-          await moveLeadToCRMStage(supabase, body.phone, userId, 'Respondeu Mensagem');
+          const crmStageNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+          await moveLeadToCRMStage(supabase, body.phone, userId, crmStageNewLead);
         }
       }
       
@@ -722,10 +723,11 @@ serve(async (req) => {
         })
         .eq('id', agentId);
 
-      // CRM Integration: Move lead to "Mensagem Enviada" when agent sends initial message
+      // CRM Integration: Move lead to configured stage when agent sends initial message
       const userId = agent.whatsapp_number?.user_id;
       if (userId) {
-        await moveLeadToCRMStage(supabase, phone, userId, 'Mensagem Enviada');
+        const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
+        await moveLeadToCRMStage(supabase, phone, userId, crmStageReply);
       }
 
       // Forward to n8n webhook if configured
