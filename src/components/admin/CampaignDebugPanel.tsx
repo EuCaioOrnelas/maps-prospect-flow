@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { LeadAnalysisPanel } from "./LeadAnalysisPanel";
 import {
   Search,
   Loader2,
@@ -52,6 +53,8 @@ interface CampaignDebug {
   simulation_mode: boolean | null;
   is_first_stage: boolean | null;
   first_10_no_response_count: number | null;
+  leads: unknown[];
+  messages: unknown[];
 }
 
 interface NumberInfo {
@@ -450,6 +453,9 @@ export const CampaignDebugPanel = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Lead Analysis */}
+              <LeadAnalysisPanel leads={Array.isArray((campaign as any).leads) ? (campaign as any).leads : []} campaignId={campaign.id} />
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
