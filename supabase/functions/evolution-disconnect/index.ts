@@ -35,49 +35,72 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, numberId } = await req.json();
+    const { instanceName, numberId, deleteInstance = false } = await req.json();
 
-    console.log(`Disconnecting instance: ${instanceName}`);
+    console.log(`Disconnecting instance: ${instanceName}, deleteInstance: ${deleteInstance}`);
 
-    // Logout from WhatsApp
-    const logoutResponse = await fetch(`${EVOLUTION_API_URL}/instance/logout/${instanceName}`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
-    });
+    // Always logout from WhatsApp session
+    try {
+      const logoutResponse = await fetch(`${EVOLUTION_API_URL}/instance/logout/${instanceName}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+        },
+      });
+      console.log('Logout response status:', logoutResponse.status);
+    } catch (e) {
+      console.error('Error during logout:', e);
+    }
 
-    console.log('Logout response status:', logoutResponse.status);
+    // Only delete the Evolution instance if explicitly requested (e.g. when removing the number entirely)
+    if (deleteInstance) {
+      try {
+        const deleteResponse = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': EVOLUTION_API_KEY,
+          },
+        });
+        console.log('Delete response status:', deleteResponse.status);
+      } catch (e) {
+        console.error('Error deleting instance:', e);
+      }
 
-    // Delete instance
-    const deleteResponse = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
-    });
+      // Clear instance_name since instance was deleted
+      const { error: updateError } = await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          phone_number: null,
+          instance_name: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
 
-    console.log('Delete response status:', deleteResponse.status);
+      if (updateError) {
+        console.error('Error updating number status:', updateError);
+      }
+    } else {
+      // Keep instance_name so we can reuse the same instance on reconnect
+      const { error: updateError } = await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          phone_number: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
 
-    // Update database - also clear instance_name since it's deleted
-    const { error: updateError } = await supabase
-      .from('whatsapp_numbers')
-      .update({ 
-        is_connected: false,
-        phone_number: null,
-        instance_name: null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', numberId)
-      .eq('user_id', user.id);
-
-    if (updateError) {
-      console.error('Error updating number status:', updateError);
+      if (updateError) {
+        console.error('Error updating number status:', updateError);
+      }
     }
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Instance disconnected successfully',
+      message: deleteInstance ? 'Instance deleted successfully' : 'Instance disconnected (preserved for reconnection)',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
