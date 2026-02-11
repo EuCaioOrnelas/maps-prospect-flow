@@ -197,6 +197,7 @@ async function hasReachedResponseLimit(
 }
 
 // Move lead to CRM stage by stage name - with flexible phone matching
+// Updates ALL matching leads (handles duplicates with different phone formats)
 // Also updates message timestamps and whatsapp_status on the lead
 async function moveLeadToCRMStage(
   supabase: any, 
@@ -216,51 +217,34 @@ async function moveLeadToCRMStage(
     const phoneDigitsOnly = phone.replace(/\D/g, '');
     const last8Digits = phoneDigitsOnly.slice(-8);
     
-    // Build multiple format attempts for matching
-    let normalizedPhone = phoneDigitsOnly;
-    if (phoneDigitsOnly.length >= 10 && phoneDigitsOnly.length <= 11 && !phoneDigitsOnly.startsWith('55')) {
-      normalizedPhone = '55' + phoneDigitsOnly;
-    }
-    
     console.log(`=== MOVE LEAD TO CRM STAGE: ${stageName} ===`);
     console.log('Input phone:', phone);
     console.log('Last 8 digits:', last8Digits);
     
-    // First try exact match with multiple formats
-    let { data: leads } = await supabase
+    // Fetch ALL user leads and find ALL matches by last 8 digits
+    // This handles duplicates with different phone formats (e.g. 5544991236180 vs 55449991236180)
+    const { data: allUserLeads } = await supabase
       .from('leads')
       .select('id, pipeline_stage_id, user_id, phone')
-      .eq('user_id', userId)
-      .or(`phone.eq.${normalizedPhone},phone.eq.${phone},phone.eq.${phoneDigitsOnly},phone.eq.55${phoneDigitsOnly.slice(-11)},phone.eq.55${phoneDigitsOnly.slice(-10)}`);
+      .eq('user_id', userId);
     
-    let lead = leads?.[0];
-    
-    // If no exact match, try matching by last 8 digits
-    if (!lead && last8Digits.length === 8) {
-      const { data: allUserLeads } = await supabase
-        .from('leads')
-        .select('id, pipeline_stage_id, user_id, phone')
-        .eq('user_id', userId);
-      
-      if (allUserLeads && allUserLeads.length > 0) {
-        lead = allUserLeads.find((l: any) => {
-          const leadPhone = l.phone?.replace(/\D/g, '') || '';
-          const leadLast8 = leadPhone.slice(-8);
-          return leadLast8 === last8Digits;
-        }) || null;
-        
-        if (lead) {
-          console.log('Lead found by last 8 digits match:', lead.phone);
-        }
-      }
+    if (!allUserLeads || allUserLeads.length === 0) {
+      console.log(`No leads found for user ${userId}`);
+      return;
     }
     
-    if (!lead) {
+    // Find ALL leads matching by last 8 digits
+    const matchingLeads = allUserLeads.filter((l: any) => {
+      const leadPhone = l.phone?.replace(/\D/g, '') || '';
+      return leadPhone.slice(-8) === last8Digits;
+    });
+    
+    if (matchingLeads.length === 0) {
       console.log(`No lead found for phone ${phone} (last 8: ${last8Digits})`);
       return;
     }
     
-    console.log('Found lead:', lead.id, 'phone:', lead.phone);
+    console.log(`Found ${matchingLeads.length} matching lead(s):`, matchingLeads.map((l: any) => `${l.id} (${l.phone})`).join(', '));
     
     // Find the target stage
     const { data: stage } = await supabase
@@ -275,47 +259,44 @@ async function moveLeadToCRMStage(
       return;
     }
     
-    // Don't move if already in target stage (but still update extras)
-    if (lead.pipeline_stage_id === stage.id && !extras) {
-      console.log(`Lead ${lead.id} already in stage "${stageName}"`);
-      return;
+    // Update ALL matching leads
+    for (const lead of matchingLeads) {
+      // Build update payload
+      const updatePayload: Record<string, any> = { 
+        pipeline_stage_id: stage.id,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add extra fields if provided (message timestamps, whatsapp_status)
+      if (extras) {
+        if (extras.last_message_sent !== undefined) updatePayload.last_message_sent = extras.last_message_sent;
+        if (extras.last_message_sent_at !== undefined) updatePayload.last_message_sent_at = extras.last_message_sent_at;
+        if (extras.last_response !== undefined) updatePayload.last_response = extras.last_response;
+        if (extras.last_response_at !== undefined) updatePayload.last_response_at = extras.last_response_at;
+        if (extras.whatsapp_status !== undefined) updatePayload.whatsapp_status = extras.whatsapp_status;
+      }
+      
+      const { error } = await supabase
+        .from('leads')
+        .update(updatePayload)
+        .eq('id', lead.id);
+      
+      if (error) {
+        console.error(`Error updating lead ${lead.id}:`, error);
+        continue;
+      }
+      
+      // Log activity
+      await supabase.from('lead_activities').insert({
+        lead_id: lead.id,
+        user_id: userId,
+        activity_type: 'stage_changed',
+        description: `Movido automaticamente para ${stageName} pelo agente IA`,
+        metadata: { automated: true, source: 'ai_agent' }
+      });
+      
+      console.log(`Lead ${lead.id} (${lead.phone}) moved to "${stageName}"`);
     }
-    
-    // Update lead's stage and optional message fields
-    const updatePayload: Record<string, any> = { 
-      pipeline_stage_id: stage.id,
-      updated_at: new Date().toISOString()
-    };
-    
-    // Add extra fields if provided (message timestamps, whatsapp_status)
-    if (extras) {
-      if (extras.last_message_sent !== undefined) updatePayload.last_message_sent = extras.last_message_sent;
-      if (extras.last_message_sent_at !== undefined) updatePayload.last_message_sent_at = extras.last_message_sent_at;
-      if (extras.last_response !== undefined) updatePayload.last_response = extras.last_response;
-      if (extras.last_response_at !== undefined) updatePayload.last_response_at = extras.last_response_at;
-      if (extras.whatsapp_status !== undefined) updatePayload.whatsapp_status = extras.whatsapp_status;
-    }
-    
-    const { error } = await supabase
-      .from('leads')
-      .update(updatePayload)
-      .eq('id', lead.id);
-    
-    if (error) {
-      console.error(`Error moving lead to ${stageName}:`, error);
-      return;
-    }
-    
-    // Log activity
-    await supabase.from('lead_activities').insert({
-      lead_id: lead.id,
-      user_id: userId,
-      activity_type: 'stage_changed',
-      description: `Movido automaticamente para ${stageName} pelo agente IA`,
-      metadata: { automated: true, source: 'ai_agent' }
-    });
-    
-    console.log(`Lead ${lead.id} moved to "${stageName}"`);
   } catch (err) {
     console.error('Error in moveLeadToCRMStage:', err);
   }
@@ -656,7 +637,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                   last_message_sent_at: nowISO,
                   last_response: combinedMessage,
                   last_response_at: conv.response_received_at || nowISO,
-                  whatsapp_status: isConversationEnded ? 'no_response' : 'in_conversation',
+                  whatsapp_status: isConversationEnded ? 'replied' : 'in_conversation',
                 };
                 
                 if (isConversationEnded && crmStageEnd) {
