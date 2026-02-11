@@ -851,6 +851,28 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
   const handleCreate = async (activate: boolean) => {
     if (!user || loading) return;
     
+    // Validate CRM stages still exist
+    const stageNames = pipelineStages.map(s => s.name);
+    const invalidStages: string[] = [];
+    if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
+    if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
+    if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    
+    if (invalidStages.length > 0) {
+      if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
+      if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
+      if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      
+      toast({
+        title: "⚠️ Colunas CRM inválidas",
+        description: `As seguintes colunas não existem mais: ${invalidStages.join(", ")}. Selecione novas colunas na etapa de Regras.`,
+        variant: "destructive",
+      });
+      // Go back to rules step
+      setCurrentStep(STEPS.findIndex(s => s.id === 'rules'));
+      return;
+    }
+    
     setLoading(true);
     
     try {
