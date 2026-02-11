@@ -611,7 +611,7 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <Search size={20} />
-                    Buscar Leads Estratégicos
+                    Prospectar Leads Estratégicos
                   </>
                 )}
               </Button>
