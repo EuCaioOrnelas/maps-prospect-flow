@@ -438,25 +438,26 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
-      // If conversation is completed, agent should not respond anymore
+      // If conversation is completed, start a NEW conversation (reset)
       if (existingConv && existingConv.status === 'completed') {
-        console.log(`Conversation ${existingConv.id} is completed, agent will not respond to ${phone}`);
+        console.log(`Conversation ${existingConv.id} was completed, creating new conversation for ${phone}`);
         
-        // Still move to CRM stage
-        const userId = agent.whatsapp_number?.user_id;
-        if (userId) {
-          await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
-        }
+        // Delete the old completed conversation to start fresh
+        await supabase
+          .from('agent_message_buffer')
+          .delete()
+          .eq('conversation_id', existingConv.id);
         
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            reason: 'conversation_completed',
-            message: 'Conversation already completed, agent will not respond' 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        await supabase
+          .from('agent_conversations')
+          .delete()
+          .eq('id', existingConv.id);
+        
+        existingConv = null; // Force creation of new conversation below
       }
+
+      // Get configurable CRM stage names from agent
+      const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
 
       // Check if user (owner) responded to this lead today - agent should not respond
       // EXCEPTION: "atendimento" objective agents continue responding even if user responded
@@ -465,10 +466,10 @@ serve(async (req) => {
         if (existingConv.user_responded_date === today) {
           console.log(`User responded to lead ${phone} today, agent ${agentId} paused for this lead`);
           
-          // CRM: Move to "Respondeu Mensagem" since agent won't respond
+          // CRM: Move to configured stage since agent won't respond
           const userId = agent.whatsapp_number?.user_id;
           if (userId) {
-            await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+            await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
           }
           
           return new Response(
@@ -505,10 +506,10 @@ serve(async (req) => {
           if (limitCheck.reached) {
             console.log(`Agent ${agentId} reached limit for new lead: ${limitCheck.currentCount}/${limitCheck.limit}`);
             
-            // CRM: Move to "Respondeu Mensagem" since we can't respond
+             // CRM: Move to configured stage since we can't respond
             const userId = agent.whatsapp_number?.user_id;
             if (userId) {
-              await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+              await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
             }
             
             return new Response(
@@ -546,17 +547,17 @@ serve(async (req) => {
         existingConv = newConv;
         console.log(`Created new conversation ${newConv.id} for ${phone}`);
         
-        // CRM Integration: Move lead to "Respondeu Mensagem" when lead responds (new conversation)
+        // CRM Integration: Move lead to configured stage when lead responds (new conversation)
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
-          await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
         }
       } else {
         // Existing conversation - lead is responding again
-        // CRM Integration: Move lead to "Respondeu Mensagem"
+        // CRM Integration: Move lead to configured stage
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
-          await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead);
         }
       }
 

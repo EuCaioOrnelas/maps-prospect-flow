@@ -225,6 +225,9 @@ export type Database = {
           agent_objective: string | null
           communication_style: string
           created_at: string
+          crm_stage_on_end: string | null
+          crm_stage_on_new_lead: string | null
+          crm_stage_on_reply: string | null
           daily_limit: number
           end_conversation_criteria: string | null
           id: string
@@ -252,6 +255,9 @@ export type Database = {
           agent_objective?: string | null
           communication_style?: string
           created_at?: string
+          crm_stage_on_end?: string | null
+          crm_stage_on_new_lead?: string | null
+          crm_stage_on_reply?: string | null
           daily_limit?: number
           end_conversation_criteria?: string | null
           id?: string
@@ -279,6 +285,9 @@ export type Database = {
           agent_objective?: string | null
           communication_style?: string
           created_at?: string
+          crm_stage_on_end?: string | null
+          crm_stage_on_new_lead?: string | null
+          crm_stage_on_reply?: string | null
           daily_limit?: number
           end_conversation_criteria?: string | null
           id?: string

@@ -357,6 +357,12 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [isWarmed, setIsWarmed] = useState(false);
   const [maxReplies, setMaxReplies] = useState<number | null>(1);
   const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
+  
+  // CRM stage config
+  const [crmStageOnNewLead, setCrmStageOnNewLead] = useState("Respondeu Mensagem");
+  const [crmStageOnReply, setCrmStageOnReply] = useState("Mensagem Enviada");
+  const [crmStageOnEnd, setCrmStageOnEnd] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
   // Apply template data to form fields (works for both default and user templates)
   const applyTemplate = (templateId: string, isUserTemplate: boolean = false) => {
@@ -517,9 +523,20 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
       }
     };
 
+    const fetchPipelineStages = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('pipeline_stages')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('position');
+      setPipelineStages(data || []);
+    };
+
     if (open) {
       fetchNumbers();
       fetchUserTemplates();
+      fetchPipelineStages();
     }
   }, [user, open]);
 
@@ -869,6 +886,9 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
           status: activate ? 'active' : 'draft',
           message_templates: MESSAGE_TEMPLATES.prospecting,
           max_response_chars: parseInt(maxChars),
+          crm_stage_on_new_lead: crmStageOnNewLead || null,
+          crm_stage_on_reply: crmStageOnReply || null,
+          crm_stage_on_end: crmStageOnEnd || null,
         });
 
       if (error) throw error;
@@ -1762,6 +1782,58 @@ Preciso falar com meu marido/esposa"
                 </div>
               )}
             </div>
+
+            {/* CRM Stage Configuration */}
+            {pipelineStages.length > 0 && (
+              <div className="space-y-3 border-t pt-4">
+                <Label className="flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5" />
+                  Integração com CRM
+                </Label>
+                <p className="text-xs text-muted-foreground">Escolha para quais colunas do funil o lead será movido automaticamente</p>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Quando lead responde</Label>
+                    <select
+                      value={crmStageOnNewLead}
+                      onChange={(e) => setCrmStageOnNewLead(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhuma</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Quando agente responde</Label>
+                    <select
+                      value={crmStageOnReply}
+                      onChange={(e) => setCrmStageOnReply(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhuma</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Quando conversa encerra</Label>
+                    <select
+                      value={crmStageOnEnd}
+                      onChange={(e) => setCrmStageOnEnd(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhuma (manter na coluna atual)</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 
