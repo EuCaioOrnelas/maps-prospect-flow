@@ -403,11 +403,11 @@ export default function AIAgents() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                   {agents.map((agent) => (
                     <Card 
                       key={agent.id} 
-                      className="border-border hover:border-primary/30 transition-all cursor-pointer group max-w-[280px] w-full"
+                      className="border-border hover:border-primary/30 transition-all cursor-pointer group"
                       onClick={() => setSummaryAgent(agent)}
                     >
                       <div className="p-3 space-y-3">
