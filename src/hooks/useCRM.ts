@@ -190,21 +190,55 @@ export const useCRM = () => {
     const validLeads = (data || []).filter((lead) => {
       const phone = (lead.phone as string) || '';
       const digits = phone.replace(/\D/g, '');
-      // Exclude @lid patterns (Facebook Lead IDs)
       if (phone.includes('@lid')) return false;
-      // Exclude @g.us patterns (WhatsApp groups)
       if (phone.includes('@g.us')) return false;
-      // Exclude group IDs (start with 120363)
       if (digits.startsWith('120363')) return false;
-      // Exclude if phone is too long (>15 digits) or too short (<10 digits)
       if (digits.length > 15) return false;
       if (digits.length < 10) return false;
-      // Exclude group JID patterns (contains hyphen with timestamp)
       if (phone.includes('-') && phone.length > 15) return false;
       return true;
     });
 
-    setLeads(validLeads as Lead[]);
+    // Deduplicate leads by last 8 digits of phone number
+    // Keep the one with the most recent activity (updated_at)
+    const seenPhones = new Map<string, number>();
+    const deduplicatedLeads = validLeads.filter((lead, index) => {
+      const digits = (lead.phone as string || '').replace(/\D/g, '');
+      const key = digits.slice(-8);
+      if (!key || key.length < 8) return true; // keep leads with short phones as-is
+      
+      const existingIndex = seenPhones.get(key);
+      if (existingIndex === undefined) {
+        seenPhones.set(key, index);
+        return true;
+      }
+      
+      // Compare: keep the one with more recent updated_at or more data
+      const existing = validLeads[existingIndex];
+      const existingDate = new Date(existing.updated_at).getTime();
+      const currentDate = new Date(lead.updated_at).getTime();
+      
+      if (currentDate > existingDate) {
+        // Current lead is newer, replace the existing one
+        seenPhones.set(key, index);
+        return true;
+      }
+      return false;
+    });
+    
+    // Second pass: remove the older duplicates that were initially kept
+    const finalKeys = new Map<string, string>();
+    for (const [key, index] of seenPhones) {
+      finalKeys.set(key, validLeads[index].id);
+    }
+    const uniqueLeads = deduplicatedLeads.filter((lead) => {
+      const digits = (lead.phone as string || '').replace(/\D/g, '');
+      const key = digits.slice(-8);
+      if (!key || key.length < 8) return true;
+      return finalKeys.get(key) === lead.id;
+    });
+
+    setLeads(uniqueLeads as Lead[]);
     setIsLoading(false);
   }, [user]);
 
@@ -226,12 +260,21 @@ export const useCRM = () => {
     return true;
   };
 
-  // Normalize phone number to Brazilian format
+  // Normalize phone number to Brazilian format (with 9th digit for mobiles)
   const normalizePhone = (phone: string): string => {
     let digits = phone.replace(/\D/g, '');
     // Add country code if missing
     if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
       digits = '55' + digits;
+    }
+    // Add 9th digit for mobile numbers (55 + 2-digit DDD + 8-digit number)
+    // Mobile numbers start with 6, 7, 8, or 9
+    if (digits.startsWith('55') && digits.length === 12) {
+      const ddd = digits.substring(2, 4);
+      const number = digits.substring(4);
+      if (/^[6-9]/.test(number)) {
+        digits = '55' + ddd + '9' + number;
+      }
     }
     return digits;
   };
