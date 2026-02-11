@@ -515,6 +515,7 @@ export default function AIAgents() {
         open={!!selectedAgent}
         onOpenChange={(open) => !open && setSelectedAgent(null)}
         onUpdate={fetchAgents}
+        whatsappNumbers={numbers}
       />
 
       {/* Delete Confirmation */}

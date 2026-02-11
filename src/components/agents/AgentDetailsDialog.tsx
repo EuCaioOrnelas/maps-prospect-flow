@@ -36,7 +36,8 @@ import {
   FileText,
   Copy,
   ArrowLeft,
-  User
+  User,
+  Smartphone
 } from "lucide-react";
 
 // Templates de prompts prontos
@@ -179,11 +180,20 @@ Você é um consultor comercial experiente e persuasivo.
   }
 ];
 
+interface WhatsAppNumberOption {
+  id: string;
+  name: string;
+  phone_number: string | null;
+  is_connected: boolean;
+  instance_name: string | null;
+}
+
 interface AgentDetailsDialogProps {
   agent: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
+  whatsappNumbers?: WhatsAppNumberOption[];
 }
 
 interface Conversation {
@@ -206,7 +216,7 @@ interface MessageLog {
   created_at: string;
 }
 
-export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: AgentDetailsDialogProps) {
+export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsappNumbers = [] }: AgentDetailsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -236,6 +246,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState(agent?.crm_stage_on_new_lead || "Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState(agent?.crm_stage_on_reply || "Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState(agent?.crm_stage_on_end || "");
+  const [selectedWhatsAppNumberId, setSelectedWhatsAppNumberId] = useState(agent?.whatsapp_number_id || "");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
   useEffect(() => {
@@ -285,6 +296,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
       setCrmStageOnNewLead(agent.crm_stage_on_new_lead || "Respondeu Mensagem");
       setCrmStageOnReply(agent.crm_stage_on_reply || "Mensagem Enviada");
       setCrmStageOnEnd(agent.crm_stage_on_end || "");
+      setSelectedWhatsAppNumberId(agent.whatsapp_number_id || "");
     }
   }, [agent, open, user]);
 
@@ -350,6 +362,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
           crm_stage_on_new_lead: crmStageOnNewLead || null,
           crm_stage_on_reply: crmStageOnReply || null,
           crm_stage_on_end: crmStageOnEnd || null,
+          whatsapp_number_id: selectedWhatsAppNumberId || null,
         })
         .eq('id', agent.id);
 
@@ -866,6 +879,36 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate }: Agen
                         Quantas mensagens o bot pode enviar por dia
                       </p>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* WhatsApp Number */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      Número do WhatsApp
+                    </CardTitle>
+                    <CardDescription>
+                      Escolha qual número este agente vai usar para responder
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <select
+                      value={selectedWhatsAppNumberId}
+                      onChange={(e) => setSelectedWhatsAppNumberId(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhum número selecionado</option>
+                      {whatsappNumbers.map(n => (
+                        <option key={n.id} value={n.id}>
+                          {n.name}{n.phone_number ? ` (${n.phone_number})` : ''}{n.is_connected ? ' ✅' : ' ⚠️ Desconectado'}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Ao trocar o número, o agente passa a funcionar no novo número imediatamente.
+                    </p>
                   </CardContent>
                 </Card>
 
