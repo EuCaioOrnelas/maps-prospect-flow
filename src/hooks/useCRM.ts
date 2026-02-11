@@ -200,43 +200,29 @@ export const useCRM = () => {
     });
 
     // Deduplicate leads by last 8 digits of phone number
-    // Keep the one with the most recent activity (updated_at)
-    const seenPhones = new Map<string, number>();
-    const deduplicatedLeads = validLeads.filter((lead, index) => {
+    // Keep the one with the most recent updated_at
+    const bestByPhone = new Map<string, typeof validLeads[0]>();
+    for (const lead of validLeads) {
       const digits = (lead.phone as string || '').replace(/\D/g, '');
       const key = digits.slice(-8);
-      if (!key || key.length < 8) return true; // keep leads with short phones as-is
-      
-      const existingIndex = seenPhones.get(key);
-      if (existingIndex === undefined) {
-        seenPhones.set(key, index);
-        return true;
+      if (!key || key.length < 8) {
+        // Can't deduplicate, will be added separately
+        continue;
       }
-      
-      // Compare: keep the one with more recent updated_at or more data
-      const existing = validLeads[existingIndex];
-      const existingDate = new Date(existing.updated_at).getTime();
-      const currentDate = new Date(lead.updated_at).getTime();
-      
-      if (currentDate > existingDate) {
-        // Current lead is newer, replace the existing one
-        seenPhones.set(key, index);
-        return true;
+      const existing = bestByPhone.get(key);
+      if (!existing || new Date(lead.updated_at).getTime() > new Date(existing.updated_at).getTime()) {
+        bestByPhone.set(key, lead);
       }
-      return false;
+    }
+    
+    // Collect: leads that couldn't be keyed + best of each key
+    const shortPhoneLeads = validLeads.filter((lead) => {
+      const digits = (lead.phone as string || '').replace(/\D/g, '');
+      const key = digits.slice(-8);
+      return !key || key.length < 8;
     });
     
-    // Second pass: remove the older duplicates that were initially kept
-    const finalKeys = new Map<string, string>();
-    for (const [key, index] of seenPhones) {
-      finalKeys.set(key, validLeads[index].id);
-    }
-    const uniqueLeads = deduplicatedLeads.filter((lead) => {
-      const digits = (lead.phone as string || '').replace(/\D/g, '');
-      const key = digits.slice(-8);
-      if (!key || key.length < 8) return true;
-      return finalKeys.get(key) === lead.id;
-    });
+    const uniqueLeads = [...shortPhoneLeads, ...bestByPhone.values()];
 
     setLeads(uniqueLeads as Lead[]);
     setIsLoading(false);
