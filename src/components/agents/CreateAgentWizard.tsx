@@ -1784,13 +1784,18 @@ Preciso falar com meu marido/esposa"
             </div>
 
             {/* CRM Stage Configuration */}
-            {pipelineStages.length > 0 && (
-              <div className="space-y-3 border-t pt-4">
-                <Label className="flex items-center gap-1.5">
-                  <Target className="w-3.5 h-3.5" />
-                  Integração com CRM
-                </Label>
-                <p className="text-xs text-muted-foreground">Escolha para quais colunas do funil o lead será movido automaticamente</p>
+            <div className="space-y-3 border-t pt-4">
+              <Label className="flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" />
+                Integração com CRM
+              </Label>
+              <p className="text-xs text-muted-foreground">Escolha para quais colunas do funil o lead será movido automaticamente</p>
+              {pipelineStages.length === 0 ? (
+                <p className="text-xs text-yellow-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Nenhuma coluna no CRM. Crie colunas no CRM para configurar a integração.
+                </p>
+              ) : (
                 <div className="space-y-2">
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">Quando lead responde</Label>
@@ -1832,8 +1837,8 @@ Preciso falar com meu marido/esposa"
                     </select>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         );
 
