@@ -590,81 +590,7 @@ serve(async (req) => {
                 console.error('Error syncing with CRM:', crmError);
               }
 
-              // Sync to chat
-              try {
-                const remoteJid = `${formattedPhone}@s.whatsapp.net`;
-                
-                const { data: existingConv } = await supabase
-                  .from('conversations')
-                  .select('id')
-                  .eq('whatsapp_number_id', numberId)
-                  .eq('remote_jid', remoteJid)
-                  .single();
-
-                let conversationId: string | undefined;
-
-                if (existingConv) {
-                  conversationId = existingConv.id;
-                } else {
-                  const { data: existingContact } = await supabase
-                    .from('contacts')
-                    .select('id, name')
-                    .eq('user_id', userId)
-                    .eq('phone', formattedPhone)
-                    .single();
-
-                  const { data: newConv } = await supabase
-                    .from('conversations')
-                    .insert({
-                      user_id: userId,
-                      whatsapp_number_id: numberId,
-                      contact_id: existingContact?.id || null,
-                      remote_jid: remoteJid,
-                      phone: formattedPhone,
-                      contact_name: existingContact?.name || lead.name || null,
-                    })
-                    .select('id')
-                    .single();
-
-                  if (newConv) {
-                    conversationId = newConv.id;
-                  }
-                }
-
-                if (conversationId) {
-                  const messageId = sendResult?.key?.id || `campaign_${campaignId}_${i}_${Date.now()}`;
-                  
-                  await supabase
-                    .from('messages')
-                    .insert({
-                      conversation_id: conversationId,
-                      user_id: userId,
-                      message_id: messageId,
-                      remote_jid: remoteJid,
-                      from_me: true,
-                      message_type: 'text',
-                      content: personalizedMessage,
-                      status: 'sent',
-                    });
-
-                  await supabase
-                    .from('conversations')
-                    .update({
-                      last_message: personalizedMessage.substring(0, 100),
-                      last_message_at: new Date().toISOString(),
-                    })
-                    .eq('id', conversationId);
-
-                  // Update lead with conversation_id
-                  await supabase
-                    .from('leads')
-                    .update({ conversation_id: conversationId })
-                    .eq('user_id', userId)
-                    .or(`phone.eq.${formattedPhone},phone.ilike.%${formattedPhone.slice(-8)}%`);
-                }
-              } catch (syncError) {
-                console.error('Error syncing message:', syncError);
-              }
+              // Chat sync removed - tables no longer exist
             } else {
               const errorText = await sendResponse.text();
               console.error(`✗ Failed to send to ${formattedPhone}:`, errorText);
@@ -681,8 +607,10 @@ serve(async (req) => {
           await supabase
             .from('whatsapp_campaigns')
             .update({ 
+              current_lead_index: i + 1,
               sent_count: sentCount,
               failed_count: failedCount,
+              last_message_sent_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
             .eq('id', campaignId);
