@@ -350,6 +350,8 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
     
     setSaving(true);
     try {
+      const numberChanged = selectedWhatsAppNumberId && selectedWhatsAppNumberId !== agent.whatsapp_number_id;
+      
       const { error } = await supabase
         .from('ai_agents')
         .update({
@@ -368,9 +370,35 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
 
       if (error) throw error;
 
+      // If the WhatsApp number changed, reconfigure webhook on the new number
+      if (numberChanged) {
+        const newNumber = whatsappNumbers.find(n => n.id === selectedWhatsAppNumberId);
+        if (newNumber?.instance_name) {
+          console.log(`Agent number changed, reconfiguring webhook for instance: ${newNumber.instance_name}`);
+          try {
+            const { data: session } = await supabase.auth.getSession();
+            const token = session?.session?.access_token;
+            if (token) {
+              const response = await supabase.functions.invoke('evolution-reconfigure-webhook', {
+                body: { instanceName: newNumber.instance_name },
+              });
+              if (response.error) {
+                console.error('Webhook reconfiguration error:', response.error);
+              } else {
+                console.log('Webhook reconfigured successfully:', response.data);
+              }
+            }
+          } catch (webhookError) {
+            console.error('Error reconfiguring webhook:', webhookError);
+          }
+        }
+      }
+
       toast({
         title: "Configurações salvas",
-        description: "As configurações do agente foram atualizadas com sucesso.",
+        description: numberChanged 
+          ? "Configurações atualizadas e webhook reconfigurado no novo número."
+          : "As configurações do agente foram atualizadas com sucesso.",
       });
       
       onUpdate();
