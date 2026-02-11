@@ -1832,6 +1832,43 @@ REGRAS OBRIGATÓRIAS:
           } else {
             console.log(`Updated connection status for ${instanceName}: ${isConnected}`);
           }
+
+          // AUTO-CONFIGURE WEBHOOK when instance connects successfully
+          // Many Evolution API versions discard webhook config set before QR scan
+          if (isConnected && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+            console.log(`🔄 Auto-configuring webhook for newly connected instance: ${instanceName}`);
+            const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
+            const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
+            
+            const webhookFormats = [
+              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
+            ];
+
+            let webhookOk = false;
+            for (const fmt of webhookFormats) {
+              if (webhookOk) break;
+              try {
+                const wRes = await fetch(fmt.url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+                  body: JSON.stringify(fmt.body),
+                });
+                const wText = await wRes.text();
+                console.log(`Webhook set attempt ${fmt.url}: ${wRes.status} - ${wText.substring(0, 200)}`);
+                if (wRes.ok || wRes.status === 201) {
+                  webhookOk = true;
+                  console.log('✅ Webhook auto-configured successfully on connection!');
+                }
+              } catch (e) {
+                console.log(`Webhook set failed for ${fmt.url}:`, e);
+              }
+            }
+
+            if (!webhookOk) {
+              console.warn('⚠️ Could not auto-configure webhook on connection. Manual config may be needed.');
+            }
+          }
         }
         break;
 
