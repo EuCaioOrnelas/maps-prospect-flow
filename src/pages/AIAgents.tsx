@@ -403,42 +403,63 @@ export default function AIAgents() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {agents.map((agent) => (
                     <Card 
                       key={agent.id} 
-                      className="border-border hover:border-primary/30 transition-all cursor-pointer group"
+                      className="border-border hover:border-primary/30 transition-all cursor-pointer group max-w-[280px] w-full"
                       onClick={() => setSummaryAgent(agent)}
                     >
-                      <div className="p-4 flex items-center gap-3">
-                        {/* Icon with status indicator */}
-                        <div className="relative shrink-0">
-                          <div className="p-2 rounded-lg bg-primary/10">
-                            <Bot className="h-5 w-5 text-primary" />
+                      <div className="p-3 space-y-3">
+                        {/* Top: Icon + Name + Number */}
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative shrink-0">
+                            <div className="p-1.5 rounded-lg bg-primary/10">
+                              <Bot className="h-4 w-4 text-primary" />
+                            </div>
+                            {agent.status === 'active' && (
+                              <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 ring-2 ring-card"></span>
+                              </span>
+                            )}
                           </div>
-                          {agent.status === 'active' && (
-                            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 ring-2 ring-card"></span>
-                            </span>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {agent.whatsapp_number 
+                                ? (agent.whatsapp_number.name || agent.whatsapp_number.phone_number)
+                                : 'Sem número vinculado'
+                              }
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Name + Number */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {agent.whatsapp_number 
-                              ? (agent.whatsapp_number.name || agent.whatsapp_number.phone_number)
-                              : 'Sem número vinculado'
-                            }
-                          </p>
-                        </div>
-
-                        {/* Status badge */}
-                        <div className="shrink-0">
+                        {/* Hours */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {agent.operating_hours_start?.slice(0, 5)} – {agent.operating_hours_end?.slice(0, 5)}
+                          </span>
                           {getStatusBadge(agent.status)}
                         </div>
+
+                        {/* Toggle button */}
+                        <Button
+                          variant={agent.status === 'active' ? 'outline' : 'default'}
+                          size="sm"
+                          className="w-full h-7 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleAgentStatus(agent);
+                          }}
+                        >
+                          {agent.status === 'active' ? (
+                            <><Pause className="h-3 w-3 mr-1" />Pausar</>
+                          ) : (
+                            <><Play className="h-3 w-3 mr-1" />Ativar</>
+                          )}
+                        </Button>
                       </div>
                     </Card>
                   ))}
