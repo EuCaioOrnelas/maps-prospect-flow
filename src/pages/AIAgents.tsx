@@ -55,6 +55,9 @@ import {
 } from "@/components/ui/dialog";
 import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
 import { Bot as BotIcon } from "lucide-react";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
+import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
+import { Smartphone } from "lucide-react";
 
 interface AIAgent {
   id: string;
@@ -120,6 +123,11 @@ export default function AIAgents() {
   const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
+  
+  // WhatsApp numbers management (shared with mass messaging)
+  const { 
+    numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
+  } = useWhatsAppNumbers();
 
   // Check if user has access to AI Agents (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
@@ -324,6 +332,12 @@ export default function AIAgents() {
                   </div>
                    
                   <div className="flex gap-2 w-full sm:w-auto">
+                    <NumbersManager
+                      numbers={numbers}
+                      onNumbersChange={setNumbers}
+                      maxNumbers={maxNumbers}
+                      onConnect={() => { fetchWhatsAppNumbers(); fetchAgents(); }}
+                    />
                     <Button 
                       variant="outline"
                       onClick={() => setShowManageTemplates(true)}

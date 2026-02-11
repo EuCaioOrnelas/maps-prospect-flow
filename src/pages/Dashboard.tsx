@@ -30,12 +30,14 @@ import {
   Clock,
   Crown,
   AlertCircle,
+  CheckSquare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
@@ -82,7 +84,8 @@ const Dashboard = () => {
   const [showWhatsAppUpgradeModal, setShowWhatsAppUpgradeModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showHistoryWarning, setShowHistoryWarning] = useState(false);
-  
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [bulkExporting, setBulkExporting] = useState(false);
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
@@ -773,13 +776,79 @@ const Dashboard = () => {
           {/* Search History Section - Below Results */}
           {searchHistory.length > 0 && (
             <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                  <History size={20} className="text-muted-foreground" />
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <History size={20} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg sm:text-xl font-bold">Prospecção</h3>
+                    <p className="text-sm text-muted-foreground">{searchHistory.length} buscas realizadas</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold">Histórico de Buscas</h3>
-                  <p className="text-sm text-muted-foreground">{searchHistory.length} buscas realizadas</p>
+                <div className="flex items-center gap-2">
+                  {selectedHistoryIds.size > 0 && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      disabled={bulkExporting}
+                      onClick={() => {
+                        setBulkExporting(true);
+                        try {
+                          const selectedItems = searchHistory.filter(h => selectedHistoryIds.has(h.id));
+                          const allLeads = selectedItems.flatMap(item => 
+                            (item.leads || []).map(lead => ({
+                              'Busca': item.keyword,
+                              'Localização': item.location,
+                              'Nome': lead.name,
+                              'Telefone': lead.phone,
+                              'Categoria': lead.category,
+                              'Cidade': lead.city,
+                              'Site': lead.website || '',
+                              'Avaliação': lead.rating,
+                              'Link Maps': lead.mapsLink,
+                            }))
+                          );
+                          if (allLeads.length === 0) {
+                            toast({ title: "Sem leads", description: "As buscas selecionadas não possuem leads salvos", variant: "destructive" });
+                            return;
+                          }
+                          const wb = XLSX.utils.book_new();
+                          const ws = XLSX.utils.json_to_sheet(allLeads);
+                          ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 8 }, { wch: 40 }];
+                          XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+                          XLSX.writeFile(wb, `prospecção-${new Date().toISOString().split('T')[0]}.xlsx`, { compression: true });
+                          toast({ title: "Exportado!", description: `${allLeads.length} leads de ${selectedItems.length} buscas exportados` });
+                          setSelectedHistoryIds(new Set());
+                        } catch (err) {
+                          toast({ title: "Erro", description: "Não foi possível exportar", variant: "destructive" });
+                        } finally {
+                          setBulkExporting(false);
+                        }
+                      }}
+                      className="gap-2"
+                    >
+                      <Download size={14} />
+                      Exportar {selectedHistoryIds.size} {selectedHistoryIds.size === 1 ? 'busca' : 'buscas'}
+                    </Button>
+                  )}
+                  {searchHistory.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedHistoryIds.size === searchHistory.length) {
+                          setSelectedHistoryIds(new Set());
+                        } else {
+                          setSelectedHistoryIds(new Set(searchHistory.map(h => h.id)));
+                        }
+                      }}
+                      className="gap-1.5 text-xs"
+                    >
+                      <CheckSquare size={14} />
+                      {selectedHistoryIds.size === searchHistory.length ? 'Desmarcar' : 'Selecionar tudo'}
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -794,9 +863,27 @@ const Dashboard = () => {
                       <div
                         key={item.id}
                         onClick={() => handleHistoryClick(item)}
-                        className="relative group bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in"
+                        className={`relative group bg-card border rounded-xl p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in ${selectedHistoryIds.has(item.id) ? 'border-primary/50 bg-primary/5' : 'border-border/50'}`}
                         style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
                       >
+                        {/* Checkbox */}
+                        <div 
+                          className="absolute top-3 left-3 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            checked={selectedHistoryIds.has(item.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedHistoryIds(prev => {
+                                const next = new Set(prev);
+                                if (checked) next.add(item.id);
+                                else next.delete(item.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        </div>
+                        
                         {/* Delete button */}
                         <button
                           onClick={(e) => handleDeleteHistoryItem(e, item.id)}
@@ -806,7 +893,7 @@ const Dashboard = () => {
                           <Trash2 size={14} />
                         </button>
                         
-                        <div className="pr-10">
+                        <div className="pl-7 pr-10">
                           <p className="font-semibold text-foreground truncate text-base">{item.keyword}</p>
                           <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1.5">
                             <MapPin size={12} className="flex-shrink-0 text-primary/60" />
