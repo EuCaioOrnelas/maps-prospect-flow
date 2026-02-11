@@ -796,18 +796,10 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Check connection with more retries for running campaigns
-        const isConnected = await checkInstanceConnection(
-          EVOLUTION_API_URL,
-          EVOLUTION_API_KEY,
-          numberData.instance_name,
-          3 // 3 retry attempts
-        );
-
-        if (!isConnected) {
-          // NEVER disconnect the number from campaign-processor
-          // Just skip this cycle and try again next time
-          console.log(`⏳ Connection check failed for ${numberData.instance_name}, skipping this cycle (will retry next cycle)`);
+        // Trust the database is_connected state (managed by webhooks)
+        // instead of checking Evolution API every cycle which causes false negatives
+        if (!numberData.is_connected) {
+          console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, skipping this cycle`);
           continue;
         }
 
