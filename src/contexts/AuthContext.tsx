@@ -93,17 +93,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`[AuthContext] Sync account state (${reason})...`);
 
-      const [subResult, resetResult] = await Promise.all([
+      const results = await Promise.allSettled([
         supabase.functions.invoke('check-subscription'),
         supabase.rpc('check_and_reset_monthly_searches', { user_id: userId }),
       ]);
 
-      if (subResult?.error) {
-        console.error('[AuthContext] Error checking subscription:', subResult.error);
+      if (results[0].status === 'rejected') {
+        console.error('[AuthContext] Error checking subscription:', results[0].reason);
+      } else if (results[0].value?.error) {
+        console.error('[AuthContext] Error checking subscription:', results[0].value.error);
       }
 
-      if (resetResult?.error) {
-        console.error('[AuthContext] Error resetting monthly searches:', resetResult.error);
+      if (results[1].status === 'rejected') {
+        console.error('[AuthContext] Error resetting monthly searches:', results[1].reason);
+      } else if (results[1].value?.error) {
+        console.error('[AuthContext] Error resetting monthly searches:', results[1].value.error);
       }
 
       const updatedProfile = await fetchProfile(userId);
