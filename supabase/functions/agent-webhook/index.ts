@@ -438,6 +438,26 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
+      // If conversation is completed, agent should not respond anymore
+      if (existingConv && existingConv.status === 'completed') {
+        console.log(`Conversation ${existingConv.id} is completed, agent will not respond to ${phone}`);
+        
+        // Still move to CRM stage
+        const userId = agent.whatsapp_number?.user_id;
+        if (userId) {
+          await moveLeadToCRMStage(supabase, phone, userId, 'Respondeu Mensagem');
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'conversation_completed',
+            message: 'Conversation already completed, agent will not respond' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       // Check if user (owner) responded to this lead today - agent should not respond
       // EXCEPTION: "atendimento" objective agents continue responding even if user responded
       if (existingConv && agent.objective !== 'atendimento') {

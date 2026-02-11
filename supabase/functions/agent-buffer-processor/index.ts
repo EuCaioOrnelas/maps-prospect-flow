@@ -487,9 +487,16 @@ REGRAS OBRIGATÓRIAS DE FORMATO:
 6. Para WhatsApp: use frases curtas e parágrafos de 1-2 frases
 7. Finalize sempre com uma frase que faça sentido, mesmo que precise resumir
 
+REGRA DE ENCERRAMENTO DE CONVERSA:
+- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, ou quando o lead claramente não tem mais interesse, ou quando a conversa chegou a uma conclusão natural, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta (após o texto da mensagem).
+- Exemplos de quando encerrar: lead agradeceu e se despediu, lead disse que não tem interesse, objetivo foi atingido, lead pediu para parar de enviar mensagens.
+- NÃO encerre prematuramente - apenas quando realmente fizer sentido.
+- O marcador [CONVERSA_ENCERRADA] NÃO será enviado ao lead, é apenas um sinal interno.
+
 EXEMPLOS DE BOM FORMATO:
 - "Ótimo! O serviço custa R$99/mês. Quer saber mais detalhes?"
 - "Claro! Trabalhamos com consultoria empresarial. Posso te explicar melhor?"
+- "Perfeito, fico à disposição! Qualquer dúvida é só chamar. 😊 [CONVERSA_ENCERRADA]"
 
 EXEMPLOS DE MAU FORMATO (NUNCA FAÇA ISSO):
 - "Trabalhamos com diversos serviços como consultoria, marketing, vendas..."
@@ -525,6 +532,15 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();
             let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
+
+            // Detect conversation end marker
+            const shouldEndConversation = replyContent.includes('[CONVERSA_ENCERRADA]');
+            if (shouldEndConversation) {
+              console.log(`AI signaled conversation end for conv ${conv.id}`);
+            }
+            
+            // Remove the marker from the actual message
+            replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
 
             // Clean up incomplete endings (fallback safety)
             replyContent = cleanIncompleteResponse(replyContent, maxChars);
@@ -576,6 +592,15 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
 
               if (sentCount > 0) {
                 const newReplyCount = currentReplyCount + 1;
+                
+                // Determine if conversation should be marked as completed
+                const maxReplies = agent.max_replies;
+                const reachedMaxReplies = maxReplies && newReplyCount >= maxReplies;
+                const isConversationEnded = shouldEndConversation || reachedMaxReplies;
+                
+                if (isConversationEnded) {
+                  console.log(`Conversation ${conv.id} ended. Reason: ${shouldEndConversation ? 'AI signal' : 'max_replies reached'} (${newReplyCount}/${maxReplies ?? '∞'})`);
+                }
 
                 // Update conversation
                 await supabase
@@ -585,7 +610,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
                     reply_count: newReplyCount,
-                    status: 'awaiting_response',
+                    status: isConversationEnded ? 'completed' : 'awaiting_response',
                     is_processing: false,
                     process_after: null,
                   })
