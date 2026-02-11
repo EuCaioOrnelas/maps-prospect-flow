@@ -146,7 +146,7 @@ export const CampaignDebugPanel = () => {
   };
 
   const getDiagnostics = (campaign: CampaignDebug) => {
-    const issues: { type: "error" | "warning" | "info"; message: string }[] = [];
+    const issues: { type: "error" | "warning" | "info"; message: string; cause: string; fix: string }[] = [];
     const now = new Date();
 
     // Running but no messages sent
@@ -154,7 +154,18 @@ export const CampaignDebugPanel = () => {
       const startedAgo = now.getTime() - new Date(campaign.started_at).getTime();
       const minutesAgo = Math.floor(startedAgo / 60000);
       if (minutesAgo > 5) {
-        issues.push({ type: "error", message: `Rodando há ${minutesAgo} min sem enviar nenhuma mensagem` });
+        const numberInfo = getNumberInfo(campaign.whatsapp_number_id);
+        const isDisconnected = numberInfo && !numberInfo.is_connected;
+        issues.push({
+          type: "error",
+          message: `Rodando há ${minutesAgo} min sem enviar nenhuma mensagem`,
+          cause: isDisconnected
+            ? "O número WhatsApp está desconectado. O processador não consegue enviar mensagens sem conexão ativa."
+            : "O campaign-processor pode não estar processando esta campanha. Possíveis causas: cron job parado, erro no Edge Function, ou leads inválidos.",
+          fix: isDisconnected
+            ? "1) Reconectar o número via QR Code. 2) Após reconectar, a campanha deve retomar automaticamente no próximo ciclo do processador (~30s)."
+            : "1) Verificar logs do campaign-processor no painel de Edge Functions. 2) Verificar se os leads têm telefones válidos. 3) Tentar pausar e retomar a campanha manualmente."
+        });
       }
     }
 
@@ -163,7 +174,12 @@ export const CampaignDebugPanel = () => {
       const lastSentAgo = now.getTime() - new Date(campaign.last_message_sent_at).getTime();
       const minutesSinceLastSent = Math.floor(lastSentAgo / 60000);
       if (minutesSinceLastSent > 10) {
-        issues.push({ type: "warning", message: `Última mensagem enviada há ${minutesSinceLastSent} min (pode estar travada)` });
+        issues.push({
+          type: "warning",
+          message: `Última mensagem enviada há ${minutesSinceLastSent} min (pode estar travada)`,
+          cause: "A campanha enviou mensagens antes mas parou. Possíveis causas: smart pause ativa, erro na Evolution API, lead atual com telefone inválido, ou limite diário atingido.",
+          fix: "1) Verificar se smart_pause está ativa e o tempo de pausa. 2) Checar se o número atingiu o limite diário. 3) Verificar logs do campaign-processor para erros. 4) Se persistir, pausar e retomar a campanha."
+        });
       }
     }
 
@@ -171,18 +187,33 @@ export const CampaignDebugPanel = () => {
     if (campaign.sent_count + campaign.failed_count > 0) {
       const failRate = campaign.failed_count / (campaign.sent_count + campaign.failed_count);
       if (failRate > 0.3) {
-        issues.push({ type: "error", message: `Taxa de falha alta: ${Math.round(failRate * 100)}%` });
+        issues.push({
+          type: "error",
+          message: `Taxa de falha alta: ${Math.round(failRate * 100)}% (${campaign.failed_count} falhas de ${campaign.sent_count + campaign.failed_count})`,
+          cause: "Muitas mensagens falharam ao enviar. Possíveis causas: leads com telefones inválidos/inexistentes no WhatsApp, número bloqueado pela Meta, ou instabilidade na Evolution API.",
+          fix: "1) Verificar se os leads importados têm telefones válidos com DDD+9 dígitos. 2) Checar se o número não foi banido (verificar no WhatsApp Web). 3) Verificar status da instância na Evolution API."
+        });
       }
     }
 
     // Paused by incident
     if (campaign.pause_reason === "incident_detected") {
-      issues.push({ type: "error", message: "Pausada por incidente (bloqueio/denúncia detectado)" });
+      issues.push({
+        type: "error",
+        message: "Pausada por incidente (bloqueio/denúncia detectado)",
+        cause: "O sistema detectou que um contato denunciou ou bloqueou o número durante o envio. A campanha foi pausada automaticamente como medida de segurança.",
+        fix: "1) NÃO retomar imediatamente — esperar pelo menos 24h. 2) Revisar o conteúdo das mensagens (pode estar gerando denúncias). 3) Reduzir o volume diário. 4) Se o número foi banido, será necessário usar outro número."
+      });
     }
 
     // Paused at daily limit
     if (campaign.paused_at_limit) {
-      issues.push({ type: "warning", message: "Pausada por limite diário atingido" });
+      issues.push({
+        type: "warning",
+        message: "Pausada por limite diário atingido",
+        cause: "O número atingiu o limite diário de envios configurado. A campanha será retomada automaticamente no próximo dia.",
+        fix: `Comportamento esperado. A campanha retomará automaticamente após a meia-noite (reset do contador diário).${campaign.resume_at ? ` Retoma prevista: ${formatDate(campaign.resume_at)}` : ""}`
+      });
     }
 
     // Scheduled but past schedule time
@@ -191,7 +222,12 @@ export const CampaignDebugPanel = () => {
       if (scheduledTime < now) {
         const minutesLate = Math.floor((now.getTime() - scheduledTime.getTime()) / 60000);
         if (minutesLate > 2) {
-          issues.push({ type: "error", message: `Agendada para ${format(scheduledTime, "dd/MM HH:mm")} mas não iniciou (${minutesLate} min de atraso)` });
+          issues.push({
+            type: "error",
+            message: `Agendada para ${format(scheduledTime, "dd/MM HH:mm")} mas não iniciou (${minutesLate} min de atraso)`,
+            cause: "O cron job start-scheduled-campaigns deveria ter iniciado esta campanha. Possíveis causas: Edge Function com erro, número desconectado no momento do agendamento, ou fuso horário incorreto.",
+            fix: "1) Verificar logs do start-scheduled-campaigns. 2) Confirmar que o número está conectado. 3) Se persistir, cancelar e recriar a campanha. 4) O atraso normal é de até 60s — acima disso indica problema."
+          });
         }
       }
     }
@@ -199,28 +235,64 @@ export const CampaignDebugPanel = () => {
     // Number not connected
     const numberInfo = getNumberInfo(campaign.whatsapp_number_id);
     if (numberInfo && !numberInfo.is_connected) {
-      issues.push({ type: "error", message: `Número "${numberInfo.name}" desconectado` });
+      issues.push({
+        type: "error",
+        message: `Número "${numberInfo.name}" desconectado`,
+        cause: "O número WhatsApp perdeu a conexão. Nenhuma mensagem será enviada enquanto estiver desconectado. Causas comuns: WhatsApp Web deslogado, celular sem internet, ou instância expirada.",
+        fix: "1) Pedir ao usuário para reconectar via QR Code na tela de Números. 2) Verificar se o celular está com internet. 3) Se não reconectar, deletar e recriar a instância."
+      });
     }
 
     if (!campaign.whatsapp_number_id) {
-      issues.push({ type: "error", message: "Nenhum número WhatsApp atribuído" });
+      issues.push({
+        type: "error",
+        message: "Nenhum número WhatsApp atribuído",
+        cause: "A campanha foi criada sem selecionar um número de envio. Isso não deveria acontecer — pode ser um bug no fluxo de criação.",
+        fix: "1) Esta campanha não pode ser recuperada. 2) O usuário precisa cancelar e criar uma nova campanha selecionando um número."
+      });
     }
 
     // current_lead_index vs sent_count mismatch
     if (campaign.current_lead_index > campaign.sent_count + campaign.failed_count + 5) {
-      issues.push({ type: "warning", message: `Index (${campaign.current_lead_index}) muito à frente de enviados+falhas (${campaign.sent_count + campaign.failed_count})` });
+      issues.push({
+        type: "warning",
+        message: `Index (${campaign.current_lead_index}) muito à frente de enviados+falhas (${campaign.sent_count + campaign.failed_count})`,
+        cause: "O índice do lead atual está desalinhado com o total processado. Alguns leads podem ter sido pulados sem registro de envio ou falha.",
+        fix: "Monitorar — se a campanha continuar avançando e enviando, não é crítico. Se parar, pode ser necessário cancelar e recriar."
+      });
     }
 
     // Pending for too long
     if (campaign.status === "pending") {
       const createdAgo = now.getTime() - new Date(campaign.created_at).getTime();
       if (createdAgo > 10 * 60000) {
-        issues.push({ type: "warning", message: "Campanha pendente há mais de 10 min" });
+        issues.push({
+          type: "warning",
+          message: "Campanha pendente há mais de 10 min",
+          cause: "A campanha deveria ter sido iniciada pelo processador. Possíveis causas: campaign-processor não está rodando ou há um erro ao processar campanhas pendentes.",
+          fix: "1) Verificar logs do campaign-processor. 2) Tentar mudar o status manualmente para 'running' no banco. 3) Se não funcionar, pedir ao usuário para cancelar e recriar."
+        });
+      }
+    }
+
+    // Updated recently but no progress
+    if (campaign.status === "running" && campaign.sent_count === 0 && campaign.updated_at) {
+      const updatedAgo = now.getTime() - new Date(campaign.updated_at).getTime();
+      if (updatedAgo < 2 * 60000 && campaign.started_at) {
+        const startedAgo = now.getTime() - new Date(campaign.started_at).getTime();
+        if (startedAgo > 5 * 60000) {
+          issues.push({
+            type: "warning",
+            message: "Processador está atualizando a campanha mas sem enviar mensagens",
+            cause: "O campaign-processor está processando esta campanha (updated_at recente) mas não consegue enviar. Possível erro no envio via Evolution API ou todos os leads já foram contatados anteriormente.",
+            fix: "1) Verificar logs detalhados do campaign-processor para esta campanha. 2) Checar se os leads não estão na lista de ignorados (ignored_contacts). 3) Verificar se a Evolution API está respondendo."
+          });
+        }
       }
     }
 
     if (issues.length === 0) {
-      issues.push({ type: "info", message: "Sem problemas detectados" });
+      issues.push({ type: "info", message: "Sem problemas detectados", cause: "", fix: "" });
     }
 
     return issues;
@@ -337,26 +409,44 @@ export const CampaignDebugPanel = () => {
               </div>
 
               {/* Diagnostics */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {diagnostics.map((d, i) => (
                   <div
                     key={i}
-                    className={`flex items-center gap-2 text-sm ${
+                    className={`rounded-lg p-3 text-sm ${
+                      d.type === "error"
+                        ? "bg-destructive/10 border border-destructive/30"
+                        : d.type === "warning"
+                        ? "bg-yellow-500/10 border border-yellow-500/30"
+                        : "bg-green-500/10 border border-green-500/30"
+                    }`}
+                  >
+                    <div className={`flex items-center gap-2 font-medium ${
                       d.type === "error"
                         ? "text-destructive"
                         : d.type === "warning"
                         ? "text-yellow-600 dark:text-yellow-400"
                         : "text-green-600 dark:text-green-400"
-                    }`}
-                  >
-                    {d.type === "error" ? (
-                      <XCircle size={14} />
-                    ) : d.type === "warning" ? (
-                      <AlertTriangle size={14} />
-                    ) : (
-                      <CheckCircle2 size={14} />
+                    }`}>
+                      {d.type === "error" ? (
+                        <XCircle size={14} />
+                      ) : d.type === "warning" ? (
+                        <AlertTriangle size={14} />
+                      ) : (
+                        <CheckCircle2 size={14} />
+                      )}
+                      <span>{d.message}</span>
+                    </div>
+                    {d.cause && (
+                      <div className="mt-2 ml-5 space-y-1">
+                        <p className="text-xs text-muted-foreground">
+                          <strong className="text-foreground">Causa provável:</strong> {d.cause}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          <strong className="text-foreground">Como resolver:</strong> {d.fix}
+                        </p>
+                      </div>
                     )}
-                    <span>{d.message}</span>
                   </div>
                 ))}
               </div>
