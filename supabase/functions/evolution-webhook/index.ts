@@ -1817,20 +1817,26 @@ REGRAS OBRIGATÓRIAS:
           
           console.log(`Instance ${instanceName} connection state: ${state}`);
           
-          // Update the whatsapp_numbers table based on connection state
-          const isConnected = state === 'open';
-          const { error } = await supabase
-            .from('whatsapp_numbers')
-            .update({ 
-              is_connected: isConnected,
-              updated_at: new Date().toISOString()
-            })
-            .eq('instance_name', instanceName);
-          
-          if (error) {
-            console.error('Error updating connection status:', error);
+        // Update the whatsapp_numbers table based on connection state
+          // IMPORTANT: Only set is_connected = true when state is 'open'
+          // NEVER set is_connected = false from webhook events, as temporary states
+          // like 'connecting' would falsely mark numbers as disconnected and stop campaigns
+          if (state === 'open') {
+            const { error } = await supabase
+              .from('whatsapp_numbers')
+              .update({ 
+                is_connected: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('instance_name', instanceName);
+            
+            if (error) {
+              console.error('Error updating connection status:', error);
+            } else {
+              console.log(`Updated connection status for ${instanceName}: connected`);
+            }
           } else {
-            console.log(`Updated connection status for ${instanceName}: ${isConnected}`);
+            console.log(`Ignoring non-open state "${state}" for ${instanceName} - NOT marking as disconnected`);
           }
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
