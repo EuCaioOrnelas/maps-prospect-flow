@@ -125,7 +125,12 @@ serve(async (req) => {
     }
 
     // If instance doesn't exist, create it
+    // Prepare webhook URL for inclusion in create payload
+    const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
+    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
+
     if (!instanceExists) {
+      // Include webhook config directly in create payload - many Evolution versions support this
       const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
         method: 'POST',
         headers: {
@@ -136,6 +141,13 @@ serve(async (req) => {
           instanceName: instanceName,
           qrcode: true,
           integration: "WHATSAPP-BAILEYS",
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents,
+          },
         }),
       });
 
@@ -152,7 +164,7 @@ serve(async (req) => {
         }
       } else {
         instanceData = await createResponse.json();
-        console.log('Instance created:', JSON.stringify(instanceData));
+        console.log('Instance created with webhook in payload:', JSON.stringify(instanceData));
       }
     }
 

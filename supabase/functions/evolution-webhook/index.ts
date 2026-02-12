@@ -1841,8 +1841,11 @@ REGRAS OBRIGATÓRIAS:
             const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
             
             const webhookFormats = [
-              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
+              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, method: 'POST', body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
+              { url: `${EVOLUTION_API_URL}/webhook/instance/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${EVOLUTION_API_URL}/webhook/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${EVOLUTION_API_URL}/settings/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
             ];
 
             let webhookOk = false;
@@ -1850,12 +1853,12 @@ REGRAS OBRIGATÓRIAS:
               if (webhookOk) break;
               try {
                 const wRes = await fetch(fmt.url, {
-                  method: 'POST',
+                  method: fmt.method,
                   headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
                   body: JSON.stringify(fmt.body),
                 });
                 const wText = await wRes.text();
-                console.log(`Webhook set attempt ${fmt.url}: ${wRes.status} - ${wText.substring(0, 200)}`);
+                console.log(`Webhook set attempt ${fmt.method} ${fmt.url}: ${wRes.status} - ${wText.substring(0, 200)}`);
                 if (wRes.ok || wRes.status === 201) {
                   webhookOk = true;
                   console.log('✅ Webhook auto-configured successfully on connection!');
