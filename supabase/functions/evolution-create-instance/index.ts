@@ -200,7 +200,6 @@ serve(async (req) => {
     }
 
     // Configure webhook for chat messages - try multiple endpoints
-    const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
     console.log(`Configuring webhook for instance ${instanceName}: ${webhookUrl}`);
     
     let webhookConfigured = false;
