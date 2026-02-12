@@ -917,21 +917,33 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
       // Reconfigure webhook for the selected number to ensure agent receives messages
       try {
-        const selectedNumber = numbers.find(n => n.id === selectedNumberId);
-        if (selectedNumber) {
-          const { data: numberData } = await supabase
-            .from('whatsapp_numbers')
-            .select('instance_name')
-            .eq('id', selectedNumberId)
-            .single();
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('instance_name')
+          .eq('id', selectedNumberId)
+          .single();
+        
+        if (numberData?.instance_name) {
+          console.log('Reconfiguring webhook for instance:', numberData.instance_name);
           
-          if (numberData?.instance_name) {
-            console.log('Reconfiguring webhook for instance:', numberData.instance_name);
-            const { data: session } = await supabase.auth.getSession();
-            await supabase.functions.invoke('evolution-reconfigure-webhook', {
+          // First attempt
+          const { data: result, error: webhookError } = await supabase.functions.invoke('evolution-reconfigure-webhook', {
+            body: { instanceName: numberData.instance_name },
+          });
+          
+          if (webhookError || !result?.success) {
+            console.warn('First webhook config attempt failed, retrying in 3s...', webhookError || result);
+            // Retry after 3 seconds - instance might not be fully ready
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            const { data: retryResult } = await supabase.functions.invoke('evolution-reconfigure-webhook', {
               body: { instanceName: numberData.instance_name },
             });
+            console.log('Webhook retry result:', retryResult);
+          } else {
+            console.log('Webhook configured successfully:', result);
           }
+        } else {
+          console.warn('No instance_name found for number', selectedNumberId, '- webhook not configured');
         }
       } catch (webhookErr) {
         console.error('Failed to reconfigure webhook (non-blocking):', webhookErr);
