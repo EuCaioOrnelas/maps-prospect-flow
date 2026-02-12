@@ -93,3 +93,6 @@ verify_jwt = false
 
 [functions.admin-create-user]
 verify_jwt = false
+
+[functions.evolution-reconfigure-webhook]
+verify_jwt = false
