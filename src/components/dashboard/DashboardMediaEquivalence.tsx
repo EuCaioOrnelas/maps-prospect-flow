@@ -12,7 +12,7 @@ export function DashboardMediaEquivalence({ leadsProspected, cplBenchmark, perio
   const estimatedInvestment = leadsProspected * cplBenchmark;
 
   return (
-    <Card className="glass border-primary/20">
+    <Card className="glass border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <CardTitle className="text-base font-semibold">
@@ -33,28 +33,19 @@ export function DashboardMediaEquivalence({ leadsProspected, cplBenchmark, perio
           </TooltipProvider>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-xl bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">Leads no período</p>
-            <p className="text-xl font-bold text-foreground">{leadsProspected.toLocaleString('pt-BR')}</p>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">CPL benchmark</p>
-            <p className="text-xl font-bold text-foreground">
-              R$ {cplBenchmark.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-primary/10 border border-primary/20">
-            <p className="text-xs text-muted-foreground mb-1">Investimento equivalente</p>
-            <p className="text-xl font-bold text-primary flex items-center justify-center gap-1">
-              <DollarSign size={16} />
-              {estimatedInvestment.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
+      <CardContent className="space-y-6">
+        <div className="flex flex-col items-center justify-center py-4">
+          <p className="text-sm text-muted-foreground mb-2">Investimento equivalente em mídia paga</p>
+          <p className="text-4xl font-extrabold text-primary flex items-center gap-1">
+            <DollarSign size={28} />
+            {estimatedInvestment.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            para <span className="font-semibold text-foreground">{leadsProspected.toLocaleString('pt-BR')}</span> leads prospectados
+          </p>
         </div>
 
-        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+        <p className="text-[11px] text-muted-foreground/60 leading-relaxed text-center">
           Estimativa baseada em benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. 
           Valores podem variar conforme mercado, segmentação e estratégia.
         </p>

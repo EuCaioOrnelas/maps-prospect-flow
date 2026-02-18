@@ -57,7 +57,7 @@ function calcChange(current: number, previous: number): number {
 
 export function DashboardKPIs(props: DashboardKPIsProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <KPICard
         title="Leads Prospectados"
         value={props.leadsProspected.toLocaleString('pt-BR')}
@@ -76,13 +76,6 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         suffix="%"
         icon={<Shield size={20} />}
         change={props.deliverabilityRate - props.prevDeliverabilityRate}
-      />
-      <KPICard
-        title="Taxa de Resposta"
-        value={props.responseRate.toFixed(1)}
-        suffix="%"
-        icon={<MessageSquare size={20} />}
-        change={props.responseRate - props.prevResponseRate}
       />
     </div>
   );

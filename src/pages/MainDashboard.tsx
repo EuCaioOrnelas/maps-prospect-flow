@@ -109,28 +109,24 @@ export default function MainDashboard() {
                 prevResponseRate={data.prevResponseRate}
               />
 
-              {/* Funnel + Media Equivalence */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                  <DashboardFunnel
-                    leadsProspected={data.leadsProspected}
-                    messagesSent={data.messagesSent + data.messagesFailed}
-                    messagesDelivered={data.messagesSent}
-                    totalResponses={data.totalResponses}
-                    prevLeadsProspected={data.prevLeadsProspected}
-                    prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
-                    prevMessagesDelivered={data.prevMessagesSent}
-                    prevTotalResponses={data.prevTotalResponses}
-                  />
-                </div>
-                <div className="lg:col-span-2">
-                  <DashboardMediaEquivalence
-                    leadsProspected={data.leadsProspected}
-                    cplBenchmark={data.cplBenchmark}
-                    periodLabel={periodLabel}
-                  />
-                </div>
-              </div>
+              {/* Media Equivalence – destaque */}
+              <DashboardMediaEquivalence
+                leadsProspected={data.leadsProspected}
+                cplBenchmark={data.cplBenchmark}
+                periodLabel={periodLabel}
+              />
+
+              {/* Funnel */}
+              <DashboardFunnel
+                leadsProspected={data.leadsProspected}
+                messagesSent={data.messagesSent + data.messagesFailed}
+                messagesDelivered={data.messagesSent}
+                totalResponses={data.totalResponses}
+                prevLeadsProspected={data.prevLeadsProspected}
+                prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
+                prevMessagesDelivered={data.prevMessagesSent}
+                prevTotalResponses={data.prevTotalResponses}
+              />
 
               {/* Campaign Performance */}
               <DashboardCampaignPerformance
