@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, Briefcase, TrendingUp, TrendingDown, GitCompareArrows } from "lucide-react";
+import { CalendarClock, Briefcase, TrendingUp, TrendingDown, GitCompareArrows, Info } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { DashboardComparisonDialog } from "./DashboardComparisonDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DashboardImpactAccumulatedProps {
   allTimeLeads: number;
@@ -79,30 +80,35 @@ export function DashboardImpactAccumulated({
         </div>
       </div>
 
-      {/* Hero Impact Card */}
-      <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-background to-background overflow-hidden">
-        <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-1.5">
-          <p className="text-[10px] font-semibold text-emerald-400/80 tracking-[0.2em] uppercase">
-            Impacto Financeiro Gerado no Período
+      {/* Hero — Equivalência de Investimento em Mídia */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-background overflow-hidden">
+        <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-2">
+          <p className="text-[10px] font-semibold text-muted-foreground/80 tracking-[0.18em] uppercase">
+            Equivalência de Investimento em Mídia Paga
           </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight leading-none">
-              R$ {fmt(financialImpact)}
-            </p>
-            {hasRealComparison && financialChange !== 0 && (
-              <div className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                financialChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
-              }`}>
-                {financialChange > 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                {Math.abs(financialChange).toFixed(1)}% vs período anterior
-              </div>
-            )}
+          <p className="text-[11px] text-muted-foreground/70 max-w-lg leading-relaxed">
+            Para gerar{' '}
+            <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} contatos B2B segmentados</span>{' '}
+            via anúncios pagos no período selecionado, o investimento estimado poderia ser:
+          </p>
+          <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-none">
+            R$ {fmt(financialImpact)}
+          </p>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+            <span>CPL utilizado no cálculo: R$ {fmt(CPL_BENCHMARK)}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={12} className="text-muted-foreground/50 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-xs">
+                    Estimativa baseada em benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. Valores podem variar conforme mercado e segmentação.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          <p className="text-[11px] text-muted-foreground/70 max-w-md leading-relaxed">
-            Resultado estimado gerado com{' '}
-            <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} leads</span>{' '}
-            nos últimos {periodDays} dias.
-          </p>
         </CardContent>
       </Card>
 
@@ -142,13 +148,13 @@ export function DashboardImpactAccumulated({
             </div>
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                Projeção anual
+                Projeção de Geração de Base (12 meses)
               </p>
-              <p className="text-2xl font-bold text-amber-400 leading-tight">
-                R$ {fmt(projectedAnnualSavings)}
+              <p className="text-2xl font-bold text-foreground leading-tight">
+                {fmtInt(Math.round(avgMonthlyLeads * 12))} contatos
               </p>
               <p className="text-[11px] text-muted-foreground/50">
-                Impacto financeiro estimado em 12 meses
+                No ritmo atual, a Wiize poderá gerar aproximadamente esse volume em 12 meses
               </p>
             </div>
           </CardContent>
