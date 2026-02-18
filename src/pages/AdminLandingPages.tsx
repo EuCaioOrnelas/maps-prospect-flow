@@ -30,6 +30,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
@@ -46,7 +48,9 @@ import {
   DollarSign,
   TrendingUp,
   ExternalLink,
-  Calendar,
+  Calendar as CalendarIcon,
+  ArrowRightLeft,
+  X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -63,20 +67,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
-
-// Preços dos planos baseados nos IDs de preço da Stripe
-const STRIPE_PRICE_TO_PLAN: { [key: string]: { name: string; price: number } } = {
-  "price_1SlykAK8CM0R6xMMOCM684rz": { name: "start", price: 197 },
-  "price_1SlykkK8CM0R6xMMZu7WJesV": { name: "growth", price: 497 },
-  "price_1SlylcK8CM0R6xMMyHRWAd8G": { name: "scale", price: 897 },
-};
-
-const PLAN_PRICES: { [key: string]: number } = {
-  free: 0,
-  start: 197,
-  growth: 497,
-  scale: 897,
-};
+import { format, subMonths, startOfMonth, endOfMonth, startOfYear, subYears } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface LandingPage {
   id: string;
@@ -96,18 +89,36 @@ interface PageStats {
   conversionRate: number;
 }
 
-interface MonthlyMRR {
-  month: string;
-  mrr: number;
-  purchases: number;
-}
-
 interface StripeMRRData {
   totalMRR: number;
   activeSubscriptions: number;
   planDistribution: { [plan: string]: number };
   monthlyMRR: Array<{ month: string; mrr: number }>;
 }
+
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+interface CompareData {
+  pageId: string;
+  pageName: string;
+  dateRange: DateRange;
+  stats: PageStats | null;
+}
+
+// Date preset shortcuts
+const DATE_PRESETS = [
+  { label: "Último mês", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }) },
+  { label: "Últimos 3 meses", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 3)), to: new Date() }) },
+  { label: "Últimos 6 meses", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 6)), to: new Date() }) },
+  { label: "Ano atual", getRange: () => ({ from: startOfYear(new Date()), to: new Date() }) },
+  { label: "Último ano", getRange: () => ({ from: startOfYear(subYears(new Date(), 1)), to: endOfMonth(new Date(new Date().getFullYear() - 1, 11, 31)) }) },
+  { label: "Todo período", getRange: () => ({ from: undefined, to: undefined }) },
+];
+
+const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
 const AdminLandingPages = () => {
   const { user, profile } = useAuth();
@@ -119,11 +130,23 @@ const AdminLandingPages = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string>("all");
   const [stats, setStats] = useState<{ [key: string]: PageStats }>({});
-  const [monthlyMRR, setMonthlyMRR] = useState<{ [key: string]: MonthlyMRR[] }>({});
-  const [averageMRR, setAverageMRR] = useState<number>(0);
-  const [totalMRR, setTotalMRR] = useState<number>(0);
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
   const [loadingStripeMRR, setLoadingStripeMRR] = useState(false);
+
+  // Date filter
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [showDateFrom, setShowDateFrom] = useState(false);
+  const [showDateTo, setShowDateTo] = useState(false);
+
+  // Comparison
+  const [showCompare, setShowCompare] = useState(false);
+  const [compareA, setCompareA] = useState<CompareData>({ pageId: "", pageName: "", dateRange: { from: undefined, to: undefined }, stats: null });
+  const [compareB, setCompareB] = useState<CompareData>({ pageId: "", pageName: "", dateRange: { from: undefined, to: undefined }, stats: null });
+  const [loadingCompare, setLoadingCompare] = useState(false);
+  const [showCompareFromA, setShowCompareFromA] = useState(false);
+  const [showCompareToA, setShowCompareToA] = useState(false);
+  const [showCompareFromB, setShowCompareFromB] = useState(false);
+  const [showCompareToB, setShowCompareToB] = useState(false);
 
   // Create page dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -137,16 +160,50 @@ const AdminLandingPages = () => {
     return data === true;
   };
 
-  // Load all data using RPC for accurate aggregation (no row limit issues)
+  const fetchStats = useCallback(async (startDate?: Date, endDate?: Date) => {
+    const params: { p_start_date?: string; p_end_date?: string } = {};
+    if (startDate) params.p_start_date = startDate.toISOString();
+    if (endDate) params.p_end_date = endDate.toISOString();
+
+    const { data, error } = await supabase.rpc("get_landing_page_stats_filtered", params);
+    if (error) {
+      console.error("Error loading stats:", error);
+      return {};
+    }
+
+    const statsMap: { [key: string]: PageStats } = {};
+    const rpcStats = (data || []) as Array<{
+      landing_page_id: string;
+      page_views: number;
+      signup_clicks: number;
+      signup_completed: number;
+      purchases: number;
+      trial_no_upgrade: number;
+    }>;
+
+    for (const row of rpcStats) {
+      const pageViews = row.page_views || 0;
+      const purchases = row.purchases || 0;
+      const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
+
+      statsMap[row.landing_page_id] = {
+        pageViews,
+        signupClicks: row.signup_clicks || 0,
+        signupCompleted: row.signup_completed || 0,
+        purchases,
+        trialNoUpgrade: row.trial_no_upgrade || 0,
+        totalRevenue: 0,
+        conversionRate,
+      };
+    }
+    return statsMap;
+  }, []);
+
   const loadAllData = useCallback(async () => {
     try {
-      // Fetch pages and aggregated stats in parallel
-      const [pagesResult, statsResult] = await Promise.all([
-        supabase
-          .from("landing_pages")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase.rpc("get_landing_page_stats"),
+      const [pagesResult, statsMap] = await Promise.all([
+        supabase.from("landing_pages").select("*").order("created_at", { ascending: false }),
+        fetchStats(dateRange.from, dateRange.to),
       ]);
 
       if (pagesResult.error) {
@@ -154,110 +211,13 @@ const AdminLandingPages = () => {
         return;
       }
 
-      if (statsResult.error) {
-        console.error("Error loading stats:", statsResult.error);
-      }
-
-      const loadedPages = pagesResult.data || [];
-      setPages(loadedPages);
-
-      // Build stats map from RPC results
-      const statsMap: { [key: string]: PageStats } = {};
-      const rpcStats = (statsResult.data || []) as Array<{
-        landing_page_id: string;
-        page_views: number;
-        signup_clicks: number;
-        signup_completed: number;
-        purchases: number;
-        trial_no_upgrade: number;
-      }>;
-
-      for (const page of loadedPages) {
-        const rpcRow = rpcStats.find((s) => s.landing_page_id === page.id);
-
-        const pageViews = rpcRow?.page_views || 0;
-        const signupClicks = rpcRow?.signup_clicks || 0;
-        const signupCompleted = rpcRow?.signup_completed || 0;
-        const purchases = rpcRow?.purchases || 0;
-        const trialNoUpgrade = rpcRow?.trial_no_upgrade || 0;
-
-        const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
-
-        statsMap[page.id] = {
-          pageViews,
-          signupClicks,
-          signupCompleted,
-          purchases,
-          trialNoUpgrade,
-          totalRevenue: 0, // Will be overridden by Stripe data
-          conversionRate,
-        };
-      }
-
+      setPages(pagesResult.data || []);
       setStats(statsMap);
-
-      // Monthly MRR from events (fetch purchase events only for chart data)
-      const { data: purchaseEvents } = await supabase
-        .from("landing_page_events")
-        .select("*")
-        .eq("event_type", "purchase")
-        .order("created_at", { ascending: false });
-
-      const mrrMap: { [key: string]: { [month: string]: { mrr: number; purchases: number } } } = {};
-
-      for (const page of loadedPages) {
-        mrrMap[page.id] = {};
-        const pagePurchases = (purchaseEvents || []).filter((e) => e.landing_page_id === page.id);
-
-        pagePurchases.forEach((e) => {
-          const date = new Date(e.created_at);
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-          const metadata = e.metadata as { plan?: string } | null;
-          const revenue = metadata?.plan ? PLAN_PRICES[metadata.plan] || 0 : 0;
-
-          if (!mrrMap[page.id][monthKey]) {
-            mrrMap[page.id][monthKey] = { mrr: 0, purchases: 0 };
-          }
-          mrrMap[page.id][monthKey].mrr += revenue;
-          mrrMap[page.id][monthKey].purchases += 1;
-        });
-
-        // Update totalRevenue in statsMap from purchase events
-        const totalRevenue = Object.values(mrrMap[page.id]).reduce((sum, m) => sum + m.mrr, 0);
-        if (statsMap[page.id]) {
-          statsMap[page.id].totalRevenue = totalRevenue;
-        }
-      }
-
-      setStats({ ...statsMap });
-
-      // Convert monthly MRR to array format
-      const monthlyMRRMap: { [key: string]: MonthlyMRR[] } = {};
-      for (const pageId in mrrMap) {
-        monthlyMRRMap[pageId] = Object.entries(mrrMap[pageId])
-          .map(([month, data]) => ({
-            month,
-            mrr: data.mrr,
-            purchases: data.purchases,
-          }))
-          .sort((a, b) => a.month.localeCompare(b.month));
-      }
-      setMonthlyMRR(monthlyMRRMap);
-
-      // Calculate total and average MRR from page events (fallback)
-      const allMRR = Object.values(statsMap).reduce((sum, s) => sum + s.totalRevenue, 0);
-      setTotalMRR(allMRR);
-      setAverageMRR(loadedPages.length > 0 ? allMRR / loadedPages.length : 0);
     } catch (error) {
       console.error("Error loading data:", error);
     }
-  }, []);
+  }, [fetchStats, dateRange]);
 
-  const loadPages = useCallback(async () => {
-    await loadAllData();
-  }, [loadAllData]);
-
-  // Load real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
     setLoadingStripeMRR(true);
     try {
@@ -266,11 +226,7 @@ const AdminLandingPages = () => {
         console.error("Error loading Stripe MRR:", error);
         return;
       }
-      if (data) {
-        setStripeMRR(data);
-        // Override with real Stripe data
-        setTotalMRR(data.totalMRR);
-      }
+      if (data) setStripeMRR(data);
     } catch (err) {
       console.error("Error invoking get-stripe-mrr:", err);
     } finally {
@@ -280,168 +236,95 @@ const AdminLandingPages = () => {
 
   useEffect(() => {
     const init = async () => {
-      if (!user || !profile) {
-        navigate("/login");
-        return;
-      }
-
+      if (!user || !profile) { navigate("/login"); return; }
       const adminStatus = await checkIsAdmin();
       if (!adminStatus) {
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão para acessar esta página.",
-          variant: "destructive",
-        });
+        toast({ title: "Acesso negado", description: "Você não tem permissão.", variant: "destructive" });
         navigate("/dashboard");
         return;
       }
-
       setIsAdmin(true);
-      
-      // Load all data in parallel for faster loading
-      await Promise.all([
-        loadAllData(),
-        loadStripeMRR()
-      ]);
-      
+      await Promise.all([loadAllData(), loadStripeMRR()]);
       setLoading(false);
     };
-
     init();
   }, [user, profile, navigate, toast, loadAllData, loadStripeMRR]);
 
+  // Reload stats when date range changes
+  useEffect(() => {
+    if (!loading && isAdmin) {
+      loadAllData();
+    }
+  }, [dateRange]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const applyDatePreset = (preset: typeof DATE_PRESETS[0]) => {
+    const range = preset.getRange();
+    setDateRange({ from: range.from, to: range.to });
+  };
+
+  // Compare logic
+  const runComparison = async () => {
+    if (!compareA.pageId || !compareB.pageId) {
+      toast({ title: "Selecione as páginas", variant: "destructive" });
+      return;
+    }
+    setLoadingCompare(true);
+    try {
+      const [statsA, statsB] = await Promise.all([
+        fetchStats(compareA.dateRange.from, compareA.dateRange.to),
+        fetchStats(compareB.dateRange.from, compareB.dateRange.to),
+      ]);
+      setCompareA(prev => ({ ...prev, stats: statsA[prev.pageId] || { pageViews: 0, signupClicks: 0, signupCompleted: 0, purchases: 0, trialNoUpgrade: 0, totalRevenue: 0, conversionRate: 0 } }));
+      setCompareB(prev => ({ ...prev, stats: statsB[prev.pageId] || { pageViews: 0, signupClicks: 0, signupCompleted: 0, purchases: 0, trialNoUpgrade: 0, totalRevenue: 0, conversionRate: 0 } }));
+    } finally {
+      setLoadingCompare(false);
+    }
+  };
+
   const createPage = async () => {
     if (!newPageName.trim() || !newPageSlug.trim()) {
-      toast({
-        title: "Erro",
-        description: "Preencha o nome e o slug da página.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Preencha o nome e o slug.", variant: "destructive" });
       return;
     }
-
-    // Validate slug format
     const slugRegex = /^[a-z0-9-]+$/;
     if (!slugRegex.test(newPageSlug)) {
-      toast({
-        title: "Slug inválido",
-        description: "O slug deve conter apenas letras minúsculas, números e hífens.",
-        variant: "destructive",
-      });
+      toast({ title: "Slug inválido", description: "Use apenas letras minúsculas, números e hífens.", variant: "destructive" });
       return;
     }
-
     setCreating(true);
-
-    const { error } = await supabase.from("landing_pages").insert({
-      name: newPageName.trim(),
-      slug: newPageSlug.trim().toLowerCase(),
-    });
-
+    const { error } = await supabase.from("landing_pages").insert({ name: newPageName.trim(), slug: newPageSlug.trim().toLowerCase() });
     if (error) {
-      if (error.code === "23505") {
-        toast({
-          title: "Slug já existe",
-          description: "Escolha um slug diferente.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Erro ao criar página",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
+      toast({ title: error.code === "23505" ? "Slug já existe" : "Erro ao criar", description: error.message, variant: "destructive" });
       setCreating(false);
       return;
     }
-
-    toast({
-      title: "Página criada!",
-      description: `A página "${newPageName}" foi criada com sucesso.`,
-    });
-
-    setNewPageName("");
-    setNewPageSlug("");
-    setShowCreateDialog(false);
-    setCreating(false);
-    await loadPages();
+    toast({ title: "Página criada!", description: `"${newPageName}" criada com sucesso.` });
+    setNewPageName(""); setNewPageSlug(""); setShowCreateDialog(false); setCreating(false);
+    await loadAllData();
   };
 
   const togglePageStatus = async (pageId: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from("landing_pages")
-      .update({ is_active: !currentStatus })
-      .eq("id", pageId);
-
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível alterar o status da página.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    await loadPages();
+    const { error } = await supabase.from("landing_pages").update({ is_active: !currentStatus }).eq("id", pageId);
+    if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
+    await loadAllData();
   };
 
   const deletePage = async (pageId: string, slug: string) => {
-    if (slug === "index") {
-      toast({
-        title: "Erro",
-        description: "Não é possível excluir a página principal.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!confirm("Tem certeza que deseja excluir esta página? Todos os dados de tracking serão perdidos.")) {
-      return;
-    }
-
+    if (slug === "index") { toast({ title: "Erro", description: "Não pode excluir a principal.", variant: "destructive" }); return; }
+    if (!confirm("Excluir esta página? Dados de tracking serão perdidos.")) return;
     const { error } = await supabase.from("landing_pages").delete().eq("id", pageId);
-
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a página.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Página excluída",
-      description: "A página foi excluída com sucesso.",
-    });
-
-    await loadPages();
+    if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
+    toast({ title: "Página excluída" });
+    await loadAllData();
   };
 
   const copyPageUrl = (slug: string) => {
-    const url = `${window.location.origin}/lp/${slug}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Link copiado!",
-      description: "O link da página foi copiado para a área de transferência.",
-    });
+    navigator.clipboard.writeText(`${window.location.origin}/lp/${slug}`);
+    toast({ title: "Link copiado!" });
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  const formatDate = (date: string) => new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
   const getFilteredStats = (): PageStats => {
     if (selectedPage === "all") {
@@ -455,58 +338,46 @@ const AdminLandingPages = () => {
           totalRevenue: acc.totalRevenue + s.totalRevenue,
           conversionRate: 0,
         }),
-        {
-          pageViews: 0,
-          signupClicks: 0,
-          signupCompleted: 0,
-          purchases: 0,
-          trialNoUpgrade: 0,
-          totalRevenue: 0,
-          conversionRate: 0,
-        }
+        { pageViews: 0, signupClicks: 0, signupCompleted: 0, purchases: 0, trialNoUpgrade: 0, totalRevenue: 0, conversionRate: 0 }
       );
     }
-    return stats[selectedPage] || {
-      pageViews: 0,
-      signupClicks: 0,
-      signupCompleted: 0,
-      purchases: 0,
-      trialNoUpgrade: 0,
-      totalRevenue: 0,
-      conversionRate: 0,
-    };
-  };
-
-  const getChartData = () => {
-    if (selectedPage === "all") {
-      // Combine all pages' monthly MRR
-      const combined: { [month: string]: { mrr: number; purchases: number } } = {};
-      Object.values(monthlyMRR).forEach((pageData) => {
-        pageData.forEach((item) => {
-          if (!combined[item.month]) {
-            combined[item.month] = { mrr: 0, purchases: 0 };
-          }
-          combined[item.month].mrr += item.mrr;
-          combined[item.month].purchases += item.purchases;
-        });
-      });
-      return Object.entries(combined)
-        .map(([month, data]) => ({ month, ...data }))
-        .sort((a, b) => a.month.localeCompare(b.month));
-    }
-    return monthlyMRR[selectedPage] || [];
+    return stats[selectedPage] || { pageViews: 0, signupClicks: 0, signupCompleted: 0, purchases: 0, trialNoUpgrade: 0, totalRevenue: 0, conversionRate: 0 };
   };
 
   const filteredStats = getFilteredStats();
-  const chartData = getChartData();
 
-  // Pie chart data for page comparison
+  // Use Stripe data for charts
+  const chartData = stripeMRR?.monthlyMRR || [];
+
   const pieData = pages.map((page) => ({
     name: page.name,
-    value: stats[page.id]?.totalRevenue || 0,
+    value: stats[page.id]?.signupCompleted || 0,
   }));
 
-  const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
+  // Date picker helper
+  const DatePickerButton = ({ date, onClick, placeholder }: { date: Date | undefined; onClick: () => void; placeholder: string }) => (
+    <Button variant="outline" size="sm" onClick={onClick} className="text-xs h-8">
+      <CalendarIcon size={14} className="mr-1" />
+      {date ? format(date, "dd/MM/yyyy") : placeholder}
+    </Button>
+  );
+
+  // Comparison metric row
+  const CompareMetricRow = ({ label, valueA, valueB, format: fmt }: { label: string; valueA: number; valueB: number; format?: (v: number) => string }) => {
+    const fmtFn = fmt || ((v: number) => v.toLocaleString());
+    const diff = valueA - valueB;
+    const pctDiff = valueB > 0 ? ((diff / valueB) * 100).toFixed(1) : valueA > 0 ? "+∞" : "0";
+    return (
+      <div className="grid grid-cols-4 gap-2 py-2 border-b border-border/30 text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="text-center font-medium">{fmtFn(valueA)}</span>
+        <span className="text-center font-medium">{fmtFn(valueB)}</span>
+        <span className={cn("text-center font-semibold", diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-muted-foreground")}>
+          {typeof pctDiff === "string" ? pctDiff : `${pctDiff}%`}{diff > 0 ? " ↑" : diff < 0 ? " ↓" : ""}
+        </span>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -524,10 +395,7 @@ const AdminLandingPages = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link
-              to="/admin"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link to="/admin" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft size={20} />
               <span className="hidden sm:inline">Voltar ao Admin</span>
             </Link>
@@ -539,153 +407,214 @@ const AdminLandingPages = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Select value={selectedPage} onValueChange={setSelectedPage}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filtrar por página" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as páginas</SelectItem>
-                {pages.map((page) => (
-                  <SelectItem key={page.id} value={page.id}>
-                    {page.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex items-center gap-4 flex-wrap">
+              <Select value={selectedPage} onValueChange={setSelectedPage}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filtrar por página" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as páginas</SelectItem>
+                  {pages.map((page) => (
+                    <SelectItem key={page.id} value={page.id}>{page.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" size="sm" onClick={() => setShowCompare(!showCompare)}>
+                <ArrowRightLeft size={16} className="mr-1" />
+                Comparar
+              </Button>
+            </div>
+
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button><Plus size={18} className="mr-2" />Nova Página</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Criar Nova Landing Page</DialogTitle>
+                  <DialogDescription>Crie uma nova versão para testes A/B ou campanhas.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome</Label>
+                    <Input id="name" placeholder="Ex: Campanha Black Friday" value={newPageName} onChange={(e) => setNewPageName(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">Slug (URL)</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground text-sm">/lp/</span>
+                      <Input id="slug" placeholder="black-friday" value={newPageSlug} onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
+                  <Button onClick={createPage} disabled={creating}>
+                    {creating ? <><Loader2 className="animate-spin mr-2" size={16} />Criando...</> : "Criar Página"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus size={18} className="mr-2" />
-                Nova Página
+          {/* Date Filter */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">Período:</span>
+            {DATE_PRESETS.map((preset) => (
+              <Button key={preset.label} variant="ghost" size="sm" className="text-xs h-7" onClick={() => applyDatePreset(preset)}>
+                {preset.label}
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Nova Landing Page</DialogTitle>
-                <DialogDescription>
-                  Crie uma nova versão da landing page para testes A/B ou campanhas específicas.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Página</Label>
-                  <Input
-                    id="name"
-                    placeholder="Ex: Campanha Black Friday"
-                    value={newPageName}
-                    onChange={(e) => setNewPageName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Slug (URL)</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">/lp/</span>
-                    <Input
-                      id="slug"
-                      placeholder="black-friday"
-                      value={newPageSlug}
-                      onChange={(e) =>
-                        setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
-                      }
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Use apenas letras minúsculas, números e hífens
-                  </p>
+            ))}
+            <div className="flex items-center gap-1 ml-2">
+              <Popover open={showDateFrom} onOpenChange={setShowDateFrom}>
+                <PopoverTrigger asChild>
+                  <DatePickerButton date={dateRange.from} onClick={() => setShowDateFrom(true)} placeholder="De" />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateRange.from} onSelect={(d) => { setDateRange(prev => ({ ...prev, from: d })); setShowDateFrom(false); }} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground text-xs">→</span>
+              <Popover open={showDateTo} onOpenChange={setShowDateTo}>
+                <PopoverTrigger asChild>
+                  <DatePickerButton date={dateRange.to} onClick={() => setShowDateTo(true)} placeholder="Até" />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateRange.to} onSelect={(d) => { setDateRange(prev => ({ ...prev, to: d })); setShowDateTo(false); }} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              {(dateRange.from || dateRange.to) && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDateRange({ from: undefined, to: undefined })}>
+                  <X size={14} />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison Panel */}
+        {showCompare && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2"><ArrowRightLeft size={18} />Comparador de Desempenho</h3>
+              <Button variant="ghost" size="icon" onClick={() => setShowCompare(false)}><X size={18} /></Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Side A */}
+              <div className="space-y-3 p-4 border border-border/50 rounded-lg">
+                <h4 className="text-sm font-semibold text-blue-400">Lado A</h4>
+                <Select value={compareA.pageId} onValueChange={(v) => setCompareA(prev => ({ ...prev, pageId: v, pageName: pages.find(p => p.id === v)?.name || "" }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
+                  <SelectContent>
+                    {pages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1">
+                  <Popover open={showCompareFromA} onOpenChange={setShowCompareFromA}>
+                    <PopoverTrigger asChild><DatePickerButton date={compareA.dateRange.from} onClick={() => setShowCompareFromA(true)} placeholder="De" /></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={compareA.dateRange.from} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromA(false); }} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-xs text-muted-foreground">→</span>
+                  <Popover open={showCompareToA} onOpenChange={setShowCompareToA}>
+                    <PopoverTrigger asChild><DatePickerButton date={compareA.dateRange.to} onClick={() => setShowCompareToA(true)} placeholder="Até" /></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={compareA.dateRange.to} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToA(false); }} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={createPage} disabled={creating}>
-                  {creating ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      Criando...
-                    </>
-                  ) : (
-                    "Criar Página"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+              {/* Side B */}
+              <div className="space-y-3 p-4 border border-border/50 rounded-lg">
+                <h4 className="text-sm font-semibold text-purple-400">Lado B</h4>
+                <Select value={compareB.pageId} onValueChange={(v) => setCompareB(prev => ({ ...prev, pageId: v, pageName: pages.find(p => p.id === v)?.name || "" }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
+                  <SelectContent>
+                    {pages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1">
+                  <Popover open={showCompareFromB} onOpenChange={setShowCompareFromB}>
+                    <PopoverTrigger asChild><DatePickerButton date={compareB.dateRange.from} onClick={() => setShowCompareFromB(true)} placeholder="De" /></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={compareB.dateRange.from} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromB(false); }} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-xs text-muted-foreground">→</span>
+                  <Popover open={showCompareToB} onOpenChange={setShowCompareToB}>
+                    <PopoverTrigger asChild><DatePickerButton date={compareB.dateRange.to} onClick={() => setShowCompareToB(true)} placeholder="Até" /></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={compareB.dateRange.to} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToB(false); }} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+            <Button onClick={runComparison} disabled={loadingCompare} className="w-full">
+              {loadingCompare ? <><Loader2 className="animate-spin mr-2" size={16} />Comparando...</> : "Comparar"}
+            </Button>
+            {compareA.stats && compareB.stats && (
+              <div className="mt-4">
+                <div className="grid grid-cols-4 gap-2 py-2 border-b border-border font-semibold text-sm">
+                  <span>Métrica</span>
+                  <span className="text-center text-blue-400">{compareA.pageName || "A"}</span>
+                  <span className="text-center text-purple-400">{compareB.pageName || "B"}</span>
+                  <span className="text-center">Diferença</span>
+                </div>
+                <CompareMetricRow label="Views" valueA={compareA.stats.pageViews} valueB={compareB.stats.pageViews} />
+                <CompareMetricRow label="Cliques" valueA={compareA.stats.signupClicks} valueB={compareB.stats.signupClicks} />
+                <CompareMetricRow label="Cadastros" valueA={compareA.stats.signupCompleted} valueB={compareB.stats.signupCompleted} />
+                <CompareMetricRow label="Compras" valueA={compareA.stats.purchases} valueB={compareB.stats.purchases} />
+                <CompareMetricRow label="Trial s/ Upgrade" valueA={compareA.stats.trialNoUpgrade} valueB={compareB.stats.trialNoUpgrade} />
+                <CompareMetricRow label="Conv. %" valueA={compareA.stats.conversionRate} valueB={compareB.stats.conversionRate} format={(v) => `${v.toFixed(2)}%`} />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Eye size={18} className="text-blue-400" />
-              <span className="text-sm text-muted-foreground">Visualizações</span>
-            </div>
+            <div className="flex items-center gap-2 mb-2"><Eye size={18} className="text-blue-400" /><span className="text-sm text-muted-foreground">Visualizações</span></div>
             <p className="text-2xl font-bold">{filteredStats.pageViews.toLocaleString()}</p>
           </div>
-
           <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MousePointerClick size={18} className="text-purple-400" />
-              <span className="text-sm text-muted-foreground">Cliques Signup</span>
-            </div>
+            <div className="flex items-center gap-2 mb-2"><MousePointerClick size={18} className="text-purple-400" /><span className="text-sm text-muted-foreground">Cliques Signup</span></div>
             <p className="text-2xl font-bold">{filteredStats.signupClicks.toLocaleString()}</p>
           </div>
-
           <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <UserPlus size={18} className="text-green-400" />
-              <span className="text-sm text-muted-foreground">Cadastros</span>
-            </div>
+            <div className="flex items-center gap-2 mb-2"><UserPlus size={18} className="text-green-400" /><span className="text-sm text-muted-foreground">Cadastros</span></div>
             <p className="text-2xl font-bold">{filteredStats.signupCompleted.toLocaleString()}</p>
           </div>
-
           <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ShoppingCart size={18} className="text-amber-400" />
-              <span className="text-sm text-muted-foreground">Compras</span>
-            </div>
+            <div className="flex items-center gap-2 mb-2"><ShoppingCart size={18} className="text-amber-400" /><span className="text-sm text-muted-foreground">Compras</span></div>
             <p className="text-2xl font-bold">{filteredStats.purchases.toLocaleString()}</p>
           </div>
-
           <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users size={18} className="text-red-400" />
-              <span className="text-sm text-muted-foreground">Trial s/ Upgrade</span>
-            </div>
+            <div className="flex items-center gap-2 mb-2"><Users size={18} className="text-red-400" /><span className="text-sm text-muted-foreground">Trial s/ Upgrade</span></div>
             <p className="text-2xl font-bold">{filteredStats.trialNoUpgrade.toLocaleString()}</p>
           </div>
-
-        <div className="glass rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={18} className="text-emerald-400" />
-              <span className="text-sm text-muted-foreground">Faturamento</span>
-            </div>
-            <p className="text-2xl font-bold">
-              {formatCurrency(stripeMRR?.totalMRR || filteredStats.totalRevenue)}
-            </p>
+          <div className="glass rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2"><DollarSign size={18} className="text-emerald-400" /><span className="text-sm text-muted-foreground">Faturamento</span></div>
+            <p className="text-2xl font-bold">{formatCurrency(stripeMRR?.totalMRR || 0)}</p>
           </div>
         </div>
 
-        {/* MRR Summary - Using real Stripe data */}
+        {/* MRR Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={20} className="text-primary" />
-              <h3 className="font-semibold">MRR Total (Stripe)</h3>
+              <h3 className="font-semibold">MRR Total</h3>
               {loadingStripeMRR && <Loader2 size={16} className="animate-spin" />}
             </div>
-            <p className="text-3xl font-bold text-primary">
-              {formatCurrency(stripeMRR?.totalMRR || totalMRR)}
-            </p>
+            <p className="text-3xl font-bold text-primary">{formatCurrency(stripeMRR?.totalMRR || 0)}</p>
             <p className="text-sm text-muted-foreground mt-1">
               {stripeMRR ? `${stripeMRR.activeSubscriptions} assinaturas ativas` : "Carregando..."}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              * Exclui contas admin
             </p>
           </div>
 
@@ -694,7 +623,7 @@ const AdminLandingPages = () => {
               <BarChart3 size={20} className="text-primary" />
               <h3 className="font-semibold">Distribuição por Plano</h3>
             </div>
-            {stripeMRR?.planDistribution ? (
+            {stripeMRR?.planDistribution && Object.keys(stripeMRR.planDistribution).length > 0 ? (
               <div className="space-y-2">
                 {Object.entries(stripeMRR.planDistribution).map(([plan, count]) => (
                   <div key={plan} className="flex justify-between items-center">
@@ -704,7 +633,7 @@ const AdminLandingPages = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">Carregando...</p>
+              <p className="text-muted-foreground text-sm">{loadingStripeMRR ? "Carregando..." : "Sem dados"}</p>
             )}
           </div>
 
@@ -713,22 +642,16 @@ const AdminLandingPages = () => {
               <ShoppingCart size={20} className="text-primary" />
               <h3 className="font-semibold">Compras Reais</h3>
             </div>
-            <p className="text-3xl font-bold text-primary">
-              {stripeMRR?.activeSubscriptions || filteredStats.purchases}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Assinaturas ativas no Stripe
-            </p>
+            <p className="text-3xl font-bold text-primary">{stripeMRR?.activeSubscriptions || 0}</p>
+            <p className="text-sm text-muted-foreground mt-1">Assinaturas ativas</p>
           </div>
         </div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Monthly MRR Chart */}
           <div className="glass rounded-xl p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Calendar size={18} />
-              Faturamento Mensal
+              <CalendarIcon size={18} />Faturamento Mensal (Stripe)
             </h3>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -736,21 +659,8 @@ const AdminLandingPages = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
                   <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(v) => `R$${v}`} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "1px solid #374151",
-                      borderRadius: "8px",
-                    }}
-                    formatter={(value: number) => [formatCurrency(value), "MRR"]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="mrr"
-                    stroke="#8b5cf6"
-                    fill="url(#colorMrr)"
-                    strokeWidth={2}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }} formatter={(value: number) => [formatCurrency(value), "MRR"]} />
+                  <Area type="monotone" dataKey="mrr" stroke="#8b5cf6" fill="url(#colorMrr)" strokeWidth={2} />
                   <defs>
                     <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -761,61 +671,33 @@ const AdminLandingPages = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Sem dados de faturamento ainda
+                {loadingStripeMRR ? "Carregando dados do Stripe..." : "Sem dados de faturamento"}
               </div>
             )}
           </div>
 
-          {/* Revenue Distribution Pie Chart */}
           <div className="glass rounded-xl p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <DollarSign size={18} />
-              Distribuição de Faturamento por Página
+              <UserPlus size={18} />Cadastros por Página
             </h3>
             {pieData.some((d) => d.value > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      percent > 0 ? `${name} (${(percent * 100).toFixed(0)}%)` : ""
-                    }
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                  <Pie data={pieData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => percent > 0 ? `${name} (${(percent * 100).toFixed(0)}%)` : ""} outerRadius={100} fill="#8884d8" dataKey="value">
+                    {pieData.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "1px solid #374151",
-                      borderRadius: "8px",
-                    }}
-                    formatter={(value: number) => [formatCurrency(value), "Faturamento"]}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Sem dados de faturamento ainda
-              </div>
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">Sem dados</div>
             )}
           </div>
         </div>
 
         {/* Pages Table */}
         <div className="glass rounded-xl p-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <BarChart3 size={18} />
-            Landing Pages
-          </h3>
-
+          <h3 className="font-semibold mb-4 flex items-center gap-2"><BarChart3 size={18} />Landing Pages</h3>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -828,112 +710,48 @@ const AdminLandingPages = () => {
                   <TableHead className="text-center">Compras</TableHead>
                   <TableHead className="text-center">CTR %</TableHead>
                   <TableHead className="text-center">Conv. %</TableHead>
-                  <TableHead className="text-right">Faturamento</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pages.map((page) => {
-                  const pageStats = stats[page.id] || {
-                    pageViews: 0,
-                    signupClicks: 0,
-                    signupCompleted: 0,
-                    purchases: 0,
-                    totalRevenue: 0,
-                    conversionRate: 0,
-                  };
-                  
-                  // CTR: Cliques de signup / Views
-                  const ctr = pageStats.pageViews > 0
-                    ? ((pageStats.signupClicks / pageStats.pageViews) * 100).toFixed(1)
-                    : "0.0";
-                  
-                  // Conversão: Compras / Views
-                  const convRate = pageStats.pageViews > 0
-                    ? ((pageStats.purchases / pageStats.pageViews) * 100).toFixed(2)
-                    : "0.00";
+                  const ps = stats[page.id] || { pageViews: 0, signupClicks: 0, signupCompleted: 0, purchases: 0, totalRevenue: 0, conversionRate: 0 };
+                  const ctr = ps.pageViews > 0 ? ((ps.signupClicks / ps.pageViews) * 100).toFixed(1) : "0.0";
+                  const convRate = ps.pageViews > 0 ? ((ps.purchases / ps.pageViews) * 100).toFixed(2) : "0.00";
 
                   return (
                     <TableRow key={page.id}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{page.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Criada em {formatDate(page.created_at)}
-                          </p>
+                          <p className="text-xs text-muted-foreground">Criada em {formatDate(page.created_at)}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-secondary px-2 py-1 rounded">
-                          /lp/{page.slug}
-                        </code>
+                      <TableCell><code className="text-xs bg-secondary px-2 py-1 rounded">/lp/{page.slug}</code></TableCell>
+                      <TableCell className="text-center">{ps.pageViews.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{ps.signupClicks.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{ps.signupCompleted.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{ps.purchases.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">
+                        <span className={ctr !== "0.0" ? "text-blue-400" : "text-muted-foreground"}>{ctr}%</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        {pageStats.pageViews.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {pageStats.signupClicks.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {pageStats.signupCompleted.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {pageStats.purchases.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={ctr !== "0.0" ? "text-blue-400" : "text-muted-foreground"}>
-                          {ctr}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={convRate !== "0.00" ? "text-green-400" : "text-muted-foreground"}>
-                          {convRate}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {page.slug === 'index' 
-                          ? formatCurrency(stripeMRR?.totalMRR || pageStats.totalRevenue)
-                          : formatCurrency(pageStats.totalRevenue)}
+                        <span className={convRate !== "0.00" ? "text-green-400" : "text-muted-foreground"}>{convRate}%</span>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant={page.is_active ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => togglePageStatus(page.id, page.is_active)}
-                        >
+                        <Button variant={page.is_active ? "default" : "outline"} size="sm" onClick={() => togglePageStatus(page.id, page.is_active)}>
                           {page.is_active ? "Ativa" : "Inativa"}
                         </Button>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyPageUrl(page.slug)}
-                            title="Copiar link"
-                          >
-                            <Copy size={16} />
+                          <Button variant="ghost" size="icon" onClick={() => copyPageUrl(page.slug)} title="Copiar link"><Copy size={16} /></Button>
+                          <Button variant="ghost" size="icon" asChild title="Abrir página">
+                            <a href={`/lp/${page.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} /></a>
                           </Button>
-                          <a
-                            href={`/lp/${page.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button variant="ghost" size="icon" title="Visualizar">
-                              <ExternalLink size={16} />
-                            </Button>
-                          </a>
                           {page.slug !== "index" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deletePage(page.id, page.slug)}
-                              title="Excluir"
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 size={16} />
-                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => deletePage(page.id, page.slug)} className="text-destructive" title="Excluir"><Trash2 size={16} /></Button>
                           )}
                         </div>
                       </TableCell>

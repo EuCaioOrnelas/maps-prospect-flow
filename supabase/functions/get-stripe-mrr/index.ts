@@ -206,10 +206,18 @@ serve(async (req) => {
       }
     }
 
+    // Plan name mapping from price IDs
+    const PRICE_TO_PLAN: { [key: string]: string } = {
+      "price_1SlykAK8CM0R6xMMOCM684rz": "start",
+      "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
+      "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
+    };
+
     // Process WiizeProspect subscriptions
     let activeMRR = 0;
     let activeCount = 0;
     let canceledCount = 0;
+    const planDistribution: { [plan: string]: number } = {};
 
     for (const sub of wiizeSubs) {
       const customer = sub.customer as Stripe.Customer;
@@ -228,6 +236,9 @@ serve(async (req) => {
         continue;
       }
 
+      const priceId = sub.items.data[0]?.price.id;
+      const planName = PRICE_TO_PLAN[priceId] || "unknown";
+
       if (sub.status === "active") {
         // Check if this subscription's charge was refunded
         const chargeId = latestInvoice?.charge;
@@ -236,6 +247,7 @@ serve(async (req) => {
         if (!wasRefunded) {
           activeMRR += amountPaid;
           activeCount++;
+          planDistribution[planName] = (planDistribution[planName] || 0) + 1;
         }
       } else if (sub.status === "canceled") {
         canceledCount++;
@@ -293,6 +305,7 @@ serve(async (req) => {
         refundCount: wiizeRefundCount,
         canceledSubscriptions: canceledCount,
         churnRate: parseFloat(churnRate.toFixed(1)),
+        planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
           .map(([month, mrr]) => ({ month, mrr }))
           .sort((a, b) => a.month.localeCompare(b.month)),

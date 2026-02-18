@@ -1841,6 +1841,17 @@ export type Database = {
           trial_no_upgrade: number
         }[]
       }
+      get_landing_page_stats_filtered: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          landing_page_id: string
+          page_views: number
+          purchases: number
+          signup_clicks: number
+          signup_completed: number
+          trial_no_upgrade: number
+        }[]
+      }
       get_phone_key: { Args: { phone_input: string }; Returns: string }
       has_role: {
         Args: {
