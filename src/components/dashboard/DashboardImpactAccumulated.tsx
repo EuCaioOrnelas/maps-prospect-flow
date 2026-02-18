@@ -148,13 +148,13 @@ export function DashboardImpactAccumulated({
             </div>
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                Projeção de Geração de Base (12 meses)
+                Equivalência de Investimento em Mídia Paga (12 meses)
               </p>
               <p className="text-2xl font-bold text-foreground leading-tight">
-                {fmtInt(Math.round(avgMonthlyLeads * 12))} contatos
+                R$ {fmt(avgMonthlyLeads * 12 * CPL_BENCHMARK)}
               </p>
               <p className="text-[11px] text-muted-foreground/50">
-                No ritmo atual, a Wiize poderá gerar aproximadamente esse volume em 12 meses
+                Investimento estimado para gerar {fmtInt(Math.round(avgMonthlyLeads * 12))} contatos via anúncios pagos
               </p>
             </div>
           </CardContent>
