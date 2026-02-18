@@ -126,6 +126,8 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
                   fontSize: '12px',
                   color: 'hsl(var(--foreground))',
                 }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
+                itemStyle={{ color: 'hsl(var(--foreground))' }}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = {
                     leads: 'Leads Prospectados',
@@ -147,9 +149,9 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
                   return labels[value] || value;
                 }}
               />
-              <Bar dataKey="leads" fill="hsl(var(--primary))" fillOpacity={0.7} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="conversations" fill="hsl(var(--primary))" fillOpacity={0.45} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="opportunities" fill="hsl(var(--primary))" fillOpacity={0.25} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="conversations" fill="hsl(210, 55%, 55%)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="opportunities" fill="hsl(270, 50%, 55%)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
