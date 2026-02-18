@@ -13,6 +13,7 @@ interface DashboardImpactAccumulatedProps {
   prevLeadsProspected: number;
   totalResponses: number;
   prevTotalResponses: number;
+  periodFilter?: React.ReactNode;
 }
 
 const CPL_BENCHMARK = 46.17;
@@ -34,6 +35,7 @@ export function DashboardImpactAccumulated({
   prevLeadsProspected,
   totalResponses,
   prevTotalResponses,
+  periodFilter,
 }: DashboardImpactAccumulatedProps) {
   const [showComparison, setShowComparison] = useState(false);
 
@@ -60,8 +62,9 @@ export function DashboardImpactAccumulated({
 
   return (
     <div className="space-y-4">
-      {/* Header with comparison button */}
-      <div className="flex items-center justify-end">
+      {/* Header with comparison button + period filter */}
+      <div className="flex items-center justify-end gap-2">
+        {periodFilter}
         <Button
           variant="outline"
           size="sm"

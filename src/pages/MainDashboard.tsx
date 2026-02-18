@@ -67,17 +67,6 @@ export default function MainDashboard() {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
-                <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="w-[170px] h-8 text-xs">
-                    <Calendar size={13} className="mr-1.5" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PERIOD_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* 1️⃣ Impacto Financeiro */}
@@ -89,6 +78,19 @@ export default function MainDashboard() {
                 prevLeadsProspected={data.prevLeadsProspected}
                 totalResponses={data.totalResponses}
                 prevTotalResponses={data.prevTotalResponses}
+                periodFilter={
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="w-[170px] h-8 text-xs">
+                      <Calendar size={13} className="mr-1.5" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERIOD_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                }
               />
 
               {/* 2️⃣ KPIs Estratégicos */}
@@ -110,12 +112,15 @@ export default function MainDashboard() {
                   totalResponses={data.totalResponses}
                   prevLeadsProspected={data.prevLeadsProspected}
                   prevTotalResponses={data.prevTotalResponses}
+                  messagesSent={data.messagesSent}
+                  prevMessagesSent={data.prevMessagesSent}
                   periodDays={periodDays}
                 />
                 <DashboardPotentialCard
                   searchesUsed={profile?.searches_used ?? 0}
                   searchesLimit={profile?.searches_limit ?? 10}
                   leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent}
                 />
               </div>
 

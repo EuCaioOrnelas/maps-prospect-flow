@@ -10,9 +10,10 @@ interface KPICardProps {
   changeLabel?: string;
   suffix?: string;
   subtitle?: string;
+  subtitleSize?: string;
 }
 
-function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle }: KPICardProps) {
+function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, subtitleSize }: KPICardProps) {
   const isPositive = change > 0;
   const hasRealChange = change !== 0;
 
@@ -41,7 +42,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle }: 
             )}
           </div>
           {subtitle && (
-            <p className="text-[10px] text-muted-foreground/50 mt-0.5">{subtitle}</p>
+            <p className={cn(subtitleSize || "text-[10px]", "text-muted-foreground/50 mt-0.5")}>{subtitle}</p>
           )}
         </div>
       </div>
@@ -101,6 +102,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
             : undefined
         }
         subtitle={`Taxa de ativação: ${activationRate.toFixed(1)}%`}
+        subtitleSize="text-xs"
       />
     </div>
   );
