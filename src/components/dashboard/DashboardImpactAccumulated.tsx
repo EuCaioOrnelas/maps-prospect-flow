@@ -154,7 +154,7 @@ export function DashboardImpactAccumulated({
                 R$ {fmt(avgMonthlyLeads * 12 * CPL_BENCHMARK)}
               </p>
               <p className="text-[11px] text-muted-foreground/50">
-                Investimento estimado para gerar {fmtInt(Math.round(avgMonthlyLeads * 12))} contatos via anúncios pagos
+                Para alcançar o mesmo volume via mídia paga em 12 meses
               </p>
             </div>
           </CardContent>
