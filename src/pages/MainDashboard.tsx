@@ -42,8 +42,8 @@ export default function MainDashboard() {
                   <Skeleton className="h-9 w-40" />
                 </div>
                 <Skeleton className="h-52" />
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[1,2,3].map(i => <Skeleton key={i} className="h-24" />)}
+                <div className="grid grid-cols-2 gap-3">
+                  {[1,2].map(i => <Skeleton key={i} className="h-24" />)}
                 </div>
                 <Skeleton className="h-48" />
               </div>
@@ -64,7 +64,7 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-8">
-              {/* Header minimal */}
+              {/* Header */}
               <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
                 <Select value={period} onValueChange={setPeriod}>
@@ -80,47 +80,42 @@ export default function MainDashboard() {
                 </Select>
               </div>
 
-              {/* 1️⃣ IMPACTO ACUMULADO – Above the fold */}
+              {/* 1️⃣ Impacto Financeiro */}
               <DashboardImpactAccumulated
                 allTimeLeads={data.allTimeLeads}
                 cumulativeByMonth={data.cumulativeByMonth}
-                monthlyLeads={data.monthlyLeads}
-                activeDays={data.activeDays}
                 periodDays={periodDays}
                 leadsProspected={data.leadsProspected}
                 prevLeadsProspected={data.prevLeadsProspected}
-                messagesSent={data.messagesSent}
-                prevMessagesSent={data.prevMessagesSent}
+                totalResponses={data.totalResponses}
+                prevTotalResponses={data.prevTotalResponses}
               />
 
-              {/* 2️⃣ KPIs Operacionais */}
+              {/* 2️⃣ KPIs Estratégicos */}
               <DashboardKPIs
                 leadsProspected={data.leadsProspected}
                 prevLeadsProspected={data.prevLeadsProspected}
+                totalResponses={data.totalResponses}
+                prevTotalResponses={data.prevTotalResponses}
                 messagesSent={data.messagesSent}
                 prevMessagesSent={data.prevMessagesSent}
-                deliverabilityRate={data.deliverabilityRate}
-                prevDeliverabilityRate={data.prevDeliverabilityRate}
                 responseRate={data.responseRate}
                 prevResponseRate={data.prevResponseRate}
               />
 
-              {/* 3️⃣ Funil + Potencial Disponível */}
+              {/* 3️⃣ Funil + Potencial */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DashboardFunnel
                   leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent + data.messagesFailed}
-                  messagesDelivered={data.messagesSent}
                   totalResponses={data.totalResponses}
                   prevLeadsProspected={data.prevLeadsProspected}
-                  prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
-                  prevMessagesDelivered={data.prevMessagesSent}
                   prevTotalResponses={data.prevTotalResponses}
                   periodDays={periodDays}
                 />
                 <DashboardPotentialCard
                   searchesUsed={profile?.searches_used ?? 0}
                   searchesLimit={profile?.searches_limit ?? 10}
+                  leadsProspected={data.leadsProspected}
                 />
               </div>
 

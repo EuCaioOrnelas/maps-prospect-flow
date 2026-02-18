@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Users, Send, Shield, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, MessageCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KPICardProps {
@@ -7,12 +7,14 @@ interface KPICardProps {
   value: string;
   icon: React.ReactNode;
   change: number;
+  changeLabel?: string;
   suffix?: string;
+  subtitle?: string;
 }
 
-function KPICard({ title, value, icon, change, suffix }: KPICardProps) {
+function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle }: KPICardProps) {
   const isPositive = change > 0;
-  const isNeutral = change === 0;
+  const hasRealChange = change !== 0;
 
   return (
     <Card className="p-4 border-border/40 bg-card/80 relative overflow-hidden">
@@ -28,16 +30,19 @@ function KPICard({ title, value, icon, change, suffix }: KPICardProps) {
             <p className="text-2xl font-bold text-foreground leading-tight">
               {value}{suffix}
             </p>
-            {!isNeutral && (
+            {hasRealChange && (
               <div className={cn(
                 "flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
                 isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
               )}>
                 {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                {Math.abs(change).toFixed(1)}%
+                {changeLabel || `${Math.abs(change).toFixed(1)}%`}
               </div>
             )}
           </div>
+          {subtitle && (
+            <p className="text-[10px] text-muted-foreground/50 mt-0.5">{subtitle}</p>
+          )}
         </div>
       </div>
     </Card>
@@ -47,40 +52,49 @@ function KPICard({ title, value, icon, change, suffix }: KPICardProps) {
 interface DashboardKPIsProps {
   leadsProspected: number;
   prevLeadsProspected: number;
+  totalResponses: number;
+  prevTotalResponses: number;
   messagesSent: number;
   prevMessagesSent: number;
-  deliverabilityRate: number;
-  prevDeliverabilityRate: number;
   responseRate: number;
   prevResponseRate: number;
 }
 
 function calcChange(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
+  if (previous === 0) return 0; // Don't show +100% when no previous data
   return ((current - previous) / previous) * 100;
 }
 
 export function DashboardKPIs(props: DashboardKPIsProps) {
+  const leadsChange = calcChange(props.leadsProspected, props.prevLeadsProspected);
+  const conversasChange = calcChange(props.totalResponses, props.prevTotalResponses);
+  const conversasDiff = props.totalResponses - props.prevTotalResponses;
+
+  // Activation rate: responses / leads prospected
+  const activationRate = props.leadsProspected > 0
+    ? (props.totalResponses / props.leadsProspected) * 100
+    : 0;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <KPICard
         title="Leads Prospectados"
         value={props.leadsProspected.toLocaleString('pt-BR')}
         icon={<Users size={16} />}
-        change={calcChange(props.leadsProspected, props.prevLeadsProspected)}
+        change={leadsChange}
+        changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
       />
       <KPICard
-        title="Mensagens Enviadas"
-        value={props.messagesSent.toLocaleString('pt-BR')}
-        icon={<Send size={16} />}
-        change={calcChange(props.messagesSent, props.prevMessagesSent)}
-      />
-      <KPICard
-        title="Taxa de Entregabilidade"
-        value={props.deliverabilityRate.toFixed(1)}
-        suffix="%"
-        icon={<Shield size={16} />}
-        change={props.deliverabilityRate - props.prevDeliverabilityRate}
+        title="Conversas Iniciadas"
+        value={props.totalResponses.toLocaleString('pt-BR')}
+        icon={<MessageCircle size={16} />}
+        change={conversasChange}
+        changeLabel={
+          props.prevTotalResponses > 0 && conversasDiff !== 0
+            ? `${conversasDiff > 0 ? '+' : ''}${conversasDiff} vs anterior`
+            : undefined
+        }
+        subtitle={`Taxa de ativação: ${activationRate.toFixed(1)}%`}
       />
     </div>
   );
