@@ -130,41 +130,17 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
     setExpandedSteps(new Set());
 
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      if (!session?.access_token) {
-        toast.error('Sessão não encontrada. Faça login novamente.');
-        return;
-      }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      console.log('[DebugDispatch] Chamando via supabase.functions.invoke...');
 
-      console.log('[DebugDispatch] Chamando via fetch direto...', { supabaseUrl: supabaseUrl?.slice(0, 30) });
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/debug-dispatch-test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey,
-        },
-        body: JSON.stringify({ numberId: selectedNumberId, phone, message, deepDebug, dryRun }),
+      const { data, error: invokeError } = await supabase.functions.invoke('debug-dispatch-test', {
+        body: { numberId: selectedNumberId, phone, message, deepDebug, dryRun },
       });
 
-      console.log('[DebugDispatch] Response status:', response.status);
+      console.log('[DebugDispatch] Response:', { data, error: invokeError });
 
-      let data: any;
-      try {
-        data = await response.json();
-      } catch (parseErr) {
-        const text = await response.text();
-        console.error('[DebugDispatch] Falha ao parsear resposta:', text?.slice(0, 500));
-        toast.error(`Erro ao parsear resposta (status ${response.status})`);
-        return;
-      }
-
-      if (!response.ok) {
-        console.error('[DebugDispatch] Erro:', data);
-        toast.error(`Erro ao executar debug: ${data?.error || data?.message || response.statusText}`);
+      if (invokeError) {
+        console.error('[DebugDispatch] Invoke error:', invokeError);
+        toast.error(`Erro ao executar debug: ${invokeError.message}`);
         return;
       }
 
