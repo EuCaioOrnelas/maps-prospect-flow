@@ -65,7 +65,7 @@ export function DashboardImpactAccumulated({
     <div className="space-y-4">
       {/* Header: title + period filter + comparison button */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
+        <h1 className="text-lg font-semibold text-foreground">Visão Geral</h1>
         <div className="flex items-center gap-2">
           {periodFilter}
           <Button
