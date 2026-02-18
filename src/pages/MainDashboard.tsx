@@ -8,10 +8,9 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { SEO } from "@/components/SEO";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, LayoutDashboard } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
-import { DashboardMediaEquivalence } from "@/components/dashboard/DashboardMediaEquivalence";
 import { DashboardOperationalHealth } from "@/components/dashboard/DashboardOperationalHealth";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
@@ -28,8 +27,6 @@ export default function MainDashboard() {
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
 
-  const periodLabel = PERIOD_OPTIONS.find(o => o.value === period)?.label || '';
-
   if (data.loading) {
     return (
       <SidebarProvider>
@@ -44,14 +41,11 @@ export default function MainDashboard() {
                   <Skeleton className="h-8 w-48" />
                   <Skeleton className="h-9 w-40" />
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[1,2,3,4].map(i => <Skeleton key={i} className="h-28" />)}
+                <Skeleton className="h-52" />
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[1,2,3].map(i => <Skeleton key={i} className="h-24" />)}
                 </div>
-                <Skeleton className="h-72" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Skeleton className="h-80" />
-                  <Skeleton className="h-80" />
-                </div>
+                <Skeleton className="h-48" />
               </div>
             </main>
           </div>
@@ -59,9 +53,6 @@ export default function MainDashboard() {
       </SidebarProvider>
     );
   }
-
-  const messagesDelivered = data.messagesSent; // delivered = sent (failed already excluded from sent_count)
-  const prevMessagesDelivered = data.prevMessagesSent;
 
   return (
     <SidebarProvider>
@@ -72,21 +63,13 @@ export default function MainDashboard() {
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <LayoutDashboard className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                    <p className="text-sm text-muted-foreground">Visão geral da sua operação</p>
-                  </div>
-                </div>
+            <div className="max-w-7xl mx-auto space-y-8">
+              {/* Header minimal */}
+              <div className="flex items-center justify-between">
+                <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
                 <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="w-[180px]">
-                    <Calendar size={16} className="mr-2" />
+                  <SelectTrigger className="w-[170px] h-8 text-xs">
+                    <Calendar size={13} className="mr-1.5" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -97,7 +80,16 @@ export default function MainDashboard() {
                 </Select>
               </div>
 
-              {/* KPIs */}
+              {/* 1️⃣ IMPACTO ACUMULADO – Above the fold */}
+              <DashboardImpactAccumulated
+                allTimeLeads={data.allTimeLeads}
+                cumulativeByMonth={data.cumulativeByMonth}
+                monthlyLeads={data.monthlyLeads}
+                activeDays={data.activeDays}
+                periodDays={periodDays}
+              />
+
+              {/* 2️⃣ KPIs Operacionais */}
               <DashboardKPIs
                 leadsProspected={data.leadsProspected}
                 prevLeadsProspected={data.prevLeadsProspected}
@@ -109,47 +101,27 @@ export default function MainDashboard() {
                 prevResponseRate={data.prevResponseRate}
               />
 
-              {/* Funnel + Economia side by side */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3">
-                  <DashboardFunnel
-                    leadsProspected={data.leadsProspected}
-                    messagesSent={data.messagesSent + data.messagesFailed}
-                    messagesDelivered={data.messagesSent}
-                    totalResponses={data.totalResponses}
-                    prevLeadsProspected={data.prevLeadsProspected}
-                    prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
-                    prevMessagesDelivered={data.prevMessagesSent}
-                    prevTotalResponses={data.prevTotalResponses}
-                    periodDays={periodDays}
-                  />
-                </div>
-                <div className="lg:col-span-2">
-                  <DashboardMediaEquivalence
-                    leadsProspected={data.leadsProspected}
-                    cplBenchmark={data.cplBenchmark}
-                    periodLabel={periodLabel}
-                  />
-                </div>
+              {/* 3️⃣ Funil + Saúde Operacional */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DashboardFunnel
+                  leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent + data.messagesFailed}
+                  messagesDelivered={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                  prevLeadsProspected={data.prevLeadsProspected}
+                  prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
+                  prevMessagesDelivered={data.prevMessagesSent}
+                  prevTotalResponses={data.prevTotalResponses}
+                  periodDays={periodDays}
+                />
+                <DashboardOperationalHealth
+                  numbers={data.numbers}
+                  warmingSessions={data.warmingSessions}
+                  incidents={data.incidents}
+                />
               </div>
 
-              {/* Operational Health */}
-              <DashboardOperationalHealth
-                numbers={data.numbers}
-                warmingSessions={data.warmingSessions}
-                incidents={data.incidents}
-              />
-
-              {/* Impacto Acumulado (Anti-Churn) */}
-              <DashboardImpactAccumulated
-                allTimeLeads={data.allTimeLeads}
-                cumulativeByMonth={data.cumulativeByMonth}
-                monthlyLeads={data.monthlyLeads}
-                activeDays={data.activeDays}
-                periodDays={periodDays}
-              />
-
-              {/* Insights as footer */}
+              {/* 4️⃣ Insights */}
               <DashboardInsights
                 leadsProspected={data.leadsProspected}
                 prevLeadsProspected={data.prevLeadsProspected}
