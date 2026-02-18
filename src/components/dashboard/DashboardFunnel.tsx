@@ -18,7 +18,7 @@ function FunnelStep({
 }: { 
   label: string; value: number; barWidth: number; displayPct: number; prevValue: number; color: string;
 }) {
-  const change = prevValue > 0 ? ((value - prevValue) / prevValue * 100) : (value > 0 ? 100 : 0);
+  const change = prevValue > 0 ? ((value - prevValue) / prevValue * 100) : 0;
   const isPositive = change > 0;
   const clampedWidth = Math.max(barWidth, 12);
   
