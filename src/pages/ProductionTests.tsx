@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Play, CheckCircle, XCircle, AlertTriangle, Loader2, 
   MessageSquare, Users, Flame, Bot, RefreshCw, Clock, 
-  Send, Database, Zap, ArrowRight
+  Send, Database, Zap, ArrowRight, ArrowLeft
 } from "lucide-react";
 import { DebugDispatchPanel } from "@/components/admin/DebugDispatchPanel";
 import { supabase } from "@/integrations/supabase/client";
@@ -732,6 +732,10 @@ const ProductionTests = () => {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-3">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
         <h1 className="text-3xl font-bold mb-2">Testes de Produção</h1>
         <p className="text-muted-foreground">
           Execute testes para validar o funcionamento do sistema antes do lançamento
