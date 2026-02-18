@@ -74,11 +74,11 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
   const prevMessagesSent = props.prevMessagesSent ?? 0;
 
   const leadsChange = calcChange(leadsProspected, prevLeadsProspected);
-  const conversasChange = calcChange(totalResponses, prevTotalResponses);
-  const conversasDiff = totalResponses - prevTotalResponses;
+  const conversasChange = calcChange(messagesSent, prevMessagesSent);
+  const conversasDiff = messagesSent - prevMessagesSent;
 
   const activationRate = leadsProspected > 0
-    ? (totalResponses / leadsProspected) * 100
+    ? (messagesSent / leadsProspected) * 100
     : 0;
 
   return (
@@ -92,11 +92,11 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
       />
       <KPICard
         title="Conversas Iniciadas"
-        value={totalResponses.toLocaleString('pt-BR')}
+        value={messagesSent.toLocaleString('pt-BR')}
         icon={<MessageCircle size={16} />}
         change={conversasChange}
         changeLabel={
-          prevTotalResponses > 0 && conversasDiff !== 0
+          prevMessagesSent > 0 && conversasDiff !== 0
             ? `${conversasDiff > 0 ? '+' : ''}${conversasDiff} vs anterior`
             : undefined
         }
