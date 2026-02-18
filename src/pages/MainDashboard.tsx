@@ -12,9 +12,9 @@ import { Calendar, LayoutDashboard } from "lucide-react";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardMediaEquivalence } from "@/components/dashboard/DashboardMediaEquivalence";
-import { DashboardCampaignPerformance } from "@/components/dashboard/DashboardCampaignPerformance";
 import { DashboardOperationalHealth } from "@/components/dashboard/DashboardOperationalHealth";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
+import { DashboardWarmingBlock } from "@/components/dashboard/DashboardWarmingBlock";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -132,30 +132,31 @@ export default function MainDashboard() {
                 </div>
               </div>
 
-              {/* Campaign Performance */}
-              <DashboardCampaignPerformance
-                campaigns={data.campaigns}
-                responsesByDay={data.responsesByDay}
-              />
-
-              {/* Operational Health + Insights */}
+              {/* Operational Health + Warming/Block */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DashboardOperationalHealth
                   numbers={data.numbers}
                   warmingSessions={data.warmingSessions}
                   incidents={data.incidents}
                 />
-                <DashboardInsights
-                  leadsProspected={data.leadsProspected}
-                  prevLeadsProspected={data.prevLeadsProspected}
-                  responseRate={data.responseRate}
-                  prevResponseRate={data.prevResponseRate}
-                  totalResponses={data.totalResponses}
-                  campaigns={data.campaigns}
-                  messagesSent={data.messagesSent}
-                  prevMessagesSent={data.prevMessagesSent}
+                <DashboardWarmingBlock
+                  numbers={data.numbers}
+                  warmingSessions={data.warmingSessions}
+                  incidents={data.incidents}
                 />
               </div>
+
+              {/* Insights as footer */}
+              <DashboardInsights
+                leadsProspected={data.leadsProspected}
+                prevLeadsProspected={data.prevLeadsProspected}
+                responseRate={data.responseRate}
+                prevResponseRate={data.prevResponseRate}
+                totalResponses={data.totalResponses}
+                campaigns={data.campaigns}
+                messagesSent={data.messagesSent}
+                prevMessagesSent={data.prevMessagesSent}
+              />
             </div>
           </main>
         </div>
