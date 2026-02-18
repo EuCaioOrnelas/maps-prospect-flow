@@ -25,6 +25,10 @@ interface DebugStep {
   error_code?: string | number;
   error_message?: string;
   suggestion?: string;
+  stack_trace?: string;
+  error_file?: string;
+  error_line?: number;
+  error_column?: number;
   details?: Record<string, unknown>;
   payload_sent?: unknown;
   payload_received?: unknown;
@@ -368,6 +372,31 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
                             <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-500/5 border border-yellow-500/20">
                               <Zap className="h-4 w-4 text-yellow-400 mt-0.5 shrink-0" />
                               <span className="text-yellow-300">{step.suggestion}</span>
+                            </div>
+                          )}
+
+                          {/* Error location */}
+                          {step.error_file && (
+                            <div className="flex items-start gap-2 p-3 rounded-md bg-red-500/5 border border-red-500/20">
+                              <XCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+                              <div className="space-y-1">
+                                <span className="text-red-300 text-xs font-semibold uppercase">Local do Erro</span>
+                                <p className="text-sm font-mono text-red-200">
+                                  📄 {step.error_file}
+                                  {step.error_line && <> — <span className="text-red-400 font-bold">Linha {step.error_line}</span></>}
+                                  {step.error_column && <>, Coluna {step.error_column}</>}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Stack trace */}
+                          {step.stack_trace && (
+                            <div>
+                              <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Stack Trace</h5>
+                              <pre className="text-xs bg-zinc-900/50 rounded p-3 overflow-x-auto max-h-36 border border-red-500/20 text-red-300 whitespace-pre-wrap">
+                                {step.stack_trace}
+                              </pre>
                             </div>
                           )}
 
