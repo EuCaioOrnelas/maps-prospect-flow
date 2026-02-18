@@ -358,8 +358,14 @@ const AdminLandingPages = () => {
 
   // Removed DatePickerButton — inlined directly in PopoverTrigger to avoid forwardRef issues
 
+  // Estimate revenue per page based on purchase ratio
+  const estimatePageRevenue = (purchases: number, totalPurchases: number): number => {
+    if (!stripeMRR?.totalMRR || totalPurchases === 0) return 0;
+    return (purchases / totalPurchases) * stripeMRR.totalMRR;
+  };
+
   // Comparison metric row
-  const CompareMetricRow = ({ label, valueA, valueB, format: fmt, higherIsBetter = true }: { label: string; valueA: number; valueB: number; format?: (v: number) => string; higherIsBetter?: boolean }) => {
+  const CompareMetricRow = ({ label, valueA, valueB, format: fmt, higherIsBetter = true, icon }: { label: string; valueA: number; valueB: number; format?: (v: number) => string; higherIsBetter?: boolean; icon?: React.ReactNode }) => {
     const fmtFn = fmt || ((v: number) => v.toLocaleString());
     const diff = valueA - valueB;
     const pctDiff = valueB > 0 ? ((diff / valueB) * 100).toFixed(1) : valueA > 0 ? "+∞" : "0";
@@ -367,19 +373,31 @@ const AdminLandingPages = () => {
     const winnerB = higherIsBetter ? valueB > valueA : valueB < valueA;
     const tie = valueA === valueB;
     return (
-      <div className="grid grid-cols-4 gap-2 py-2 border-b border-border/30 text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className={cn("text-center font-medium flex items-center justify-center gap-1", winnerA && !tie && "text-primary font-semibold")}>
-          {winnerA && !tie && <Trophy size={12} className="text-amber-400" />}
+      <div className="grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-3 py-3 border-b border-border/20 text-sm items-center hover:bg-muted/20 transition-colors rounded-md px-2">
+        <span className="text-muted-foreground flex items-center gap-2">
+          {icon}
+          {label}
+        </span>
+        <div className={cn(
+          "text-center font-medium flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors",
+          winnerA && !tie && "bg-primary/10 text-primary font-semibold"
+        )}>
+          {winnerA && !tie && <Trophy size={13} className="text-amber-400 shrink-0" />}
           {fmtFn(valueA)}
-        </span>
-        <span className={cn("text-center font-medium flex items-center justify-center gap-1", winnerB && !tie && "text-primary font-semibold")}>
-          {winnerB && !tie && <Trophy size={12} className="text-amber-400" />}
+        </div>
+        <div className={cn(
+          "text-center font-medium flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors",
+          winnerB && !tie && "bg-primary/10 text-primary font-semibold"
+        )}>
+          {winnerB && !tie && <Trophy size={13} className="text-amber-400 shrink-0" />}
           {fmtFn(valueB)}
-        </span>
-        <span className={cn("text-center font-semibold", diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-muted-foreground")}>
+        </div>
+        <div className={cn(
+          "text-center font-semibold text-xs py-1.5 rounded-full",
+          diff > 0 ? "text-green-400 bg-green-400/10" : diff < 0 ? "text-red-400 bg-red-400/10" : "text-muted-foreground"
+        )}>
           {typeof pctDiff === "string" ? pctDiff : `${pctDiff}%`}{diff > 0 ? " ↑" : diff < 0 ? " ↓" : ""}
-        </span>
+        </div>
       </div>
     );
   };
@@ -502,31 +520,40 @@ const AdminLandingPages = () => {
 
         {/* Comparison Panel */}
         {showCompare && (
-          <div className="glass rounded-xl p-6 space-y-4">
+          <div className="glass rounded-xl p-6 space-y-5 border border-primary/10">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center gap-2"><ArrowRightLeft size={18} />Comparador de Desempenho</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowCompare(false)}><X size={18} /></Button>
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <ArrowRightLeft size={18} className="text-primary" />
+                </div>
+                Comparador de Desempenho
+              </h3>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setShowCompare(false)}><X size={16} /></Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Side A */}
-              <div className="space-y-3 p-4 border border-border/50 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-400">Lado A</h4>
+              <div className="space-y-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-400" />
+                  <h4 className="text-sm font-semibold text-blue-400">Lado A</h4>
+                </div>
                 <Select value={compareA.pageId} onValueChange={(v) => setCompareA(prev => ({ ...prev, pageId: v, pageName: pages.find(p => p.id === v)?.name || "" }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
+                  <SelectTrigger className="bg-background/50"><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
                   <SelectContent>
                     {pages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-1">
                   <Popover open={showCompareFromA} onOpenChange={setShowCompareFromA}>
-                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.from ? format(compareA.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8 bg-background/50"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.from ? format(compareA.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareA.dateRange.from} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromA(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-xs text-muted-foreground">→</span>
                   <Popover open={showCompareToA} onOpenChange={setShowCompareToA}>
-                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.to ? format(compareA.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8 bg-background/50"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.to ? format(compareA.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareA.dateRange.to} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToA(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
@@ -534,24 +561,27 @@ const AdminLandingPages = () => {
                 </div>
               </div>
               {/* Side B */}
-              <div className="space-y-3 p-4 border border-border/50 rounded-lg">
-                <h4 className="text-sm font-semibold text-purple-400">Lado B</h4>
+              <div className="space-y-3 p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-purple-400" />
+                  <h4 className="text-sm font-semibold text-purple-400">Lado B</h4>
+                </div>
                 <Select value={compareB.pageId} onValueChange={(v) => setCompareB(prev => ({ ...prev, pageId: v, pageName: pages.find(p => p.id === v)?.name || "" }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
+                  <SelectTrigger className="bg-background/50"><SelectValue placeholder="Selecione uma página" /></SelectTrigger>
                   <SelectContent>
                     {pages.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-1">
                   <Popover open={showCompareFromB} onOpenChange={setShowCompareFromB}>
-                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.from ? format(compareB.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8 bg-background/50"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.from ? format(compareB.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareB.dateRange.from} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromB(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-xs text-muted-foreground">→</span>
                   <Popover open={showCompareToB} onOpenChange={setShowCompareToB}>
-                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.to ? format(compareB.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8 bg-background/50"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.to ? format(compareB.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareB.dateRange.to} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToB(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
@@ -559,26 +589,44 @@ const AdminLandingPages = () => {
                 </div>
               </div>
             </div>
-            <Button onClick={runComparison} disabled={loadingCompare} className="w-full">
-              {loadingCompare ? <><Loader2 className="animate-spin mr-2" size={16} />Comparando...</> : "Comparar"}
+
+            <Button onClick={runComparison} disabled={loadingCompare} className="w-full h-11 font-semibold">
+              {loadingCompare ? <><Loader2 className="animate-spin mr-2" size={16} />Comparando...</> : <><ArrowRightLeft size={16} className="mr-2" />Comparar Desempenho</>}
             </Button>
-            {compareA.stats && compareB.stats && (
-              <div className="mt-4">
-                <div className="grid grid-cols-4 gap-2 py-2 border-b border-border font-semibold text-sm">
-                  <span>Métrica</span>
-                  <span className="text-center text-blue-400">{compareA.pageName || "A"}</span>
-                  <span className="text-center text-purple-400">{compareB.pageName || "B"}</span>
-                  <span className="text-center">Diferença</span>
+
+            {compareA.stats && compareB.stats && (() => {
+              const totalPurchasesAll = (compareA.stats?.purchases || 0) + (compareB.stats?.purchases || 0);
+              const revenueA = estimatePageRevenue(compareA.stats?.purchases || 0, totalPurchasesAll);
+              const revenueB = estimatePageRevenue(compareB.stats?.purchases || 0, totalPurchasesAll);
+              return (
+                <div className="mt-2 rounded-xl border border-border/30 overflow-hidden">
+                  <div className="grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-3 py-3 px-4 bg-muted/30 text-sm font-semibold border-b border-border/30">
+                    <span className="text-muted-foreground">Métrica</span>
+                    <span className="text-center text-blue-400 flex items-center justify-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-blue-400" />
+                      {compareA.pageName || "A"}
+                    </span>
+                    <span className="text-center text-purple-400 flex items-center justify-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-purple-400" />
+                      {compareB.pageName || "B"}
+                    </span>
+                    <span className="text-center text-muted-foreground">Δ%</span>
+                  </div>
+                  <div className="p-2">
+                    <CompareMetricRow label="Views" valueA={compareA.stats.pageViews} valueB={compareB.stats.pageViews} icon={<Eye size={14} className="text-blue-400" />} />
+                    <CompareMetricRow label="Cliques" valueA={compareA.stats.signupClicks} valueB={compareB.stats.signupClicks} icon={<MousePointerClick size={14} className="text-purple-400" />} />
+                    <CompareMetricRow label="Cadastros" valueA={compareA.stats.signupCompleted} valueB={compareB.stats.signupCompleted} icon={<UserPlus size={14} className="text-green-400" />} />
+                    <CompareMetricRow label="Compras" valueA={compareA.stats.purchases} valueB={compareB.stats.purchases} icon={<ShoppingCart size={14} className="text-amber-400" />} />
+                    <CompareMetricRow label="Trial s/ Upgrade" valueA={compareA.stats.trialNoUpgrade} valueB={compareB.stats.trialNoUpgrade} higherIsBetter={false} icon={<Users size={14} className="text-red-400" />} />
+                    <CompareMetricRow label="Faturamento" valueA={revenueA} valueB={revenueB} format={(v) => formatCurrency(v)} icon={<DollarSign size={14} className="text-emerald-400" />} />
+                    <CompareMetricRow label="Conv. %" valueA={compareA.stats.conversionRate} valueB={compareB.stats.conversionRate} format={(v) => `${v.toFixed(2)}%`} icon={<TrendingUp size={14} className="text-primary" />} />
+                  </div>
+                  {totalPurchasesAll > 0 && (
+                    <p className="text-[10px] text-muted-foreground/60 text-center pb-2">* Faturamento estimado proporcionalmente às compras</p>
+                  )}
                 </div>
-                <CompareMetricRow label="Views" valueA={compareA.stats.pageViews} valueB={compareB.stats.pageViews} />
-                <CompareMetricRow label="Cliques" valueA={compareA.stats.signupClicks} valueB={compareB.stats.signupClicks} />
-                <CompareMetricRow label="Cadastros" valueA={compareA.stats.signupCompleted} valueB={compareB.stats.signupCompleted} />
-                <CompareMetricRow label="Compras" valueA={compareA.stats.purchases} valueB={compareB.stats.purchases} />
-                <CompareMetricRow label="Trial s/ Upgrade" valueA={compareA.stats.trialNoUpgrade} valueB={compareB.stats.trialNoUpgrade} higherIsBetter={false} />
-                <CompareMetricRow label="Faturamento" valueA={compareA.stats.totalRevenue} valueB={compareB.stats.totalRevenue} format={(v) => formatCurrency(v)} />
-                <CompareMetricRow label="Conv. %" valueA={compareA.stats.conversionRate} valueB={compareB.stats.conversionRate} format={(v) => `${v.toFixed(2)}%`} />
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
