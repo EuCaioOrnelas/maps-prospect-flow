@@ -18,13 +18,13 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
   const hasRealChange = change !== 0;
 
   return (
-    <Card className="p-4 border-border/40 bg-card/80 relative overflow-hidden">
+    <Card className="p-5 border-border/30 bg-card/80 relative overflow-hidden">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground shrink-0">
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
             {title}
           </p>
           <div className="flex items-baseline gap-2">
@@ -32,13 +32,12 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
               {value}{suffix}
             </p>
             {hasRealChange && (
-              <div className={cn(
-                "flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
+              <span className={cn(
+                "text-[10px] font-medium",
+                isPositive ? "text-emerald-400" : "text-destructive"
               )}>
-                {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                {changeLabel || `${Math.abs(change).toFixed(1)}%`}
-              </div>
+                {changeLabel || `${isPositive ? '+' : ''}${Math.abs(change).toFixed(1)}%`}
+              </span>
             )}
           </div>
           {subtitle && (

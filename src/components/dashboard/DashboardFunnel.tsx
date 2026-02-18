@@ -26,13 +26,13 @@ function FunnelStep({
   const clampedWidth = Math.max(barWidth, 12);
   
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground/70">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">{value.toLocaleString('pt-BR')}</span>
+          <span className="text-sm font-bold text-foreground">{value.toLocaleString('pt-BR')}</span>
           {hasRealPrev && change !== 0 && (
-            <span className={cn("text-[10px] flex items-center gap-0.5", isPositive ? "text-emerald-400" : "text-destructive")}
+            <span className={cn("text-[10px] font-medium", isPositive ? "text-emerald-400" : "text-destructive")}
               title={`vs ${periodDays} dias anteriores`}
             >
               {isPositive ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
@@ -43,14 +43,21 @@ function FunnelStep({
       </div>
       <div className="w-full flex justify-center">
         <div
-          className="h-6 rounded-md transition-all duration-700 flex items-center justify-center bg-primary/20"
-          style={{ width: `${clampedWidth}%` }}
-        >
-          {clampedWidth > 20 && (
-            <span className="text-[10px] font-medium text-foreground/60">{displayPct.toFixed(0)}%</span>
+          className={cn(
+            "h-7 rounded-md transition-all duration-700 flex items-center justify-center",
+            displayPct === 100 ? "bg-primary/25" : "bg-primary/12"
           )}
+          style={{ width: `${clampedWidth}%`, opacity: displayPct === 100 ? 1 : 0.65 }}
+        >
+          <span className="text-[10px] font-semibold text-foreground/70">{displayPct.toFixed(0)}%</span>
         </div>
       </div>
+      {/* Conversion rate between steps */}
+      {displayPct < 100 && displayPct > 0 && (
+        <p className="text-[9px] text-muted-foreground/40 text-center">
+          {displayPct.toFixed(1)}% taxa de conversão
+        </p>
+      )}
     </div>
   );
 }
@@ -87,11 +94,11 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
   ];
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-muted-foreground">Funil de Performance</CardTitle>
+    <Card className="border-border/30">
+      <CardHeader className="pb-2 pt-5 px-6">
+        <CardTitle className="text-sm font-semibold text-foreground">Funil de Performance</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2.5">
+      <CardContent className="space-y-3 px-6 pb-6">
         {steps.map((step) => (
           <FunnelStep
             key={step.label}
@@ -103,7 +110,7 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
             periodDays={periodDays}
           />
         ))}
-        <p className="text-[9px] text-muted-foreground/40 text-right italic pt-1">
+        <p className="text-[9px] text-muted-foreground/35 text-right pt-1">
           *Oportunidades estimadas com base em média de mercado de {(opportunityRate * 100).toFixed(0)}%
         </p>
       </CardContent>
