@@ -355,13 +355,7 @@ const AdminLandingPages = () => {
     value: stats[page.id]?.signupCompleted || 0,
   }));
 
-  // Date picker helper
-  const DatePickerButton = ({ date, onClick, placeholder }: { date: Date | undefined; onClick: () => void; placeholder: string }) => (
-    <Button variant="outline" size="sm" onClick={onClick} className="text-xs h-8">
-      <CalendarIcon size={14} className="mr-1" />
-      {date ? format(date, "dd/MM/yyyy") : placeholder}
-    </Button>
-  );
+  // Removed DatePickerButton — inlined directly in PopoverTrigger to avoid forwardRef issues
 
   // Comparison metric row
   const CompareMetricRow = ({ label, valueA, valueB, format: fmt }: { label: string; valueA: number; valueB: number; format?: (v: number) => string }) => {
@@ -472,7 +466,7 @@ const AdminLandingPages = () => {
             <div className="flex items-center gap-1 ml-2">
               <Popover open={showDateFrom} onOpenChange={setShowDateFrom}>
                 <PopoverTrigger asChild>
-                  <DatePickerButton date={dateRange.from} onClick={() => setShowDateFrom(true)} placeholder="De" />
+                  <Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{dateRange.from ? format(dateRange.from, "dd/MM/yyyy") : "De"}</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar mode="single" selected={dateRange.from} onSelect={(d) => { setDateRange(prev => ({ ...prev, from: d })); setShowDateFrom(false); }} className="p-3 pointer-events-auto" />
@@ -481,7 +475,7 @@ const AdminLandingPages = () => {
               <span className="text-muted-foreground text-xs">→</span>
               <Popover open={showDateTo} onOpenChange={setShowDateTo}>
                 <PopoverTrigger asChild>
-                  <DatePickerButton date={dateRange.to} onClick={() => setShowDateTo(true)} placeholder="Até" />
+                  <Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{dateRange.to ? format(dateRange.to, "dd/MM/yyyy") : "Até"}</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar mode="single" selected={dateRange.to} onSelect={(d) => { setDateRange(prev => ({ ...prev, to: d })); setShowDateTo(false); }} className="p-3 pointer-events-auto" />
@@ -515,14 +509,14 @@ const AdminLandingPages = () => {
                 </Select>
                 <div className="flex items-center gap-1">
                   <Popover open={showCompareFromA} onOpenChange={setShowCompareFromA}>
-                    <PopoverTrigger asChild><DatePickerButton date={compareA.dateRange.from} onClick={() => setShowCompareFromA(true)} placeholder="De" /></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.from ? format(compareA.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareA.dateRange.from} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromA(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-xs text-muted-foreground">→</span>
                   <Popover open={showCompareToA} onOpenChange={setShowCompareToA}>
-                    <PopoverTrigger asChild><DatePickerButton date={compareA.dateRange.to} onClick={() => setShowCompareToA(true)} placeholder="Até" /></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareA.dateRange.to ? format(compareA.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareA.dateRange.to} onSelect={(d) => { setCompareA(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToA(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
@@ -540,14 +534,14 @@ const AdminLandingPages = () => {
                 </Select>
                 <div className="flex items-center gap-1">
                   <Popover open={showCompareFromB} onOpenChange={setShowCompareFromB}>
-                    <PopoverTrigger asChild><DatePickerButton date={compareB.dateRange.from} onClick={() => setShowCompareFromB(true)} placeholder="De" /></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.from ? format(compareB.dateRange.from, "dd/MM/yyyy") : "De"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareB.dateRange.from} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, from: d } })); setShowCompareFromB(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-xs text-muted-foreground">→</span>
                   <Popover open={showCompareToB} onOpenChange={setShowCompareToB}>
-                    <PopoverTrigger asChild><DatePickerButton date={compareB.dateRange.to} onClick={() => setShowCompareToB(true)} placeholder="Até" /></PopoverTrigger>
+                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="text-xs h-8"><CalendarIcon size={14} className="mr-1" />{compareB.dateRange.to ? format(compareB.dateRange.to, "dd/MM/yyyy") : "Até"}</Button></PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar mode="single" selected={compareB.dateRange.to} onSelect={(d) => { setCompareB(prev => ({ ...prev, dateRange: { ...prev.dateRange, to: d } })); setShowCompareToB(false); }} className="p-3 pointer-events-auto" />
                     </PopoverContent>
