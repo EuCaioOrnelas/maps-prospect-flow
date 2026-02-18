@@ -15,25 +15,31 @@ function KPICard({ title, value, icon, change, suffix }: KPICardProps) {
   const isNeutral = change === 0;
 
   return (
-    <Card className="p-4 border-border/50 relative overflow-hidden">
-      <div className="flex items-start justify-between mb-2">
-        <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">
+    <Card className="p-4 border-border/40 bg-card/80 relative overflow-hidden">
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground shrink-0">
           {icon}
         </div>
-        {!isNeutral && (
-          <div className={cn(
-            "flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-            isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
-          )}>
-            {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-            {Math.abs(change).toFixed(1)}%
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+            {title}
+          </p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-foreground leading-tight">
+              {value}{suffix}
+            </p>
+            {!isNeutral && (
+              <div className={cn(
+                "flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full",
+                isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
+              )}>
+                {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                {Math.abs(change).toFixed(1)}%
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
-      <p className="text-xl font-bold text-foreground">
-        {value}{suffix}
-      </p>
-      <p className="text-[11px] text-muted-foreground/60 mt-0.5">{title}</p>
     </Card>
   );
 }
