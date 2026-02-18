@@ -52,7 +52,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
-  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
+  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -87,10 +87,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const dashboardSubItems = [
     {
-      title: "Prospecção",
+      title: "Visão Geral",
       url: "/dashboard",
-      icon: FileSearch,
+      icon: LayoutDashboard,
       active: currentPath === "/dashboard"
+    },
+    {
+      title: "Prospecção",
+      url: "/reports/prospeccao",
+      icon: FileSearch,
+      active: currentPath === "/reports/prospeccao"
     },
     {
       title: "Disparos",
