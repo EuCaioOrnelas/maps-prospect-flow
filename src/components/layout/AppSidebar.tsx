@@ -180,17 +180,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
-            {/* Dashboard with submenu */}
+            {/* Visão Geral with submenu */}
             <li>
               <SidebarNavItem
-                title="Dashboard"
+                title="Visão Geral"
                 icon={LayoutDashboard}
                 onClick={handleReportsClick}
                 isActive={isOnReportsPage || currentPath === "/dashboard"}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isReportsOpen}
-                tooltip="Dashboard"
+                tooltip="Visão Geral"
               />
 
               {isExpanded && (
