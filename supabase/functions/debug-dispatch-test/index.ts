@@ -161,12 +161,18 @@ async function sendMessage(
 // FONTE: campaign-processor/index.ts → isContactIgnored()
 async function isContactIgnored(supabase: any, userId: string, phone: string): Promise<boolean> {
   const normalizedPhone = normalizePhone(phone);
-  const { data } = await supabase
+  // Use .maybeSingle() instead of .single() to avoid error when no row found
+  const { data, error } = await supabase
     .from('ignored_contacts')
     .select('id')
     .eq('user_id', userId)
     .eq('phone', normalizedPhone)
-    .single();
+    .maybeSingle();
+  
+  if (error) {
+    console.log('[isContactIgnored] Query error:', error.message);
+    return false;
+  }
   return !!data;
 }
 
