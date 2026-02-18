@@ -11,9 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
-// DashboardOperationalHealth removed
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
+import { DashboardPotentialCard } from "@/components/dashboard/DashboardPotentialCard";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -91,8 +91,6 @@ export default function MainDashboard() {
                 prevLeadsProspected={data.prevLeadsProspected}
                 messagesSent={data.messagesSent}
                 prevMessagesSent={data.prevMessagesSent}
-                searchesUsed={profile?.searches_used ?? 0}
-                searchesLimit={profile?.searches_limit ?? 10}
               />
 
               {/* 2️⃣ KPIs Operacionais */}
@@ -107,18 +105,24 @@ export default function MainDashboard() {
                 prevResponseRate={data.prevResponseRate}
               />
 
-              {/* 3️⃣ Funil de Performance */}
-              <DashboardFunnel
-                leadsProspected={data.leadsProspected}
-                messagesSent={data.messagesSent + data.messagesFailed}
-                messagesDelivered={data.messagesSent}
-                totalResponses={data.totalResponses}
-                prevLeadsProspected={data.prevLeadsProspected}
-                prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
-                prevMessagesDelivered={data.prevMessagesSent}
-                prevTotalResponses={data.prevTotalResponses}
-                periodDays={periodDays}
-              />
+              {/* 3️⃣ Funil + Potencial Disponível */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DashboardFunnel
+                  leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent + data.messagesFailed}
+                  messagesDelivered={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                  prevLeadsProspected={data.prevLeadsProspected}
+                  prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
+                  prevMessagesDelivered={data.prevMessagesSent}
+                  prevTotalResponses={data.prevTotalResponses}
+                  periodDays={periodDays}
+                />
+                <DashboardPotentialCard
+                  searchesUsed={profile?.searches_used ?? 0}
+                  searchesLimit={profile?.searches_limit ?? 10}
+                />
+              </div>
 
               {/* 4️⃣ Insights */}
               <DashboardInsights
