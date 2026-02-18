@@ -182,10 +182,11 @@ export function DashboardImpactAccumulated({
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <RechartsTooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
                       fontSize: '12px',
+                      color: 'hsl(var(--foreground))',
                     }}
                     formatter={(value: number) => [fmtInt(value) + ' leads', 'Total acumulado']}
                   />

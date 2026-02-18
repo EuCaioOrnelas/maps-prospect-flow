@@ -120,10 +120,11 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--background))',
+                  backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
                   fontSize: '12px',
+                  color: 'hsl(var(--foreground))',
                 }}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = {
@@ -146,9 +147,9 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
                   return labels[value] || value;
                 }}
               />
-              <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="conversations" fill="hsl(210, 60%, 55%)" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="opportunities" fill="hsl(158, 60%, 42%)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="leads" fill="hsl(var(--primary))" fillOpacity={0.7} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="conversations" fill="hsl(var(--primary))" fillOpacity={0.45} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="opportunities" fill="hsl(var(--primary))" fillOpacity={0.25} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
