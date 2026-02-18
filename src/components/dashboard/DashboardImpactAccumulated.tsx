@@ -89,15 +89,20 @@ export function DashboardImpactAccumulated({
           <p className="text-[2rem] sm:text-[2.6rem] font-black text-white tracking-[0.02em] leading-none drop-shadow-[0_0_12px_hsla(158,60%,40%,0.12)]">
             R$ {fmt(financialImpact)}
           </p>
-          <p className="text-[13px] text-muted-foreground/70 font-[500] max-w-md leading-snug">
+          {hasRealComparison && financialChange !== 0 && (
+            <span className={`text-sm font-semibold ${financialChange > 0 ? 'text-emerald-400' : 'text-destructive'}`}>
+              {financialChange > 0 ? '↑' : '↓'} {Math.abs(financialChange).toFixed(0)}% vs período anterior
+            </span>
+          )}
+          <p className="text-[13px] text-muted-foreground/80 font-[500] max-w-md leading-snug">
             Estimativa aproximada de investimento necessário para gerar {fmtInt(leadsProspected)} contatos B2B via tráfego pago no período selecionado.
           </p>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[10px] text-muted-foreground/35 flex items-center gap-1 cursor-help pt-0.5">
-                  CPL de referência: R$ {fmt(CPL_BENCHMARK)}
-                  <Info size={11} className="text-muted-foreground/25" />
+                <span className="text-[11px] text-muted-foreground/45 flex items-center gap-1 cursor-help pt-0.5">
+                  Baseado em CPL médio de R$ {fmt(CPL_BENCHMARK)}
+                  <Info size={11} className="text-muted-foreground/35" />
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
