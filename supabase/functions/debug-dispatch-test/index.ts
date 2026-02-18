@@ -15,6 +15,10 @@ interface DebugStep {
   error_code?: string | number;
   error_message?: string;
   suggestion?: string;
+  stack_trace?: string;
+  error_file?: string;
+  error_line?: number;
+  error_column?: number;
   details?: Record<string, unknown>;
   payload_sent?: unknown;
   payload_received?: unknown;
@@ -22,15 +26,46 @@ interface DebugStep {
   headers_received?: Record<string, string>;
 }
 
-function classifyError(error: unknown, step: string): Pick<DebugStep, 'category' | 'suggestion' | 'error_message' | 'error_code'> {
+function parseStackTrace(error: unknown): { stack_trace?: string; error_file?: string; error_line?: number; error_column?: number } {
+  if (!(error instanceof Error) || !error.stack) return {};
+  
+  const stack = error.stack;
+  const lines = stack.split('\n').filter(l => l.trim().startsWith('at '));
+  
+  // Try to find relevant line (skip node internals)
+  for (const line of lines) {
+    const match = line.match(/at\s+(.+?)\s*\(?((?:file|https?):\/\/[^)]+?):(\d+):(\d+)\)?/) ||
+                  line.match(/at\s+((?:file|https?):\/\/[^:]+):(\d+):(\d+)/);
+    if (match) {
+      const hasName = match.length === 5;
+      const file = hasName ? match[2] : match[1];
+      const lineNum = parseInt(hasName ? match[3] : match[2]);
+      const col = parseInt(hasName ? match[4] : match[3]);
+      // Extract just filename from full path
+      const fileName = file.split('/').pop() || file;
+      return {
+        stack_trace: lines.slice(0, 5).map(l => l.trim()).join('\n'),
+        error_file: fileName,
+        error_line: lineNum,
+        error_column: col,
+      };
+    }
+  }
+  
+  return { stack_trace: lines.slice(0, 5).map(l => l.trim()).join('\n') };
+}
+
+function classifyError(error: unknown, step: string): Pick<DebugStep, 'category' | 'suggestion' | 'error_message' | 'error_code'> & { stack_trace?: string; error_file?: string; error_line?: number; error_column?: number } {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
+  const stackInfo = parseStackTrace(error);
   
   if (lower.includes('not configured') || lower.includes('not set') || lower.includes('undefined') || lower.includes('missing')) {
     return {
       category: 'config_error',
       error_message: msg,
       suggestion: `Verifique se as variáveis de ambiente necessárias estão configuradas (EVOLUTION_API_URL, EVOLUTION_API_KEY).`,
+      ...stackInfo,
     };
   }
   if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('econnrefused') || lower.includes('dns')) {
@@ -38,6 +73,7 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
       category: 'infra_error',
       error_message: msg,
       suggestion: 'Problema de infraestrutura: verifique se o servidor da API está acessível e se a URL está correta.',
+      ...stackInfo,
     };
   }
   if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('forbidden') || lower.includes('403')) {
@@ -46,6 +82,7 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
       error_message: msg,
       error_code: lower.includes('401') ? 401 : 403,
       suggestion: 'Falha de autenticação. Verifique se a API Key da Evolution está correta e válida.',
+      ...stackInfo,
     };
   }
   if (lower.includes('429') || lower.includes('rate limit') || lower.includes('too many')) {
@@ -54,6 +91,7 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
       error_message: msg,
       error_code: 429,
       suggestion: 'Rate limit atingido. Aguarde alguns minutos antes de tentar novamente.',
+      ...stackInfo,
     };
   }
   if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504')) {
@@ -62,6 +100,7 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
       error_message: msg,
       error_code: parseInt(lower.match(/5\d{2}/)?.[0] || '500'),
       suggestion: 'Erro no servidor da Evolution API. Tente novamente em alguns minutos.',
+      ...stackInfo,
     };
   }
   if (lower.includes('not found') || lower.includes('404')) {
@@ -70,13 +109,17 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
       error_message: msg,
       error_code: 404,
       suggestion: 'Endpoint não encontrado. Verifique se a instância existe e se a URL da API está correta.',
+      ...stackInfo,
     };
   }
   
   return {
     category: 'internal_error',
     error_message: msg,
-    suggestion: `Erro interno na etapa "${step}". Verifique os logs da edge function para mais detalhes.`,
+    suggestion: stackInfo.error_file 
+      ? `Erro interno no arquivo "${stackInfo.error_file}" na linha ${stackInfo.error_line}. Verifique os logs da edge function.`
+      : `Erro interno na etapa "${step}". Verifique os logs da edge function para mais detalhes.`,
+    ...stackInfo,
   };
 }
 
