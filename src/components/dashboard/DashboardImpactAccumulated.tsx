@@ -81,28 +81,28 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="border-border/30 bg-gradient-to-br from-primary/[0.03] via-background to-background overflow-hidden">
-        <CardContent className="py-8 px-8 flex flex-col items-center text-center space-y-2.5">
-          <p className="text-[10px] font-medium text-muted-foreground/60 tracking-[0.18em] uppercase">
-            Equivalência de Investimento em Mídia Paga
+      <Card className="border-border/30 bg-gradient-to-br from-primary/[0.015] via-background to-background overflow-hidden">
+        <CardContent className="py-7 px-8 flex flex-col items-center text-center space-y-1.5">
+          <p className="text-[10px] font-medium text-muted-foreground/50 tracking-[0.18em] uppercase">
+            Investimento estimado via mídia paga
           </p>
           <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-none">
             R$ {fmt(financialImpact)}
           </p>
-          <p className="text-[13px] text-muted-foreground/70 font-medium max-w-sm leading-snug">
-            Para gerar {fmtInt(leadsProspected)} contatos B2B via tráfego pago no período selecionado.
+          <p className="text-[13px] text-muted-foreground/70 font-[500] max-w-md leading-snug">
+            Estimativa aproximada de investimento necessário para gerar {fmtInt(leadsProspected)} contatos B2B via tráfego pago no período selecionado.
           </p>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[10px] text-muted-foreground/40 flex items-center gap-1 cursor-help">
-                  CPL considerado: R$ {fmt(CPL_BENCHMARK)}
-                  <Info size={11} className="text-muted-foreground/30" />
+                <span className="text-[10px] text-muted-foreground/35 flex items-center gap-1 cursor-help pt-0.5">
+                  CPL de referência: R$ {fmt(CPL_BENCHMARK)}
+                  <Info size={11} className="text-muted-foreground/25" />
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
                 <p className="text-xs">
-                  Estimativa baseada em benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. Valores podem variar conforme mercado e segmentação.
+                  Benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. Valores podem variar conforme mercado e segmentação.
                 </p>
               </TooltipContent>
             </Tooltip>
