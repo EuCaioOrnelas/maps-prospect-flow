@@ -35,17 +35,17 @@ export function DashboardImpactAccumulated({
   const projectedAnnualSavings = avgMonthlyLeads * 12 * CPL_BENCHMARK;
 
   return (
-    <div className="space-y-5">
-      {/* Hero Impact Card */}
+    <div className="space-y-4">
+      {/* Hero Impact Card - compact */}
       <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-background to-background overflow-hidden">
-        <CardContent className="py-8 px-6 flex flex-col items-center text-center space-y-2">
+        <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-1.5">
           <p className="text-[10px] font-semibold text-emerald-400/80 tracking-[0.2em] uppercase">
             Impacto gerado com a Wiize
           </p>
-          <p className="text-4xl sm:text-5xl font-black text-emerald-400 tracking-tight leading-none">
+          <p className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight leading-none">
             R$ {fmt(financialImpact)}
           </p>
-          <p className="text-xs text-muted-foreground/70 max-w-sm leading-relaxed">
+          <p className="text-[11px] text-muted-foreground/70 max-w-sm leading-relaxed">
             Valor estimado que você evitou pagar gerando{' '}
             <span className="font-medium text-foreground/80">{fmtInt(allTimeLeads)} leads</span>{' '}
             sem depender de tráfego pago ou SDR interno.
@@ -53,33 +53,37 @@ export function DashboardImpactAccumulated({
         </CardContent>
       </Card>
 
-      {/* Secondary: Operational + Projection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="py-5 px-5 flex flex-col items-center text-center space-y-1">
-            <Briefcase size={16} className="text-muted-foreground/60" />
-            <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+      {/* Secondary: Operational + Projection - professional */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="py-7 px-6 flex flex-col items-center text-center space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-1">
+              <Briefcase size={20} className="text-primary" />
+            </div>
+            <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Capacidade operacional gerada
             </p>
-            <p className="text-2xl font-bold text-foreground">
+            <p className="text-3xl font-bold text-foreground">
               {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
             </p>
-            <p className="text-[11px] text-muted-foreground/50">
+            <p className="text-xs text-muted-foreground/50">
               de trabalho de um SDR
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
-          <CardContent className="py-5 px-5 flex flex-col items-center text-center space-y-1">
-            <CalendarClock size={16} className="text-amber-400/70" />
-            <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="py-7 px-6 flex flex-col items-center text-center space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-1">
+              <CalendarClock size={20} className="text-amber-400" />
+            </div>
+            <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Mantendo esse ritmo
             </p>
-            <p className="text-2xl font-bold text-amber-400">
+            <p className="text-3xl font-bold text-amber-400">
               R$ {fmt(projectedAnnualSavings)}
             </p>
-            <p className="text-[11px] text-muted-foreground/50">
+            <p className="text-xs text-muted-foreground/50">
               em custo evitado por ano
             </p>
           </CardContent>
