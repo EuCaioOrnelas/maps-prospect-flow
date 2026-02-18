@@ -121,6 +121,7 @@ export default function MainDashboard() {
                     prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
                     prevMessagesDelivered={data.prevMessagesSent}
                     prevTotalResponses={data.prevTotalResponses}
+                    periodDays={periodDays}
                   />
                 </div>
                 <div className="lg:col-span-2">
