@@ -199,11 +199,11 @@ const AdminLandingPages = () => {
     return statsMap;
   }, []);
 
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (startDate?: Date, endDate?: Date) => {
     try {
       const [pagesResult, statsMap] = await Promise.all([
         supabase.from("landing_pages").select("*").order("created_at", { ascending: false }),
-        fetchStats(dateRange.from, dateRange.to),
+        fetchStats(startDate, endDate),
       ]);
 
       if (pagesResult.error) {
@@ -216,7 +216,7 @@ const AdminLandingPages = () => {
     } catch (error) {
       console.error("Error loading data:", error);
     }
-  }, [fetchStats, dateRange]);
+  }, [fetchStats]);
 
   const loadStripeMRR = useCallback(async () => {
     setLoadingStripeMRR(true);
@@ -234,6 +234,7 @@ const AdminLandingPages = () => {
     }
   }, []);
 
+  // Init effect — runs once
   useEffect(() => {
     const init = async () => {
       if (!user || !profile) { navigate("/login"); return; }
@@ -248,12 +249,12 @@ const AdminLandingPages = () => {
       setLoading(false);
     };
     init();
-  }, [user, profile, navigate, toast, loadAllData, loadStripeMRR]);
+  }, [user, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reload stats when date range changes
   useEffect(() => {
     if (!loading && isAdmin) {
-      loadAllData();
+      loadAllData(dateRange.from, dateRange.to);
     }
   }, [dateRange]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -300,13 +301,13 @@ const AdminLandingPages = () => {
     }
     toast({ title: "Página criada!", description: `"${newPageName}" criada com sucesso.` });
     setNewPageName(""); setNewPageSlug(""); setShowCreateDialog(false); setCreating(false);
-    await loadAllData();
+    await loadAllData(dateRange.from, dateRange.to);
   };
 
   const togglePageStatus = async (pageId: string, currentStatus: boolean) => {
     const { error } = await supabase.from("landing_pages").update({ is_active: !currentStatus }).eq("id", pageId);
     if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
-    await loadAllData();
+    await loadAllData(dateRange.from, dateRange.to);
   };
 
   const deletePage = async (pageId: string, slug: string) => {
@@ -315,7 +316,7 @@ const AdminLandingPages = () => {
     const { error } = await supabase.from("landing_pages").delete().eq("id", pageId);
     if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
     toast({ title: "Página excluída" });
-    await loadAllData();
+    await loadAllData(dateRange.from, dateRange.to);
   };
 
   const copyPageUrl = (slug: string) => {
