@@ -27,12 +27,14 @@ function formatMonthLabel(month: string) {
 }
 
 export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChartProps) {
-  // Use last 3 months
   const last3 = monthlyData.slice(-3);
 
-  // Calculate average growth
+  // Calculate average growth & stats
   let avgGrowth = 0;
   let growthLabel = '';
+  const totalLeads = last3.reduce((s, d) => s + d.leads, 0);
+  const avgMonthly = last3.length > 0 ? Math.round(totalLeads / last3.length) : 0;
+
   if (last3.length >= 2) {
     const growths: number[] = [];
     for (let i = 1; i < last3.length; i++) {
@@ -45,12 +47,19 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
     if (growths.length > 0) {
       avgGrowth = growths.reduce((a, b) => a + b, 0) / growths.length;
       if (avgGrowth > 0) {
-        growthLabel = `Crescimento médio de +${avgGrowth.toFixed(0)}% nos últimos ${last3.length} meses`;
+        growthLabel = `+${avgGrowth.toFixed(0)}% crescimento médio`;
       } else {
-        growthLabel = `Tendência de geração consistente nos últimos 90 dias`;
+        growthLabel = `Geração consistente`;
       }
     }
   }
+
+  // Variation vs previous period
+  const lastMonth = last3[last3.length - 1];
+  const prevMonth = last3.length >= 2 ? last3[last3.length - 2] : null;
+  const variation = prevMonth && prevMonth.leads > 0
+    ? ((lastMonth.leads - prevMonth.leads) / prevMonth.leads * 100)
+    : null;
 
   const chartData = last3.map(d => ({
     ...d,
@@ -59,32 +68,32 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
 
   if (chartData.length === 0) {
     return (
-      <Card className="border-border/50 flex flex-col">
-        <CardContent className="py-5 px-5 flex-1 flex flex-col items-center justify-center text-center space-y-2">
-          <BarChart3 size={24} className="text-muted-foreground/40" />
-          <p className="text-xs text-muted-foreground/60">Dados insuficientes para evolução</p>
+      <Card className="border-border/30 flex flex-col">
+        <CardContent className="py-8 px-6 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+          <BarChart3 size={24} className="text-muted-foreground/30" />
+          <p className="text-xs text-muted-foreground/50">Dados insuficientes para evolução</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-border/50 flex flex-col">
-      <CardContent className="py-5 px-5 space-y-3 flex-1 flex flex-col">
+    <Card className="border-border/30 flex flex-col">
+      <CardContent className="py-6 px-6 space-y-4 flex-1 flex flex-col">
         {/* Title */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BarChart3 size={16} className="text-primary" />
+            <BarChart3 size={16} className="text-muted-foreground" />
             <div>
               <p className="text-sm font-semibold text-foreground">Evolução de Performance</p>
-              <p className="text-[10px] text-muted-foreground/60">Últimos 3 meses</p>
+              <p className="text-[10px] text-muted-foreground/50">Últimos 3 meses</p>
             </div>
           </div>
           {growthLabel && (
-            <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded-full">
+            <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
               <TrendingUp size={10} />
               {growthLabel}
-            </div>
+            </span>
           )}
         </div>
 
@@ -92,7 +101,7 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
         <div className="h-48 flex-1 min-h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }} barCategoryGap="20%">
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} vertical={false} />
               <XAxis
                 dataKey="monthLabel"
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
@@ -144,10 +153,15 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
           </ResponsiveContainer>
         </div>
 
-        {/* Strategic line */}
-        <p className="text-[10px] text-muted-foreground/50 text-center italic">
-          Com o ritmo atual, você deve manter ou superar esse volume no próximo mês.
-        </p>
+        {/* Technical footer */}
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground/40 pt-1">
+          <span>Média mensal: {fmtInt(avgMonthly)} leads</span>
+          {variation !== null && (
+            <span>
+              Variação vs mês anterior: {variation > 0 ? '+' : ''}{variation.toFixed(1)}%
+            </span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

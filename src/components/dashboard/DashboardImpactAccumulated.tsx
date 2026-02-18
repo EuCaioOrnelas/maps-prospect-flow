@@ -81,46 +81,44 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-background overflow-hidden">
-        <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-2">
-          <p className="text-[10px] font-semibold text-muted-foreground/80 tracking-[0.18em] uppercase">
+      <Card className="border-border/30 bg-gradient-to-br from-primary/[0.03] via-background to-background overflow-hidden">
+        <CardContent className="py-8 px-8 flex flex-col items-center text-center space-y-2.5">
+          <p className="text-[10px] font-medium text-muted-foreground/60 tracking-[0.18em] uppercase">
             Equivalência de Investimento em Mídia Paga
           </p>
-          <p className="text-[11px] text-muted-foreground/70 max-w-lg leading-relaxed">
-            Para gerar{' '}
-            <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} contatos B2B segmentados</span>{' '}
-            via anúncios pagos no período selecionado, o investimento estimado poderia ser:
-          </p>
-          <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-none">
+          <p className="text-4xl sm:text-5xl font-black text-foreground tracking-tight leading-none">
             R$ {fmt(financialImpact)}
           </p>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
-            <span>CPL utilizado no cálculo: R$ {fmt(CPL_BENCHMARK)}</span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info size={12} className="text-muted-foreground/50 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-xs">
-                    Estimativa baseada em benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. Valores podem variar conforme mercado e segmentação.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          <p className="text-xs text-muted-foreground/60">
+            {fmtInt(leadsProspected)} contatos B2B gerados no período
+          </p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[10px] text-muted-foreground/40 flex items-center gap-1 cursor-help">
+                  CPL considerado: R$ {fmt(CPL_BENCHMARK)}
+                  <Info size={11} className="text-muted-foreground/30" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-xs">
+                  Estimativa baseada em benchmark médio de custo por lead (CPL) para campanhas B2B de topo de funil. Valores podem variar conforme mercado e segmentação.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardContent>
       </Card>
 
       {/* Secondary: Capacidade Operacional + Projeção Anual */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="py-4 px-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Briefcase size={20} className="text-primary" />
+        <Card className="border-border/30 bg-card/80">
+          <CardContent className="py-5 px-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+              <Briefcase size={18} className="text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+              <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
                 Capacidade operacional gerada
               </p>
               <div className="flex items-baseline gap-2">
@@ -128,32 +126,31 @@ export function DashboardImpactAccumulated({
                   {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
                 </p>
                 {hasRealComparison && leadsChange !== 0 && (
-                  <div className={`flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                    leadsChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
+                  <span className={`text-[10px] font-medium ${
+                    leadsChange > 0 ? 'text-emerald-400' : 'text-destructive'
                   }`}>
-                    {leadsChange > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                     {leadsDiff > 0 ? '+' : ''}{fmtInt(leadsDiff)} leads vs anterior
-                  </div>
+                  </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground/50">de trabalho de um SDR no período</p>
+              <p className="text-[11px] text-muted-foreground/40">de trabalho de um SDR no período</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="py-4 px-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-              <CalendarClock size={20} className="text-amber-400" />
+        <Card className="border-border/30 bg-card/80">
+          <CardContent className="py-5 px-6 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+              <CalendarClock size={18} className="text-muted-foreground" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                Equivalência de Investimento em Mídia Paga (12 meses)
+              <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                Projeção estimada (12 meses)
               </p>
-              <p className="text-2xl font-bold text-foreground leading-tight">
+              <p className="text-xl font-bold text-foreground leading-tight">
                 R$ {fmt(avgMonthlyLeads * 12 * CPL_BENCHMARK)}
               </p>
-              <p className="text-[11px] text-muted-foreground/50">
+              <p className="text-[11px] text-muted-foreground/40">
                 Para alcançar o mesmo volume via mídia paga em 12 meses
               </p>
             </div>
