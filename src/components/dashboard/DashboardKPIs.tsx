@@ -66,31 +66,37 @@ function calcChange(current: number, previous: number): number {
 }
 
 export function DashboardKPIs(props: DashboardKPIsProps) {
-  const leadsChange = calcChange(props.leadsProspected, props.prevLeadsProspected);
-  const conversasChange = calcChange(props.totalResponses, props.prevTotalResponses);
-  const conversasDiff = props.totalResponses - props.prevTotalResponses;
+  const leadsProspected = props.leadsProspected ?? 0;
+  const prevLeadsProspected = props.prevLeadsProspected ?? 0;
+  const totalResponses = props.totalResponses ?? 0;
+  const prevTotalResponses = props.prevTotalResponses ?? 0;
+  const messagesSent = props.messagesSent ?? 0;
+  const prevMessagesSent = props.prevMessagesSent ?? 0;
 
-  // Activation rate: responses / leads prospected
-  const activationRate = props.leadsProspected > 0
-    ? (props.totalResponses / props.leadsProspected) * 100
+  const leadsChange = calcChange(leadsProspected, prevLeadsProspected);
+  const conversasChange = calcChange(totalResponses, prevTotalResponses);
+  const conversasDiff = totalResponses - prevTotalResponses;
+
+  const activationRate = leadsProspected > 0
+    ? (totalResponses / leadsProspected) * 100
     : 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <KPICard
         title="Leads Prospectados"
-        value={props.leadsProspected.toLocaleString('pt-BR')}
+        value={leadsProspected.toLocaleString('pt-BR')}
         icon={<Users size={16} />}
         change={leadsChange}
         changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
       />
       <KPICard
         title="Conversas Iniciadas"
-        value={props.totalResponses.toLocaleString('pt-BR')}
+        value={totalResponses.toLocaleString('pt-BR')}
         icon={<MessageCircle size={16} />}
         change={conversasChange}
         changeLabel={
-          props.prevTotalResponses > 0 && conversasDiff !== 0
+          prevTotalResponses > 0 && conversasDiff !== 0
             ? `${conversasDiff > 0 ? '+' : ''}${conversasDiff} vs anterior`
             : undefined
         }
