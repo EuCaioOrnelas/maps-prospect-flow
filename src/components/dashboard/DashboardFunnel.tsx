@@ -5,18 +5,19 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 interface DashboardFunnelProps {
   leadsProspected: number;
   messagesSent: number;
-  messagesDelivered: number; // sent - failed
+  messagesDelivered: number;
   totalResponses: number;
   prevLeadsProspected: number;
   prevMessagesSent: number;
   prevMessagesDelivered: number;
   prevTotalResponses: number;
+  periodDays: number;
 }
 
 function FunnelStep({ 
-  label, value, barWidth, displayPct, prevValue, color 
+  label, value, barWidth, displayPct, prevValue, color, periodDays
 }: { 
-  label: string; value: number; barWidth: number; displayPct: number; prevValue: number; color: string;
+  label: string; value: number; barWidth: number; displayPct: number; prevValue: number; color: string; periodDays: number;
 }) {
   const change = prevValue > 0 ? ((value - prevValue) / prevValue * 100) : 0;
   const isPositive = change > 0;
@@ -29,7 +30,9 @@ function FunnelStep({
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-foreground">{value.toLocaleString('pt-BR')}</span>
           {change !== 0 && (
-            <span className={cn("text-xs flex items-center gap-0.5", isPositive ? "text-emerald-400" : "text-destructive")}>
+            <span className={cn("text-xs flex items-center gap-0.5", isPositive ? "text-emerald-400" : "text-destructive")}
+              title={`vs ${periodDays} dias anteriores`}
+            >
               {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
               {Math.abs(change).toFixed(0)}%
             </span>
@@ -51,7 +54,7 @@ function FunnelStep({
 }
 
 export function DashboardFunnel(props: DashboardFunnelProps) {
-  const { leadsProspected, messagesSent, messagesDelivered } = props;
+  const { leadsProspected, messagesSent, messagesDelivered, periodDays } = props;
   const maxVal = Math.max(leadsProspected, messagesSent, messagesDelivered, 1);
 
   const steps = [
@@ -60,10 +63,19 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
     { label: "Entregues", value: messagesDelivered, prevValue: props.prevMessagesDelivered, color: "bg-cyan-500", displayPct: leadsProspected > 0 ? (messagesDelivered / leadsProspected) * 100 : 0 },
   ];
 
+  const hasPrevData = props.prevLeadsProspected > 0 || props.prevMessagesSent > 0;
+
   return (
     <Card className="glass">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Funil de Performance</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Funil de Performance</CardTitle>
+          {hasPrevData && (
+            <span className="text-[10px] text-muted-foreground">
+              Variação vs {periodDays} dias anteriores
+            </span>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {steps.map((step) => (
@@ -75,6 +87,7 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
             displayPct={step.displayPct}
             prevValue={step.prevValue}
             color={step.color}
+            periodDays={periodDays}
           />
         ))}
       </CardContent>
