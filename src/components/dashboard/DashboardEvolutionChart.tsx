@@ -103,6 +103,11 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                 axisLine={false}
                 tickLine={false}
+                tickFormatter={(value: number) => {
+                  if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`;
+                  return value.toString();
+                }}
+                width={45}
               />
               <Tooltip
                 contentStyle={{
