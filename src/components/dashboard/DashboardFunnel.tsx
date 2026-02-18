@@ -52,12 +52,11 @@ function FunnelStep({
 
 export function DashboardFunnel(props: DashboardFunnelProps) {
   const { leadsProspected, messagesSent, messagesDelivered } = props;
-  const maxVal = Math.max(leadsProspected, 1);
 
   const steps = [
-    { label: "Leads Prospectados", value: leadsProspected, prevValue: props.prevLeadsProspected, color: "bg-primary" },
-    { label: "Mensagens Enviadas", value: messagesSent, prevValue: props.prevMessagesSent, color: "bg-emerald-500" },
-    { label: "Entregues", value: messagesDelivered, prevValue: props.prevMessagesDelivered, color: "bg-cyan-500" },
+    { label: "Leads Prospectados", value: leadsProspected, prevValue: props.prevLeadsProspected, color: "bg-primary", pct: 100 },
+    { label: "Mensagens Enviadas", value: messagesSent, prevValue: props.prevMessagesSent, color: "bg-emerald-500", pct: leadsProspected > 0 ? (messagesSent / leadsProspected) * 100 : 0 },
+    { label: "Entregues", value: messagesDelivered, prevValue: props.prevMessagesDelivered, color: "bg-cyan-500", pct: messagesSent > 0 ? (messagesDelivered / messagesSent) * 100 : 0 },
   ];
 
   return (
@@ -71,7 +70,7 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
             key={step.label}
             label={step.label}
             value={step.value}
-            widthPercent={(step.value / maxVal) * 100}
+            widthPercent={step.pct}
             prevValue={step.prevValue}
             color={step.color}
           />
