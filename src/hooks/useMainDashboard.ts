@@ -191,7 +191,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           activeDaysSet.add(new Date(r.created_at).toISOString().slice(0, 10));
         });
 
-      // Build monthly breakdown (leads + conversations by month)
+      // Build monthly breakdown — always last 3 calendar months (including current)
       const campaignMonthMap: Record<string, number> = {};
       (allTimeCampaignsRes.data || []).forEach((c: any) => {
         const d = new Date(c.created_at);
@@ -199,10 +199,15 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         campaignMonthMap[key] = (campaignMonthMap[key] || 0) + (c.sent_count || 0);
       });
 
-      // Merge all months from both sources
-      const allMonthKeys = new Set([...Object.keys(monthMap), ...Object.keys(campaignMonthMap)]);
-      const sortedAllMonths = Array.from(allMonthKeys).sort();
-      const monthlyBreakdown: MonthlyBreakdown[] = sortedAllMonths.map(m => {
+      // Generate last 3 months keys (current + 2 previous), handling year boundaries
+      const last3MonthKeys: string[] = [];
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        last3MonthKeys.push(key);
+      }
+
+      const monthlyBreakdown: MonthlyBreakdown[] = last3MonthKeys.map(m => {
         const leads = monthMap[m] || 0;
         const conversations = campaignMonthMap[m] || 0;
         const opportunities = Math.round(conversations * 0.03);

@@ -52,12 +52,6 @@ function FunnelStep({
           <span className="text-[10px] font-semibold text-foreground/70">{displayPct.toFixed(0)}%</span>
         </div>
       </div>
-      {/* Conversion rate between steps */}
-      {displayPct < 100 && displayPct > 0 && (
-        <p className="text-[9px] text-muted-foreground/40 text-center">
-          {displayPct.toFixed(1)}% taxa de conversão
-        </p>
-      )}
     </div>
   );
 }
