@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 
 // Lazy load all other pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const MainDashboard = lazy(() => import("./pages/MainDashboard"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLandingPages = lazy(() => import("./pages/AdminLandingPages"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
@@ -93,6 +94,14 @@ const App = () => (
                 <Route path="/contato" element={<Contact />} />
                 <Route
                   path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <MainDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route
+                  path="/reports/prospeccao" 
                   element={
                     <ProtectedRoute>
                       <Reports />

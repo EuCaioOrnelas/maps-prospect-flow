@@ -1,0 +1,167 @@
+import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { subDays } from "date-fns";
+
+export interface DashboardMetrics {
+  leadsProspected: number;
+  prevLeadsProspected: number;
+  messagesSent: number;
+  prevMessagesSent: number;
+  messagesFailed: number;
+  prevMessagesFailed: number;
+  totalResponses: number;
+  prevTotalResponses: number;
+  deliverabilityRate: number;
+  prevDeliverabilityRate: number;
+  responseRate: number;
+  prevResponseRate: number;
+  campaigns: any[];
+  numbers: any[];
+  warmingSessions: any[];
+  incidents: any[];
+  responsesByDay: { date: string; count: number }[];
+  cplBenchmark: number;
+  loading: boolean;
+}
+
+export function useMainDashboard(periodDays: number): DashboardMetrics {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [rawData, setRawData] = useState({
+    leadsProspected: 0,
+    prevLeadsProspected: 0,
+    messagesSent: 0,
+    prevMessagesSent: 0,
+    messagesFailed: 0,
+    prevMessagesFailed: 0,
+    totalResponses: 0,
+    prevTotalResponses: 0,
+    campaigns: [] as any[],
+    numbers: [] as any[],
+    warmingSessions: [] as any[],
+    incidents: [] as any[],
+    responsesByDay: [] as { date: string; count: number }[],
+    cplBenchmark: 50,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    fetchData();
+  }, [user, periodDays]);
+
+  const fetchData = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    const now = new Date();
+    const periodStart = subDays(now, periodDays);
+    const prevPeriodStart = subDays(now, periodDays * 2);
+    const prevPeriodEnd = periodStart;
+
+    try {
+      const [
+        searchCurrent, searchPrev,
+        campaignsCurrent, campaignsPrev,
+        responsesCurrent, responsesPrev,
+        numbersRes, warmingRes, incidentsRes, cplRes,
+      ] = await Promise.all([
+        supabase.from('search_history').select('results_count')
+          .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
+        supabase.from('search_history').select('results_count')
+          .eq('user_id', user.id)
+          .gte('created_at', prevPeriodStart.toISOString())
+          .lt('created_at', prevPeriodEnd.toISOString()),
+        supabase.from('whatsapp_campaigns')
+          .select('id, name, status, sent_count, failed_count, total_leads, total_responses, created_at, whatsapp_number_id')
+          .eq('user_id', user.id)
+          .gte('created_at', periodStart.toISOString())
+          .order('created_at', { ascending: false }),
+        supabase.from('whatsapp_campaigns')
+          .select('sent_count, failed_count, total_responses')
+          .eq('user_id', user.id)
+          .gte('created_at', prevPeriodStart.toISOString())
+          .lt('created_at', prevPeriodEnd.toISOString()),
+        supabase.from('campaign_responses').select('responded_at')
+          .eq('user_id', user.id).gte('responded_at', periodStart.toISOString()),
+        supabase.from('campaign_responses').select('id')
+          .eq('user_id', user.id)
+          .gte('responded_at', prevPeriodStart.toISOString())
+          .lt('responded_at', prevPeriodEnd.toISOString()),
+        supabase.from('whatsapp_numbers')
+          .select('id, name, phone_number, is_connected, daily_sent_count, last_sent_at')
+          .eq('user_id', user.id),
+        supabase.from('warming_sessions')
+          .select('id, whatsapp_number_id, warming_level, warming_status, status, messages_sent_today, error_message')
+          .eq('user_id', user.id),
+        supabase.from('campaign_incidents')
+          .select('id, incident_type, detected_at, contact_phone')
+          .eq('user_id', user.id)
+          .gte('created_at', periodStart.toISOString())
+          .order('created_at', { ascending: false }).limit(20),
+        (supabase.from('system_settings' as any).select('value')
+          .eq('key', 'cpl_benchmark').maybeSingle() as unknown as Promise<any>),
+      ]);
+
+      const campaigns = campaignsCurrent.data || [];
+      const prevCampaignData = campaignsPrev.data || [];
+
+      const leadsProspected = (searchCurrent.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
+      const prevLeadsProspected = (searchPrev.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
+      const messagesSent = campaigns.reduce((s, c) => s + (c.sent_count || 0), 0);
+      const messagesFailed = campaigns.reduce((s, c) => s + (c.failed_count || 0), 0);
+      const prevMessagesSent = prevCampaignData.reduce((s, c) => s + (c.sent_count || 0), 0);
+      const prevMessagesFailed = prevCampaignData.reduce((s, c) => s + (c.failed_count || 0), 0);
+      const totalResponses = (responsesCurrent.data || []).length;
+      const prevTotalResponses = (responsesPrev.data || []).length;
+
+      // Responses by day
+      const byDayMap: Record<string, number> = {};
+      (responsesCurrent.data || []).forEach((r: any) => {
+        const day = new Date(r.responded_at).toLocaleDateString('pt-BR');
+        byDayMap[day] = (byDayMap[day] || 0) + 1;
+      });
+      const responsesByDay = Object.entries(byDayMap)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => {
+          const [dA, mA, yA] = a.date.split('/').map(Number);
+          const [dB, mB, yB] = b.date.split('/').map(Number);
+          return new Date(yA, mA - 1, dA).getTime() - new Date(yB, mB - 1, dB).getTime();
+        });
+
+      const cplValue = cplRes.data?.value as any;
+
+      setRawData({
+        leadsProspected, prevLeadsProspected,
+        messagesSent, prevMessagesSent,
+        messagesFailed, prevMessagesFailed,
+        totalResponses, prevTotalResponses,
+        campaigns,
+        numbers: numbersRes.data || [],
+        warmingSessions: warmingRes.data || [],
+        incidents: incidentsRes.data || [],
+        responsesByDay,
+        cplBenchmark: cplValue?.value || 50,
+      });
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return useMemo(() => {
+    const { messagesSent, messagesFailed, prevMessagesSent, prevMessagesFailed, totalResponses, prevTotalResponses } = rawData;
+    const total = messagesSent + messagesFailed;
+    const prevTotal = prevMessagesSent + prevMessagesFailed;
+
+    return {
+      ...rawData,
+      deliverabilityRate: total > 0 ? (messagesSent / total) * 100 : 0,
+      prevDeliverabilityRate: prevTotal > 0 ? (prevMessagesSent / prevTotal) * 100 : 0,
+      responseRate: messagesSent > 0 ? (totalResponses / messagesSent) * 100 : 0,
+      prevResponseRate: prevMessagesSent > 0 ? (prevTotalResponses / prevMessagesSent) * 100 : 0,
+      loading,
+    };
+  }, [rawData, loading]);
+}
