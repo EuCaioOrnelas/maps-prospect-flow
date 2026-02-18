@@ -81,22 +81,12 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="border-border/30 bg-card/50 overflow-hidden relative">
+      <Card className="border-border/30 bg-card overflow-hidden relative">
         <CardContent className="py-6 px-8 flex flex-col items-center text-center space-y-1">
-          {/* Top labels */}
-          <div className="w-full flex items-center justify-between mb-1">
-            <span className="text-[9px] font-medium text-muted-foreground/40 uppercase tracking-wider">
-              Resumo financeiro comparativo
-            </span>
-            <span className="text-[9px] font-medium text-muted-foreground/30 uppercase tracking-wider">
-              KPI principal do período
-            </span>
-          </div>
-
           <p className="text-[10px] font-medium text-muted-foreground/50 tracking-[0.18em] uppercase">
             Investimento estimado via mídia paga
           </p>
-          <p className="text-[2rem] sm:text-[2.6rem] font-black text-foreground tracking-tight leading-none drop-shadow-[0_0_12px_hsla(158,60%,40%,0.12)]">
+          <p className="text-[2rem] sm:text-[2.6rem] font-black text-white tracking-[0.02em] leading-none drop-shadow-[0_0_12px_hsla(158,60%,40%,0.12)]">
             R$ {fmt(financialImpact)}
           </p>
           <p className="text-[13px] text-muted-foreground/70 font-[500] max-w-md leading-snug">
@@ -122,7 +112,7 @@ export function DashboardImpactAccumulated({
 
       {/* Secondary: Capacidade Operacional + Projeção Anual */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-border/30 bg-card/80">
+        <Card className="border-border/30 bg-card">
           <CardContent className="py-5 px-6 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
               <Briefcase size={18} className="text-muted-foreground" />
@@ -148,7 +138,7 @@ export function DashboardImpactAccumulated({
           </CardContent>
         </Card>
 
-        <Card className="border-border/30 bg-card/80">
+        <Card className="border-border/30 bg-card">
           <CardContent className="py-5 px-6 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
               <CalendarClock size={18} className="text-muted-foreground" />
