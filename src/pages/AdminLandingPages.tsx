@@ -137,36 +137,16 @@ const AdminLandingPages = () => {
     return data === true;
   };
 
-  // Load all data (fetch events with pagination to avoid the 1000-row default limit)
+  // Load all data using RPC for accurate aggregation (no row limit issues)
   const loadAllData = useCallback(async () => {
     try {
-      const PAGE_SIZE = 1000;
-
-      const fetchAllEvents = async () => {
-        const all: any[] = [];
-        for (let offset = 0; offset < 50000; offset += PAGE_SIZE) {
-          const { data, error } = await supabase
-            .from("landing_page_events")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .range(offset, offset + PAGE_SIZE - 1);
-
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-
-          all.push(...data);
-          if (data.length < PAGE_SIZE) break;
-        }
-        return all;
-      };
-
-      // Fetch pages and events in parallel
-      const [pagesResult, events] = await Promise.all([
+      // Fetch pages and aggregated stats in parallel
+      const [pagesResult, statsResult] = await Promise.all([
         supabase
           .from("landing_pages")
           .select("*")
           .order("created_at", { ascending: false }),
-        fetchAllEvents(),
+        supabase.rpc("get_landing_page_stats"),
       ]);
 
       if (pagesResult.error) {
@@ -174,31 +154,32 @@ const AdminLandingPages = () => {
         return;
       }
 
+      if (statsResult.error) {
+        console.error("Error loading stats:", statsResult.error);
+      }
+
       const loadedPages = pagesResult.data || [];
       setPages(loadedPages);
 
-      // Calculate stats per page
+      // Build stats map from RPC results
       const statsMap: { [key: string]: PageStats } = {};
-      const mrrMap: { [key: string]: { [month: string]: { mrr: number; purchases: number } } } = {};
+      const rpcStats = (statsResult.data || []) as Array<{
+        landing_page_id: string;
+        page_views: number;
+        signup_clicks: number;
+        signup_completed: number;
+        purchases: number;
+        trial_no_upgrade: number;
+      }>;
 
       for (const page of loadedPages) {
-        const pageEvents = events.filter((e) => e.landing_page_id === page.id);
+        const rpcRow = rpcStats.find((s) => s.landing_page_id === page.id);
 
-        const pageViews = pageEvents.filter((e) => e.event_type === "page_view").length;
-        const signupClicks = pageEvents.filter((e) => e.event_type === "signup_click").length;
-        const signupCompleted = pageEvents.filter((e) => e.event_type === "signup_completed").length;
-        const purchaseEvents = pageEvents.filter((e) => e.event_type === "purchase");
-        const purchases = purchaseEvents.length;
-        const trialNoUpgrade = pageEvents.filter((e) => e.event_type === "trial_no_upgrade").length;
-
-        // Calculate total revenue from purchases
-        let totalRevenue = 0;
-        purchaseEvents.forEach((e) => {
-          const metadata = e.metadata as { plan?: string; amount?: number } | null;
-          if (metadata?.plan) {
-            totalRevenue += PLAN_PRICES[metadata.plan] || 0;
-          }
-        });
+        const pageViews = rpcRow?.page_views || 0;
+        const signupClicks = rpcRow?.signup_clicks || 0;
+        const signupCompleted = rpcRow?.signup_completed || 0;
+        const purchases = rpcRow?.purchases || 0;
+        const trialNoUpgrade = rpcRow?.trial_no_upgrade || 0;
 
         const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
 
@@ -208,13 +189,27 @@ const AdminLandingPages = () => {
           signupCompleted,
           purchases,
           trialNoUpgrade,
-          totalRevenue,
+          totalRevenue: 0, // Will be overridden by Stripe data
           conversionRate,
         };
+      }
 
-        // Calculate monthly MRR
+      setStats(statsMap);
+
+      // Monthly MRR from events (fetch purchase events only for chart data)
+      const { data: purchaseEvents } = await supabase
+        .from("landing_page_events")
+        .select("*")
+        .eq("event_type", "purchase")
+        .order("created_at", { ascending: false });
+
+      const mrrMap: { [key: string]: { [month: string]: { mrr: number; purchases: number } } } = {};
+
+      for (const page of loadedPages) {
         mrrMap[page.id] = {};
-        purchaseEvents.forEach((e) => {
+        const pagePurchases = (purchaseEvents || []).filter((e) => e.landing_page_id === page.id);
+
+        pagePurchases.forEach((e) => {
           const date = new Date(e.created_at);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
           const metadata = e.metadata as { plan?: string } | null;
@@ -226,9 +221,15 @@ const AdminLandingPages = () => {
           mrrMap[page.id][monthKey].mrr += revenue;
           mrrMap[page.id][monthKey].purchases += 1;
         });
+
+        // Update totalRevenue in statsMap from purchase events
+        const totalRevenue = Object.values(mrrMap[page.id]).reduce((sum, m) => sum + m.mrr, 0);
+        if (statsMap[page.id]) {
+          statsMap[page.id].totalRevenue = totalRevenue;
+        }
       }
 
-      setStats(statsMap);
+      setStats({ ...statsMap });
 
       // Convert monthly MRR to array format
       const monthlyMRRMap: { [key: string]: MonthlyMRR[] } = {};

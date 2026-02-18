@@ -1830,6 +1830,17 @@ export type Database = {
         Returns: Json
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      get_landing_page_stats: {
+        Args: never
+        Returns: {
+          landing_page_id: string
+          page_views: number
+          purchases: number
+          signup_clicks: number
+          signup_completed: number
+          trial_no_upgrade: number
+        }[]
+      }
       get_phone_key: { Args: { phone_input: string }; Returns: string }
       has_role: {
         Args: {
