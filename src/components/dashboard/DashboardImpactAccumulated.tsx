@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Users, CalendarClock, TrendingUp, Zap, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent } from "@/components/ui/card";
+import { BarChart3, CalendarClock, Briefcase } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 interface DashboardImpactAccumulatedProps {
@@ -13,8 +12,7 @@ interface DashboardImpactAccumulatedProps {
 
 const CPL_BENCHMARK = 46.17;
 const SDR_PER_DAY = 80;
-const SDR_WORK_DAYS = 22;
-const SDR_PER_MONTH = SDR_PER_DAY * SDR_WORK_DAYS; // 1760
+const SDR_PER_MONTH = SDR_PER_DAY * 22;
 
 function fmt(n: number) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,16 +30,11 @@ export function DashboardImpactAccumulated({
   periodDays,
 }: DashboardImpactAccumulatedProps) {
   const financialImpact = allTimeLeads * CPL_BENCHMARK;
-  const sdrEquivalent = allTimeLeads / SDR_PER_MONTH;
-  const daysSaved = allTimeLeads / SDR_PER_DAY;
-  const monthlySDR = monthlyLeads / SDR_PER_MONTH;
-  const dailyAvg = activeDays > 0 ? monthlyLeads / Math.min(activeDays, periodDays) : 0;
+  const daysSaved = Math.round(allTimeLeads / SDR_PER_DAY);
 
-  // Annual projection based on monthly avg
   const monthsActive = cumulativeByMonth.length || 1;
   const avgMonthlyLeads = allTimeLeads / monthsActive;
-  const projectedAnnualLeads = avgMonthlyLeads * 12;
-  const projectedAnnualSavings = projectedAnnualLeads * CPL_BENCHMARK;
+  const projectedAnnualSavings = avgMonthlyLeads * 12 * CPL_BENCHMARK;
 
   return (
     <div className="space-y-4">
@@ -52,145 +45,76 @@ export function DashboardImpactAccumulated({
         </div>
         <div>
           <h2 className="text-lg font-bold text-foreground">Impacto Acumulado</h2>
-          <p className="text-xs text-muted-foreground">Crescimento estrutural da sua operação com a Wiize</p>
+          <p className="text-xs text-muted-foreground">O valor que você já construiu com a Wiize</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* BLOCO 1 – Impacto Financeiro */}
-        <Card className="glass border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                <TrendingUp size={15} className="text-emerald-400" />
-              </div>
-              <CardTitle className="text-sm font-semibold">Impacto Financeiro Acumulado</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center space-y-1">
-              <p className="text-3xl font-extrabold text-emerald-400">
-                R$ {fmt(financialImpact)}
-              </p>
-              <p className="text-xs text-muted-foreground font-mono">
-                {fmtInt(allTimeLeads)} leads × R$ {fmt(CPL_BENCHMARK)} = R$ {fmt(financialImpact)}
-              </p>
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 text-center leading-relaxed">
-              Estimativa baseada no custo médio de geração de lead via tráfego pago ou SDR interno.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Main Impact Block */}
+      <Card className="glass border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-transparent to-primary/5 overflow-hidden">
+        <CardContent className="py-10 px-6 flex flex-col items-center text-center space-y-3">
+          <p className="text-sm font-medium text-emerald-400 tracking-wide uppercase">
+            💰 Impacto gerado com a Wiize
+          </p>
+          <p className="text-5xl sm:text-6xl font-extrabold text-emerald-400 tracking-tight">
+            R$ {fmt(financialImpact)}
+          </p>
+          <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
+            Valor estimado que você evitou pagar gerando{' '}
+            <span className="font-semibold text-foreground">{fmtInt(allTimeLeads)} leads</span>{' '}
+            sem depender de tráfego pago ou SDR interno.
+          </p>
+        </CardContent>
+      </Card>
 
-        {/* BLOCO 2 – Equivalência SDR */}
-        <Card className="glass border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Users size={15} className="text-primary" />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CardTitle className="text-sm font-semibold">Equivalência em SDR</CardTitle>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info size={12} className="text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <p className="text-xs">
-                        Baseado em média conservadora: {SDR_PER_DAY} prospecções/dia, {SDR_WORK_DAYS} dias/mês = {fmtInt(SDR_PER_MONTH)} prospecções/mês por SDR.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 rounded-xl bg-primary/5 border border-primary/10">
-                <p className="text-2xl font-bold text-foreground">{sdrEquivalent.toFixed(2).replace('.', ',')}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">SDR equivalente/mês</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-primary/5 border border-primary/10">
-                <p className="text-2xl font-bold text-foreground">{daysSaved.toFixed(1).replace('.', ',')}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">dias de trabalho economizados</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 text-center">
+      {/* Secondary blocks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Operational Capacity */}
+        <Card className="glass border-primary/10">
+          <CardContent className="py-8 px-6 flex flex-col items-center text-center space-y-2">
+            <Briefcase size={22} className="text-primary mb-1" />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Capacidade operacional gerada
+            </p>
+            <p className="text-3xl font-bold text-foreground">
+              {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              de trabalho de um SDR
+            </p>
+            <p className="text-[10px] text-muted-foreground/50 pt-1">
               Baseado em média conservadora de produtividade de SDR.
             </p>
           </CardContent>
         </Card>
 
-        {/* BLOCO 3 – Capacidade Operacional */}
-        <Card className="glass border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                <Zap size={15} className="text-cyan-400" />
-              </div>
-              <CardTitle className="text-sm font-semibold">Capacidade Operacional Gerada</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-                <p className="text-2xl font-bold text-foreground">{monthlySDR.toFixed(2).replace('.', ',')}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">SDR equivalente mensal</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-                <p className="text-2xl font-bold text-foreground">{dailyAvg.toFixed(1).replace('.', ',')}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">prospecções/dia (média)</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 text-center">
-              Baseado nos leads prospectados no período selecionado.
+        {/* Annual Projection */}
+        <Card className="glass border-amber-500/10">
+          <CardContent className="py-8 px-6 flex flex-col items-center text-center space-y-2">
+            <CalendarClock size={22} className="text-amber-400 mb-1" />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Mantendo esse ritmo
             </p>
-          </CardContent>
-        </Card>
-
-        {/* BLOCO EXTRA – Projeção Anual */}
-        <Card className="glass border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <CalendarClock size={15} className="text-amber-400" />
-              </div>
-              <CardTitle className="text-sm font-semibold">Projeção Anual</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground text-center">
-              Se mantiver o ritmo atual, você gerará:
+            <p className="text-3xl font-bold text-amber-400">
+              R$ {fmt(projectedAnnualSavings)}
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                <p className="text-2xl font-bold text-foreground">{fmtInt(Math.round(projectedAnnualLeads))}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">leads por ano</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                <p className="text-2xl font-bold text-amber-400">R$ {fmt(projectedAnnualSavings)}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">em custo evitado</p>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground max-w-[220px]">
+              em custo evitado por ano
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* BLOCO 4 – Crescimento Acumulado (Gráfico) */}
+      {/* Cumulative Growth Chart */}
       {cumulativeByMonth.length > 1 && (
         <Card className="glass">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Crescimento Acumulado de Leads</CardTitle>
-              <p className="text-[10px] text-muted-foreground max-w-[220px] text-right">
-                Seu ativo de prospecção continua crescendo enquanto você utiliza a Wiize.
+          <CardContent className="pt-6 pb-4">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <p className="text-sm font-semibold text-foreground">Crescimento Acumulado</p>
+              <p className="text-[10px] text-muted-foreground italic">
+                Seu ativo de prospecção continua crescendo.
               </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-56">
+            <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={cumulativeByMonth} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                   <defs>
