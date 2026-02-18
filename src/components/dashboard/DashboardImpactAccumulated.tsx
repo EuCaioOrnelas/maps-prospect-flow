@@ -81,7 +81,7 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="border-border/30 bg-card/80 overflow-hidden relative">
+      <Card className="border-border/30 bg-card overflow-hidden relative">
         <CardContent className="py-6 px-8 flex flex-col items-center text-center space-y-1">
           {/* Top labels */}
           <div className="w-full flex items-center justify-between mb-1">
