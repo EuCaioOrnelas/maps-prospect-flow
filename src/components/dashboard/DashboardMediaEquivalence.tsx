@@ -9,8 +9,8 @@ interface DashboardMediaEquivalenceProps {
 }
 
 export function DashboardMediaEquivalence({ leadsProspected, cplBenchmark, periodLabel }: DashboardMediaEquivalenceProps) {
-  // Use a broken/realistic CPL value
-  const realisticCPL = cplBenchmark > 0 ? cplBenchmark + 0.78 : 43.78;
+  const realisticCPL = 46.17;
+
   const estimatedInvestment = leadsProspected * realisticCPL;
 
   return (
