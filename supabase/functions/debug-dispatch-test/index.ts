@@ -185,7 +185,11 @@ function parseStackTrace(error: unknown): { stack_trace?: string; error_file?: s
       const file = hasName ? match[2] : match[1];
       const lineNum = parseInt(hasName ? match[3] : match[2]);
       const col = parseInt(hasName ? match[4] : match[3]);
-      const fileName = file.split('/').pop() || file;
+      // Extract function-name/index.ts instead of just index.ts
+      const parts = file.split('/');
+      const fileName = parts.length >= 2 
+        ? `${parts[parts.length - 2]}/${parts[parts.length - 1]}` 
+        : parts[parts.length - 1] || file;
       return {
         stack_trace: lines.slice(0, 5).map(l => l.trim()).join('\n'),
         error_file: fileName,
@@ -216,6 +220,9 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
   }
   if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504')) {
     return { category: 'external_error', error_message: msg, error_code: parseInt(lower.match(/5\d{2}/)?.[0] || '500'), suggestion: 'Erro no servidor da Evolution API. Tente novamente em alguns minutos.', ...stackInfo };
+  }
+  if (lower.includes('400') || lower.includes('bad request')) {
+    return { category: 'external_error', error_message: msg, error_code: 400, suggestion: 'A Evolution API rejeitou a requisição (HTTP 400). Verifique se o número de telefone está no formato correto e se a instância está configurada corretamente.', ...stackInfo };
   }
   if (lower.includes('not found') || lower.includes('404')) {
     return { category: 'external_error', error_message: msg, error_code: 404, suggestion: 'Endpoint não encontrado. Verifique se a instância existe e se a URL da API está correta.', ...stackInfo };
