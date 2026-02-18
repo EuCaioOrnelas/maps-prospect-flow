@@ -53,39 +53,43 @@ export function DashboardImpactAccumulated({
         </CardContent>
       </Card>
 
-      {/* Secondary: Operational + Projection - professional */}
+      {/* Secondary: Operational + Projection - horizontal layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-border/40 bg-card/80">
-          <CardContent className="py-7 px-6 flex flex-col items-center text-center space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-1">
+          <CardContent className="py-4 px-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <Briefcase size={20} className="text-primary" />
             </div>
-            <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-              Capacidade operacional gerada
-            </p>
-            <p className="text-3xl font-bold text-foreground">
-              {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
-            </p>
-            <p className="text-xs text-muted-foreground/50">
-              de trabalho de um SDR
-            </p>
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                Capacidade operacional gerada
+              </p>
+              <p className="text-2xl font-bold text-foreground leading-tight">
+                {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
+              </p>
+              <p className="text-[11px] text-muted-foreground/50">
+                de trabalho de um SDR
+              </p>
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-border/40 bg-card/80">
-          <CardContent className="py-7 px-6 flex flex-col items-center text-center space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-1">
+          <CardContent className="py-4 px-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
               <CalendarClock size={20} className="text-amber-400" />
             </div>
-            <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-              Mantendo esse ritmo
-            </p>
-            <p className="text-3xl font-bold text-amber-400">
-              R$ {fmt(projectedAnnualSavings)}
-            </p>
-            <p className="text-xs text-muted-foreground/50">
-              em custo evitado por ano
-            </p>
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                Mantendo esse ritmo
+              </p>
+              <p className="text-2xl font-bold text-amber-400 leading-tight">
+                R$ {fmt(projectedAnnualSavings)}
+              </p>
+              <p className="text-[11px] text-muted-foreground/50">
+                em custo evitado por ano
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
