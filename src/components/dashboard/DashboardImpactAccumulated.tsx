@@ -97,15 +97,6 @@ export function DashboardImpactAccumulated({
             <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} leads</span>{' '}
             nos últimos {periodDays} dias.
           </p>
-          <p className="text-[10px] text-muted-foreground/50 italic pt-0.5">
-            Mantendo esse ritmo, você deve gerar aproximadamente {fmtInt(projectedMonthlyLeads)} novos leads no próximo mês.
-          </p>
-          {/* Anti-churn subtle line */}
-          {leadsProspected > 0 && (
-            <p className="text-[10px] text-muted-foreground/40 pt-2 max-w-sm">
-              Se interromper agora, você deixará de gerar aproximadamente {fmtInt(projectedMonthlyLeads)} novos leads por mês.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -145,12 +136,14 @@ export function DashboardImpactAccumulated({
             </div>
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                Mantendo esse ritmo
+                Projeção anual
               </p>
               <p className="text-2xl font-bold text-amber-400 leading-tight">
                 R$ {fmt(projectedAnnualSavings)}
               </p>
-              <p className="text-[11px] text-muted-foreground/50">em custo evitado por ano</p>
+              <p className="text-[11px] text-muted-foreground/50">
+                Impacto financeiro estimado em 12 meses
+              </p>
             </div>
           </CardContent>
         </Card>
