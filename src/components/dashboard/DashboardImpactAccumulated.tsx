@@ -86,7 +86,7 @@ export function DashboardImpactAccumulated({
           <p className="text-[10px] font-medium text-muted-foreground/60 tracking-[0.18em] uppercase">
             Equivalência de Investimento em Mídia Paga
           </p>
-          <p className="text-4xl sm:text-5xl font-black text-foreground tracking-tight leading-none">
+          <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-none">
             R$ {fmt(financialImpact)}
           </p>
           <p className="text-[13px] text-muted-foreground/70 font-medium max-w-sm leading-snug">
