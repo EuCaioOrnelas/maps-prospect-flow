@@ -130,12 +130,24 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
     setExpandedSteps(new Set());
 
     try {
-      const { data, error } = await supabase.functions.invoke('debug-dispatch-test', {
-        body: { numberId: selectedNumberId, phone, message, deepDebug, dryRun },
+      const session = (await supabase.auth.getSession()).data.session;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/debug-dispatch-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({ numberId: selectedNumberId, phone, message, deepDebug, dryRun }),
       });
 
-      if (error) {
-        toast.error(`Erro ao executar debug: ${error.message}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(`Erro ao executar debug: ${data?.error || response.statusText}`);
         return;
       }
 
