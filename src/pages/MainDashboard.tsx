@@ -14,7 +14,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardMediaEquivalence } from "@/components/dashboard/DashboardMediaEquivalence";
 import { DashboardOperationalHealth } from "@/components/dashboard/DashboardOperationalHealth";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
-
+import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -138,6 +138,15 @@ export default function MainDashboard() {
                 numbers={data.numbers}
                 warmingSessions={data.warmingSessions}
                 incidents={data.incidents}
+              />
+
+              {/* Impacto Acumulado (Anti-Churn) */}
+              <DashboardImpactAccumulated
+                allTimeLeads={data.allTimeLeads}
+                cumulativeByMonth={data.cumulativeByMonth}
+                monthlyLeads={data.monthlyLeads}
+                activeDays={data.activeDays}
+                periodDays={periodDays}
               />
 
               {/* Insights as footer */}

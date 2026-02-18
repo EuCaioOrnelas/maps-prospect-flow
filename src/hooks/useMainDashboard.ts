@@ -23,6 +23,12 @@ export interface DashboardMetrics {
   responsesByDay: { date: string; count: number }[];
   cplBenchmark: number;
   loading: boolean;
+  // Cumulative (all-time) data
+  allTimeLeads: number;
+  cumulativeByMonth: { month: string; total: number }[];
+  accountCreatedAt: string | null;
+  monthlyLeads: number;
+  activeDays: number;
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
@@ -43,6 +49,11 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
     incidents: [] as any[],
     responsesByDay: [] as { date: string; count: number }[],
     cplBenchmark: 50,
+    allTimeLeads: 0,
+    cumulativeByMonth: [] as { month: string; total: number }[],
+    accountCreatedAt: null as string | null,
+    monthlyLeads: 0,
+    activeDays: 0,
   });
 
   useEffect(() => {
@@ -65,6 +76,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         campaignsCurrent, campaignsPrev,
         responsesCurrent, responsesPrev,
         numbersRes, warmingRes, incidentsRes, cplRes,
+        allTimeSearchRes, profileRes,
       ] = await Promise.all([
         supabase.from('search_history').select('results_count')
           .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
@@ -101,6 +113,11 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .order('created_at', { ascending: false }).limit(20),
         (supabase.from('system_settings' as any).select('value')
           .eq('key', 'cpl_benchmark').maybeSingle() as unknown as Promise<any>),
+        // All-time search data for cumulative metrics
+        supabase.from('search_history').select('results_count, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true }),
+        supabase.from('profiles').select('created_at').eq('id', user.id).maybeSingle(),
       ]);
 
       const campaigns = campaignsCurrent.data || [];
@@ -131,6 +148,35 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
 
       const cplValue = cplRes.data?.value as any;
 
+      // Cumulative data
+      const allTimeData = allTimeSearchRes.data || [];
+      const allTimeLeads = allTimeData.reduce((s: number, r: any) => s + (r.results_count || 0), 0);
+
+      // Build cumulative by month
+      const monthMap: Record<string, number> = {};
+      allTimeData.forEach((r: any) => {
+        const d = new Date(r.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthMap[key] = (monthMap[key] || 0) + (r.results_count || 0);
+      });
+      const sortedMonths = Object.keys(monthMap).sort();
+      let cumTotal = 0;
+      const cumulativeByMonth = sortedMonths.map(m => {
+        cumTotal += monthMap[m];
+        return { month: m.slice(2).replace('-', '/'), total: cumTotal };
+      });
+
+      // Active days (unique days with searches in current period)
+      const activeDaysSet = new Set<string>();
+      (searchCurrent.data || []).forEach((r: any) => {
+        // searchCurrent doesn't have created_at selected; use allTimeData filtered
+      });
+      allTimeData
+        .filter((r: any) => new Date(r.created_at) >= periodStart)
+        .forEach((r: any) => {
+          activeDaysSet.add(new Date(r.created_at).toISOString().slice(0, 10));
+        });
+
       setRawData({
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
@@ -142,6 +188,11 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         incidents: incidentsRes.data || [],
         responsesByDay,
         cplBenchmark: cplValue?.value || 50,
+        allTimeLeads,
+        cumulativeByMonth,
+        accountCreatedAt: profileRes.data?.created_at || null,
+        monthlyLeads: leadsProspected,
+        activeDays: activeDaysSet.size,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
