@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CalendarClock, Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarClock, Briefcase, TrendingUp, TrendingDown, GitCompareArrows, Target } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { Progress } from "@/components/ui/progress";
+import { DashboardComparisonDialog } from "./DashboardComparisonDialog";
 
 interface DashboardImpactAccumulatedProps {
   allTimeLeads: number;
@@ -8,6 +12,14 @@ interface DashboardImpactAccumulatedProps {
   monthlyLeads: number;
   activeDays: number;
   periodDays: number;
+  // Period-based data
+  leadsProspected: number;
+  prevLeadsProspected: number;
+  messagesSent: number;
+  prevMessagesSent: number;
+  // Plan info
+  searchesUsed: number;
+  searchesLimit: number;
 }
 
 const CPL_BENCHMARK = 46.17;
@@ -27,72 +39,170 @@ export function DashboardImpactAccumulated({
   monthlyLeads,
   activeDays,
   periodDays,
+  leadsProspected,
+  prevLeadsProspected,
+  messagesSent,
+  prevMessagesSent,
+  searchesUsed,
+  searchesLimit,
 }: DashboardImpactAccumulatedProps) {
-  const financialImpact = allTimeLeads * CPL_BENCHMARK;
-  const daysSaved = Math.round(allTimeLeads / SDR_PER_DAY);
-  const monthsActive = cumulativeByMonth.length || 1;
-  const avgMonthlyLeads = allTimeLeads / monthsActive;
-  const projectedAnnualSavings = avgMonthlyLeads * 12 * CPL_BENCHMARK;
+  const [showComparison, setShowComparison] = useState(false);
+
+  // Use period-based data for impact calculation
+  const financialImpact = leadsProspected * CPL_BENCHMARK;
+  const daysSaved = Math.round(leadsProspected / SDR_PER_DAY);
+
+  // Growth indicators
+  const leadsChange = prevLeadsProspected > 0
+    ? ((leadsProspected - prevLeadsProspected) / prevLeadsProspected) * 100
+    : leadsProspected > 0 ? 100 : 0;
+  const prevFinancialImpact = prevLeadsProspected * CPL_BENCHMARK;
+  const financialChange = prevFinancialImpact > 0
+    ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100
+    : financialImpact > 0 ? 100 : 0;
+
+  // Projection for the month (based on daily average in current period)
+  const dailyAvgLeads = periodDays > 0 ? leadsProspected / periodDays : 0;
+  const daysInMonth = 30;
+  const projectedMonthlyLeads = Math.round(dailyAvgLeads * daysInMonth);
+  const projectedMonthlySavings = projectedMonthlyLeads * CPL_BENCHMARK;
+
+  // Goal progress (based on plan searches limit as monthly goal)
+  const goalTarget = searchesLimit > 0 ? searchesLimit : 100;
+  const goalProgress = goalTarget > 0 ? Math.min((searchesUsed / goalTarget) * 100, 100) : 0;
+
+  // Potencial Não Explorado
+  const capacityUsed = searchesLimit > 0 ? (searchesUsed / searchesLimit) * 100 : 0;
+  const remainingCapacity = Math.max(searchesLimit - searchesUsed, 0);
 
   return (
     <div className="space-y-4">
-      {/* Hero Impact Card - compact */}
+      {/* Header with comparison button */}
+      <div className="flex items-center justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5 h-7"
+          onClick={() => setShowComparison(true)}
+        >
+          <GitCompareArrows size={13} />
+          Comparar períodos
+        </Button>
+      </div>
+
+      {/* Hero Impact Card */}
       <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-background to-background overflow-hidden">
         <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-1.5">
           <p className="text-[10px] font-semibold text-emerald-400/80 tracking-[0.2em] uppercase">
-            Impacto gerado com a Wiize
+            Impacto gerado no período
           </p>
-          <p className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight leading-none">
-            R$ {fmt(financialImpact)}
-          </p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight leading-none">
+              R$ {fmt(financialImpact)}
+            </p>
+            {financialChange !== 0 && (
+              <div className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                financialChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
+              }`}>
+                {financialChange > 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                {Math.abs(financialChange).toFixed(1)}%
+              </div>
+            )}
+          </div>
           <p className="text-[11px] text-muted-foreground/70 max-w-sm leading-relaxed">
-            Valor estimado que você evitou pagar gerando{' '}
-            <span className="font-medium text-foreground/80">{fmtInt(allTimeLeads)} leads</span>{' '}
-            sem depender de tráfego pago ou SDR interno.
+            Valor estimado economizado gerando{' '}
+            <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} leads</span>{' '}
+            nos últimos {periodDays} dias.
+          </p>
+          {/* Micro projection */}
+          <p className="text-[10px] text-muted-foreground/50 italic pt-1">
+            Mantendo esse ritmo, você deve gerar ~{fmtInt(projectedMonthlyLeads)} leads e economizar R$ {fmt(projectedMonthlySavings)} este mês.
           </p>
         </CardContent>
       </Card>
 
-      {/* Secondary: Operational + Projection - horizontal layout */}
+      {/* Secondary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Capacidade Operacional */}
         <Card className="border-border/40 bg-card/80">
           <CardContent className="py-4 px-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <Briefcase size={20} className="text-primary" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                 Capacidade operacional gerada
               </p>
-              <p className="text-2xl font-bold text-foreground leading-tight">
-                {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
-              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground leading-tight">
+                  {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
+                </p>
+                {leadsChange !== 0 && (
+                  <div className={`flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                    leadsChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
+                  }`}>
+                    {leadsChange > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                    {Math.abs(leadsChange).toFixed(1)}%
+                  </div>
+                )}
+              </div>
               <p className="text-[11px] text-muted-foreground/50">
-                de trabalho de um SDR
+                de trabalho de um SDR no período
               </p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Meta mensal com progress bar */}
         <Card className="border-border/40 bg-card/80">
           <CardContent className="py-4 px-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-              <CalendarClock size={20} className="text-amber-400" />
+              <Target size={20} className="text-amber-400" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                Mantendo esse ritmo
+                Meta mensal de prospecção
               </p>
-              <p className="text-2xl font-bold text-amber-400 leading-tight">
-                R$ {fmt(projectedAnnualSavings)}
+              <p className="text-2xl font-bold text-foreground leading-tight">
+                {fmtInt(searchesUsed)} / {fmtInt(goalTarget)}
               </p>
-              <p className="text-[11px] text-muted-foreground/50">
-                em custo evitado por ano
-              </p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Progress value={goalProgress} className="h-2 flex-1" />
+                <span className="text-[10px] font-semibold text-muted-foreground/70 shrink-0">
+                  {goalProgress.toFixed(0)}%
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Potencial Não Explorado */}
+      <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.05] via-background to-background">
+        <CardContent className="py-5 px-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <CalendarClock size={20} className="text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                ⚡ Potencial Disponível
+              </p>
+              <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
+                Você usou <span className="font-semibold text-foreground">{capacityUsed.toFixed(0)}%</span> da sua capacidade de prospecção este mês.
+              </p>
+              {remainingCapacity > 0 && (
+                <p className="text-[12px] text-amber-400/90 mt-1 font-medium">
+                  Você ainda pode gerar +{fmtInt(remainingCapacity)} novas prospecções com seu plano atual.
+                </p>
+              )}
+              <div className="mt-2">
+                <Progress value={capacityUsed} className="h-2" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cumulative Growth Chart */}
       {cumulativeByMonth.length > 1 && (
@@ -138,6 +248,12 @@ export function DashboardImpactAccumulated({
           </CardContent>
         </Card>
       )}
+
+      {/* Comparison Dialog */}
+      <DashboardComparisonDialog
+        open={showComparison}
+        onOpenChange={setShowComparison}
+      />
     </div>
   );
 }
