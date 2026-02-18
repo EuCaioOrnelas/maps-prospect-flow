@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -175,24 +175,29 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-    // Use anon key + auth header for JWT validation (compatible with ES256 signing keys)
-    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
+    // Use exact same auth pattern as check-subscription (proven to work)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
     });
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await authClient.auth.getUser(token);
-    if (userError || !user) {
-      console.error('[debug-dispatch-test] JWT validation failed:', userError?.message);
-      return new Response(JSON.stringify({ error: 'Invalid JWT', detail: userError?.message }), { status: 401, headers: corsHeaders });
+
+    // Try getClaims first (faster), fallback to getUser
+    let userId: string;
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.log('[debug-dispatch-test] getClaims failed, falling back to getUser:', claimsError?.message);
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData.user) {
+        console.error('[debug-dispatch-test] getUser also failed:', userError?.message);
+        return new Response(JSON.stringify({ error: 'Invalid JWT', detail: userError?.message }), { status: 401, headers: corsHeaders });
+      }
+      userId = userData.user.id;
+    } else {
+      userId = claimsData.claims.sub as string;
     }
-
-    const userId = user.id;
-
-    // Service role client for DB operations
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Check admin
     const { data: isAdmin } = await supabase.rpc('is_current_user_admin');
