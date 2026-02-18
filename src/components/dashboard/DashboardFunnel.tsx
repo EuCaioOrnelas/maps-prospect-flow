@@ -7,8 +7,10 @@ interface DashboardFunnelProps {
   totalResponses: number;
   prevLeadsProspected: number;
   prevTotalResponses: number;
+  messagesSent: number;
+  prevMessagesSent: number;
   periodDays: number;
-  conversionRate?: number; // configurable estimated opportunity rate, default 3%
+  conversionRate?: number;
 }
 
 const DEFAULT_OPPORTUNITY_RATE = 0.03; // 3% market average
@@ -54,12 +56,14 @@ function FunnelStep({
 }
 
 export function DashboardFunnel(props: DashboardFunnelProps) {
-  const { leadsProspected, totalResponses, periodDays } = props;
+  const { leadsProspected, periodDays } = props;
+  const messagesSent = props.messagesSent ?? 0;
+  const prevMessagesSent = props.prevMessagesSent ?? 0;
   const opportunityRate = props.conversionRate ?? DEFAULT_OPPORTUNITY_RATE;
-  const estimatedOpportunities = Math.round(totalResponses * opportunityRate * 100) / 100;
-  const prevEstimatedOpportunities = Math.round(props.prevTotalResponses * opportunityRate * 100) / 100;
+  const estimatedOpportunities = Math.round(messagesSent * opportunityRate);
+  const prevEstimatedOpportunities = Math.round(prevMessagesSent * opportunityRate);
 
-  const maxVal = Math.max(leadsProspected, totalResponses, 1);
+  const maxVal = Math.max(leadsProspected, messagesSent, 1);
 
   const steps = [
     { 
@@ -70,14 +74,14 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
     },
     { 
       label: "Conversas Iniciadas", 
-      value: totalResponses, 
-      prevValue: props.prevTotalResponses, 
-      displayPct: leadsProspected > 0 ? (totalResponses / leadsProspected) * 100 : 0 
+      value: messagesSent, 
+      prevValue: prevMessagesSent, 
+      displayPct: leadsProspected > 0 ? (messagesSent / leadsProspected) * 100 : 0 
     },
     { 
       label: "Oportunidades Estimadas", 
-      value: Math.round(estimatedOpportunities), 
-      prevValue: Math.round(prevEstimatedOpportunities), 
+      value: estimatedOpportunities, 
+      prevValue: prevEstimatedOpportunities, 
       displayPct: leadsProspected > 0 ? (estimatedOpportunities / leadsProspected) * 100 : 0 
     },
   ];
