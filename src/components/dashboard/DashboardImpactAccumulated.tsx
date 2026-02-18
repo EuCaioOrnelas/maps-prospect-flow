@@ -8,13 +8,11 @@ import { DashboardComparisonDialog } from "./DashboardComparisonDialog";
 interface DashboardImpactAccumulatedProps {
   allTimeLeads: number;
   cumulativeByMonth: { month: string; total: number }[];
-  monthlyLeads: number;
-  activeDays: number;
   periodDays: number;
   leadsProspected: number;
   prevLeadsProspected: number;
-  messagesSent: number;
-  prevMessagesSent: number;
+  totalResponses: number;
+  prevTotalResponses: number;
 }
 
 const CPL_BENCHMARK = 46.17;
@@ -31,26 +29,26 @@ function fmtInt(n: number) {
 export function DashboardImpactAccumulated({
   allTimeLeads,
   cumulativeByMonth,
-  monthlyLeads,
-  activeDays,
   periodDays,
   leadsProspected,
   prevLeadsProspected,
-  messagesSent,
-  prevMessagesSent,
+  totalResponses,
+  prevTotalResponses,
 }: DashboardImpactAccumulatedProps) {
   const [showComparison, setShowComparison] = useState(false);
 
   const financialImpact = leadsProspected * CPL_BENCHMARK;
   const daysSaved = Math.round(leadsProspected / SDR_PER_DAY);
 
-  const leadsChange = prevLeadsProspected > 0
+  // Real comparison — avoid showing +100% when prev is 0
+  const hasRealComparison = prevLeadsProspected > 0;
+  const financialChange = hasRealComparison
     ? ((leadsProspected - prevLeadsProspected) / prevLeadsProspected) * 100
-    : leadsProspected > 0 ? 100 : 0;
-  const prevFinancialImpact = prevLeadsProspected * CPL_BENCHMARK;
-  const financialChange = prevFinancialImpact > 0
-    ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100
-    : financialImpact > 0 ? 100 : 0;
+    : 0;
+  const leadsChange = hasRealComparison
+    ? ((leadsProspected - prevLeadsProspected) / prevLeadsProspected) * 100
+    : 0;
+  const leadsDiff = leadsProspected - prevLeadsProspected;
 
   // Projection
   const monthsActive = cumulativeByMonth.length || 1;
@@ -59,7 +57,6 @@ export function DashboardImpactAccumulated({
 
   const dailyAvgLeads = periodDays > 0 ? leadsProspected / periodDays : 0;
   const projectedMonthlyLeads = Math.round(dailyAvgLeads * 30);
-  const projectedMonthlySavings = projectedMonthlyLeads * CPL_BENCHMARK;
 
   return (
     <div className="space-y-4">
@@ -80,29 +77,35 @@ export function DashboardImpactAccumulated({
       <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-background to-background overflow-hidden">
         <CardContent className="py-6 px-6 flex flex-col items-center text-center space-y-1.5">
           <p className="text-[10px] font-semibold text-emerald-400/80 tracking-[0.2em] uppercase">
-            Impacto gerado no período
+            Impacto Financeiro Gerado no Período
           </p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight leading-none">
               R$ {fmt(financialImpact)}
             </p>
-            {financialChange !== 0 && (
+            {hasRealComparison && financialChange !== 0 && (
               <div className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-full ${
                 financialChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
               }`}>
                 {financialChange > 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                {Math.abs(financialChange).toFixed(1)}%
+                {Math.abs(financialChange).toFixed(1)}% vs período anterior
               </div>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground/70 max-w-sm leading-relaxed">
-            Valor estimado economizado gerando{' '}
+          <p className="text-[11px] text-muted-foreground/70 max-w-md leading-relaxed">
+            Resultado estimado gerado com{' '}
             <span className="font-medium text-foreground/80">{fmtInt(leadsProspected)} leads</span>{' '}
             nos últimos {periodDays} dias.
           </p>
-          <p className="text-[10px] text-muted-foreground/50 italic pt-1">
-            Mantendo esse ritmo, você deve gerar ~{fmtInt(projectedMonthlyLeads)} leads e economizar R$ {fmt(projectedMonthlySavings)} este mês.
+          <p className="text-[10px] text-muted-foreground/50 italic pt-0.5">
+            Mantendo esse ritmo, você deve gerar aproximadamente {fmtInt(projectedMonthlyLeads)} novos leads no próximo mês.
           </p>
+          {/* Anti-churn subtle line */}
+          {leadsProspected > 0 && (
+            <p className="text-[10px] text-muted-foreground/40 pt-2 max-w-sm">
+              Se interromper agora, você deixará de gerar aproximadamente {fmtInt(projectedMonthlyLeads)} novos leads por mês.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -121,12 +124,12 @@ export function DashboardImpactAccumulated({
                 <p className="text-2xl font-bold text-foreground leading-tight">
                   {daysSaved} {daysSaved === 1 ? 'dia' : 'dias'}
                 </p>
-                {leadsChange !== 0 && (
+                {hasRealComparison && leadsChange !== 0 && (
                   <div className={`flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                     leadsChange > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'
                   }`}>
                     {leadsChange > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                    {Math.abs(leadsChange).toFixed(1)}%
+                    {leadsDiff > 0 ? '+' : ''}{fmtInt(leadsDiff)} leads vs anterior
                   </div>
                 )}
               </div>

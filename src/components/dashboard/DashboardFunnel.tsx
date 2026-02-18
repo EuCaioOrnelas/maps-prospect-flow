@@ -4,22 +4,22 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface DashboardFunnelProps {
   leadsProspected: number;
-  messagesSent: number;
-  messagesDelivered: number;
   totalResponses: number;
   prevLeadsProspected: number;
-  prevMessagesSent: number;
-  prevMessagesDelivered: number;
   prevTotalResponses: number;
   periodDays: number;
+  conversionRate?: number; // configurable estimated opportunity rate, default 3%
 }
+
+const DEFAULT_OPPORTUNITY_RATE = 0.03; // 3% market average
 
 function FunnelStep({ 
   label, value, barWidth, displayPct, prevValue, periodDays
 }: { 
   label: string; value: number; barWidth: number; displayPct: number; prevValue: number; periodDays: number;
 }) {
-  const change = prevValue > 0 ? ((value - prevValue) / prevValue * 100) : 0;
+  const hasRealPrev = prevValue > 0;
+  const change = hasRealPrev ? ((value - prevValue) / prevValue * 100) : 0;
   const isPositive = change > 0;
   const clampedWidth = Math.max(barWidth, 12);
   
@@ -29,7 +29,7 @@ function FunnelStep({
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground">{value.toLocaleString('pt-BR')}</span>
-          {change !== 0 && (
+          {hasRealPrev && change !== 0 && (
             <span className={cn("text-[10px] flex items-center gap-0.5", isPositive ? "text-emerald-400" : "text-destructive")}
               title={`vs ${periodDays} dias anteriores`}
             >
@@ -54,13 +54,32 @@ function FunnelStep({
 }
 
 export function DashboardFunnel(props: DashboardFunnelProps) {
-  const { leadsProspected, messagesSent, messagesDelivered, periodDays } = props;
-  const maxVal = Math.max(leadsProspected, messagesSent, messagesDelivered, 1);
+  const { leadsProspected, totalResponses, periodDays } = props;
+  const opportunityRate = props.conversionRate ?? DEFAULT_OPPORTUNITY_RATE;
+  const estimatedOpportunities = Math.round(totalResponses * opportunityRate * 100) / 100;
+  const prevEstimatedOpportunities = Math.round(props.prevTotalResponses * opportunityRate * 100) / 100;
+
+  const maxVal = Math.max(leadsProspected, totalResponses, 1);
 
   const steps = [
-    { label: "Leads Prospectados", value: leadsProspected, prevValue: props.prevLeadsProspected, displayPct: 100 },
-    { label: "Mensagens Enviadas", value: messagesSent, prevValue: props.prevMessagesSent, displayPct: leadsProspected > 0 ? (messagesSent / leadsProspected) * 100 : 0 },
-    { label: "Entregues", value: messagesDelivered, prevValue: props.prevMessagesDelivered, displayPct: leadsProspected > 0 ? (messagesDelivered / leadsProspected) * 100 : 0 },
+    { 
+      label: "Leads Prospectados", 
+      value: leadsProspected, 
+      prevValue: props.prevLeadsProspected, 
+      displayPct: 100 
+    },
+    { 
+      label: "Conversas Iniciadas", 
+      value: totalResponses, 
+      prevValue: props.prevTotalResponses, 
+      displayPct: leadsProspected > 0 ? (totalResponses / leadsProspected) * 100 : 0 
+    },
+    { 
+      label: "Oportunidades Estimadas", 
+      value: Math.round(estimatedOpportunities), 
+      prevValue: Math.round(prevEstimatedOpportunities), 
+      displayPct: leadsProspected > 0 ? (estimatedOpportunities / leadsProspected) * 100 : 0 
+    },
   ];
 
   return (
@@ -80,6 +99,9 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
             periodDays={periodDays}
           />
         ))}
+        <p className="text-[9px] text-muted-foreground/40 text-right italic pt-1">
+          *Oportunidades estimadas com base em média de mercado de {(opportunityRate * 100).toFixed(0)}%
+        </p>
       </CardContent>
     </Card>
   );
