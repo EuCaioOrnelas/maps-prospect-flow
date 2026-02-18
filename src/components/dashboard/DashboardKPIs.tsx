@@ -75,6 +75,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
   const prevMessagesSent = props.prevMessagesSent ?? 0;
 
   const leadsChange = calcChange(leadsProspected, prevLeadsProspected);
+  const leadsDiff = leadsProspected - prevLeadsProspected;
   const conversasChange = calcChange(messagesSent, prevMessagesSent);
   const conversasDiff = messagesSent - prevMessagesSent;
 
@@ -90,6 +91,12 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         icon={<Users size={16} />}
         change={leadsChange}
         changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
+        subtitle={
+          prevLeadsProspected > 0 && leadsDiff !== 0
+            ? `${leadsDiff > 0 ? '+' : ''}${leadsDiff.toLocaleString('pt-BR')} leads ${leadsDiff > 0 ? 'a mais' : 'a menos'} que o período anterior`
+            : undefined
+        }
+        subtitleSize="text-xs"
       />
       <KPICard
         title="Conversas Iniciadas"
