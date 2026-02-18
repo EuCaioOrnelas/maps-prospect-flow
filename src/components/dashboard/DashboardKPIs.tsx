@@ -92,9 +92,9 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         change={leadsChange}
         changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
         subtitle={
-          prevLeadsProspected > 0 && leadsDiff !== 0
+          leadsDiff !== 0
             ? `${leadsDiff > 0 ? '+' : ''}${leadsDiff.toLocaleString('pt-BR')} leads ${leadsDiff > 0 ? 'a mais' : 'a menos'} que o período anterior`
-            : undefined
+            : 'Mesmo volume do período anterior'
         }
         subtitleSize="text-xs"
       />
