@@ -131,23 +131,40 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
 
     try {
       const session = (await supabase.auth.getSession()).data.session;
+      if (!session?.access_token) {
+        toast.error('Sessão não encontrada. Faça login novamente.');
+        return;
+      }
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      console.log('[DebugDispatch] Chamando via fetch direto...', { supabaseUrl: supabaseUrl?.slice(0, 30) });
 
       const response = await fetch(`${supabaseUrl}/functions/v1/debug-dispatch-test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'apikey': anonKey,
         },
         body: JSON.stringify({ numberId: selectedNumberId, phone, message, deepDebug, dryRun }),
       });
 
-      const data = await response.json();
+      console.log('[DebugDispatch] Response status:', response.status);
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        const text = await response.text();
+        console.error('[DebugDispatch] Falha ao parsear resposta:', text?.slice(0, 500));
+        toast.error(`Erro ao parsear resposta (status ${response.status})`);
+        return;
+      }
 
       if (!response.ok) {
-        toast.error(`Erro ao executar debug: ${data?.error || response.statusText}`);
+        console.error('[DebugDispatch] Erro:', data);
+        toast.error(`Erro ao executar debug: ${data?.error || data?.message || response.statusText}`);
         return;
       }
 
