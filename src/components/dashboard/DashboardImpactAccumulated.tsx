@@ -89,8 +89,8 @@ export function DashboardImpactAccumulated({
           <p className="text-4xl sm:text-5xl font-black text-foreground tracking-tight leading-none">
             R$ {fmt(financialImpact)}
           </p>
-          <p className="text-xs text-muted-foreground/60">
-            {fmtInt(leadsProspected)} contatos B2B gerados no período
+          <p className="text-[13px] text-muted-foreground/70 font-medium max-w-sm leading-snug">
+            Para gerar {fmtInt(leadsProspected)} contatos B2B via tráfego pago no período selecionado.
           </p>
           <TooltipProvider>
             <Tooltip>
