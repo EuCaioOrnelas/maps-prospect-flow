@@ -71,7 +71,7 @@ export function DashboardImpactAccumulated({
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5 h-8"
+            className="text-xs gap-1.5 h-8 bg-card border-border/50 hover:bg-muted"
             onClick={() => setShowComparison(true)}
           >
             <GitCompareArrows size={13} />
