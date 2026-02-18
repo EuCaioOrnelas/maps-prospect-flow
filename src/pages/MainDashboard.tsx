@@ -58,7 +58,7 @@ export default function MainDashboard() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
-        <SEO title="Dashboard | Wiize" description="Visão geral da sua operação de prospecção e vendas" />
+        <SEO title="Visão Geral | Wiize" description="Visão geral da sua operação de prospecção e vendas" />
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
