@@ -23,7 +23,7 @@ function FunnelStep({
   const hasRealPrev = prevValue > 0;
   const change = hasRealPrev ? ((value - prevValue) / prevValue * 100) : 0;
   const isPositive = change > 0;
-  const clampedWidth = Math.max(barWidth, 12);
+  const clampedWidth = Math.max(barWidth, 8);
   
   return (
     <div className="space-y-1.5">
@@ -45,9 +45,9 @@ function FunnelStep({
         <div
           className={cn(
             "h-7 rounded-md transition-all duration-700 flex items-center justify-center",
-            displayPct === 100 ? "bg-primary/25" : "bg-primary/12"
+            displayPct === 100 ? "bg-primary/25" : "bg-primary/20"
           )}
-          style={{ width: `${clampedWidth}%`, opacity: displayPct === 100 ? 1 : 0.65 }}
+          style={{ width: `${Math.max(clampedWidth, value > 0 ? 8 : 4)}%`, opacity: displayPct === 100 ? 1 : 0.65 }}
         >
           <span className="text-[10px] font-semibold text-foreground/70">{displayPct.toFixed(0)}%</span>
         </div>
