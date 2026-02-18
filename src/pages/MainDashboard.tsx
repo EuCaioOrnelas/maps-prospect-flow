@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
 import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
-import { DashboardOperationalHealth } from "@/components/dashboard/DashboardOperationalHealth";
+// DashboardOperationalHealth removed
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 
@@ -87,6 +87,12 @@ export default function MainDashboard() {
                 monthlyLeads={data.monthlyLeads}
                 activeDays={data.activeDays}
                 periodDays={periodDays}
+                leadsProspected={data.leadsProspected}
+                prevLeadsProspected={data.prevLeadsProspected}
+                messagesSent={data.messagesSent}
+                prevMessagesSent={data.prevMessagesSent}
+                searchesUsed={profile?.searches_used ?? 0}
+                searchesLimit={profile?.searches_limit ?? 10}
               />
 
               {/* 2️⃣ KPIs Operacionais */}
@@ -101,25 +107,18 @@ export default function MainDashboard() {
                 prevResponseRate={data.prevResponseRate}
               />
 
-              {/* 3️⃣ Funil + Saúde Operacional */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DashboardFunnel
-                  leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent + data.messagesFailed}
-                  messagesDelivered={data.messagesSent}
-                  totalResponses={data.totalResponses}
-                  prevLeadsProspected={data.prevLeadsProspected}
-                  prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
-                  prevMessagesDelivered={data.prevMessagesSent}
-                  prevTotalResponses={data.prevTotalResponses}
-                  periodDays={periodDays}
-                />
-                <DashboardOperationalHealth
-                  numbers={data.numbers}
-                  warmingSessions={data.warmingSessions}
-                  incidents={data.incidents}
-                />
-              </div>
+              {/* 3️⃣ Funil de Performance */}
+              <DashboardFunnel
+                leadsProspected={data.leadsProspected}
+                messagesSent={data.messagesSent + data.messagesFailed}
+                messagesDelivered={data.messagesSent}
+                totalResponses={data.totalResponses}
+                prevLeadsProspected={data.prevLeadsProspected}
+                prevMessagesSent={data.prevMessagesSent + data.prevMessagesFailed}
+                prevMessagesDelivered={data.prevMessagesSent}
+                prevTotalResponses={data.prevTotalResponses}
+                periodDays={periodDays}
+              />
 
               {/* 4️⃣ Insights */}
               <DashboardInsights
