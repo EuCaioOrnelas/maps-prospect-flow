@@ -370,8 +370,9 @@ serve(async (req) => {
 
     // Minimum and maximum targets for valid leads
     const MIN_VALID_LEADS = 45;
-    const MAX_LEADS_PER_LOCATION = 60; // Max 3 pages x 20 results = 3 SERP API searches per location
+    const MAX_LEADS_PER_LOCATION = 40; // Max 2 pages x 20 results = 2 SERP API searches per location
     const resultsPerPage = 20;
+    const MAX_SERP_CALLS = 2; // Hard limit: max 2 SerpAPI calls per user search
 
     // Define nearby cities for major Brazilian cities (fallback expansion)
     const nearbyCities: Record<string, string[]> = {
@@ -408,6 +409,7 @@ serve(async (req) => {
     let searchedLocations: string[] = [];
     let totalRawResults = 0;
     let totalWithPhone = 0;
+    let totalSerpCalls = 0; // Track total SerpAPI calls
     
     // Helper to collect leads from a location
     async function collectLeadsFromLocation(searchLocation: string, maxToCollect: number): Promise<Lead[]> {
@@ -417,10 +419,17 @@ serve(async (req) => {
       const localSeenPlaceIds = new Set<string>();
       
       for (let page = 0; page < pagesToFetch && collectedResults.length < maxToCollect; page++) {
+        // Enforce global hard limit of SERP API calls
+        if (totalSerpCalls >= MAX_SERP_CALLS) {
+          console.log(`Global SERP call limit reached (${MAX_SERP_CALLS}). Stopping.`);
+          break;
+        }
+        
         const startIndex = page * resultsPerPage;
-        console.log(`Fetching ${searchLocation} page ${page + 1} (start=${startIndex})...`);
+        console.log(`Fetching ${searchLocation} page ${page + 1} (start=${startIndex}), totalSerpCalls=${totalSerpCalls + 1}/${MAX_SERP_CALLS}...`);
         
         const result = await fetchWithFallback(searchQuery, startIndex);
+        totalSerpCalls++; // Count every API call
         
         if (!result) {
           console.log('API keys exhausted for this location');
@@ -480,7 +489,7 @@ serve(async (req) => {
     }
 
     // MAIN SEARCH LOOP: Search locations until we have enough valid leads
-    for (let locIndex = 0; locIndex < locationsToSearch.length && allValidLeads.length < MIN_VALID_LEADS; locIndex++) {
+    for (let locIndex = 0; locIndex < locationsToSearch.length && allValidLeads.length < MIN_VALID_LEADS && totalSerpCalls < MAX_SERP_CALLS; locIndex++) {
       const currentLocation = locationsToSearch[locIndex];
       searchedLocations.push(currentLocation);
       
