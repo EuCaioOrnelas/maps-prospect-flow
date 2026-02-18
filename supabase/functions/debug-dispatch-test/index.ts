@@ -26,13 +26,157 @@ interface DebugStep {
   headers_received?: Record<string, string>;
 }
 
+// ══════════════════════════════════════════════════════════════
+// FUNÇÕES IDÊNTICAS AO campaign-processor/index.ts
+// Qualquer alteração aqui DEVE ser replicada no campaign-processor
+// ══════════════════════════════════════════════════════════════
+
+// Normalize phone number - supports international numbers
+// FONTE: campaign-processor/index.ts → normalizePhone()
+function normalizePhone(phone: string): string {
+  let normalized = phone.replace(/\D/g, '');
+  
+  // If number has 10-11 digits without country code, assume Brazil (55)
+  // International numbers should already have country code (12+ digits)
+  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
+    normalized = '55' + normalized;
+  }
+  
+  return normalized;
+}
+
+// Check if instance is connected with retry logic
+// FONTE: campaign-processor/index.ts → checkInstanceConnection()
+async function checkInstanceConnection(
+  evolutionUrl: string, 
+  apiKey: string, 
+  instanceName: string,
+  maxRetries: number = 3
+): Promise<{ connected: boolean; state?: string; attempts: number; errors: string[]; responseTimes: number[] }> {
+  const errors: string[] = [];
+  const responseTimes: number[] = [];
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const fetchStart = performance.now();
+      const response = await fetch(`${evolutionUrl}/instance/connectionState/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': apiKey },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      responseTimes.push(Math.round(performance.now() - fetchStart));
+
+      if (!response.ok) {
+        const errText = await response.text();
+        errors.push(`Tentativa ${attempt}: HTTP ${response.status} - ${errText.slice(0, 100)}`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        return { connected: false, attempts: attempt, errors, responseTimes };
+      }
+
+      const data = await response.json();
+      const state = data.state || data.instance?.state;
+      const isConnected = state === 'open';
+      
+      if (isConnected) {
+        return { connected: true, state, attempts: attempt, errors, responseTimes };
+      }
+      
+      // States that might be temporary - retry
+      if (state === 'connecting' || state === 'close') {
+        errors.push(`Tentativa ${attempt}: Estado "${state}" (temporário)`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+      }
+      
+      return { connected: false, state, attempts: attempt, errors, responseTimes };
+      
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`Tentativa ${attempt}: ${msg}`);
+      responseTimes.push(-1);
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+    }
+  }
+  
+  return { connected: false, attempts: maxRetries, errors, responseTimes };
+}
+
+// Send a single message (or simulate it)
+// FONTE: campaign-processor/index.ts → sendMessage()
+async function sendMessage(
+  evolutionUrl: string,
+  apiKey: string,
+  instanceName: string,
+  phone: string,
+  message: string,
+  simulationMode: boolean = false
+): Promise<{ success: boolean; messageId?: string; error?: string; simulated?: boolean; responseTime?: number; httpStatus?: number; rawResponse?: unknown }> {
+  if (simulationMode) {
+    const simulatedMessageId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return { success: true, messageId: simulatedMessageId, simulated: true };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const fetchStart = performance.now();
+    const response = await fetch(`${evolutionUrl}/message/sendText/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+      },
+      body: JSON.stringify({ number: phone, text: message }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const responseTime = Math.round(performance.now() - fetchStart);
+
+    if (response.ok) {
+      const result = await response.json();
+      return { success: true, messageId: result?.key?.id, responseTime, httpStatus: response.status, rawResponse: result };
+    } else {
+      const errorText = await response.text();
+      return { success: false, error: errorText, responseTime, httpStatus: response.status };
+    }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// Check if contact is in ignored list
+// FONTE: campaign-processor/index.ts → isContactIgnored()
+async function isContactIgnored(supabase: any, userId: string, phone: string): Promise<boolean> {
+  const normalizedPhone = normalizePhone(phone);
+  const { data } = await supabase
+    .from('ignored_contacts')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('phone', normalizedPhone)
+    .single();
+  return !!data;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIM DAS FUNÇÕES DO campaign-processor
+// ══════════════════════════════════════════════════════════════
+
 function parseStackTrace(error: unknown): { stack_trace?: string; error_file?: string; error_line?: number; error_column?: number } {
   if (!(error instanceof Error) || !error.stack) return {};
-  
-  const stack = error.stack;
-  const lines = stack.split('\n').filter(l => l.trim().startsWith('at '));
-  
-  // Try to find relevant line (skip node internals)
+  const lines = error.stack.split('\n').filter(l => l.trim().startsWith('at '));
   for (const line of lines) {
     const match = line.match(/at\s+(.+?)\s*\(?((?:file|https?):\/\/[^)]+?):(\d+):(\d+)\)?/) ||
                   line.match(/at\s+((?:file|https?):\/\/[^:]+):(\d+):(\d+)/);
@@ -41,7 +185,6 @@ function parseStackTrace(error: unknown): { stack_trace?: string; error_file?: s
       const file = hasName ? match[2] : match[1];
       const lineNum = parseInt(hasName ? match[3] : match[2]);
       const col = parseInt(hasName ? match[4] : match[3]);
-      // Extract just filename from full path
       const fileName = file.split('/').pop() || file;
       return {
         stack_trace: lines.slice(0, 5).map(l => l.trim()).join('\n'),
@@ -51,7 +194,6 @@ function parseStackTrace(error: unknown): { stack_trace?: string; error_file?: s
       };
     }
   }
-  
   return { stack_trace: lines.slice(0, 5).map(l => l.trim()).join('\n') };
 }
 
@@ -61,61 +203,26 @@ function classifyError(error: unknown, step: string): Pick<DebugStep, 'category'
   const stackInfo = parseStackTrace(error);
   
   if (lower.includes('not configured') || lower.includes('not set') || lower.includes('undefined') || lower.includes('missing')) {
-    return {
-      category: 'config_error',
-      error_message: msg,
-      suggestion: `Verifique se as variáveis de ambiente necessárias estão configuradas (EVOLUTION_API_URL, EVOLUTION_API_KEY).`,
-      ...stackInfo,
-    };
+    return { category: 'config_error', error_message: msg, suggestion: `Verifique se as variáveis de ambiente necessárias estão configuradas (EVOLUTION_API_URL, EVOLUTION_API_KEY).`, ...stackInfo };
   }
-  if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('econnrefused') || lower.includes('dns')) {
-    return {
-      category: 'infra_error',
-      error_message: msg,
-      suggestion: 'Problema de infraestrutura: verifique se o servidor da API está acessível e se a URL está correta.',
-      ...stackInfo,
-    };
+  if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('abort') || lower.includes('econnrefused') || lower.includes('dns')) {
+    return { category: 'infra_error', error_message: msg, suggestion: 'Problema de infraestrutura: verifique se o servidor da API está acessível e se a URL está correta.', ...stackInfo };
   }
   if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('forbidden') || lower.includes('403')) {
-    return {
-      category: 'external_error',
-      error_message: msg,
-      error_code: lower.includes('401') ? 401 : 403,
-      suggestion: 'Falha de autenticação. Verifique se a API Key da Evolution está correta e válida.',
-      ...stackInfo,
-    };
+    return { category: 'external_error', error_message: msg, error_code: lower.includes('401') ? 401 : 403, suggestion: 'Falha de autenticação. Verifique se a API Key da Evolution está correta e válida.', ...stackInfo };
   }
   if (lower.includes('429') || lower.includes('rate limit') || lower.includes('too many')) {
-    return {
-      category: 'external_error',
-      error_message: msg,
-      error_code: 429,
-      suggestion: 'Rate limit atingido. Aguarde alguns minutos antes de tentar novamente.',
-      ...stackInfo,
-    };
+    return { category: 'external_error', error_message: msg, error_code: 429, suggestion: 'Rate limit atingido. Aguarde alguns minutos antes de tentar novamente.', ...stackInfo };
   }
   if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504')) {
-    return {
-      category: 'external_error',
-      error_message: msg,
-      error_code: parseInt(lower.match(/5\d{2}/)?.[0] || '500'),
-      suggestion: 'Erro no servidor da Evolution API. Tente novamente em alguns minutos.',
-      ...stackInfo,
-    };
+    return { category: 'external_error', error_message: msg, error_code: parseInt(lower.match(/5\d{2}/)?.[0] || '500'), suggestion: 'Erro no servidor da Evolution API. Tente novamente em alguns minutos.', ...stackInfo };
   }
   if (lower.includes('not found') || lower.includes('404')) {
-    return {
-      category: 'external_error',
-      error_message: msg,
-      error_code: 404,
-      suggestion: 'Endpoint não encontrado. Verifique se a instância existe e se a URL da API está correta.',
-      ...stackInfo,
-    };
+    return { category: 'external_error', error_message: msg, error_code: 404, suggestion: 'Endpoint não encontrado. Verifique se a instância existe e se a URL da API está correta.', ...stackInfo };
   }
   
   return {
-    category: 'internal_error',
-    error_message: msg,
+    category: 'internal_error', error_message: msg,
     suggestion: stackInfo.error_file 
       ? `Erro interno no arquivo "${stackInfo.error_file}" na linha ${stackInfo.error_line}. Verifique os logs da edge function.`
       : `Erro interno na etapa "${step}". Verifique os logs da edge function para mais detalhes.`,
@@ -143,8 +250,7 @@ serve(async (req) => {
       const duration = performance.now() - stepStart;
       const isWarning = duration > 5000;
       steps.push({
-        id,
-        name,
+        id, name,
         status: isWarning ? 'warning' : 'success',
         duration_ms: Math.round(duration),
         category: isWarning ? 'warning' : 'ok',
@@ -155,13 +261,7 @@ serve(async (req) => {
     } catch (error) {
       const duration = performance.now() - stepStart;
       const classified = classifyError(error, name);
-      steps.push({
-        id,
-        name,
-        status: 'error',
-        duration_ms: Math.round(duration),
-        ...classified,
-      });
+      steps.push({ id, name, status: 'error', duration_ms: Math.round(duration), ...classified });
       return { success: false };
     }
   }
@@ -176,22 +276,18 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Use exact same auth pattern as check-subscription (proven to work)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Try getClaims first (faster), fallback to getUser
     let userId: string;
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-
     if (claimsError || !claimsData?.claims?.sub) {
       console.log('[debug-dispatch-test] getClaims failed, falling back to getUser:', claimsError?.message);
       const { data: userData, error: userError } = await supabase.auth.getUser(token);
       if (userError || !userData.user) {
-        console.error('[debug-dispatch-test] getUser also failed:', userError?.message);
         return new Response(JSON.stringify({ error: 'Invalid JWT', detail: userError?.message }), { status: 401, headers: corsHeaders });
       }
       userId = userData.user.id;
@@ -199,32 +295,20 @@ serve(async (req) => {
       userId = claimsData.claims.sub as string;
     }
 
-    // Check admin
-    const { data: isAdmin } = await supabase.rpc('is_current_user_admin');
-    // Note: use getUser token-based check for admin - for now allow any authenticated user
-    // In production, uncomment below:
-    // if (!isAdmin) {
-    //   return new Response(JSON.stringify({ error: 'Admin only' }), { status: 403, headers: corsHeaders });
-    // }
-
     const body = await req.json();
     const { numberId, phone, message, deepDebug, dryRun } = body;
 
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
-    // ── Step 1: Validate config ──
-    let configOk = true;
-    const step1 = await runStep('config_check', '1. Verificação de Configuração', async () => {
+    // ── Step 1: Validate config (igual ao campaign-processor) ──
+    await runStep('config_check', '1. Verificação de Configuração', async () => {
       const missing: string[] = [];
       if (!EVOLUTION_API_URL) missing.push('EVOLUTION_API_URL');
       if (!EVOLUTION_API_KEY) missing.push('EVOLUTION_API_KEY');
       if (!SUPABASE_URL) missing.push('SUPABASE_URL');
       if (!SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-
-      if (missing.length > 0) {
-        throw new Error(`Variáveis ausentes: ${missing.join(', ')}`);
-      }
+      if (missing.length > 0) throw new Error(`Variáveis ausentes: ${missing.join(', ')}`);
 
       return {
         details: {
@@ -235,11 +319,10 @@ serve(async (req) => {
         },
       };
     });
-    if (!step1.success) configOk = false;
 
     // ── Step 2: Validate number ──
     let numberData: Record<string, unknown> | null = null;
-    const step2 = await runStep('validate_number', '2. Validação do Número', async () => {
+    await runStep('validate_number', '2. Validação do Número', async () => {
       if (!numberId) throw new Error('numberId não fornecido');
 
       const { data, error } = await supabase
@@ -264,11 +347,8 @@ serve(async (req) => {
 
       return {
         details: {
-          id: data.id,
-          name: data.name,
-          instance_name: data.instance_name,
-          phone_number: data.phone_number,
-          is_connected: data.is_connected,
+          id: data.id, name: data.name, instance_name: data.instance_name,
+          phone_number: data.phone_number, is_connected: data.is_connected,
           daily_sent_count: data.daily_sent_count,
           warnings: warnings.length > 0 ? warnings : undefined,
         },
@@ -276,175 +356,146 @@ serve(async (req) => {
       };
     });
 
-    // ── Step 3: Normalize phone ──
+    // ── Step 3: Normalize phone (MESMA FUNÇÃO do campaign-processor) ──
     let normalizedPhone = '';
-    await runStep('normalize_phone', '3. Normalização do Telefone', async () => {
+    await runStep('normalize_phone', '3. Normalização do Telefone (campaign-processor)', async () => {
       if (!phone) throw new Error('Telefone não fornecido');
 
-      const raw = phone.replace(/\D/g, '');
-      if (raw.length < 10) throw new Error(`Telefone muito curto: "${raw}" (${raw.length} dígitos)`);
-      if (raw.length > 15) throw new Error(`Telefone muito longo: "${raw}" (${raw.length} dígitos)`);
+      normalizedPhone = normalizePhone(phone);
 
-      normalizedPhone = raw.startsWith('55') ? raw : `55${raw}`;
+      if (normalizedPhone.length < 10) throw new Error(`Telefone muito curto: "${normalizedPhone}" (${normalizedPhone.length} dígitos)`);
+      if (normalizedPhone.length > 15) throw new Error(`Telefone muito longo: "${normalizedPhone}" (${normalizedPhone.length} dígitos)`);
 
-      // Brazilian phone validation
-      const ddd = normalizedPhone.slice(2, 4);
-      const numberPart = normalizedPhone.slice(4);
       const warnings: string[] = [];
-
-      if (parseInt(ddd) < 11 || parseInt(ddd) > 99) {
-        warnings.push(`DDD ${ddd} pode ser inválido`);
-      }
-      if (numberPart.length === 8 && ['6', '7', '8', '9'].includes(numberPart[0])) {
-        normalizedPhone = `55${ddd}9${numberPart}`;
-        warnings.push('Adicionado 9º dígito automaticamente');
+      // Check if Brazilian number
+      if (normalizedPhone.startsWith('55')) {
+        const ddd = normalizedPhone.slice(2, 4);
+        const numberPart = normalizedPhone.slice(4);
+        if (parseInt(ddd) < 11 || parseInt(ddd) > 99) {
+          warnings.push(`DDD ${ddd} pode ser inválido`);
+        }
+        return {
+          details: {
+            input: phone, normalized: normalizedPhone,
+            format: 'brasileiro', ddd, number_part: numberPart,
+            total_digits: normalizedPhone.length,
+            warnings: warnings.length > 0 ? warnings : undefined,
+            nota: 'Usando mesma lógica do campaign-processor (normalizePhone)',
+          },
+        };
       }
 
       return {
         details: {
-          input: phone,
-          cleaned: raw,
-          normalized: normalizedPhone,
-          ddd,
-          number_part: numberPart,
+          input: phone, normalized: normalizedPhone,
+          format: 'internacional',
           total_digits: normalizedPhone.length,
-          warnings: warnings.length > 0 ? warnings : undefined,
+          nota: 'Número internacional detectado (mesmo tratamento do campaign-processor)',
         },
       };
     });
 
-    // ── Step 4: Check connection via API ──
-    let connectionOk = false;
+    // ── Step 4: Check ignored contacts (MESMA FUNÇÃO do campaign-processor) ──
+    await runStep('check_ignored', '4. Verificar Contato Ignorado (campaign-processor)', async () => {
+      const ignored = await isContactIgnored(supabase, userId, normalizedPhone);
+      if (ignored) {
+        return {
+          details: { phone: normalizedPhone, is_ignored: true },
+          category: 'warning' as const,
+          suggestion: 'Este contato está na lista de ignorados. No disparo real, seria PULADO pelo campaign-processor. A mensagem ainda será enviada neste teste.',
+        };
+      }
+      return { details: { phone: normalizedPhone, is_ignored: false } };
+    });
+
+    // ── Step 5: Check connection (MESMA FUNÇÃO do campaign-processor com 3 retries) ──
     const instanceName = (numberData as any)?.instance_name;
-    await runStep('check_connection', '4. Verificar Conexão na API', async () => {
+    let connectionOk = false;
+    await runStep('check_connection', '5. Verificar Conexão (campaign-processor, 3 retries)', async () => {
       if (!instanceName) throw new Error('instance_name não disponível');
 
-      const url = `${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`;
-      const fetchStart = performance.now();
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'apikey': EVOLUTION_API_KEY! },
-      });
-      const fetchDuration = performance.now() - fetchStart;
-
-      const responseText = await response.text();
-      let responseJson: unknown;
-      try {
-        responseJson = JSON.parse(responseText);
-      } catch {
-        responseJson = responseText;
-      }
-
-      if (!response.ok) {
-        throw new Error(`API retornou ${response.status}: ${responseText.slice(0, 200)}`);
-      }
-
-      const state = (responseJson as any)?.state || (responseJson as any)?.instance?.state;
-      connectionOk = state === 'open';
+      const result = await checkInstanceConnection(
+        EVOLUTION_API_URL!, EVOLUTION_API_KEY!, instanceName, 3
+      );
+      
+      connectionOk = result.connected;
 
       if (!connectionOk) {
-        throw new Error(`Estado da instância: "${state}" (esperado: "open")`);
+        throw new Error(`Instância não conectada após ${result.attempts} tentativas. Estado: "${result.state || 'unknown'}". Erros: ${result.errors.join(' | ')}`);
       }
 
       return {
         details: {
-          state,
-          api_response_time_ms: Math.round(fetchDuration),
-          ...(deepDebug ? { raw_response: responseJson } : {}),
+          state: result.state,
+          attempts_needed: result.attempts,
+          response_times_ms: result.responseTimes,
+          max_retries: 3,
+          retry_errors: result.errors.length > 0 ? result.errors : undefined,
+          nota: 'Usando mesma lógica do campaign-processor (checkInstanceConnection com retry exponencial)',
         },
-        headers_sent: { apikey: '***' },
-        headers_received: Object.fromEntries(response.headers.entries()),
-        payload_received: responseJson,
       };
     });
 
-    // ── Step 5: Build payload ──
-    let sendPayload: Record<string, unknown> = {};
-    await runStep('build_payload', '5. Geração do Payload', async () => {
+    // ── Step 6: Build payload ──
+    await runStep('build_payload', '6. Geração do Payload', async () => {
       if (!message) throw new Error('Mensagem não fornecida');
       if (message.length > 4096) throw new Error(`Mensagem muito longa: ${message.length} caracteres (max: 4096)`);
-
-      sendPayload = {
-        number: normalizedPhone,
-        text: message,
-      };
 
       return {
         details: {
           message_length: message.length,
           phone: normalizedPhone,
           has_variables: message.includes('{'),
-          ...(deepDebug ? { full_payload: sendPayload } : {}),
+          ...(deepDebug ? { full_payload: { number: normalizedPhone, text: message } } : {}),
         },
-        payload_sent: sendPayload,
+        payload_sent: { number: normalizedPhone, text: message },
       };
     });
 
-    // ── Step 6: Send message (or dry-run) ──
-    let sendResult: unknown = null;
-    let sendResponseHeaders: Record<string, string> = {};
-    await runStep('send_message', dryRun ? '6. Envio (DRY-RUN - não enviado)' : '6. Envio da Mensagem', async () => {
+    // ── Step 7: Send message (MESMA FUNÇÃO do campaign-processor com timeout 15s) ──
+    let sendResultData: any = null;
+    await runStep('send_message', dryRun ? '7. Envio (DRY-RUN - não enviado)' : '7. Envio da Mensagem (campaign-processor, timeout 15s)', async () => {
       if (dryRun) {
+        const simResult = await sendMessage(EVOLUTION_API_URL!, EVOLUTION_API_KEY!, instanceName, normalizedPhone, message, true);
         return {
           details: {
-            mode: 'dry-run',
+            mode: 'dry-run (simulation_mode do campaign-processor)',
+            simulated_message_id: simResult.messageId,
             would_send_to: normalizedPhone,
             instance: instanceName,
             message_preview: message.slice(0, 100),
           },
           category: 'warning' as const,
-          suggestion: 'Modo dry-run: mensagem NÃO foi enviada. Desative dry-run para envio real.',
+          suggestion: 'Modo dry-run: usou sendMessage() com simulationMode=true (mesmo do campaign-processor). Desative dry-run para envio real.',
         };
       }
 
-      const url = `${EVOLUTION_API_URL}/message/sendText/${instanceName}`;
-      const fetchStart = performance.now();
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY!,
-        },
-        body: JSON.stringify(sendPayload),
-      });
-      const fetchDuration = performance.now() - fetchStart;
+      const result = await sendMessage(
+        EVOLUTION_API_URL!, EVOLUTION_API_KEY!, instanceName, normalizedPhone, message, false
+      );
+      sendResultData = result;
 
-      const responseText = await response.text();
-      try {
-        sendResult = JSON.parse(responseText);
-      } catch {
-        sendResult = responseText;
+      if (!result.success) {
+        throw new Error(`Envio falhou (HTTP ${result.httpStatus || '?'}): ${result.error?.slice(0, 300)}`);
       }
-
-      sendResponseHeaders = Object.fromEntries(response.headers.entries());
-
-      if (!response.ok) {
-        throw new Error(`API retornou ${response.status}: ${responseText.slice(0, 300)}`);
-      }
-
-      const messageId = (sendResult as any)?.key?.id || (sendResult as any)?.messageId;
 
       return {
         details: {
-          http_status: response.status,
-          message_id: messageId,
-          api_response_time_ms: Math.round(fetchDuration),
-          ...(deepDebug ? { raw_response: sendResult } : {}),
+          message_id: result.messageId || 'N/A',
+          http_status: result.httpStatus,
+          api_response_time_ms: result.responseTime,
+          nota: 'Usando mesma função sendMessage() do campaign-processor (com AbortController timeout 15s)',
+          ...(deepDebug ? { raw_response: result.rawResponse } : {}),
         },
-        payload_sent: sendPayload,
-        payload_received: sendResult,
-        headers_sent: { 'Content-Type': 'application/json', apikey: '***' },
-        headers_received: sendResponseHeaders,
+        payload_sent: { number: normalizedPhone, text: message },
+        payload_received: result.rawResponse,
       };
     });
 
-    // ── Step 7: Update DB counts ──
-    await runStep('update_db', '7. Atualização no Banco de Dados', async () => {
+    // ── Step 8: Update DB counts ──
+    await runStep('update_db', '8. Atualização no Banco de Dados', async () => {
       if (dryRun) {
-        return {
-          details: { mode: 'dry-run', skipped: true },
-          category: 'warning' as const,
-        };
+        return { details: { mode: 'dry-run', skipped: true }, category: 'warning' as const };
       }
 
       const today = new Date().toDateString();
@@ -467,24 +518,17 @@ serve(async (req) => {
       if (error) throw new Error(`Erro ao atualizar banco: ${error.message}`);
 
       return {
-        details: {
-          previous_count: currentCount,
-          new_count: newCount,
-          date: today,
-        },
+        details: { previous_count: currentCount, new_count: newCount, date: today },
       };
     });
 
-    // ── Step 8: Verify delivery ──
-    await runStep('verify_delivery', '8. Verificação de Entrega', async () => {
+    // ── Step 9: Verify delivery ──
+    await runStep('verify_delivery', '9. Verificação de Entrega', async () => {
       if (dryRun) {
-        return {
-          details: { mode: 'dry-run', skipped: true },
-          category: 'warning' as const,
-        };
+        return { details: { mode: 'dry-run', skipped: true }, category: 'warning' as const };
       }
 
-      const messageId = (sendResult as any)?.key?.id || (sendResult as any)?.messageId;
+      const messageId = sendResultData?.messageId;
 
       return {
         details: {
@@ -501,7 +545,7 @@ serve(async (req) => {
     const warningSteps = steps.filter(s => s.status === 'warning');
 
     let overallStatus: 'success' | 'partial' | 'error' = 'success';
-    let overallCategory = '🟢 Sistema OK';
+    let overallCategory = '🟢 Sistema OK (mesmas funções do campaign-processor)';
 
     if (errorSteps.length > 0) {
       overallStatus = 'error';
@@ -526,6 +570,7 @@ serve(async (req) => {
       dry_run: !!dryRun,
       deep_debug: !!deepDebug,
       timestamp: new Date().toISOString(),
+      engine_note: 'Este debug usa EXATAMENTE as mesmas funções do campaign-processor: normalizePhone(), checkInstanceConnection(3 retries), sendMessage(timeout 15s), isContactIgnored()',
       steps,
       summary: {
         total_steps: steps.length,
