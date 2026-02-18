@@ -119,6 +119,7 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
                 width={45}
               />
               <Tooltip
+                cursor={{ fill: 'transparent' }}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
