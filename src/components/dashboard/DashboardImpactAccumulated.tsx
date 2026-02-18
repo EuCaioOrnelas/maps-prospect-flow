@@ -17,7 +17,7 @@ interface DashboardImpactAccumulatedProps {
   periodFilter?: React.ReactNode;
 }
 
-const CPL_BENCHMARK = 46.17;
+const CPL_BENCHMARK = 11.77;
 const SDR_PER_DAY = 80;
 
 function fmt(n: number) {
