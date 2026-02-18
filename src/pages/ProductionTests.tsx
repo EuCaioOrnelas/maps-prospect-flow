@@ -13,6 +13,7 @@ import {
   MessageSquare, Users, Flame, Bot, RefreshCw, Clock, 
   Send, Database, Zap, ArrowRight
 } from "lucide-react";
+import { DebugDispatchPanel } from "@/components/admin/DebugDispatchPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -760,128 +761,7 @@ const ProductionTests = () => {
             </TabsList>
 
             <TabsContent value="campaigns" className="mt-4 space-y-4">
-              {/* Real Message Test */}
-              <Card className="border-green-500/30 bg-green-500/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Send className="h-5 w-5 text-green-500" />
-                    Teste de Envio REAL
-                  </CardTitle>
-                  <CardDescription>
-                    Envia uma mensagem real para um número de teste para verificar o envio e recebimento
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número WhatsApp (remetente)</Label>
-                      <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {numbers.map(n => (
-                            <SelectItem key={n.id} value={n.id}>
-                              {n.name || n.phone_number}
-                              {n.is_connected ? ' ✓' : ' (offline)'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Telefone de Teste (destinatário)</Label>
-                      <Input 
-                        placeholder="5511999999999"
-                        value={realTestPhone}
-                        onChange={e => setRealTestPhone(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Use seu próprio número para receber a mensagem
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Mensagem de Teste</Label>
-                    <Input 
-                      placeholder="Olá! Esta é uma mensagem de teste."
-                      value={realTestMessage}
-                      onChange={e => setRealTestMessage(e.target.value)}
-                    />
-                  </div>
-
-                  <Button 
-                    onClick={runRealMessageTest} 
-                    disabled={isRunning || !selectedNumberId || !realTestPhone}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    {isRunning ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
-                    ) : (
-                      <><Send className="h-4 w-4 mr-2" /> Enviar Mensagem Real</>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Simulation Test */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Teste de Campanhas (Modo Simulação)
-                  </CardTitle>
-                  <CardDescription>
-                    Cria uma campanha em modo simulação que loga as mensagens sem enviar realmente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número WhatsApp</Label>
-                      <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {numbers.map(n => (
-                            <SelectItem key={n.id} value={n.id}>
-                              {n.name || n.phone_number}
-                              {n.is_connected ? ' ✓' : ' (offline)'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Leads para simular</Label>
-                      <Input 
-                        type="number" 
-                        min={1} 
-                        max={50}
-                        value={campaignLeadsCount}
-                        onChange={e => setCampaignLeadsCount(Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    onClick={runCampaignSimulation} 
-                    disabled={isRunning || !selectedNumberId}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    {isRunning ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Executando...</>
-                    ) : (
-                      <><Play className="h-4 w-4 mr-2" /> Executar Simulação</>
-                    )}
-                  </Button>
-
-                  {testResults.campaigns.length > 0 && renderResults(testResults.campaigns)}
-                </CardContent>
-              </Card>
+              <DebugDispatchPanel numbers={numbers} />
             </TabsContent>
 
             <TabsContent value="crm" className="mt-4">

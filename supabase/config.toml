@@ -96,3 +96,6 @@ verify_jwt = false
 
 [functions.evolution-reconfigure-webhook]
 verify_jwt = false
+
+[functions.debug-dispatch-test]
+verify_jwt = false
