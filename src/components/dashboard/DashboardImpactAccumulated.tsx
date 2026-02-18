@@ -62,18 +62,21 @@ export function DashboardImpactAccumulated({
 
   return (
     <div className="space-y-4">
-      {/* Header with comparison button + period filter */}
-      <div className="flex items-center justify-end gap-2">
-        {periodFilter}
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs gap-1.5 h-7"
-          onClick={() => setShowComparison(true)}
-        >
-          <GitCompareArrows size={13} />
-          Comparar períodos
-        </Button>
+      {/* Header: title + period filter + comparison button */}
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          {periodFilter}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5 h-8"
+            onClick={() => setShowComparison(true)}
+          >
+            <GitCompareArrows size={13} />
+            Comparar períodos
+          </Button>
+        </div>
       </div>
 
       {/* Hero Impact Card */}

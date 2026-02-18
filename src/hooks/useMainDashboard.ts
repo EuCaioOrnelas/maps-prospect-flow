@@ -3,6 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { subDays } from "date-fns";
 
+export interface MonthlyBreakdown {
+  month: string;
+  leads: number;
+  conversations: number;
+  opportunities: number;
+}
+
 export interface DashboardMetrics {
   leadsProspected: number;
   prevLeadsProspected: number;
@@ -23,12 +30,12 @@ export interface DashboardMetrics {
   responsesByDay: { date: string; count: number }[];
   cplBenchmark: number;
   loading: boolean;
-  // Cumulative (all-time) data
   allTimeLeads: number;
   cumulativeByMonth: { month: string; total: number }[];
   accountCreatedAt: string | null;
   monthlyLeads: number;
   activeDays: number;
+  monthlyBreakdown: MonthlyBreakdown[];
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
@@ -54,6 +61,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
     accountCreatedAt: null as string | null,
     monthlyLeads: 0,
     activeDays: 0,
+    monthlyBreakdown: [] as MonthlyBreakdown[],
   });
 
   useEffect(() => {
@@ -77,6 +85,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         responsesCurrent, responsesPrev,
         numbersRes, warmingRes, incidentsRes, cplRes,
         allTimeSearchRes, profileRes,
+        allTimeCampaignsRes,
       ] = await Promise.all([
         supabase.from('search_history').select('results_count')
           .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
@@ -118,6 +127,11 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .eq('user_id', user.id)
           .order('created_at', { ascending: true }),
         supabase.from('profiles').select('created_at').eq('id', user.id).maybeSingle(),
+        // All-time campaigns for monthly breakdown
+        supabase.from('whatsapp_campaigns')
+          .select('sent_count, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true }),
       ]);
 
       const campaigns = campaignsCurrent.data || [];
@@ -177,6 +191,29 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           activeDaysSet.add(new Date(r.created_at).toISOString().slice(0, 10));
         });
 
+      // Build monthly breakdown (leads + conversations by month)
+      const campaignMonthMap: Record<string, number> = {};
+      (allTimeCampaignsRes.data || []).forEach((c: any) => {
+        const d = new Date(c.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        campaignMonthMap[key] = (campaignMonthMap[key] || 0) + (c.sent_count || 0);
+      });
+
+      // Merge all months from both sources
+      const allMonthKeys = new Set([...Object.keys(monthMap), ...Object.keys(campaignMonthMap)]);
+      const sortedAllMonths = Array.from(allMonthKeys).sort();
+      const monthlyBreakdown: MonthlyBreakdown[] = sortedAllMonths.map(m => {
+        const leads = monthMap[m] || 0;
+        const conversations = campaignMonthMap[m] || 0;
+        const opportunities = Math.round(conversations * 0.03);
+        return {
+          month: m.slice(2).replace('-', '/'),
+          leads,
+          conversations,
+          opportunities,
+        };
+      });
+
       setRawData({
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
@@ -193,6 +230,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         accountCreatedAt: profileRes.data?.created_at || null,
         monthlyLeads: leadsProspected,
         activeDays: activeDaysSet.size,
+        monthlyBreakdown,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);

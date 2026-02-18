@@ -13,7 +13,7 @@ import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
-import { DashboardPotentialCard } from "@/components/dashboard/DashboardPotentialCard";
+import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -64,10 +64,6 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-8">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
-              </div>
 
               {/* 1️⃣ Impacto Financeiro */}
               <DashboardImpactAccumulated
@@ -116,11 +112,8 @@ export default function MainDashboard() {
                   prevMessagesSent={data.prevMessagesSent}
                   periodDays={periodDays}
                 />
-                <DashboardPotentialCard
-                  searchesUsed={profile?.searches_used ?? 0}
-                  searchesLimit={profile?.searches_limit ?? 10}
-                  leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent}
+                <DashboardEvolutionChart
+                  monthlyData={data.monthlyBreakdown}
                 />
               </div>
 
