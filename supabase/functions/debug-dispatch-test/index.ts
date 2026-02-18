@@ -282,24 +282,42 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    // Service role client for DB operations
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+
+    // User client with anon key for auth validation (works with both HS256 and ES256)
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     });
 
     const token = authHeader.replace('Bearer ', '');
 
     let userId: string;
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.log('[debug-dispatch-test] getClaims failed, falling back to getUser:', claimsError?.message);
-      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    
+    // Try getClaims first (works on Lovable Cloud / ES256)
+    try {
+      const { data: claimsData, error: claimsError } = await (supabaseAuth.auth as any).getClaims(token);
+      if (!claimsError && claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+        console.log('[debug-dispatch-test] Auth via getClaims:', userId);
+      } else {
+        throw new Error('getClaims not available or failed');
+      }
+    } catch {
+      // Fallback to getUser (works on standard Supabase / HS256)
+      console.log('[debug-dispatch-test] getClaims unavailable, trying getUser...');
+      const { data: userData, error: userError } = await supabaseAuth.auth.getUser(token);
       if (userError || !userData.user) {
+        console.error('[debug-dispatch-test] Auth failed:', userError?.message);
         return new Response(JSON.stringify({ error: 'Invalid JWT', detail: userError?.message }), { status: 401, headers: corsHeaders });
       }
       userId = userData.user.id;
-    } else {
-      userId = claimsData.claims.sub as string;
+      console.log('[debug-dispatch-test] Auth via getUser:', userId);
     }
 
     const body = await req.json();
@@ -332,7 +350,7 @@ serve(async (req) => {
     await runStep('validate_number', '2. Validação do Número', async () => {
       if (!numberId) throw new Error('numberId não fornecido');
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('whatsapp_numbers')
         .select('*')
         .eq('id', numberId)
@@ -404,7 +422,7 @@ serve(async (req) => {
 
     // ── Step 4: Check ignored contacts (MESMA FUNÇÃO do campaign-processor) ──
     await runStep('check_ignored', '4. Verificar Contato Ignorado (campaign-processor)', async () => {
-      const ignored = await isContactIgnored(supabase, userId, normalizedPhone);
+      const ignored = await isContactIgnored(supabaseAdmin, userId, normalizedPhone);
       if (ignored) {
         return {
           details: { phone: normalizedPhone, is_ignored: true },
@@ -513,7 +531,7 @@ serve(async (req) => {
       const currentCount = (numberData as any)?.daily_sent_count || 0;
       const newCount = lastSentDate === today ? currentCount + 1 : 1;
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('whatsapp_numbers')
         .update({
           daily_sent_count: newCount,
