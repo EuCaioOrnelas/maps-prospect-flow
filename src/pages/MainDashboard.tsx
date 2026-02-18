@@ -14,7 +14,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardMediaEquivalence } from "@/components/dashboard/DashboardMediaEquivalence";
 import { DashboardOperationalHealth } from "@/components/dashboard/DashboardOperationalHealth";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
-import { DashboardWarmingBlock } from "@/components/dashboard/DashboardWarmingBlock";
+
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -132,19 +132,12 @@ export default function MainDashboard() {
                 </div>
               </div>
 
-              {/* Operational Health + Warming/Block */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DashboardOperationalHealth
-                  numbers={data.numbers}
-                  warmingSessions={data.warmingSessions}
-                  incidents={data.incidents}
-                />
-                <DashboardWarmingBlock
-                  numbers={data.numbers}
-                  warmingSessions={data.warmingSessions}
-                  incidents={data.incidents}
-                />
-              </div>
+              {/* Operational Health */}
+              <DashboardOperationalHealth
+                numbers={data.numbers}
+                warmingSessions={data.warmingSessions}
+                incidents={data.incidents}
+              />
 
               {/* Insights as footer */}
               <DashboardInsights
