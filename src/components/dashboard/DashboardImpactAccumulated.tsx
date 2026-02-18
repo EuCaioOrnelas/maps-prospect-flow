@@ -81,12 +81,22 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="border-border/30 bg-gradient-to-br from-primary/[0.015] via-background to-background overflow-hidden">
-        <CardContent className="py-7 px-8 flex flex-col items-center text-center space-y-1.5">
+      <Card className="border-emerald-500/10 bg-card/90 overflow-hidden relative">
+        <CardContent className="py-6 px-8 flex flex-col items-center text-center space-y-1">
+          {/* Top labels */}
+          <div className="w-full flex items-center justify-between mb-1">
+            <span className="text-[9px] font-medium text-muted-foreground/40 uppercase tracking-wider">
+              Resumo financeiro comparativo
+            </span>
+            <span className="text-[9px] font-medium text-muted-foreground/30 uppercase tracking-wider">
+              KPI principal do período
+            </span>
+          </div>
+
           <p className="text-[10px] font-medium text-muted-foreground/50 tracking-[0.18em] uppercase">
             Investimento estimado via mídia paga
           </p>
-          <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-none">
+          <p className="text-[2rem] sm:text-[2.6rem] font-black text-foreground tracking-tight leading-none drop-shadow-[0_0_12px_hsla(158,60%,40%,0.12)]">
             R$ {fmt(financialImpact)}
           </p>
           <p className="text-[13px] text-muted-foreground/70 font-[500] max-w-md leading-snug">
