@@ -51,6 +51,7 @@ import {
   Calendar as CalendarIcon,
   ArrowRightLeft,
   X,
+  Trophy,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -358,15 +359,24 @@ const AdminLandingPages = () => {
   // Removed DatePickerButton — inlined directly in PopoverTrigger to avoid forwardRef issues
 
   // Comparison metric row
-  const CompareMetricRow = ({ label, valueA, valueB, format: fmt }: { label: string; valueA: number; valueB: number; format?: (v: number) => string }) => {
+  const CompareMetricRow = ({ label, valueA, valueB, format: fmt, higherIsBetter = true }: { label: string; valueA: number; valueB: number; format?: (v: number) => string; higherIsBetter?: boolean }) => {
     const fmtFn = fmt || ((v: number) => v.toLocaleString());
     const diff = valueA - valueB;
     const pctDiff = valueB > 0 ? ((diff / valueB) * 100).toFixed(1) : valueA > 0 ? "+∞" : "0";
+    const winnerA = higherIsBetter ? valueA > valueB : valueA < valueB;
+    const winnerB = higherIsBetter ? valueB > valueA : valueB < valueA;
+    const tie = valueA === valueB;
     return (
       <div className="grid grid-cols-4 gap-2 py-2 border-b border-border/30 text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="text-center font-medium">{fmtFn(valueA)}</span>
-        <span className="text-center font-medium">{fmtFn(valueB)}</span>
+        <span className={cn("text-center font-medium flex items-center justify-center gap-1", winnerA && !tie && "text-primary font-semibold")}>
+          {winnerA && !tie && <Trophy size={12} className="text-amber-400" />}
+          {fmtFn(valueA)}
+        </span>
+        <span className={cn("text-center font-medium flex items-center justify-center gap-1", winnerB && !tie && "text-primary font-semibold")}>
+          {winnerB && !tie && <Trophy size={12} className="text-amber-400" />}
+          {fmtFn(valueB)}
+        </span>
         <span className={cn("text-center font-semibold", diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-muted-foreground")}>
           {typeof pctDiff === "string" ? pctDiff : `${pctDiff}%`}{diff > 0 ? " ↑" : diff < 0 ? " ↓" : ""}
         </span>
@@ -564,7 +574,8 @@ const AdminLandingPages = () => {
                 <CompareMetricRow label="Cliques" valueA={compareA.stats.signupClicks} valueB={compareB.stats.signupClicks} />
                 <CompareMetricRow label="Cadastros" valueA={compareA.stats.signupCompleted} valueB={compareB.stats.signupCompleted} />
                 <CompareMetricRow label="Compras" valueA={compareA.stats.purchases} valueB={compareB.stats.purchases} />
-                <CompareMetricRow label="Trial s/ Upgrade" valueA={compareA.stats.trialNoUpgrade} valueB={compareB.stats.trialNoUpgrade} />
+                <CompareMetricRow label="Trial s/ Upgrade" valueA={compareA.stats.trialNoUpgrade} valueB={compareB.stats.trialNoUpgrade} higherIsBetter={false} />
+                <CompareMetricRow label="Faturamento" valueA={compareA.stats.totalRevenue} valueB={compareB.stats.totalRevenue} format={(v) => formatCurrency(v)} />
                 <CompareMetricRow label="Conv. %" valueA={compareA.stats.conversionRate} valueB={compareB.stats.conversionRate} format={(v) => `${v.toFixed(2)}%`} />
               </div>
             )}
