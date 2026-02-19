@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarClock, Briefcase, TrendingUp, TrendingDown, GitCompareArrows, Info } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { DashboardComparisonDialog } from "./DashboardComparisonDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -96,6 +95,9 @@ export function DashboardImpactAccumulated({
           )}
           <p className="text-[13px] text-muted-foreground/80 font-[500] max-w-md leading-snug">
             Estimativa aproximada de investimento necessário para gerar {fmtInt(leadsProspected)} contatos B2B via tráfego pago no período selecionado.
+            {allTimeLeads > leadsProspected && (
+              <span className="text-muted-foreground/50"> — Total acumulado: {fmtInt(allTimeLeads)} leads (R$ {fmt(allTimeLeads * CPL_BENCHMARK)})</span>
+            )}
           </p>
           <TooltipProvider>
             <Tooltip>
@@ -162,46 +164,6 @@ export function DashboardImpactAccumulated({
           </CardContent>
         </Card>
       </div>
-
-      {/* Cumulative Growth Chart */}
-      {cumulativeByMonth.length > 1 && (
-        <Card className="border-border/50">
-          <CardContent className="pt-6 pb-4">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <p className="text-sm font-semibold text-foreground">Crescimento Acumulado</p>
-              <p className="text-[10px] text-muted-foreground/50 italic">
-                Seu ativo de prospecção continua crescendo.
-              </p>
-            </div>
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={cumulativeByMonth} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="cumulativeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(158, 72%, 38%)" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(158, 72%, 38%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <RechartsTooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                    formatter={(value: number) => [fmtInt(value) + ' leads', 'Total acumulado']}
-                  />
-                  <Area type="monotone" dataKey="total" stroke="hsl(158, 72%, 38%)" strokeWidth={2} fill="url(#cumulativeGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <DashboardComparisonDialog open={showComparison} onOpenChange={setShowComparison} />
     </div>
