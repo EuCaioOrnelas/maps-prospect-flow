@@ -89,7 +89,7 @@ export function DashboardInsights(props: DashboardInsightsProps) {
   }
 
   return (
-    <Card className="glass">
+    <Card className="dashboard-card rounded-xl">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Lightbulb size={16} className="text-yellow-500" />
