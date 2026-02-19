@@ -135,6 +135,15 @@ serve(async (req) => {
           logStep("Skipping downgrade - admin assigned plan", { 
             plan: currentProfile.plan 
           });
+          
+          return new Response(JSON.stringify({ 
+            subscribed: true, 
+            plan: currentProfile.plan,
+            searches_limit: currentProfile.searches_limit
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
         } else {
           logStep("Downgrading user with no Stripe customer", { 
             previousPlan: currentProfile.plan 
