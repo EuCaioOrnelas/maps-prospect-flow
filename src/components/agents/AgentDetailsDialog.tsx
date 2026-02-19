@@ -429,11 +429,101 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
       if (agent.objective === 'prospecting') salesApproach = 'qualify';
       else if (agent.objective === 'closing') salesApproach = 'close';
       
+      // Extract fields from system prompt to populate wizard fields when template is loaded
+      const extractFromPrompt = (prompt: string, pattern: RegExp, fallback: string = ''): string => {
+        const match = prompt.match(pattern);
+        return match?.[1]?.trim() || fallback;
+      };
+
+      const extractListFromPrompt = (prompt: string, sectionStart: string, sectionEnd: string): string => {
+        const startIdx = prompt.indexOf(sectionStart);
+        const endIdx = prompt.indexOf(sectionEnd, startIdx + sectionStart.length);
+        if (startIdx === -1) return '';
+        const section = prompt.substring(startIdx + sectionStart.length, endIdx === -1 ? undefined : endIdx);
+        // Extract list items (lines starting with - or ✓ or ")
+        const items = section.split('\n')
+          .map(line => line.replace(/^[\s]*[-✓✗"•]\s*/, '').replace(/"$/, '').trim())
+          .filter(line => line.length > 0 && !line.startsWith('**') && !line.startsWith('#'));
+        return items.join('\n');
+      };
+
+      // Extract company name from prompt
+      const companyNameMatch = systemPrompt.match(/da empresa "([^"]+)"/);
+      const extractedCompanyName = companyNameMatch?.[1] || '';
+
+      // Extract product name from prompt
+      const productNameMatch = systemPrompt.match(/produto\/serviço: "([^"]+)"/);
+      const extractedProductName = productNameMatch?.[1] || '';
+
+      // Extract product description
+      const productDescMatch = systemPrompt.match(/\*\*Descrição:\*\*\s*(.+)/);
+      const extractedProductDesc = productDescMatch?.[1]?.trim() || '';
+
+      // Extract info to discover
+      const extractedInfoToDiscover = extractListFromPrompt(
+        systemPrompt, 
+        '# DIAGNÓSTICO - INFORMAÇÕES A DESCOBRIR', 
+        '**Limite:**'
+      );
+
+      // Extract differentials
+      const extractedDifferentials = extractListFromPrompt(
+        systemPrompt,
+        '**Diferenciais que DEVEM aparecer naturalmente na conversa:**',
+        '**Política de preço:**'
+      );
+
+      // Extract common objections
+      const extractedObjections = extractListFromPrompt(
+        systemPrompt,
+        'Esteja preparado para estas objeções:',
+        '**Postura diante de objeções:**'
+      );
+
+      // Extract presentation style from prompt
+      const presentationStyleMatch = systemPrompt.match(/\*\*Estilo de apresentação:\*\*\s*(.+)/);
+      const extractedPresentationStyle = presentationStyleMatch?.[1]?.trim() || '';
+      // Reverse-map presentation labels to keys
+      const presentationKeyMap: Record<string, string> = {
+        'Educando sobre o problema e solução': 'educating',
+        'Comparando com o cenário atual do lead': 'comparing',
+        'Mostrando risco de continuar como está': 'risk',
+      };
+      const mappedPresentationStyle = presentationKeyMap[extractedPresentationStyle] || 'educating';
+
+      // Extract price policy
+      const pricePolicyMatch = systemPrompt.match(/\*\*Política de preço:\*\*\s*(.+)/);
+      const extractedPricePolicy = pricePolicyMatch?.[1]?.trim() || '';
+      const pricePolicyKeyMap: Record<string, string> = {
+        'NUNCA mencionar preço': 'never',
+        'Apenas se o lead perguntar diretamente': 'if_asked',
+        'Sempre contextualizar o valor antes do preço': 'with_context',
+      };
+      const mappedPricePolicy = pricePolicyKeyMap[extractedPricePolicy] || 'never';
+
+      // Extract objection posture
+      const postureMatch = systemPrompt.match(/\*\*Postura diante de objeções:\*\*\s*(.+)/);
+      const extractedPosture = postureMatch?.[1]?.trim() || '';
+      const postureKeyMap: Record<string, string> = {
+        'Validar a preocupação do lead': 'validate',
+        'Explicar com empatia e dados': 'explain',
+        'Dar exemplo real de caso similar': 'example',
+        'Convidar para próximo passo sem pressão': 'invite',
+      };
+      const mappedPosture = postureKeyMap[extractedPosture] || 'validate';
+
+      // Extract max questions
+      const maxQuestionsMatch = systemPrompt.match(/MÁXIMO (\d+) perguntas/);
+      const extractedMaxQuestions = maxQuestionsMatch?.[1] || '2';
+
       // Build comprehensive template data with all wizard fields
       const templateData = {
         // Basic info
         suggestedName: agent.name,
         agentRole: agentRole,
+        companyName: extractedCompanyName,
+        productName: extractedProductName,
+        productDescription: extractedProductDesc !== 'Não informado' ? extractedProductDesc : '',
         salesApproach: salesApproach,
         
         // System prompt (most important - contains all agent behavior)
@@ -457,7 +547,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
         // Communication style mapping
         communicationStyle: agent.communication_style,
         
-        // Lead context defaults
+        // Lead context - extracted or defaults
         leadAwareness: 'heard',
         messageReason: 'active_search',
         consciousnessLevel: 'aware_solution',
@@ -466,6 +556,19 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
         openingStyle: 'thank',
         firstMission: 'understand',
         
+        // Diagnosis fields (previously missing!)
+        infoToDiscover: extractedInfoToDiscover,
+        maxQuestions: extractedMaxQuestions,
+
+        // Conduct fields (previously missing!)
+        presentationStyle: mappedPresentationStyle,
+        differentials: extractedDifferentials,
+        pricePolicy: mappedPricePolicy,
+
+        // Objections fields (previously missing!)
+        commonObjections: extractedObjections,
+        objectionPosture: mappedPosture,
+        
         // CTA defaults based on objective
         conversationGoal: agent.objective === 'prospecting' ? 'schedule_call' : 
                           agent.objective === 'closing' ? 'close_deal' : 'forward_human',
@@ -473,14 +576,6 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
         endConditions: agent.end_conversation_criteria 
           ? agent.end_conversation_criteria.split('\n').filter((c: string) => c.trim())
           : ['Objetivo atingido', 'Lead disse que não tem interesse'],
-        
-        // Objection handling defaults
-        objectionPosture: 'validate',
-        
-        // Presentation defaults
-        presentationStyle: 'educating',
-        pricePolicy: 'never',
-        maxQuestions: '2',
         
         // Store the original objective and target audience
         objective: agent.objective,
