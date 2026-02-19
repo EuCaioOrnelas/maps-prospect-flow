@@ -361,12 +361,14 @@ async function processSingleMessage(
   const currentIndex = campaign.current_lead_index || 0;
   let sentCount = campaign.sent_count || 0;
   let failedCount = campaign.failed_count || 0;
+  let windowSentCount = campaign.window_sent_count || 0;
 
   campaignLog('📈', `Current State`, {
     leadIndex: currentIndex,
     totalLeads: leads.length,
     sent: sentCount,
-    failed: failedCount
+    failed: failedCount,
+    windowSent: windowSentCount
   });
 
   // Check if completed
@@ -446,14 +448,13 @@ async function processSingleMessage(
   // Smart pause check - trigger BEFORE sending the message that would hit the threshold
   // This means if pause_after_contacts=10, we pause AFTER sending message #10, #20, #30...
   if (campaign.enable_smart_pause && campaign.pause_after_contacts > 0) {
-    // sentCount represents messages already successfully sent
-    // If sentCount is divisible by pause_after_contacts and > 0, it's time to pause
-    const shouldPause = sentCount > 0 && sentCount % campaign.pause_after_contacts === 0;
+    // Use window_sent_count to track messages sent since last smart pause
+    // This avoids the infinite loop where sentCount % pause_after_contacts stays 0
+    const shouldPause = windowSentCount >= campaign.pause_after_contacts;
     
     campaignLog('🔍', `Smart pause check`, {
-      sentCount,
+      windowSentCount,
       pauseAfterContacts: campaign.pause_after_contacts,
-      moduloResult: sentCount % campaign.pause_after_contacts,
       shouldPause
     });
     
@@ -463,7 +464,8 @@ async function processSingleMessage(
       const resumeAt = new Date(Date.now() + pauseMs).toISOString();
       
       campaignLog('☕', `SMART PAUSE ACTIVATED`, {
-        messagesSent: sentCount,
+        messagesSentSinceLastPause: windowSentCount,
+        totalSent: sentCount,
         pauseAfter: campaign.pause_after_contacts,
         pauseMinutes: pauseMinutes,
         resumeAt
@@ -473,6 +475,7 @@ async function processSingleMessage(
         status: 'paused',
         pause_reason: 'smart_pause',
         resume_at: resumeAt,
+        window_sent_count: 0, // Reset window counter for next cycle
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
       
@@ -560,7 +563,7 @@ async function processSingleMessage(
 
   if (result.success) {
     sentCount++;
-    
+    windowSentCount++;
     // Only increment daily count for real messages (not simulations)
     if (!isSimulation) {
       dailySentCount++;
@@ -595,6 +598,7 @@ async function processSingleMessage(
     current_lead_index: currentIndex + 1,
     sent_count: sentCount,
     failed_count: failedCount,
+    window_sent_count: windowSentCount,
     last_message_sent_at: now,
     updated_at: now
   }).eq('id', campaign.id);
