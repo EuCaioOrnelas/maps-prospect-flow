@@ -659,11 +659,57 @@ serve(async (req) => {
           if (customer && !customer.deleted && customer.email) {
             const { data: profile } = await supabaseClient
               .from("profiles")
-              .select("id, plan, searches_limit")
+              .select("id, plan, searches_limit, searches_used")
               .eq("email", customer.email)
               .maybeSingle();
 
             const refundAmount = charge.amount_refunded / 100;
+            const previousPlan = profile?.plan || "free";
+            const previousLimit = profile?.searches_limit || 0;
+
+            // Cancel all active subscriptions for this customer after refund
+            try {
+              const activeSubs = await stripe.subscriptions.list({
+                customer: charge.customer as string,
+                status: "active",
+                limit: 10,
+              });
+
+              for (const sub of activeSubs.data) {
+                logStep("Canceling subscription after refund", { subscriptionId: sub.id });
+                await stripe.subscriptions.cancel(sub.id, { prorate: false });
+              }
+              logStep("All active subscriptions canceled after refund", { 
+                count: activeSubs.data.length 
+              });
+            } catch (cancelError) {
+              logStep("Error canceling subscriptions after refund", { 
+                error: String(cancelError) 
+              });
+            }
+
+            // Downgrade user to free plan
+            if (profile && profile.plan !== "free") {
+              const { error: updateError } = await supabaseClient
+                .from("profiles")
+                .update({
+                  plan: "free",
+                  searches_limit: PLAN_LIMITS["free"],
+                  searches_used: 0,
+                  subscription_current_period_end: null,
+                })
+                .eq("id", profile.id);
+
+              if (updateError) {
+                logStep("Error downgrading profile after refund", { error: updateError.message });
+              } else {
+                logStep("Profile downgraded to free after refund", {
+                  previousPlan,
+                  previousLimit,
+                  newLimit: PLAN_LIMITS["free"],
+                });
+              }
+            }
 
             // Log refund event
             await logSubscriptionEvent(
@@ -672,10 +718,10 @@ serve(async (req) => {
               "stripe-webhook",
               customer.email,
               profile?.id || null,
-              profile?.plan || null,
-              profile?.plan || null,
-              profile?.searches_limit || null,
-              profile?.searches_limit || 0,
+              previousPlan,
+              "free",
+              previousLimit,
+              PLAN_LIMITS["free"],
               0,
               null,
               charge.customer as string,
@@ -686,12 +732,15 @@ serve(async (req) => {
                 currency: charge.currency,
                 stripe_event_created: event.created,
                 stripe_event_type: event.type,
+                previousSearchesUsed: profile?.searches_used || 0,
+                action: "downgraded_to_free",
               }
             );
 
-            logStep("Refund event logged", { 
+            logStep("Refund processed: user downgraded to free", { 
               email: customer.email, 
-              amount: refundAmount 
+              amount: refundAmount,
+              previousPlan,
             });
           }
         }
