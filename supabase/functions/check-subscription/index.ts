@@ -126,20 +126,23 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, user is on free plan - keeping current profile state");
+      logStep("No customer found in Stripe");
       
-      // If the current profile already has a plan set by webhook, trust it
-      // Only return free if profile is also on free
+      // If user has a paid plan but no Stripe customer, downgrade them
       if (currentProfile.plan && currentProfile.plan !== "free") {
-        logStep("Profile has paid plan, returning that", { plan: currentProfile.plan });
-        return new Response(JSON.stringify({ 
-          subscribed: true, 
-          plan: currentProfile.plan,
-          searches_limit: currentProfile.searches_limit
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
+        logStep("Downgrading user with no Stripe customer", { 
+          previousPlan: currentProfile.plan 
         });
+        
+        await supabaseClient
+          .from('profiles')
+          .update({
+            plan: "free",
+            searches_limit: PLAN_LIMITS["free"],
+            searches_used: 0,
+            subscription_current_period_end: null,
+          })
+          .eq('id', userId);
       }
       
       return new Response(JSON.stringify({ 
@@ -270,23 +273,58 @@ serve(async (req) => {
     } else {
       logStep("No active subscription found in Stripe");
       
-      // IMPORTANT: Do NOT reset to free here!
-      // The webhook is the source of truth for plan changes.
-      // This function should only READ subscription status, not WRITE plan changes.
-      // If we reset here, it can cause race conditions during upgrades where:
-      // 1. Webhook sets the new plan
-      // 2. Old subscription is canceled
-      // 3. This function runs before Stripe fully propagates the new subscription
-      // 4. This function would incorrectly reset to free
-      
-      // Instead, trust the current profile state
-      plan = currentProfile?.plan || "free";
-      searchesLimit = currentProfile?.searches_limit || PLAN_LIMITS["free"];
-      
-      logStep("Keeping current profile state (webhook is source of truth)", {
-        plan,
-        searchesLimit
-      });
+      // If user has a paid plan but NO active subscription in Stripe, downgrade them.
+      // To avoid race conditions during upgrades, we check if there are ANY subscriptions
+      // (including incomplete/trialing) before downgrading.
+      if (currentProfile?.plan && currentProfile.plan !== "free") {
+        // Check for any non-canceled subscriptions (trialing, incomplete, past_due)
+        // to avoid race conditions during checkout
+        const allSubs = await stripe.subscriptions.list({
+          customer: customerId,
+          limit: 10,
+        });
+        
+        const hasAnySub = allSubs.data.some((s: Stripe.Subscription) => 
+          ["active", "trialing", "incomplete"].includes(s.status)
+        );
+        
+        if (!hasAnySub) {
+          // No active/trialing/incomplete subs - user should be on free
+          plan = "free";
+          searchesLimit = PLAN_LIMITS["free"];
+          
+          const { error: downgradeError } = await supabaseClient
+            .from('profiles')
+            .update({
+              plan: "free",
+              searches_limit: PLAN_LIMITS["free"],
+              searches_used: 0,
+              subscription_current_period_end: null,
+            })
+            .eq('id', userId);
+          
+          if (downgradeError) {
+            logStep("Error downgrading profile", { error: downgradeError.message });
+          } else {
+            logStep("Profile downgraded to free - no active subscription in Stripe", {
+              previousPlan: currentProfile.plan,
+              previousLimit: currentProfile.searches_limit,
+            });
+          }
+        } else {
+          // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
+          plan = currentProfile.plan;
+          searchesLimit = currentProfile.searches_limit;
+          logStep("Keeping current plan - found non-canceled subscription", {
+            plan,
+            statuses: allSubs.data.map((s: Stripe.Subscription) => s.status),
+          });
+        }
+      } else {
+        plan = "free";
+        searchesLimit = PLAN_LIMITS["free"];
+        logStep("User is already on free plan");
+      }
     }
 
     return new Response(JSON.stringify({
