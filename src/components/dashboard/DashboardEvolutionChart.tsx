@@ -68,7 +68,7 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
 
   if (chartData.length === 0) {
     return (
-      <Card className="dashboard-card flex flex-col rounded-xl">
+      <Card className="bg-card border-border/50 flex flex-col rounded-xl">
         <CardContent className="py-8 px-6 flex-1 flex flex-col items-center justify-center text-center space-y-2">
           <BarChart3 size={24} className="text-muted-foreground/30" />
           <p className="text-xs text-muted-foreground/50">Dados insuficientes para evolução</p>
@@ -78,7 +78,7 @@ export function DashboardEvolutionChart({ monthlyData }: DashboardEvolutionChart
   }
 
   return (
-    <Card className="dashboard-card flex flex-col rounded-xl">
+    <Card className="bg-card border-border/50 flex flex-col rounded-xl">
       <CardContent className="py-6 px-6 space-y-4 flex-1 flex flex-col">
         {/* Title */}
         <div className="flex items-center justify-between">
