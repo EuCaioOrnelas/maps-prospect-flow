@@ -107,7 +107,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
             ? `${conversasDiff > 0 ? '+' : ''}${conversasDiff} vs anterior`
             : undefined
         }
-        subtitle={`Taxa de ativação: ${activationRate.toFixed(1)}%`}
+        subtitle={`Taxa de conversas iniciadas: ${activationRate.toFixed(1)}%`}
         subtitleSize="text-xs"
       />
     </div>
