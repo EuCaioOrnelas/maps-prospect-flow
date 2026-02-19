@@ -26,9 +26,20 @@ const ForgotPassword = () => {
     setIsLoading(false);
 
     if (error) {
+      console.error("Reset password error:", error.message, error.status);
+      
+      // Supabase retorna erro de rate limit ou outros erros específicos
+      let errorMessage = "Não foi possível enviar o email. Tente novamente em alguns minutos.";
+      
+      if (error.message?.includes("rate") || error.message?.includes("limit") || error.status === 429) {
+        errorMessage = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+      } else if (error.message?.includes("not found") || error.message?.includes("not registered")) {
+        errorMessage = "Email não encontrado. Verifique se o endereço está correto.";
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível enviar o email. Verifique o endereço.",
+        description: errorMessage,
         variant: "destructive",
       });
       return;
