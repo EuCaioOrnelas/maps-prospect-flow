@@ -1008,6 +1008,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_assigned_plan: boolean
           avatar_url: string | null
           created_at: string
           device_fingerprint: string | null
@@ -1028,6 +1029,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_assigned_plan?: boolean
           avatar_url?: string | null
           created_at?: string
           device_fingerprint?: string | null
@@ -1048,6 +1050,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_assigned_plan?: boolean
           avatar_url?: string | null
           created_at?: string
           device_fingerprint?: string | null
