@@ -106,7 +106,7 @@ serve(async (req) => {
     // Get current profile to check existing searches
     const { data: currentProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan')
       .eq('id', userId)
       .single();
 
@@ -129,20 +129,27 @@ serve(async (req) => {
       logStep("No customer found in Stripe");
       
       // If user has a paid plan but no Stripe customer, downgrade them
+      // UNLESS the plan was admin-assigned
       if (currentProfile.plan && currentProfile.plan !== "free") {
-        logStep("Downgrading user with no Stripe customer", { 
-          previousPlan: currentProfile.plan 
-        });
-        
-        await supabaseClient
-          .from('profiles')
-          .update({
-            plan: "free",
-            searches_limit: PLAN_LIMITS["free"],
-            searches_used: 0,
-            subscription_current_period_end: null,
-          })
-          .eq('id', userId);
+        if (currentProfile.admin_assigned_plan) {
+          logStep("Skipping downgrade - admin assigned plan", { 
+            plan: currentProfile.plan 
+          });
+        } else {
+          logStep("Downgrading user with no Stripe customer", { 
+            previousPlan: currentProfile.plan 
+          });
+          
+          await supabaseClient
+            .from('profiles')
+            .update({
+              plan: "free",
+              searches_limit: PLAN_LIMITS["free"],
+              searches_used: 0,
+              subscription_current_period_end: null,
+            })
+            .eq('id', userId);
+        }
       }
       
       return new Response(JSON.stringify({ 
@@ -277,41 +284,49 @@ serve(async (req) => {
       // To avoid race conditions during upgrades, we check if there are ANY subscriptions
       // (including incomplete/trialing) before downgrading.
       if (currentProfile?.plan && currentProfile.plan !== "free") {
-        // Check for any non-canceled subscriptions (trialing, incomplete, past_due)
-        // to avoid race conditions during checkout
-        const allSubs = await stripe.subscriptions.list({
-          customer: customerId,
-          limit: 10,
-        });
-        
-        const hasAnySub = allSubs.data.some((s: Stripe.Subscription) => 
-          ["active", "trialing", "incomplete"].includes(s.status)
-        );
-        
-        if (!hasAnySub) {
-          // No active/trialing/incomplete subs - user should be on free
-          plan = "free";
-          searchesLimit = PLAN_LIMITS["free"];
-          
-          const { error: downgradeError } = await supabaseClient
-            .from('profiles')
-            .update({
-              plan: "free",
-              searches_limit: PLAN_LIMITS["free"],
-              searches_used: 0,
-              subscription_current_period_end: null,
-            })
-            .eq('id', userId);
-          
-          if (downgradeError) {
-            logStep("Error downgrading profile", { error: downgradeError.message });
-          } else {
-            logStep("Profile downgraded to free - no active subscription in Stripe", {
-              previousPlan: currentProfile.plan,
-              previousLimit: currentProfile.searches_limit,
-            });
-          }
+        // Skip downgrade for admin-assigned plans
+        if (currentProfile.admin_assigned_plan) {
+          logStep("Skipping downgrade - admin assigned plan", { 
+            plan: currentProfile.plan 
+          });
+          plan = currentProfile.plan;
+          searchesLimit = currentProfile.searches_limit;
         } else {
+          // Check for any non-canceled subscriptions (trialing, incomplete, past_due)
+          // to avoid race conditions during checkout
+          const allSubs = await stripe.subscriptions.list({
+            customer: customerId,
+            limit: 10,
+          });
+          
+          const hasAnySub = allSubs.data.some((s: Stripe.Subscription) => 
+            ["active", "trialing", "incomplete"].includes(s.status)
+          );
+          
+          if (!hasAnySub) {
+            // No active/trialing/incomplete subs - user should be on free
+            plan = "free";
+            searchesLimit = PLAN_LIMITS["free"];
+            
+            const { error: downgradeError } = await supabaseClient
+              .from('profiles')
+              .update({
+                plan: "free",
+                searches_limit: PLAN_LIMITS["free"],
+                searches_used: 0,
+                subscription_current_period_end: null,
+              })
+              .eq('id', userId);
+            
+            if (downgradeError) {
+              logStep("Error downgrading profile", { error: downgradeError.message });
+            } else {
+              logStep("Profile downgraded to free - no active subscription in Stripe", {
+                previousPlan: currentProfile.plan,
+                previousLimit: currentProfile.searches_limit,
+              });
+            }
+          } else {
           // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
           plan = currentProfile.plan;
           searchesLimit = currentProfile.searches_limit;
