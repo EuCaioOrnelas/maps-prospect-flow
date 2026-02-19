@@ -327,13 +327,14 @@ serve(async (req) => {
               });
             }
           } else {
-          // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
-          plan = currentProfile.plan;
-          searchesLimit = currentProfile.searches_limit;
-          logStep("Keeping current plan - found non-canceled subscription", {
-            plan,
-            statuses: allSubs.data.map((s: Stripe.Subscription) => s.status),
-          });
+            // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
+            plan = currentProfile.plan;
+            searchesLimit = currentProfile.searches_limit;
+            logStep("Keeping current plan - found non-canceled subscription", {
+              plan,
+              statuses: allSubs.data.map((s: Stripe.Subscription) => s.status),
+            });
+          }
         }
       } else {
         plan = "free";
