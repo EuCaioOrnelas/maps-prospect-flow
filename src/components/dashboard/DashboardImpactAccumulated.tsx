@@ -80,7 +80,7 @@ export function DashboardImpactAccumulated({
       </div>
 
       {/* Hero — Equivalência de Investimento em Mídia */}
-      <Card className="dashboard-card-hero overflow-hidden relative rounded-xl">
+      <Card className="bg-card border-border/50 overflow-hidden relative rounded-xl">
         <CardContent className="py-6 px-8 flex flex-col items-center text-center space-y-1">
           <p className="text-[10px] font-medium text-muted-foreground/50 tracking-[0.18em] uppercase">
             Investimento estimado via mídia paga
@@ -119,7 +119,7 @@ export function DashboardImpactAccumulated({
 
       {/* Secondary: Capacidade Operacional + Projeção Anual */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="dashboard-card rounded-xl">
+        <Card className="bg-card border-border/50 rounded-xl">
           <CardContent className="py-5 px-6 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
               <Briefcase size={18} className="text-muted-foreground" />
@@ -145,7 +145,7 @@ export function DashboardImpactAccumulated({
           </CardContent>
         </Card>
 
-        <Card className="dashboard-card rounded-xl">
+        <Card className="bg-card border-border/50 rounded-xl">
           <CardContent className="py-5 px-6 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
               <CalendarClock size={18} className="text-muted-foreground" />

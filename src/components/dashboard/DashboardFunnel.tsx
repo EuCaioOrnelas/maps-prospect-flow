@@ -88,7 +88,7 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
   ];
 
   return (
-    <Card className="dashboard-card rounded-xl">
+    <Card className="bg-card border-border/50 rounded-xl">
       <CardHeader className="pb-2 pt-5 px-6">
         <CardTitle className="text-sm font-semibold text-foreground">Funil de Performance</CardTitle>
       </CardHeader>

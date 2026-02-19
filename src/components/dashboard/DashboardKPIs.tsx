@@ -18,7 +18,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
   const hasRealChange = change !== 0;
 
   return (
-    <Card className="dashboard-card p-5 relative overflow-hidden rounded-xl">
+    <Card className="bg-card border-border/50 p-5 relative overflow-hidden rounded-xl">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground shrink-0">
           {icon}
