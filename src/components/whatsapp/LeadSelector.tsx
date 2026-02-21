@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
+import { CountryCodeSelect } from "@/components/crm/CountryCodeSelect";
 // Use centralized phone validation helper
 import { validateAndFormatPhone, isLandlinePhone } from '@/lib/phoneUtils';
 
@@ -67,6 +68,7 @@ export const LeadSelector = ({
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [importStats, setImportStats] = useState<{ valid: number; invalid: number; landlines: number } | null>(null);
+  const [defaultCountryCode, setDefaultCountryCode] = useState("55");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -197,7 +199,14 @@ export const LeadSelector = ({
             category: row['Categoria'] || row['categoria'] || row['Category'] || '',
             address: row['Endereço'] || row['endereco'] || row['Address'] || '',
             city: row['Cidade'] || row['cidade'] || row['City'] || '',
-            phone: String(phone).replace(/\D/g, ''),
+            phone: (() => {
+              const digits = String(phone).replace(/\D/g, '');
+              // If 10-11 digits without country code, prepend selected country code
+              if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
+                return defaultCountryCode + digits;
+              }
+              return digits;
+            })(),
             website: row['Site'] || row['site'] || row['Website'] || '',
             rating: row['Avaliação'] || row['avaliacao'] || row['Rating'] || 0,
             reviewCount: row['Nº Avaliações'] || row['reviews'] || 0,
@@ -343,11 +352,16 @@ export const LeadSelector = ({
       if (newSelected.has(h.id) && h.leads) {
         h.leads.forEach(lead => {
           if (lead.phone && !allLeads.some(l => l.phone === lead.phone)) {
+            // Normalize phone with selected country code
+            let digits = String(lead.phone).replace(/\D/g, '');
+            if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
+              digits = defaultCountryCode + digits;
+            }
             // Check if it's a landline
-            if (isLandlinePhone(lead.phone)) {
+            if (isLandlinePhone(digits)) {
               totalLandlines++;
             } else {
-              allLeads.push(lead);
+              allLeads.push({ ...lead, phone: digits });
             }
           }
         });
@@ -414,6 +428,20 @@ export const LeadSelector = ({
         <p className="text-muted-foreground">
           Escolha os contatos que receberão as mensagens
         </p>
+      </div>
+
+      {/* Country Code Selector */}
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-muted/30 mb-4">
+        <div className="flex-1">
+          <p className="text-sm font-medium">Código do país dos leads</p>
+          <p className="text-xs text-muted-foreground">
+            Aplicado a números sem código de país (10-11 dígitos)
+          </p>
+        </div>
+        <CountryCodeSelect 
+          value={defaultCountryCode} 
+          onValueChange={setDefaultCountryCode} 
+        />
       </div>
 
       {/* Source Selection */}
