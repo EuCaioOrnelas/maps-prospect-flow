@@ -90,27 +90,12 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
 
               {/* Navigation links */}
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                {isFreePlan ? (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full justify-start gap-2"
-                    onClick={() => {
-                      setIsOpen(false);
-                      onWhatsAppClick?.();
-                    }}
-                  >
+                <Link to="/whatsapp" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                     <Megaphone size={16} />
                     Disparos em Massa
                   </Button>
-                ) : (
-                  <Link to="/whatsapp" onClick={() => setIsOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                      <Megaphone size={16} />
-                      Disparos em Massa
-                    </Button>
-                  </Link>
-                )}
+                </Link>
 
                 <Link to="/crm" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
