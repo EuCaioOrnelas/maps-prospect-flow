@@ -243,8 +243,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <SidebarNavItem
                 title="Disparos"
                 icon={Megaphone}
-                url={isFreePlan ? undefined : "/whatsapp"}
-                onClick={isFreePlan ? onWhatsAppClick : undefined}
+                url="/whatsapp"
                 isActive={currentPath === "/whatsapp"}
                 isExpanded={isExpanded}
                 tooltip="Disparos"
