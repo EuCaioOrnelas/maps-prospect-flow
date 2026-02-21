@@ -1133,6 +1133,7 @@ const WhatsAppCampaign = () => {
                   selectedLeads={selectedLeads}
                   onLeadsChange={setSelectedLeads}
                   onNext={() => setStep("messages")}
+                  onCancel={handleNewCampaign}
                   canProceed={canProceedToMessages}
                   dailyLimit={dailyLimit}
                   usedToday={usedToday}
