@@ -69,6 +69,7 @@ export const LeadSelector = ({
   const [isDragging, setIsDragging] = useState(false);
   const [importStats, setImportStats] = useState<{ valid: number; invalid: number; landlines: number } | null>(null);
   const [defaultCountryCode, setDefaultCountryCode] = useState("55");
+  const prevCountryCodeRef = useRef(defaultCountryCode);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -79,6 +80,35 @@ export const LeadSelector = ({
 
   // Get phone validation status for display
   const getPhoneStatus = (phone: string) => validateAndFormatPhone(phone);
+
+  // Re-process leads when country code changes
+  useEffect(() => {
+    const prevCode = prevCountryCodeRef.current;
+    if (prevCode === defaultCountryCode || selectedLeads.length === 0) {
+      prevCountryCodeRef.current = defaultCountryCode;
+      return;
+    }
+    
+    const reprocessed = selectedLeads.map(lead => {
+      let digits = String(lead.phone).replace(/\D/g, '');
+      // Strip previous country code if it was prepended
+      if (digits.startsWith(prevCode)) {
+        const withoutCode = digits.slice(prevCode.length);
+        // Only strip if the remaining part looks like a local number (10-11 digits)
+        if (withoutCode.length >= 10 && withoutCode.length <= 11) {
+          digits = withoutCode;
+        }
+      }
+      // Apply new country code to local numbers
+      if (digits.length >= 10 && digits.length <= 11) {
+        digits = defaultCountryCode + digits;
+      }
+      return { ...lead, phone: digits };
+    });
+    
+    prevCountryCodeRef.current = defaultCountryCode;
+    onLeadsChange(reprocessed);
+  }, [defaultCountryCode]);
 
   useEffect(() => {
     if (source === 'history') {
