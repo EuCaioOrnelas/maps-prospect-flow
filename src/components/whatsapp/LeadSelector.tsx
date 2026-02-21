@@ -764,7 +764,7 @@ export const LeadSelector = ({
       {/* Navigation */}
       {source !== 'history' && (
         <div className="flex justify-between mt-6 pt-6 border-t border-border">
-          {onCancel && (
+          {onCancel && selectedLeads.length > 0 ? (
             <Button 
               variant="ghost" 
               onClick={onCancel}
@@ -773,8 +773,7 @@ export const LeadSelector = ({
               <X size={16} />
               Cancelar
             </Button>
-          )}
-          {!onCancel && <div />}
+          ) : <div />}
           <Button 
             onClick={onNext} 
             disabled={!canProceed || willExceed} 
