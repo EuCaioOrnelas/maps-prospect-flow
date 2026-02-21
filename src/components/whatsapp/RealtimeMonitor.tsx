@@ -367,9 +367,8 @@ export const RealtimeMonitor = ({
                 </div>
               </div>
 
-              {/* Show resume button for manually paused campaigns (and non-limit paused) */}
-              {!isPausedByLimit && (
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                {!isPausedByLimit && (
                   <Button 
                     variant="default" 
                     size="sm"
@@ -379,17 +378,17 @@ export const RealtimeMonitor = ({
                     <Play size={14} />
                     Retomar
                   </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => onStop(campaign)}
-                    className="gap-1"
-                  >
-                    <Square size={14} />
-                    Parar
-                  </Button>
-                </div>
-              )}
+                )}
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => onStop(campaign)}
+                  className="gap-1"
+                >
+                  <Square size={14} />
+                  {isPausedByLimit ? 'Cancelar' : 'Parar'}
+                </Button>
+              </div>
             </div>
 
             {/* Progress Bar */}
