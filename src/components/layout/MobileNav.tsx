@@ -93,7 +93,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 <Link to="/whatsapp" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                     <Megaphone size={16} />
-                    Disparos em Massa
+                    Campanhas
                   </Button>
                 </Link>
 
