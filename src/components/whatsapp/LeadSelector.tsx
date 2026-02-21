@@ -40,6 +40,7 @@ interface LeadSelectorProps {
   selectedLeads: Lead[];
   onLeadsChange: (leads: Lead[]) => void;
   onNext: () => void;
+  onCancel?: () => void;
   canProceed: boolean;
   dailyLimit: number;
   usedToday: number;
@@ -53,6 +54,7 @@ export const LeadSelector = ({
   selectedLeads, 
   onLeadsChange, 
   onNext, 
+  onCancel,
   canProceed,
   dailyLimit,
   usedToday,
@@ -761,7 +763,18 @@ export const LeadSelector = ({
 
       {/* Navigation */}
       {source !== 'history' && (
-        <div className="flex justify-end mt-6 pt-6 border-t border-border">
+        <div className="flex justify-between mt-6 pt-6 border-t border-border">
+          {onCancel && (
+            <Button 
+              variant="ghost" 
+              onClick={onCancel}
+              className="gap-2 text-muted-foreground hover:text-destructive"
+            >
+              <X size={16} />
+              Cancelar
+            </Button>
+          )}
+          {!onCancel && <div />}
           <Button 
             onClick={onNext} 
             disabled={!canProceed || willExceed} 
