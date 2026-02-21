@@ -1,10 +1,20 @@
+import * as React from 'react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 const countryCodes = [
   // América do Sul
@@ -19,7 +29,7 @@ const countryCodes = [
   { code: '598', name: 'Uruguai', flag: '🇺🇾' },
   { code: '591', name: 'Bolívia', flag: '🇧🇴' },
   // América do Norte e Central
-  { code: '1', name: 'EUA/Canadá', flag: '🇺🇸' },
+  { code: '1', name: 'EUA / Canadá', flag: '🇺🇸' },
   { code: '52', name: 'México', flag: '🇲🇽' },
   { code: '507', name: 'Panamá', flag: '🇵🇦' },
   { code: '506', name: 'Costa Rica', flag: '🇨🇷' },
@@ -63,21 +73,62 @@ interface CountryCodeSelectProps {
 }
 
 export const CountryCodeSelect = ({ value, onValueChange }: CountryCodeSelectProps) => {
+  const [open, setOpen] = React.useState(false);
+  const selected = countryCodes.find((c) => c.code === value);
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-[110px] h-11">
-        <SelectValue placeholder="País" />
-      </SelectTrigger>
-      <SelectContent>
-        {countryCodes.map((country) => (
-          <SelectItem key={country.code} value={country.code}>
-            <span className="flex items-center gap-2">
-              <span>{country.flag}</span>
-              <span>+{country.code}</span>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] h-11 justify-between font-normal"
+        >
+          {selected ? (
+            <span className="flex items-center gap-2 truncate">
+              <span>{selected.flag}</span>
+              <span>{selected.name}</span>
+              <span className="text-muted-foreground">+{selected.code}</span>
             </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          ) : (
+            'Selecione o país'
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[260px] p-0 z-50" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar país..." />
+          <CommandList>
+            <CommandEmpty>Nenhum país encontrado.</CommandEmpty>
+            <CommandGroup>
+              {countryCodes.map((country) => (
+                <CommandItem
+                  key={country.code}
+                  value={`${country.name} ${country.code}`}
+                  onSelect={() => {
+                    onValueChange(country.code);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === country.code ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  <span className="flex items-center gap-2">
+                    <span>{country.flag}</span>
+                    <span>{country.name}</span>
+                    <span className="text-muted-foreground">+{country.code}</span>
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
