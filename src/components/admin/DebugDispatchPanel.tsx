@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CountryCodeSelect } from "@/components/crm/CountryCodeSelect";
 
 interface DebugStep {
   id: string;
@@ -92,6 +93,7 @@ const categoryBadge: Record<string, { color: string; label: string }> = {
 export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
   const [selectedNumberId, setSelectedNumberId] = useState(numbers[0]?.id || '');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('55');
   const [message, setMessage] = useState('Olá! Mensagem de teste do sistema de debug. 🔍');
   const [deepDebug, setDeepDebug] = useState(false);
   const [dryRun, setDryRun] = useState(true);
@@ -132,8 +134,12 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
     try {
       console.log('[DebugDispatch] Chamando via supabase.functions.invoke...');
 
+      const fullPhone = phone.replace(/\D/g, '').length <= 11 
+        ? `${countryCode}${phone.replace(/\D/g, '')}` 
+        : phone.replace(/\D/g, '');
+
       const { data, error: invokeError } = await supabase.functions.invoke('debug-dispatch-test', {
-        body: { numberId: selectedNumberId, phone, message, deepDebug, dryRun },
+        body: { numberId: selectedNumberId, phone: fullPhone, message, deepDebug, dryRun },
       });
 
       console.log('[DebugDispatch] Response:', { data, error: invokeError });
@@ -214,13 +220,20 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
 
             <div className="space-y-2">
               <Label>Telefone Destino</Label>
-              <Input
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="5511999999999"
-              />
+              <div className="flex gap-2">
+                <CountryCodeSelect value={countryCode} onValueChange={setCountryCode} />
+                <Input
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="11999999999"
+                  className="flex-1"
+                />
             </div>
           </div>
+              <p className="text-xs text-muted-foreground">
+                Números com até 11 dígitos recebem o DDI automaticamente
+              </p>
+            </div>
 
           <div className="space-y-2">
             <Label>Mensagem de Teste</Label>
