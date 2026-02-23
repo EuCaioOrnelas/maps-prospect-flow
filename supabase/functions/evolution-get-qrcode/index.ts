@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,59 +45,75 @@ serve(async (req) => {
 
     // Format phone number if provided
     const cleanNumber = phoneNumber ? phoneNumber.replace(/\D/g, '') : null;
-
-    // Ensure number has country code (Brazil = 55)
     let formattedNumber = cleanNumber;
     if (cleanNumber && !cleanNumber.startsWith('55')) {
       formattedNumber = '55' + cleanNumber;
     }
 
-    console.log(`Requesting QR/pairing for instance: ${instanceName}, number: ${formattedNumber || 'not provided'}`);
+    // Retry connect endpoint with delays - the Evolution API needs time to generate QR
+    const MAX_RETRIES = 5;
+    const RETRY_DELAYS = [0, 3000, 3000, 4000, 5000]; // first call immediate, then wait
+    
+    let qrcode: string | null = null;
+    let pairingCode: string | null = null;
 
-    // First, try to get QR code (and pairing code if number provided)
-    // Evolution API v2 requires the number parameter in the query string
-    let connectUrl = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
-    if (formattedNumber) {
-      connectUrl += `?number=${formattedNumber}`;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (RETRY_DELAYS[attempt] > 0) {
+        console.log(`Waiting ${RETRY_DELAYS[attempt]}ms before attempt ${attempt + 1}...`);
+        await sleep(RETRY_DELAYS[attempt]);
+      }
+
+      let connectUrl = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
+      if (formattedNumber) {
+        connectUrl += `?number=${formattedNumber}`;
+      }
+
+      console.log(`Connect attempt ${attempt + 1}/${MAX_RETRIES}: GET ${connectUrl}`);
+
+      const qrResponse = await fetch(connectUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!qrResponse.ok) {
+        const errorText = await qrResponse.text();
+        console.error(`Connect attempt ${attempt + 1} error (${qrResponse.status}):`, errorText);
+        continue;
+      }
+
+      const qrData = await qrResponse.json();
+      console.log(`Connect attempt ${attempt + 1} response:`, JSON.stringify(qrData).substring(0, 500));
+
+      // Extract pairing code
+      if (qrData.pairingCode && qrData.pairingCode !== null) {
+        pairingCode = String(qrData.pairingCode);
+        console.log('Got pairing code:', pairingCode);
+      }
+
+      // Extract QR code base64 - try ALL known response formats
+      const extractedQr = 
+        qrData.base64 ||
+        qrData.qrcode?.base64 ||
+        qrData.code?.base64 ||
+        qrData.code ||
+        (typeof qrData.qrcode === 'string' && qrData.qrcode.length > 50 ? qrData.qrcode : null) ||
+        null;
+
+      if (extractedQr) {
+        qrcode = extractedQr;
+        console.log(`Got QR code on attempt ${attempt + 1}! Length: ${String(qrcode).length}`);
+        break;
+      }
+
+      // Check if we got count > 0 but no base64 (QR was generated but not returned)
+      const count = qrData.count ?? qrData.qrcode?.count;
+      console.log(`Attempt ${attempt + 1}: no QR found. count=${count}`);
     }
 
-    const qrResponse = await fetch(connectUrl, {
-      method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!qrResponse.ok) {
-      const errorText = await qrResponse.text();
-      console.error('Evolution API connect error:', errorText);
-      throw new Error(`Failed to get QR code: ${errorText}`);
-    }
-
-    const qrData = await qrResponse.json();
-    console.log('Connect response keys:', Object.keys(qrData));
-    console.log('Connect response full:', JSON.stringify(qrData).substring(0, 1000));
-    console.log('pairingCode value:', qrData.pairingCode);
-
-    // The Evolution API should return pairingCode when number is provided
-    let pairingCode = null;
-    if (qrData.pairingCode && qrData.pairingCode !== null) {
-      pairingCode = String(qrData.pairingCode);
-      console.log('Got pairing code:', pairingCode);
-    } else if (formattedNumber) {
-      console.warn('No pairing code returned despite number being provided. Number format:', formattedNumber);
-    }
-
-    // Extract QR code base64 - try all known response formats
-    const qrcode = qrData.base64 || 
-                   qrData.qrcode?.base64 || 
-                   qrData.code?.base64 ||
-                   qrData.code ||
-                   (typeof qrData.qrcode === 'string' ? qrData.qrcode : null) ||
-                   null;
-
-    console.log('Final result - QR Code exists:', !!qrcode, 'QR Code length:', qrcode ? String(qrcode).length : 0, 'Pairing Code:', pairingCode);
+    console.log('Final result - QR Code exists:', !!qrcode, 'QR length:', qrcode ? String(qrcode).length : 0, 'Pairing Code:', pairingCode);
 
     return new Response(JSON.stringify({
       success: true,
