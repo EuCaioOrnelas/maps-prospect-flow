@@ -374,6 +374,8 @@ export const NumbersManager = ({
 
     try {
       // Create instance in Evolution API
+      console.log('[QR-DEBUG] Starting createInstanceAndGetQR', { numberId, instanceName });
+      
       const createResponse = await supabase.functions.invoke('evolution-create-instance', {
         body: { 
           numberId,
@@ -381,14 +383,22 @@ export const NumbersManager = ({
         },
       });
 
+      console.log('[QR-DEBUG] create-instance response:', {
+        error: createResponse.error?.message || null,
+        dataKeys: createResponse.data ? Object.keys(createResponse.data) : null,
+        hasQrcode: !!createResponse.data?.qrcode,
+        qrcodeType: typeof createResponse.data?.qrcode,
+        qrcodeLength: createResponse.data?.qrcode ? String(createResponse.data.qrcode).length : 0,
+        rawData: JSON.stringify(createResponse.data)?.substring(0, 500),
+      });
+
       if (createResponse.error) {
         throw new Error(createResponse.error.message);
       }
 
-      console.log('Instance created:', createResponse.data);
-
       // If QR code came with instance creation
       if (createResponse.data?.qrcode) {
+        console.log('[QR-DEBUG] Got QR from create-instance!');
         setQrCode(createResponse.data.qrcode);
         setQrLoading(false);
         return;
@@ -398,7 +408,7 @@ export const NumbersManager = ({
       let qrCodeObtained = false;
       for (let attempt = 0; attempt < 3; attempt++) {
         if (attempt > 0) {
-          console.log(`QR code attempt ${attempt + 1}/3, waiting 2s...`);
+          console.log(`[QR-DEBUG] QR code attempt ${attempt + 1}/3, waiting 2s...`);
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
@@ -406,18 +416,28 @@ export const NumbersManager = ({
           body: { instanceName },
         });
 
+        console.log(`[QR-DEBUG] get-qrcode attempt ${attempt + 1}:`, {
+          error: qrResponse.error?.message || null,
+          dataKeys: qrResponse.data ? Object.keys(qrResponse.data) : null,
+          hasQrcode: !!qrResponse.data?.qrcode,
+          qrcodeType: typeof qrResponse.data?.qrcode,
+          qrcodeLength: qrResponse.data?.qrcode ? String(qrResponse.data.qrcode).length : 0,
+          rawData: JSON.stringify(qrResponse.data)?.substring(0, 500),
+        });
+
         if (qrResponse.error) {
-          console.warn(`QR attempt ${attempt + 1} error:`, qrResponse.error.message);
+          console.warn(`[QR-DEBUG] QR attempt ${attempt + 1} error:`, qrResponse.error.message);
           continue;
         }
 
         if (qrResponse.data?.qrcode) {
+          console.log('[QR-DEBUG] Got QR from get-qrcode!');
           setQrCode(qrResponse.data.qrcode);
           qrCodeObtained = true;
           break;
         }
 
-        console.warn(`QR attempt ${attempt + 1}: no qrcode in response`, qrResponse.data);
+        console.warn(`[QR-DEBUG] QR attempt ${attempt + 1}: no qrcode in response`);
       }
 
       if (!qrCodeObtained) {
