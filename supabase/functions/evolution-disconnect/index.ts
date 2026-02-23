@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,14 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured');
-    }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -37,7 +32,12 @@ serve(async (req) => {
 
     const { instanceName, numberId, deleteInstance = false } = await req.json();
 
-    console.log(`Disconnecting instance: ${instanceName}, deleteInstance: ${deleteInstance}`);
+    // Get the correct Evolution API based on the number's api_tier
+    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
+
+    console.log(`Disconnecting instance: ${instanceName} on ${evoCredentials.tier} API, deleteInstance: ${deleteInstance}`);
 
     // Always logout from WhatsApp session
     try {
@@ -52,7 +52,7 @@ serve(async (req) => {
       console.error('Error during logout:', e);
     }
 
-    // Only delete the Evolution instance if explicitly requested (e.g. when removing the number entirely)
+    // Only delete the Evolution instance if explicitly requested
     if (deleteInstance) {
       try {
         const deleteResponse = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
@@ -66,7 +66,6 @@ serve(async (req) => {
         console.error('Error deleting instance:', e);
       }
 
-      // Clear instance_name since instance was deleted
       const { error: updateError } = await supabase
         .from('whatsapp_numbers')
         .update({ 
@@ -82,7 +81,6 @@ serve(async (req) => {
         console.error('Error updating number status:', updateError);
       }
     } else {
-      // Keep instance_name so we can reuse the same instance on reconnect
       const { error: updateError } = await supabase
         .from('whatsapp_numbers')
         .update({ 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,14 +51,8 @@ serve(async (req) => {
   }
 
   try {
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured');
-    }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
@@ -98,13 +93,18 @@ serve(async (req) => {
 
     const { instanceName, phoneNumber, message, numberId } = await req.json();
 
+    // Get the correct Evolution API based on the number's api_tier
+    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
+
     // Format phone number (remove non-digits, add country code if needed)
     let formattedPhone = phoneNumber.replace(/\D/g, '');
     if (!formattedPhone.startsWith('55')) {
       formattedPhone = '55' + formattedPhone;
     }
 
-    console.log(`Sending message via ${instanceName} to ${formattedPhone}`);
+    console.log(`Sending message via ${instanceName} to ${formattedPhone} on ${evoCredentials.tier} API`);
 
     // Send message via Evolution API
     const sendResponse = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
