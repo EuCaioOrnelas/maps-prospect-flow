@@ -316,10 +316,19 @@ serve(async (req) => {
       }
     }
 
+    // Extract QR code from various possible response formats
+    const qrcode = instanceData?.qrcode?.base64 || 
+                   instanceData?.base64 ||
+                   instanceData?.qrcode?.pairingCode ||
+                   (typeof instanceData?.qrcode === 'string' ? instanceData.qrcode : null) ||
+                   null;
+
+    console.log('Extracted QR code exists:', !!qrcode, 'from instance data keys:', instanceData ? Object.keys(instanceData) : 'null');
+
     return new Response(JSON.stringify({
       success: true,
       instance: instanceData,
-      qrcode: instanceData.qrcode?.base64 || null,
+      qrcode: qrcode,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

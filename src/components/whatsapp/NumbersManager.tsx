@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -393,19 +394,34 @@ export const NumbersManager = ({
         return;
       }
 
-      // Get QR code
-      const qrResponse = await supabase.functions.invoke('evolution-get-qrcode', {
-        body: { instanceName },
-      });
+      // Get QR code - retry up to 3 times with delay since instance may need time to initialize
+      let qrCodeObtained = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          console.log(`QR code attempt ${attempt + 1}/3, waiting 2s...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
-      if (qrResponse.error) {
-        throw new Error(qrResponse.error.message);
+        const qrResponse = await supabase.functions.invoke('evolution-get-qrcode', {
+          body: { instanceName },
+        });
+
+        if (qrResponse.error) {
+          console.warn(`QR attempt ${attempt + 1} error:`, qrResponse.error.message);
+          continue;
+        }
+
+        if (qrResponse.data?.qrcode) {
+          setQrCode(qrResponse.data.qrcode);
+          qrCodeObtained = true;
+          break;
+        }
+
+        console.warn(`QR attempt ${attempt + 1}: no qrcode in response`, qrResponse.data);
       }
 
-      if (qrResponse.data?.qrcode) {
-        setQrCode(qrResponse.data.qrcode);
-      } else {
-        throw new Error('QR Code não disponível');
+      if (!qrCodeObtained) {
+        throw new Error('QR Code não disponível após múltiplas tentativas. Tente novamente.');
       }
 
     } catch (err) {
@@ -1063,6 +1079,9 @@ export const NumbersManager = ({
               <Smartphone size={20} />
               Conectar WhatsApp
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Escaneie o QR Code para conectar seu WhatsApp
+            </DialogDescription>
           </DialogHeader>
           
           {/* Success Animation Overlay */}
