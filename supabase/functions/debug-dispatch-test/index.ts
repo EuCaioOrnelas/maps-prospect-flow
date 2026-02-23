@@ -310,22 +310,38 @@ serve(async (req) => {
     console.log('[debug-dispatch-test] Auth OK, userId:', userId);
 
     const body = await req.json();
-    const { numberId, phone, message, deepDebug, dryRun } = body;
+    const { numberId, phone, message, deepDebug, dryRun, apiTier } = body;
 
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    // Resolve credentials based on apiTier (free or paid)
+    const selectedTier = apiTier === 'paid' ? 'paid' : 'free';
+    let EVOLUTION_API_URL: string | undefined;
+    let EVOLUTION_API_KEY: string | undefined;
+
+    if (selectedTier === 'paid') {
+      EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL_PAID');
+      EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY_PAID');
+      if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+        console.warn('[debug-dispatch-test] PAID credentials not configured, falling back to free');
+        EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+        EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+      }
+    } else {
+      EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+      EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    }
 
     // ── Step 1: Validate config (igual ao campaign-processor) ──
-    await runStep('config_check', '1. Verificação de Configuração', async () => {
+    await runStep('config_check', `1. Verificação de Configuração (${selectedTier.toUpperCase()})`, async () => {
       const missing: string[] = [];
-      if (!EVOLUTION_API_URL) missing.push('EVOLUTION_API_URL');
-      if (!EVOLUTION_API_KEY) missing.push('EVOLUTION_API_KEY');
+      if (!EVOLUTION_API_URL) missing.push(selectedTier === 'paid' ? 'EVOLUTION_API_URL_PAID' : 'EVOLUTION_API_URL');
+      if (!EVOLUTION_API_KEY) missing.push(selectedTier === 'paid' ? 'EVOLUTION_API_KEY_PAID' : 'EVOLUTION_API_KEY');
       if (!SUPABASE_URL) missing.push('SUPABASE_URL');
       if (!SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
       if (missing.length > 0) throw new Error(`Variáveis ausentes: ${missing.join(', ')}`);
 
       return {
         details: {
+          api_tier: selectedTier,
           evolution_url: EVOLUTION_API_URL,
           evolution_key_preview: EVOLUTION_API_KEY ? `${EVOLUTION_API_KEY.slice(0, 6)}...` : 'N/A',
           supabase_url: SUPABASE_URL,
