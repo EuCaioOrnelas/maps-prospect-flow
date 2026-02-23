@@ -95,6 +95,7 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('55');
   const [message, setMessage] = useState('Olá! Mensagem de teste do sistema de debug. 🔍');
+  const [apiTier, setApiTier] = useState<'free' | 'paid'>('free');
   const [deepDebug, setDeepDebug] = useState(false);
   const [dryRun, setDryRun] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
@@ -139,7 +140,7 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
         : phone.replace(/\D/g, '');
 
       const { data, error: invokeError } = await supabase.functions.invoke('debug-dispatch-test', {
-        body: { numberId: selectedNumberId, phone: fullPhone, message, deepDebug, dryRun },
+        body: { numberId: selectedNumberId, phone: fullPhone, message, deepDebug, dryRun, apiTier },
       });
 
       console.log('[DebugDispatch] Response:', { data, error: invokeError });
@@ -243,6 +244,23 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
               rows={2}
               className="resize-none"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>VPS / API Tier</Label>
+            <Select value={apiTier} onValueChange={(v) => setApiTier(v as 'free' | 'paid')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">
+                  🟢 Free (Teste) — EVOLUTION_API_URL
+                </SelectItem>
+                <SelectItem value="paid">
+                  🔵 Paid (Produção) — EVOLUTION_API_URL_PAID
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
