@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getEvolutionCredentials } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -650,6 +651,7 @@ Deno.serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  // Default Evolution API credentials (used for connection checks on start action)
   const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL')!;
   const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')!;
 
@@ -687,6 +689,11 @@ Deno.serve(async (req) => {
         .eq('id', campaign.whatsapp_number_id)
         .single();
 
+      // Resolve Evolution API credentials based on number's api_tier
+      const evoCredentials = getEvolutionCredentials(numberData?.api_tier);
+      const startEvoUrl = evoCredentials.url;
+      const startEvoKey = evoCredentials.apiKey;
+
       if (!numberData?.instance_name) {
         await supabase.from('whatsapp_campaigns').update({
           status: 'failed',
@@ -700,8 +707,8 @@ Deno.serve(async (req) => {
       }
 
       const isConnected = await checkInstanceConnection(
-        EVOLUTION_API_URL,
-        EVOLUTION_API_KEY,
+        startEvoUrl,
+        startEvoKey,
         numberData.instance_name
       );
 
@@ -843,10 +850,13 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Resolve Evolution API credentials based on number's api_tier
+        const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
+
         const result = await processSingleMessage(
           supabase,
-          EVOLUTION_API_URL,
-          EVOLUTION_API_KEY,
+          campaignEvoCredentials.url,
+          campaignEvoCredentials.apiKey,
           campaign,
           numberData
         );
