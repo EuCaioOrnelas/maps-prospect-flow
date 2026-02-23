@@ -73,11 +73,10 @@ serve(async (req) => {
 
     const qrData = await qrResponse.json();
     console.log('Connect response keys:', Object.keys(qrData));
-    console.log('Connect response (truncated):', JSON.stringify(qrData).substring(0, 500));
+    console.log('Connect response full:', JSON.stringify(qrData).substring(0, 1000));
     console.log('pairingCode value:', qrData.pairingCode);
 
     // The Evolution API should return pairingCode when number is provided
-    // If it's still null, the number format might be wrong or the feature isn't enabled
     let pairingCode = null;
     if (qrData.pairingCode && qrData.pairingCode !== null) {
       pairingCode = String(qrData.pairingCode);
@@ -86,14 +85,15 @@ serve(async (req) => {
       console.warn('No pairing code returned despite number being provided. Number format:', formattedNumber);
     }
 
-    // Extract QR code base64
+    // Extract QR code base64 - try all known response formats
     const qrcode = qrData.base64 || 
                    qrData.qrcode?.base64 || 
                    qrData.code?.base64 ||
+                   qrData.code ||
                    (typeof qrData.qrcode === 'string' ? qrData.qrcode : null) ||
                    null;
 
-    console.log('Final result - QR Code exists:', !!qrcode, 'Pairing Code:', pairingCode);
+    console.log('Final result - QR Code exists:', !!qrcode, 'QR Code length:', qrcode ? String(qrcode).length : 0, 'Pairing Code:', pairingCode);
 
     return new Response(JSON.stringify({
       success: true,
