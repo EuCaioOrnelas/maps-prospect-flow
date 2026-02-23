@@ -1,6 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
+// --- Evolution API credentials helper (inlined) ---
+interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
+const PAID_PLANS = ['start', 'growth', 'scale'];
+function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
+  const normalized = (tierOrPlan || 'free').toLowerCase();
+  if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
+    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+  }
+  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
+  return { url, apiKey, tier: 'free' };
+}
+async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
+  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
+  return getEvolutionCredentials(data?.plan || 'free');
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,13 +40,6 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Evolution API not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Get auth token
@@ -52,6 +61,11 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Get Evolution API credentials
+    const evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
     const { instanceName, groupJid } = await req.json();
 
