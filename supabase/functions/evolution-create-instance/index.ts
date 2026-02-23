@@ -127,7 +127,7 @@ serve(async (req) => {
     // If instance doesn't exist, create it
     // Prepare webhook URL for inclusion in create payload
     const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
-    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATED", "MESSAGES_EDITED", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
+    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
 
     if (!instanceExists) {
       // Include webhook config directly in create payload - many Evolution versions support this

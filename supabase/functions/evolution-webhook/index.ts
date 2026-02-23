@@ -1841,10 +1841,10 @@ REGRAS OBRIGATÓRIAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
-          if (isConnected && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+          if (state === 'open' && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
             console.log(`🔄 Auto-configuring webhook for newly connected instance: ${instanceName}`);
             const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
-            const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
+            const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
             
             const webhookFormats = [
               { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
