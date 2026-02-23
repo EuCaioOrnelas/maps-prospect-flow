@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getEvolutionCredentials } from '../_shared/evolution-config.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -563,6 +564,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    // Default Evolution API credentials (fallback)
     const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!
     
@@ -621,12 +623,13 @@ Deno.serve(async (req) => {
     const { data: sessions, error: sessionsError } = await supabase
       .from('warming_sessions')
       .select(`
-        *,
+      *,
         whatsapp_numbers!inner(
           id,
           instance_name,
           phone_number,
-          is_connected
+          is_connected,
+          api_tier
         )
       `)
       .eq('status', 'active')
@@ -654,12 +657,12 @@ Deno.serve(async (req) => {
     const { data: pendingResponses } = await supabase
       .from('warming_interactions')
       .select(`
-        *,
+      *,
         warming_sessions!inner(
           id,
           user_id,
           whatsapp_number_id,
-          whatsapp_numbers!inner(instance_name, is_connected)
+          whatsapp_numbers!inner(instance_name, is_connected, api_tier)
         )
       `)
       .eq('status', 'pending_response')
@@ -674,14 +677,17 @@ Deno.serve(async (req) => {
         
         const instanceName = interaction.warming_sessions.whatsapp_numbers.instance_name
         
+        // Resolve Evolution API credentials based on number's api_tier
+        const followUpEvoCredentials = getEvolutionCredentials(interaction.warming_sessions.whatsapp_numbers.api_tier)
+        
         console.log(`Sending follow-up to ${interaction.lead_phone}: "${interaction.last_message_sent}"`)
         
         const sendResult = await sendMessage(
           instanceName,
           interaction.lead_phone,
           interaction.last_message_sent,
-          evolutionApiUrl,
-          evolutionApiKey
+          followUpEvoCredentials.url,
+          followUpEvoCredentials.apiKey
         )
         
         if (sendResult.success) {
@@ -710,6 +716,11 @@ Deno.serve(async (req) => {
     for (const session of sessions || []) {
       try {
         console.log(`\n--- Processing session ${session.id} ---`)
+        
+        // Resolve Evolution API credentials based on number's api_tier
+        const sessionEvoCredentials = getEvolutionCredentials(session.whatsapp_numbers.api_tier)
+        const sessionEvoUrl = sessionEvoCredentials.url
+        const sessionEvoKey = sessionEvoCredentials.apiKey
         
         // Check if number is connected - PAUSE if disconnected instead of just skipping
         if (!session.whatsapp_numbers.is_connected || !session.whatsapp_numbers.instance_name) {
@@ -974,8 +985,8 @@ Deno.serve(async (req) => {
           const validation = await validateWhatsAppNumber(
             session.whatsapp_numbers.instance_name,
             candidate.phone,
-            evolutionApiUrl,
-            evolutionApiKey
+            sessionEvoUrl,
+            sessionEvoKey
           )
           
           if (validation.exists) {
@@ -1024,8 +1035,8 @@ Deno.serve(async (req) => {
           session.whatsapp_numbers.instance_name,
           validatedPhone,
           message,
-          evolutionApiUrl,
-          evolutionApiKey
+          sessionEvoUrl,
+          sessionEvoKey
         )
 
         if (sendResult.messageId === 'BLOCKED') {

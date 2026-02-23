@@ -396,6 +396,15 @@ serve(async (req) => {
                 // Track purchase for landing page analytics
                 const amount = PLAN_PRICES[plan] || 0;
                 await trackPurchase(supabaseClient, profile.id, plan, amount);
+
+                // If upgrading from free to paid, cleanup all free tier instances
+                if (transitionType === "upgrade" && (profile.plan === "free" || !profile.plan)) {
+                  logStep("Triggering free tier cleanup on upgrade", { 
+                    previousPlan: profile.plan, 
+                    newPlan: plan 
+                  });
+                  await cleanupFreeInstances(supabaseClient, profile.id, customerEmail);
+                }
               }
 
               // Cancel any OTHER active subscriptions for this customer (upgrade scenario)
