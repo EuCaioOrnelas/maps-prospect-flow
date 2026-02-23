@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentials } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,7 +132,80 @@ const logSubscriptionEvent = async (
   }
 };
 
-// Track purchase for landing page analytics
+// Cleanup free tier instances when user upgrades to paid
+const cleanupFreeInstances = async (
+  supabaseClient: any,
+  userId: string,
+  email: string
+) => {
+  try {
+    logStep("Starting free tier cleanup for upgraded user", { userId, email });
+
+    // 1. Get all user's whatsapp numbers with their instance names
+    const { data: numbers } = await supabaseClient
+      .from('whatsapp_numbers')
+      .select('id, instance_name, api_tier')
+      .eq('user_id', userId);
+
+    if (!numbers || numbers.length === 0) {
+      logStep("No WhatsApp numbers to cleanup");
+      return;
+    }
+
+    // 2. Delete instances from the FREE Evolution API
+    const freeCredentials = getEvolutionCredentials('free');
+    
+    for (const number of numbers) {
+      if (number.instance_name) {
+        try {
+          // Logout first
+          await fetch(`${freeCredentials.url}/instance/logout/${number.instance_name}`, {
+            method: 'DELETE',
+            headers: { 'apikey': freeCredentials.apiKey },
+          });
+          // Then delete
+          await fetch(`${freeCredentials.url}/instance/delete/${number.instance_name}`, {
+            method: 'DELETE',
+            headers: { 'apikey': freeCredentials.apiKey },
+          });
+          logStep("Deleted free instance", { instanceName: number.instance_name });
+        } catch (e) {
+          logStep("Error deleting free instance (non-fatal)", { instanceName: number.instance_name, error: String(e) });
+        }
+      }
+    }
+
+    // 3. Clean up DB: delete dependent records first
+    const numberIds = numbers.map((n: any) => n.id);
+
+    await supabaseClient.from('campaign_daily_reservations')
+      .delete().in('whatsapp_number_id', numberIds);
+    await supabaseClient.from('warming_search_assignments')
+      .delete().eq('user_id', userId);
+    await supabaseClient.from('warming_sessions')
+      .delete().eq('user_id', userId);
+    
+    // Unlink references
+    await supabaseClient.from('whatsapp_campaigns')
+      .update({ whatsapp_number_id: null }).eq('user_id', userId);
+    await supabaseClient.from('ai_agents')
+      .update({ whatsapp_number_id: null }).eq('user_id', userId);
+    await supabaseClient.from('campaign_incidents')
+      .update({ whatsapp_number_id: null }).eq('user_id', userId);
+    await supabaseClient.from('ignored_contacts')
+      .update({ whatsapp_number_id: null }).eq('user_id', userId);
+    await supabaseClient.from('leads')
+      .update({ whatsapp_number_id: null }).eq('user_id', userId);
+
+    // 4. Delete all whatsapp numbers
+    await supabaseClient.from('whatsapp_numbers')
+      .delete().eq('user_id', userId);
+
+    logStep("Free tier cleanup completed", { userId, numbersDeleted: numbers.length });
+  } catch (error) {
+    logStep("Error during free tier cleanup (non-fatal)", { error: String(error) });
+  }
+};
 const trackPurchase = async (
   supabaseClient: any,
   userId: string,

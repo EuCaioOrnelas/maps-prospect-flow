@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByUser } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,14 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured');
-    }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -36,6 +31,11 @@ serve(async (req) => {
     }
 
     const { instanceName } = await req.json();
+
+    // Get the correct Evolution API based on user's plan
+    const evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
     if (!instanceName) {
       throw new Error('Instance name is required');

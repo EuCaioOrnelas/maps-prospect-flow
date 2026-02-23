@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,14 +17,8 @@ serve(async (req) => {
   }
 
   try {
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured');
-    }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -39,7 +34,24 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, phoneNumber } = await req.json();
+    const { instanceName, phoneNumber, numberId } = await req.json();
+
+    // Get the correct Evolution API based on the number's api_tier
+    let EVOLUTION_API_URL: string;
+    let EVOLUTION_API_KEY: string;
+    
+    if (numberId) {
+      const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+      EVOLUTION_API_URL = evoCredentials.url;
+      EVOLUTION_API_KEY = evoCredentials.apiKey;
+      console.log(`Getting QR Code on ${evoCredentials.tier} API`);
+    } else {
+      // Fallback: use user's plan
+      const { getEvolutionCredentialsByUser } = await import("../_shared/evolution-config.ts");
+      const evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+      EVOLUTION_API_URL = evoCredentials.url;
+      EVOLUTION_API_KEY = evoCredentials.apiKey;
+    }
 
     console.log(`Getting QR Code for instance: ${instanceName}, phoneNumber: ${phoneNumber || 'not provided'}`);
 
@@ -50,9 +62,9 @@ serve(async (req) => {
       formattedNumber = '55' + cleanNumber;
     }
 
-    // Retry connect endpoint with delays - the Evolution API needs time to generate QR
+    // Retry connect endpoint with delays
     const MAX_RETRIES = 5;
-    const RETRY_DELAYS = [0, 3000, 3000, 4000, 5000]; // first call immediate, then wait
+    const RETRY_DELAYS = [0, 3000, 3000, 4000, 5000];
     
     let qrcode: string | null = null;
     let pairingCode: string | null = null;
@@ -87,13 +99,11 @@ serve(async (req) => {
       const qrData = await qrResponse.json();
       console.log(`Connect attempt ${attempt + 1} response:`, JSON.stringify(qrData).substring(0, 500));
 
-      // Extract pairing code
       if (qrData.pairingCode && qrData.pairingCode !== null) {
         pairingCode = String(qrData.pairingCode);
         console.log('Got pairing code:', pairingCode);
       }
 
-      // Extract QR code base64 - try ALL known response formats
       const extractedQr = 
         qrData.base64 ||
         qrData.qrcode?.base64 ||
@@ -108,7 +118,6 @@ serve(async (req) => {
         break;
       }
 
-      // Check if we got count > 0 but no base64 (QR was generated but not returned)
       const count = qrData.count ?? qrData.qrcode?.count;
       console.log(`Attempt ${attempt + 1}: no QR found. count=${count}`);
     }

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,14 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured');
-    }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -53,7 +48,12 @@ serve(async (req) => {
 
     const { instanceName, numberId } = await req.json();
 
-    console.log(`Checking status for instance: ${instanceName}`);
+    // Get the correct Evolution API based on the number's api_tier
+    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
+
+    console.log(`Checking status for instance: ${instanceName} on ${evoCredentials.tier} API`);
 
     // Check connection status with retry logic
     let statusResponse: Response | null = null;
@@ -73,7 +73,7 @@ serve(async (req) => {
         retryCount++;
         if (retryCount <= maxRetries) {
           console.log(`Retry ${retryCount}/${maxRetries} for status check...`);
-          await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+          await new Promise(r => setTimeout(r, 1000));
         }
       } catch (e) {
         console.error(`Fetch error attempt ${retryCount}:`, e);
@@ -88,27 +88,14 @@ serve(async (req) => {
       const errorText = statusResponse ? await statusResponse.text() : 'No response';
       console.error('Evolution API error after retries:', errorText);
       
-      // NEVER mark as disconnected from backend - this causes unwanted UI flicker
-      // Just report the state and let the webhook handle real disconnection events
       console.log(`⚠️ Instance ${instanceName} might not exist, but NOT updating database`);
 
       return new Response(JSON.stringify({
         success: false,
-        connected: null, // Return null to indicate uncertain state
+        connected: null,
         state: 'unknown',
         phoneNumber: null,
         error: 'Could not verify instance - will retry later'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-
-      // For other errors, return uncertain state without updating DB
-      return new Response(JSON.stringify({
-        success: false,
-        connected: null, // Uncertain
-        state: 'unknown',
-        phoneNumber: null,
-        error: 'Could not determine connection state - API temporarily unavailable'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -120,8 +107,6 @@ serve(async (req) => {
     const state = statusData.state || statusData.instance?.state;
     const isConnected = state === 'open';
     
-    // NEVER mark as disconnected automatically from this endpoint
-    // Only the webhook should handle real disconnection events
     if (!isConnected) {
       console.log(`Instance ${instanceName} is not connected (state: ${state}). Returning status but NOT updating database.`);
 
@@ -130,8 +115,6 @@ serve(async (req) => {
         connected: false,
         state: state || 'unknown',
         phoneNumber: null,
-        // Important: we do NOT update the database here
-        // The webhook will handle real disconnection events
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

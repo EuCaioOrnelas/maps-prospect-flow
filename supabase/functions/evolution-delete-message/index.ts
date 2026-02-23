@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,8 +15,6 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -56,8 +55,13 @@ serve(async (req) => {
       });
     }
 
-    // If forEveryone and Evolution API is configured, delete on WhatsApp
-    if (forEveryone && messageId && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+    // Get the correct Evolution API based on the number's api_tier
+    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, whatsappNumberId);
+    const EVOLUTION_API_URL = evoCredentials.url;
+    const EVOLUTION_API_KEY = evoCredentials.apiKey;
+
+    // If forEveryone, delete on WhatsApp
+    if (forEveryone && messageId) {
       try {
         console.log('[DELETE-MSG] Deleting on WhatsApp via Evolution API...');
         
@@ -77,13 +81,11 @@ serve(async (req) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error('[DELETE-MSG] Evolution API error:', response.status, errorText);
-          // Continue with local deletion even if Evolution API fails
         } else {
           console.log('[DELETE-MSG] Deleted on WhatsApp successfully');
         }
       } catch (error) {
         console.error('[DELETE-MSG] Evolution API call failed:', error);
-        // Continue with local deletion
       }
     }
 

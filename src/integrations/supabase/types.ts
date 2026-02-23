@@ -1793,6 +1793,7 @@ export type Database = {
       }
       whatsapp_numbers: {
         Row: {
+          api_tier: string
           created_at: string
           daily_sent_count: number
           id: string
@@ -1805,6 +1806,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_tier?: string
           created_at?: string
           daily_sent_count?: number
           id?: string
@@ -1817,6 +1819,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_tier?: string
           created_at?: string
           daily_sent_count?: number
           id?: string
