@@ -1,5 +1,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { getEvolutionCredentialsByNumber } from "../_shared/evolution-config.ts";
+// --- Evolution API credentials helper (inlined) ---
+interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
+const PAID_PLANS = ['start', 'growth', 'scale'];
+function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
+  const normalized = (tierOrPlan || 'free').toLowerCase();
+  if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
+    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+  }
+  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
+  return { url, apiKey, tier: 'free' };
+}
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
+  const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
+  return getEvolutionCredentials(data?.api_tier || 'free');
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -68,6 +84,12 @@ Deno.serve(async (req) => {
     }
 
     const instanceName = conversation.whatsapp_numbers?.instance_name;
+    
+    // Get Evolution API credentials
+    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, conversation.whatsapp_numbers?.id);
+    const evolutionApiUrl = evoCredentials.url;
+    const evolutionApiKey = evoCredentials.apiKey;
+
     if (!instanceName) {
       console.error('[READ-RECEIPT] No instance name for conversation');
       return new Response(
