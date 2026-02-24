@@ -12,9 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Play, CheckCircle, XCircle, AlertTriangle, Loader2, 
   MessageSquare, Users, Flame, Bot, RefreshCw, Clock, 
-  Send, Database, Zap, ArrowRight, ArrowLeft
+  Send, Database, Zap, ArrowRight, ArrowLeft,
+  Activity
 } from "lucide-react";
 import { DebugDispatchPanel } from "@/components/admin/DebugDispatchPanel";
+import { EdgeFunctionMonitor } from "@/components/admin/EdgeFunctionMonitor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -746,7 +748,7 @@ const ProductionTests = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="campaigns" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Campanhas
@@ -762,6 +764,10 @@ const ProductionTests = () => {
               <TabsTrigger value="agents" className="flex items-center gap-2">
                 <Bot className="h-4 w-4" />
                 Agentes
+              </TabsTrigger>
+              <TabsTrigger value="monitor" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Monitor
               </TabsTrigger>
             </TabsList>
 
@@ -891,6 +897,10 @@ const ProductionTests = () => {
                   {testResults.agents.length > 0 && renderResults(testResults.agents)}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="monitor" className="mt-4">
+              <EdgeFunctionMonitor />
             </TabsContent>
           </Tabs>
         </div>
