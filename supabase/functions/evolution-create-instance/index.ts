@@ -239,6 +239,51 @@ serve(async (req) => {
       }
     }
 
+    // After creation or if instance exists, explicitly set proxy via dedicated endpoint
+    if (proxyConfig) {
+      try {
+        const proxyPayload = {
+          enabled: true,
+          host: proxyConfig.host,
+          port: proxyConfig.port,
+          protocol: proxyConfig.protocol,
+          ...(proxyConfig.username && { username: proxyConfig.username }),
+          ...(proxyConfig.password && { password: proxyConfig.password }),
+        };
+        
+        console.log(`Setting proxy via dedicated endpoint for ${instanceName}:`, JSON.stringify(proxyPayload));
+        
+        const proxyResponse = await fetch(`${EVOLUTION_API_URL}/proxy/set/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY,
+          },
+          body: JSON.stringify(proxyPayload),
+        });
+
+        const proxyResponseText = await proxyResponse.text();
+        console.log(`Proxy set response (${proxyResponse.status}):`, proxyResponseText.substring(0, 300));
+
+        if (!proxyResponse.ok) {
+          // Try alternative endpoint format
+          console.log('Trying alternative proxy endpoint...');
+          const altProxyResponse = await fetch(`${EVOLUTION_API_URL}/proxy/set/${instanceName}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': EVOLUTION_API_KEY,
+            },
+            body: JSON.stringify(proxyPayload),
+          });
+          const altText = await altProxyResponse.text();
+          console.log(`Alt proxy response (${altProxyResponse.status}):`, altText.substring(0, 300));
+        }
+      } catch (proxySetErr) {
+        console.error('Error setting proxy via dedicated endpoint:', proxySetErr);
+      }
+    }
+
     // If we detected instance exists from error, fetch it now
     if (instanceExists && !instanceData) {
       const refetchResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
