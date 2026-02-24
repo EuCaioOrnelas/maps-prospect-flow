@@ -48,6 +48,15 @@ const Consultoria = lazy(() => import("./pages/Consultoria"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const ProductionTests = lazy(() => import("./pages/ProductionTests"));
 
+// Revenue pages
+const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
+const RevenueDashboard = lazy(() => import("./pages/revenue/RevenueDashboard"));
+const RevenueLeads = lazy(() => import("./pages/revenue/RevenueLeads"));
+const RevenueLeadDetail = lazy(() => import("./pages/revenue/RevenueLeadDetail"));
+const RevenueNumbers = lazy(() => import("./pages/revenue/RevenueNumbers"));
+const RevenueInsights = lazy(() => import("./pages/revenue/RevenueInsights"));
+const RevenueSettings = lazy(() => import("./pages/revenue/RevenueSettings"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -232,6 +241,22 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                {/* Wiize Revenue (admin only, separate layout) */}
+                <Route
+                  path="/revenue"
+                  element={
+                    <ProtectedRoute>
+                      <RevenueLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<RevenueDashboard />} />
+                  <Route path="leads" element={<RevenueLeads />} />
+                  <Route path="leads/:id" element={<RevenueLeadDetail />} />
+                  <Route path="numbers" element={<RevenueNumbers />} />
+                  <Route path="insights" element={<RevenueInsights />} />
+                  <Route path="settings" element={<RevenueSettings />} />
+                </Route>
                 {/* Explicit 404 route */}
                 <Route path="/404" element={<NotFound />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
