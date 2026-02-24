@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Settings,
   ArrowLeft,
-  DollarSign,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -15,11 +14,11 @@ import { useState } from "react";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 const navItems = [
-  { title: "Dashboard", url: "/revenue", icon: LayoutDashboard },
+  { title: "Painel Geral", url: "/revenue", icon: LayoutDashboard },
   { title: "Leads", url: "/revenue/leads", icon: Users },
   { title: "Números", url: "/revenue/numbers", icon: Smartphone },
-  { title: "Insights", url: "/revenue/insights", icon: TrendingUp },
-  { title: "Settings", url: "/revenue/settings", icon: Settings },
+  { title: "Projeções", url: "/revenue/insights", icon: TrendingUp },
+  { title: "Configurações", url: "/revenue/settings", icon: Settings },
 ];
 
 export const RevenueSidebar = () => {
@@ -51,7 +50,7 @@ export const RevenueSidebar = () => {
                 Revenue
               </span>
               <span className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
-                Beta Admin
+                Inteligência de Receita
               </span>
             </div>
           )}
