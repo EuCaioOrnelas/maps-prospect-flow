@@ -1099,6 +1099,263 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_conversations: {
+        Row: {
+          avg_response_time_seconds: number | null
+          created_at: string
+          id: string
+          inbound_count_7d: number
+          last_inbound_at: string | null
+          last_outbound_at: string | null
+          lead_id: string
+          number_instance_id: string | null
+          outbound_count_7d: number
+          unreplied_inbound_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_response_time_seconds?: number | null
+          created_at?: string
+          id?: string
+          inbound_count_7d?: number
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
+          lead_id: string
+          number_instance_id?: string | null
+          outbound_count_7d?: number
+          unreplied_inbound_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_response_time_seconds?: number | null
+          created_at?: string
+          id?: string
+          inbound_count_7d?: number
+          last_inbound_at?: string | null
+          last_outbound_at?: string | null
+          lead_id?: string
+          number_instance_id?: string | null
+          outbound_count_7d?: number
+          unreplied_inbound_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_conversations_number_instance_id_fkey"
+            columns: ["number_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_events: {
+        Row: {
+          created_at: string
+          event_meta: Json | null
+          event_type: string
+          event_value: number | null
+          id: string
+          lead_id: string
+          number_instance_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_meta?: Json | null
+          event_type: string
+          event_value?: number | null
+          id?: string
+          lead_id: string
+          number_instance_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_meta?: Json | null
+          event_type?: string
+          event_value?: number | null
+          id?: string
+          lead_id?: string
+          number_instance_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_events_number_instance_id_fkey"
+            columns: ["number_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_leads: {
+        Row: {
+          assigned_to_user_id: string | null
+          created_at: string
+          estimated_ticket_value: number | null
+          first_seen_at: string
+          id: string
+          last_activity_at: string
+          name: string | null
+          notes: string | null
+          phone_e164: string
+          risk_reason: string | null
+          risk_state: Database["public"]["Enums"]["revenue_risk_state"]
+          score_last_calc_at: string | null
+          score_total: number
+          source_number_instance_id: string | null
+          status_bucket: Database["public"]["Enums"]["revenue_status_bucket"]
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          created_at?: string
+          estimated_ticket_value?: number | null
+          first_seen_at?: string
+          id?: string
+          last_activity_at?: string
+          name?: string | null
+          notes?: string | null
+          phone_e164: string
+          risk_reason?: string | null
+          risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
+          score_last_calc_at?: string | null
+          score_total?: number
+          source_number_instance_id?: string | null
+          status_bucket?: Database["public"]["Enums"]["revenue_status_bucket"]
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          created_at?: string
+          estimated_ticket_value?: number | null
+          first_seen_at?: string
+          id?: string
+          last_activity_at?: string
+          name?: string | null
+          notes?: string | null
+          phone_e164?: string
+          risk_reason?: string | null
+          risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
+          score_last_calc_at?: string | null
+          score_total?: number
+          source_number_instance_id?: string | null
+          status_bucket?: Database["public"]["Enums"]["revenue_status_bucket"]
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_leads_source_number_instance_id_fkey"
+            columns: ["source_number_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_score_rules: {
+        Row: {
+          cooldown_minutes: number | null
+          id: string
+          is_enabled: boolean
+          max_per_day: number | null
+          points: number
+          rule_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cooldown_minutes?: number | null
+          id?: string
+          is_enabled?: boolean
+          max_per_day?: number | null
+          points?: number
+          rule_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cooldown_minutes?: number | null
+          id?: string
+          is_enabled?: boolean
+          max_per_day?: number | null
+          points?: number
+          rule_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revenue_settings: {
+        Row: {
+          cooldown_decay_per_day: number
+          created_at: string
+          default_close_rate_cold: number
+          default_close_rate_engaged: number
+          default_close_rate_hot: number
+          default_close_rate_very_hot: number
+          default_ticket_value: number
+          id: string
+          risk_no_reply_hours: number
+          sla_first_response_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cooldown_decay_per_day?: number
+          created_at?: string
+          default_close_rate_cold?: number
+          default_close_rate_engaged?: number
+          default_close_rate_hot?: number
+          default_close_rate_very_hot?: number
+          default_ticket_value?: number
+          id?: string
+          risk_no_reply_hours?: number
+          sla_first_response_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cooldown_decay_per_day?: number
+          created_at?: string
+          default_close_rate_cold?: number
+          default_close_rate_engaged?: number
+          default_close_rate_hot?: number
+          default_close_rate_very_hot?: number
+          default_ticket_value?: number
+          id?: string
+          risk_no_reply_hours?: number
+          sla_first_response_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -1974,6 +2231,14 @@ export type Database = {
         Args: { phone_input: string }
         Returns: string
       }
+      revenue_score_to_bucket: {
+        Args: { p_score: number }
+        Returns: Database["public"]["Enums"]["revenue_status_bucket"]
+      }
+      seed_revenue_score_rules: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       verify_webhook_signature: {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
         Returns: boolean
@@ -1981,6 +2246,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
+      revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2109,6 +2376,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
+      revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],
     },
   },
 } as const
