@@ -13,9 +13,16 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
-  const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-  return getEvolutionCredentials(data?.api_tier || 'free');
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials> {
+  if (numberId) {
+    const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
+    if (data?.api_tier) return getEvolutionCredentials(data.api_tier);
+  }
+  return getEvolutionCredentials(null);
+}
+async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
+  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
+  return getEvolutionCredentials(data?.plan || 'free');
 }
 
 const corsHeaders = {
@@ -64,8 +71,13 @@ serve(async (req) => {
 
     const { instanceName, numberId } = await req.json();
 
-    // Get the correct Evolution API based on the number's api_tier
-    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    // Get the correct Evolution API - use number's api_tier if available, otherwise user's plan
+    let evoCredentials: EvolutionCredentials;
+    if (numberId) {
+      evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    } else {
+      evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+    }
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
