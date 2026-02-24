@@ -33,6 +33,30 @@ serve(async (req) => {
     
     console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
+    // Helper: fire-and-forget revenue event processing
+    async function fireRevenueEvent(params: {
+      user_id: string;
+      phone_e164: string;
+      number_instance_id?: string;
+      direction: 'inbound' | 'outbound';
+      message_content?: string;
+      lead_name?: string;
+    }) {
+      try {
+        const revenueUrl = `${SUPABASE_URL}/functions/v1/revenue-processor`;
+        fetch(revenueUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ action: 'process_message', ...params }),
+        }).catch(e => console.log('Revenue processor fire-and-forget error:', e));
+      } catch (e) {
+        console.log('Revenue event fire error:', e);
+      }
+    }
+
     // Helper function to normalize phone numbers (supports international)
     function normalizePhoneNumber(phone: string): string {
       // Remove all non-digits
@@ -887,6 +911,17 @@ REGRAS OBRIGATÓRIAS:
               }
             }
             
+            // ===== REVENUE TRACKING: OUTBOUND =====
+            if (fromMe && normalizedPhone) {
+              fireRevenueEvent({
+                user_id: whatsappNumber.user_id,
+                phone_e164: normalizePhoneNumber(rawPhone),
+                number_instance_id: whatsappNumber.id,
+                direction: 'outbound',
+                message_content: content,
+              });
+            }
+
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
               // Find lead by phone - use flexible matching strategy
@@ -990,6 +1025,16 @@ REGRAS OBRIGATÓRIAS:
                     });
                   }
                 }
+
+                // ===== REVENUE TRACKING: INBOUND =====
+                fireRevenueEvent({
+                  user_id: whatsappNumber.user_id,
+                  phone_e164: normalizePhoneNumber(rawPhone),
+                  number_instance_id: whatsappNumber.id,
+                  direction: 'inbound',
+                  message_content: content,
+                  lead_name: data.pushName || undefined,
+                });
               } else {
                 console.log('No lead found for phone:', normalizedPhone, '(last 8:', last8Digits, ')');
               }
