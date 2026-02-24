@@ -85,7 +85,7 @@ export const ProxyManagerPanel = () => {
   const fetchProxies = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("whatsapp_proxies")
         .select("*")
         .order("created_at", { ascending: false });
@@ -106,7 +106,7 @@ export const ProxyManagerPanel = () => {
   // Recalculate assigned counts from whatsapp_numbers
   const refreshCounts = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("whatsapp_numbers")
         .select("proxy_id")
         .not("proxy_id", "is", null);
@@ -123,7 +123,7 @@ export const ProxyManagerPanel = () => {
       for (const proxy of proxies) {
         const realCount = counts[proxy.id] || 0;
         if (realCount !== proxy.assigned_numbers_count) {
-          await supabase
+          await (supabase as any)
             .from("whatsapp_proxies")
             .update({ assigned_numbers_count: realCount })
             .eq("id", proxy.id);
@@ -144,7 +144,7 @@ export const ProxyManagerPanel = () => {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("whatsapp_proxies").insert({
+      const { error } = await (supabase as any).from("whatsapp_proxies").insert({
         host: form.host.trim(),
         port: form.port.trim(),
         protocol: form.protocol,
@@ -201,7 +201,7 @@ export const ProxyManagerPanel = () => {
           password = parts[3] || null;
         }
 
-        const { error } = await supabase.from("whatsapp_proxies").insert({
+        const { error } = await (supabase as any).from("whatsapp_proxies").insert({
           host: host.trim(),
           port: port.trim(),
           protocol: bulkProtocol,
@@ -230,7 +230,7 @@ export const ProxyManagerPanel = () => {
   const toggleBlock = async (proxy: Proxy) => {
     try {
       const newBlocked = !proxy.is_blocked;
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("whatsapp_proxies")
         .update({
           is_blocked: newBlocked,
@@ -251,8 +251,8 @@ export const ProxyManagerPanel = () => {
     if (!confirm("Tem certeza que deseja excluir este proxy?")) return;
     try {
       // First unlink from any numbers
-      await supabase.from("whatsapp_numbers").update({ proxy_id: null }).eq("proxy_id", id);
-      const { error } = await supabase.from("whatsapp_proxies").delete().eq("id", id);
+      await (supabase as any).from("whatsapp_numbers").update({ proxy_id: null }).eq("proxy_id", id);
+      const { error } = await (supabase as any).from("whatsapp_proxies").delete().eq("id", id);
       if (error) throw error;
       await fetchProxies();
       toast({ title: "Proxy excluído" });
