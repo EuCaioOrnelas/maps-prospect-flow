@@ -521,16 +521,41 @@ export const NumbersManager = ({
         }
       }
 
-      // First, unlink any campaigns associated with this number
-      const { error: unlinkError } = await supabase
-        .from('whatsapp_campaigns')
-        .update({ whatsapp_number_id: null })
-        .eq('whatsapp_number_id', numberToDelete);
-
-      if (unlinkError) {
-        console.error('Error unlinking campaigns:', unlinkError);
-        // Continue anyway, this shouldn't block deletion
+      // Unlink proxy from whatsapp_proxies (decrement count)
+      try {
+        const proxyId = (numberToRemove as any)?.proxy_id;
+        if (proxyId) {
+          await (supabase as any)
+            .from('whatsapp_proxies')
+            .update({ assigned_numbers_count: Math.max(0, ((numberToRemove as any)?.assigned_numbers_count || 1) - 1) })
+            .eq('id', proxyId);
+        }
+      } catch (e) {
+        console.error('Error unlinking proxy:', e);
       }
+
+      // Unlink related tables before deleting
+      const unlinkPromises = [
+        supabase.from('whatsapp_campaigns').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
+        supabase.from('ai_agents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
+        supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
+        (supabase as any).from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberToDelete),
+        (supabase as any).from('warming_search_assignments').delete().eq('whatsapp_number_id', numberToDelete),
+      ];
+      
+      // Delete warming sessions (has FK constraint)
+      const { data: warmingData } = await supabase
+        .from('warming_sessions')
+        .select('id')
+        .eq('whatsapp_number_id', numberToDelete);
+      
+      if (warmingData && warmingData.length > 0) {
+        const sessionIds = warmingData.map(s => s.id);
+        await (supabase as any).from('warming_interactions').delete().in('warming_session_id', sessionIds);
+        await supabase.from('warming_sessions').delete().eq('whatsapp_number_id', numberToDelete);
+      }
+
+      await Promise.allSettled(unlinkPromises);
 
       // Now delete the number
       const { error } = await supabase

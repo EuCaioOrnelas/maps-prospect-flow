@@ -41,6 +41,8 @@ import {
   RefreshCw,
   Copy,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Proxy {
@@ -261,6 +263,17 @@ export const ProxyManagerPanel = () => {
     }
   };
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(proxies.length / ITEMS_PER_PAGE);
+  const paginatedProxies = proxies.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Reset page when proxies change
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+  }, [proxies.length, totalPages, currentPage]);
+
   const activeCount = proxies.filter((p) => !p.is_blocked).length;
   const blockedCount = proxies.filter((p) => p.is_blocked).length;
   const totalAssigned = proxies.reduce((sum, p) => sum + p.assigned_numbers_count, 0);
@@ -335,7 +348,7 @@ export const ProxyManagerPanel = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {proxies.map((proxy) => (
+              {paginatedProxies.map((proxy) => (
                 <TableRow key={proxy.id} className={proxy.is_blocked ? "opacity-50" : ""}>
                   <TableCell>
                     {proxy.is_blocked ? (
@@ -402,6 +415,36 @@ export const ProxyManagerPanel = () => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, proxies.length)} de {proxies.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 
