@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    // Verify admin
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
@@ -33,7 +33,6 @@ serve(async (req) => {
       });
     }
 
-    // Check admin
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Admin only' }), { 
@@ -42,120 +41,151 @@ serve(async (req) => {
     }
 
     const { hours = 1 } = await req.json().catch(() => ({}));
-
-    // Query the analytics endpoint for edge function logs
-    const projectRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+    const safeHours = Math.min(Math.max(Number(hours), 1), 72);
     
-    // Try the analytics API
-    const analyticsUrl = `${supabaseUrl}/analytics/v1/query`;
-    const sql = `
+    const projectRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+
+    // Query aggregated stats per function
+    const statsQuery = `
       select 
         m.function_id,
         count(*) as total_calls,
-        avg(m.execution_time_ms) as avg_execution_ms,
-        max(m.execution_time_ms) as max_execution_ms,
+        count(case when request.method != 'OPTIONS' then 1 end) as real_calls,
+        count(case when request.method = 'OPTIONS' then 1 end) as options_calls,
         count(case when response.status_code >= 400 then 1 end) as error_count,
-        count(case when request.method = 'OPTIONS' then 1 end) as options_count,
-        min(t.timestamp) as first_call,
-        max(t.timestamp) as last_call
-      from function_edge_logs as t
+        count(case when response.status_code >= 200 and response.status_code < 300 then 1 end) as success_count,
+        avg(case when request.method != 'OPTIONS' then m.execution_time_ms end) as avg_execution_ms,
+        max(m.execution_time_ms) as max_execution_ms,
+        min(m.execution_time_ms) as min_execution_ms,
+        min(function_edge_logs.timestamp) as first_call,
+        max(function_edge_logs.timestamp) as last_call
+      from function_edge_logs
         cross join unnest(metadata) as m
         cross join unnest(m.response) as response
         cross join unnest(m.request) as request
-      where t.timestamp > now() - interval '${Math.min(Number(hours), 24)} hours'
+      where function_edge_logs.timestamp > now() - interval '${safeHours} hours'
       group by m.function_id
       order by total_calls desc
     `;
 
-    let functionStats: any[] = [];
-    let analyticsAvailable = false;
+    // Query recent individual calls
+    const recentQuery = `
+      select 
+        function_edge_logs.timestamp,
+        m.function_id,
+        request.method,
+        response.status_code,
+        m.execution_time_ms,
+        event_message
+      from function_edge_logs
+        cross join unnest(metadata) as m
+        cross join unnest(m.response) as response
+        cross join unnest(m.request) as request
+      where function_edge_logs.timestamp > now() - interval '${safeHours} hours'
+        and request.method != 'OPTIONS'
+      order by function_edge_logs.timestamp desc
+      limit 100
+    `;
 
-    try {
-      const analyticsRes = await fetch(analyticsUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': Deno.env.get('SUPABASE_ANON_KEY') || supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ sql }),
-      });
+    // Query hourly distribution
+    const hourlyQuery = `
+      select 
+        date_trunc('hour', function_edge_logs.timestamp) as hour,
+        m.function_id,
+        count(*) as calls,
+        count(case when request.method != 'OPTIONS' then 1 end) as real_calls
+      from function_edge_logs
+        cross join unnest(metadata) as m
+        cross join unnest(m.request) as request
+      where function_edge_logs.timestamp > now() - interval '${safeHours} hours'
+      group by hour, m.function_id
+      order by hour desc
+    `;
 
-      if (analyticsRes.ok) {
-        const analyticsData = await analyticsRes.json();
-        functionStats = analyticsData.result || analyticsData || [];
-        analyticsAvailable = true;
-      } else {
-        const errText = await analyticsRes.text();
-        console.log('Analytics API not available:', analyticsRes.status, errText);
-      }
-    } catch (e) {
-      console.log('Analytics API error:', e.message);
-    }
-
-    // Known function name mapping (hardcoded since we can't query it programmatically)
-    const functionNameMap: Record<string, string> = {
-      '97f9c507-e96a-4578-8264-b99a94eded9f': 'evolution-webhook',
-      'd0607a05-0ec8-4aa7-80cb-ecce7bc5668d': 'check-subscription',
-      '728a9a5b-b25b-4eff-94a0-9ee9e55e60fb': 'evolution-create-instance',
-      'bf9b470c-7571-4551-94b2-e9bfd376405b': 'evolution-check-status',
+    const analyticsUrl = `https://${projectRef}.supabase.co/analytics/v1/query`;
+    const analyticsHeaders = {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
     };
 
-    // Enrich with names
+    // Execute all 3 queries in parallel
+    const [statsRes, recentRes, hourlyRes] = await Promise.all([
+      fetch(analyticsUrl, { method: 'POST', headers: analyticsHeaders, body: JSON.stringify({ sql: statsQuery }) }),
+      fetch(analyticsUrl, { method: 'POST', headers: analyticsHeaders, body: JSON.stringify({ sql: recentQuery }) }),
+      fetch(analyticsUrl, { method: 'POST', headers: analyticsHeaders, body: JSON.stringify({ sql: hourlyQuery }) }),
+    ]);
+
+    let functionStats: any[] = [];
+    let recentCalls: any[] = [];
+    let hourlyData: any[] = [];
+    let analyticsAvailable = false;
+
+    if (statsRes.ok) {
+      const data = await statsRes.json();
+      functionStats = data.result || data || [];
+      analyticsAvailable = true;
+    } else {
+      const errText = await statsRes.text();
+      console.log('Stats query failed:', statsRes.status, errText);
+    }
+
+    if (recentRes.ok) {
+      const data = await recentRes.json();
+      recentCalls = data.result || data || [];
+    } else {
+      await recentRes.text();
+    }
+
+    if (hourlyRes.ok) {
+      const data = await hourlyRes.json();
+      hourlyData = data.result || data || [];
+    } else {
+      await hourlyRes.text();
+    }
+
+    // Known function name mapping
+    const functionNameMap: Record<string, string> = {};
+    
+    // Extract function names from event_message URLs
+    for (const call of recentCalls) {
+      if (call.function_id && call.event_message) {
+        const match = call.event_message.match(/\/functions\/v1\/([a-z0-9-]+)/);
+        if (match) {
+          functionNameMap[call.function_id] = match[1];
+        }
+      }
+    }
+
+    // Enrich stats with names
     const enrichedStats = functionStats.map((stat: any) => ({
       ...stat,
       function_name: functionNameMap[stat.function_id] || `unknown-${stat.function_id?.slice(0, 8)}`,
+      avg_execution_ms: stat.avg_execution_ms ? Math.round(stat.avg_execution_ms) : null,
+      error_rate: stat.total_calls > 0 ? ((stat.error_count / stat.total_calls) * 100).toFixed(1) : '0',
     }));
 
-    // Also get recent individual calls for timeline view
-    let recentCalls: any[] = [];
-    if (analyticsAvailable) {
-      try {
-        const recentSql = `
-          select 
-            t.timestamp,
-            m.function_id,
-            request.method,
-            response.status_code,
-            m.execution_time_ms
-          from function_edge_logs as t
-            cross join unnest(metadata) as m
-            cross join unnest(m.response) as response
-            cross join unnest(m.request) as request
-          where t.timestamp > now() - interval '${Math.min(Number(hours), 24)} hours'
-          order by t.timestamp desc
-          limit 100
-        `;
+    // Enrich recent calls
+    const enrichedRecent = recentCalls.map((call: any) => ({
+      ...call,
+      function_name: functionNameMap[call.function_id] || `unknown-${call.function_id?.slice(0, 8)}`,
+    }));
 
-        const recentRes = await fetch(analyticsUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': Deno.env.get('SUPABASE_ANON_KEY') || supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-          },
-          body: JSON.stringify({ sql: recentSql }),
-        });
-
-        if (recentRes.ok) {
-          const recentData = await recentRes.json();
-          recentCalls = (recentData.result || recentData || []).map((call: any) => ({
-            ...call,
-            function_name: functionNameMap[call.function_id] || `unknown-${call.function_id?.slice(0, 8)}`,
-          }));
-        } else {
-          await recentRes.text();
-        }
-      } catch (e) {
-        console.log('Recent calls query error:', e.message);
-      }
-    }
+    // Compute totals
+    const totals = {
+      total_invocations: functionStats.reduce((sum: number, s: any) => sum + (Number(s.total_calls) || 0), 0),
+      real_invocations: functionStats.reduce((sum: number, s: any) => sum + (Number(s.real_calls) || 0), 0),
+      total_errors: functionStats.reduce((sum: number, s: any) => sum + (Number(s.error_count) || 0), 0),
+      unique_functions: functionStats.length,
+    };
 
     return new Response(JSON.stringify({
       analytics_available: analyticsAvailable,
-      hours_queried: Math.min(Number(hours), 24),
+      hours_queried: safeHours,
+      totals,
       function_stats: enrichedStats,
-      recent_calls: recentCalls,
+      recent_calls: enrichedRecent,
+      hourly_data: hourlyData,
       known_functions: functionNameMap,
       timestamp: new Date().toISOString(),
     }), {
