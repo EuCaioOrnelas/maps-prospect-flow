@@ -1802,6 +1802,7 @@ export type Database = {
           last_sent_at: string | null
           name: string
           phone_number: string | null
+          proxy_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1815,6 +1816,7 @@ export type Database = {
           last_sent_at?: string | null
           name: string
           phone_number?: string | null
+          proxy_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1828,8 +1830,71 @@ export type Database = {
           last_sent_at?: string | null
           name?: string
           phone_number?: string | null
+          proxy_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_numbers_proxy_id_fkey"
+            columns: ["proxy_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_proxies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_proxies: {
+        Row: {
+          assigned_numbers_count: number
+          blocked_at: string | null
+          blocked_reason: string | null
+          created_at: string
+          host: string
+          id: string
+          is_blocked: boolean
+          label: string | null
+          last_used_at: string | null
+          password: string | null
+          port: string
+          protocol: string
+          status: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          assigned_numbers_count?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          host: string
+          id?: string
+          is_blocked?: boolean
+          label?: string | null
+          last_used_at?: string | null
+          password?: string | null
+          port: string
+          protocol?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          assigned_numbers_count?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          host?: string
+          id?: string
+          is_blocked?: boolean
+          label?: string | null
+          last_used_at?: string | null
+          password?: string | null
+          port?: string
+          protocol?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }

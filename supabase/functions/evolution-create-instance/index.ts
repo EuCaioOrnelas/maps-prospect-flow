@@ -118,6 +118,47 @@ serve(async (req) => {
 
     const { numberId, instanceName } = await req.json();
 
+    // --- Proxy assignment: find least-used active proxy ---
+    let proxyConfig: { host: string; port: string; protocol: string; username?: string; password?: string } | null = null;
+    let assignedProxyId: string | null = null;
+
+    try {
+      const { data: availableProxy } = await supabase
+        .from('whatsapp_proxies')
+        .select('*')
+        .eq('is_blocked', false)
+        .eq('status', 'active')
+        .order('assigned_numbers_count', { ascending: true })
+        .order('last_used_at', { ascending: true, nullsFirst: true })
+        .limit(1)
+        .single();
+
+      if (availableProxy) {
+        proxyConfig = {
+          host: availableProxy.host,
+          port: availableProxy.port,
+          protocol: availableProxy.protocol,
+          username: availableProxy.username || undefined,
+          password: availableProxy.password || undefined,
+        };
+        assignedProxyId = availableProxy.id;
+        console.log(`Assigned proxy ${availableProxy.host}:${availableProxy.port} (id: ${availableProxy.id})`);
+
+        // Increment assigned count and update last_used_at
+        await supabase
+          .from('whatsapp_proxies')
+          .update({
+            assigned_numbers_count: (availableProxy.assigned_numbers_count || 0) + 1,
+            last_used_at: new Date().toISOString(),
+          })
+          .eq('id', availableProxy.id);
+      } else {
+        console.log('No active proxies available, creating instance without proxy');
+      }
+    } catch (proxyErr) {
+      console.log('Error fetching proxy, continuing without:', proxyErr);
+    }
+
     // First, check if instance already exists
     let instanceData = null;
     let instanceExists = false;
@@ -147,24 +188,38 @@ serve(async (req) => {
     const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
 
     if (!instanceExists) {
+      const createPayload: any = {
+        instanceName: instanceName,
+        qrcode: true,
+        integration: "WHATSAPP-BAILEYS",
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: webhookEvents,
+        },
+      };
+
+      // Add proxy configuration if available
+      if (proxyConfig) {
+        createPayload.proxy = {
+          host: proxyConfig.host,
+          port: proxyConfig.port,
+          protocol: proxyConfig.protocol,
+          ...(proxyConfig.username && { username: proxyConfig.username }),
+          ...(proxyConfig.password && { password: proxyConfig.password }),
+        };
+        console.log(`Creating instance with proxy: ${proxyConfig.host}:${proxyConfig.port}`);
+      }
+
       const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': EVOLUTION_API_KEY,
         },
-        body: JSON.stringify({
-          instanceName: instanceName,
-          qrcode: true,
-          integration: "WHATSAPP-BAILEYS",
-          webhook: {
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: webhookEvents,
-          },
-        }),
+        body: JSON.stringify(createPayload),
       });
 
       if (!createResponse.ok) {
@@ -200,14 +255,18 @@ serve(async (req) => {
 
     console.log('Final instance data:', JSON.stringify(instanceData));
 
-    // Store the instance_name and api_tier
+    // Store the instance_name, api_tier, and proxy_id
+    const updatePayload: any = { 
+      instance_name: instanceName,
+      api_tier: apiTier,
+      updated_at: new Date().toISOString()
+    };
+    if (assignedProxyId) {
+      updatePayload.proxy_id = assignedProxyId;
+    }
     const { error: updateError } = await supabase
       .from('whatsapp_numbers')
-      .update({ 
-        instance_name: instanceName,
-        api_tier: apiTier,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', numberId)
       .eq('user_id', user.id);
 
