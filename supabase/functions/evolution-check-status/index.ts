@@ -8,6 +8,7 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
     const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
     if (url && apiKey) return { url, apiKey, tier: 'paid' };
+    console.warn(`Plan is ${normalized} but PAID credentials not found, falling back to free`);
   }
   const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
@@ -15,14 +16,17 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
 }
 async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials> {
   if (numberId) {
-    const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
+    const { data, error } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
+    console.log(`getEvolutionCredentialsByNumber(${numberId}): api_tier=${data?.api_tier}, error=${error?.message || 'none'}`);
     if (data?.api_tier) return getEvolutionCredentials(data.api_tier);
   }
   return getEvolutionCredentials(null);
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
-  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
-  return getEvolutionCredentials(data?.plan || 'free');
+  const { data, error } = await supabase.from('profiles').select('plan').eq('id', userId).single();
+  const plan = data?.plan || 'free';
+  console.log(`getEvolutionCredentialsByUser(${userId}): plan=${plan}, error=${error?.message || 'none'}`);
+  return getEvolutionCredentials(plan);
 }
 
 const corsHeaders = {
@@ -69,19 +73,31 @@ serve(async (req) => {
       });
     }
 
-    const { instanceName, numberId } = await req.json();
+    const body = await req.json();
+    const { instanceName } = body;
+    // Treat "null" string as actual null
+    const numberId = body.numberId && body.numberId !== 'null' ? body.numberId : null;
 
-    // Get the correct Evolution API - use number's api_tier if available, otherwise user's plan
+    // Get the correct Evolution API
+    // ALWAYS check user plan first (most reliable), then fall back to number's api_tier
     let evoCredentials: EvolutionCredentials;
-    if (numberId) {
-      evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
-    } else {
-      evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+    
+    // Primary: use user's plan from profiles (always up-to-date)
+    evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+    
+    // If user plan says free but number has paid tier, use number's tier
+    if (evoCredentials.tier === 'free' && numberId) {
+      const numberCreds = await getEvolutionCredentialsByNumber(supabase, numberId);
+      if (numberCreds.tier === 'paid') {
+        console.log('User plan is free but number has paid tier, using paid credentials');
+        evoCredentials = numberCreds;
+      }
     }
+
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
-    console.log(`Checking status for instance: ${instanceName} on ${evoCredentials.tier} API`);
+    console.log(`Checking status for instance: ${instanceName} on ${evoCredentials.tier} API (user: ${user.id})`);
 
     // Check connection status with retry logic
     let statusResponse: Response | null = null;
@@ -108,6 +124,50 @@ serve(async (req) => {
         retryCount++;
         if (retryCount <= maxRetries) {
           await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+
+    // If primary API failed and we haven't tried the other one, try it
+    if ((!statusResponse || !statusResponse.ok) && evoCredentials.tier === 'free') {
+      // Maybe the instance is on paid API - try paid credentials
+      const paidUrl = Deno.env.get('EVOLUTION_API_URL_PAID');
+      const paidKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+      if (paidUrl && paidKey) {
+        console.log('Instance not found on free API, trying paid API as fallback...');
+        try {
+          const fallbackResponse = await fetch(`${paidUrl}/instance/connectionState/${instanceName}`, {
+            method: 'GET',
+            headers: { 'apikey': paidKey },
+          });
+          if (fallbackResponse.ok) {
+            statusResponse = fallbackResponse;
+            // Update credentials for phone number fetch later
+            evoCredentials = { url: paidUrl, apiKey: paidKey, tier: 'paid' };
+            console.log('Found instance on paid API!');
+          }
+        } catch (e) {
+          console.log('Paid API fallback also failed:', e);
+        }
+      }
+    } else if ((!statusResponse || !statusResponse.ok) && evoCredentials.tier === 'paid') {
+      // Maybe the instance is on free API - try free credentials
+      const freeUrl = Deno.env.get('EVOLUTION_API_URL');
+      const freeKey = Deno.env.get('EVOLUTION_API_KEY');
+      if (freeUrl && freeKey) {
+        console.log('Instance not found on paid API, trying free API as fallback...');
+        try {
+          const fallbackResponse = await fetch(`${freeUrl}/instance/connectionState/${instanceName}`, {
+            method: 'GET',
+            headers: { 'apikey': freeKey },
+          });
+          if (fallbackResponse.ok) {
+            statusResponse = fallbackResponse;
+            evoCredentials = { url: freeUrl, apiKey: freeKey, tier: 'free' };
+            console.log('Found instance on free API!');
+          }
+        } catch (e) {
+          console.log('Free API fallback also failed:', e);
         }
       }
     }
@@ -151,10 +211,10 @@ serve(async (req) => {
     // Se conectado, obter o número de telefone
     let phoneNumber = null;
     try {
-      const infoResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
+      const infoResponse = await fetch(`${evoCredentials.url}/instance/fetchInstances?instanceName=${instanceName}`, {
         method: 'GET',
         headers: {
-          'apikey': EVOLUTION_API_KEY,
+          'apikey': evoCredentials.apiKey,
         },
       });
       
@@ -170,19 +230,22 @@ serve(async (req) => {
       console.error('Error fetching instance info:', e);
     }
 
-    // Update database with connected status
-    const { error: updateError } = await supabase
-      .from('whatsapp_numbers')
-      .update({ 
-        is_connected: true,
-        phone_number: phoneNumber,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', numberId)
-      .eq('user_id', user.id);
+    // Update database with connected status (only if numberId exists)
+    if (numberId) {
+      const { error: updateError } = await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: true,
+          phone_number: phoneNumber,
+          api_tier: evoCredentials.tier,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
 
-    if (updateError) {
-      console.error('Error updating number status:', updateError);
+      if (updateError) {
+        console.error('Error updating number status:', updateError);
+      }
     }
 
     return new Response(JSON.stringify({
