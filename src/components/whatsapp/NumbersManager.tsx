@@ -279,6 +279,7 @@ export const NumbersManager = ({
             // Guard against duplicate inserts
             if (isInsertingRef.current) return;
             isInsertingRef.current = true;
+            const isPaidPlan = ['start', 'growth', 'scale'].includes(userPlan);
             const { data: newNumber, error: insertError } = await supabase
               .from('whatsapp_numbers')
               .insert({
@@ -286,7 +287,8 @@ export const NumbersManager = ({
                 name: pendingNumberName,
                 is_connected: true,
                 phone_number: data.phoneNumber || null,
-                instance_name: connectingInstanceName
+                instance_name: connectingInstanceName,
+                api_tier: isPaidPlan ? 'paid' : 'free'
               })
               .select()
               .single();
