@@ -256,23 +256,27 @@ serve(async (req) => {
 
     console.log('Final instance data:', JSON.stringify(instanceData));
 
-    // Store the instance_name, api_tier, and proxy_id
-    const updatePayload: any = { 
-      instance_name: instanceName,
-      api_tier: apiTier,
-      updated_at: new Date().toISOString()
-    };
-    if (assignedProxyId) {
-      updatePayload.proxy_id = assignedProxyId;
-    }
-    const { error: updateError } = await supabase
-      .from('whatsapp_numbers')
-      .update(updatePayload)
-      .eq('id', numberId)
-      .eq('user_id', user.id);
+    // Store the instance_name, api_tier, and proxy_id (only if numberId exists)
+    if (numberId) {
+      const updatePayload: any = { 
+        instance_name: instanceName,
+        api_tier: apiTier,
+        updated_at: new Date().toISOString()
+      };
+      if (assignedProxyId) {
+        updatePayload.proxy_id = assignedProxyId;
+      }
+      const { error: updateError } = await supabase
+        .from('whatsapp_numbers')
+        .update(updatePayload)
+        .eq('id', numberId)
+        .eq('user_id', user.id);
 
-    if (updateError) {
-      console.error('Error updating instance_name:', updateError);
+      if (updateError) {
+        console.error('Error updating instance_name:', updateError);
+      }
+    } else {
+      console.log('No numberId provided (new number flow), skipping DB update - will be saved after connection');
     }
 
     // Configure webhook for chat messages - try multiple endpoints
