@@ -19,6 +19,8 @@ const corsHeaders = {
 };
 
 const DAILY_LIMIT_PER_NUMBER = 200;
+const FREE_DAILY_LIMIT = 20;
+const FREE_TRIAL_MESSAGE_LIMIT = 400;
 
 // Start next postponed campaign for a number when the current one finishes
 async function startNextPostponedCampaign(
@@ -323,6 +325,27 @@ async function getAvailableBalance(
   return Math.max(0, DAILY_LIMIT_PER_NUMBER - usedToday - totalReserved);
 }
 
+// Get user plan info
+async function getUserPlanInfo(supabase: any, userId: string): Promise<{ plan: string; trialMessagesSent: number; isTrialExpired: boolean }> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan, trial_messages_sent, trial_start_at')
+    .eq('id', userId)
+    .single();
+
+  if (!profile) return { plan: 'free', trialMessagesSent: 0, isTrialExpired: false };
+
+  const isTrialExpired = profile.trial_start_at
+    ? (Date.now() - new Date(profile.trial_start_at).getTime()) > 30 * 24 * 60 * 60 * 1000
+    : false;
+
+  return {
+    plan: profile.plan || 'free',
+    trialMessagesSent: profile.trial_messages_sent || 0,
+    isTrialExpired
+  };
+}
+
 // Process a single campaign - send ONE message (simplified without window system)
 async function processSingleMessage(
   supabase: any,
@@ -432,7 +455,72 @@ async function processSingleMessage(
     remaining: DAILY_LIMIT_PER_NUMBER - dailySentCount
   });
 
-  // Check daily limit
+  // Check free plan limits
+  const userInfo = await getUserPlanInfo(supabase, campaign.user_id);
+  const isFreePlan = userInfo.plan === 'free';
+
+  // Free plan: check total trial limit (400)
+  if (isFreePlan && userInfo.trialMessagesSent >= FREE_TRIAL_MESSAGE_LIMIT) {
+    campaignLog('🛑', `FREE TRIAL LIMIT REACHED - Cancelling campaign`, {
+      trialMessagesSent: userInfo.trialMessagesSent,
+      limit: FREE_TRIAL_MESSAGE_LIMIT
+    });
+
+    await supabase.from('whatsapp_campaigns').update({
+      status: 'completed',
+      pause_reason: 'Limite gratuito de 400 disparos atingido',
+      completed_at: new Date().toISOString(),
+      sent_count: sentCount,
+      failed_count: failedCount
+    }).eq('id', campaign.id);
+
+    return { processed: false, completed: true, skipped: false, error: 'Trial limit reached' };
+  }
+
+  // Free plan: check daily limit (20 per day)
+  if (isFreePlan) {
+    // Count messages sent today by this user (across all campaigns)
+    const spNowForFreeLimit = getSaoPauloTime();
+    const todayStr = spNowForFreeLimit.toISOString().split('T')[0];
+
+    const { count: todayUserSent } = await supabase
+      .from('whatsapp_campaigns')
+      .select('sent_count', { count: 'exact', head: false })
+      .eq('user_id', campaign.user_id)
+      .eq('status', 'running')
+      .gte('updated_at', todayStr + 'T00:00:00-03:00');
+
+    // Simple approach: use a dedicated counter or check via sent_count today
+    // For simplicity, track via daily_sent_count on the number (already tracked)
+    if (dailySentCount >= FREE_DAILY_LIMIT) {
+      const spNowFree = getSaoPauloTime();
+      const spTomorrowFree = new Date(spNowFree);
+      spTomorrowFree.setDate(spTomorrowFree.getDate() + 1);
+      spTomorrowFree.setHours(0, 0, 0, 0);
+      const tomorrowUTCFree = new Date(spTomorrowFree.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
+
+      campaignLog('🛑', `FREE DAILY LIMIT REACHED (20/day) - Pausing until tomorrow`, {
+        dailySentCount,
+        freeLimit: FREE_DAILY_LIMIT,
+        resumeAt: tomorrowUTCFree.toISOString()
+      });
+
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'Limite diário de 20 disparos (plano gratuito)',
+        paused_at_limit: true,
+        resume_at: tomorrowUTCFree.toISOString(),
+        current_lead_index: currentIndex,
+        sent_count: sentCount,
+        failed_count: failedCount,
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+
+      return { processed: false, completed: false, skipped: false, error: 'Free daily limit reached' };
+    }
+  }
+
+  // Check daily limit (per number - 200)
   if (dailySentCount >= DAILY_LIMIT_PER_NUMBER) {
     const spNow = getSaoPauloTime();
     const spTomorrow = new Date(spNow);
@@ -596,6 +684,15 @@ async function processSingleMessage(
     // Add to ignored list (will only be removed if contact responds) - skip for simulations
     if (!isSimulation) {
       await addToIgnoredList(supabase, campaign.user_id, formattedPhone, campaign.id, numberData.id);
+
+      // Increment trial_messages_sent for free plan users (per actual sent message)
+      if (isFreePlan) {
+        await supabase.from('profiles').update({
+          trial_messages_sent: userInfo.trialMessagesSent + 1
+        }).eq('id', campaign.user_id);
+        // Update local counter for next iteration
+        userInfo.trialMessagesSent++;
+      }
     }
   } else {
     campaignLog('❌', `MESSAGE FAILED`, {
