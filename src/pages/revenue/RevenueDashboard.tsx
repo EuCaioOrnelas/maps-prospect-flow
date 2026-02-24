@@ -3,15 +3,23 @@ import {
   Users,
   Flame,
   AlertTriangle,
-  TrendingUp,
   Activity,
   DollarSign,
+  Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRevenueDashboardStats, useRevenueSettings } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
+
+const bucketLabels: Record<string, string> = {
+  COLD: "Frio",
+  ENGAGED: "Engajado",
+  HOT: "Quente",
+  VERY_HOT: "Muito Quente",
+};
 
 const bucketColors: Record<string, string> = {
   COLD: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -20,11 +28,24 @@ const bucketColors: Record<string, string> = {
   VERY_HOT: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
+const riskLabels: Record<string, string> = {
+  OK: "Saudável",
+  COOLING: "Esfriando",
+  AT_RISK: "Em Risco",
+};
+
 const riskBadge: Record<string, string> = {
   OK: "bg-primary/10 text-primary",
   COOLING: "bg-warning/10 text-warning",
   AT_RISK: "bg-destructive/10 text-destructive",
 };
+
+const fmt = (value: number) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  }).format(value);
 
 const RevenueDashboard = () => {
   const { data: stats, isLoading } = useRevenueDashboardStats();
@@ -56,15 +77,12 @@ const RevenueDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Wiize Revenue
+            Painel de Receita
           </h1>
           <p className="text-sm text-muted-foreground">
-            Inteligência comportamental de engajamento
+            Acompanhe o engajamento dos seus leads e a projeção de faturamento em tempo real
           </p>
         </div>
-        <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-          BETA ADMIN
-        </Badge>
       </div>
 
       {/* KPIs */}
@@ -76,58 +94,93 @@ const RevenueDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border/50">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Activity size={16} />
-                <span className="text-xs font-medium">Ativos (7d)</span>
+                <span className="text-xs font-medium">Ativos (7 dias)</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px]">
+                    <p className="text-xs">Leads que tiveram qualquer interação (enviaram ou receberam mensagem) nos últimos 7 dias.</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-2xl font-bold text-foreground">{stats?.active7d || 0}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border/50">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 text-orange-400 mb-1">
                 <Flame size={16} />
-                <span className="text-xs font-medium">HOT + VERY HOT</span>
+                <span className="text-xs font-medium">Quentes + Muito Quentes</span>
               </div>
               <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Score acima de 350 pts</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border/50">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 text-destructive mb-1">
                 <AlertTriangle size={16} />
                 <span className="text-xs font-medium">Em Risco</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px]">
+                    <p className="text-xs">Leads que estão esfriando ou em risco de perda por inatividade prolongada.</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-2xl font-bold text-foreground">{stats?.atRiskCount || 0}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border/50">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 text-primary mb-1">
                 <DollarSign size={16} />
                 <span className="text-xs font-medium">Receita Esperada</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px]">
+                    <p className="text-xs">Soma de (leads × ticket médio × taxa de conversão) de cada nível. Ajuste as taxas em Configurações.</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <p className="text-2xl font-bold text-foreground">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                  maximumFractionDigits: 0,
-                }).format(receitaEsperada)}
-              </p>
+              <p className="text-2xl font-bold text-foreground">{fmt(receitaEsperada)}</p>
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Bucket Distribution */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Distribuição por Bucket</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-semibold">Distribuição por Nível de Engajamento</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={14} className="text-muted-foreground/50 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px]">
+                <p className="text-xs">Cada lead recebe um score de 0 a 1000 baseado nas suas interações. O nível é calculado automaticamente:</p>
+                <ul className="text-xs mt-1 space-y-0.5">
+                  <li>• <strong>Frio:</strong> 0–149 pts</li>
+                  <li>• <strong>Engajado:</strong> 150–349 pts</li>
+                  <li>• <strong>Quente:</strong> 350–649 pts</li>
+                  <li>• <strong>Muito Quente:</strong> 650–1000 pts</li>
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-3">
@@ -139,7 +192,7 @@ const RevenueDashboard = () => {
                   bucketColors[bucket]
                 )}
               >
-                <p className="text-xs font-medium opacity-80">{bucket.replace("_", " ")}</p>
+                <p className="text-xs font-medium opacity-80">{bucketLabels[bucket]}</p>
                 <p className="text-xl font-bold mt-1">
                   {stats?.bucketCounts[bucket] || 0}
                 </p>
@@ -151,30 +204,24 @@ const RevenueDashboard = () => {
 
       {/* Receita Potencial */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Receita Potencial (HOT+VERY_HOT)
+              Receita Potencial (Quentes + Muito Quentes)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">
-              {new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-                maximumFractionDigits: 0,
-              }).format(receitaPotencial)}
-            </p>
+            <p className="text-3xl font-bold text-primary">{fmt(receitaPotencial)}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Ticket médio: R$ {ticket.toLocaleString("pt-BR")}
+              Se todos os leads quentes fecharem — ticket médio de {fmt(ticket)}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Leads
+              Total de Leads Rastreados
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -182,18 +229,18 @@ const RevenueDashboard = () => {
               {stats?.totalLeads || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Todos os leads rastreados
+              Leads que interagiram via WhatsApp
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Top Oportunidades */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">
-              Top Oportunidades
+              Principais Oportunidades
             </CardTitle>
             <Link
               to="/revenue/leads"
@@ -234,14 +281,14 @@ const RevenueDashboard = () => {
                       variant="outline"
                       className={cn("text-[10px]", bucketColors[lead.status_bucket])}
                     >
-                      {lead.status_bucket.replace("_", " ")}
+                      {bucketLabels[lead.status_bucket]}
                     </Badge>
                     {lead.risk_state !== "OK" && (
                       <Badge
                         variant="outline"
                         className={cn("text-[10px]", riskBadge[lead.risk_state])}
                       >
-                        {lead.risk_state}
+                        {riskLabels[lead.risk_state]}
                       </Badge>
                     )}
                   </div>

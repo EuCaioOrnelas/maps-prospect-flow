@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Smartphone, Wifi, WifiOff } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
@@ -14,7 +14,7 @@ const RevenueNumbers = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Números Conectados</h1>
         <p className="text-sm text-muted-foreground">
-          Instâncias de WhatsApp vinculadas ao Revenue
+          Instâncias de WhatsApp que alimentam o sistema de receita com dados de conversas
         </p>
       </div>
 
@@ -25,13 +25,13 @@ const RevenueNumbers = () => {
           ))}
         </div>
       ) : numbers.length === 0 ? (
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border/50">
           <CardContent className="py-12 text-center">
             <Smartphone className="mx-auto text-muted-foreground mb-3" size={32} />
             <p className="text-muted-foreground">
               Nenhum número conectado. Conecte números na seção de{" "}
               <Link to="/whatsapp" className="text-primary hover:underline">
-                Campanhas WhatsApp
+                Campanhas
               </Link>
               .
             </p>
@@ -40,7 +40,7 @@ const RevenueNumbers = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {numbers.map((num) => (
-            <Card key={num.id} className="bg-card border-border">
+            <Card key={num.id} className="bg-card border-border/50">
               <CardContent className="pt-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -52,11 +52,7 @@ const RevenueNumbers = () => {
                           : "bg-destructive/10 text-destructive"
                       )}
                     >
-                      {num.is_connected ? (
-                        <Wifi size={18} />
-                      ) : (
-                        <WifiOff size={18} />
-                      )}
+                      {num.is_connected ? <Wifi size={18} /> : <WifiOff size={18} />}
                     </div>
                     <div>
                       <p className="font-medium text-foreground">{num.name}</p>
@@ -74,7 +70,7 @@ const RevenueNumbers = () => {
                         : "border-destructive/30 text-destructive"
                     )}
                   >
-                    {num.is_connected ? "Online" : "Offline"}
+                    {num.is_connected ? "Conectado" : "Desconectado"}
                   </Badge>
                 </div>
 
@@ -84,7 +80,7 @@ const RevenueNumbers = () => {
                     to={`/revenue/leads?number=${num.id}`}
                     className="text-primary hover:underline"
                   >
-                    Ver leads →
+                    Ver leads deste número →
                   </Link>
                 </div>
               </CardContent>

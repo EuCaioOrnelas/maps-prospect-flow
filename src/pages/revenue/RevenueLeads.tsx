@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,11 +11,24 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const bucketLabels: Record<string, string> = {
+  COLD: "Frio",
+  ENGAGED: "Engajado",
+  HOT: "Quente",
+  VERY_HOT: "Muito Quente",
+};
+
 const bucketColors: Record<string, string> = {
   COLD: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   ENGAGED: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   HOT: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   VERY_HOT: "bg-red-500/10 text-red-400 border-red-500/20",
+};
+
+const riskLabels: Record<string, string> = {
+  OK: "Saudável",
+  COOLING: "Esfriando",
+  AT_RISK: "Em Risco",
 };
 
 const riskColors: Record<string, string> = {
@@ -48,7 +61,7 @@ const RevenueLeads = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Leads</h1>
         <p className="text-sm text-muted-foreground">
-          Todos os leads com score de engajamento
+          Todos os leads com pontuação de engajamento calculada automaticamente
         </p>
       </div>
 
@@ -64,32 +77,32 @@ const RevenueLeads = () => {
           />
         </div>
         <Select value={bucketFilter} onValueChange={setBucketFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Bucket" />
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Nível" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os Buckets</SelectItem>
-            <SelectItem value="COLD">Cold</SelectItem>
-            <SelectItem value="ENGAGED">Engaged</SelectItem>
-            <SelectItem value="HOT">Hot</SelectItem>
-            <SelectItem value="VERY_HOT">Very Hot</SelectItem>
+            <SelectItem value="all">Todos os Níveis</SelectItem>
+            <SelectItem value="COLD">🧊 Frio</SelectItem>
+            <SelectItem value="ENGAGED">💬 Engajado</SelectItem>
+            <SelectItem value="HOT">🔥 Quente</SelectItem>
+            <SelectItem value="VERY_HOT">🔥🔥 Muito Quente</SelectItem>
           </SelectContent>
         </Select>
         <Select value={riskFilter} onValueChange={setRiskFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Risco" />
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="OK">OK</SelectItem>
-            <SelectItem value="COOLING">Cooling</SelectItem>
-            <SelectItem value="AT_RISK">At Risk</SelectItem>
+            <SelectItem value="OK">✅ Saudável</SelectItem>
+            <SelectItem value="COOLING">⚠️ Esfriando</SelectItem>
+            <SelectItem value="AT_RISK">🚨 Em Risco</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Table */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-border/50">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
@@ -107,10 +120,10 @@ const RevenueLeads = () => {
                 <thead>
                   <tr className="border-b border-border text-muted-foreground text-xs">
                     <th className="text-left p-4 font-medium">Lead</th>
-                    <th className="text-center p-4 font-medium">Score</th>
-                    <th className="text-center p-4 font-medium">Bucket</th>
+                    <th className="text-center p-4 font-medium">Pontuação</th>
+                    <th className="text-center p-4 font-medium">Nível</th>
                     <th className="text-left p-4 font-medium">Última Atividade</th>
-                    <th className="text-center p-4 font-medium">Risco</th>
+                    <th className="text-center p-4 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,13 +149,14 @@ const RevenueLeads = () => {
                         <span className="font-bold text-foreground">
                           {lead.score_total}
                         </span>
+                        <span className="text-[10px] text-muted-foreground ml-1">pts</span>
                       </td>
                       <td className="p-4 text-center">
                         <Badge
                           variant="outline"
                           className={cn("text-[10px]", bucketColors[lead.status_bucket])}
                         >
-                          {lead.status_bucket.replace("_", " ")}
+                          {bucketLabels[lead.status_bucket]}
                         </Badge>
                       </td>
                       <td className="p-4 text-muted-foreground text-xs">
@@ -158,7 +172,7 @@ const RevenueLeads = () => {
                             riskColors[lead.risk_state]
                           )}
                         >
-                          {lead.risk_state}
+                          {riskLabels[lead.risk_state]}
                         </span>
                       </td>
                     </tr>
