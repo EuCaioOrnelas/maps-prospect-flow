@@ -500,6 +500,25 @@ export const ProxyManagerPanel = () => {
               <p>user:pass@host:port</p>
             </div>
             <div>
+              <Label>Importar arquivo .txt</Label>
+              <Input
+                type="file"
+                accept=".txt,.csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const content = ev.target?.result as string;
+                    setBulkText((prev) => (prev ? prev + "\n" + content : content));
+                  };
+                  reader.readAsText(file);
+                  e.target.value = "";
+                }}
+                className="cursor-pointer"
+              />
+            </div>
+            <div>
               <Label>Protocolo (para todos)</Label>
               <Select value={bulkProtocol} onValueChange={setBulkProtocol}>
                 <SelectTrigger>
