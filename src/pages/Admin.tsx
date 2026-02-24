@@ -621,9 +621,14 @@ const Admin = () => {
     setCheckingApis(false);
   }, [runKeyCheck]);
 
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
   useEffect(() => {
+    if (initialLoadDone) return;
+    if (!user || !profile) return;
+    setInitialLoadDone(true);
     checkAdminAndLoad();
-  }, [user, profile]);
+  }, [user, profile, initialLoadDone]);
 
   // Não fazer monitoramento automático para evitar falsos positivos
   // O admin pode verificar manualmente clicando no botão de refresh
