@@ -122,6 +122,7 @@ const WhatsAppCampaign = () => {
 
   // Free trial limits
   const FREE_TRIAL_MESSAGE_LIMIT = 400;
+  const FREE_DAILY_LIMIT = 20;
   const isFreePlan = profile?.plan === "free" || !profile?.plan;
   const trialMessagesUsed = profile?.trial_messages_sent || 0;
   const hasReachedTrialLimit = isFreePlan && trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT;
@@ -507,19 +508,8 @@ const WhatsAppCampaign = () => {
           console.log("Initial campaign trigger (cron will continue):", err?.message || "triggered");
         });
 
-      // Update trial messages sent for free trial users
-      if (isFreePlan && !isTrialExpired && user) {
-        const newCount = trialMessagesUsed + selectedLeads.length;
-        await supabase.from("profiles").update({ trial_messages_sent: newCount }).eq("id", user.id);
-
-        // Refresh profile to get updated count
-        await refreshProfile();
-
-        // Check if limit reached after this campaign
-        if (newCount >= FREE_TRIAL_MESSAGE_LIMIT) {
-          setShowTrialLimitModal(true);
-        }
-      }
+      // Trial messages are now counted per actual sent message in campaign-processor
+      // No upfront deduction needed
 
       toast({
         title: "Campanha iniciada!",
@@ -1008,43 +998,55 @@ const WhatsAppCampaign = () => {
         )}
 
         {/* Free Trial Indicator */}
-        {/* Free Trial Indicator */}
         {isFreePlan && !isTrialExpired && (
           <div className="max-w-4xl mx-auto mb-6">
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-primary" />
+              <div className="flex flex-col gap-4">
+                {/* Total trial balance */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Saldo Total (Teste Gratuito)</p>
+                      <p className="text-xs text-muted-foreground">Contagem baseada em mensagens realmente enviadas</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Disparos Gratuitos</p>
-                    <p className="text-xs text-muted-foreground">Período de teste (30 dias)</p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 sm:flex-none">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-bold text-foreground">
+                          {trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-2">{remainingTrialMessages} restantes</span>
+                      </div>
+                      <div className="w-full sm:w-48 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9
+                              ? "bg-destructive"
+                              : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7
+                                ? "bg-warning"
+                                : "bg-primary"
+                          }`}
+                          style={{
+                            width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 sm:flex-none">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-foreground">
-                        {trialMessagesUsed} / {FREE_TRIAL_MESSAGE_LIMIT}
-                      </span>
-                      <span className="text-xs text-muted-foreground ml-2">{remainingTrialMessages} restantes</span>
-                    </div>
-                    <div className="w-full sm:w-48 h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.9
-                            ? "bg-destructive"
-                            : trialMessagesUsed >= FREE_TRIAL_MESSAGE_LIMIT * 0.7
-                              ? "bg-yellow-500"
-                              : "bg-primary"
-                        }`}
-                        style={{
-                          width: `${Math.min((trialMessagesUsed / FREE_TRIAL_MESSAGE_LIMIT) * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
+
+                {/* Daily limit info */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
+                  <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Limite diário: {FREE_DAILY_LIMIT} disparos/dia</span>
+                    {" "}— Ao atingir, a campanha pausa e retoma automaticamente no dia seguinte. 
+                    Apenas mensagens enviadas com sucesso são descontadas do saldo.
+                  </p>
                 </div>
               </div>
             </div>
