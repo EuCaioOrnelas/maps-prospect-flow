@@ -70,16 +70,45 @@ serve(async (req) => {
 
     // Only delete the Evolution instance if explicitly requested
     if (deleteInstance) {
+      // Try deleting from BOTH APIs (free + paid) to ensure cleanup
+      for (const tier of ['free', 'paid'] as const) {
+        try {
+          const creds = getEvolutionCredentials(tier);
+          const deleteResponse = await fetch(`${creds.url}/instance/delete/${instanceName}`, {
+            method: 'DELETE',
+            headers: { 'apikey': creds.apiKey },
+          });
+          console.log(`Delete from ${tier} API response status:`, deleteResponse.status);
+        } catch (e) {
+          console.log(`Instance not found on ${tier} API (expected):`, e);
+        }
+      }
+
+      // Unlink proxy before deleting
       try {
-        const deleteResponse = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': EVOLUTION_API_KEY,
-          },
-        });
-        console.log('Delete response status:', deleteResponse.status);
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('proxy_id')
+          .eq('id', numberId)
+          .single();
+        
+        if (numberData?.proxy_id) {
+          // Decrement proxy assigned count
+          const { data: proxyData } = await supabase
+            .from('whatsapp_proxies')
+            .select('assigned_numbers_count')
+            .eq('id', numberData.proxy_id)
+            .single();
+          
+          if (proxyData) {
+            await supabase
+              .from('whatsapp_proxies')
+              .update({ assigned_numbers_count: Math.max(0, (proxyData.assigned_numbers_count || 1) - 1) })
+              .eq('id', numberData.proxy_id);
+          }
+        }
       } catch (e) {
-        console.error('Error deleting instance:', e);
+        console.error('Error unlinking proxy:', e);
       }
 
       const { error: updateError } = await supabase
@@ -88,6 +117,7 @@ serve(async (req) => {
           is_connected: false,
           phone_number: null,
           instance_name: null,
+          proxy_id: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', numberId)
