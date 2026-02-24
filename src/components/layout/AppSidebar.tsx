@@ -16,10 +16,12 @@ import {
   Bot,
   GraduationCap,
   LayoutDashboard,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
@@ -44,6 +46,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
+  const { isAdmin } = useAdminCheck();
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements } = useUnreadAnnouncements();
@@ -312,6 +315,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 tooltip="Consultoria Estratégica"
               />
             </li>
+
+            {/* Wiize Revenue (admin only) */}
+            {isAdmin && (
+              <li>
+                <SidebarNavItem
+                  title="Revenue"
+                  icon={DollarSign}
+                  url="/revenue"
+                  isActive={currentPath.startsWith("/revenue")}
+                  isExpanded={isExpanded}
+                  highlight
+                  tooltip="Wiize Revenue (Beta)"
+                />
+              </li>
+            )}
           </ul>
         </nav>
 
