@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +66,7 @@ interface WhatsAppNumber {
   instance_name: string | null;
   phone_number: string | null;
   is_connected: boolean;
+  api_tier?: string;
 }
 
 interface DebugDispatchPanelProps {
@@ -91,11 +92,24 @@ const categoryBadge: Record<string, { color: string; label: string }> = {
 };
 
 export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
-  const [selectedNumberId, setSelectedNumberId] = useState(numbers[0]?.id || '');
+  const [apiTier, setApiTier] = useState<'free' | 'paid'>('free');
+
+  // Filter numbers by selected API tier
+  const filteredNumbers = numbers.filter(n => {
+    const tier = (n.api_tier || 'free').toLowerCase();
+    return tier === apiTier;
+  });
+
+  const [selectedNumberId, setSelectedNumberId] = useState(filteredNumbers[0]?.id || '');
+
+  // Auto-select first number when tier changes
+  useEffect(() => {
+    setSelectedNumberId(filteredNumbers[0]?.id || '');
+  }, [apiTier, numbers]);
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('55');
   const [message, setMessage] = useState('Olá! Mensagem de teste do sistema de debug. 🔍');
-  const [apiTier, setApiTier] = useState<'free' | 'paid'>('free');
+  // apiTier is declared above (before filteredNumbers)
   const [deepDebug, setDeepDebug] = useState(false);
   const [dryRun, setDryRun] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
@@ -204,19 +218,55 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Número WhatsApp</Label>
-              <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
+              <Label>VPS / API Tier</Label>
+              <Select value={apiTier} onValueChange={(v) => setApiTier(v as 'free' | 'paid')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o número" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {numbers.map(n => (
-                    <SelectItem key={n.id} value={n.id}>
-                      {n.name} {n.is_connected ? '🟢' : '🔴'} {n.phone_number || ''}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="free">
+                    🟢 Free (Teste) — EVOLUTION_API_URL
+                  </SelectItem>
+                  <SelectItem value="paid">
+                    🔵 Paid (Produção) — EVOLUTION_API_URL_PAID
+                  </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Número WhatsApp ({filteredNumbers.length} na VPS {apiTier})</Label>
+              {filteredNumbers.length > 0 ? (
+                <Select value={selectedNumberId} onValueChange={setSelectedNumberId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o número" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredNumbers.map(n => (
+                      <SelectItem key={n.id} value={n.id}>
+                        {n.name} {n.is_connected ? '🟢' : '🔴'} {n.phone_number || ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex flex-col items-center gap-2 p-4 rounded-lg border border-dashed border-yellow-500/30 bg-yellow-500/5">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Nenhuma instância na VPS <strong>{apiTier === 'free' ? 'Free' : 'Paid'}</strong>
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to WhatsApp campaign page to connect a number
+                      window.location.href = '/disparos-whatsapp';
+                    }}
+                  >
+                    <Zap className="h-3.5 w-3.5 mr-1" />
+                    Conectar Número
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -244,23 +294,6 @@ export function DebugDispatchPanel({ numbers }: DebugDispatchPanelProps) {
               rows={2}
               className="resize-none"
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label>VPS / API Tier</Label>
-            <Select value={apiTier} onValueChange={(v) => setApiTier(v as 'free' | 'paid')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="free">
-                  🟢 Free (Teste) — EVOLUTION_API_URL
-                </SelectItem>
-                <SelectItem value="paid">
-                  🔵 Paid (Produção) — EVOLUTION_API_URL_PAID
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
