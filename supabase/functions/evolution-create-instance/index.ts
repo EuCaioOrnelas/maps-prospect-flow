@@ -204,13 +204,14 @@ serve(async (req) => {
       // Add proxy configuration if available
       if (proxyConfig) {
         createPayload.proxy = {
+          enabled: true,
           host: proxyConfig.host,
           port: proxyConfig.port,
           protocol: proxyConfig.protocol,
           ...(proxyConfig.username && { username: proxyConfig.username }),
           ...(proxyConfig.password && { password: proxyConfig.password }),
         };
-        console.log(`Creating instance with proxy: ${proxyConfig.host}:${proxyConfig.port}`);
+        console.log(`Creating instance with proxy (enabled): ${proxyConfig.host}:${proxyConfig.port}`);
       }
 
       const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
