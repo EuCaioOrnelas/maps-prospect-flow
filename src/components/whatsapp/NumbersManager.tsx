@@ -155,7 +155,7 @@ export const NumbersManager = ({
   };
 
   const userPlan = profile?.plan?.toLowerCase() || 'free';
-  const hasMassMessagingAccess = ['start', 'growth', 'scale'].includes(userPlan);
+  const hasMassMessagingAccess = true; // All plans can connect numbers (free gets 1 number with 400 msg limit)
   const connectedNumbers = numbers.filter(n => n.is_connected);
   const hasConnectedNumber = connectedNumbers.length > 0;
 
