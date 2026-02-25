@@ -98,16 +98,17 @@ function getRandomDelay(minSeconds: number, maxSeconds: number): number {
   return Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
 }
 
-// Normalize phone number - supports international numbers
+// Normalize phone number preserving provided country code
 function normalizePhone(phone: string): string {
   let normalized = phone.replace(/\D/g, '');
-  
-  // If number has 10-11 digits without country code, assume Brazil (55)
-  // International numbers should already have country code (12+ digits)
-  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
-    normalized = '55' + normalized;
+
+  // Convert international prefix 00XX... -> XX...
+  if (normalized.startsWith('00') && normalized.length > 4) {
+    normalized = normalized.slice(2);
   }
-  
+
+  // IMPORTANT: do not force Brazil prefix here.
+  // Leads are already normalized on the frontend with selected country code.
   return normalized;
 }
 
