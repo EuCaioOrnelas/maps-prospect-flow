@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRevenueActionItems } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -67,8 +68,8 @@ export const ActionRequiredToday = () => {
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {item.phone_e164}
+                  <p className="text-sm font-medium text-foreground truncate font-mono">
+                    {formatPhoneNumber(item.phone_e164)}
                   </p>
                   <Badge variant="outline" className={cn(
                     "text-[10px] shrink-0",
