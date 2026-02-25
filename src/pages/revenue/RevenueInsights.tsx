@@ -14,9 +14,9 @@ const fmt = (value: number) =>
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
-  ENGAGED: "Engajado",
-  HOT: "Quente",
-  VERY_HOT: "Muito Quente",
+  ENGAGED: "Morno",
+  HOT: "Engajado",
+  VERY_HOT: "Quente",
 };
 
 const bucketEmojis: Record<string, string> = {
@@ -103,7 +103,7 @@ const RevenueInsights = () => {
           <CardContent>
             <p className="text-3xl font-bold text-primary">{fmt(receitaPotencial)}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {buckets.HOT + buckets.VERY_HOT} leads quentes × {fmt(ticket)}
+              {buckets.HOT + buckets.VERY_HOT} leads engajados/quentes × {fmt(ticket)}
             </p>
           </CardContent>
         </Card>
@@ -133,7 +133,7 @@ const RevenueInsights = () => {
           <CardContent>
             <p className="text-3xl font-bold text-destructive">{fmt(receitaEmRisco)}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {atRiskHotLeads} leads quentes com risco de perda
+              {atRiskHotLeads} leads engajados/quentes com risco de perda
             </p>
           </CardContent>
         </Card>

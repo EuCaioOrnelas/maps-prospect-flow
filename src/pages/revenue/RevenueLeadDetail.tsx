@@ -10,9 +10,9 @@ import { ptBR } from "date-fns/locale";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
-  ENGAGED: "Engajado",
-  HOT: "Quente",
-  VERY_HOT: "Muito Quente",
+  ENGAGED: "Morno",
+  HOT: "Engajado",
+  VERY_HOT: "Quente",
 };
 
 const bucketColors: Record<string, string> = {

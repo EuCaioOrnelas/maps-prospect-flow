@@ -13,9 +13,9 @@ import { ptBR } from "date-fns/locale";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
-  ENGAGED: "Engajado",
-  HOT: "Quente",
-  VERY_HOT: "Muito Quente",
+  ENGAGED: "Morno",
+  HOT: "Engajado",
+  VERY_HOT: "Quente",
 };
 
 const bucketColors: Record<string, string> = {
@@ -83,9 +83,9 @@ const RevenueLeads = () => {
           <SelectContent>
             <SelectItem value="all">Todos os Níveis</SelectItem>
             <SelectItem value="COLD">🧊 Frio</SelectItem>
-            <SelectItem value="ENGAGED">💬 Engajado</SelectItem>
-            <SelectItem value="HOT">🔥 Quente</SelectItem>
-            <SelectItem value="VERY_HOT">🔥🔥 Muito Quente</SelectItem>
+            <SelectItem value="ENGAGED">☀️ Morno</SelectItem>
+            <SelectItem value="HOT">💬 Engajado</SelectItem>
+            <SelectItem value="VERY_HOT">🔥 Quente</SelectItem>
           </SelectContent>
         </Select>
         <Select value={riskFilter} onValueChange={setRiskFilter}>
