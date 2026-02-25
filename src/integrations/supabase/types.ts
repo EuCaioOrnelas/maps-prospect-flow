@@ -1391,6 +1391,41 @@ export type Database = {
           },
         ]
       }
+      revenue_number_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          user_id: string
+          whatsapp_number_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          whatsapp_number_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          whatsapp_number_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_number_config_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_reports: {
         Row: {
           created_at: string
