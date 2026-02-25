@@ -699,3 +699,262 @@ export const useRevenueOpportunityIndex = () => {
     enabled: !!user,
   });
 };
+
+// === ACTION ITEMS (leads needing immediate action) ===
+export interface ActionItem {
+  id: string;
+  name: string | null;
+  phone_e164: string;
+  score_total: number;
+  status_bucket: string;
+  risk_state: string;
+  risk_reason: string | null;
+  last_activity_at: string;
+  reason: string;
+  urgency: "critical" | "high";
+}
+
+export const useRevenueActionItems = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["revenue-action-items", user?.id],
+    queryFn: async () => {
+      const { data: leads, error } = await supabase
+        .from("revenue_leads")
+        .select("id, name, phone_e164, score_total, status_bucket, risk_state, risk_reason, last_activity_at, estimated_ticket_value");
+      if (error) throw error;
+
+      const all = (leads || []) as unknown as RevenueLead[];
+      const now = Date.now();
+      const items: ActionItem[] = [];
+
+      for (const lead of all) {
+        const hoursInactive = (now - new Date(lead.last_activity_at).getTime()) / 3600000;
+
+        // VERY_HOT with risk
+        if (lead.status_bucket === "VERY_HOT" && lead.risk_state !== "OK") {
+          items.push({
+            ...lead,
+            reason: "Lead quente em risco — responder agora",
+            urgency: "critical",
+          });
+          continue;
+        }
+
+        // HOT with risk (SLA busted)
+        if (lead.status_bucket === "HOT" && lead.risk_state === "AT_RISK") {
+          items.push({
+            ...lead,
+            reason: "Lead engajado com SLA estourado",
+            urgency: "critical",
+          });
+          continue;
+        }
+
+        // High score inactive > 24h
+        if (lead.score_total >= 350 && hoursInactive > 24) {
+          items.push({
+            ...lead,
+            reason: `Inativo há ${Math.round(hoursInactive)}h — score alto`,
+            urgency: "high",
+          });
+          continue;
+        }
+
+        // COOLING leads with decent score
+        if (lead.risk_state === "COOLING" && lead.score_total >= 200) {
+          items.push({
+            ...lead,
+            reason: "Esfriando — reengajar antes que perca",
+            urgency: "high",
+          });
+        }
+      }
+
+      // Sort: critical first, then by score
+      items.sort((a, b) => {
+        if (a.urgency !== b.urgency) return a.urgency === "critical" ? -1 : 1;
+        return b.score_total - a.score_total;
+      });
+
+      return items.slice(0, 8);
+    },
+    enabled: !!user,
+  });
+};
+
+// === RECEITA EM RISCO (detailed) ===
+export const useRevenueAtRisk = () => {
+  const { user } = useAuth();
+  const { data: settings } = useRevenueSettings();
+
+  return useQuery({
+    queryKey: ["revenue-at-risk", user?.id, settings?.default_ticket_value],
+    queryFn: async () => {
+      const ticket = settings?.default_ticket_value || 3000;
+      const rates = {
+        COLD: settings?.default_close_rate_cold || 0.05,
+        ENGAGED: settings?.default_close_rate_engaged || 0.15,
+        HOT: settings?.default_close_rate_hot || 0.35,
+        VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
+      };
+
+      const { data: leads, error } = await supabase
+        .from("revenue_leads")
+        .select("id, status_bucket, risk_state, estimated_ticket_value, score_total");
+      if (error) throw error;
+
+      const all = (leads || []) as unknown as RevenueLead[];
+      const atRisk = all.filter(
+        (l) => (l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT") && l.risk_state !== "OK"
+      );
+
+      const value = atRisk.reduce((sum, l) => {
+        const rate = rates[l.status_bucket as keyof typeof rates] || 0;
+        return sum + (l.estimated_ticket_value || ticket) * rate;
+      }, 0);
+
+      const hotTotal = all.filter(l => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT").length;
+
+      return {
+        value,
+        count: atRisk.length,
+        hotTotal,
+        hasData: all.length > 0,
+      };
+    },
+    enabled: !!user && !!settings,
+  });
+};
+
+// === 7-DAY TRENDS (from snapshots) ===
+export interface RevenueTrend {
+  hotLeadsDelta: number | null;
+  avgResponseDelta: number | null;
+  revenueExpectedDelta: number | null;
+  hasSufficientData: boolean;
+}
+
+export const useRevenueTrend7d = () => {
+  const { user } = useAuth();
+  const { data: settings } = useRevenueSettings();
+
+  return useQuery({
+    queryKey: ["revenue-trend-7d", user?.id],
+    queryFn: async () => {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const fourteenDaysAgo = new Date(now);
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+      const { data: snapshots, error } = await supabase
+        .from("revenue_score_snapshots")
+        .select("snapshot_date, status_bucket, score_value")
+        .gte("snapshot_date", fourteenDaysAgo.toISOString().split("T")[0])
+        .order("snapshot_date", { ascending: true });
+
+      if (error) throw error;
+
+      const all = (snapshots || []) as any[];
+      if (all.length < 7) {
+        return { hotLeadsDelta: null, avgResponseDelta: null, revenueExpectedDelta: null, hasSufficientData: false } as RevenueTrend;
+      }
+
+      const sevenStr = sevenDaysAgo.toISOString().split("T")[0];
+
+      const current = all.filter(s => s.snapshot_date >= sevenStr);
+      const previous = all.filter(s => s.snapshot_date < sevenStr);
+
+      const countHot = (arr: any[]) => arr.filter(s => s.status_bucket === "HOT" || s.status_bucket === "VERY_HOT").length;
+
+      const currentHot = countHot(current);
+      const previousHot = countHot(previous);
+
+      const hotDelta = previousHot > 0 ? Math.round(((currentHot - previousHot) / previousHot) * 100) : null;
+
+      const ticket = settings?.default_ticket_value || 3000;
+      const rates: Record<string, number> = {
+        COLD: settings?.default_close_rate_cold || 0.05,
+        ENGAGED: settings?.default_close_rate_engaged || 0.15,
+        HOT: settings?.default_close_rate_hot || 0.35,
+        VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
+      };
+
+      const calcRevenue = (arr: any[]) => arr.reduce((sum: number, s: any) => sum + ticket * (rates[s.status_bucket] || 0), 0);
+      const currentRev = calcRevenue(current);
+      const previousRev = calcRevenue(previous);
+      const revDelta = previousRev > 0 ? Math.round(((currentRev - previousRev) / previousRev) * 100) : null;
+
+      return {
+        hotLeadsDelta: hotDelta,
+        avgResponseDelta: null, // Would need conversation snapshots
+        revenueExpectedDelta: revDelta,
+        hasSufficientData: previous.length >= 3,
+      } as RevenueTrend;
+    },
+    enabled: !!user,
+  });
+};
+
+// === FUNNEL PROGRESSION RATE ===
+export const useRevenueFunnelProgression = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["revenue-funnel-progression", user?.id],
+    queryFn: async () => {
+      // Get score logs to track bucket transitions
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: logs, error } = await supabase
+        .from("revenue_score_logs")
+        .select("lead_id, score_before, score_after, created_at")
+        .gte("created_at", thirtyDaysAgo.toISOString())
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const all = (logs || []) as unknown as RevenueScoreLog[];
+
+      // Count transitions
+      const scoreToBucket = (s: number): string => {
+        if (s >= 650) return "VERY_HOT";
+        if (s >= 350) return "HOT";
+        if (s >= 150) return "ENGAGED";
+        return "COLD";
+      };
+
+      let engagedToHot = 0;
+      let totalEngaged = 0;
+      let coldToEngaged = 0;
+      let totalCold = 0;
+
+      for (const log of all) {
+        const before = scoreToBucket(log.score_before);
+        const after = scoreToBucket(log.score_after);
+
+        if (before === "ENGAGED" && (after === "HOT" || after === "VERY_HOT")) {
+          engagedToHot++;
+        }
+        if (before === "ENGAGED") totalEngaged++;
+        if (before === "COLD" && (after === "ENGAGED" || after === "HOT" || after === "VERY_HOT")) {
+          coldToEngaged++;
+        }
+        if (before === "COLD") totalCold++;
+      }
+
+      const engagedToHotRate = totalEngaged >= 5 ? Math.round((engagedToHot / totalEngaged) * 100) : null;
+      const coldToEngagedRate = totalCold >= 5 ? Math.round((coldToEngaged / totalCold) * 100) : null;
+
+      return {
+        engagedToHotRate,
+        coldToEngagedRate,
+        hasSufficientData: totalEngaged >= 5 || totalCold >= 5,
+      };
+    },
+    enabled: !!user,
+  });
+};
