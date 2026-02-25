@@ -504,7 +504,7 @@ REGRAS OBRIGATÓRIAS:
           // Get the WhatsApp number (instance) info
           const { data: whatsappNumber } = await supabase
             .from('whatsapp_numbers')
-            .select('id, user_id, api_tier')
+            .select('id, user_id, api_tier, phone_number')
             .eq('instance_name', instance)
             .single();
           
@@ -987,13 +987,18 @@ REGRAS OBRIGATÓRIAS:
 
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
-              if (!canonicalLeadPhone) {
-                console.log('Skipping Revenue/CRM for invalid inbound phone:', rawPhone);
+              const ownCanonicalPhone = normalizeBrazilianMobileE164(String(whatsappNumber?.phone_number || ''));
+              const effectiveLeadPhone = ownCanonicalPhone && canonicalLeadPhone === ownCanonicalPhone
+                ? null
+                : canonicalLeadPhone;
+
+              if (!effectiveLeadPhone) {
+                console.log('Skipping Revenue/CRM for invalid or self inbound phone:', rawPhone);
               } else {
                 // ===== REVENUE TRACKING: INBOUND (always fire, regardless of CRM lead) =====
                 await fireRevenueEvent({
                   user_id: whatsappNumber.user_id,
-                  phone_e164: canonicalLeadPhone,
+                  phone_e164: effectiveLeadPhone,
                   number_instance_id: whatsappNumber.id,
                   direction: 'inbound',
                   message_content: content,
@@ -1002,13 +1007,13 @@ REGRAS OBRIGATÓRIAS:
 
                 console.log('=== LEAD LOOKUP ===');
                 console.log('Raw phone:', rawPhone);
-                console.log('Canonical phone:', canonicalLeadPhone);
+                console.log('Canonical phone:', effectiveLeadPhone);
 
                 let { data: existingLead } = await supabase
                   .from('leads')
                   .select('id, phone, pipeline_stage_id, whatsapp_status')
                   .eq('user_id', whatsappNumber.user_id)
-                  .eq('phone', canonicalLeadPhone)
+                  .eq('phone', effectiveLeadPhone)
                   .limit(1)
                   .maybeSingle();
 
@@ -1076,7 +1081,7 @@ REGRAS OBRIGATÓRIAS:
                   // Create CRM lead automatically when inbound message has no existing lead
                   const newLeadPayload: Record<string, unknown> = {
                     user_id: whatsappNumber.user_id,
-                    phone: canonicalLeadPhone,
+                    phone: effectiveLeadPhone,
                     contact_name: data.pushName || null,
                     origin: 'whatsapp_inbound',
                     whatsapp_number_id: whatsappNumber.id,
@@ -1131,8 +1136,8 @@ REGRAS OBRIGATÓRIAS:
                     const { data: existingResponses } = await supabase
                       .from('campaign_responses')
                       .select('id')
-                      .eq('campaign_id', campaign.id)
-                      .eq('contact_phone', canonicalLeadPhone)
+                        .eq('campaign_id', campaign.id)
+                        .eq('contact_phone', effectiveLeadPhone)
                       .limit(1);
                     
                     if (!existingResponses || existingResponses.length === 0) {
@@ -1140,7 +1145,7 @@ REGRAS OBRIGATÓRIAS:
                         .from('ignored_contacts')
                         .select('first_message_sent_at')
                         .eq('user_id', whatsappNumber.user_id)
-                        .eq('phone', canonicalLeadPhone)
+                        .eq('phone', effectiveLeadPhone)
                         .eq('campaign_id', campaign.id)
                         .limit(1);
                       
@@ -1171,7 +1176,7 @@ REGRAS OBRIGATÓRIAS:
                         .insert({
                           campaign_id: campaign.id,
                           user_id: whatsappNumber.user_id,
-                          contact_phone: canonicalLeadPhone,
+                          contact_phone: effectiveLeadPhone,
                           window_number: campaign.current_window || 1,
                           message_content: content?.substring(0, 500) || null,
                           responded_at: new Date().toISOString(),
@@ -1230,7 +1235,7 @@ REGRAS OBRIGATÓRIAS:
                     .from('ignored_contacts')
                     .delete()
                     .eq('user_id', whatsappNumber.user_id)
-                    .eq('phone', canonicalLeadPhone);
+                    .eq('phone', effectiveLeadPhone);
                 }
               }
               
@@ -1349,14 +1354,26 @@ REGRAS OBRIGATÓRIAS:
                   console.error('Error pausing AI agent:', agentPauseError);
                 }
                 
-                // Find lead by phone or conversation_id
-                const { data: existingLeadSent } = await supabase
+                const canonicalSentPhone = normalizeBrazilianMobileE164(rawPhone);
+
+                let leadQuery = supabase
                   .from('leads')
                   .select('id, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id)
-                  .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},conversation_id.eq.${conversationId}`)
+                  .eq('user_id', whatsappNumber.user_id);
+
+                if (canonicalSentPhone && conversationId) {
+                  leadQuery = leadQuery.or(`phone.eq.${canonicalSentPhone},conversation_id.eq.${conversationId}`);
+                } else if (canonicalSentPhone) {
+                  leadQuery = leadQuery.eq('phone', canonicalSentPhone);
+                } else if (conversationId) {
+                  leadQuery = leadQuery.eq('conversation_id', conversationId);
+                } else {
+                  leadQuery = leadQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                }
+
+                const { data: existingLeadSent } = await leadQuery
                   .limit(1)
-                  .single();
+                  .maybeSingle();
                 
                 if (existingLeadSent) {
                   console.log('Found lead to update on sent message:', existingLeadSent.id);
