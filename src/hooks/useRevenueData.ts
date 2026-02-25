@@ -423,7 +423,7 @@ export const useRevenuePerformanceScore = () => {
       // Get conversations data for metrics
       const { data: convs, error: convErr } = await supabase
         .from("revenue_conversations")
-        .select("avg_response_time_seconds, unreplied_inbound_count, last_inbound_at, last_outbound_at");
+        .select("avg_response_time_seconds, unreplied_inbound_count, inbound_count_7d, outbound_count_7d, last_inbound_at, last_outbound_at");
       if (convErr) throw convErr;
 
       const { data: leads, error: leadErr } = await supabase
@@ -436,9 +436,11 @@ export const useRevenuePerformanceScore = () => {
 
       // Only consider leads with real interactions (score > 0)
       const interactedLeads = allLeads.filter((l) => l.score_total > 0);
+      // Only consider conversations with actual activity
+      const activeConvs = allConvs.filter((c) => c.avg_response_time_seconds > 0 || c.unreplied_inbound_count > 0 || c.inbound_count_7d > 0 || c.outbound_count_7d > 0);
 
       // If no real interaction data exists, return zeros
-      if (interactedLeads.length === 0 && allConvs.length === 0) return emptyResult;
+      if (interactedLeads.length === 0 && activeConvs.length === 0) return emptyResult;
 
       // 1. Avg response time (30% weight) - target < 5 min (300s)
       const avgResponseTimes = allConvs
