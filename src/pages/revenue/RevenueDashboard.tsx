@@ -4,19 +4,22 @@ import {
   AlertTriangle,
   Activity,
   DollarSign,
-  Info,
   Target,
   Gauge,
-  BarChart3,
-  TrendingUp,
   Zap,
+  Info,
+  Shield,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   useRevenueDashboardStats,
   useRevenueSettings,
@@ -37,11 +40,11 @@ const bucketLabels: Record<string, string> = {
   VERY_HOT: "Quente",
 };
 
-const bucketColors: Record<string, string> = {
-  COLD: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  ENGAGED: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  HOT: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  VERY_HOT: "bg-red-500/10 text-red-400 border-red-500/20",
+const bucketDescriptions: Record<string, string> = {
+  COLD: "Leads com pouca ou nenhuma interação recente. Precisam de reativação.",
+  ENGAGED: "Leads que demonstraram interesse inicial. Estão respondendo mensagens.",
+  HOT: "Leads com alto engajamento e sinais claros de interesse comercial.",
+  VERY_HOT: "Leads prontos para conversão. Prioridade máxima de atendimento.",
 };
 
 const riskLabels: Record<string, string> = {
@@ -52,7 +55,7 @@ const riskLabels: Record<string, string> = {
 
 const riskBadge: Record<string, string> = {
   OK: "bg-primary/10 text-primary",
-  COOLING: "bg-warning/10 text-warning",
+  COOLING: "bg-yellow-500/10 text-yellow-400",
   AT_RISK: "bg-destructive/10 text-destructive",
 };
 
@@ -92,6 +95,82 @@ const performanceColor = (score: number) => {
   return "text-destructive";
 };
 
+/* ── Hover KPI Card ── */
+interface KPICardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  description: string;
+  accent?: string;
+  highlight?: boolean;
+}
+
+const KPICard = ({ icon, label, value, description, accent = "text-muted-foreground", highlight = false }: KPICardProps) => (
+  <HoverCard openDelay={200} closeDelay={100}>
+    <HoverCardTrigger asChild>
+      <Card className={cn(
+        "bg-card border-border/50 cursor-default transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5",
+        highlight && "ring-1 ring-primary/20"
+      )}>
+        <CardContent className="pt-5 pb-4">
+          <div className={cn("flex items-center gap-2 mb-2", accent)}>
+            {icon}
+            <span className="text-xs font-medium">{label}</span>
+          </div>
+          <p className={cn("text-2xl font-bold", highlight ? accent : "text-foreground")}>{value}</p>
+        </CardContent>
+      </Card>
+    </HoverCardTrigger>
+    <HoverCardContent side="bottom" className="w-72 text-sm">
+      <div className="flex items-start gap-2">
+        <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-muted-foreground leading-relaxed">{description}</p>
+      </div>
+    </HoverCardContent>
+  </HoverCard>
+);
+
+/* ── Bucket Bar ── */
+const BucketBar = ({ bucket, count, total }: { bucket: string; count: number; total: number }) => {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+  const colorMap: Record<string, string> = {
+    COLD: "bg-blue-500",
+    ENGAGED: "bg-yellow-500",
+    HOT: "bg-orange-500",
+    VERY_HOT: "bg-red-500",
+  };
+  const textColorMap: Record<string, string> = {
+    COLD: "text-blue-400",
+    ENGAGED: "text-yellow-400",
+    HOT: "text-orange-400",
+    VERY_HOT: "text-red-400",
+  };
+
+  return (
+    <HoverCard openDelay={150} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <div className="flex items-center gap-3 cursor-default group">
+          <span className={cn("text-xs font-medium w-16 text-right", textColorMap[bucket])}>
+            {bucketLabels[bucket]}
+          </span>
+          <div className="flex-1 h-6 bg-secondary/30 rounded-md overflow-hidden">
+            <div
+              className={cn("h-full rounded-md transition-all duration-500", colorMap[bucket])}
+              style={{ width: `${Math.max(pct, 2)}%`, opacity: 0.7 }}
+            />
+          </div>
+          <span className="text-sm font-bold text-foreground w-8">{count}</span>
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent side="right" className="w-64 text-sm">
+        <p className="font-medium text-foreground mb-1">{bucketLabels[bucket]}</p>
+        <p className="text-muted-foreground text-xs leading-relaxed">{bucketDescriptions[bucket]}</p>
+        <p className="text-xs text-muted-foreground/60 mt-2">{pct.toFixed(1)}% do total de leads</p>
+      </HoverCardContent>
+    </HoverCard>
+  );
+};
+
 const RevenueDashboard = () => {
   const { data: stats, isLoading } = useRevenueDashboardStats();
   const { data: settings } = useRevenueSettings();
@@ -115,7 +194,10 @@ const RevenueDashboard = () => {
       )
     : 0;
 
-  // Intent chart data
+  const totalLeads = stats
+    ? Object.values(stats.bucketCounts).reduce((a, b) => a + b, 0)
+    : 0;
+
   const intentData = Object.entries(intentDist || {})
     .map(([key, count]) => ({
       name: intentLabels[key] || key,
@@ -139,187 +221,179 @@ const RevenueDashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-6 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Painel de Receita</h1>
-        <p className="text-sm text-muted-foreground">
-          Inteligência comercial em tempo real — acompanhe engajamento, oportunidades e performance
+        <p className="text-sm text-muted-foreground mt-1">
+          Visão consolidada da operação comercial — passe o mouse nos cards para detalhes
         </p>
       </div>
 
-      {/* KPIs Row 1 */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="bg-card border-border/50">
+      {/* ═══ TIER 1: Hero KPIs ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          icon={<DollarSign size={18} />}
+          label="Receita Esperada"
+          value={fmt(receitaEsperada)}
+          accent="text-primary"
+          highlight
+          description="Projeção de receita baseada na quantidade de leads em cada nível, multiplicada pelo ticket médio e taxa de conversão configurada."
+        />
+        <KPICard
+          icon={<Flame size={18} />}
+          label="Engajados + Quentes"
+          value={stats?.hotCount || 0}
+          accent="text-orange-400"
+          highlight
+          description="Total de leads nos níveis 'Engajado' e 'Quente' — são as oportunidades com maior probabilidade de fechamento."
+        />
+        <KPICard
+          icon={<Activity size={18} />}
+          label="Ativos (7d)"
+          value={stats?.active7d || 0}
+          description="Leads que tiveram pelo menos uma interação nos últimos 7 dias. Indica o tamanho ativo do seu pipeline."
+        />
+        <KPICard
+          icon={<AlertTriangle size={18} />}
+          label="Em Risco"
+          value={stats?.atRiskCount || 0}
+          accent="text-destructive"
+          description="Leads que pararam de interagir e estão esfriando. Precisam de atenção imediata para não perder a oportunidade."
+        />
+      </div>
+
+      {/* ═══ TIER 2: Alertas (condicional) ═══ */}
+      <AlertsPanel />
+
+      {/* ═══ TIER 2: Performance + Distribuição ═══ */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        {/* Performance Score - mais compacto */}
+        <Card className="bg-card border-border/50 lg:col-span-2">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Activity size={16} />
-              <span className="text-xs font-medium">Ativos (7d)</span>
+            <HoverCard openDelay={200}>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center justify-between cursor-default mb-4">
+                  <div className="flex items-center gap-2">
+                    <Gauge size={16} className={performanceColor(perfScore?.performanceScore || 0)} />
+                    <span className="text-sm font-semibold text-foreground">Performance</span>
+                  </div>
+                  <p className={cn("text-3xl font-bold", performanceColor(perfScore?.performanceScore || 0))}>
+                    {perfScore?.performanceScore || 0}
+                    <span className="text-sm font-normal text-muted-foreground">/100</span>
+                  </p>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent side="bottom" className="w-80">
+                <p className="text-xs text-muted-foreground">Índice composto: tempo de resposta (30%), leads quentes respondidos (40%), taxa de ignorados (20%) e consistência (10%).</p>
+              </HoverCardContent>
+            </HoverCard>
+            <Progress value={perfScore?.performanceScore || 0} className="h-2 mb-4" />
+            <div className="space-y-2.5">
+              {[
+                { label: "Tempo médio resposta", value: `${perfScore?.avgResponseTimeMinutes || 0} min` },
+                { label: "Quentes respondidos", value: `${perfScore?.hotResponseRate || 0}%` },
+                { label: "Taxa de ignorados", value: `${perfScore?.ignoredRate || 0}%` },
+                { label: "Consistência", value: `${perfScore?.consistencyRate || 0}%` },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <span className="font-medium text-foreground">{item.value}</span>
+                </div>
+              ))}
             </div>
-            <p className="text-2xl font-bold text-foreground">{stats?.active7d || 0}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
+        {/* Distribuição por nível - barra horizontal */}
+        <Card className="bg-card border-border/50 lg:col-span-3">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-orange-400 mb-1">
-              <Flame size={16} />
-              <span className="text-xs font-medium">Engajados + Quentes</span>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold text-foreground">Distribuição por Nível</span>
+              <span className="text-xs text-muted-foreground">{totalLeads} leads</span>
             </div>
-            <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border/50">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-destructive mb-1">
-              <AlertTriangle size={16} />
-              <span className="text-xs font-medium">Em Risco</span>
+            <div className="space-y-3">
+              {(["VERY_HOT", "HOT", "ENGAGED", "COLD"] as const).map((bucket) => (
+                <BucketBar
+                  key={bucket}
+                  bucket={bucket}
+                  count={stats?.bucketCounts[bucket] || 0}
+                  total={totalLeads}
+                />
+              ))}
             </div>
-            <p className="text-2xl font-bold text-foreground">{stats?.atRiskCount || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border/50">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-primary mb-1">
-              <DollarSign size={16} />
-              <span className="text-xs font-medium">Receita Esperada</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{fmt(receitaEsperada)}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border/50">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Gauge size={16} className={performanceColor(perfScore?.performanceScore || 0)} />
-              <span className="text-xs font-medium text-muted-foreground">Performance</span>
-            </div>
-            <p className={cn("text-2xl font-bold", performanceColor(perfScore?.performanceScore || 0))}>
-              {perfScore?.performanceScore || 0}/100
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alerts */}
-      <AlertsPanel />
-
-      {/* Bottleneck Map */}
+      {/* ═══ TIER 3: Gargalos ═══ */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
-          Gargalos Detectados (7 dias)
-        </h2>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+          Gargalos (7 dias)
+        </p>
         <BottleneckCards />
       </div>
 
-      {/* Performance Score Details + Maturity Index */}
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* Performance Score */}
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-semibold">Índice de Performance Comercial</CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info size={14} className="text-muted-foreground/50 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[300px]">
-                  <p className="text-xs">Métrica composta baseada em: tempo de resposta (30%), leads quentes respondidos (40%), leads ignorados (20%) e consistência (10%).</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Tempo médio resposta</span>
-              <span className="font-medium text-foreground">{perfScore?.avgResponseTimeMinutes || 0} min</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Leads quentes respondidos</span>
-              <span className="font-medium text-foreground">{perfScore?.hotResponseRate || 0}%</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Taxa de ignorados</span>
-              <span className="font-medium text-foreground">{perfScore?.ignoredRate || 0}%</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Consistência de atividade</span>
-              <span className="font-medium text-foreground">{perfScore?.consistencyRate || 0}%</span>
-            </div>
-            <Progress value={perfScore?.performanceScore || 0} className="h-2 mt-2" />
-          </CardContent>
-        </Card>
-
-        {/* Maturity Index */}
+      {/* ═══ TIER 3: Maturidade ═══ */}
+      <div className="grid lg:grid-cols-2 gap-4">
         <MaturityGauge />
+
+        {/* Intent Distribution */}
+        {intentData.length > 0 && (
+          <Card className="bg-card border-border/50">
+            <CardContent className="pt-5 pb-4">
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <div className="flex items-center gap-2 mb-4 cursor-default">
+                    <Target size={16} className="text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">Sinais de Intenção (7d)</span>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" className="w-72">
+                  <p className="text-xs text-muted-foreground">Intenções detectadas automaticamente nas mensagens dos leads, como perguntas sobre preço, disponibilidade ou pedidos de proposta.</p>
+                </HoverCardContent>
+              </HoverCard>
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={intentData} layout="vertical" margin={{ left: 75, right: 8 }}>
+                    <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} width={70} />
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                    />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      {intentData.map((entry) => (
+                        <Cell key={entry.key} fill={intentBarColors[entry.key] || "#6b7280"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Bucket Distribution */}
-      <Card className="bg-card border-border/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Distribuição por Nível</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-3">
-            {(["COLD", "ENGAGED", "HOT", "VERY_HOT"] as const).map((bucket) => (
-              <div key={bucket} className={cn("rounded-lg border p-3 text-center", bucketColors[bucket])}>
-                <p className="text-xs font-medium opacity-80">{bucketLabels[bucket]}</p>
-                <p className="text-xl font-bold mt-1">{stats?.bucketCounts[bucket] || 0}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Intent Distribution */}
-      {intentData.length > 0 && (
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Target size={16} />
-              <CardTitle className="text-base font-semibold">Sinais de Intenção (7 dias)</CardTitle>
-            </div>
-            <CardDescription>Distribuição de intenções detectadas nas mensagens dos leads</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={intentData} layout="vertical" margin={{ left: 80 }}>
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} width={75} />
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {intentData.map((entry) => (
-                      <Cell key={entry.key} fill={intentBarColors[entry.key] || "#6b7280"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Top 10 Oportunidades Hoje */}
+      {/* ═══ TIER 4: Top Oportunidades ═══ */}
       <Card className="bg-card border-border/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap size={16} className="text-primary" />
-              <CardTitle className="text-base font-semibold">Top 10 Oportunidades Hoje</CardTitle>
-            </div>
+            <HoverCard openDelay={200}>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-2 cursor-default">
+                  <Zap size={16} className="text-primary" />
+                  <CardTitle className="text-sm font-semibold">Top 10 Oportunidades</CardTitle>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent side="bottom" className="w-72">
+                <p className="text-xs text-muted-foreground">Leads com maior potencial de conversão baseado no score ponderado, risco e recência de atividade.</p>
+              </HoverCardContent>
+            </HoverCard>
             <Link to="/revenue/leads" className="text-xs text-primary hover:underline">
               Ver todos →
             </Link>
           </div>
-          <CardDescription>
-            Ranking baseado em score × peso + risco + recência de atividade
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {stats?.topOpportunities.length === 0 ? (
@@ -327,28 +401,33 @@ const RevenueDashboard = () => {
               Nenhum lead registrado ainda.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {stats?.topOpportunities.map((lead, idx) => (
                 <Link
                   key={lead.id}
                   to={`/revenue/leads/${lead.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary/40 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                       {idx + 1}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">
                         {lead.name || lead.phone_e164}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Score: {lead.score_total} • {lead.recommendedAction}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={cn("text-[10px]", bucketColors[lead.status_bucket])}>
+                    <Badge variant="outline" className={cn("text-[10px]", {
+                      "border-blue-500/20 text-blue-400": lead.status_bucket === "COLD",
+                      "border-yellow-500/20 text-yellow-400": lead.status_bucket === "ENGAGED",
+                      "border-orange-500/20 text-orange-400": lead.status_bucket === "HOT",
+                      "border-red-500/20 text-red-400": lead.status_bucket === "VERY_HOT",
+                    })}>
                       {bucketLabels[lead.status_bucket]}
                     </Badge>
                     {lead.risk_state !== "OK" && (
