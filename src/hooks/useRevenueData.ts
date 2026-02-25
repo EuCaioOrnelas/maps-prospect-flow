@@ -399,6 +399,18 @@ export const useRevenuePerformanceScore = () => {
       const allConvs = (convs || []) as unknown as RevenueConversation[];
       const allLeads = (leads || []) as unknown as RevenueLead[];
 
+      // If no data exists, return zeros instead of fake scores
+      if (allLeads.length === 0 && allConvs.length === 0) {
+        return {
+          performanceScore: 0,
+          avgResponseTimeMinutes: 0,
+          hotResponseRate: 0,
+          ignoredRate: 0,
+          consistencyRate: 0,
+          hasData: false,
+        };
+      }
+
       // 1. Avg response time (30% weight) - target < 5 min (300s)
       const avgResponseTimes = allConvs
         .filter((c) => c.avg_response_time_seconds > 0)
@@ -406,24 +418,24 @@ export const useRevenuePerformanceScore = () => {
       const avgResponseTime = avgResponseTimes.length > 0
         ? avgResponseTimes.reduce((a, b) => a + b, 0) / avgResponseTimes.length
         : 0;
-      const responseScore = avgResponseTime === 0 ? 50 : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
+      const responseScore = avgResponseTimes.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
 
       // 2. % hot leads responded (40% weight)
       const hotLeads = allLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotResponded = hotLeads.filter((l) => l.risk_state === "OK").length;
-      const hotResponseRate = hotLeads.length > 0 ? (hotResponded / hotLeads.length) * 100 : 100;
+      const hotResponseRate = hotLeads.length > 0 ? (hotResponded / hotLeads.length) * 100 : 0;
 
       // 3. % ignored leads (20% weight)
       const totalUnreplied = allConvs.reduce((sum, c) => sum + c.unreplied_inbound_count, 0);
       const totalConvs = allConvs.length || 1;
       const ignoredRate = Math.min(100, (totalUnreplied / totalConvs) * 100);
-      const ignoredScore = Math.max(0, 100 - ignoredRate * 2);
+      const ignoredScore = allConvs.length === 0 ? 0 : Math.max(0, 100 - ignoredRate * 2);
 
       // 4. Activity consistency (10% weight)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const activeLeads = allLeads.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
-      const consistencyScore = allLeads.length > 0 ? Math.min(100, (activeLeads / allLeads.length) * 100) : 50;
+      const consistencyScore = allLeads.length > 0 ? Math.min(100, (activeLeads / allLeads.length) * 100) : 0;
 
       const performanceScore = Math.round(
         responseScore * 0.3 +
@@ -438,6 +450,7 @@ export const useRevenuePerformanceScore = () => {
         hotResponseRate: Math.round(hotResponseRate),
         ignoredRate: Math.round(ignoredRate),
         consistencyRate: Math.round(consistencyScore),
+        hasData: true,
       };
     },
     enabled: !!user,
