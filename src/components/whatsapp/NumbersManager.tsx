@@ -557,6 +557,13 @@ export const NumbersManager = ({
         supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('warming_search_assignments').delete().eq('whatsapp_number_id', numberToDelete),
+        (supabase as any).from('campaign_incidents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
+        (supabase as any).from('ignored_contacts').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
+        // Revenue tables with FK to whatsapp_numbers
+        (supabase as any).from('revenue_conversations').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
+        (supabase as any).from('revenue_events').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
+        (supabase as any).from('revenue_leads').update({ source_number_instance_id: null }).eq('source_number_instance_id', numberToDelete),
+        (supabase as any).from('revenue_number_config').delete().eq('whatsapp_number_id', numberToDelete),
       ];
       
       // Delete warming sessions (has FK constraint)
