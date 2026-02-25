@@ -17,6 +17,7 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
     const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
     const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
@@ -44,12 +45,33 @@ serve(async (req) => {
     // Evolution API sends event in different formats - normalize
     const rawEvent = payload.event || '';
     const event = rawEvent.toLowerCase().replace(/_/g, '.').replace(/-/g, '.');
-    const instance = payload.instance;
-    const data = payload.data;
+
+    const instance = typeof payload.instance === 'string'
+      ? payload.instance
+      : payload.instance?.instanceName || payload.instance?.name || payload.instance_id || payload.instanceId;
+
+    const rawData = payload.data;
+    const isMessageUpsertEvent = ['messages.upsert', 'message.upsert', 'messagesupsert'].includes(event);
+
+    const data = isMessageUpsertEvent && Array.isArray(rawData?.messages)
+      ? {
+          ...rawData.messages[0],
+          pushName: rawData.messages[0]?.pushName || rawData?.pushName || payload?.pushName || null,
+          participant: rawData.messages[0]?.participant || rawData?.participant || null,
+        }
+      : rawData;
     
     console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
-    // Helper: fire-and-forget revenue event processing
+    if (!instance) {
+      console.error('Webhook payload sem instance identificável:', JSON.stringify(payload));
+      return new Response(JSON.stringify({ error: 'Missing instance name in webhook payload' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Helper: revenue event processing (awaited to avoid dropping events)
     async function fireRevenueEvent(params: {
       user_id: string;
       phone_e164: string;
@@ -59,17 +81,20 @@ serve(async (req) => {
       lead_name?: string;
     }) {
       try {
-        const revenueUrl = `${SUPABASE_URL}/functions/v1/revenue-processor`;
-        fetch(revenueUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          },
-          body: JSON.stringify({ action: 'process_message', ...params }),
-        }).catch(e => console.log('Revenue processor fire-and-forget error:', e));
+        const { data: revenueResult, error } = await supabase.functions.invoke('revenue-processor', {
+          body: { action: 'process_message', ...params },
+        });
+
+        if (error) {
+          console.error('Revenue processor invoke failed:', error);
+          return;
+        }
+
+        if (revenueResult && revenueResult.success === false) {
+          console.log('Revenue processor skipped:', revenueResult);
+        }
       } catch (e) {
-        console.log('Revenue event fire error:', e);
+        console.error('Revenue event fire error:', e);
       }
     }
 
@@ -940,7 +965,7 @@ REGRAS OBRIGATÓRIAS:
             
             // ===== REVENUE TRACKING: OUTBOUND =====
             if (fromMe && normalizedPhone) {
-              fireRevenueEvent({
+              await fireRevenueEvent({
                 user_id: whatsappNumber.user_id,
                 phone_e164: normalizePhoneNumber(rawPhone),
                 number_instance_id: whatsappNumber.id,
@@ -952,7 +977,7 @@ REGRAS OBRIGATÓRIAS:
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
               // ===== REVENUE TRACKING: INBOUND (always fire, regardless of CRM lead) =====
-              fireRevenueEvent({
+              await fireRevenueEvent({
                 user_id: whatsappNumber.user_id,
                 phone_e164: normalizePhoneNumber(rawPhone),
                 number_instance_id: whatsappNumber.id,
