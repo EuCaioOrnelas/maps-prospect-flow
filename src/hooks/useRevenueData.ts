@@ -379,12 +379,47 @@ export const useRevenueDashboardStats = () => {
   });
 };
 
+export const useHasConnectedNumbers = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["has-connected-numbers", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_numbers")
+        .select("id")
+        .eq("user_id", user!.id)
+        .limit(1);
+      if (error) throw error;
+      return (data || []).length > 0;
+    },
+    enabled: !!user,
+  });
+};
+
 export const useRevenuePerformanceScore = () => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ["revenue-performance-score", user?.id],
     queryFn: async () => {
+      const emptyResult = {
+        performanceScore: 0,
+        avgResponseTimeMinutes: 0,
+        hotResponseRate: 0,
+        ignoredRate: 0,
+        consistencyRate: 0,
+        hasData: false,
+      };
+
+      // Check if user has any whatsapp numbers at all
+      const { data: nums } = await supabase
+        .from("whatsapp_numbers")
+        .select("id")
+        .eq("user_id", user!.id)
+        .limit(1);
+      if (!nums || nums.length === 0) return emptyResult;
+
       // Get conversations data for metrics
       const { data: convs, error: convErr } = await supabase
         .from("revenue_conversations")
@@ -399,17 +434,8 @@ export const useRevenuePerformanceScore = () => {
       const allConvs = (convs || []) as unknown as RevenueConversation[];
       const allLeads = (leads || []) as unknown as RevenueLead[];
 
-      // If no data exists, return zeros instead of fake scores
-      if (allLeads.length === 0 && allConvs.length === 0) {
-        return {
-          performanceScore: 0,
-          avgResponseTimeMinutes: 0,
-          hotResponseRate: 0,
-          ignoredRate: 0,
-          consistencyRate: 0,
-          hasData: false,
-        };
-      }
+      // If no data exists, return zeros
+      if (allLeads.length === 0 && allConvs.length === 0) return emptyResult;
 
       // 1. Avg response time (30% weight) - target < 5 min (300s)
       const avgResponseTimes = allConvs
