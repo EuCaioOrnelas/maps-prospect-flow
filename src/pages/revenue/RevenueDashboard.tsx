@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
-  ENGAGED: "Engajado",
-  HOT: "Quente",
-  VERY_HOT: "Muito Quente",
+  ENGAGED: "Morno",
+  HOT: "Engajado",
+  VERY_HOT: "Quente",
 };
 
 const bucketColors: Record<string, string> = {
@@ -116,7 +116,7 @@ const RevenueDashboard = () => {
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 text-orange-400 mb-1">
                 <Flame size={16} />
-                <span className="text-xs font-medium">Quentes + Muito Quentes</span>
+                <span className="text-xs font-medium">Engajados + Quentes</span>
               </div>
               <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Score acima de 350 pts</p>
@@ -174,9 +174,9 @@ const RevenueDashboard = () => {
                 <p className="text-xs">Cada lead recebe um score de 0 a 1000 baseado nas suas interações. O nível é calculado automaticamente:</p>
                 <ul className="text-xs mt-1 space-y-0.5">
                   <li>• <strong>Frio:</strong> 0–149 pts</li>
-                  <li>• <strong>Engajado:</strong> 150–349 pts</li>
-                  <li>• <strong>Quente:</strong> 350–649 pts</li>
-                  <li>• <strong>Muito Quente:</strong> 650–1000 pts</li>
+                   <li>• <strong>Morno:</strong> 150–349 pts</li>
+                   <li>• <strong>Engajado:</strong> 350–649 pts</li>
+                   <li>• <strong>Quente:</strong> 650–1000 pts</li>
                 </ul>
               </TooltipContent>
             </Tooltip>
@@ -207,7 +207,7 @@ const RevenueDashboard = () => {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Receita Potencial (Quentes + Muito Quentes)
+              Receita Potencial (Engajados + Quentes)
             </CardTitle>
           </CardHeader>
           <CardContent>
