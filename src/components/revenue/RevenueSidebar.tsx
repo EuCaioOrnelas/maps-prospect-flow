@@ -29,15 +29,25 @@ const navItems = [
   { title: "Configurações", url: "/revenue/settings", icon: Settings },
 ];
 
-export const RevenueSidebar = () => {
+interface RevenueSidebarProps {
+  onCollapsedChange?: (collapsed: boolean) => void;
+}
+
+export const RevenueSidebar = ({ onCollapsedChange }: RevenueSidebarProps) => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const currentPath = location.pathname;
 
+  const handleToggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    onCollapsedChange?.(next);
+  };
+
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-[width] duration-300 ease-out shrink-0",
+        "h-screen fixed top-0 left-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-[width] duration-300 ease-out shrink-0 z-30",
         collapsed ? "w-[68px]" : "w-56"
       )}
     >
@@ -64,7 +74,7 @@ export const RevenueSidebar = () => {
           )}
         </Link>
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleToggle}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
