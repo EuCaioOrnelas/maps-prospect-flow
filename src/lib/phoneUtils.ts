@@ -144,6 +144,26 @@ export const isMobilePhone = (phone: string): boolean => {
 };
 
 /**
+ * Detecta números provavelmente artificiais/de-teste (ex.: 9999-0001)
+ * para evitar poluir funis e dashboards.
+ */
+export const isLikelyPlaceholderPhone = (phone: string): boolean => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return true;
+
+  const local = digits.startsWith('55') && digits.length >= 12 ? digits.slice(4) : digits;
+  const subscriber = local.length >= 8 ? local.slice(-8) : local;
+
+  // Padrões clássicos de teste/placeholder
+  if (/^(\d)\1{7}$/.test(subscriber)) return true;           // 00000000, 99999999
+  if (subscriber.startsWith('9999')) return true;              // 9999-xxxx
+  if (/(0000|1234|4321)/.test(subscriber)) return true;        // blocos artificiais
+  if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return true;
+
+  return false;
+};
+
+/**
  * Normalize phone number - supports international numbers
  * For Brazilian numbers (10-11 digits without country code), adds 55
  * For international numbers (already has country code), keeps as-is

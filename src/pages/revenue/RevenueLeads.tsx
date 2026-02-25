@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRevenueLeads } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
-import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { formatPhoneNumber, isLikelyPlaceholderPhone } from "@/lib/phoneUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -59,6 +59,10 @@ const RevenueLeads = () => {
   });
 
   const filtered = (leads || []).filter((l) => {
+    // Remove registros sem interação real ou com telefone placeholder
+    if (l.score_total <= 0) return false;
+    if (isLikelyPlaceholderPhone(l.phone_e164)) return false;
+
     if (!search) return true;
     const qDigits = search.replace(/\D/g, '');
     const phoneDigits = l.phone_e164.replace(/\D/g, '');
