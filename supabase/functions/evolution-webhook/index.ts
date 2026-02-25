@@ -52,15 +52,21 @@ serve(async (req) => {
     const rawData = payload.data;
     const isMessageUpsertEvent = ['messages.upsert', 'message.upsert', 'messagesupsert'].includes(event);
 
-    const data = isMessageUpsertEvent && Array.isArray(rawData?.messages)
+    const selectedMessageFromArray = isMessageUpsertEvent && Array.isArray(rawData?.messages)
+      ? (rawData.messages.find((msg: any) => msg?.key && msg?.message && msg?.key?.fromMe === false)
+          || rawData.messages.find((msg: any) => msg?.key && msg?.message)
+          || null)
+      : null;
+
+    const data = selectedMessageFromArray
       ? {
-          ...rawData.messages[0],
-          pushName: rawData.messages[0]?.pushName || rawData?.pushName || payload?.pushName || null,
-          participant: rawData.messages[0]?.participant || rawData?.participant || null,
+          ...selectedMessageFromArray,
+          pushName: selectedMessageFromArray?.pushName || rawData?.pushName || payload?.pushName || null,
+          participant: selectedMessageFromArray?.participant || rawData?.participant || null,
         }
       : rawData;
     
-    console.log('Raw event:', rawEvent, '-> Normalized:', event);
+    console.log('Raw event:', rawEvent, '-> Normalized:', event, 'messagesInBatch:', Array.isArray(rawData?.messages) ? rawData.messages.length : 0, 'selectedFromMe:', data?.key?.fromMe ?? null);
 
     if (!instance) {
       console.error('Webhook payload sem instance identificável:', JSON.stringify(payload));

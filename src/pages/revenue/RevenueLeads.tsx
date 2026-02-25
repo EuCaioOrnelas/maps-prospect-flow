@@ -60,8 +60,9 @@ const RevenueLeads = () => {
 
   const filtered = (leads || []).filter((l) => {
     if (!search) return true;
-    const q = search.toLowerCase();
-    return l.phone_e164.includes(q);
+    const qDigits = search.replace(/\D/g, '');
+    const phoneDigits = l.phone_e164.replace(/\D/g, '');
+    return qDigits ? phoneDigits.includes(qDigits) : l.phone_e164.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
