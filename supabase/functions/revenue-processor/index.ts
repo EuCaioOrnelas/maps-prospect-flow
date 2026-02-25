@@ -50,13 +50,16 @@ const NEGATIVE_MODERATE_PATTERNS: string[] = [
 const OBJECTION_FINANCIAL: string[] = [
   "nao tenho dinheiro", "nao cabe no orcamento", "esta fora do meu orcamento",
   "preciso organizar", "nao posso agora", "fora do orcamento",
-  "sem orcamento", "sem verba",
+  "sem orcamento", "sem verba", "sem budget", "nao tem budget",
+  "fora do budget", "budget apertado",
 ];
 
 const OBJECTION_DELAY: string[] = [
   "preciso pensar", "depois eu vejo", "vou analisar", "vou falar com socio",
   "preciso conversar", "mais tarde", "depois vejo", "vou pensar",
-  "vou avaliar", "deixa eu ver",
+  "vou avaliar", "deixa eu ver", "vou ver e te falo", "vou ver",
+  "preciso falar com", "vou conversar com", "vou consultar",
+  "deixa eu pensar", "me da um tempo",
 ];
 
 const OBJECTION_PRICE_NEGATIVE_TERMS = [
