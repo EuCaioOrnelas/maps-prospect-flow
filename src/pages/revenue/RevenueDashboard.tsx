@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Flame,
@@ -10,9 +11,13 @@ import {
   BarChart3,
   TrendingUp,
   Zap,
+  Smartphone,
+  QrCode,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
@@ -22,7 +27,11 @@ import {
   useRevenueIntentDistribution,
   useRevenuePerformanceScore,
   useRevenueOpportunityIndex,
+  useHasConnectedNumbers,
 } from "@/hooks/useRevenueData";
+import { useWhatsAppNumbers, PLAN_LIMITS } from "@/hooks/useWhatsAppNumbers";
+import { useAuth } from "@/contexts/AuthContext";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 
@@ -89,11 +98,18 @@ const performanceColor = (score: number) => {
 };
 
 const RevenueDashboard = () => {
+  const [showNumbersManager, setShowNumbersManager] = useState(false);
+  const { profile } = useAuth();
   const { data: stats, isLoading } = useRevenueDashboardStats();
   const { data: settings } = useRevenueSettings();
   const { data: intentDist } = useRevenueIntentDistribution();
   const { data: perfScore } = useRevenuePerformanceScore();
   const { data: oppIndex } = useRevenueOpportunityIndex();
+  const { data: hasNumbers, isLoading: loadingNumbers } = useHasConnectedNumbers();
+  const { numbers, setNumbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
+
+  const userPlan = profile?.plan?.toLowerCase() || "free";
+  const planMaxNumbers = PLAN_LIMITS[userPlan] || 1;
 
   const ticket = settings?.default_ticket_value || 3000;
   const closeRates = {
@@ -120,7 +136,7 @@ const RevenueDashboard = () => {
     }))
     .sort((a, b) => b.value - a.value);
 
-  if (isLoading) {
+  if (isLoading || loadingNumbers) {
     return (
       <div className="p-6 space-y-4 max-w-7xl mx-auto">
         <Skeleton className="h-8 w-48" />
@@ -130,6 +146,79 @@ const RevenueDashboard = () => {
           ))}
         </div>
         <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  // Show setup state when no numbers exist
+  if (!hasNumbers) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Painel de Receita</h1>
+          <p className="text-sm text-muted-foreground">
+            Inteligência comercial em tempo real — acompanhe engajamento, oportunidades e performance
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 mt-8">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Smartphone className="w-10 h-10 text-primary" />
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="text-xl font-bold text-foreground">
+                Conecte um número para começar
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                O módulo de Inteligência de Receita monitora automaticamente as conversas do WhatsApp 
+                para calcular scores, detectar intenções e gerar insights comerciais. 
+                Conecte um número para ativar.
+              </p>
+            </div>
+
+            <Card className="bg-card border-border/50 text-left">
+              <CardContent className="pt-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+                  <p className="text-sm text-muted-foreground">Clique no botão abaixo para adicionar um número</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+                  <p className="text-sm text-muted-foreground">Escaneie o QR Code com seu WhatsApp</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+                  <p className="text-sm text-muted-foreground">Os dados de receita serão gerados automaticamente</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button
+              onClick={() => setShowNumbersManager(true)}
+              size="lg"
+              className="w-full gap-2 h-12 text-base"
+            >
+              <QrCode className="w-5 h-5" />
+              Conectar WhatsApp
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+
+            <p className="text-xs text-muted-foreground">
+              🔒 Conexão segura e criptografada
+            </p>
+          </div>
+        </div>
+
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={(nums) => { setNumbers(nums); fetchNumbers(); }}
+          maxNumbers={planMaxNumbers}
+          onConnect={() => { fetchNumbers(); }}
+          forceOpen={showNumbersManager}
+          onClose={() => setShowNumbersManager(false)}
+        />
       </div>
     );
   }
