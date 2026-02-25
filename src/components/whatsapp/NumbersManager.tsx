@@ -95,6 +95,10 @@ export const NumbersManager = ({
   const isInsertingRef = useRef(false);
   const connectionHandledRef = useRef(false);
   
+  // Store proxy_id and api_tier from create-instance for new numbers
+  const pendingProxyIdRef = useRef<string | null>(null);
+  const pendingApiTierRef = useRef<string>('free');
+  
   // Warming sessions for each number
   const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
   
@@ -280,16 +284,20 @@ export const NumbersManager = ({
             if (isInsertingRef.current) return;
             isInsertingRef.current = true;
             const isPaidPlan = ['start', 'growth', 'scale'].includes(userPlan);
+            const insertPayload: any = {
+              user_id: user.id,
+              name: pendingNumberName,
+              is_connected: true,
+              phone_number: data.phoneNumber || null,
+              instance_name: connectingInstanceName,
+              api_tier: pendingApiTierRef.current || (isPaidPlan ? 'paid' : 'free')
+            };
+            if (pendingProxyIdRef.current) {
+              insertPayload.proxy_id = pendingProxyIdRef.current;
+            }
             const { data: newNumber, error: insertError } = await supabase
               .from('whatsapp_numbers')
-              .insert({
-                user_id: user.id,
-                name: pendingNumberName,
-                is_connected: true,
-                phone_number: data.phoneNumber || null,
-                instance_name: connectingInstanceName,
-                api_tier: isPaidPlan ? 'paid' : 'free'
-              })
+              .insert(insertPayload)
               .select()
               .single();
             
@@ -311,10 +319,10 @@ export const NumbersManager = ({
             setTimeout(() => {
               setShowSuccessAnimation(false);
               setConnectDialogOpen(false);
-              onConnect(newNumber.id, true); // Pass true to trigger sync
-              
-              // Reset all states
+              onConnect(newNumber.id, true);
               setPendingNumberName(null);
+              pendingProxyIdRef.current = null;
+              pendingApiTierRef.current = 'free';
               isInsertingRef.current = false;
             }, 2000);
           } else {
@@ -396,6 +404,14 @@ export const NumbersManager = ({
 
       if (createResponse.error) {
         throw new Error(createResponse.error.message);
+      }
+
+      // Store proxy and tier info for new numbers
+      if (createResponse.data?.proxyId) {
+        pendingProxyIdRef.current = createResponse.data.proxyId;
+      }
+      if (createResponse.data?.apiTier) {
+        pendingApiTierRef.current = createResponse.data.apiTier;
       }
 
       // If QR code came with instance creation (string, not object)
@@ -1243,16 +1259,20 @@ export const NumbersManager = ({
                         if (isInsertingRef.current) return;
                         isInsertingRef.current = true;
                         const isPaidPlan = ['start', 'growth', 'scale'].includes(userPlan);
+                        const manualInsertPayload: any = {
+                          user_id: user.id,
+                          name: pendingNumberName,
+                          is_connected: true,
+                          phone_number: data.phoneNumber || null,
+                          instance_name: connectingInstanceName,
+                          api_tier: pendingApiTierRef.current || (isPaidPlan ? 'paid' : 'free')
+                        };
+                        if (pendingProxyIdRef.current) {
+                          manualInsertPayload.proxy_id = pendingProxyIdRef.current;
+                        }
                         const { data: newNumber, error: insertError } = await supabase
                           .from('whatsapp_numbers')
-                          .insert({
-                            user_id: user.id,
-                            name: pendingNumberName,
-                            is_connected: true,
-                            phone_number: data.phoneNumber || null,
-                            instance_name: connectingInstanceName,
-                            api_tier: isPaidPlan ? 'paid' : 'free'
-                          })
+                          .insert(manualInsertPayload)
                           .select()
                           .single();
                         
@@ -1270,6 +1290,8 @@ export const NumbersManager = ({
                           setConnectDialogOpen(false);
                           onConnect(newNumber.id, true);
                           setPendingNumberName(null);
+                          pendingProxyIdRef.current = null;
+                          pendingApiTierRef.current = 'free';
                           isInsertingRef.current = false;
                         }, 2000);
                       } else {
