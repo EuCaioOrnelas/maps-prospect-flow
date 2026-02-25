@@ -23,31 +23,21 @@ const navItems = [
   { title: "Tendências", url: "/revenue/trends", icon: BarChart3 },
   { title: "Projeções", url: "/revenue/insights", icon: TrendingUp },
   { title: "Simulador", url: "/revenue/simulator", icon: Calculator },
+  { title: "Equipe", url: "/revenue/team", icon: UserCheck },
   { title: "Relatórios", url: "/revenue/report", icon: FileText },
   { title: "Números", url: "/revenue/numbers", icon: Smartphone },
-  { title: "Equipe", url: "/revenue/team", icon: UserCheck },
   { title: "Configurações", url: "/revenue/settings", icon: Settings },
 ];
 
-interface RevenueSidebarProps {
-  onCollapsedChange?: (collapsed: boolean) => void;
-}
-
-export const RevenueSidebar = ({ onCollapsedChange }: RevenueSidebarProps) => {
+export const RevenueSidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const currentPath = location.pathname;
 
-  const handleToggle = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    onCollapsedChange?.(next);
-  };
-
   return (
     <aside
       className={cn(
-        "h-screen fixed top-0 left-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-[width] duration-300 ease-out shrink-0 z-30",
+        "h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-[width] duration-300 ease-out shrink-0",
         collapsed ? "w-[68px]" : "w-56"
       )}
     >
@@ -74,7 +64,7 @@ export const RevenueSidebar = ({ onCollapsedChange }: RevenueSidebarProps) => {
           )}
         </Link>
         <button
-          onClick={handleToggle}
+          onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

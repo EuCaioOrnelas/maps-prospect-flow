@@ -23,10 +23,10 @@ const RevenueInsights = () => {
 
   const ticket = settings?.default_ticket_value || 3000;
   const rates = {
-    COLD: settings?.default_close_rate_cold || 0.005,
-    ENGAGED: settings?.default_close_rate_engaged || 0.05,
-    HOT: settings?.default_close_rate_hot || 0.15,
-    VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
+    COLD: settings?.default_close_rate_cold || 0.05,
+    ENGAGED: settings?.default_close_rate_engaged || 0.15,
+    HOT: settings?.default_close_rate_hot || 0.35,
+    VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
   };
 
   const buckets = stats?.bucketCounts || { COLD: 0, ENGAGED: 0, HOT: 0, VERY_HOT: 0 };

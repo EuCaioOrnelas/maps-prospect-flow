@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRevenueLeads } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
-import { formatPhoneNumber, isLikelyPlaceholderPhone } from "@/lib/phoneUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,16 +37,6 @@ const riskColors: Record<string, string> = {
   AT_RISK: "text-destructive",
 };
 
-const getEffectiveStatus = (lead: { score_total: number; risk_state: string }) => {
-  if (lead.score_total === 0) return { label: "Aguardando", color: "text-muted-foreground", icon: "⏳" };
-  if (lead.score_total < 50) return { label: "Novo", color: "text-blue-400", icon: "🆕" };
-  return {
-    label: riskLabels[lead.risk_state] || lead.risk_state,
-    color: riskColors[lead.risk_state] || "text-muted-foreground",
-    icon: lead.risk_state === "AT_RISK" ? "🚨" : lead.risk_state === "COOLING" ? "⚠️" : "✅",
-  };
-};
-
 const RevenueLeads = () => {
   const [bucketFilter, setBucketFilter] = useState<string>("all");
   const [riskFilter, setRiskFilter] = useState<string>("all");
@@ -59,14 +48,12 @@ const RevenueLeads = () => {
   });
 
   const filtered = (leads || []).filter((l) => {
-    // Remove registros sem interação real ou com telefone placeholder
-    if (l.score_total <= 0) return false;
-    if (isLikelyPlaceholderPhone(l.phone_e164)) return false;
-
     if (!search) return true;
-    const qDigits = search.replace(/\D/g, '');
-    const phoneDigits = l.phone_e164.replace(/\D/g, '');
-    return qDigits ? phoneDigits.includes(qDigits) : l.phone_e164.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    return (
+      l.phone_e164.includes(q) ||
+      (l.name && l.name.toLowerCase().includes(q))
+    );
   });
 
   return (
@@ -83,7 +70,7 @@ const RevenueLeads = () => {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por telefone..."
+            placeholder="Buscar por nome ou telefone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -150,8 +137,11 @@ const RevenueLeads = () => {
                           to={`/revenue/leads/${lead.id}`}
                           className="hover:text-primary transition-colors"
                         >
-                          <p className="font-medium text-foreground font-mono text-xs">
-                            {formatPhoneNumber(lead.phone_e164)}
+                          <p className="font-medium text-foreground">
+                            {lead.name || "Sem nome"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {lead.phone_e164}
                           </p>
                         </Link>
                       </td>
@@ -176,14 +166,14 @@ const RevenueLeads = () => {
                         })}
                       </td>
                       <td className="p-4 text-center">
-                        {(() => {
-                          const status = getEffectiveStatus(lead);
-                          return (
-                            <span className={cn("text-xs font-medium", status.color)}>
-                              {status.icon} {status.label}
-                            </span>
-                          );
-                        })()}
+                        <span
+                          className={cn(
+                            "text-xs font-medium",
+                            riskColors[lead.risk_state]
+                          )}
+                        >
+                          {riskLabels[lead.risk_state]}
+                        </span>
                       </td>
                     </tr>
                   ))}

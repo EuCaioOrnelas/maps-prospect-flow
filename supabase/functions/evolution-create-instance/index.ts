@@ -449,8 +449,6 @@ serve(async (req) => {
       success: true,
       instance: instanceData,
       qrcode: qrcode,
-      proxyId: assignedProxyId,
-      apiTier: apiTier,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

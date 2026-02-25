@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRevenueLead, useRevenueEvents, useRevenueScoreLogs, useRevenueScoreSnapshots } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
-import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -33,7 +32,6 @@ const eventLabels: Record<string, string> = {
   INTENT_AVAILABILITY: "Perguntou disponibilidade", INTENT_PAYMENT: "Falou sobre pagamento",
   INTENT_PROPOSAL: "Pediu proposta", INTENT_URGENT: "Demonstrou urgência",
   INTENT_OBJECTION: "Fez objeção", INTENT_NEGATIVE: "Sinalizou desinteresse",
-  INTENT_NEGATIVE_MODERATE: "Penalidade moderada", INTENT_NEGATIVE_HARD: "Penalidade forte",
   OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "Respondeu em menos de 1h",
   INBOUND_STREAK_3: "Sequência de 3 mensagens", INBOUND_AFTER_24H_SILENCE: "Voltou após 24h",
   INBOUND_AFTER_7D_SILENCE: "Voltou após 7 dias", LINK_CLICK: "Clicou em link",
@@ -51,41 +49,9 @@ const eventLabels: Record<string, string> = {
 const eventIcons: Record<string, string> = {
   INBOUND_MESSAGE: "💬", OUTBOUND_MESSAGE: "📤", INTENT_PRICE: "💰", INTENT_BUY_NOW: "🔥",
   INTENT_AVAILABILITY: "📅", INTENT_PAYMENT: "💳", INTENT_PROPOSAL: "📄", INTENT_URGENT: "⚡",
-  INTENT_OBJECTION: "⚠️", INTENT_NEGATIVE: "🚫", INTENT_NEGATIVE_MODERATE: "❄️", INTENT_NEGATIVE_HARD: "⛔",
-  OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "⏱️",
+  INTENT_OBJECTION: "⚠️", INTENT_NEGATIVE: "🚫", OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "⏱️",
   LINK_CLICK: "🔗", CALL_REQUEST: "📞", SLA_FIRST_RESPONSE_UNDER_5MIN: "✅",
   SLA_FIRST_RESPONSE_OVER_30MIN: "❌",
-};
-
-const intentCategoryLabels: Record<string, string> = {
-  INTENT_POSITIVE: "Intenção Positiva",
-  INTENT_OBJECTION: "Objeção",
-  INTENT_NEGATIVE_MODERATE: "Penalidade Moderada",
-  INTENT_NEGATIVE_HARD: "Penalidade Forte",
-  NEUTRAL: "Neutro",
-};
-
-const intentSubtypeLabels: Record<string, string> = {
-  PRICE_REQUEST: "Pedido de Preço",
-  BUY_INTENT: "Intenção de Compra",
-  AVAILABILITY: "Disponibilidade",
-  PROPOSAL: "Pedido de Proposta",
-  PAYMENT: "Pagamento",
-  URGENT: "Urgência",
-  PRICE_OBJECTION: "Objeção de Preço",
-  FINANCIAL_OBJECTION: "Objeção Financeira",
-  DELAY_OBJECTION: "Adiamento",
-  DISINTEREST: "Desinteresse Leve",
-  NO_INTEREST: "Desinteresse Explícito",
-  OPT_OUT: "Opt-out",
-};
-
-const intentCategoryColors: Record<string, string> = {
-  INTENT_POSITIVE: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  INTENT_OBJECTION: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  INTENT_NEGATIVE_MODERATE: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  INTENT_NEGATIVE_HARD: "bg-red-500/10 text-red-400 border-red-500/20",
-  NEUTRAL: "bg-muted text-muted-foreground border-border",
 };
 
 const categoryLabels: Record<string, string> = {
@@ -170,23 +136,14 @@ const RevenueLeadDetail = () => {
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-foreground font-mono">{formatPhoneNumber(lead.phone_e164)}</h1>
+              <h1 className="text-xl font-bold text-foreground">{lead.name || lead.phone_e164}</h1>
+              <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn("text-xs", bucketColors[lead.status_bucket])}>{bucketLabels[lead.status_bucket]}</Badge>
               <Badge variant="outline" className={cn("text-xs", riskBadge[lead.risk_state])}>{riskLabels[lead.risk_state]}</Badge>
             </div>
           </div>
-
-          {/* Last Intent Badge */}
-          {(lead as any).last_intent_category && (lead as any).last_intent_category !== "NEUTRAL" && (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Última intenção:</span>
-              <Badge variant="outline" className={cn("text-xs", intentCategoryColors[(lead as any).last_intent_category] || "")}>
-                {intentSubtypeLabels[(lead as any).last_intent_subtype] || intentCategoryLabels[(lead as any).last_intent_category] || (lead as any).last_intent_category}
-              </Badge>
-            </div>
-          )}
 
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-secondary/30 rounded-lg p-3 text-center">

@@ -208,44 +208,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
-    // STEP 1+2: Run whitelist check AND fingerprint/IP collection IN PARALLEL
+    // STEP 1: Check if email is whitelisted (Stripe paying customer)
     let isWhitelisted = false;
+    try {
+      console.log('[AuthContext] Checking Stripe whitelist for:', email);
+      const { data: whitelistData, error: whitelistError } = await supabase.functions.invoke('check-stripe-whitelist', {
+        body: { email }
+      });
+      
+      if (!whitelistError && whitelistData?.whitelisted) {
+        isWhitelisted = true;
+        console.log('[AuthContext] Email is whitelisted - Stripe paying customer:', whitelistData.reason);
+      } else {
+        console.log('[AuthContext] Email not whitelisted:', whitelistData?.reason || whitelistError?.message);
+      }
+    } catch (e) {
+      console.error('[AuthContext] Whitelist check error (continuing):', e);
+      // Don't block signup on whitelist check error
+    }
+    
+    // STEP 2: Get device fingerprint and IP for fraud prevention (only if not whitelisted)
     let fingerprint = '';
     let clientIP = '';
     
-    try {
-      console.log('[AuthContext] Starting parallel whitelist + fingerprint check for:', email);
-      
-      const [whitelistResult, fpResult, ipResult] = await Promise.allSettled([
-        supabase.functions.invoke('check-stripe-whitelist', { body: { email } }),
-        generateFingerprint(),
-        getClientIP()
-      ]);
-      
-      // Process whitelist result
-      if (whitelistResult.status === 'fulfilled') {
-        const { data: whitelistData, error: whitelistError } = whitelistResult.value;
-        if (!whitelistError && whitelistData?.whitelisted) {
-          isWhitelisted = true;
-          console.log('[AuthContext] Email is whitelisted - Stripe paying customer:', whitelistData.reason);
-        } else {
-          console.log('[AuthContext] Email not whitelisted:', whitelistData?.reason || whitelistError?.message);
-        }
-      } else {
-        console.error('[AuthContext] Whitelist check failed (continuing):', whitelistResult.reason);
+    if (!isWhitelisted) {
+      try {
+        // Use Promise.allSettled to not fail if one service is down
+        const [fpResult, ipResult] = await Promise.allSettled([
+          generateFingerprint(),
+          getClientIP()
+        ]);
+        
+        fingerprint = fpResult.status === 'fulfilled' ? fpResult.value : '';
+        clientIP = ipResult.status === 'fulfilled' ? ipResult.value : 'unknown';
+        
+        console.log('[AuthContext] Fingerprint and IP obtained:', { 
+          fingerprint: fingerprint ? fingerprint.substring(0, 8) + '...' : 'none', 
+          ip: clientIP 
+        });
+      } catch (fpError) {
+        console.error('[AuthContext] Error getting fingerprint/IP:', fpError);
+        // Continue with empty values - signup should NOT be blocked
       }
-      
-      // Process fingerprint/IP results
-      fingerprint = fpResult.status === 'fulfilled' ? fpResult.value : '';
-      clientIP = ipResult.status === 'fulfilled' ? ipResult.value : 'unknown';
-      
-      console.log('[AuthContext] Parallel checks done:', { 
-        whitelisted: isWhitelisted,
-        fingerprint: fingerprint ? fingerprint.substring(0, 8) + '...' : 'none', 
-        ip: clientIP 
-      });
-    } catch (e) {
-      console.error('[AuthContext] Parallel checks error (continuing):', e);
+    } else {
+      console.log('[AuthContext] Skipping fingerprint collection - user is whitelisted');
     }
     
     // STEP 3: FRAUD CHECK - Skip entirely if whitelisted

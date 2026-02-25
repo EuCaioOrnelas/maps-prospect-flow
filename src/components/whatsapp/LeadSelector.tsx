@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, DragEvent } from "react";
+import { useState, useEffect, useRef, DragEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
+  Upload, 
   History, 
   Users, 
   FileSpreadsheet,
@@ -13,6 +14,7 @@ import {
   Plus,
   Download,
   AlertCircle,
+  Phone,
   PhoneOff
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
+import { CountryCodeSelect } from "@/components/crm/CountryCodeSelect";
 // Use centralized phone validation helper
 import { validateAndFormatPhone, isLandlinePhone } from '@/lib/phoneUtils';
 
@@ -47,47 +50,6 @@ interface LeadSelectorProps {
   scheduledDate?: Date;
 }
 
-type CampaignPhoneValidation = {
-  isValid: boolean;
-  normalized: string;
-  reason: 'invalid' | 'international' | 'landline' | 'empty';
-};
-
-const normalizeBrazilianMobilePhone = (phone: string): CampaignPhoneValidation => {
-  let digits = String(phone || '').replace(/\D/g, '');
-
-  if (!digits) {
-    return { isValid: false, normalized: '', reason: 'empty' };
-  }
-
-  if (digits.startsWith('00') && digits.length > 4) {
-    digits = digits.slice(2);
-  }
-
-  if (!digits.startsWith('55') && digits.length > 11) {
-    return { isValid: false, normalized: digits, reason: 'international' };
-  }
-
-  const local = digits.startsWith('55') ? digits.slice(2) : digits;
-
-  if (local.length !== 11) {
-    if (local.length === 10) {
-      return { isValid: false, normalized: `55${local}`, reason: 'landline' };
-    }
-    return { isValid: false, normalized: local.length >= 10 ? `55${local}` : local, reason: 'invalid' };
-  }
-
-  if (local.charAt(2) !== '9') {
-    return { isValid: false, normalized: `55${local}`, reason: 'landline' };
-  }
-
-  if (isLandlinePhone(`55${local}`)) {
-    return { isValid: false, normalized: `55${local}`, reason: 'landline' };
-  }
-
-  return { isValid: true, normalized: `55${local}`, reason: 'invalid' };
-};
-
 export const LeadSelector = ({ 
   selectedLeads, 
   onLeadsChange, 
@@ -107,7 +69,9 @@ export const LeadSelector = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
-  const [importStats, setImportStats] = useState<{ valid: number; invalid: number; landlines: number; international: number } | null>(null);
+  const [importStats, setImportStats] = useState<{ valid: number; invalid: number; landlines: number } | null>(null);
+  const [defaultCountryCode, setDefaultCountryCode] = useState("55");
+  const prevCountryCodeRef = useRef(defaultCountryCode);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
@@ -117,22 +81,36 @@ export const LeadSelector = ({
   const willExceed = selectedLeads.length > remaining;
 
   // Get phone validation status for display
-  const getPhoneStatus = (phone: string) => {
-    const normalized = normalizeBrazilianMobilePhone(phone);
+  const getPhoneStatus = (phone: string) => validateAndFormatPhone(phone);
 
-    if (!normalized.isValid) {
-      return {
-        isValid: false,
-        display: normalized.normalized ? `+${normalized.normalized}` : String(phone || ''),
-      };
+  // Re-process leads when country code changes
+  useEffect(() => {
+    const prevCode = prevCountryCodeRef.current;
+    if (prevCode === defaultCountryCode || selectedLeads.length === 0) {
+      prevCountryCodeRef.current = defaultCountryCode;
+      return;
     }
-
-    const formatted = validateAndFormatPhone(normalized.normalized);
-    return {
-      isValid: true,
-      display: formatted.display,
-    };
-  };
+    
+    const reprocessed = selectedLeads.map(lead => {
+      let digits = String(lead.phone).replace(/\D/g, '');
+      // Strip previous country code if it was prepended
+      if (digits.startsWith(prevCode)) {
+        const withoutCode = digits.slice(prevCode.length);
+        // Only strip if the remaining part looks like a local number (10-11 digits)
+        if (withoutCode.length >= 10 && withoutCode.length <= 11) {
+          digits = withoutCode;
+        }
+      }
+      // Apply new country code to local numbers
+      if (digits.length >= 10 && digits.length <= 11) {
+        digits = defaultCountryCode + digits;
+      }
+      return { ...lead, phone: digits };
+    });
+    
+    prevCountryCodeRef.current = defaultCountryCode;
+    onLeadsChange(reprocessed);
+  }, [defaultCountryCode]);
 
   useEffect(() => {
     if (source === 'history') {
@@ -253,7 +231,14 @@ export const LeadSelector = ({
             category: row['Categoria'] || row['categoria'] || row['Category'] || '',
             address: row['Endereço'] || row['endereco'] || row['Address'] || '',
             city: row['Cidade'] || row['cidade'] || row['City'] || '',
-            phone: String(phone).replace(/\D/g, ''),
+            phone: (() => {
+              const digits = String(phone).replace(/\D/g, '');
+              // If 10-11 digits without country code, prepend selected country code
+              if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
+                return defaultCountryCode + digits;
+              }
+              return digits;
+            })(),
             website: row['Site'] || row['site'] || row['Website'] || '',
             rating: row['Avaliação'] || row['avaliacao'] || row['Rating'] || 0,
             reviewCount: row['Nº Avaliações'] || row['reviews'] || 0,
@@ -261,49 +246,38 @@ export const LeadSelector = ({
           };
         });
 
-        // Validate phones and allow only Brazilian mobile numbers
+        // Validate phones, filter landlines, and separate valid/invalid
         const validLeads: Lead[] = [];
         const invalidPhones: string[] = [];
         const landlineLeads: Lead[] = [];
-        let internationalBlocked = 0;
 
         leads.forEach(lead => {
-          const phoneStatus = normalizeBrazilianMobilePhone(lead.phone);
-
+          const phoneStatus = validateAndFormatPhone(lead.phone);
           if (phoneStatus.isValid) {
-            validLeads.push({
-              ...lead,
-              phone: phoneStatus.normalized,
-            });
-            return;
-          }
-
-          if (phoneStatus.reason === 'international') {
-            internationalBlocked++;
-            return;
-          }
-
-          if (phoneStatus.reason === 'landline') {
-            landlineLeads.push({
-              ...lead,
-              phone: phoneStatus.normalized,
-            });
-            return;
-          }
-
-          if (lead.phone) {
+            // Check if it's a landline (Brazilian fixed line)
+            if (isLandlinePhone(lead.phone)) {
+              landlineLeads.push({
+                ...lead,
+                phone: phoneStatus.formatted
+              });
+            } else {
+              validLeads.push({
+                ...lead,
+                phone: phoneStatus.formatted
+              });
+            }
+          } else if (lead.phone) {
             invalidPhones.push(lead.name || lead.phone);
           }
         });
 
         if (validLeads.length === 0) {
-          const extras = [];
-          if (landlineLeads.length > 0) extras.push(`${landlineLeads.length} fixos excluídos`);
-          if (internationalBlocked > 0) extras.push(`${internationalBlocked} internacionais bloqueados`);
-
+          const landlineMsg = landlineLeads.length > 0 
+            ? ` (${landlineLeads.length} números fixos excluídos)` 
+            : '';
           toast({
-            title: "Nenhum celular brasileiro válido encontrado",
-            description: `A planilha deve ter Nome na 1ª coluna e Telefone celular BR na 2ª coluna${extras.length ? ` (${extras.join(', ')})` : ''}`,
+            title: "Nenhum celular válido encontrado",
+            description: `A planilha deve ter Nome na 1ª coluna e Telefone (celular) na 2ª coluna${landlineMsg}`,
             variant: "destructive",
           });
           setImportStats(null);
@@ -314,19 +288,20 @@ export const LeadSelector = ({
         setImportStats({
           valid: validLeads.length,
           invalid: invalidPhones.length,
-          landlines: landlineLeads.length,
-          international: internationalBlocked,
+          landlines: landlineLeads.length
         });
 
         onLeadsChange(validLeads);
         
-        if (invalidPhones.length > 0 || landlineLeads.length > 0 || internationalBlocked > 0) {
+        if (invalidPhones.length > 0 || landlineLeads.length > 0) {
           const parts = [];
-          parts.push(`${validLeads.length} celulares BR válidos`);
-          if (landlineLeads.length > 0) parts.push(`${landlineLeads.length} fixos excluídos`);
-          if (internationalBlocked > 0) parts.push(`${internationalBlocked} internacionais bloqueados`);
-          if (invalidPhones.length > 0) parts.push(`${invalidPhones.length} inválidos`);
-
+          parts.push(`${validLeads.length} celulares válidos`);
+          if (landlineLeads.length > 0) {
+            parts.push(`${landlineLeads.length} fixos excluídos`);
+          }
+          if (invalidPhones.length > 0) {
+            parts.push(`${invalidPhones.length} inválidos`);
+          }
           toast({
             title: "Planilha importada com filtros",
             description: parts.join(', '),
@@ -334,7 +309,7 @@ export const LeadSelector = ({
         } else {
           toast({
             title: "Planilha importada!",
-            description: `${validLeads.length} contatos BR carregados com sucesso`,
+            description: `${validLeads.length} contatos carregados com sucesso`,
           });
         }
       } catch (err) {
@@ -401,32 +376,26 @@ export const LeadSelector = ({
     
     setSelectedHistoryIds(newSelected);
     
-    // Merge all leads from selected history items, allowing only BR mobile numbers
+    // Merge all leads from selected history items, filtering out landlines
     const allLeads: Lead[] = [];
     let totalLandlines = 0;
-    let totalInvalid = 0;
-    let totalInternational = 0;
     
     searchHistory.forEach(h => {
       if (newSelected.has(h.id) && h.leads) {
         h.leads.forEach(lead => {
-          if (!lead.phone) return;
-
-          const normalized = normalizeBrazilianMobilePhone(lead.phone);
-
-          if (!normalized.isValid) {
-            if (normalized.reason === 'international') {
-              totalInternational++;
-            } else if (normalized.reason === 'landline') {
+          if (lead.phone && !allLeads.some(l => l.phone === lead.phone)) {
+            // Normalize phone with selected country code
+            let digits = String(lead.phone).replace(/\D/g, '');
+            if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
+              digits = defaultCountryCode + digits;
+            }
+            // Check if it's a landline
+            if (isLandlinePhone(digits)) {
               totalLandlines++;
             } else {
-              totalInvalid++;
+              allLeads.push({ ...lead, phone: digits });
             }
-            return;
           }
-
-          if (allLeads.some(l => l.phone === normalized.normalized)) return;
-          allLeads.push({ ...lead, phone: normalized.normalized });
         });
       }
     });
@@ -435,9 +404,8 @@ export const LeadSelector = ({
     if (newSelected.size > 0) {
       setImportStats({
         valid: allLeads.length,
-        invalid: totalInvalid,
-        landlines: totalLandlines,
-        international: totalInternational,
+        invalid: 0,
+        landlines: totalLandlines
       });
     } else {
       setImportStats(null);
@@ -457,9 +425,8 @@ export const LeadSelector = ({
     }
     
     const landlineCount = importStats?.landlines || 0;
-    const internationalCount = importStats?.international || 0;
-    const msg = (landlineCount > 0 || internationalCount > 0)
-      ? `${selectedLeads.length} celulares BR de ${selectedHistoryIds.size} buscas (${landlineCount} fixos excluídos, ${internationalCount} internacionais bloqueados)`
+    const msg = landlineCount > 0 
+      ? `${selectedLeads.length} celulares de ${selectedHistoryIds.size} buscas (${landlineCount} fixos excluídos)`
       : `${selectedLeads.length} contatos selecionados de ${selectedHistoryIds.size} buscas`;
     
     toast({
@@ -495,14 +462,18 @@ export const LeadSelector = ({
         </p>
       </div>
 
-      <div className="flex items-center gap-3 p-4 rounded-lg border border-warning/40 bg-warning/10 mb-4">
-        <AlertCircle size={16} className="text-warning shrink-0" />
-        <div>
-          <p className="text-sm font-medium">Disparos disponíveis apenas para números brasileiros</p>
+      {/* Country Code Selector */}
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-muted/30 mb-4">
+        <div className="flex-1">
+          <p className="text-sm font-medium">Código do país dos leads</p>
           <p className="text-xs text-muted-foreground">
-            O sistema adiciona +55 automaticamente quando necessário e bloqueia números internacionais.
+            Aplicado a números sem código de país (10-11 dígitos)
           </p>
         </div>
+        <CountryCodeSelect 
+          value={defaultCountryCode} 
+          onValueChange={setDefaultCountryCode} 
+        />
       </div>
 
       {/* Source Selection */}
@@ -720,18 +691,12 @@ export const LeadSelector = ({
             <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 text-sm flex-wrap">
               <div className="flex items-center gap-2 text-primary">
                 <CheckCircle2 size={16} />
-                <span>{importStats.valid} celulares BR</span>
+                <span>{importStats.valid} celulares</span>
               </div>
               {importStats.landlines > 0 && (
                 <div className="flex items-center gap-2 text-warning">
                   <PhoneOff size={16} />
                   <span>{importStats.landlines} fixos excluídos</span>
-                </div>
-              )}
-              {importStats.international > 0 && (
-                <div className="flex items-center gap-2 text-warning">
-                  <AlertCircle size={16} />
-                  <span>{importStats.international} internacionais bloqueados</span>
                 </div>
               )}
               {importStats.invalid > 0 && (

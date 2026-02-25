@@ -3,11 +3,9 @@ import { RevenueSidebar } from "./RevenueSidebar";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
 
 export const RevenueLayout = () => {
   const { isAdmin, loading } = useAdminCheck();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (loading) {
     return (
@@ -26,11 +24,8 @@ export const RevenueLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background w-full">
-      <RevenueSidebar onCollapsedChange={setSidebarCollapsed} />
-      <main
-        className="flex-1 overflow-auto transition-[margin-left] duration-300 ease-out"
-        style={{ marginLeft: sidebarCollapsed ? 68 : 224 }}
-      >
+      <RevenueSidebar />
+      <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
     </div>

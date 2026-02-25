@@ -423,58 +423,45 @@ export const useRevenuePerformanceScore = () => {
       // Get conversations data for metrics
       const { data: convs, error: convErr } = await supabase
         .from("revenue_conversations")
-        .select("avg_response_time_seconds, unreplied_inbound_count, inbound_count_7d, outbound_count_7d, last_inbound_at, last_outbound_at");
+        .select("avg_response_time_seconds, unreplied_inbound_count, last_inbound_at, last_outbound_at");
       if (convErr) throw convErr;
 
       const { data: leads, error: leadErr } = await supabase
         .from("revenue_leads")
-        .select("status_bucket, risk_state, last_activity_at, score_total");
+        .select("status_bucket, risk_state, last_activity_at");
       if (leadErr) throw leadErr;
 
       const allConvs = (convs || []) as unknown as RevenueConversation[];
       const allLeads = (leads || []) as unknown as RevenueLead[];
 
-      // Only consider leads with real interactions (score > 0)
-      const interactedLeads = allLeads.filter((l) => l.score_total > 0);
-      // Only consider conversations with actual activity
-      const activeConvs = allConvs.filter((c) =>
-        c.avg_response_time_seconds > 0 ||
-        c.unreplied_inbound_count > 0 ||
-        c.inbound_count_7d > 0 ||
-        c.outbound_count_7d > 0
-      );
-
-      // If no real interaction data exists, return zeros
-      if (interactedLeads.length === 0 && activeConvs.length === 0) return emptyResult;
+      // If no data exists, return zeros
+      if (allLeads.length === 0 && allConvs.length === 0) return emptyResult;
 
       // 1. Avg response time (30% weight) - target < 5 min (300s)
-      const avgResponseTimes = activeConvs
+      const avgResponseTimes = allConvs
         .filter((c) => c.avg_response_time_seconds > 0)
         .map((c) => c.avg_response_time_seconds);
       const avgResponseTime = avgResponseTimes.length > 0
         ? avgResponseTimes.reduce((a, b) => a + b, 0) / avgResponseTimes.length
         : 0;
-      const responseScore = avgResponseTimes.length === 0
-        ? 0
-        : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
+      const responseScore = avgResponseTimes.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
 
       // 2. % hot leads responded (40% weight)
-      const hotLeads = interactedLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotLeads = allLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotResponded = hotLeads.filter((l) => l.risk_state === "OK").length;
       const hotResponseRate = hotLeads.length > 0 ? (hotResponded / hotLeads.length) * 100 : 0;
 
-      // 3. % ignored leads (20% weight) - only when there is inbound activity
-      const convsWithInbound = activeConvs.filter((c) => c.inbound_count_7d > 0 || c.unreplied_inbound_count > 0);
-      const totalInbound = convsWithInbound.reduce((sum, c) => sum + (c.inbound_count_7d || 0), 0);
-      const totalUnreplied = convsWithInbound.reduce((sum, c) => sum + (c.unreplied_inbound_count || 0), 0);
-      const ignoredRate = totalInbound > 0 ? Math.min(100, (totalUnreplied / totalInbound) * 100) : 0;
-      const ignoredScore = totalInbound === 0 ? 0 : Math.max(0, 100 - ignoredRate);
+      // 3. % ignored leads (20% weight)
+      const totalUnreplied = allConvs.reduce((sum, c) => sum + c.unreplied_inbound_count, 0);
+      const totalConvs = allConvs.length || 1;
+      const ignoredRate = Math.min(100, (totalUnreplied / totalConvs) * 100);
+      const ignoredScore = allConvs.length === 0 ? 0 : Math.max(0, 100 - ignoredRate * 2);
 
-      // 4. Activity consistency (10% weight) - only count leads with real interactions
+      // 4. Activity consistency (10% weight)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const activeLeads = interactedLeads.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
-      const consistencyScore = interactedLeads.length > 0 ? Math.min(100, (activeLeads / interactedLeads.length) * 100) : 0;
+      const activeLeads = allLeads.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
+      const consistencyScore = allLeads.length > 0 ? Math.min(100, (activeLeads / allLeads.length) * 100) : 0;
 
       const performanceScore = Math.round(
         responseScore * 0.3 +
@@ -596,24 +583,15 @@ export const useRevenueMaturityIndex = () => {
 
       const { data: leads } = await supabase
         .from("revenue_leads")
-        .select("status_bucket, risk_state, last_activity_at, score_total");
+        .select("status_bucket, risk_state, last_activity_at");
       const all = (leads || []) as unknown as RevenueLead[];
 
       const { data: convs } = await supabase
         .from("revenue_conversations")
-        .select("avg_response_time_seconds, unreplied_inbound_count, inbound_count_7d, outbound_count_7d");
+        .select("avg_response_time_seconds, unreplied_inbound_count");
       const allConvs = (convs || []) as unknown as RevenueConversation[];
 
-      // Only consider leads with real interactions (score > 0)
-      const interacted = all.filter((l) => l.score_total > 0);
-      const activeConvs = allConvs.filter((c) =>
-        c.avg_response_time_seconds > 0 ||
-        c.unreplied_inbound_count > 0 ||
-        c.inbound_count_7d > 0 ||
-        c.outbound_count_7d > 0
-      );
-
-      if (interacted.length === 0 && activeConvs.length === 0) {
+      if (all.length === 0) {
         return { total: 0, responsiveness: 0, hotUtilization: 0, consistency: 0, riskReduction: 0 } as MaturityIndex;
       }
 
@@ -623,17 +601,17 @@ export const useRevenueMaturityIndex = () => {
       const responsiveness = responseTimesMs.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponse - 300) / 30));
 
       // 2. Hot utilization - 30%
-      const hotLeads = interacted.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotLeads = all.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotOk = hotLeads.filter((l) => l.risk_state === "OK").length;
       const hotUtilization = hotLeads.length > 0 ? (hotOk / hotLeads.length) * 100 : 0;
 
-      // 3. Consistency (7d activity) - 20% - only leads with real interactions
-      const activeLeads = interacted.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
-      const consistency = Math.min(100, (activeLeads / interacted.length) * 100);
+      // 3. Consistency (7d activity) - 20%
+      const activeLeads = all.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
+      const consistency = Math.min(100, (activeLeads / all.length) * 100);
 
       // 4. Risk reduction - 20%
-      const atRiskLeads = interacted.filter((l) => l.risk_state !== "OK").length;
-      const riskReduction = Math.max(0, 100 - (atRiskLeads / interacted.length) * 100);
+      const atRiskLeads = all.filter((l) => l.risk_state !== "OK").length;
+      const riskReduction = Math.max(0, 100 - (atRiskLeads / all.length) * 100);
 
       const total = Math.round(
         responsiveness * 0.30 +
@@ -716,265 +694,6 @@ export const useRevenueOpportunityIndex = () => {
         totalHot: hotLeads.length,
         respondedInSLA,
         notResponded,
-      };
-    },
-    enabled: !!user,
-  });
-};
-
-// === ACTION ITEMS (leads needing immediate action) ===
-export interface ActionItem {
-  id: string;
-  name: string | null;
-  phone_e164: string;
-  score_total: number;
-  status_bucket: string;
-  risk_state: string;
-  risk_reason: string | null;
-  last_activity_at: string;
-  reason: string;
-  urgency: "critical" | "high";
-}
-
-export const useRevenueActionItems = () => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ["revenue-action-items", user?.id],
-    queryFn: async () => {
-      const { data: leads, error } = await supabase
-        .from("revenue_leads")
-        .select("id, name, phone_e164, score_total, status_bucket, risk_state, risk_reason, last_activity_at, estimated_ticket_value");
-      if (error) throw error;
-
-      const all = (leads || []) as unknown as RevenueLead[];
-      const now = Date.now();
-      const items: ActionItem[] = [];
-
-      for (const lead of all) {
-        const hoursInactive = (now - new Date(lead.last_activity_at).getTime()) / 3600000;
-
-        // VERY_HOT with risk
-        if (lead.status_bucket === "VERY_HOT" && lead.risk_state !== "OK") {
-          items.push({
-            ...lead,
-            reason: "Lead quente em risco — responder agora",
-            urgency: "critical",
-          });
-          continue;
-        }
-
-        // HOT with risk (SLA busted)
-        if (lead.status_bucket === "HOT" && lead.risk_state === "AT_RISK") {
-          items.push({
-            ...lead,
-            reason: "Lead engajado com SLA estourado",
-            urgency: "critical",
-          });
-          continue;
-        }
-
-        // High score inactive > 24h
-        if (lead.score_total >= 350 && hoursInactive > 24) {
-          items.push({
-            ...lead,
-            reason: `Inativo há ${Math.round(hoursInactive)}h — score alto`,
-            urgency: "high",
-          });
-          continue;
-        }
-
-        // COOLING leads with decent score
-        if (lead.risk_state === "COOLING" && lead.score_total >= 200) {
-          items.push({
-            ...lead,
-            reason: "Esfriando — reengajar antes que perca",
-            urgency: "high",
-          });
-        }
-      }
-
-      // Sort: critical first, then by score
-      items.sort((a, b) => {
-        if (a.urgency !== b.urgency) return a.urgency === "critical" ? -1 : 1;
-        return b.score_total - a.score_total;
-      });
-
-      return items.slice(0, 8);
-    },
-    enabled: !!user,
-  });
-};
-
-// === RECEITA EM RISCO (detailed) ===
-export const useRevenueAtRisk = () => {
-  const { user } = useAuth();
-  const { data: settings } = useRevenueSettings();
-
-  return useQuery({
-    queryKey: ["revenue-at-risk", user?.id, settings?.default_ticket_value],
-    queryFn: async () => {
-      const ticket = settings?.default_ticket_value || 3000;
-      const rates = {
-        COLD: settings?.default_close_rate_cold || 0.005,
-        ENGAGED: settings?.default_close_rate_engaged || 0.05,
-        HOT: settings?.default_close_rate_hot || 0.15,
-        VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
-      };
-
-      const { data: leads, error } = await supabase
-        .from("revenue_leads")
-        .select("id, status_bucket, risk_state, estimated_ticket_value, score_total");
-      if (error) throw error;
-
-      const all = (leads || []) as unknown as RevenueLead[];
-      const atRisk = all.filter(
-        (l) => (l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT") && l.risk_state !== "OK"
-      );
-
-      const value = atRisk.reduce((sum, l) => {
-        const rate = rates[l.status_bucket as keyof typeof rates] || 0;
-        return sum + (l.estimated_ticket_value || ticket) * rate;
-      }, 0);
-
-      const hotTotal = all.filter(l => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT").length;
-
-      return {
-        value,
-        count: atRisk.length,
-        hotTotal,
-        hasData: all.length > 0,
-      };
-    },
-    enabled: !!user && !!settings,
-  });
-};
-
-// === 7-DAY TRENDS (from snapshots) ===
-export interface RevenueTrend {
-  hotLeadsDelta: number | null;
-  avgResponseDelta: number | null;
-  revenueExpectedDelta: number | null;
-  hasSufficientData: boolean;
-}
-
-export const useRevenueTrend7d = () => {
-  const { user } = useAuth();
-  const { data: settings } = useRevenueSettings();
-
-  return useQuery({
-    queryKey: ["revenue-trend-7d", user?.id],
-    queryFn: async () => {
-      const now = new Date();
-      const sevenDaysAgo = new Date(now);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const fourteenDaysAgo = new Date(now);
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-      const { data: snapshots, error } = await supabase
-        .from("revenue_score_snapshots")
-        .select("snapshot_date, status_bucket, score_value")
-        .gte("snapshot_date", fourteenDaysAgo.toISOString().split("T")[0])
-        .order("snapshot_date", { ascending: true });
-
-      if (error) throw error;
-
-      const all = (snapshots || []) as any[];
-      if (all.length < 7) {
-        return { hotLeadsDelta: null, avgResponseDelta: null, revenueExpectedDelta: null, hasSufficientData: false } as RevenueTrend;
-      }
-
-      const sevenStr = sevenDaysAgo.toISOString().split("T")[0];
-
-      const current = all.filter(s => s.snapshot_date >= sevenStr);
-      const previous = all.filter(s => s.snapshot_date < sevenStr);
-
-      const countHot = (arr: any[]) => arr.filter(s => s.status_bucket === "HOT" || s.status_bucket === "VERY_HOT").length;
-
-      const currentHot = countHot(current);
-      const previousHot = countHot(previous);
-
-      const hotDelta = previousHot > 0 ? Math.round(((currentHot - previousHot) / previousHot) * 100) : null;
-
-      const ticket = settings?.default_ticket_value || 3000;
-      const rates: Record<string, number> = {
-        COLD: settings?.default_close_rate_cold || 0.005,
-        ENGAGED: settings?.default_close_rate_engaged || 0.05,
-        HOT: settings?.default_close_rate_hot || 0.15,
-        VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
-      };
-
-      const calcRevenue = (arr: any[]) => arr.reduce((sum: number, s: any) => sum + ticket * (rates[s.status_bucket] || 0), 0);
-      const currentRev = calcRevenue(current);
-      const previousRev = calcRevenue(previous);
-      const revDelta = previousRev > 0 ? Math.round(((currentRev - previousRev) / previousRev) * 100) : null;
-
-      return {
-        hotLeadsDelta: hotDelta,
-        avgResponseDelta: null, // Would need conversation snapshots
-        revenueExpectedDelta: revDelta,
-        hasSufficientData: previous.length >= 3,
-      } as RevenueTrend;
-    },
-    enabled: !!user,
-  });
-};
-
-// === FUNNEL PROGRESSION RATE ===
-export const useRevenueFunnelProgression = () => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ["revenue-funnel-progression", user?.id],
-    queryFn: async () => {
-      // Get score logs to track bucket transitions
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data: logs, error } = await supabase
-        .from("revenue_score_logs")
-        .select("lead_id, score_before, score_after, created_at")
-        .gte("created_at", thirtyDaysAgo.toISOString())
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      const all = (logs || []) as unknown as RevenueScoreLog[];
-
-      // Count transitions
-      const scoreToBucket = (s: number): string => {
-        if (s >= 650) return "VERY_HOT";
-        if (s >= 350) return "HOT";
-        if (s >= 150) return "ENGAGED";
-        return "COLD";
-      };
-
-      let engagedToHot = 0;
-      let totalEngaged = 0;
-      let coldToEngaged = 0;
-      let totalCold = 0;
-
-      for (const log of all) {
-        const before = scoreToBucket(log.score_before);
-        const after = scoreToBucket(log.score_after);
-
-        if (before === "ENGAGED" && (after === "HOT" || after === "VERY_HOT")) {
-          engagedToHot++;
-        }
-        if (before === "ENGAGED") totalEngaged++;
-        if (before === "COLD" && (after === "ENGAGED" || after === "HOT" || after === "VERY_HOT")) {
-          coldToEngaged++;
-        }
-        if (before === "COLD") totalCold++;
-      }
-
-      const engagedToHotRate = totalEngaged >= 5 ? Math.round((engagedToHot / totalEngaged) * 100) : null;
-      const coldToEngagedRate = totalCold >= 5 ? Math.round((coldToEngaged / totalCold) * 100) : null;
-
-      return {
-        engagedToHotRate,
-        coldToEngagedRate,
-        hasSufficientData: totalEngaged >= 5 || totalCold >= 5,
       };
     },
     enabled: !!user,

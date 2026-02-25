@@ -31,41 +31,18 @@ interface DebugStep {
 // Qualquer alteração aqui DEVE ser replicada no campaign-processor
 // ══════════════════════════════════════════════════════════════
 
-// Normalize phone number for Brazilian campaigns
+// Normalize phone number - supports international numbers
 // FONTE: campaign-processor/index.ts → normalizePhone()
 function normalizePhone(phone: string): string {
-  let normalized = String(phone || '').replace(/\D/g, '');
-
-  // Convert international prefix 00XX... -> XX...
-  if (normalized.startsWith('00') && normalized.length > 4) {
-    normalized = normalized.slice(2);
+  let normalized = phone.replace(/\D/g, '');
+  
+  // If number has 10-11 digits without country code, assume Brazil (55)
+  // International numbers should already have country code (12+ digits)
+  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
+    normalized = '55' + normalized;
   }
-
-  // Restore previous behavior: local BR numbers receive +55
-  if (!normalized.startsWith('55') && normalized.length >= 10 && normalized.length <= 11) {
-    normalized = `55${normalized}`;
-  }
-
+  
   return normalized;
-}
-
-function validateBrazilianCampaignPhone(phone: string): { isValid: boolean; normalized: string; reason?: string } {
-  const normalized = normalizePhone(phone);
-
-  if (!normalized.startsWith('55')) {
-    return { isValid: false, normalized, reason: 'international_not_supported' };
-  }
-
-  const local = normalized.slice(2);
-  if (local.length !== 11) {
-    return { isValid: false, normalized, reason: 'invalid_length_or_landline' };
-  }
-
-  if (local.charAt(2) !== '9') {
-    return { isValid: false, normalized, reason: 'landline_not_supported' };
-  }
-
-  return { isValid: true, normalized };
 }
 
 // Check if instance is connected with retry logic
@@ -409,41 +386,41 @@ serve(async (req) => {
       };
     });
 
-    // ── Step 3: Normalize/validate phone (MESMA FUNÇÃO do campaign-processor) ──
+    // ── Step 3: Normalize phone (MESMA FUNÇÃO do campaign-processor) ──
     let normalizedPhone = '';
     await runStep('normalize_phone', '3. Normalização do Telefone (campaign-processor)', async () => {
       if (!phone) throw new Error('Telefone não fornecido');
 
-      const validation = validateBrazilianCampaignPhone(phone);
-      normalizedPhone = validation.normalized;
+      normalizedPhone = normalizePhone(phone);
 
-      if (!validation.isValid) {
-        if (validation.reason === 'international_not_supported') {
-          throw new Error(`Número internacional não é aceito para disparo no momento: "${normalizedPhone}"`);
-        }
-        if (validation.reason === 'landline_not_supported') {
-          throw new Error(`Número fixo não é aceito para disparo: "${normalizedPhone}"`);
-        }
-        throw new Error(`Telefone inválido para disparo: "${normalizedPhone}"`);
-      }
+      if (normalizedPhone.length < 10) throw new Error(`Telefone muito curto: "${normalizedPhone}" (${normalizedPhone.length} dígitos)`);
+      if (normalizedPhone.length > 15) throw new Error(`Telefone muito longo: "${normalizedPhone}" (${normalizedPhone.length} dígitos)`);
 
-      const ddd = normalizedPhone.slice(2, 4);
-      const numberPart = normalizedPhone.slice(4);
       const warnings: string[] = [];
-      if (parseInt(ddd) < 11 || parseInt(ddd) > 99) {
-        warnings.push(`DDD ${ddd} pode ser inválido`);
+      // Check if Brazilian number
+      if (normalizedPhone.startsWith('55')) {
+        const ddd = normalizedPhone.slice(2, 4);
+        const numberPart = normalizedPhone.slice(4);
+        if (parseInt(ddd) < 11 || parseInt(ddd) > 99) {
+          warnings.push(`DDD ${ddd} pode ser inválido`);
+        }
+        return {
+          details: {
+            input: phone, normalized: normalizedPhone,
+            format: 'brasileiro', ddd, number_part: numberPart,
+            total_digits: normalizedPhone.length,
+            warnings: warnings.length > 0 ? warnings : undefined,
+            nota: 'Usando mesma lógica do campaign-processor (normalizePhone)',
+          },
+        };
       }
 
       return {
         details: {
-          input: phone,
-          normalized: normalizedPhone,
-          format: 'brasileiro_mobile',
-          ddd,
-          number_part: numberPart,
+          input: phone, normalized: normalizedPhone,
+          format: 'internacional',
           total_digits: normalizedPhone.length,
-          warnings: warnings.length > 0 ? warnings : undefined,
-          nota: 'Usando mesma lógica do campaign-processor (normalizePhone + validação BR)',
+          nota: 'Número internacional detectado (mesmo tratamento do campaign-processor)',
         },
       };
     });

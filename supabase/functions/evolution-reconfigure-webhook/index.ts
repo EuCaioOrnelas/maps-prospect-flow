@@ -66,22 +66,7 @@ serve(async (req) => {
     let successEndpoint = null;
 
     // Try multiple endpoint formats - webhook config must be nested under "webhook" property
-    const webhookEvents = [
-      "MESSAGES_UPSERT",
-      "MESSAGES_UPDATE",
-      "MESSAGES_EDITED",
-      "CONNECTION_UPDATE",
-      "QRCODE_UPDATED",
-      "SEND_MESSAGE",
-    ];
-
-    const webhookConfig = {
-      enabled: true,
-      url: webhookUrl,
-      webhookByEvents: true,
-      webhookBase64: false,
-      events: webhookEvents,
-    };
+    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDITED", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"];
     
     const endpoints = [
       // Format 1: webhook/set with nested webhook object (most common for Evolution API)
@@ -89,21 +74,39 @@ serve(async (req) => {
         url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
-          webhook: webhookConfig,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents
+          }
         }
       },
       // Format 2: Direct properties (some versions)
       {
         url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
         method: 'POST',
-        body: webhookConfig
+        body: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: false,
+          webhookBase64: true,
+          events: webhookEvents
+        }
       },
       // Format 3: webhook/instance endpoint
       {
         url: `${EVOLUTION_API_URL}/webhook/instance/${instanceName}`,
         method: 'POST',
         body: {
-          webhook: webhookConfig,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents
+          }
         }
       },
       // Format 4: PUT to webhook
@@ -111,7 +114,13 @@ serve(async (req) => {
         url: `${EVOLUTION_API_URL}/webhook/${instanceName}`,
         method: 'PUT',
         body: {
-          webhook: webhookConfig,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents
+          }
         }
       },
       // Format 5: settings endpoint  
@@ -119,7 +128,13 @@ serve(async (req) => {
         url: `${EVOLUTION_API_URL}/settings/${instanceName}`,
         method: 'PUT',
         body: {
-          webhook: webhookConfig,
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents
+          }
         }
       }
     ];

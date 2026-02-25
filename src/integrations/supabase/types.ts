@@ -1208,9 +1208,6 @@ export type Database = {
           event_type: string
           event_value: number | null
           id: string
-          intent_category: string | null
-          intent_confidence_score: number | null
-          intent_subtype: string | null
           lead_id: string
           number_instance_id: string | null
           user_id: string
@@ -1221,9 +1218,6 @@ export type Database = {
           event_type: string
           event_value?: number | null
           id?: string
-          intent_category?: string | null
-          intent_confidence_score?: number | null
-          intent_subtype?: string | null
           lead_id: string
           number_instance_id?: string | null
           user_id: string
@@ -1234,9 +1228,6 @@ export type Database = {
           event_type?: string
           event_value?: number | null
           id?: string
-          intent_category?: string | null
-          intent_confidence_score?: number | null
-          intent_subtype?: string | null
           lead_id?: string
           number_instance_id?: string | null
           user_id?: string
@@ -1258,50 +1249,6 @@ export type Database = {
           },
         ]
       }
-      revenue_intent_logs: {
-        Row: {
-          confidence_score: number | null
-          created_at: string
-          id: string
-          intent_category: string
-          intent_subtype: string
-          lead_id: string
-          matched_keywords: string[] | null
-          message_id: string | null
-          raw_message: string
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string
-          id?: string
-          intent_category: string
-          intent_subtype: string
-          lead_id: string
-          matched_keywords?: string[] | null
-          message_id?: string | null
-          raw_message: string
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string
-          id?: string
-          intent_category?: string
-          intent_subtype?: string
-          lead_id?: string
-          matched_keywords?: string[] | null
-          message_id?: string | null
-          raw_message?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "revenue_intent_logs_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "revenue_leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       revenue_leads: {
         Row: {
           assigned_to_user_id: string | null
@@ -1310,8 +1257,6 @@ export type Database = {
           first_seen_at: string
           id: string
           last_activity_at: string
-          last_intent_category: string | null
-          last_intent_subtype: string | null
           name: string | null
           notes: string | null
           phone_e164: string
@@ -1336,8 +1281,6 @@ export type Database = {
           first_seen_at?: string
           id?: string
           last_activity_at?: string
-          last_intent_category?: string | null
-          last_intent_subtype?: string | null
           name?: string | null
           notes?: string | null
           phone_e164: string
@@ -1362,8 +1305,6 @@ export type Database = {
           first_seen_at?: string
           id?: string
           last_activity_at?: string
-          last_intent_category?: string | null
-          last_intent_subtype?: string | null
           name?: string | null
           notes?: string | null
           phone_e164?: string
@@ -1385,41 +1326,6 @@ export type Database = {
           {
             foreignKeyName: "revenue_leads_source_number_instance_id_fkey"
             columns: ["source_number_instance_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_numbers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      revenue_number_config: {
-        Row: {
-          created_at: string
-          id: string
-          is_enabled: boolean
-          updated_at: string
-          user_id: string
-          whatsapp_number_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-          user_id: string
-          whatsapp_number_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-          user_id?: string
-          whatsapp_number_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "revenue_number_config_whatsapp_number_id_fkey"
-            columns: ["whatsapp_number_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_numbers"
             referencedColumns: ["id"]

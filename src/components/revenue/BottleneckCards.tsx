@@ -36,67 +36,53 @@ export const BottleneckCards = () => {
 
   if (!metrics) return null;
 
-  // Check if all metrics are zero
-  const allZero = metrics.hotIgnoredPct === 0 && metrics.aboveSLAPct === 0 &&
-    metrics.avgFirstResponseMin === 0 && metrics.cooledLeads === 0 && metrics.objectionLeads === 0;
-
-  if (allZero) {
-    return (
-      <div className="text-center py-4">
-        <p className="text-sm text-muted-foreground/60 italic">
-          Nenhum gargalo detectado nos últimos 7 dias.
-        </p>
-      </div>
-    );
-  }
-
   const cards = [
     {
       icon: Flame,
       label: "Quentes Ignorados",
       value: `${metrics.hotIgnoredPct}%`,
       trend: metrics.hotIgnoredTrend,
-      color: metrics.hotIgnoredPct > 30 ? "text-destructive" : "text-foreground",
-      iconColor: "text-muted-foreground",
+      color: metrics.hotIgnoredPct > 30 ? "text-destructive" : "text-primary",
+      iconColor: "text-orange-400",
     },
     {
       icon: Clock,
       label: "Acima do SLA",
       value: `${metrics.aboveSLAPct}%`,
       trend: metrics.aboveSLATrend,
-      color: metrics.aboveSLAPct > 40 ? "text-destructive" : "text-foreground",
-      iconColor: "text-muted-foreground",
+      color: metrics.aboveSLAPct > 40 ? "text-destructive" : "text-primary",
+      iconColor: "text-yellow-400",
     },
     {
       icon: AlertTriangle,
       label: "Tempo Médio Resp.",
       value: `${metrics.avgFirstResponseMin}min`,
       trend: metrics.avgFirstResponseTrend,
-      color: metrics.avgFirstResponseMin > 30 ? "text-destructive" : "text-foreground",
-      iconColor: "text-muted-foreground",
+      color: metrics.avgFirstResponseMin > 30 ? "text-destructive" : "text-primary",
+      iconColor: "text-blue-400",
     },
     {
       icon: ThermometerSnowflake,
       label: "Leads Esfriando",
       value: String(metrics.cooledLeads),
       trend: metrics.cooledLeadsTrend,
-      color: metrics.cooledLeads > 5 ? "text-destructive" : "text-foreground",
-      iconColor: "text-muted-foreground",
+      color: metrics.cooledLeads > 5 ? "text-destructive" : "text-muted-foreground",
+      iconColor: "text-cyan-400",
     },
     {
       icon: MessageSquareWarning,
       label: "Objeções (7d)",
       value: String(metrics.objectionLeads),
       trend: 0,
-      color: metrics.objectionLeads > 3 ? "text-destructive" : "text-foreground",
-      iconColor: "text-muted-foreground",
+      color: metrics.objectionLeads > 3 ? "text-destructive" : "text-muted-foreground",
+      iconColor: "text-red-400",
     },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {cards.map((card) => (
-        <Card key={card.label} className="bg-card border-border/40">
+        <Card key={card.label} className="bg-card border-border/50">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-1.5 mb-1">
               <card.icon size={14} className={card.iconColor} />

@@ -73,30 +73,17 @@ interface Lead {
   hasWhatsApp?: boolean;
 }
 
-// Normalize phone to strict BR mobile E.164 format: 55 + DDD + 9 + 8 digits
+// Normalize phone to format 5511999999999
 function normalizePhone(phone: string): string {
-  const digits = String(phone || '').replace(/\D/g, '');
-
-  // Already in BR E.164 mobile format
-  if (digits.length === 13 && digits.startsWith('55')) {
-    const ddd = Number(digits.slice(2, 4));
-    const firstLocal = digits[4];
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
-      return digits;
-    }
-    return '';
+  let clean = phone.replace(/[^0-9]/g, '');
+  
+  // Remove country code if present
+  if (clean.startsWith('55') && clean.length >= 12) {
+    clean = clean.substring(2);
   }
-
-  // Local BR mobile format (DDD + 9 + 8)
-  if (digits.length === 11) {
-    const ddd = Number(digits.slice(0, 2));
-    const firstLocal = digits[2];
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
-      return `55${digits}`;
-    }
-  }
-
-  return '';
+  
+  // Add country code back
+  return '55' + clean;
 }
 
 // Check if a number is a landline (fixed) - has 8 digits after DDD
@@ -477,44 +464,26 @@ serve(async (req) => {
       }));
     }
 
-    // Helper to filter leads with strict valid BR mobile phone numbers
+    // Helper to filter leads with valid phone numbers (no WhatsApp validation)
     function filterLeadsWithPhone(leads: Lead[]): Lead[] {
-      const filtered: Lead[] = [];
-
-      for (const lead of leads) {
-        const normalized = normalizePhone(lead.phone || '');
-        if (!normalized) continue;
-
-        // Block obvious placeholders
-        const subscriber = normalized.slice(-8);
-        if (/^(\d)\1{7}$/.test(subscriber)) continue;
-        if (subscriber.startsWith('9999')) continue;
-        if (/(0000|1234|4321)/.test(subscriber)) continue;
-
-        filtered.push({ ...lead, phone: normalized });
-      }
-
-      return filtered;
+      return leads.filter(lead => {
+        const phone = lead.phone?.trim();
+        return phone && phone !== '-' && phone !== '' && phone.length >= 8;
+      });
     }
 
-    // Helper to deduplicate leads by canonical full phone + name
+    // Helper to deduplicate leads
     function deduplicateLeads(leads: Lead[]): Lead[] {
       return leads.filter(lead => {
-        const normalizedPhone = normalizePhone(lead.phone || '');
-        if (!normalizedPhone) return false;
-
-        const phoneKey = normalizedPhone;
+        const phoneKey = lead.phone.replace(/[^0-9]/g, '').slice(-8);
         const nameKey = lead.name.toLowerCase().trim();
-
-        if (seenPhones.has(phoneKey) || (nameKey && seenNames.has(nameKey))) {
+        
+        if (seenPhones.has(phoneKey) || seenNames.has(nameKey)) {
           return false;
         }
-
+        
         seenPhones.add(phoneKey);
-        if (nameKey) seenNames.add(nameKey);
-
-        // Persist canonical phone for downstream use
-        lead.phone = normalizedPhone;
+        seenNames.add(nameKey);
         return true;
       });
     }

@@ -37,7 +37,7 @@ export const AlertsPanel = () => {
   if (unread.length === 0) return null;
 
   return (
-    <Card className="bg-card border-border/40">
+    <Card className="bg-card border-border/50">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <Bell size={16} className="text-yellow-400" />

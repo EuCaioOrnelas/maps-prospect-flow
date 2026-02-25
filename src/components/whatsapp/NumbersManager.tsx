@@ -95,10 +95,6 @@ export const NumbersManager = ({
   const isInsertingRef = useRef(false);
   const connectionHandledRef = useRef(false);
   
-  // Store proxy_id and api_tier from create-instance for new numbers
-  const pendingProxyIdRef = useRef<string | null>(null);
-  const pendingApiTierRef = useRef<string>('free');
-  
   // Warming sessions for each number
   const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
   
@@ -284,20 +280,16 @@ export const NumbersManager = ({
             if (isInsertingRef.current) return;
             isInsertingRef.current = true;
             const isPaidPlan = ['start', 'growth', 'scale'].includes(userPlan);
-            const insertPayload: any = {
-              user_id: user.id,
-              name: pendingNumberName,
-              is_connected: true,
-              phone_number: data.phoneNumber || null,
-              instance_name: connectingInstanceName,
-              api_tier: pendingApiTierRef.current || (isPaidPlan ? 'paid' : 'free')
-            };
-            if (pendingProxyIdRef.current) {
-              insertPayload.proxy_id = pendingProxyIdRef.current;
-            }
             const { data: newNumber, error: insertError } = await supabase
               .from('whatsapp_numbers')
-              .insert(insertPayload)
+              .insert({
+                user_id: user.id,
+                name: pendingNumberName,
+                is_connected: true,
+                phone_number: data.phoneNumber || null,
+                instance_name: connectingInstanceName,
+                api_tier: isPaidPlan ? 'paid' : 'free'
+              })
               .select()
               .single();
             
@@ -319,10 +311,10 @@ export const NumbersManager = ({
             setTimeout(() => {
               setShowSuccessAnimation(false);
               setConnectDialogOpen(false);
-              onConnect(newNumber.id, true);
+              onConnect(newNumber.id, true); // Pass true to trigger sync
+              
+              // Reset all states
               setPendingNumberName(null);
-              pendingProxyIdRef.current = null;
-              pendingApiTierRef.current = 'free';
               isInsertingRef.current = false;
             }, 2000);
           } else {
@@ -404,14 +396,6 @@ export const NumbersManager = ({
 
       if (createResponse.error) {
         throw new Error(createResponse.error.message);
-      }
-
-      // Store proxy and tier info for new numbers
-      if (createResponse.data?.proxyId) {
-        pendingProxyIdRef.current = createResponse.data.proxyId;
-      }
-      if (createResponse.data?.apiTier) {
-        pendingApiTierRef.current = createResponse.data.apiTier;
       }
 
       // If QR code came with instance creation (string, not object)
@@ -557,13 +541,6 @@ export const NumbersManager = ({
         supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('warming_search_assignments').delete().eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('campaign_incidents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('ignored_contacts').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        // Revenue tables with FK to whatsapp_numbers
-        (supabase as any).from('revenue_conversations').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_events').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_leads').update({ source_number_instance_id: null }).eq('source_number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_number_config').delete().eq('whatsapp_number_id', numberToDelete),
       ];
       
       // Delete warming sessions (has FK constraint)
@@ -1102,35 +1079,36 @@ export const NumbersManager = ({
         </DialogContent>
       </Dialog>
 
-      {/* Connect QR Dialog */}
-      <Dialog open={connectDialogOpen} onOpenChange={(open) => {
+      {/* Connect QR Dialog - Modal stays open when clicking outside */}
+      <Dialog open={connectDialogOpen} onOpenChange={async (open) => {
+        // Only close via X button or success, not clicking outside
         if (!open && !showSuccessAnimation) {
-          // Close dialog immediately, cleanup in background
-          setConnectDialogOpen(false);
-          const instanceToCleanup = connectingInstanceName;
-          const numberIdToCleanup = connectingNumberId;
+          // User clicked X - cancel the instance if not connected
+          // For NEW numbers (pendingNumberName set), there's no DB record to clean
+          // For EXISTING numbers, we might have an orphan instance in Evolution
+          if (connectingInstanceName) {
+            try {
+              // Delete the orphan instance from Evolution API
+              await supabase.functions.invoke('evolution-disconnect', {
+                body: { 
+                  instanceName: connectingInstanceName,
+                  numberId: connectingNumberId // null for new numbers
+                },
+              });
+              console.log('Cancelled orphan instance:', connectingInstanceName);
+            } catch (err) {
+              console.error('Error cancelling instance:', err);
+            }
+          }
           
+          setConnectDialogOpen(false);
           // Reset ALL states including pending number
           setConnectingInstanceName("");
           setConnectingNumberId(null);
           setPendingNumberName(null);
-          
-          // Cleanup orphan instance in background (non-blocking)
-          if (instanceToCleanup) {
-            supabase.functions.invoke('evolution-disconnect', {
-              body: { 
-                instanceName: instanceToCleanup,
-                numberId: numberIdToCleanup
-              },
-            }).then(() => {
-              console.log('Cancelled orphan instance:', instanceToCleanup);
-            }).catch((err) => {
-              console.error('Error cancelling instance:', err);
-            });
-          }
         }
       }}>
-        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Smartphone size={20} />
@@ -1234,115 +1212,6 @@ export const NumbersManager = ({
                 </div>
               )}
             </div>
-
-            {/* Manual check button */}
-            {!qrLoading && qrCode && !qrExpired && !showSuccessAnimation && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full gap-2"
-                disabled={checkingConnection}
-                onClick={async () => {
-                  try {
-                    setCheckingConnection(true);
-                    const { data, error } = await invokeWithRetry<{
-                      connected: boolean;
-                      phoneNumber?: string;
-                    }>('evolution-check-status', {
-                      body: { 
-                        instanceName: connectingInstanceName,
-                        numberId: pendingNumberName !== null ? null : connectingNumberId 
-                      },
-                    }, { maxRetries: 1 });
-                    
-                    if (data?.connected) {
-                      // Connection detected - trigger same flow as polling
-                      if (connectionHandledRef.current) return;
-                      connectionHandledRef.current = true;
-                      setShowSuccessAnimation(true);
-                      
-                      const isNewNumber = pendingNumberName !== null;
-                      if (isNewNumber && user) {
-                        if (isInsertingRef.current) return;
-                        isInsertingRef.current = true;
-                        const isPaidPlan = ['start', 'growth', 'scale'].includes(userPlan);
-                        const manualInsertPayload: any = {
-                          user_id: user.id,
-                          name: pendingNumberName,
-                          is_connected: true,
-                          phone_number: data.phoneNumber || null,
-                          instance_name: connectingInstanceName,
-                          api_tier: pendingApiTierRef.current || (isPaidPlan ? 'paid' : 'free')
-                        };
-                        if (pendingProxyIdRef.current) {
-                          manualInsertPayload.proxy_id = pendingProxyIdRef.current;
-                        }
-                        const { data: newNumber, error: insertError } = await supabase
-                          .from('whatsapp_numbers')
-                          .insert(manualInsertPayload)
-                          .select()
-                          .single();
-                        
-                        if (insertError) {
-                          toast({ title: "Erro ao salvar", description: "Tente novamente.", variant: "destructive" });
-                          isInsertingRef.current = false;
-                          connectionHandledRef.current = false;
-                          setShowSuccessAnimation(false);
-                          return;
-                        }
-                        
-                        onNumbersChange([...numbers, newNumber]);
-                        setTimeout(() => {
-                          setShowSuccessAnimation(false);
-                          setConnectDialogOpen(false);
-                          onConnect(newNumber.id, true);
-                          setPendingNumberName(null);
-                          pendingProxyIdRef.current = null;
-                          pendingApiTierRef.current = 'free';
-                          isInsertingRef.current = false;
-                        }, 2000);
-                      } else {
-                        onNumbersChange(numbers.map(n => 
-                          n.id === connectingNumberId 
-                            ? { ...n, is_connected: true, phone_number: data.phoneNumber, instance_name: connectingInstanceName } 
-                            : n
-                        ));
-                        setTimeout(() => {
-                          setShowSuccessAnimation(false);
-                          setConnectDialogOpen(false);
-                          if (connectingNumberId) onConnect(connectingNumberId);
-                        }, 2000);
-                      }
-                      
-                      toast({
-                        title: "WhatsApp conectado!",
-                        description: data.phoneNumber 
-                          ? `Número ${data.phoneNumber} conectado com sucesso`
-                          : "Número pronto para disparos",
-                      });
-                    } else {
-                      toast({
-                        title: "Ainda não conectado",
-                        description: "Escaneie o QR Code com seu WhatsApp e aguarde alguns segundos",
-                        variant: "destructive",
-                      });
-                    }
-                  } catch (err) {
-                    console.error('Manual check error:', err);
-                    toast({ title: "Erro ao verificar", description: "Tente novamente", variant: "destructive" });
-                  } finally {
-                    setCheckingConnection(false);
-                  }
-                }}
-              >
-                {checkingConnection ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={14} />
-                )}
-                Já escaneei o QR Code
-              </Button>
-            )}
 
             <div className="space-y-2 p-3 rounded-lg bg-muted/30 text-sm">
               <p className="font-medium">Como conectar:</p>
