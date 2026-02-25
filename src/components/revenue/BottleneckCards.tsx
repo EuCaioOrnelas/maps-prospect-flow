@@ -36,6 +36,20 @@ export const BottleneckCards = () => {
 
   if (!metrics) return null;
 
+  // Check if all metrics are zero
+  const allZero = metrics.hotIgnoredPct === 0 && metrics.aboveSLAPct === 0 &&
+    metrics.avgFirstResponseMin === 0 && metrics.cooledLeads === 0 && metrics.objectionLeads === 0;
+
+  if (allZero) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-sm text-muted-foreground/60 italic">
+          Nenhum gargalo detectado nos últimos 7 dias.
+        </p>
+      </div>
+    );
+  }
+
   const cards = [
     {
       icon: Flame,
