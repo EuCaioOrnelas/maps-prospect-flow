@@ -19,6 +19,31 @@ const INTENT_PATTERNS: Record<string, RegExp> = {
   INTENT_NEGATIVE: /\b(n[aã]o quero|pare|n[aã]o me chama|sair|cancelar|bloquear)\b/i,
 };
 
+const EVENT_CATEGORIES: Record<string, string> = {
+  INBOUND_MESSAGE: "engagement",
+  OUTBOUND_MESSAGE: "engagement",
+  INBOUND_STREAK_3: "engagement",
+  INBOUND_AFTER_24H_SILENCE: "engagement",
+  INBOUND_AFTER_7D_SILENCE: "engagement",
+  OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "sla",
+  INTENT_PRICE: "intent",
+  INTENT_BUY_NOW: "intent",
+  INTENT_AVAILABILITY: "intent",
+  INTENT_PAYMENT: "intent",
+  INTENT_PROPOSAL: "intent",
+  INTENT_URGENT: "intent",
+  INTENT_OBJECTION: "penalty",
+  INTENT_NEGATIVE: "penalty",
+  SLA_FIRST_RESPONSE_UNDER_5MIN: "sla",
+  SLA_FIRST_RESPONSE_5_TO_30MIN: "sla",
+  SLA_FIRST_RESPONSE_OVER_30MIN: "penalty",
+  UNREPLIED_INBOUND_OVER_2H: "penalty",
+  UNREPLIED_INBOUND_OVER_24H: "penalty",
+  CONVERSATION_ACTIVE_3D: "engagement",
+  CONVERSATION_ACTIVE_5D: "engagement",
+  BACK_AND_FORTH_5_TURNS: "engagement",
+};
+
 function scoreToBucket(score: number): string {
   if (score >= 650) return "VERY_HOT";
   if (score >= 350) return "HOT";
@@ -42,7 +67,7 @@ serve(async (req) => {
       user_id,
       phone_e164,
       number_instance_id,
-      direction, // "inbound" or "outbound"
+      direction,
       message_content,
       lead_name,
     } = body;
@@ -117,23 +142,39 @@ serve(async (req) => {
         (rules || []).map((r: any) => [r.rule_key, r])
       );
 
-      // 4. Generate events
+      // 4. Generate events + score logs
       const eventsToCreate: any[] = [];
+      const scoreLogsToCreate: any[] = [];
       let scoreChange = 0;
+      let runningScore = previousScore;
+
+      const addEvent = (eventType: string, points: number, meta: any = {}) => {
+        eventsToCreate.push({
+          user_id,
+          lead_id: leadId,
+          number_instance_id,
+          event_type: eventType,
+          event_value: points,
+          event_meta: meta,
+        });
+        const scoreBefore = runningScore;
+        runningScore = Math.max(0, Math.min(1000, runningScore + points));
+        scoreChange += points;
+        scoreLogsToCreate.push({
+          user_id,
+          lead_id: leadId,
+          event_type: eventType,
+          points_applied: points,
+          score_before: scoreBefore,
+          score_after: runningScore,
+          category: EVENT_CATEGORIES[eventType] || "engagement",
+        });
+      };
 
       if (direction === "inbound") {
-        // INBOUND_MESSAGE
         const inboundRule = rulesMap.get("INBOUND_MESSAGE");
         if (inboundRule) {
-          eventsToCreate.push({
-            user_id,
-            lead_id: leadId,
-            number_instance_id,
-            event_type: "INBOUND_MESSAGE",
-            event_value: inboundRule.points,
-            event_meta: {},
-          });
-          scoreChange += inboundRule.points;
+          addEvent("INBOUND_MESSAGE", inboundRule.points);
         }
 
         // Detect intents
@@ -142,19 +183,8 @@ serve(async (req) => {
             if (pattern.test(message_content)) {
               const rule = rulesMap.get(intentKey);
               const points = rule?.points || 0;
-              eventsToCreate.push({
-                user_id,
-                lead_id: leadId,
-                number_instance_id,
-                event_type: intentKey,
-                event_value: points,
-                event_meta: {
-                  matched_text: message_content.substring(0, 200),
-                },
-              });
-              scoreChange += points;
+              addEvent(intentKey, points, { matched_text: message_content.substring(0, 200) });
 
-              // INTENT_NEGATIVE → mark at risk
               if (intentKey === "INTENT_NEGATIVE") {
                 await supabase
                   .from("revenue_leads")
@@ -171,7 +201,7 @@ serve(async (req) => {
           }
         }
 
-        // Check SLA: time since last outbound
+        // Check SLA
         if (existingLead) {
           const { data: conv } = await supabase
             .from("revenue_conversations")
@@ -188,15 +218,7 @@ serve(async (req) => {
             if (diffMin <= 60) {
               const rule = rulesMap.get("OUTBOUND_REPLY_RECEIVED_WITHIN_1H");
               if (rule) {
-                eventsToCreate.push({
-                  user_id,
-                  lead_id: leadId,
-                  number_instance_id,
-                  event_type: "OUTBOUND_REPLY_RECEIVED_WITHIN_1H",
-                  event_value: rule.points,
-                  event_meta: { response_time_minutes: Math.round(diffMin) },
-                });
-                scoreChange += rule.points;
+                addEvent("OUTBOUND_REPLY_RECEIVED_WITHIN_1H", rule.points, { response_time_minutes: Math.round(diffMin) });
               }
             }
           }
@@ -205,19 +227,32 @@ serve(async (req) => {
 
       // 5. Insert events
       if (eventsToCreate.length > 0) {
-        await supabase.from("revenue_events").insert(eventsToCreate);
+        const { data: insertedEvents } = await supabase
+          .from("revenue_events")
+          .insert(eventsToCreate)
+          .select("id");
+
+        // Link event IDs to score logs
+        if (insertedEvents && insertedEvents.length === scoreLogsToCreate.length) {
+          for (let i = 0; i < scoreLogsToCreate.length; i++) {
+            scoreLogsToCreate[i].event_id = insertedEvents[i].id;
+          }
+        }
       }
 
-      // 6. Update score
+      // 6. Insert score logs
+      if (scoreLogsToCreate.length > 0) {
+        await supabase.from("revenue_score_logs").insert(scoreLogsToCreate);
+      }
+
+      // 7. Update score
       const newScore = Math.max(0, Math.min(1000, previousScore + scoreChange));
       const newBucket = scoreToBucket(newScore);
 
-      // Update risk state
       let riskState = existingLead?.risk_state || "OK";
       let riskReason = existingLead?.risk_reason || null;
 
       if (direction === "inbound" && riskState !== "AT_RISK") {
-        // Activity resets cooling
         riskState = "OK";
         riskReason = null;
       }
@@ -254,7 +289,6 @@ serve(async (req) => {
         );
       }
 
-      // Load settings
       const { data: settings } = await supabase
         .from("revenue_settings")
         .select("*")
@@ -263,7 +297,6 @@ serve(async (req) => {
 
       const decayRate = settings?.cooldown_decay_per_day || 0.06;
 
-      // Get all leads
       const { data: leads } = await supabase
         .from("revenue_leads")
         .select("id, score_total, last_activity_at, status_bucket, risk_state")
@@ -271,10 +304,20 @@ serve(async (req) => {
 
       let updated = 0;
       const now = Date.now();
+      const snapshotsToCreate: any[] = [];
 
       for (const lead of leads || []) {
         const lastActivity = new Date(lead.last_activity_at).getTime();
         const daysSince = (now - lastActivity) / (1000 * 60 * 60 * 24);
+
+        // Create daily snapshot for all leads
+        snapshotsToCreate.push({
+          lead_id: lead.id,
+          user_id,
+          score_value: lead.score_total,
+          status_bucket: lead.status_bucket,
+          snapshot_date: new Date().toISOString().split("T")[0],
+        });
 
         if (daysSince < 1) continue;
 
@@ -307,8 +350,15 @@ serve(async (req) => {
         updated++;
       }
 
+      // Upsert snapshots
+      if (snapshotsToCreate.length > 0) {
+        await supabase
+          .from("revenue_score_snapshots")
+          .upsert(snapshotsToCreate, { onConflict: "lead_id,snapshot_date" });
+      }
+
       return new Response(
-        JSON.stringify({ success: true, leads_updated: updated }),
+        JSON.stringify({ success: true, leads_updated: updated, snapshots_created: snapshotsToCreate.length }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

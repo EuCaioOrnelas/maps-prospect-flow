@@ -1,18 +1,30 @@
 import { Link } from "react-router-dom";
 import {
-  Users,
   Flame,
   AlertTriangle,
   Activity,
   DollarSign,
   Info,
+  Target,
+  Gauge,
+  BarChart3,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useRevenueDashboardStats, useRevenueSettings } from "@/hooks/useRevenueData";
+import { Progress } from "@/components/ui/progress";
+import {
+  useRevenueDashboardStats,
+  useRevenueSettings,
+  useRevenueIntentDistribution,
+  useRevenuePerformanceScore,
+  useRevenueOpportunityIndex,
+} from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
@@ -40,6 +52,28 @@ const riskBadge: Record<string, string> = {
   AT_RISK: "bg-destructive/10 text-destructive",
 };
 
+const intentLabels: Record<string, string> = {
+  INTENT_PRICE: "Preço",
+  INTENT_BUY_NOW: "Compra",
+  INTENT_AVAILABILITY: "Disponibilidade",
+  INTENT_PAYMENT: "Pagamento",
+  INTENT_PROPOSAL: "Proposta",
+  INTENT_URGENT: "Urgência",
+  INTENT_OBJECTION: "Objeção",
+  INTENT_NEGATIVE: "Negativo",
+};
+
+const intentBarColors: Record<string, string> = {
+  INTENT_PRICE: "#f59e0b",
+  INTENT_BUY_NOW: "#ef4444",
+  INTENT_AVAILABILITY: "#3b82f6",
+  INTENT_PAYMENT: "#8b5cf6",
+  INTENT_PROPOSAL: "#10b981",
+  INTENT_URGENT: "#f97316",
+  INTENT_OBJECTION: "#eab308",
+  INTENT_NEGATIVE: "#6b7280",
+};
+
 const fmt = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -47,9 +81,19 @@ const fmt = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const performanceColor = (score: number) => {
+  if (score >= 80) return "text-primary";
+  if (score >= 60) return "text-yellow-400";
+  if (score >= 40) return "text-orange-400";
+  return "text-destructive";
+};
+
 const RevenueDashboard = () => {
   const { data: stats, isLoading } = useRevenueDashboardStats();
   const { data: settings } = useRevenueSettings();
+  const { data: intentDist } = useRevenueIntentDistribution();
+  const { data: perfScore } = useRevenuePerformanceScore();
+  const { data: oppIndex } = useRevenueOpportunityIndex();
 
   const ticket = settings?.default_ticket_value || 3000;
   const closeRates = {
@@ -59,10 +103,6 @@ const RevenueDashboard = () => {
     VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
   };
 
-  const receitaPotencial = stats
-    ? (stats.bucketCounts.HOT + stats.bucketCounts.VERY_HOT) * ticket
-    : 0;
-
   const receitaEsperada = stats
     ? Object.entries(stats.bucketCounts).reduce(
         (sum, [bucket, count]) =>
@@ -71,223 +111,263 @@ const RevenueDashboard = () => {
       )
     : 0;
 
-  return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Painel de Receita
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Acompanhe o engajamento dos seus leads e a projeção de faturamento em tempo real
-          </p>
-        </div>
-      </div>
+  // Intent chart data
+  const intentData = Object.entries(intentDist || {})
+    .map(([key, count]) => ({
+      name: intentLabels[key] || key,
+      value: count,
+      key,
+    }))
+    .sort((a, b) => b.value - a.value);
 
-      {/* KPIs */}
-      {isLoading ? (
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4 max-w-7xl mx-auto">
+        <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-card border-border/50">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Activity size={16} />
-                <span className="text-xs font-medium">Ativos (7 dias)</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[240px]">
-                    <p className="text-xs">Leads que tiveram qualquer interação (enviaram ou receberam mensagem) nos últimos 7 dias.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats?.active7d || 0}</p>
-            </CardContent>
-          </Card>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
 
-          <Card className="bg-card border-border/50">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2 text-orange-400 mb-1">
-                <Flame size={16} />
-                <span className="text-xs font-medium">Engajados + Quentes</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Score acima de 350 pts</p>
-            </CardContent>
-          </Card>
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Painel de Receita</h1>
+        <p className="text-sm text-muted-foreground">
+          Inteligência comercial em tempo real — acompanhe engajamento, oportunidades e performance
+        </p>
+      </div>
 
-          <Card className="bg-card border-border/50">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2 text-destructive mb-1">
-                <AlertTriangle size={16} />
-                <span className="text-xs font-medium">Em Risco</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[240px]">
-                    <p className="text-xs">Leads que estão esfriando ou em risco de perda por inatividade prolongada.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats?.atRiskCount || 0}</p>
-            </CardContent>
-          </Card>
+      {/* KPIs Row 1 */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card className="bg-card border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Activity size={16} />
+              <span className="text-xs font-medium">Ativos (7d)</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{stats?.active7d || 0}</p>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-card border-border/50">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2 text-primary mb-1">
-                <DollarSign size={16} />
-                <span className="text-xs font-medium">Receita Esperada</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info size={12} className="text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[260px]">
-                    <p className="text-xs">Soma de (leads × ticket médio × taxa de conversão) de cada nível. Ajuste as taxas em Configurações.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{fmt(receitaEsperada)}</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card className="bg-card border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 text-orange-400 mb-1">
+              <Flame size={16} />
+              <span className="text-xs font-medium">Engajados + Quentes</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 text-destructive mb-1">
+              <AlertTriangle size={16} />
+              <span className="text-xs font-medium">Em Risco</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{stats?.atRiskCount || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 text-primary mb-1">
+              <DollarSign size={16} />
+              <span className="text-xs font-medium">Receita Esperada</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{fmt(receitaEsperada)}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Gauge size={16} className={performanceColor(perfScore?.performanceScore || 0)} />
+              <span className="text-xs font-medium text-muted-foreground">Performance</span>
+            </div>
+            <p className={cn("text-2xl font-bold", performanceColor(perfScore?.performanceScore || 0))}>
+              {perfScore?.performanceScore || 0}/100
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Score Details + Opportunity Index */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Performance Score */}
+        <Card className="bg-card border-border/50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold">Índice de Performance Comercial</CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={14} className="text-muted-foreground/50 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px]">
+                  <p className="text-xs">Métrica composta baseada em: tempo de resposta (30%), leads quentes respondidos (40%), leads ignorados (20%) e consistência (10%).</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Tempo médio resposta</span>
+              <span className="font-medium text-foreground">{perfScore?.avgResponseTimeMinutes || 0} min</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Leads quentes respondidos</span>
+              <span className="font-medium text-foreground">{perfScore?.hotResponseRate || 0}%</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Taxa de ignorados</span>
+              <span className="font-medium text-foreground">{perfScore?.ignoredRate || 0}%</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Consistência de atividade</span>
+              <span className="font-medium text-foreground">{perfScore?.consistencyRate || 0}%</span>
+            </div>
+            <Progress value={perfScore?.performanceScore || 0} className="h-2 mt-2" />
+          </CardContent>
+        </Card>
+
+        {/* Opportunity Index */}
+        <Card className="bg-card border-border/50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold">Aproveitamento de Oportunidades</CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={14} className="text-muted-foreground/50 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px]">
+                  <p className="text-xs">Porcentagem de leads engajados/quentes nos últimos 7 dias que foram respondidos dentro do SLA. Quanto maior, melhor o aproveitamento.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-2">
+              <p className={cn("text-4xl font-bold", oppIndex && oppIndex.index >= 70 ? "text-primary" : oppIndex && oppIndex.index >= 40 ? "text-yellow-400" : "text-destructive")}>
+                {oppIndex?.index || 0}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {oppIndex?.respondedInSLA || 0} de {oppIndex?.totalHot || 0} leads quentes respondidos no SLA
+              </p>
+              {oppIndex && oppIndex.notResponded > 0 && (
+                <p className="text-xs text-destructive mt-1">
+                  ⚠️ {oppIndex.notResponded} leads quentes sem resposta adequada
+                </p>
+              )}
+            </div>
+            <Progress value={oppIndex?.index || 0} className="h-2 mt-3" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Bucket Distribution */}
       <Card className="bg-card border-border/50">
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-semibold">Distribuição por Nível de Engajamento</CardTitle>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info size={14} className="text-muted-foreground/50 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[300px]">
-                <p className="text-xs">Cada lead recebe um score de 0 a 1000 baseado nas suas interações. O nível é calculado automaticamente:</p>
-                <ul className="text-xs mt-1 space-y-0.5">
-                  <li>• <strong>Frio:</strong> 0–149 pts</li>
-                   <li>• <strong>Morno:</strong> 150–349 pts</li>
-                   <li>• <strong>Engajado:</strong> 350–649 pts</li>
-                   <li>• <strong>Quente:</strong> 650–1000 pts</li>
-                </ul>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <CardTitle className="text-base font-semibold">Distribuição por Nível</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-3">
             {(["COLD", "ENGAGED", "HOT", "VERY_HOT"] as const).map((bucket) => (
-              <div
-                key={bucket}
-                className={cn(
-                  "rounded-lg border p-3 text-center",
-                  bucketColors[bucket]
-                )}
-              >
+              <div key={bucket} className={cn("rounded-lg border p-3 text-center", bucketColors[bucket])}>
                 <p className="text-xs font-medium opacity-80">{bucketLabels[bucket]}</p>
-                <p className="text-xl font-bold mt-1">
-                  {stats?.bucketCounts[bucket] || 0}
-                </p>
+                <p className="text-xl font-bold mt-1">{stats?.bucketCounts[bucket] || 0}</p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Receita Potencial */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* Intent Distribution */}
+      {intentData.length > 0 && (
         <Card className="bg-card border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Receita Potencial (Engajados + Quentes)
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Target size={16} />
+              <CardTitle className="text-base font-semibold">Sinais de Intenção (7 dias)</CardTitle>
+            </div>
+            <CardDescription>Distribuição de intenções detectadas nas mensagens dos leads</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">{fmt(receitaPotencial)}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Se todos os leads quentes fecharem — ticket médio de {fmt(ticket)}
-            </p>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={intentData} layout="vertical" margin={{ left: 80 }}>
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} width={75} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "hsl(var(--foreground))" }}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {intentData.map((entry) => (
+                      <Cell key={entry.key} fill={intentBarColors[entry.key] || "#6b7280"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Leads Rastreados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">
-              {stats?.totalLeads || 0}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Leads que interagiram via WhatsApp
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Oportunidades */}
+      {/* Top 10 Oportunidades Hoje */}
       <Card className="bg-card border-border/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">
-              Principais Oportunidades
-            </CardTitle>
-            <Link
-              to="/revenue/leads"
-              className="text-xs text-primary hover:underline"
-            >
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-primary" />
+              <CardTitle className="text-base font-semibold">Top 10 Oportunidades Hoje</CardTitle>
+            </div>
+            <Link to="/revenue/leads" className="text-xs text-primary hover:underline">
               Ver todos →
             </Link>
           </div>
+          <CardDescription>
+            Ranking baseado em score × peso + risco + recência de atividade
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {stats?.topOpportunities.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum lead registrado ainda. Os leads aparecerão aqui conforme as mensagens de WhatsApp forem processadas.
+              Nenhum lead registrado ainda.
             </p>
           ) : (
             <div className="space-y-2">
-              {stats?.topOpportunities.map((lead) => (
+              {stats?.topOpportunities.map((lead, idx) => (
                 <Link
                   key={lead.id}
                   to={`/revenue/leads/${lead.id}`}
                   className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                      {lead.score_total}
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                      {idx + 1}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">
                         {lead.name || lead.phone_e164}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {lead.phone_e164}
+                        Score: {lead.score_total} • {lead.recommendedAction}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[10px]", bucketColors[lead.status_bucket])}
-                    >
+                    <Badge variant="outline" className={cn("text-[10px]", bucketColors[lead.status_bucket])}>
                       {bucketLabels[lead.status_bucket]}
                     </Badge>
                     {lead.risk_state !== "OK" && (
-                      <Badge
-                        variant="outline"
-                        className={cn("text-[10px]", riskBadge[lead.risk_state])}
-                      >
+                      <Badge variant="outline" className={cn("text-[10px]", riskBadge[lead.risk_state])}>
                         {riskLabels[lead.risk_state]}
                       </Badge>
                     )}
