@@ -21,9 +21,9 @@ const bucketLabels: Record<string, string> = {
 
 const bucketEmojis: Record<string, string> = {
   COLD: "🧊",
-  ENGAGED: "💬",
-  HOT: "🔥",
-  VERY_HOT: "🔥🔥",
+  ENGAGED: "☀️",
+  HOT: "💬",
+  VERY_HOT: "🔥",
 };
 
 const RevenueInsights = () => {
