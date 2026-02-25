@@ -10,6 +10,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useState } from "react";
+import { ScoreBreakdownCard } from "@/components/revenue/ScoreBreakdownCard";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio", ENGAGED: "Morno", HOT: "Engajado", VERY_HOT: "Quente",
@@ -172,6 +173,15 @@ const RevenueLeadDetail = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Score Multidimensional Breakdown */}
+      <ScoreBreakdownCard
+        scoreIntent={(lead as any).score_intent || 0}
+        scoreEngagement={(lead as any).score_engagement || 0}
+        scoreUrgency={(lead as any).score_urgency || 0}
+        scoreRisk={(lead as any).score_risk || 0}
+        scoreTotal={lead.score_total}
+      />
 
       {/* Recommended Actions */}
       <Card className="bg-card border-border/50">

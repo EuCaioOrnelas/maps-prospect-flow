@@ -1262,8 +1262,12 @@ export type Database = {
           phone_e164: string
           risk_reason: string | null
           risk_state: Database["public"]["Enums"]["revenue_risk_state"]
+          score_engagement: number
+          score_intent: number
           score_last_calc_at: string | null
+          score_risk: number
           score_total: number
+          score_urgency: number
           source_number_instance_id: string | null
           status_bucket: Database["public"]["Enums"]["revenue_status_bucket"]
           tags: string[] | null
@@ -1282,8 +1286,12 @@ export type Database = {
           phone_e164: string
           risk_reason?: string | null
           risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
+          score_engagement?: number
+          score_intent?: number
           score_last_calc_at?: string | null
+          score_risk?: number
           score_total?: number
+          score_urgency?: number
           source_number_instance_id?: string | null
           status_bucket?: Database["public"]["Enums"]["revenue_status_bucket"]
           tags?: string[] | null
@@ -1302,8 +1310,12 @@ export type Database = {
           phone_e164?: string
           risk_reason?: string | null
           risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
+          score_engagement?: number
+          score_intent?: number
           score_last_calc_at?: string | null
+          score_risk?: number
           score_total?: number
+          score_urgency?: number
           source_number_instance_id?: string | null
           status_bucket?: Database["public"]["Enums"]["revenue_status_bucket"]
           tags?: string[] | null
@@ -1319,6 +1331,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenue_reports: {
+        Row: {
+          created_at: string
+          id: string
+          report_data: Json
+          report_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          report_data?: Json
+          report_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          report_data?: Json
+          report_date?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       revenue_score_logs: {
         Row: {
@@ -1459,6 +1495,10 @@ export type Database = {
           sla_first_response_minutes: number
           updated_at: string
           user_id: string
+          weight_engagement: number
+          weight_intent: number
+          weight_risk: number
+          weight_urgency: number
         }
         Insert: {
           cooldown_decay_per_day?: number
@@ -1473,6 +1513,10 @@ export type Database = {
           sla_first_response_minutes?: number
           updated_at?: string
           user_id: string
+          weight_engagement?: number
+          weight_intent?: number
+          weight_risk?: number
+          weight_urgency?: number
         }
         Update: {
           cooldown_decay_per_day?: number
@@ -1487,6 +1531,10 @@ export type Database = {
           sla_first_response_minutes?: number
           updated_at?: string
           user_id?: string
+          weight_engagement?: number
+          weight_intent?: number
+          weight_risk?: number
+          weight_urgency?: number
         }
         Relationships: []
       }

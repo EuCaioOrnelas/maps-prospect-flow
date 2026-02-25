@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,6 +120,10 @@ const RevenueSettings = () => {
     sla_first_response_minutes: 5,
     risk_no_reply_hours: 24,
     cooldown_decay_per_day: 0.06,
+    weight_intent: 0.35,
+    weight_engagement: 0.30,
+    weight_urgency: 0.20,
+    weight_risk: 0.15,
   });
 
   useEffect(() => {
@@ -132,6 +137,10 @@ const RevenueSettings = () => {
         sla_first_response_minutes: settings.sla_first_response_minutes,
         risk_no_reply_hours: settings.risk_no_reply_hours,
         cooldown_decay_per_day: settings.cooldown_decay_per_day,
+        weight_intent: (settings as any).weight_intent || 0.35,
+        weight_engagement: (settings as any).weight_engagement || 0.30,
+        weight_urgency: (settings as any).weight_urgency || 0.20,
+        weight_risk: (settings as any).weight_risk || 0.15,
       });
     }
   }, [settings]);
@@ -209,12 +218,73 @@ const RevenueSettings = () => {
       </div>
 
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="weights">Pesos</TabsTrigger>
           <TabsTrigger value="numbers">Números</TabsTrigger>
           <TabsTrigger value="scoring">Pontuação</TabsTrigger>
-          <TabsTrigger value="rules">Regras de Score</TabsTrigger>
+          <TabsTrigger value="rules">Regras</TabsTrigger>
         </TabsList>
+
+        {/* Weights Tab */}
+        <TabsContent value="weights" className="space-y-6 mt-6">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-start gap-3">
+                <Info size={18} className="text-primary shrink-0 mt-0.5" />
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p className="text-foreground font-medium">Pesos do Score Multidimensional</p>
+                  <p>O score total é calculado como: (Intenção × peso) + (Engajamento × peso) + (Urgência × peso) − (Risco × peso). A soma dos pesos deve ser 1.0.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Pesos das Dimensões</CardTitle>
+              <CardDescription>Ajuste como cada dimensão influencia o score total</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {[
+                { key: "weight_intent", label: "🎯 Intenção", desc: "Sinais de interesse (preço, proposta, compra)" },
+                { key: "weight_engagement", label: "💬 Engajamento", desc: "Volume e frequência de interações" },
+                { key: "weight_urgency", label: "⚡ Urgência", desc: "Sinais de urgência e tempo de resposta" },
+                { key: "weight_risk", label: "⚠️ Risco (penalidade)", desc: "Leads esfriando, sem resposta, objeções" },
+              ].map(({ key, label, desc }) => (
+                <div key={key}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Label className="text-xs text-muted-foreground">{label}</Label>
+                    <FieldHelp>{desc}</FieldHelp>
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    value={(form as any)[key]}
+                    onChange={(e) => setForm((f) => ({ ...f, [key]: Number(e.target.value) }))}
+                  />
+                </div>
+              ))}
+
+              <div className="p-3 rounded-lg bg-secondary/30 text-sm">
+                <p className="text-muted-foreground">
+                  Soma atual:{" "}
+                  <span className={cn(
+                    "font-bold",
+                    Math.abs(form.weight_intent + form.weight_engagement + form.weight_urgency + form.weight_risk - 1) < 0.01
+                      ? "text-primary"
+                      : "text-destructive"
+                  )}>
+                    {(form.weight_intent + form.weight_engagement + form.weight_urgency + form.weight_risk).toFixed(2)}
+                  </span>
+                  {" "}(ideal: 1.00)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Numbers Tab */}
         <TabsContent value="numbers" className="space-y-6 mt-6">
