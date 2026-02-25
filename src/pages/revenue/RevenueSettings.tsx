@@ -560,62 +560,150 @@ const RevenueSettings = () => {
               </CardContent>
             </Card>
           ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" onClick={() => setRulesUnlocked(false)} className="gap-1.5 text-muted-foreground">
-                  <ChevronLeft size={14} />
-                  Voltar
-                </Button>
-                <Button variant="outline" onClick={handleSeedRules} disabled={seeding} size="sm">
-                  <RefreshCw size={14} className="mr-1.5" />
-                  {seeding ? "Criando..." : "Criar Regras Padrão"}
-                </Button>
-              </div>
+            <div className="flex gap-6">
+              {/* Sidebar fixa com explicação */}
+              <div className="w-72 shrink-0">
+                <div className="sticky top-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Button variant="ghost" size="sm" onClick={() => setRulesUnlocked(false)} className="gap-1.5 text-muted-foreground -ml-2">
+                      <ChevronLeft size={14} />
+                      Voltar
+                    </Button>
+                  </div>
 
-              {/* Regras de Pontuação por Evento */}
-              {Object.entries(groupedRules).map(([category, rules]) => (
-                <Card key={category} className="bg-card border-border/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold capitalize">
-                      {categoryLabels[category] || category}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {rules.map((rule) => (
-                      <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
-                        <Switch
-                          checked={rule.is_enabled}
-                          onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
-                          <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={rule.points}
-                            onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
-                            className="w-20 h-8 text-sm text-center"
-                          />
-                          <span className="text-xs text-muted-foreground">pts</span>
+                  <Card className="bg-card border-border/50">
+                    <CardContent className="pt-5 pb-4 space-y-4">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground mb-1.5">Como funciona</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Cada interação do lead gera eventos que somam ou subtraem pontos do score total.
+                          O score varia de <strong>0 a 1000</strong> pontos e define automaticamente o nível do lead.
+                        </p>
+                      </div>
+
+                      <div className="border-t border-border/40 pt-3">
+                        <p className="text-xs font-semibold text-foreground mb-2">Faixas de Nível</p>
+                        <div className="space-y-1.5">
+                          {[
+                            { emoji: "🧊", label: "Frio", range: `0 – 149`, rate: form.default_close_rate_cold },
+                            { emoji: "☀️", label: "Morno", range: `150 – 349`, rate: form.default_close_rate_engaged },
+                            { emoji: "💬", label: "Engajado", range: `350 – 649`, rate: form.default_close_rate_hot },
+                            { emoji: "🔥", label: "Quente", range: `650 – 1000`, rate: form.default_close_rate_very_hot },
+                          ].map(b => (
+                            <div key={b.label} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{b.emoji} {b.label}</span>
+                              <span className="font-mono text-foreground">{b.range}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ))}
 
-              {(!scoreRules || scoreRules.length === 0) && (
-                <Card className="bg-card border-border/50">
-                  <CardContent className="py-8 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Nenhuma regra criada. Clique em "Criar Regras Padrão" para começar.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+                      <div className="border-t border-border/40 pt-3">
+                        <p className="text-xs font-semibold text-foreground mb-2">Taxa de Conversão</p>
+                        <div className="space-y-1.5">
+                          {[
+                            { label: "Frio", rate: form.default_close_rate_cold },
+                            { label: "Morno", rate: form.default_close_rate_engaged },
+                            { label: "Engajado", rate: form.default_close_rate_hot },
+                            { label: "Quente", rate: form.default_close_rate_very_hot },
+                          ].map(b => (
+                            <div key={b.label} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{b.label}</span>
+                              <span className="font-mono text-foreground">{Math.round(b.rate * 100)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/40 pt-3">
+                        <p className="text-xs font-semibold text-foreground mb-2">Pesos do Score</p>
+                        <div className="space-y-1.5">
+                          {[
+                            { label: "Intenção", value: form.weight_intent },
+                            { label: "Engajamento", value: form.weight_engagement },
+                            { label: "Urgência", value: form.weight_urgency },
+                            { label: "Risco", value: form.weight_risk },
+                          ].map(w => (
+                            <div key={w.label} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{w.label}</span>
+                              <span className="font-mono text-foreground">{(w.value * 100).toFixed(0)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/40 pt-3 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">SLA resposta</span>
+                          <span className="font-mono text-foreground">{form.sla_first_response_minutes}min</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Risco inatividade</span>
+                          <span className="font-mono text-foreground">{form.risk_no_reply_hours}h</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Decaimento/dia</span>
+                          <span className="font-mono text-foreground">{Math.round(form.cooldown_decay_per_day * 100)}%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Conteúdo principal das regras */}
+              <div className="flex-1 min-w-0 space-y-4">
+                <div className="flex items-center justify-end">
+                  <Button variant="outline" onClick={handleSeedRules} disabled={seeding} size="sm">
+                    <RefreshCw size={14} className="mr-1.5" />
+                    {seeding ? "Criando..." : "Criar Regras Padrão"}
+                  </Button>
+                </div>
+
+                {Object.entries(groupedRules).map(([category, rules]) => (
+                  <Card key={category} className="bg-card border-border/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold capitalize">
+                        {categoryLabels[category] || category}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {rules.map((rule) => (
+                        <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
+                          <Switch
+                            checked={rule.is_enabled}
+                            onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
+                            <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={rule.points}
+                              onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
+                              className="w-20 h-8 text-sm text-center"
+                            />
+                            <span className="text-xs text-muted-foreground">pts</span>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {(!scoreRules || scoreRules.length === 0) && (
+                  <Card className="bg-card border-border/50">
+                    <CardContent className="py-8 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma regra criada. Clique em "Criar Regras Padrão" para começar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           )}
         </TabsContent>
       </Tabs>
