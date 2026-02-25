@@ -311,7 +311,7 @@ const RevenueDashboard = () => {
                   <span className="text-muted-foreground">Consistência de atividade</span>
                   <span className="font-medium text-foreground">{perfScore.consistencyRate}%</span>
                 </div>
-                <Progress value={perfScore.performanceScore} className="h-2 mt-2" />
+                <Progress value={perfScore.consistencyRate} className="h-2 mt-2" />
               </>
             )}
           </CardContent>

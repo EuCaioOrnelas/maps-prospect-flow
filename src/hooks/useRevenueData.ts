@@ -428,7 +428,7 @@ export const useRevenuePerformanceScore = () => {
 
       const { data: leads, error: leadErr } = await supabase
         .from("revenue_leads")
-        .select("status_bucket, risk_state, last_activity_at");
+        .select("status_bucket, risk_state, last_activity_at, score_total");
       if (leadErr) throw leadErr;
 
       const allConvs = (convs || []) as unknown as RevenueConversation[];
@@ -437,30 +437,38 @@ export const useRevenuePerformanceScore = () => {
       // Only consider leads with real interactions (score > 0)
       const interactedLeads = allLeads.filter((l) => l.score_total > 0);
       // Only consider conversations with actual activity
-      const activeConvs = allConvs.filter((c) => c.avg_response_time_seconds > 0 || c.unreplied_inbound_count > 0 || c.inbound_count_7d > 0 || c.outbound_count_7d > 0);
+      const activeConvs = allConvs.filter((c) =>
+        c.avg_response_time_seconds > 0 ||
+        c.unreplied_inbound_count > 0 ||
+        c.inbound_count_7d > 0 ||
+        c.outbound_count_7d > 0
+      );
 
       // If no real interaction data exists, return zeros
       if (interactedLeads.length === 0 && activeConvs.length === 0) return emptyResult;
 
       // 1. Avg response time (30% weight) - target < 5 min (300s)
-      const avgResponseTimes = allConvs
+      const avgResponseTimes = activeConvs
         .filter((c) => c.avg_response_time_seconds > 0)
         .map((c) => c.avg_response_time_seconds);
       const avgResponseTime = avgResponseTimes.length > 0
         ? avgResponseTimes.reduce((a, b) => a + b, 0) / avgResponseTimes.length
         : 0;
-      const responseScore = avgResponseTimes.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
+      const responseScore = avgResponseTimes.length === 0
+        ? 0
+        : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
 
       // 2. % hot leads responded (40% weight)
       const hotLeads = interactedLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotResponded = hotLeads.filter((l) => l.risk_state === "OK").length;
       const hotResponseRate = hotLeads.length > 0 ? (hotResponded / hotLeads.length) * 100 : 0;
 
-      // 3. % ignored leads (20% weight)
-      const totalUnreplied = allConvs.reduce((sum, c) => sum + c.unreplied_inbound_count, 0);
-      const totalConvs = allConvs.length || 1;
-      const ignoredRate = Math.min(100, (totalUnreplied / totalConvs) * 100);
-      const ignoredScore = allConvs.length === 0 ? 0 : Math.max(0, 100 - ignoredRate * 2);
+      // 3. % ignored leads (20% weight) - only when there is inbound activity
+      const convsWithInbound = activeConvs.filter((c) => c.inbound_count_7d > 0 || c.unreplied_inbound_count > 0);
+      const totalInbound = convsWithInbound.reduce((sum, c) => sum + (c.inbound_count_7d || 0), 0);
+      const totalUnreplied = convsWithInbound.reduce((sum, c) => sum + (c.unreplied_inbound_count || 0), 0);
+      const ignoredRate = totalInbound > 0 ? Math.min(100, (totalUnreplied / totalInbound) * 100) : 0;
+      const ignoredScore = totalInbound === 0 ? 0 : Math.max(0, 100 - ignoredRate);
 
       // 4. Activity consistency (10% weight) - only count leads with real interactions
       const sevenDaysAgo = new Date();
@@ -588,18 +596,24 @@ export const useRevenueMaturityIndex = () => {
 
       const { data: leads } = await supabase
         .from("revenue_leads")
-        .select("status_bucket, risk_state, last_activity_at");
+        .select("status_bucket, risk_state, last_activity_at, score_total");
       const all = (leads || []) as unknown as RevenueLead[];
 
       const { data: convs } = await supabase
         .from("revenue_conversations")
-        .select("avg_response_time_seconds, unreplied_inbound_count");
+        .select("avg_response_time_seconds, unreplied_inbound_count, inbound_count_7d, outbound_count_7d");
       const allConvs = (convs || []) as unknown as RevenueConversation[];
 
       // Only consider leads with real interactions (score > 0)
       const interacted = all.filter((l) => l.score_total > 0);
+      const activeConvs = allConvs.filter((c) =>
+        c.avg_response_time_seconds > 0 ||
+        c.unreplied_inbound_count > 0 ||
+        c.inbound_count_7d > 0 ||
+        c.outbound_count_7d > 0
+      );
 
-      if (interacted.length === 0) {
+      if (interacted.length === 0 && activeConvs.length === 0) {
         return { total: 0, responsiveness: 0, hotUtilization: 0, consistency: 0, riskReduction: 0 } as MaturityIndex;
       }
 
