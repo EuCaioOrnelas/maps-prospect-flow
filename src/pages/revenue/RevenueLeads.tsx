@@ -37,6 +37,16 @@ const riskColors: Record<string, string> = {
   AT_RISK: "text-destructive",
 };
 
+const getEffectiveStatus = (lead: { score_total: number; risk_state: string }) => {
+  if (lead.score_total === 0) return { label: "Aguardando", color: "text-muted-foreground", icon: "⏳" };
+  if (lead.score_total < 50) return { label: "Novo", color: "text-blue-400", icon: "🆕" };
+  return {
+    label: riskLabels[lead.risk_state] || lead.risk_state,
+    color: riskColors[lead.risk_state] || "text-muted-foreground",
+    icon: lead.risk_state === "AT_RISK" ? "🚨" : lead.risk_state === "COOLING" ? "⚠️" : "✅",
+  };
+};
+
 const RevenueLeads = () => {
   const [bucketFilter, setBucketFilter] = useState<string>("all");
   const [riskFilter, setRiskFilter] = useState<string>("all");
@@ -166,14 +176,14 @@ const RevenueLeads = () => {
                         })}
                       </td>
                       <td className="p-4 text-center">
-                        <span
-                          className={cn(
-                            "text-xs font-medium",
-                            riskColors[lead.risk_state]
-                          )}
-                        >
-                          {riskLabels[lead.risk_state]}
-                        </span>
+                        {(() => {
+                          const status = getEffectiveStatus(lead);
+                          return (
+                            <span className={cn("text-xs font-medium", status.color)}>
+                              {status.icon} {status.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}
