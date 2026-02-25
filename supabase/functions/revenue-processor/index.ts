@@ -273,7 +273,6 @@ serve(async (req) => {
       number_instance_id,
       direction,
       message_content,
-      lead_name,
     } = body;
 
     // === ACTION: process_message ===
@@ -316,11 +315,12 @@ serve(async (req) => {
       if (existingLead) {
         leadId = existingLead.id;
         previousScore = existingLead.score_total;
+        // Update last activity and source number (tracks last number that interacted)
         await supabase
           .from("revenue_leads")
           .update({
             last_activity_at: new Date().toISOString(),
-            name: lead_name || existingLead.name,
+            source_number_instance_id: number_instance_id || existingLead.source_number_instance_id,
           })
           .eq("id", leadId);
       } else {
@@ -329,7 +329,6 @@ serve(async (req) => {
           .insert({
             user_id,
             phone_e164,
-            name: lead_name || null,
             source_number_instance_id: number_instance_id || null,
           })
           .select("id")

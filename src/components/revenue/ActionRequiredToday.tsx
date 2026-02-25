@@ -68,7 +68,7 @@ export const ActionRequiredToday = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {item.name || item.phone_e164}
+                    {item.phone_e164}
                   </p>
                   <Badge variant="outline" className={cn(
                     "text-[10px] shrink-0",

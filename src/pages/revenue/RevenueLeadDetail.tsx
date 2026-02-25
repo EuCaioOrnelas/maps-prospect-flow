@@ -169,8 +169,7 @@ const RevenueLeadDetail = () => {
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-foreground">{lead.name || lead.phone_e164}</h1>
-              <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
+              <h1 className="text-xl font-bold text-foreground">{lead.phone_e164}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn("text-xs", bucketColors[lead.status_bucket])}>{bucketLabels[lead.status_bucket]}</Badge>
