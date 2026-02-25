@@ -1278,6 +1278,60 @@ export type Database = {
           },
         ]
       }
+      revenue_score_logs: {
+        Row: {
+          category: string
+          created_at: string
+          event_id: string | null
+          event_type: string
+          id: string
+          lead_id: string
+          points_applied: number
+          score_after: number
+          score_before: number
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          event_type: string
+          id?: string
+          lead_id: string
+          points_applied?: number
+          score_after?: number
+          score_before?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          lead_id?: string
+          points_applied?: number
+          score_after?: number
+          score_before?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_score_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_score_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_score_rules: {
         Row: {
           cooldown_minutes: number | null
@@ -1310,6 +1364,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      revenue_score_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          score_value: number
+          snapshot_date: string
+          status_bucket: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          score_value?: number
+          snapshot_date?: string
+          status_bucket?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          score_value?: number
+          snapshot_date?: string
+          status_bucket?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_score_snapshots_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revenue_settings: {
         Row: {
