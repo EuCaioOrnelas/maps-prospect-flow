@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight } from "lucide-react";
+import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight, AlertTriangle, ShieldAlert, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +89,7 @@ const RevenueSettings = () => {
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [showNumbersManager, setShowNumbersManager] = useState(false);
+  const [rulesUnlocked, setRulesUnlocked] = useState(false);
   const [searchParams] = useSearchParams();
 
   const { numbers, setNumbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
@@ -523,54 +524,216 @@ const RevenueSettings = () => {
 
         {/* Rules Tab */}
         <TabsContent value="rules" className="space-y-6 mt-6">
-          <div className="flex flex-wrap gap-3 mb-4">
-            <Button variant="outline" onClick={handleSeedRules} disabled={seeding}>
-              <RefreshCw size={16} className="mr-2" />
-              {seeding ? "Criando..." : "Criar Regras Padrão"}
-            </Button>
-          </div>
-
-          {Object.entries(groupedRules).map(([category, rules]) => (
-            <Card key={category} className="bg-card border-border/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold capitalize">
-                  {categoryLabels[category] || category}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {rules.map((rule) => (
-                  <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
-                    <Switch
-                      checked={rule.is_enabled}
-                      onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
-                      <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={rule.points}
-                        onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
-                        className="w-20 h-8 text-sm text-center"
-                      />
-                      <span className="text-xs text-muted-foreground">pts</span>
-                    </div>
+          {!rulesUnlocked ? (
+            <Card className="bg-destructive/[0.03] border-destructive/20">
+              <CardContent className="pt-8 pb-8">
+                <div className="flex flex-col items-center text-center max-w-lg mx-auto space-y-5">
+                  <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <ShieldAlert className="w-7 h-7 text-destructive" />
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-foreground">Área de Configuração Avançada</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Esta seção controla <strong>todo o funcionamento do sistema de pontuação</strong> da Wiize Revenue.
+                      Alterar valores incorretamente pode afetar a classificação de leads, projeções de receita e detecção de riscos.
+                    </p>
+                    <p className="text-xs text-destructive/80 font-medium mt-2">
+                      ⚠️ Edite com cuidado. Alterações são aplicadas imediatamente.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <Button variant="outline" onClick={() => {
+                      const tabsList = document.querySelector('[data-state="active"][value="rules"]');
+                      if (tabsList) {
+                        const generalTab = document.querySelector('[value="general"]') as HTMLElement;
+                        generalTab?.click();
+                      }
+                    }}>
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={() => setRulesUnlocked(true)}>
+                      <AlertTriangle size={14} className="mr-2" />
+                      Entendo, avançar
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <Button variant="ghost" size="sm" onClick={() => setRulesUnlocked(false)} className="gap-1.5 text-muted-foreground">
+                  <ChevronLeft size={14} />
+                  Voltar
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleSeedRules} disabled={seeding} size="sm">
+                    <RefreshCw size={14} className="mr-1.5" />
+                    {seeding ? "Criando..." : "Criar Regras Padrão"}
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving} size="sm">
+                    <Save size={14} className="mr-1.5" />
+                    {saving ? "Salvando..." : "Salvar Tudo"}
+                  </Button>
+                </div>
+              </div>
 
-          {(!scoreRules || scoreRules.length === 0) && (
-            <Card className="bg-card border-border/50">
-              <CardContent className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma regra criada. Clique em "Criar Regras Padrão" para começar.
-                </p>
-              </CardContent>
-            </Card>
+              {/* Pesos das Dimensões */}
+              <Card className="bg-card border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">Pesos das Dimensões do Score</CardTitle>
+                  <CardDescription className="text-xs">O score total é: (Intenção × peso) + (Engajamento × peso) + (Urgência × peso) − (Risco × peso)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: "weight_intent", label: "🎯 Intenção" },
+                      { key: "weight_engagement", label: "💬 Engajamento" },
+                      { key: "weight_urgency", label: "⚡ Urgência" },
+                      { key: "weight_risk", label: "⚠️ Risco" },
+                    ].map(({ key, label }) => (
+                      <div key={key}>
+                        <Label className="text-xs text-muted-foreground">{label}</Label>
+                        <Input
+                          type="number" step="0.05" min="0" max="1"
+                          value={(form as any)[key]}
+                          onChange={(e) => setForm((f) => ({ ...f, [key]: Number(e.target.value) }))}
+                          className="h-9"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-secondary/30 text-xs">
+                    Soma: <span className={cn("font-bold", Math.abs(form.weight_intent + form.weight_engagement + form.weight_urgency + form.weight_risk - 1) < 0.01 ? "text-primary" : "text-destructive")}>{(form.weight_intent + form.weight_engagement + form.weight_urgency + form.weight_risk).toFixed(2)}</span> (ideal: 1.00)
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Taxas de Conversão */}
+              <Card className="bg-card border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">Taxas de Conversão por Nível</CardTitle>
+                  <CardDescription className="text-xs">% estimada de leads que fecham venda em cada nível de score</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: "default_close_rate_cold", label: "🧊 Frio (0–149)", emoji: "🧊" },
+                      { key: "default_close_rate_engaged", label: "☀️ Morno (150–349)", emoji: "☀️" },
+                      { key: "default_close_rate_hot", label: "💬 Engajado (350–649)", emoji: "💬" },
+                      { key: "default_close_rate_very_hot", label: "🔥 Quente (650–1000)", emoji: "🔥" },
+                    ].map(({ key, label }) => (
+                      <div key={key}>
+                        <Label className="text-xs text-muted-foreground">{label}</Label>
+                        <Input
+                          type="number" step="1" min="0" max="100"
+                          value={Math.round((form as any)[key] * 100)}
+                          onChange={(e) => setForm((f) => ({ ...f, [key]: Number(e.target.value) / 100 }))}
+                          className="h-9"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ticket Médio */}
+              <Card className="bg-card border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">Projeção de Receita</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Ticket Médio (R$)</Label>
+                    <Input type="number" value={form.default_ticket_value} onChange={(e) => setForm((f) => ({ ...f, default_ticket_value: Number(e.target.value) }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">Usado nas projeções de Receita Esperada e Receita em Risco</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SLA e Risco */}
+              <Card className="bg-card border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">SLA, Risco e Decaimento</CardTitle>
+                  <CardDescription className="text-xs">Configura detecção de leads esfriando e penalidades automáticas</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">SLA de Primeira Resposta (minutos)</Label>
+                    <Input type="number" value={form.sla_first_response_minutes} onChange={(e) => setForm((f) => ({ ...f, sla_first_response_minutes: Number(e.target.value) }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Resposta {"<"} SLA = bônus | {">"} 30min = penalidade</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Alerta de Risco por Inatividade (horas)</Label>
+                    <Input type="number" value={form.risk_no_reply_hours} onChange={(e) => setForm((f) => ({ ...f, risk_no_reply_hours: Number(e.target.value) }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Após esse tempo sem resposta, lead entra em estado de risco</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Decaimento Diário (%)</Label>
+                    <Input type="number" step="1" value={Math.round(form.cooldown_decay_per_day * 100)} onChange={(e) => setForm((f) => ({ ...f, cooldown_decay_per_day: Number(e.target.value) / 100 }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">% do score perdido por dia de inatividade</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Regras de Pontuação por Evento */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Regras de Pontuação por Evento</h3>
+                {Object.entries(groupedRules).map(([category, rules]) => (
+                  <Card key={category} className="bg-card border-border/50 mb-3">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold capitalize">
+                        {categoryLabels[category] || category}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {rules.map((rule) => (
+                        <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
+                          <Switch
+                            checked={rule.is_enabled}
+                            onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
+                            <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={rule.points}
+                              onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
+                              className="w-20 h-8 text-sm text-center"
+                            />
+                            <span className="text-xs text-muted-foreground">pts</span>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {(!scoreRules || scoreRules.length === 0) && (
+                  <Card className="bg-card border-border/50">
+                    <CardContent className="py-8 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma regra criada. Clique em "Criar Regras Padrão" para começar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Salvar no final */}
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={() => setRulesUnlocked(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSave} disabled={saving}>
+                  <Save size={16} className="mr-2" />
+                  {saving ? "Salvando..." : "Salvar Todas as Configurações"}
+                </Button>
+              </div>
+            </>
           )}
         </TabsContent>
       </Tabs>
