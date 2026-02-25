@@ -40,6 +40,7 @@ import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
 import { WarmingWarningModal } from "@/components/whatsapp/WarmingWarningModal";
+import { FirstCampaignPromoModal } from "@/components/whatsapp/FirstCampaignPromoModal";
 import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -132,6 +133,7 @@ const WhatsAppCampaign = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
   const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
   const [warmingInfo, setWarmingInfo] = useState<{
     level: number;
     status: "cold" | "warm" | "hot";
@@ -147,6 +149,29 @@ const WhatsAppCampaign = () => {
       setShowTrialLimitModal(true);
     }
   }, [isFreePlan, isTrialExpired, hasReachedTrialLimit]);
+
+  // Check if free user completed first campaign → show promo
+  useEffect(() => {
+    if (!user || !isFreePlan || isTrialExpired) return;
+
+    const alreadySeen = localStorage.getItem(`promo_first_campaign_${user.id}`);
+    if (alreadySeen) return;
+
+    const checkFirstCampaign = async () => {
+      const { count, error } = await supabase
+        .from("whatsapp_campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "completed");
+
+      if (!error && count && count > 0) {
+        setShowPromoModal(true);
+        localStorage.setItem(`promo_first_campaign_${user.id}`, "true");
+      }
+    };
+
+    checkFirstCampaign();
+  }, [user, isFreePlan, isTrialExpired]);
 
   // Use realtime hook for campaigns
   const { campaigns, setCampaigns, loading: loadingCampaigns, fetchCampaigns } = useCampaignRealtime();
@@ -1237,6 +1262,11 @@ const WhatsAppCampaign = () => {
           )}
         </div>
       </main>
+      {/* First campaign promo modal for free users */}
+      <FirstCampaignPromoModal
+        open={showPromoModal}
+        onClose={() => setShowPromoModal(false)}
+      />
     </div>
   );
 };
