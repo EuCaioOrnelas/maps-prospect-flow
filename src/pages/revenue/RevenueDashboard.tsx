@@ -437,7 +437,7 @@ const RevenueDashboard = () => {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {lead.name || lead.phone_e164}
+                          {lead.phone_e164}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Score: {lead.score_total} • {lead.recommendedAction}

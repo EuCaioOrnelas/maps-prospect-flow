@@ -60,10 +60,7 @@ const RevenueLeads = () => {
   const filtered = (leads || []).filter((l) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (
-      l.phone_e164.includes(q) ||
-      (l.name && l.name.toLowerCase().includes(q))
-    );
+    return l.phone_e164.includes(q);
   });
 
   return (
@@ -80,7 +77,7 @@ const RevenueLeads = () => {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou telefone..."
+            placeholder="Buscar por telefone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -148,9 +145,6 @@ const RevenueLeads = () => {
                           className="hover:text-primary transition-colors"
                         >
                           <p className="font-medium text-foreground">
-                            {lead.name || "Sem nome"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
                             {lead.phone_e164}
                           </p>
                         </Link>
