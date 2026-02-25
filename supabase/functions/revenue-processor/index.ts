@@ -255,6 +255,53 @@ function scoreToBucket(score: number): string {
   return "COLD";
 }
 
+function isValidRevenuePhone(phone: string): boolean {
+  const digits = String(phone || "").replace(/\D/g, "");
+
+  // Revenue processa contatos WhatsApp em formato E.164 Brasil: 55 + DDD + número
+  if (!digits.startsWith("55") || digits.length < 12 || digits.length > 13) return false;
+
+  const local = digits.slice(4); // sem país + DDD
+  if (![8, 9].includes(local.length)) return false;
+
+  const subscriber = local.slice(-8);
+
+  // Bloqueia placeholders clássicos: 99999999, 00000000, sequências triviais
+  if (/^(\d)\1{7}$/.test(subscriber)) return false;
+  if (["12345678", "87654321", "01234567"].includes(subscriber)) return false;
+
+  return true;
+}
+
+async function calculateLeadScoreComponents(supabase: any, leadId: string) {
+  const { data: logs } = await supabase
+    .from("revenue_score_logs")
+    .select("category, points_applied")
+    .eq("lead_id", leadId);
+
+  let engagement = 0;
+  let intent = 0;
+  let urgency = 0;
+  let risk = 0;
+
+  for (const log of logs || []) {
+    const points = Number(log.points_applied || 0);
+    const category = log.category || "engagement";
+
+    if (category === "engagement") engagement += points;
+    else if (category === "intent") intent += points;
+    else if (category === "sla") urgency += points;
+    else if (category === "penalty") risk += Math.abs(points);
+  }
+
+  return {
+    score_engagement: Math.max(0, Math.min(1000, engagement)),
+    score_intent: Math.max(0, Math.min(1000, intent)),
+    score_urgency: Math.max(0, Math.min(1000, urgency)),
+    score_risk: Math.max(0, Math.min(1000, risk)),
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -281,6 +328,13 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Missing required fields" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!isValidRevenuePhone(phone_e164)) {
+        return new Response(
+          JSON.stringify({ success: false, skipped: true, reason: "Invalid or placeholder phone" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -513,26 +567,12 @@ serve(async (req) => {
         }
       }
 
-      // Calculate individual score components from this processing batch
-      const componentDeltas: Record<string, number> = { engagement: 0, intent: 0, sla: 0, penalty: 0 };
-      for (const log of scoreLogsToCreate) {
-        const cat = log.category || "engagement";
-        if (cat in componentDeltas) {
-          componentDeltas[cat] += log.points_applied;
-        }
-      }
-
-      const prevEngagement = existingLead?.score_engagement || 0;
-      const prevIntent = existingLead?.score_intent || 0;
-      const prevUrgency = existingLead?.score_urgency || 0;
-      const prevRisk = existingLead?.score_risk || 0;
+      // Recalculate multidimensional components from score logs (corrige legados inconsistentes)
+      const componentScores = await calculateLeadScoreComponents(supabase, leadId);
 
       const leadUpdate: any = {
         score_total: newScore,
-        score_engagement: Math.max(0, Math.min(1000, prevEngagement + componentDeltas.engagement)),
-        score_intent: Math.max(0, Math.min(1000, prevIntent + componentDeltas.intent)),
-        score_urgency: Math.max(0, Math.min(1000, prevUrgency + componentDeltas.sla)),
-        score_risk: Math.max(0, Math.min(1000, prevRisk + Math.abs(componentDeltas.penalty))),
+        ...componentScores,
         score_last_calc_at: new Date().toISOString(),
         status_bucket: newBucket,
         risk_state: riskState,
