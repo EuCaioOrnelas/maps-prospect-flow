@@ -17,9 +17,25 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Helper to resolve correct API credentials based on instance tier
+    async function getApiCredentials(instanceName: string): Promise<{ url: string; apiKey: string }> {
+      const { data: numberRow } = await supabase
+        .from('whatsapp_numbers')
+        .select('api_tier')
+        .eq('instance_name', instanceName)
+        .maybeSingle();
+      
+      if (numberRow?.api_tier === 'paid' && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        return { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID };
+      }
+      return { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
+    }
 
     const payload = await req.json();
     console.log('=== EVOLUTION WEBHOOK RAW ===');
@@ -28,12 +44,39 @@ serve(async (req) => {
     // Evolution API sends event in different formats - normalize
     const rawEvent = payload.event || '';
     const event = rawEvent.toLowerCase().replace(/_/g, '.').replace(/-/g, '.');
-    const instance = payload.instance;
-    const data = payload.data;
-    
-    console.log('Raw event:', rawEvent, '-> Normalized:', event);
 
-    // Helper: fire-and-forget revenue event processing
+    const instance = typeof payload.instance === 'string'
+      ? payload.instance
+      : payload.instance?.instanceName || payload.instance?.name || payload.instance_id || payload.instanceId;
+
+    const rawData = payload.data;
+    const isMessageUpsertEvent = ['messages.upsert', 'message.upsert', 'messagesupsert'].includes(event);
+
+    const selectedMessageFromArray = isMessageUpsertEvent && Array.isArray(rawData?.messages)
+      ? (rawData.messages.find((msg: any) => msg?.key && msg?.message && msg?.key?.fromMe === false)
+          || rawData.messages.find((msg: any) => msg?.key && msg?.message)
+          || null)
+      : null;
+
+    const data = selectedMessageFromArray
+      ? {
+          ...selectedMessageFromArray,
+          pushName: selectedMessageFromArray?.pushName || rawData?.pushName || payload?.pushName || null,
+          participant: selectedMessageFromArray?.participant || rawData?.participant || null,
+        }
+      : rawData;
+    
+    console.log('Raw event:', rawEvent, '-> Normalized:', event, 'messagesInBatch:', Array.isArray(rawData?.messages) ? rawData.messages.length : 0, 'selectedFromMe:', data?.key?.fromMe ?? null);
+
+    if (!instance) {
+      console.error('Webhook payload sem instance identificável:', JSON.stringify(payload));
+      return new Response(JSON.stringify({ error: 'Missing instance name in webhook payload' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Helper: revenue event processing (awaited to avoid dropping events)
     async function fireRevenueEvent(params: {
       user_id: string;
       phone_e164: string;
@@ -43,77 +86,87 @@ serve(async (req) => {
       lead_name?: string;
     }) {
       try {
-        const revenueUrl = `${SUPABASE_URL}/functions/v1/revenue-processor`;
-        fetch(revenueUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          },
-          body: JSON.stringify({ action: 'process_message', ...params }),
-        }).catch(e => console.log('Revenue processor fire-and-forget error:', e));
+        const { data: revenueResult, error } = await supabase.functions.invoke('revenue-processor', {
+          body: { action: 'process_message', ...params },
+        });
+
+        if (error) {
+          console.error('Revenue processor invoke failed:', error);
+          return;
+        }
+
+        if (revenueResult && revenueResult.success === false) {
+          console.log('Revenue processor skipped:', revenueResult);
+        }
       } catch (e) {
-        console.log('Revenue event fire error:', e);
+        console.error('Revenue event fire error:', e);
       }
     }
 
-    // Helper function to normalize phone numbers (supports international)
+    // Helper function to normalize generic phone strings
     function normalizePhoneNumber(phone: string): string {
-      // Remove all non-digits
-      let cleanPhone = phone.replace(/\D/g, '');
-      
-      // If it's too short or a LID, return as-is
-      if (cleanPhone.length < 10 || phone.includes('@lid')) {
-        return phone;
-      }
-      
-      // Check if it's a Brazilian number (starts with 55 or has 10-11 digits)
-      const isBrazilian = cleanPhone.startsWith('55') || 
-        (cleanPhone.length >= 10 && cleanPhone.length <= 11);
-      
-      if (isBrazilian) {
-        // Remove country code 55 if present to process
-        let hasCountryCode = false;
-        if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
-          hasCountryCode = true;
-          cleanPhone = cleanPhone.slice(2);
+      return String(phone || '').replace(/\D/g, '');
+    }
+
+    // Canonical BR mobile phone for CRM/Revenue (E.164: 55 + DDD + 9 + 8)
+    function normalizeBrazilianMobileE164(phone: string): string | null {
+      const digits = normalizePhoneNumber(phone);
+      if (!digits) return null;
+
+      // Ignore obvious non-person IDs (groups / special IDs)
+      if (digits.startsWith('120363')) return null;
+
+      // Accept 13-digit E.164 BR mobile directly
+      if (digits.length === 13 && digits.startsWith('55')) {
+        const ddd = Number(digits.slice(2, 4));
+        const firstLocal = digits[4];
+        if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
+          const subscriber = digits.slice(-8);
+          // Block placeholders
+          if (/^(\d)\1{7}$/.test(subscriber)) return null;
+          if (subscriber.startsWith('9999')) return null;
+          if (/(0000|1234|4321)/.test(subscriber)) return null;
+          if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return null;
+          return digits;
         }
-        
-        // Brazilian mobile numbers should be 11 digits (DDD + 9 + 8 digits)
-        if (cleanPhone.length === 10) {
-          const ddd = cleanPhone.slice(0, 2);
-          const numberPart = cleanPhone.slice(2);
-          
-          // Check if it's a mobile number (starts with 6, 7, 8, 9 after DDD)
-          if (['6', '7', '8', '9'].includes(numberPart[0])) {
-            // Add the 9 prefix for mobile numbers
-            cleanPhone = ddd + '9' + numberPart;
-          }
-        }
-        
-        // Re-add country code for Brazil
-        return '55' + cleanPhone;
+        return null;
       }
-      
-      // For international numbers, return as-is (already has country code)
-      return cleanPhone;
+
+      // Accept local BR mobile (DDD + 9 + 8) and add country code
+      if (digits.length === 11) {
+        const ddd = Number(digits.slice(0, 2));
+        const firstLocal = digits[2];
+        if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
+          const candidate = `55${digits}`;
+          const subscriber = candidate.slice(-8);
+          if (/^(\d)\1{7}$/.test(subscriber)) return null;
+          if (subscriber.startsWith('9999')) return null;
+          if (/(0000|1234|4321)/.test(subscriber)) return null;
+          if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return null;
+          return candidate;
+        }
+      }
+
+      return null;
     }
 
     async function downloadAndStoreMedia(
       instanceName: string,
       messageId: string,
       mediaType: string,
-      userId: string
+      userId: string,
+      apiCreds?: { url: string; apiKey: string }
     ): Promise<{ url: string; mimetype: string } | null> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
         console.log(`Downloading media for message ${messageId} from instance ${instanceName}`);
         
         // Use Evolution API to get base64 media
-        const response = await fetch(`${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`, {
+        const response = await fetch(`${creds.url}/chat/getBase64FromMediaMessage/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({
             message: { key: { id: messageId } },
@@ -192,13 +245,14 @@ serve(async (req) => {
     }
 
     // Helper function to fetch profile picture from Evolution API
-    async function fetchProfilePicture(instanceName: string, phone: string): Promise<string | null> {
+    async function fetchProfilePicture(instanceName: string, phone: string, apiCreds?: { url: string; apiKey: string }): Promise<string | null> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
-        const response = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
+        const response = await fetch(`${creds.url}/chat/fetchProfilePictureUrl/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({ number: phone }),
         });
@@ -313,8 +367,10 @@ REGRAS OBRIGATÓRIAS:
     async function sendWarmingResponseDirect(
       instanceName: string,
       phone: string,
-      message: string
+      message: string,
+      apiCreds?: { url: string; apiKey: string }
     ): Promise<boolean> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
         // Add a small random delay to simulate human typing (1-4 seconds)
         const typingDelay = Math.floor(Math.random() * 3000) + 1000;
@@ -323,11 +379,11 @@ REGRAS OBRIGATÓRIAS:
         const formattedPhone = phone.replace(/\D/g, '');
         console.log(`Sending warming response to ${formattedPhone}: "${message}"`);
         
-        const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+        const response = await fetch(`${creds.url}/message/sendText/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({
             number: formattedPhone,
@@ -443,14 +499,20 @@ REGRAS OBRIGATÓRIAS:
           
           // Remove any non-digit characters for matching
           const normalizedPhone = rawPhone.replace(/\D/g, '');
+          const canonicalLeadPhone = !isGroup ? normalizeBrazilianMobileE164(rawPhone) : null;
           
           // Get the WhatsApp number (instance) info
           const { data: whatsappNumber } = await supabase
             .from('whatsapp_numbers')
-            .select('id, user_id')
+            .select('id, user_id, api_tier, phone_number')
             .eq('instance_name', instance)
             .single();
           
+          // Resolve correct API credentials based on instance tier
+          const instanceApiCreds = (whatsappNumber?.api_tier === 'paid' && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID)
+            ? { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID }
+            : { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
+
           if (whatsappNumber) {
             // Get or create conversation - try multiple matching strategies
             // NOTE: The 'conversations' and 'messages' tables may not exist in all setups
@@ -535,7 +597,7 @@ REGRAS OBRIGATÓRIAS:
               
               // Strategy 3: Create new conversation if not found
               if (hasConversationsTable && !conversationId) {
-                // For groups, use the group jid directly; for individuals, normalize
+                // For groups, use the group jid directly; for individuals keep digits only
                 const phoneForStorage = isGroup ? rawPhone : normalizePhoneNumber(rawPhone);
                 const jidForStorage = isGroup ? remoteJid : (phoneForStorage + '@s.whatsapp.net');
                 
@@ -577,7 +639,7 @@ REGRAS OBRIGATÓRIAS:
             // Only do this if conversations table exists
             if (!fromMe && rawPhone && hasConversationsTable) {
               try {
-                const profilePicture = await fetchProfilePicture(instance, rawPhone);
+                const profilePicture = await fetchProfilePicture(instance, rawPhone, instanceApiCreds);
                 if (profilePicture) {
                   console.log('Got profile picture URL:', profilePicture);
                   
@@ -822,7 +884,8 @@ REGRAS OBRIGATÓRIAS:
                 instance,
                 messageId,
                 messageType,
-                whatsappNumber.user_id
+                whatsappNumber.user_id,
+                instanceApiCreds
               );
               
               if (storedMedia) {
@@ -912,10 +975,10 @@ REGRAS OBRIGATÓRIAS:
             }
             
             // ===== REVENUE TRACKING: OUTBOUND =====
-            if (fromMe && normalizedPhone) {
-              fireRevenueEvent({
+            if (fromMe && canonicalLeadPhone) {
+              await fireRevenueEvent({
                 user_id: whatsappNumber.user_id,
-                phone_e164: normalizePhoneNumber(rawPhone),
+                phone_e164: canonicalLeadPhone,
                 number_instance_id: whatsappNumber.id,
                 direction: 'outbound',
                 message_content: content,
@@ -924,130 +987,147 @@ REGRAS OBRIGATÓRIAS:
 
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
-              // Find lead by phone - use flexible matching strategy
-              // Strategy: match by last 8 digits (most reliable for Brazilian numbers)
-              const phoneDigitsOnly = normalizedPhone.replace(/\D/g, '');
-              const last8Digits = phoneDigitsOnly.slice(-8);
-              
-              console.log('=== LEAD LOOKUP ===');
-              console.log('Raw phone:', rawPhone);
-              console.log('Normalized phone:', normalizedPhone);
-              console.log('Last 8 digits for matching:', last8Digits);
-              
-              // First try exact match with multiple formats
-              let { data: existingLead } = await supabase
-                .from('leads')
-                .select('id, phone, pipeline_stage_id, whatsapp_status')
-                .eq('user_id', whatsappNumber.user_id)
-                .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},phone.eq.55${phoneDigitsOnly.slice(-11)},phone.eq.55${phoneDigitsOnly.slice(-10)}`)
-                .limit(1)
-                .maybeSingle();
-              
-              // If no exact match, try matching by last 8 digits
-              if (!existingLead && last8Digits.length === 8) {
-                const { data: allUserLeads } = await supabase
-                  .from('leads')
-                  .select('id, phone, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id);
-                
-                if (allUserLeads && allUserLeads.length > 0) {
-                  existingLead = allUserLeads.find(lead => {
-                    const leadPhone = lead.phone?.replace(/\D/g, '') || '';
-                    const leadLast8 = leadPhone.slice(-8);
-                    return leadLast8 === last8Digits;
-                  }) || null;
-                  
-                  if (existingLead) {
-                    console.log('Lead found by last 8 digits match:', existingLead.phone, '->', normalizedPhone);
-                  }
-                }
-              }
-              
-              if (existingLead) {
-                console.log('Found lead to update on response:', existingLead.id, 'phone:', existingLead.phone);
-                
-                // Get the "Respondeu Mensagem" stage
-                const { data: respondeuStage } = await supabase
-                  .from('pipeline_stages')
-                  .select('id, position')
-                  .eq('user_id', whatsappNumber.user_id)
-                  .eq('name', 'Respondeu Mensagem')
-                  .single();
-                
-                // Only move to "Respondeu Mensagem" if current stage is earlier
-                let shouldMoveToRespondeu = false;
-                if (existingLead.pipeline_stage_id && respondeuStage) {
-                  const { data: currentStage } = await supabase
-                    .from('pipeline_stages')
-                    .select('position')
-                    .eq('id', existingLead.pipeline_stage_id)
-                    .single();
-                  
-                  if (currentStage && currentStage.position < respondeuStage.position) {
-                    shouldMoveToRespondeu = true;
-                  }
-                } else if (respondeuStage) {
-                  shouldMoveToRespondeu = true;
-                }
-                
-                const leadUpdate: Record<string, unknown> = {
-                  whatsapp_status: 'replied',
-                  last_response: content || `[${messageType}]`,
-                  last_response_at: new Date().toISOString(),
-                  has_responded: true,
-                  responded_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                };
-                
-                if (shouldMoveToRespondeu && respondeuStage) {
-                  leadUpdate.pipeline_stage_id = respondeuStage.id;
-                  console.log(`Moving lead ${existingLead.id} to Respondeu Mensagem stage`);
-                }
-                
-                const { error: leadUpdateError } = await supabase
-                  .from('leads')
-                  .update(leadUpdate)
-                  .eq('id', existingLead.id);
-                
-                if (leadUpdateError) {
-                  console.error('Error updating lead:', leadUpdateError);
-                } else {
-                  console.log('Lead updated with response data');
-                  
-                  // Log activity for the stage change
-                  if (shouldMoveToRespondeu) {
-                    await supabase.from('lead_activities').insert({
-                      lead_id: existingLead.id,
-                      user_id: whatsappNumber.user_id,
-                      activity_type: 'stage_changed',
-                      description: 'Movido automaticamente para Respondeu Mensagem (recebeu resposta)',
-                      metadata: { automatic: true, trigger: 'webhook_response' },
-                    });
-                  }
-                }
+              const ownCanonicalPhone = normalizeBrazilianMobileE164(String(whatsappNumber?.phone_number || ''));
+              const effectiveLeadPhone = ownCanonicalPhone && canonicalLeadPhone === ownCanonicalPhone
+                ? null
+                : canonicalLeadPhone;
 
-                // ===== REVENUE TRACKING: INBOUND =====
-                fireRevenueEvent({
+              if (!effectiveLeadPhone) {
+                console.log('Skipping Revenue/CRM for invalid or self inbound phone:', rawPhone);
+              } else {
+                // ===== REVENUE TRACKING: INBOUND (always fire, regardless of CRM lead) =====
+                await fireRevenueEvent({
                   user_id: whatsappNumber.user_id,
-                  phone_e164: normalizePhoneNumber(rawPhone),
+                  phone_e164: effectiveLeadPhone,
                   number_instance_id: whatsappNumber.id,
                   direction: 'inbound',
                   message_content: content,
                   lead_name: data.pushName || undefined,
                 });
-              } else {
-                console.log('No lead found for phone:', normalizedPhone, '(last 8:', last8Digits, ')');
-              }
-              
-              // Continue with campaign detection only if lead was found
-              if (existingLead) {
-                // ===== CAMPAIGN RESPONSE DETECTION =====
-                const { data: runningCampaigns } = await supabase
-                  .from('whatsapp_campaigns')
-                  .select('id, name, current_window, total_responses')
+
+                console.log('=== LEAD LOOKUP ===');
+                console.log('Raw phone:', rawPhone);
+                console.log('Canonical phone:', effectiveLeadPhone);
+
+                let { data: existingLead } = await supabase
+                  .from('leads')
+                  .select('id, phone, pipeline_stage_id, whatsapp_status')
                   .eq('user_id', whatsappNumber.user_id)
-                  .eq('whatsapp_number_id', whatsappNumber.id)
-                  .in('status', ['running', 'paused']);
+                  .eq('phone', effectiveLeadPhone)
+                  .limit(1)
+                  .maybeSingle();
+
+                const { data: respondeuStage } = await supabase
+                  .from('pipeline_stages')
+                  .select('id, position')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .eq('name', 'Respondeu Mensagem')
+                  .maybeSingle();
+
+                if (existingLead) {
+                  console.log('Found lead to update on response:', existingLead.id, 'phone:', existingLead.phone);
+
+                  // Only move to "Respondeu Mensagem" if current stage is earlier
+                  let shouldMoveToRespondeu = false;
+                  if (existingLead.pipeline_stage_id && respondeuStage) {
+                    const { data: currentStage } = await supabase
+                      .from('pipeline_stages')
+                      .select('position')
+                      .eq('id', existingLead.pipeline_stage_id)
+                      .single();
+
+                    if (currentStage && currentStage.position < respondeuStage.position) {
+                      shouldMoveToRespondeu = true;
+                    }
+                  } else if (respondeuStage) {
+                    shouldMoveToRespondeu = true;
+                  }
+
+                  const leadUpdate: Record<string, unknown> = {
+                    whatsapp_status: 'replied',
+                    last_response: content || `[${messageType}]`,
+                    last_response_at: new Date().toISOString(),
+                    has_responded: true,
+                    responded_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+
+                  if (shouldMoveToRespondeu && respondeuStage) {
+                    leadUpdate.pipeline_stage_id = respondeuStage.id;
+                    console.log(`Moving lead ${existingLead.id} to Respondeu Mensagem stage`);
+                  }
+
+                  const { error: leadUpdateError } = await supabase
+                    .from('leads')
+                    .update(leadUpdate)
+                    .eq('id', existingLead.id);
+
+                  if (leadUpdateError) {
+                    console.error('Error updating lead:', leadUpdateError);
+                  } else {
+                    console.log('Lead updated with response data');
+
+                    if (shouldMoveToRespondeu) {
+                      await supabase.from('lead_activities').insert({
+                        lead_id: existingLead.id,
+                        user_id: whatsappNumber.user_id,
+                        activity_type: 'stage_changed',
+                        description: 'Movido automaticamente para Respondeu Mensagem (recebeu resposta)',
+                        metadata: { automatic: true, trigger: 'webhook_response' },
+                      });
+                    }
+                  }
+                } else {
+                  // Create CRM lead automatically when inbound message has no existing lead
+                  const newLeadPayload: Record<string, unknown> = {
+                    user_id: whatsappNumber.user_id,
+                    phone: effectiveLeadPhone,
+                    contact_name: data.pushName || null,
+                    origin: 'whatsapp_inbound',
+                    whatsapp_number_id: whatsappNumber.id,
+                    whatsapp_status: 'replied',
+                    has_responded: true,
+                    responded_at: new Date().toISOString(),
+                    last_response: content || `[${messageType}]`,
+                    last_response_at: new Date().toISOString(),
+                    first_message_sent: false,
+                  };
+
+                  if (respondeuStage?.id) {
+                    newLeadPayload.pipeline_stage_id = respondeuStage.id;
+                  }
+
+                  const { data: createdLead, error: createLeadError } = await supabase
+                    .from('leads')
+                    .insert(newLeadPayload)
+                    .select('id, phone')
+                    .single();
+
+                  if (createLeadError) {
+                    console.error('Error creating lead from inbound message:', createLeadError);
+                  } else {
+                    existingLead = createdLead;
+                    console.log('Lead created automatically from inbound message:', createdLead?.id, createdLead?.phone);
+
+                    await supabase.from('lead_activities').insert({
+                      lead_id: createdLead.id,
+                      user_id: whatsappNumber.user_id,
+                      activity_type: 'lead_created',
+                      description: 'Lead criado automaticamente por mensagem recebida',
+                      metadata: { automatic: true, trigger: 'webhook_inbound' },
+                    });
+                  }
+                }
+
+                // Continue with campaign detection only if lead was found/created
+                if (existingLead) {
+                  // ===== CAMPAIGN RESPONSE DETECTION =====
+                  const { data: runningCampaigns } = await supabase
+                    .from('whatsapp_campaigns')
+                    .select('id, name, current_window, total_responses')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('whatsapp_number_id', whatsappNumber.id)
+                    .in('status', ['running', 'paused']);
                 
                 if (runningCampaigns && runningCampaigns.length > 0) {
                   console.log('=== CAMPAIGN RESPONSE CHECK ===');
@@ -1056,8 +1136,8 @@ REGRAS OBRIGATÓRIAS:
                     const { data: existingResponses } = await supabase
                       .from('campaign_responses')
                       .select('id')
-                      .eq('campaign_id', campaign.id)
-                      .eq('contact_phone', normalizedPhone)
+                        .eq('campaign_id', campaign.id)
+                        .eq('contact_phone', effectiveLeadPhone)
                       .limit(1);
                     
                     if (!existingResponses || existingResponses.length === 0) {
@@ -1065,7 +1145,7 @@ REGRAS OBRIGATÓRIAS:
                         .from('ignored_contacts')
                         .select('first_message_sent_at')
                         .eq('user_id', whatsappNumber.user_id)
-                        .eq('phone', normalizedPhone)
+                        .eq('phone', effectiveLeadPhone)
                         .eq('campaign_id', campaign.id)
                         .limit(1);
                       
@@ -1096,7 +1176,7 @@ REGRAS OBRIGATÓRIAS:
                         .insert({
                           campaign_id: campaign.id,
                           user_id: whatsappNumber.user_id,
-                          contact_phone: normalizedPhone,
+                          contact_phone: effectiveLeadPhone,
                           window_number: campaign.current_window || 1,
                           message_content: content?.substring(0, 500) || null,
                           responded_at: new Date().toISOString(),
@@ -1155,7 +1235,7 @@ REGRAS OBRIGATÓRIAS:
                     .from('ignored_contacts')
                     .delete()
                     .eq('user_id', whatsappNumber.user_id)
-                    .eq('phone', normalizedPhone);
+                    .eq('phone', effectiveLeadPhone);
                 }
               }
               
@@ -1274,14 +1354,26 @@ REGRAS OBRIGATÓRIAS:
                   console.error('Error pausing AI agent:', agentPauseError);
                 }
                 
-                // Find lead by phone or conversation_id
-                const { data: existingLeadSent } = await supabase
+                const canonicalSentPhone = normalizeBrazilianMobileE164(rawPhone);
+
+                let leadQuery = supabase
                   .from('leads')
                   .select('id, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id)
-                  .or(`phone.eq.${rawPhone},phone.eq.${normalizedPhone},conversation_id.eq.${conversationId}`)
+                  .eq('user_id', whatsappNumber.user_id);
+
+                if (canonicalSentPhone && conversationId) {
+                  leadQuery = leadQuery.or(`phone.eq.${canonicalSentPhone},conversation_id.eq.${conversationId}`);
+                } else if (canonicalSentPhone) {
+                  leadQuery = leadQuery.eq('phone', canonicalSentPhone);
+                } else if (conversationId) {
+                  leadQuery = leadQuery.eq('conversation_id', conversationId);
+                } else {
+                  leadQuery = leadQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                }
+
+                const { data: existingLeadSent } = await leadQuery
                   .limit(1)
-                  .single();
+                  .maybeSingle();
                 
                 if (existingLeadSent) {
                   console.log('Found lead to update on sent message:', existingLeadSent.id);
@@ -1487,7 +1579,8 @@ REGRAS OBRIGATÓRIAS:
                       const sent = await sendWarmingResponseDirect(
                         instance,
                         normalizedLeadPhone,
-                        responseMessage
+                        responseMessage,
+                        instanceApiCreds
                       );
                       
                       if (sent) {

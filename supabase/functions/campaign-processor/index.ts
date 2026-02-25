@@ -98,17 +98,42 @@ function getRandomDelay(minSeconds: number, maxSeconds: number): number {
   return Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
 }
 
-// Normalize phone number - supports international numbers
+// Normalize phone number for Brazilian campaigns
 function normalizePhone(phone: string): string {
-  let normalized = phone.replace(/\D/g, '');
-  
-  // If number has 10-11 digits without country code, assume Brazil (55)
-  // International numbers should already have country code (12+ digits)
-  if (normalized.length >= 10 && normalized.length <= 11 && !normalized.startsWith('55')) {
-    normalized = '55' + normalized;
+  let normalized = String(phone || '').replace(/\D/g, '');
+
+  // Convert international prefix 00XX... -> XX...
+  if (normalized.startsWith('00') && normalized.length > 4) {
+    normalized = normalized.slice(2);
   }
-  
+
+  // Restore previous behavior: local BR numbers receive +55
+  if (!normalized.startsWith('55') && normalized.length >= 10 && normalized.length <= 11) {
+    normalized = `55${normalized}`;
+  }
+
   return normalized;
+}
+
+function validateBrazilianCampaignPhone(phone: string): { isValid: boolean; normalized: string; reason?: string } {
+  const normalized = normalizePhone(phone);
+
+  if (!normalized.startsWith('55')) {
+    return { isValid: false, normalized, reason: 'international_not_supported' };
+  }
+
+  const local = normalized.slice(2);
+
+  // BR WhatsApp campaign support: only mobile format (DDD + 9 + 8 digits)
+  if (local.length !== 11) {
+    return { isValid: false, normalized, reason: 'invalid_length_or_landline' };
+  }
+
+  if (local.charAt(2) !== '9') {
+    return { isValid: false, normalized, reason: 'landline_not_supported' };
+  }
+
+  return { isValid: true, normalized };
 }
 
 // Check if instance is connected with retry logic
@@ -601,7 +626,26 @@ async function processSingleMessage(
     return { processed: true, completed: false, skipped: false };
   }
 
-  const formattedPhone = normalizePhone(phone);
+  const phoneValidation = validateBrazilianCampaignPhone(phone);
+
+  if (!phoneValidation.isValid) {
+    campaignLog('⚠️', `Skipping lead with unsupported phone format`, {
+      rawPhone: phone,
+      normalized: phoneValidation.normalized,
+      reason: phoneValidation.reason,
+    });
+
+    failedCount++;
+    await supabase.from('whatsapp_campaigns').update({
+      current_lead_index: currentIndex + 1,
+      failed_count: failedCount,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+
+    return { processed: true, completed: false, skipped: false };
+  }
+
+  const formattedPhone = phoneValidation.normalized;
 
   // Check if contact is ignored
   const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
@@ -792,6 +836,19 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (!campaign.whatsapp_number_id) {
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'failed',
+          pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+          updated_at: new Date().toISOString()
+        }).eq('id', campaignId);
+
+        return new Response(JSON.stringify({ error: 'Campaign has no WhatsApp number assigned' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { data: numberData } = await supabase
         .from('whatsapp_numbers')
         .select('*')
@@ -822,13 +879,19 @@ Deno.serve(async (req) => {
       );
 
       if (!isConnected) {
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'paused',
+          pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+          updated_at: new Date().toISOString()
+        }).eq('id', campaignId);
+
         // NEVER update is_connected = false from backend
-        // Only skip this action and let the user know
-        console.log(`⚠️ Connection check failed for ${numberData.instance_name}, but NOT marking as disconnected`);
+        // Only pause campaign and ask user to reconnect the number manually
+        console.log(`⚠️ Connection check failed for ${numberData.instance_name}. Campaign paused awaiting reconnection.`);
 
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'Não foi possível verificar a conexão do WhatsApp. Tente novamente.' 
+          error: 'WhatsApp desconectado. Reconecte o número para iniciar a campanha.' 
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -903,6 +966,17 @@ Deno.serve(async (req) => {
       // Start scheduled campaigns
       for (const scheduled of (scheduledCampaigns || [])) {
         console.log(`📅 Starting SCHEDULED campaign: ${scheduled.name}`);
+
+        if (!scheduled.whatsapp_number_id) {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'failed',
+            pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+            updated_at: now.toISOString()
+          }).eq('id', scheduled.id);
+          console.log(`❌ Scheduled campaign failed (no number): ${scheduled.id}`);
+          campaignsProcessed++;
+          continue;
+        }
         
         await supabase.from('campaign_daily_reservations')
           .delete()
@@ -938,6 +1012,17 @@ Deno.serve(async (req) => {
 
       // Process running campaigns
       for (const campaign of (runningCampaigns || [])) {
+        if (!campaign.whatsapp_number_id) {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'failed',
+            pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+            updated_at: now.toISOString()
+          }).eq('id', campaign.id);
+          console.log(`❌ Running campaign failed (no number): ${campaign.id}`);
+          campaignsProcessed++;
+          continue;
+        }
+
         const { data: numberData } = await supabase
           .from('whatsapp_numbers')
           .select('*')
@@ -946,21 +1031,44 @@ Deno.serve(async (req) => {
 
         if (!numberData?.instance_name) {
           await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'Número não configurado'
+            status: 'failed',
+            pause_reason: 'Número WhatsApp não encontrado ou sem instância',
+            updated_at: now.toISOString()
           }).eq('id', campaign.id);
-          continue;
-        }
-
-        // Trust the database is_connected state (managed by webhooks)
-        // instead of checking Evolution API every cycle which causes false negatives
-        if (!numberData.is_connected) {
-          console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, skipping this cycle`);
+          campaignsProcessed++;
           continue;
         }
 
         // Resolve Evolution API credentials based on number's api_tier
         const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
+
+        // Validate real connection state before processing to avoid consuming leads on disconnected sessions
+        if (!numberData.is_connected) {
+          console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, pausing campaign ${campaign.id}`);
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+            updated_at: now.toISOString()
+          }).eq('id', campaign.id);
+          continue;
+        }
+
+        const isConnectedNow = await checkInstanceConnection(
+          campaignEvoCredentials.url,
+          campaignEvoCredentials.apiKey,
+          numberData.instance_name,
+          2
+        );
+
+        if (!isConnectedNow) {
+          console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
+            updated_at: now.toISOString()
+          }).eq('id', campaign.id);
+          continue;
+        }
 
         const result = await processSingleMessage(
           supabase,

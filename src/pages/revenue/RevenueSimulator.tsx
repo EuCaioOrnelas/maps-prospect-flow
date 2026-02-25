@@ -20,10 +20,10 @@ const RevenueSimulator = () => {
 
   const defaults = useMemo(() => ({
     ticket: settings?.default_ticket_value || 3000,
-    rateCold: settings?.default_close_rate_cold || 0.05,
-    rateEngaged: settings?.default_close_rate_engaged || 0.15,
-    rateHot: settings?.default_close_rate_hot || 0.35,
-    rateVeryHot: settings?.default_close_rate_very_hot || 0.55,
+    rateCold: settings?.default_close_rate_cold || 0.005,
+    rateEngaged: settings?.default_close_rate_engaged || 0.05,
+    rateHot: settings?.default_close_rate_hot || 0.15,
+    rateVeryHot: settings?.default_close_rate_very_hot || 0.35,
   }), [settings]);
 
   const [sim, setSim] = useState<typeof defaults | null>(null);
@@ -74,23 +74,11 @@ const RevenueSimulator = () => {
       </div>
 
       {/* Results comparison */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign size={14} /> Receita Atual
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{fmt(receitaAtual)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Com parâmetros configurados</p>
-          </CardContent>
-        </Card>
-
+      <div className="grid md:grid-cols-2 gap-4">
         <Card className={cn("border-border/50", sim ? "bg-primary/5 border-primary/30" : "bg-card")}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp size={14} /> Receita Simulada
+              <TrendingUp size={14} /> Receita Projetada
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -99,18 +87,16 @@ const RevenueSimulator = () => {
           </CardContent>
         </Card>
 
-        <Card className={cn("border-border/50", diff > 0 ? "bg-primary/5 border-primary/30" : diff < 0 ? "bg-destructive/5 border-destructive/30" : "bg-card")}>
+        <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              {diff >= 0 ? <TrendingUp size={14} /> : <AlertTriangle size={14} />} Diferença
+              <Calculator size={14} /> Resumo do Pipeline
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className={cn("text-3xl font-bold", diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-foreground")}>
-              {diff > 0 ? "+" : ""}{diff.toFixed(1)}%
-            </p>
+            <p className="text-3xl font-bold text-foreground">{buckets.COLD + buckets.ENGAGED + buckets.HOT + buckets.VERY_HOT}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {diff > 0 ? `+${fmt(receitaSimulada - receitaAtual)}` : diff < 0 ? fmt(receitaSimulada - receitaAtual) : "Sem alteração"}
+              {buckets.VERY_HOT} quentes • {buckets.HOT} engajados • {buckets.ENGAGED} mornos • {buckets.COLD} frios
             </p>
           </CardContent>
         </Card>

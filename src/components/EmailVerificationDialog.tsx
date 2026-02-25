@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Mail, AlertTriangle, ArrowRight } from "lucide-react";
+import { Mail, AlertTriangle, ArrowRight, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface EmailVerificationDialogProps {
   open: boolean;
@@ -22,6 +25,32 @@ export const EmailVerificationDialog = ({
   email,
   onRetry,
 }: EmailVerificationDialogProps) => {
+  const [resending, setResending] = useState(false);
+  const { toast } = useToast();
+
+  const handleResendEmail = async () => {
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      if (error) throw error;
+      toast({
+        title: "Email reenviado!",
+        description: "Verifique sua caixa de entrada e spam.",
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao reenviar",
+        description: "Aguarde alguns minutos e tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -63,6 +92,20 @@ export const EmailVerificationDialog = ({
           </div>
 
           <div className="flex flex-col gap-2 pt-2">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleResendEmail}
+              disabled={resending}
+            >
+              {resending ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Reenviar email de verificação
+            </Button>
+
             <Link to="/login" className="w-full">
               <Button className="w-full" variant="default">
                 Ir para o Login
@@ -72,14 +115,14 @@ export const EmailVerificationDialog = ({
             
             {onRetry && (
               <Button 
-                variant="outline" 
-                className="w-full"
+                variant="ghost" 
+                className="w-full text-muted-foreground"
                 onClick={() => {
                   onOpenChange(false);
                   onRetry();
                 }}
               >
-                Tentar novamente com outro email
+                Tentar com outro email
               </Button>
             )}
           </div>
