@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRevenueLead, useRevenueEvents, useRevenueScoreLogs, useRevenueScoreSnapshots } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -169,7 +170,7 @@ const RevenueLeadDetail = () => {
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-foreground">{lead.phone_e164}</h1>
+              <h1 className="text-xl font-bold text-foreground font-mono">{formatPhoneNumber(lead.phone_e164)}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn("text-xs", bucketColors[lead.status_bucket])}>{bucketLabels[lead.status_bucket]}</Badge>

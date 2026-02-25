@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRevenueLeads } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -144,8 +145,8 @@ const RevenueLeads = () => {
                           to={`/revenue/leads/${lead.id}`}
                           className="hover:text-primary transition-colors"
                         >
-                          <p className="font-medium text-foreground">
-                            {lead.phone_e164}
+                          <p className="font-medium text-foreground font-mono text-xs">
+                            {formatPhoneNumber(lead.phone_e164)}
                           </p>
                         </Link>
                       </td>
