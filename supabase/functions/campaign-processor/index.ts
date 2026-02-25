@@ -792,6 +792,19 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (!campaign.whatsapp_number_id) {
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'failed',
+          pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+          updated_at: new Date().toISOString()
+        }).eq('id', campaignId);
+
+        return new Response(JSON.stringify({ error: 'Campaign has no WhatsApp number assigned' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { data: numberData } = await supabase
         .from('whatsapp_numbers')
         .select('*')
@@ -903,6 +916,17 @@ Deno.serve(async (req) => {
       // Start scheduled campaigns
       for (const scheduled of (scheduledCampaigns || [])) {
         console.log(`📅 Starting SCHEDULED campaign: ${scheduled.name}`);
+
+        if (!scheduled.whatsapp_number_id) {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'failed',
+            pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+            updated_at: now.toISOString()
+          }).eq('id', scheduled.id);
+          console.log(`❌ Scheduled campaign failed (no number): ${scheduled.id}`);
+          campaignsProcessed++;
+          continue;
+        }
         
         await supabase.from('campaign_daily_reservations')
           .delete()
@@ -938,6 +962,17 @@ Deno.serve(async (req) => {
 
       // Process running campaigns
       for (const campaign of (runningCampaigns || [])) {
+        if (!campaign.whatsapp_number_id) {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'failed',
+            pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
+            updated_at: now.toISOString()
+          }).eq('id', campaign.id);
+          console.log(`❌ Running campaign failed (no number): ${campaign.id}`);
+          campaignsProcessed++;
+          continue;
+        }
+
         const { data: numberData } = await supabase
           .from('whatsapp_numbers')
           .select('*')
@@ -946,9 +981,11 @@ Deno.serve(async (req) => {
 
         if (!numberData?.instance_name) {
           await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'Número não configurado'
+            status: 'failed',
+            pause_reason: 'Número WhatsApp não encontrado ou sem instância',
+            updated_at: now.toISOString()
           }).eq('id', campaign.id);
+          campaignsProcessed++;
           continue;
         }
 

@@ -376,26 +376,34 @@ export const LeadSelector = ({
     
     setSelectedHistoryIds(newSelected);
     
-    // Merge all leads from selected history items, filtering out landlines
+    // Merge all leads from selected history items, filtering out landlines and invalid phones
     const allLeads: Lead[] = [];
     let totalLandlines = 0;
+    let totalInvalid = 0;
     
     searchHistory.forEach(h => {
       if (newSelected.has(h.id) && h.leads) {
         h.leads.forEach(lead => {
-          if (lead.phone && !allLeads.some(l => l.phone === lead.phone)) {
-            // Normalize phone with selected country code
-            let digits = String(lead.phone).replace(/\D/g, '');
-            if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
-              digits = defaultCountryCode + digits;
-            }
-            // Check if it's a landline
-            if (isLandlinePhone(digits)) {
-              totalLandlines++;
-            } else {
-              allLeads.push({ ...lead, phone: digits });
-            }
+          if (!lead.phone || allLeads.some(l => l.phone === lead.phone)) return;
+
+          // Normalize with selected country code when number looks local
+          let digits = String(lead.phone).replace(/\D/g, '');
+          if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith(defaultCountryCode)) {
+            digits = defaultCountryCode + digits;
           }
+
+          const phoneStatus = validateAndFormatPhone(digits);
+          if (!phoneStatus.isValid) {
+            totalInvalid++;
+            return;
+          }
+
+          if (phoneStatus.isLandline || isLandlinePhone(phoneStatus.formatted)) {
+            totalLandlines++;
+            return;
+          }
+
+          allLeads.push({ ...lead, phone: phoneStatus.formatted });
         });
       }
     });
@@ -404,7 +412,7 @@ export const LeadSelector = ({
     if (newSelected.size > 0) {
       setImportStats({
         valid: allLeads.length,
-        invalid: 0,
+        invalid: totalInvalid,
         landlines: totalLandlines
       });
     } else {
