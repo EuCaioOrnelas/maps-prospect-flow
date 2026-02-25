@@ -82,7 +82,7 @@ export const BottleneckCards = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {cards.map((card) => (
-        <Card key={card.label} className="bg-card border-border/50">
+        <Card key={card.label} className="bg-card border-border/40">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-1.5 mb-1">
               <card.icon size={14} className={card.iconColor} />
