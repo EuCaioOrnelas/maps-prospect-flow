@@ -512,10 +512,7 @@ const RevenueDashboard = () => {
     );
   }
 
-  // Empty state
-  if (totalLeads === 0) {
-    return <EmptyDashboard />;
-  }
+  const isEmpty = totalLeads === 0;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -536,6 +533,19 @@ const RevenueDashboard = () => {
           </motion.p>
         )}
       </div>
+
+      {/* ═══ AVISO EMPTY ═══ */}
+      {isEmpty && (
+        <div className="flex items-start gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
+          <Info size={16} className="text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Nenhum lead registrado ainda</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Quando suas conversas começarem, os dados de receita, performance e oportunidades serão exibidos automaticamente aqui.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ═══ 1. HERO KPIs ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
