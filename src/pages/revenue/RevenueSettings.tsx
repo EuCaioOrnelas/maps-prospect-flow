@@ -117,7 +117,7 @@ const ruleDescriptions: Record<string, { description: string; triggers?: string[
   },
   INTENT_OBJECTION: {
     description: "Objeção contextual detectada. Inclui objeção de preço (preço+caro), financeira ou adiamento. Score líquido leve negativo.",
-    triggers: ["preço+caro", "preço+alto", "preço+absurdo", "preço+salgado", "não tenho dinheiro", "não cabe no orçamento", "fora do orçamento", "preciso pensar", "depois eu vejo", "vou analisar", "vou falar com sócio", "mais tarde"],
+    triggers: ["preço+caro", "preço+alto", "preço+absurdo", "preço+salgado", "não tenho dinheiro", "não cabe no orçamento", "fora do orçamento", "sem budget", "budget apertado", "preciso pensar", "depois eu vejo", "vou analisar", "vou falar com sócio", "mais tarde", "vou ver e te falo", "vou ver", "preciso falar com", "vou conversar com", "vou consultar"],
     type: "penalty",
   },
   INTENT_NEGATIVE_MODERATE: {
