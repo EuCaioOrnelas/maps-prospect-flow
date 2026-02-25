@@ -434,8 +434,11 @@ export const useRevenuePerformanceScore = () => {
       const allConvs = (convs || []) as unknown as RevenueConversation[];
       const allLeads = (leads || []) as unknown as RevenueLead[];
 
-      // If no data exists, return zeros
-      if (allLeads.length === 0 && allConvs.length === 0) return emptyResult;
+      // Only consider leads with real interactions (score > 0)
+      const interactedLeads = allLeads.filter((l) => l.score_total > 0);
+
+      // If no real interaction data exists, return zeros
+      if (interactedLeads.length === 0 && allConvs.length === 0) return emptyResult;
 
       // 1. Avg response time (30% weight) - target < 5 min (300s)
       const avgResponseTimes = allConvs
@@ -447,7 +450,7 @@ export const useRevenuePerformanceScore = () => {
       const responseScore = avgResponseTimes.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponseTime - 300) / 30));
 
       // 2. % hot leads responded (40% weight)
-      const hotLeads = allLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotLeads = interactedLeads.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotResponded = hotLeads.filter((l) => l.risk_state === "OK").length;
       const hotResponseRate = hotLeads.length > 0 ? (hotResponded / hotLeads.length) * 100 : 0;
 
@@ -457,11 +460,11 @@ export const useRevenuePerformanceScore = () => {
       const ignoredRate = Math.min(100, (totalUnreplied / totalConvs) * 100);
       const ignoredScore = allConvs.length === 0 ? 0 : Math.max(0, 100 - ignoredRate * 2);
 
-      // 4. Activity consistency (10% weight)
+      // 4. Activity consistency (10% weight) - only count leads with real interactions
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const activeLeads = allLeads.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
-      const consistencyScore = allLeads.length > 0 ? Math.min(100, (activeLeads / allLeads.length) * 100) : 0;
+      const activeLeads = interactedLeads.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
+      const consistencyScore = interactedLeads.length > 0 ? Math.min(100, (activeLeads / interactedLeads.length) * 100) : 0;
 
       const performanceScore = Math.round(
         responseScore * 0.3 +
@@ -591,7 +594,10 @@ export const useRevenueMaturityIndex = () => {
         .select("avg_response_time_seconds, unreplied_inbound_count");
       const allConvs = (convs || []) as unknown as RevenueConversation[];
 
-      if (all.length === 0) {
+      // Only consider leads with real interactions (score > 0)
+      const interacted = all.filter((l) => l.score_total > 0);
+
+      if (interacted.length === 0) {
         return { total: 0, responsiveness: 0, hotUtilization: 0, consistency: 0, riskReduction: 0 } as MaturityIndex;
       }
 
@@ -601,17 +607,17 @@ export const useRevenueMaturityIndex = () => {
       const responsiveness = responseTimesMs.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponse - 300) / 30));
 
       // 2. Hot utilization - 30%
-      const hotLeads = all.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotLeads = interacted.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
       const hotOk = hotLeads.filter((l) => l.risk_state === "OK").length;
       const hotUtilization = hotLeads.length > 0 ? (hotOk / hotLeads.length) * 100 : 0;
 
-      // 3. Consistency (7d activity) - 20%
-      const activeLeads = all.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
-      const consistency = Math.min(100, (activeLeads / all.length) * 100);
+      // 3. Consistency (7d activity) - 20% - only leads with real interactions
+      const activeLeads = interacted.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
+      const consistency = Math.min(100, (activeLeads / interacted.length) * 100);
 
       // 4. Risk reduction - 20%
-      const atRiskLeads = all.filter((l) => l.risk_state !== "OK").length;
-      const riskReduction = Math.max(0, 100 - (atRiskLeads / all.length) * 100);
+      const atRiskLeads = interacted.filter((l) => l.risk_state !== "OK").length;
+      const riskReduction = Math.max(0, 100 - (atRiskLeads / interacted.length) * 100);
 
       const total = Math.round(
         responsiveness * 0.30 +

@@ -113,15 +113,23 @@ const RevenueDashboard = () => {
     VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
   };
 
-  const hasLeads = (stats?.totalLeads || 0) > 0;
+  // Only consider leads with real interactions (score > 0) for metrics
+  const interactedLeads = stats?.allLeads?.filter((l) => l.score_total > 0) || [];
+  const hasLeads = interactedLeads.length > 0;
 
-  const receitaEsperada = stats
-    ? Object.entries(stats.bucketCounts).reduce(
-        (sum, [bucket, count]) => sum + count * ticket * (closeRates[bucket as keyof typeof closeRates] || 0), 0
-      )
-    : 0;
+  // Receita esperada only from leads with actual engagement
+  const interactedBucketCounts = {
+    COLD: interactedLeads.filter((l) => l.status_bucket === "COLD").length,
+    ENGAGED: interactedLeads.filter((l) => l.status_bucket === "ENGAGED").length,
+    HOT: interactedLeads.filter((l) => l.status_bucket === "HOT").length,
+    VERY_HOT: interactedLeads.filter((l) => l.status_bucket === "VERY_HOT").length,
+  };
 
-  const hotAndVeryHot = (stats?.bucketCounts.HOT || 0) + (stats?.bucketCounts.VERY_HOT || 0);
+  const receitaEsperada = Object.entries(interactedBucketCounts).reduce(
+    (sum, [bucket, count]) => sum + count * ticket * (closeRates[bucket as keyof typeof closeRates] || 0), 0
+  );
+
+  const hotAndVeryHot = interactedBucketCounts.HOT + interactedBucketCounts.VERY_HOT;
 
   const intentData = Object.entries(intentDist || {})
     .map(([key, count]) => ({ name: intentLabels[key] || key, value: count, key }))
