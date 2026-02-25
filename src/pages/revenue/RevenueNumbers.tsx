@@ -19,8 +19,8 @@ const RevenueNumbers = () => {
   const { data: settings } = useRevenueSettings();
 
   const ticket = settings?.default_ticket_value || 3000;
-  const hotRate = settings?.default_close_rate_hot || 0.35;
-  const veryHotRate = settings?.default_close_rate_very_hot || 0.55;
+  const hotRate = settings?.default_close_rate_hot || 0.15;
+  const veryHotRate = settings?.default_close_rate_very_hot || 0.35;
 
   // Chart data
   const chartData = numbers

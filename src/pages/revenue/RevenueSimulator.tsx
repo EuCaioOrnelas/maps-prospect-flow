@@ -20,10 +20,10 @@ const RevenueSimulator = () => {
 
   const defaults = useMemo(() => ({
     ticket: settings?.default_ticket_value || 3000,
-    rateCold: settings?.default_close_rate_cold || 0.05,
-    rateEngaged: settings?.default_close_rate_engaged || 0.15,
-    rateHot: settings?.default_close_rate_hot || 0.35,
-    rateVeryHot: settings?.default_close_rate_very_hot || 0.55,
+    rateCold: settings?.default_close_rate_cold || 0.005,
+    rateEngaged: settings?.default_close_rate_engaged || 0.05,
+    rateHot: settings?.default_close_rate_hot || 0.15,
+    rateVeryHot: settings?.default_close_rate_very_hot || 0.35,
   }), [settings]);
 
   const [sim, setSim] = useState<typeof defaults | null>(null);

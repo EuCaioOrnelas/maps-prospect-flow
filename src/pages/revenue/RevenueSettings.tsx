@@ -266,10 +266,10 @@ const RevenueSettings = () => {
 
   const [form, setForm] = useState({
     default_ticket_value: 3000,
-    default_close_rate_cold: 0.05,
-    default_close_rate_engaged: 0.15,
-    default_close_rate_hot: 0.35,
-    default_close_rate_very_hot: 0.55,
+    default_close_rate_cold: 0.005,
+    default_close_rate_engaged: 0.05,
+    default_close_rate_hot: 0.15,
+    default_close_rate_very_hot: 0.35,
     sla_first_response_minutes: 5,
     risk_no_reply_hours: 24,
     cooldown_decay_per_day: 0.06,

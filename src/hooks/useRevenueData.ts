@@ -816,10 +816,10 @@ export const useRevenueAtRisk = () => {
     queryFn: async () => {
       const ticket = settings?.default_ticket_value || 3000;
       const rates = {
-        COLD: settings?.default_close_rate_cold || 0.05,
-        ENGAGED: settings?.default_close_rate_engaged || 0.15,
-        HOT: settings?.default_close_rate_hot || 0.35,
-        VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
+        COLD: settings?.default_close_rate_cold || 0.005,
+        ENGAGED: settings?.default_close_rate_engaged || 0.05,
+        HOT: settings?.default_close_rate_hot || 0.15,
+        VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
       };
 
       const { data: leads, error } = await supabase
@@ -898,10 +898,10 @@ export const useRevenueTrend7d = () => {
 
       const ticket = settings?.default_ticket_value || 3000;
       const rates: Record<string, number> = {
-        COLD: settings?.default_close_rate_cold || 0.05,
-        ENGAGED: settings?.default_close_rate_engaged || 0.15,
-        HOT: settings?.default_close_rate_hot || 0.35,
-        VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
+        COLD: settings?.default_close_rate_cold || 0.005,
+        ENGAGED: settings?.default_close_rate_engaged || 0.05,
+        HOT: settings?.default_close_rate_hot || 0.15,
+        VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
       };
 
       const calcRevenue = (arr: any[]) => arr.reduce((sum: number, s: any) => sum + ticket * (rates[s.status_bucket] || 0), 0);
