@@ -17,9 +17,25 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+    const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Helper to resolve correct API credentials based on instance tier
+    async function getApiCredentials(instanceName: string): Promise<{ url: string; apiKey: string }> {
+      const { data: numberRow } = await supabase
+        .from('whatsapp_numbers')
+        .select('api_tier')
+        .eq('instance_name', instanceName)
+        .maybeSingle();
+      
+      if (numberRow?.api_tier === 'paid' && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        return { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID };
+      }
+      return { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
+    }
 
     const payload = await req.json();
     console.log('=== EVOLUTION WEBHOOK RAW ===');
@@ -103,17 +119,19 @@ serve(async (req) => {
       instanceName: string,
       messageId: string,
       mediaType: string,
-      userId: string
+      userId: string,
+      apiCreds?: { url: string; apiKey: string }
     ): Promise<{ url: string; mimetype: string } | null> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
         console.log(`Downloading media for message ${messageId} from instance ${instanceName}`);
         
         // Use Evolution API to get base64 media
-        const response = await fetch(`${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`, {
+        const response = await fetch(`${creds.url}/chat/getBase64FromMediaMessage/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({
             message: { key: { id: messageId } },
@@ -192,13 +210,14 @@ serve(async (req) => {
     }
 
     // Helper function to fetch profile picture from Evolution API
-    async function fetchProfilePicture(instanceName: string, phone: string): Promise<string | null> {
+    async function fetchProfilePicture(instanceName: string, phone: string, apiCreds?: { url: string; apiKey: string }): Promise<string | null> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
-        const response = await fetch(`${EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instanceName}`, {
+        const response = await fetch(`${creds.url}/chat/fetchProfilePictureUrl/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({ number: phone }),
         });
@@ -313,8 +332,10 @@ REGRAS OBRIGATÓRIAS:
     async function sendWarmingResponseDirect(
       instanceName: string,
       phone: string,
-      message: string
+      message: string,
+      apiCreds?: { url: string; apiKey: string }
     ): Promise<boolean> {
+      const creds = apiCreds || { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
       try {
         // Add a small random delay to simulate human typing (1-4 seconds)
         const typingDelay = Math.floor(Math.random() * 3000) + 1000;
@@ -323,11 +344,11 @@ REGRAS OBRIGATÓRIAS:
         const formattedPhone = phone.replace(/\D/g, '');
         console.log(`Sending warming response to ${formattedPhone}: "${message}"`);
         
-        const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+        const response = await fetch(`${creds.url}/message/sendText/${instanceName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY!,
+            'apikey': creds.apiKey,
           },
           body: JSON.stringify({
             number: formattedPhone,
@@ -447,10 +468,15 @@ REGRAS OBRIGATÓRIAS:
           // Get the WhatsApp number (instance) info
           const { data: whatsappNumber } = await supabase
             .from('whatsapp_numbers')
-            .select('id, user_id')
+            .select('id, user_id, api_tier')
             .eq('instance_name', instance)
             .single();
           
+          // Resolve correct API credentials based on instance tier
+          const instanceApiCreds = (whatsappNumber?.api_tier === 'paid' && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID)
+            ? { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID }
+            : { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
+
           if (whatsappNumber) {
             // Get or create conversation - try multiple matching strategies
             // NOTE: The 'conversations' and 'messages' tables may not exist in all setups
@@ -577,7 +603,7 @@ REGRAS OBRIGATÓRIAS:
             // Only do this if conversations table exists
             if (!fromMe && rawPhone && hasConversationsTable) {
               try {
-                const profilePicture = await fetchProfilePicture(instance, rawPhone);
+                const profilePicture = await fetchProfilePicture(instance, rawPhone, instanceApiCreds);
                 if (profilePicture) {
                   console.log('Got profile picture URL:', profilePicture);
                   
@@ -822,7 +848,8 @@ REGRAS OBRIGATÓRIAS:
                 instance,
                 messageId,
                 messageType,
-                whatsappNumber.user_id
+                whatsappNumber.user_id,
+                instanceApiCreds
               );
               
               if (storedMedia) {
@@ -924,6 +951,16 @@ REGRAS OBRIGATÓRIAS:
 
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
             if (!fromMe) {
+              // ===== REVENUE TRACKING: INBOUND (always fire, regardless of CRM lead) =====
+              fireRevenueEvent({
+                user_id: whatsappNumber.user_id,
+                phone_e164: normalizePhoneNumber(rawPhone),
+                number_instance_id: whatsappNumber.id,
+                direction: 'inbound',
+                message_content: content,
+                lead_name: data.pushName || undefined,
+              });
+
               // Find lead by phone - use flexible matching strategy
               // Strategy: match by last 8 digits (most reliable for Brazilian numbers)
               const phoneDigitsOnly = normalizedPhone.replace(/\D/g, '');
@@ -1025,18 +1062,8 @@ REGRAS OBRIGATÓRIAS:
                     });
                   }
                 }
-
-                // ===== REVENUE TRACKING: INBOUND =====
-                fireRevenueEvent({
-                  user_id: whatsappNumber.user_id,
-                  phone_e164: normalizePhoneNumber(rawPhone),
-                  number_instance_id: whatsappNumber.id,
-                  direction: 'inbound',
-                  message_content: content,
-                  lead_name: data.pushName || undefined,
-                });
               } else {
-                console.log('No lead found for phone:', normalizedPhone, '(last 8:', last8Digits, ')');
+                console.log('No lead found in CRM for phone:', normalizedPhone, '(last 8:', last8Digits, ') - Revenue lead created independently');
               }
               
               // Continue with campaign detection only if lead was found
@@ -1487,7 +1514,8 @@ REGRAS OBRIGATÓRIAS:
                       const sent = await sendWarmingResponseDirect(
                         instance,
                         normalizedLeadPhone,
-                        responseMessage
+                        responseMessage,
+                        instanceApiCreds
                       );
                       
                       if (sent) {
