@@ -57,6 +57,129 @@ const ruleLabels: Record<string, string> = {
   BACK_AND_FORTH_5_TURNS: "5 trocas de mensagem",
 };
 
+const ruleDescriptions: Record<string, { description: string; triggers?: string[]; type: "bonus" | "penalty" | "neutral" }> = {
+  INBOUND_MESSAGE: {
+    description: "Toda mensagem recebida do lead soma pontos de engajamento.",
+    triggers: ["Qualquer mensagem enviada pelo lead"],
+    type: "bonus",
+  },
+  INBOUND_STREAK_3: {
+    description: "Quando o lead envia 3 mensagens seguidas sem você responder, indica alto interesse.",
+    triggers: ["3 mensagens consecutivas do lead"],
+    type: "bonus",
+  },
+  INBOUND_AFTER_24H_SILENCE: {
+    description: "Lead que volta a falar após 24h de silêncio demonstra interesse persistente.",
+    triggers: ["Mensagem após 24h sem interação"],
+    type: "bonus",
+  },
+  INBOUND_AFTER_7D_SILENCE: {
+    description: "Lead que retorna após 7 dias é um sinal forte de intenção real.",
+    triggers: ["Mensagem após 7 dias sem interação"],
+    type: "bonus",
+  },
+  OUTBOUND_REPLY_RECEIVED_WITHIN_1H: {
+    description: "Lead responde rápido à sua mensagem, indicando engajamento ativo.",
+    triggers: ["Resposta do lead em menos de 1 hora"],
+    type: "bonus",
+  },
+  INTENT_PRICE: {
+    description: "Lead demonstrou interesse em valores ou orçamento.",
+    triggers: ["preço", "valor", "quanto custa", "orçamento", "quanto é"],
+    type: "bonus",
+  },
+  INTENT_BUY_NOW: {
+    description: "Lead sinalizou forte intenção de fechar negócio agora.",
+    triggers: ["quero fechar", "fechar hoje", "pode mandar contrato", "vou fechar", "quero comprar"],
+    type: "bonus",
+  },
+  INTENT_AVAILABILITY: {
+    description: "Lead perguntou sobre disponibilidade ou agenda.",
+    triggers: ["tem vaga", "quando começa", "agenda", "disponível", "disponibilidade"],
+    type: "bonus",
+  },
+  INTENT_PAYMENT: {
+    description: "Lead mencionou forma de pagamento — sinal de decisão avançada.",
+    triggers: ["pix", "cartão", "boleto", "parcelar", "pagamento", "parcela"],
+    type: "bonus",
+  },
+  INTENT_PROPOSAL: {
+    description: "Lead solicitou proposta ou material comercial.",
+    triggers: ["proposta", "cotação", "envia", "pdf", "apresentação"],
+    type: "bonus",
+  },
+  INTENT_URGENT: {
+    description: "Lead demonstrou urgência na compra.",
+    triggers: ["urgente", "pra hoje", "agora", "imediato", "preciso já"],
+    type: "bonus",
+  },
+  INTENT_OBJECTION: {
+    description: "Lead levantou objeção de preço ou adiou decisão.",
+    triggers: ["caro", "muito caro", "não tenho dinheiro", "depois vejo", "vou pensar"],
+    type: "penalty",
+  },
+  INTENT_NEGATIVE: {
+    description: "Lead demonstrou desinteresse ou pediu para parar o contato.",
+    triggers: ["não quero", "pare", "não me chama", "sair", "cancelar", "bloquear"],
+    type: "penalty",
+  },
+  LINK_CLICK: {
+    description: "Lead clicou em um link enviado, demonstrando interesse no conteúdo.",
+    triggers: ["Clique em link rastreado"],
+    type: "bonus",
+  },
+  FORM_SUBMIT: {
+    description: "Lead preencheu e enviou um formulário.",
+    triggers: ["Envio de formulário detectado"],
+    type: "bonus",
+  },
+  CALL_REQUEST: {
+    description: "Lead solicitou uma ligação ou chamada.",
+    triggers: ["Pedido de ligação ou chamada"],
+    type: "bonus",
+  },
+  SLA_FIRST_RESPONSE_UNDER_5MIN: {
+    description: "Você respondeu em menos de 5 minutos — excelente atendimento!",
+    triggers: ["Primeira resposta em < 5 minutos"],
+    type: "bonus",
+  },
+  SLA_FIRST_RESPONSE_5_TO_30MIN: {
+    description: "Você respondeu entre 5 e 30 minutos — dentro do aceitável.",
+    triggers: ["Primeira resposta entre 5–30 minutos"],
+    type: "neutral",
+  },
+  SLA_FIRST_RESPONSE_OVER_30MIN: {
+    description: "Resposta demorou mais de 30 minutos — penalidade aplicada.",
+    triggers: ["Primeira resposta acima de 30 minutos"],
+    type: "penalty",
+  },
+  UNREPLIED_INBOUND_OVER_2H: {
+    description: "Lead enviou mensagem e não foi respondido há mais de 2 horas.",
+    triggers: ["Mensagem do lead sem resposta por 2h+"],
+    type: "penalty",
+  },
+  UNREPLIED_INBOUND_OVER_24H: {
+    description: "Lead sem resposta há mais de 24 horas — risco alto de perda.",
+    triggers: ["Mensagem do lead sem resposta por 24h+"],
+    type: "penalty",
+  },
+  CONVERSATION_ACTIVE_3D: {
+    description: "Conversa ativa por 3 dias consecutivos — bom sinal de engajamento.",
+    triggers: ["Troca de mensagens por 3 dias seguidos"],
+    type: "bonus",
+  },
+  CONVERSATION_ACTIVE_5D: {
+    description: "Conversa ativa por 5 dias — lead altamente engajado.",
+    triggers: ["Troca de mensagens por 5 dias seguidos"],
+    type: "bonus",
+  },
+  BACK_AND_FORTH_5_TURNS: {
+    description: "5 trocas de mensagem no diálogo — conversa avançada.",
+    triggers: ["5 mensagens alternadas (ida e volta)"],
+    type: "bonus",
+  },
+};
+
 const ruleCategories: Record<string, string> = {
   INBOUND_MESSAGE: "engagement", INBOUND_STREAK_3: "engagement", INBOUND_AFTER_24H_SILENCE: "engagement",
   INBOUND_AFTER_7D_SILENCE: "engagement", OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "sla",
@@ -668,27 +791,78 @@ const RevenueSettings = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {rules.map((rule) => (
-                        <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
-                          <Switch
-                            checked={rule.is_enabled}
-                            onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
-                            <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              value={rule.points}
-                              onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
-                              className="w-20 h-8 text-sm text-center"
+                      {rules.map((rule) => {
+                        const info = ruleDescriptions[rule.rule_key];
+                        return (
+                          <div key={rule.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20">
+                            <Switch
+                              checked={rule.is_enabled}
+                              onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_enabled: checked })}
                             />
-                            <span className="text-xs text-muted-foreground">pts</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-foreground">{ruleLabels[rule.rule_key] || rule.rule_key}</p>
+                                {info && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button className="shrink-0 outline-none">
+                                        <Info size={13} className={cn(
+                                          "cursor-help transition-colors",
+                                          info.type === "penalty" ? "text-destructive/50 hover:text-destructive" :
+                                          info.type === "bonus" ? "text-primary/50 hover:text-primary" :
+                                          "text-muted-foreground/50 hover:text-muted-foreground"
+                                        )} />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[320px] p-3 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className={cn(
+                                          "text-[9px] px-1.5 py-0",
+                                          info.type === "penalty" ? "border-destructive/40 text-destructive" :
+                                          info.type === "bonus" ? "border-primary/40 text-primary" :
+                                          "border-border text-muted-foreground"
+                                        )}>
+                                          {info.type === "penalty" ? "Penalidade" : info.type === "bonus" ? "Bônus" : "Neutro"}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground leading-relaxed">{info.description}</p>
+                                      {info.triggers && info.triggers.length > 0 && (
+                                        <div className="pt-1 border-t border-border/40">
+                                          <p className="text-[10px] font-medium text-foreground mb-1">
+                                            {rule.rule_key.startsWith("INTENT_") ? "Palavras-chave detectadas:" : "Gatilho:"}
+                                          </p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {info.triggers.map((t, i) => (
+                                              <span key={i} className={cn(
+                                                "inline-block text-[10px] px-1.5 py-0.5 rounded-md font-mono",
+                                                info.type === "penalty"
+                                                  ? "bg-destructive/10 text-destructive"
+                                                  : "bg-primary/10 text-primary"
+                                              )}>
+                                                {t}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">{rule.rule_key}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={rule.points}
+                                onChange={(e) => handleUpdateRule(rule.id, { points: Number(e.target.value) })}
+                                className="w-20 h-8 text-sm text-center"
+                              />
+                              <span className="text-xs text-muted-foreground">pts</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 ))}
