@@ -483,6 +483,187 @@ export const useRevenuePerformanceScore = () => {
   });
 };
 
+// === BOTTLENECK METRICS (7d) ===
+export interface BottleneckMetrics {
+  hotIgnoredPct: number;
+  aboveSLAPct: number;
+  avgFirstResponseMin: number;
+  cooledLeads: number;
+  objectionLeads: number;
+  // Trend vs previous 7d
+  hotIgnoredTrend: number;
+  aboveSLATrend: number;
+  avgFirstResponseTrend: number;
+  cooledLeadsTrend: number;
+}
+
+export const useRevenueBottlenecks = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["revenue-bottlenecks", user?.id],
+    queryFn: async () => {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const fourteenDaysAgo = new Date(now);
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+      // Get all leads
+      const { data: leads } = await supabase
+        .from("revenue_leads")
+        .select("status_bucket, risk_state, last_activity_at, score_total");
+      const all = (leads || []) as unknown as RevenueLead[];
+
+      // Get conversations
+      const { data: convs } = await supabase
+        .from("revenue_conversations")
+        .select("avg_response_time_seconds, unreplied_inbound_count, last_inbound_at, last_outbound_at");
+      const allConvs = (convs || []) as unknown as RevenueConversation[];
+
+      // Get events for objection detection (current 7d)
+      const { data: objEvents } = await supabase
+        .from("revenue_events")
+        .select("event_type, created_at")
+        .in("event_type", ["INTENT_OBJECTION", "INTENT_NEGATIVE"])
+        .gte("created_at", sevenDaysAgo.toISOString());
+
+      // Current period metrics
+      const hotLeads = all.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotIgnored = hotLeads.filter((l) => l.risk_state !== "OK").length;
+      const hotIgnoredPct = hotLeads.length > 0 ? Math.round((hotIgnored / hotLeads.length) * 100) : 0;
+
+      const responseTimesMs = allConvs
+        .filter((c) => c.avg_response_time_seconds > 0)
+        .map((c) => c.avg_response_time_seconds);
+      const avgFirstResponseMin = responseTimesMs.length > 0
+        ? Math.round(responseTimesMs.reduce((a, b) => a + b, 0) / responseTimesMs.length / 60)
+        : 0;
+
+      const totalUnreplied = allConvs.reduce((sum, c) => sum + c.unreplied_inbound_count, 0);
+      const aboveSLAPct = allConvs.length > 0 ? Math.round((totalUnreplied / allConvs.length) * 100) : 0;
+
+      const cooledLeads = all.filter((l) => l.risk_state === "COOLING" || l.risk_state === "AT_RISK").length;
+      const objectionLeads = (objEvents || []).length;
+
+      // Simple trends (placeholder - would need historical snapshots for accurate trends)
+      return {
+        hotIgnoredPct,
+        aboveSLAPct,
+        avgFirstResponseMin,
+        cooledLeads,
+        objectionLeads,
+        hotIgnoredTrend: 0,
+        aboveSLATrend: 0,
+        avgFirstResponseTrend: 0,
+        cooledLeadsTrend: 0,
+      } as BottleneckMetrics;
+    },
+    enabled: !!user,
+  });
+};
+
+// === MATURITY INDEX (0-100) ===
+export interface MaturityIndex {
+  total: number;
+  responsiveness: number; // 30%
+  hotUtilization: number; // 30%
+  consistency: number;    // 20%
+  riskReduction: number;  // 20%
+}
+
+export const useRevenueMaturityIndex = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["revenue-maturity-index", user?.id],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: leads } = await supabase
+        .from("revenue_leads")
+        .select("status_bucket, risk_state, last_activity_at");
+      const all = (leads || []) as unknown as RevenueLead[];
+
+      const { data: convs } = await supabase
+        .from("revenue_conversations")
+        .select("avg_response_time_seconds, unreplied_inbound_count");
+      const allConvs = (convs || []) as unknown as RevenueConversation[];
+
+      if (all.length === 0) {
+        return { total: 0, responsiveness: 0, hotUtilization: 0, consistency: 0, riskReduction: 0 } as MaturityIndex;
+      }
+
+      // 1. Responsiveness (SLA) - 30%
+      const responseTimesMs = allConvs.filter((c) => c.avg_response_time_seconds > 0).map((c) => c.avg_response_time_seconds);
+      const avgResponse = responseTimesMs.length > 0 ? responseTimesMs.reduce((a, b) => a + b, 0) / responseTimesMs.length : 0;
+      const responsiveness = responseTimesMs.length === 0 ? 0 : Math.max(0, Math.min(100, 100 - (avgResponse - 300) / 30));
+
+      // 2. Hot utilization - 30%
+      const hotLeads = all.filter((l) => l.status_bucket === "HOT" || l.status_bucket === "VERY_HOT");
+      const hotOk = hotLeads.filter((l) => l.risk_state === "OK").length;
+      const hotUtilization = hotLeads.length > 0 ? (hotOk / hotLeads.length) * 100 : 0;
+
+      // 3. Consistency (7d activity) - 20%
+      const activeLeads = all.filter((l) => new Date(l.last_activity_at) >= sevenDaysAgo).length;
+      const consistency = Math.min(100, (activeLeads / all.length) * 100);
+
+      // 4. Risk reduction - 20%
+      const atRiskLeads = all.filter((l) => l.risk_state !== "OK").length;
+      const riskReduction = Math.max(0, 100 - (atRiskLeads / all.length) * 100);
+
+      const total = Math.round(
+        responsiveness * 0.30 +
+        hotUtilization * 0.30 +
+        consistency * 0.20 +
+        riskReduction * 0.20
+      );
+
+      return {
+        total: Math.max(0, Math.min(100, total)),
+        responsiveness: Math.round(responsiveness),
+        hotUtilization: Math.round(hotUtilization),
+        consistency: Math.round(consistency),
+        riskReduction: Math.round(riskReduction),
+      } as MaturityIndex;
+    },
+    enabled: !!user,
+  });
+};
+
+// === REVENUE ALERTS ===
+export interface RevenueAlert {
+  id: string;
+  alert_type: string;
+  alert_message: string;
+  alert_severity: string;
+  metric_name: string;
+  current_value: number;
+  previous_value: number;
+  variation_pct: number;
+  is_read: boolean;
+  created_at: string;
+}
+
+export const useRevenueAlerts = (limit: number = 10) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["revenue-alerts", user?.id, limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("revenue_alerts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data || []) as unknown as RevenueAlert[];
+    },
+    enabled: !!user,
+  });
+};
+
 export const useRevenueOpportunityIndex = () => {
   const { user } = useAuth();
 

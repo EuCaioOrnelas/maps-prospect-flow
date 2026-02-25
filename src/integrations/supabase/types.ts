@@ -1099,6 +1099,48 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_alerts: {
+        Row: {
+          alert_message: string
+          alert_severity: string
+          alert_type: string
+          created_at: string
+          current_value: number
+          id: string
+          is_read: boolean
+          metric_name: string
+          previous_value: number
+          user_id: string
+          variation_pct: number
+        }
+        Insert: {
+          alert_message: string
+          alert_severity?: string
+          alert_type: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_read?: boolean
+          metric_name: string
+          previous_value?: number
+          user_id: string
+          variation_pct?: number
+        }
+        Update: {
+          alert_message?: string
+          alert_severity?: string
+          alert_type?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_read?: boolean
+          metric_name?: string
+          previous_value?: number
+          user_id?: string
+          variation_pct?: number
+        }
+        Relationships: []
+      }
       revenue_conversations: {
         Row: {
           avg_response_time_seconds: number | null

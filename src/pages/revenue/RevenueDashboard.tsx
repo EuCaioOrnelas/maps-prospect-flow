@@ -26,6 +26,9 @@ import {
 } from "@/hooks/useRevenueData";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
+import { BottleneckCards } from "@/components/revenue/BottleneckCards";
+import { MaturityGauge } from "@/components/revenue/MaturityGauge";
+import { AlertsPanel } from "@/components/revenue/AlertsPanel";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio",
@@ -200,7 +203,18 @@ const RevenueDashboard = () => {
         </Card>
       </div>
 
-      {/* Performance Score Details + Opportunity Index */}
+      {/* Alerts */}
+      <AlertsPanel />
+
+      {/* Bottleneck Map */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
+          Gargalos Detectados (7 dias)
+        </h2>
+        <BottleneckCards />
+      </div>
+
+      {/* Performance Score Details + Maturity Index */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Performance Score */}
         <Card className="bg-card border-border/50">
@@ -238,38 +252,8 @@ const RevenueDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Opportunity Index */}
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-semibold">Aproveitamento de Oportunidades</CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info size={14} className="text-muted-foreground/50 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[300px]">
-                  <p className="text-xs">Porcentagem de leads engajados/quentes nos últimos 7 dias que foram respondidos dentro do SLA. Quanto maior, melhor o aproveitamento.</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-2">
-              <p className={cn("text-4xl font-bold", oppIndex && oppIndex.index >= 70 ? "text-primary" : oppIndex && oppIndex.index >= 40 ? "text-yellow-400" : "text-destructive")}>
-                {oppIndex?.index || 0}%
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {oppIndex?.respondedInSLA || 0} de {oppIndex?.totalHot || 0} leads quentes respondidos no SLA
-              </p>
-              {oppIndex && oppIndex.notResponded > 0 && (
-                <p className="text-xs text-destructive mt-1">
-                  ⚠️ {oppIndex.notResponded} leads quentes sem resposta adequada
-                </p>
-              )}
-            </div>
-            <Progress value={oppIndex?.index || 0} className="h-2 mt-3" />
-          </CardContent>
-        </Card>
+        {/* Maturity Index */}
+        <MaturityGauge />
       </div>
 
       {/* Bucket Distribution */}
