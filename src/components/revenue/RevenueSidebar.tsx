@@ -23,9 +23,9 @@ const navItems = [
   { title: "Tendências", url: "/revenue/trends", icon: BarChart3 },
   { title: "Projeções", url: "/revenue/insights", icon: TrendingUp },
   { title: "Simulador", url: "/revenue/simulator", icon: Calculator },
-  { title: "Equipe", url: "/revenue/team", icon: UserCheck },
   { title: "Relatórios", url: "/revenue/report", icon: FileText },
   { title: "Números", url: "/revenue/numbers", icon: Smartphone },
+  { title: "Equipe", url: "/revenue/team", icon: UserCheck },
   { title: "Configurações", url: "/revenue/settings", icon: Settings },
 ];
 
