@@ -29,7 +29,7 @@ export const MaturityGauge = () => {
   ];
 
   return (
-    <Card className="bg-card border-border/50">
+    <Card className="bg-card border-border/40">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Shield size={16} className="text-primary" />

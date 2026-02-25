@@ -150,9 +150,9 @@ const RevenueDashboard = () => {
 
       {/* KPIs Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-card border-border/40">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <div className="flex items-center gap-2 text-muted-foreground/70 mb-1">
               <Activity size={16} />
               <span className="text-xs font-medium">Ativos (7d)</span>
             </div>
@@ -160,41 +160,48 @@ const RevenueDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
+        <Card className="bg-card border-border/40">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-orange-400 mb-1">
-              <Flame size={16} />
+            <div className="flex items-center gap-2 text-muted-foreground/70 mb-1">
+              <Flame size={16} className="text-primary" />
               <span className="text-xs font-medium">Engajados + Quentes</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{stats?.hotCount || 0}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
+        <Card className="bg-card border-border/40">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-2 text-destructive mb-1">
-              <AlertTriangle size={16} />
+            <div className="flex items-center gap-2 text-muted-foreground/70 mb-1">
+              <AlertTriangle size={16} className="text-destructive/70" />
               <span className="text-xs font-medium">Em Risco</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{stats?.atRiskCount || 0}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
+        {/* Highlighted: Receita Esperada */}
+        <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 text-primary mb-1">
               <DollarSign size={16} />
-              <span className="text-xs font-medium">Receita Esperada</span>
+              <span className="text-xs font-semibold">Receita Esperada</span>
             </div>
-            <p className="text-2xl font-bold text-foreground">{fmt(receitaEsperada)}</p>
+            <p className="text-2xl font-bold text-primary">{fmt(receitaEsperada)}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
+        {/* Highlighted: Performance */}
+        <Card className={cn(
+          "border",
+          (perfScore?.performanceScore || 0) >= 60
+            ? "bg-primary/5 border-primary/20"
+            : "bg-destructive/5 border-destructive/20"
+        )}>
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Gauge size={16} className={performanceColor(perfScore?.performanceScore || 0)} />
-              <span className="text-xs font-medium text-muted-foreground">Performance</span>
+              <span className="text-xs font-semibold text-muted-foreground">Performance</span>
             </div>
             <p className={cn("text-2xl font-bold", performanceColor(perfScore?.performanceScore || 0))}>
               {perfScore?.performanceScore || 0}/100
@@ -217,7 +224,7 @@ const RevenueDashboard = () => {
       {/* Performance Score Details + Maturity Index */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Performance Score */}
-        <Card className="bg-card border-border/50">
+        <Card className="bg-card border-border/40">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CardTitle className="text-base font-semibold">Índice de Performance Comercial</CardTitle>
@@ -257,7 +264,7 @@ const RevenueDashboard = () => {
       </div>
 
       {/* Bucket Distribution */}
-      <Card className="bg-card border-border/50">
+      <Card className="bg-card border-border/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold">Distribuição por Nível</CardTitle>
         </CardHeader>
@@ -275,7 +282,7 @@ const RevenueDashboard = () => {
 
       {/* Intent Distribution */}
       {intentData.length > 0 && (
-        <Card className="bg-card border-border/50">
+        <Card className="bg-card border-border/40">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Target size={16} />
@@ -306,7 +313,7 @@ const RevenueDashboard = () => {
       )}
 
       {/* Top 10 Oportunidades Hoje */}
-      <Card className="bg-card border-border/50">
+      <Card className="bg-primary/[0.03] border-primary/15">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
