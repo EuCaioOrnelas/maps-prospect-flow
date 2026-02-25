@@ -218,6 +218,7 @@ const RevenueDashboard = () => {
           onConnect={() => { fetchNumbers(); }}
           forceOpen={showNumbersManager}
           onClose={() => setShowNumbersManager(false)}
+          hideButtons
         />
       </div>
     );
