@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Save, RefreshCw, Info, HelpCircle, Plus, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useWhatsAppNumbers, PLAN_LIMITS } from "@/hooks/useWhatsAppNumbers";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 
 const FieldHelp = ({ children }: { children: React.ReactNode }) => (
   <Tooltip>
@@ -79,11 +82,20 @@ interface ScoreRule {
 }
 
 const RevenueSettings = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { data: settings, isLoading } = useRevenueSettings();
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [showNumbersManager, setShowNumbersManager] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  const { numbers, setNumbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
+  const userPlan = profile?.plan?.toLowerCase() || "free";
+  const planMaxNumbers = PLAN_LIMITS[userPlan] || 1;
+
+  // Default tab from URL param
+  const defaultTab = searchParams.get("tab") || "general";
 
   const { data: scoreRules } = useQuery({
     queryKey: ["revenue-score-rules", user?.id],
@@ -192,16 +204,119 @@ const RevenueSettings = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Configurações Avançadas</h1>
         <p className="text-sm text-muted-foreground">
-          Personalize pesos de pontuação, taxas de conversão, SLA e decaimento
+          Personalize pesos de pontuação, taxas de conversão, SLA e gerencie seus números
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="numbers">Números</TabsTrigger>
           <TabsTrigger value="scoring">Pontuação</TabsTrigger>
           <TabsTrigger value="rules">Regras de Score</TabsTrigger>
         </TabsList>
+
+        {/* Numbers Tab */}
+        <TabsContent value="numbers" className="space-y-6 mt-6">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-start gap-3">
+                <Smartphone size={18} className="text-primary shrink-0 mt-0.5" />
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p className="text-foreground font-medium">Números WhatsApp</p>
+                  <p>Conecte seus números de WhatsApp para que o módulo de Inteligência de Receita possa monitorar conversas, calcular scores e detectar intenções automaticamente.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {numbers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="max-w-md w-full text-center space-y-6">
+                <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Smartphone className="w-10 h-10 text-primary" />
+                </div>
+
+                <div className="space-y-3">
+                  <h2 className="text-xl font-bold text-foreground">
+                    Conecte um número para começar
+                  </h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    O módulo de Inteligência de Receita monitora automaticamente as conversas do WhatsApp
+                    para calcular scores, detectar intenções e gerar insights comerciais.
+                  </p>
+                </div>
+
+                <Card className="bg-card border-border/50 text-left">
+                  <CardContent className="pt-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+                      <p className="text-sm text-muted-foreground">Clique no botão abaixo para adicionar um número</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+                      <p className="text-sm text-muted-foreground">Escaneie o QR Code com seu WhatsApp</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+                      <p className="text-sm text-muted-foreground">Os dados de receita serão gerados automaticamente</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Button
+                  onClick={() => setShowNumbersManager(true)}
+                  size="lg"
+                  className="w-full gap-2 h-12 text-base"
+                >
+                  <QrCode className="w-5 h-5" />
+                  Conectar WhatsApp
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+
+                <p className="text-xs text-muted-foreground">
+                  🔒 Conexão segura e criptografada
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {numbers.length} de {planMaxNumbers} número(s) conectado(s)
+                </p>
+                <Button
+                  onClick={() => setShowNumbersManager(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Smartphone size={14} />
+                  Gerenciar Números
+                </Button>
+              </div>
+
+              <div className="grid gap-3">
+                {numbers.map((num) => (
+                  <Card key={num.id} className="bg-card border-border/50">
+                    <CardContent className="py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${num.is_connected ? "bg-primary" : "bg-destructive"}`} />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{num.name}</p>
+                          <p className="text-xs text-muted-foreground">{num.phone_number || "Sem número detectado"}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${num.is_connected ? "border-primary/30 text-primary" : "border-destructive/30 text-destructive"}`}>
+                        {num.is_connected ? "Conectado" : "Desconectado"}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </TabsContent>
 
         {/* General Tab */}
         <TabsContent value="general" className="space-y-6 mt-6">
@@ -305,7 +420,7 @@ const RevenueSettings = () => {
           </div>
         </TabsContent>
 
-        {/* Scoring Tab - explains how scoring works */}
+        {/* Scoring Tab */}
         <TabsContent value="scoring" className="space-y-6 mt-6">
           <Card className="bg-card border-border/50">
             <CardHeader>
@@ -389,6 +504,16 @@ const RevenueSettings = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <NumbersManager
+        numbers={numbers}
+        onNumbersChange={(nums) => { setNumbers(nums); fetchNumbers(); }}
+        maxNumbers={planMaxNumbers}
+        onConnect={() => { fetchNumbers(); }}
+        forceOpen={showNumbersManager}
+        onClose={() => setShowNumbersManager(false)}
+        hideButtons
+      />
     </div>
   );
 };
