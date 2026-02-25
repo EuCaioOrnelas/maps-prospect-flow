@@ -38,10 +38,10 @@ const bucketLabels: Record<string, string> = {
 };
 
 const bucketColors: Record<string, string> = {
-  COLD: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  ENGAGED: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  HOT: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  VERY_HOT: "bg-red-500/10 text-red-400 border-red-500/20",
+  COLD: "bg-muted/50 text-muted-foreground border-border/40",
+  ENGAGED: "bg-muted/50 text-foreground border-border/40",
+  HOT: "bg-primary/8 text-primary border-primary/20",
+  VERY_HOT: "bg-primary/15 text-primary border-primary/30",
 };
 
 const riskLabels: Record<string, string> = {
@@ -87,9 +87,9 @@ const fmt = (value: number) =>
 
 const performanceColor = (score: number) => {
   if (score >= 80) return "text-primary";
-  if (score >= 60) return "text-yellow-400";
-  if (score >= 40) return "text-orange-400";
-  return "text-destructive";
+  if (score >= 60) return "text-foreground";
+  if (score >= 40) return "text-muted-foreground";
+  return "text-muted-foreground";
 };
 
 const RevenueDashboard = () => {

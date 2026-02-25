@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils";
 
 const maturityLabel = (score: number) => {
   if (score >= 80) return { text: "Excelente", color: "text-primary" };
-  if (score >= 60) return { text: "Bom", color: "text-yellow-400" };
-  if (score >= 40) return { text: "Em Desenvolvimento", color: "text-orange-400" };
-  return { text: "Inicial", color: "text-destructive" };
+  if (score >= 60) return { text: "Bom", color: "text-primary/80" };
+  if (score >= 40) return { text: "Em Desenvolvimento", color: "text-muted-foreground" };
+  return { text: "Inicial", color: "text-muted-foreground" };
 };
 
 export const MaturityGauge = () => {
