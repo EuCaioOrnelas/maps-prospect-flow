@@ -78,12 +78,12 @@ const RevenueSimulator = () => {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign size={14} /> Receita Atual
+              <DollarSign size={14} /> Receita Estimada Base
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">{fmt(receitaAtual)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Com parâmetros configurados</p>
+            <p className="text-xs text-muted-foreground mt-1">Projeção com taxas padrão</p>
           </CardContent>
         </Card>
 
