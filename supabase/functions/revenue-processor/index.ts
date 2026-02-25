@@ -513,8 +513,26 @@ serve(async (req) => {
         }
       }
 
+      // Calculate individual score components from this processing batch
+      const componentDeltas: Record<string, number> = { engagement: 0, intent: 0, sla: 0, penalty: 0 };
+      for (const log of scoreLogsToCreate) {
+        const cat = log.category || "engagement";
+        if (cat in componentDeltas) {
+          componentDeltas[cat] += log.points_applied;
+        }
+      }
+
+      const prevEngagement = existingLead?.score_engagement || 0;
+      const prevIntent = existingLead?.score_intent || 0;
+      const prevUrgency = existingLead?.score_urgency || 0;
+      const prevRisk = existingLead?.score_risk || 0;
+
       const leadUpdate: any = {
         score_total: newScore,
+        score_engagement: Math.max(0, Math.min(1000, prevEngagement + componentDeltas.engagement)),
+        score_intent: Math.max(0, Math.min(1000, prevIntent + componentDeltas.intent)),
+        score_urgency: Math.max(0, Math.min(1000, prevUrgency + componentDeltas.sla)),
+        score_risk: Math.max(0, Math.min(1000, prevRisk + Math.abs(componentDeltas.penalty))),
         score_last_calc_at: new Date().toISOString(),
         status_bucket: newBucket,
         risk_state: riskState,
