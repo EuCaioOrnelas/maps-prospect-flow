@@ -17,8 +17,8 @@ export const MoneyLossSection = () => {
 
   const ticket = settings?.default_ticket_value || 3000;
   const rates = {
-    HOT: settings?.default_close_rate_hot || 0.35,
-    VERY_HOT: settings?.default_close_rate_very_hot || 0.55,
+    HOT: settings?.default_close_rate_hot || 0.15,
+    VERY_HOT: settings?.default_close_rate_very_hot || 0.35,
   };
 
   // Calculate real impacts
