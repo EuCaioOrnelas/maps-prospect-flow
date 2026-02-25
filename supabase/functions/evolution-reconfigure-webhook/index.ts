@@ -69,7 +69,6 @@ serve(async (req) => {
     const webhookEvents = [
       "MESSAGES_UPSERT",
       "MESSAGES_UPDATE",
-      "MESSAGES_EDIT",
       "MESSAGES_EDITED",
       "CONNECTION_UPDATE",
       "QRCODE_UPDATED",
