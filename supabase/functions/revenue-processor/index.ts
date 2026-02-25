@@ -388,6 +388,14 @@ serve(async (req) => {
           })
           .eq("id", leadId);
       } else {
+        // Do not create Revenue lead from outbound-only traffic
+        if (direction !== "inbound") {
+          return new Response(
+            JSON.stringify({ success: false, skipped: true, reason: "Outbound message without existing lead" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         const { data: newLead, error: insertErr } = await supabase
           .from("revenue_leads")
           .insert({
