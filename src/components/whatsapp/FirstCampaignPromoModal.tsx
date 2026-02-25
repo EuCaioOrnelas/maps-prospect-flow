@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown, Copy, Check, Clock, Gift, Sparkles, Zap, AlertTriangle } from "lucide-react";
+import { Crown, Copy, Check, Clock, Gift, Zap, AlertTriangle, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,7 +54,6 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
     return () => clearInterval(interval);
   }, [open]);
 
-  // Pulse effect when time is low
   useEffect(() => {
     if (timeLeft <= 120 && timeLeft > 0) {
       const pulseInterval = setInterval(() => {
@@ -91,27 +90,21 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
   const isWarning = timeLeft <= 300 && timeLeft > 120;
 
   const timerColor = isUrgent
-    ? "text-destructive"
+    ? "text-red-400"
     : isWarning
       ? "text-amber-400"
-      : "text-emerald-400";
-
-  const timerBg = isUrgent
-    ? "bg-destructive/10 border-destructive/30"
-    : isWarning
-      ? "bg-amber-500/10 border-amber-500/30"
-      : "bg-emerald-500/10 border-emerald-500/30";
+      : "text-orange-300";
 
   const progressPct = Math.max(0, (timeLeft / TIMER_SECONDS) * 100);
   const progressColor = isUrgent
-    ? "bg-destructive"
+    ? "bg-red-500"
     : isWarning
       ? "bg-amber-500"
-      : "bg-primary";
+      : "bg-orange-500";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[420px] border-primary/30 bg-card p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-[440px] border-orange-500/40 bg-card p-0 overflow-hidden gap-0">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -119,40 +112,97 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
-              {/* Animated background particles */}
+              {/* Glowing background */}
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <motion.div
-                  className="absolute -top-4 -right-4 h-32 w-32 rounded-full bg-primary/10 blur-2xl"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -top-8 -right-8 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl"
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
-                  className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-primary/10 blur-2xl"
+                  className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-red-500/10 blur-3xl"
                   animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 />
               </div>
 
-              {/* Header */}
-              <div className="relative bg-gradient-to-br from-primary/25 via-primary/10 to-transparent p-6 pb-5 text-center">
-                {/* Sparkles */}
+              {/* === TIMER ON TOP — URGENT BANNER === */}
+              <motion.div
+                className="relative bg-gradient-to-r from-red-600 via-orange-500 to-red-600 px-4 py-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                {/* Animated shimmer */}
                 <motion.div
-                  className="absolute top-3 right-4"
-                  animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </motion.div>
-                <motion.div
-                  className="absolute top-5 left-4"
-                  animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-                >
-                  <Zap className="h-4 w-4 text-primary/60" />
-                </motion.div>
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                />
 
+                {!expired ? (
+                  <div className="relative flex flex-col items-center gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                      >
+                        <Flame className="h-4 w-4 text-yellow-200" />
+                      </motion.div>
+                      <span className="text-xs font-bold text-white/90 uppercase tracking-wider">
+                        ⚡ Oferta expira em
+                      </span>
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+                      >
+                        <Flame className="h-4 w-4 text-yellow-200" />
+                      </motion.div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <motion.span
+                        className="font-mono text-3xl font-black text-white tabular-nums drop-shadow-lg"
+                        animate={isUrgent ? { scale: [1, 1.08, 1] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity }}
+                      >
+                        {time.minutes}
+                      </motion.span>
+                      <motion.span
+                        className="text-2xl font-black text-yellow-200"
+                        animate={{ opacity: [1, 0.2, 1] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                      >
+                        :
+                      </motion.span>
+                      <motion.span
+                        className="font-mono text-3xl font-black text-white tabular-nums drop-shadow-lg"
+                        animate={isUrgent ? { scale: [1, 1.08, 1] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                      >
+                        {time.seconds}
+                      </motion.span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-1.5 rounded-full bg-black/30 overflow-hidden mt-1">
+                      <motion.div
+                        className={`h-full rounded-full ${isUrgent ? "bg-yellow-300" : "bg-white/80"}`}
+                        animate={{ width: `${progressPct}%` }}
+                        transition={{ duration: 0.5, ease: "linear" }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative flex items-center justify-center gap-2 py-1">
+                    <AlertTriangle className="h-5 w-5 text-white" />
+                    <span className="text-sm font-bold text-white">Oferta expirada!</span>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* === HEADER === */}
+              <div className="relative px-6 pt-5 pb-3 text-center">
                 <motion.div
-                  className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 ring-2 ring-primary/40"
+                  className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500/20 ring-2 ring-orange-500/40"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", delay: 0.2, damping: 12 }}
@@ -161,7 +211,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                     animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
                     transition={{ duration: 1, delay: 0.5 }}
                   >
-                    <Gift className="h-8 w-8 text-primary" />
+                    <Gift className="h-7 w-7 text-orange-400" />
                   </motion.div>
                 </motion.div>
 
@@ -171,23 +221,23 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  Está gostando da Wiize? 🎉
+                  🔥 Oportunidade ÚNICA!
                 </motion.h2>
                 <motion.p
-                  className="mt-1.5 text-sm text-muted-foreground"
+                  className="mt-1.5 text-sm text-muted-foreground leading-relaxed"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  Preparamos uma oferta <span className="font-bold text-primary">EXCLUSIVA</span> só pra você!
+                  Essa oferta é <span className="font-bold text-orange-400">exclusiva</span> e só está disponível pelos próximos <span className="font-bold text-orange-400">10 minutos</span>. Depois disso, o desconto será removido permanentemente.
                 </motion.p>
               </div>
 
-              {/* Body */}
-              <div className="relative px-6 pb-6 pt-4 space-y-4">
+              {/* === BODY === */}
+              <div className="relative px-6 pb-6 pt-2 space-y-4">
                 {/* Discount banner */}
                 <motion.div
-                  className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-5 text-center"
+                  className="rounded-xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 to-red-500/10 p-5 text-center"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.5, type: "spring", damping: 15 }}
@@ -196,8 +246,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                     Desconto especial
                   </p>
                   <motion.p
-                    className="text-5xl font-black text-primary tracking-tight leading-none"
-                    animate={pulse ? { scale: [1, 1.05, 1] } : {}}
+                    className="text-5xl font-black text-orange-400 tracking-tight leading-none"
+                    animate={pulse ? { scale: [1, 1.08, 1] } : {}}
                     transition={{ duration: 0.3 }}
                   >
                     50% OFF
@@ -219,11 +269,11 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                   </p>
                   <motion.button
                     onClick={handleCopy}
-                    className="w-full flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3.5 transition-colors hover:border-primary hover:bg-primary/10"
+                    className="w-full flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-orange-500/40 bg-orange-500/5 px-4 py-3.5 transition-colors hover:border-orange-400 hover:bg-orange-500/10"
                     whileTap={{ scale: 0.97 }}
                     whileHover={{ scale: 1.02 }}
                   >
-                    <span className="text-xl font-mono font-black tracking-[0.2em] text-primary">
+                    <span className="text-xl font-mono font-black tracking-[0.2em] text-orange-400">
                       {COUPON_CODE}
                     </span>
                     <motion.div
@@ -241,72 +291,17 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                   </motion.button>
                 </motion.div>
 
-                {/* Timer */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  {!expired ? (
-                    <div className="space-y-2">
-                      <div className={`flex items-center justify-center gap-3 rounded-xl border ${timerBg} p-3`}>
-                        {isUrgent && (
-                          <motion.div
-                            animate={{ scale: [1, 1.3, 1] }}
-                            transition={{ duration: 0.6, repeat: Infinity }}
-                          >
-                            <AlertTriangle className="h-4 w-4 text-destructive" />
-                          </motion.div>
-                        )}
-                        <Clock className={`h-4 w-4 ${timerColor}`} />
-                        <span className="text-xs text-muted-foreground">
-                          {isUrgent ? "Oferta expirando!" : "Expira em"}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className={`font-mono text-2xl font-black tabular-nums ${timerColor}`}>
-                            {time.minutes}
-                          </span>
-                          <motion.span
-                            className={`text-lg font-bold ${timerColor}`}
-                            animate={{ opacity: [1, 0.3, 1] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                          >
-                            :
-                          </motion.span>
-                          <span className={`font-mono text-2xl font-black tabular-nums ${timerColor}`}>
-                            {time.seconds}
-                          </span>
-                        </div>
-                      </div>
-                      {/* Progress bar */}
-                      <div className="h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${progressColor}`}
-                          initial={{ width: "100%" }}
-                          animate={{ width: `${progressPct}%` }}
-                          transition={{ duration: 0.5, ease: "linear" }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 p-3">
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                      <span className="text-sm font-semibold text-destructive">Oferta expirada</span>
-                    </div>
-                  )}
-                </motion.div>
-
                 {/* CTA */}
                 <motion.div
                   className="flex flex-col gap-2 pt-1"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
+                  transition={{ delay: 0.7 }}
                 >
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
                       onClick={handleGoToUpgrade}
-                      className="w-full gap-2 text-base font-bold h-12"
+                      className="w-full gap-2 text-base font-bold h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg shadow-orange-500/25 border-0"
                       size="lg"
                       disabled={expired}
                     >
