@@ -98,18 +98,42 @@ function getRandomDelay(minSeconds: number, maxSeconds: number): number {
   return Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
 }
 
-// Normalize phone number preserving provided country code
+// Normalize phone number for Brazilian campaigns
 function normalizePhone(phone: string): string {
-  let normalized = phone.replace(/\D/g, '');
+  let normalized = String(phone || '').replace(/\D/g, '');
 
   // Convert international prefix 00XX... -> XX...
   if (normalized.startsWith('00') && normalized.length > 4) {
     normalized = normalized.slice(2);
   }
 
-  // IMPORTANT: do not force Brazil prefix here.
-  // Leads are already normalized on the frontend with selected country code.
+  // Restore previous behavior: local BR numbers receive +55
+  if (!normalized.startsWith('55') && normalized.length >= 10 && normalized.length <= 11) {
+    normalized = `55${normalized}`;
+  }
+
   return normalized;
+}
+
+function validateBrazilianCampaignPhone(phone: string): { isValid: boolean; normalized: string; reason?: string } {
+  const normalized = normalizePhone(phone);
+
+  if (!normalized.startsWith('55')) {
+    return { isValid: false, normalized, reason: 'international_not_supported' };
+  }
+
+  const local = normalized.slice(2);
+
+  // BR WhatsApp campaign support: only mobile format (DDD + 9 + 8 digits)
+  if (local.length !== 11) {
+    return { isValid: false, normalized, reason: 'invalid_length_or_landline' };
+  }
+
+  if (local.charAt(2) !== '9') {
+    return { isValid: false, normalized, reason: 'landline_not_supported' };
+  }
+
+  return { isValid: true, normalized };
 }
 
 // Check if instance is connected with retry logic
@@ -602,7 +626,26 @@ async function processSingleMessage(
     return { processed: true, completed: false, skipped: false };
   }
 
-  const formattedPhone = normalizePhone(phone);
+  const phoneValidation = validateBrazilianCampaignPhone(phone);
+
+  if (!phoneValidation.isValid) {
+    campaignLog('⚠️', `Skipping lead with unsupported phone format`, {
+      rawPhone: phone,
+      normalized: phoneValidation.normalized,
+      reason: phoneValidation.reason,
+    });
+
+    failedCount++;
+    await supabase.from('whatsapp_campaigns').update({
+      current_lead_index: currentIndex + 1,
+      failed_count: failedCount,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaign.id);
+
+    return { processed: true, completed: false, skipped: false };
+  }
+
+  const formattedPhone = phoneValidation.normalized;
 
   // Check if contact is ignored
   const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
