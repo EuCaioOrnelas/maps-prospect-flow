@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight, AlertTriangle, ShieldAlert, ChevronLeft } from "lucide-react";
+import { Save, RefreshCw, Info, HelpCircle, Plus, X, Smartphone, QrCode, ArrowRight, AlertTriangle, ShieldAlert, ChevronLeft, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRevenueSettings } from "@/hooks/useRevenueData";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -228,7 +229,7 @@ const RevenueSettings = () => {
   const [rulesUnlocked, setRulesUnlocked] = useState(false);
   const [searchParams] = useSearchParams();
   const [togglingNumber, setTogglingNumber] = useState<string | null>(null);
-
+  const [disconnectingNumber, setDisconnectingNumber] = useState<string | null>(null);
   const { numbers, setNumbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
   const userPlan = profile?.plan?.toLowerCase() || "free";
   const planMaxNumbers = PLAN_LIMITS[userPlan] || 1;
@@ -355,6 +356,43 @@ const RevenueSettings = () => {
       toast.error("Erro: " + err.message);
     } finally {
       setTogglingNumber(null);
+    }
+  };
+
+  const handleDisconnectNumber = async (numberId: string) => {
+    const number = numbers.find(n => n.id === numberId);
+    if (!number) return;
+    
+    setDisconnectingNumber(numberId);
+    try {
+      if (number.instance_name) {
+        await supabase.functions.invoke('evolution-disconnect', {
+          body: { 
+            instanceName: number.instance_name,
+            numberId,
+            deleteInstance: false
+          },
+        });
+      }
+      
+      await supabase
+        .from('whatsapp_numbers')
+        .update({ 
+          is_connected: false,
+          phone_number: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numberId);
+      
+      setNumbers(numbers.map(n => 
+        n.id === numberId ? { ...n, is_connected: false, phone_number: null } : n
+      ));
+      fetchNumbers();
+      toast.success("Número desconectado");
+    } catch (err: any) {
+      toast.error("Erro ao desconectar: " + err.message);
+    } finally {
+      setDisconnectingNumber(null);
     }
   };
 
@@ -559,6 +597,32 @@ const RevenueSettings = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
+                          {num.is_connected ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs gap-1"
+                              disabled={disconnectingNumber === num.id}
+                              onClick={() => handleDisconnectNumber(num.id)}
+                            >
+                              {disconnectingNumber === num.id ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <WifiOff size={12} />
+                              )}
+                              Desconectar
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:text-primary hover:bg-primary/10 h-7 px-2 text-xs gap-1"
+                              onClick={() => setShowNumbersManager(true)}
+                            >
+                              <Wifi size={12} />
+                              Reconectar
+                            </Button>
+                          )}
                           <Badge variant="outline" className={`text-[10px] ${num.is_connected ? "border-primary/30 text-primary" : "border-destructive/30 text-destructive"}`}>
                             {num.is_connected ? "Conectado" : "Desconectado"}
                           </Badge>
