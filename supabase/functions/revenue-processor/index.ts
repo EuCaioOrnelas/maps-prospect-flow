@@ -285,6 +285,23 @@ serve(async (req) => {
         );
       }
 
+      // 0. Check if number is enabled for Revenue analysis
+      if (number_instance_id) {
+        const { data: numConfig } = await supabase
+          .from("revenue_number_config")
+          .select("is_enabled")
+          .eq("user_id", user_id)
+          .eq("whatsapp_number_id", number_instance_id)
+          .maybeSingle();
+
+        if (!numConfig || !numConfig.is_enabled) {
+          return new Response(
+            JSON.stringify({ success: false, skipped: true, reason: "Number not enabled for Revenue analysis" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       // 1. Upsert revenue_lead
       const { data: existingLead } = await supabase
         .from("revenue_leads")

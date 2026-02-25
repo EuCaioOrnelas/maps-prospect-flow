@@ -227,10 +227,25 @@ const RevenueSettings = () => {
   const [showNumbersManager, setShowNumbersManager] = useState(false);
   const [rulesUnlocked, setRulesUnlocked] = useState(false);
   const [searchParams] = useSearchParams();
+  const [togglingNumber, setTogglingNumber] = useState<string | null>(null);
 
   const { numbers, setNumbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
   const userPlan = profile?.plan?.toLowerCase() || "free";
   const planMaxNumbers = PLAN_LIMITS[userPlan] || 1;
+
+  // Fetch revenue number configs
+  const { data: numberConfigs, refetch: refetchConfigs } = useQuery({
+    queryKey: ["revenue-number-config", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("revenue_number_config")
+        .select("*")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   // Default tab from URL param
   const defaultTab = searchParams.get("tab") || "general";
@@ -314,6 +329,32 @@ const RevenueSettings = () => {
       toast.error("Erro: " + err.message);
     } finally {
       setSeeding(false);
+    }
+  };
+
+  const handleToggleRevenueNumber = async (numberId: string, currentEnabled: boolean) => {
+    if (!user) return;
+    setTogglingNumber(numberId);
+    try {
+      const existing = (numberConfigs || []).find((c: any) => c.whatsapp_number_id === numberId);
+      if (existing) {
+        const { error } = await supabase
+          .from("revenue_number_config")
+          .update({ is_enabled: !currentEnabled } as any)
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("revenue_number_config")
+          .insert({ user_id: user.id, whatsapp_number_id: numberId, is_enabled: true } as any);
+        if (error) throw error;
+      }
+      refetchConfigs();
+      toast.success(!currentEnabled ? "Número ativado para Revenue" : "Número desativado para Revenue");
+    } catch (err: any) {
+      toast.error("Erro: " + err.message);
+    } finally {
+      setTogglingNumber(null);
     }
   };
 
@@ -504,22 +545,51 @@ const RevenueSettings = () => {
               </div>
 
               <div className="grid gap-3">
-                {numbers.map((num) => (
-                  <Card key={num.id} className="bg-card border-border/50">
-                    <CardContent className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${num.is_connected ? "bg-primary" : "bg-destructive"}`} />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{num.name}</p>
-                          <p className="text-xs text-muted-foreground">{num.phone_number || "Sem número detectado"}</p>
+                {numbers.map((num) => {
+                  const config = (numberConfigs || []).find((c: any) => c.whatsapp_number_id === num.id);
+                  const isEnabled = config?.is_enabled || false;
+                  return (
+                    <Card key={num.id} className={cn("bg-card border-border/50 transition-colors", isEnabled && "border-primary/30 bg-primary/[0.02]")}>
+                      <CardContent className="py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${num.is_connected ? "bg-primary" : "bg-destructive"}`} />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{num.name}</p>
+                            <p className="text-xs text-muted-foreground">{num.phone_number || "Sem número detectado"}</p>
+                          </div>
                         </div>
-                      </div>
-                      <Badge variant="outline" className={`text-[10px] ${num.is_connected ? "border-primary/30 text-primary" : "border-destructive/30 text-destructive"}`}>
-                        {num.is_connected ? "Conectado" : "Desconectado"}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className={`text-[10px] ${num.is_connected ? "border-primary/30 text-primary" : "border-destructive/30 text-destructive"}`}>
+                            {num.is_connected ? "Conectado" : "Desconectado"}
+                          </Badge>
+                          <div className="flex items-center gap-2 pl-3 border-l border-border/40">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1.5">
+                                  <Switch
+                                    checked={isEnabled}
+                                    disabled={togglingNumber === num.id}
+                                    onCheckedChange={() => handleToggleRevenueNumber(num.id, isEnabled)}
+                                  />
+                                  <span className={cn("text-[10px] font-medium", isEnabled ? "text-primary" : "text-muted-foreground")}>
+                                    {isEnabled ? "Ativo" : "Inativo"}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[240px]">
+                                <p className="text-xs">
+                                  {isEnabled
+                                    ? "Este número está sendo analisado pela Revenue. Mensagens recebidas geram score e intenção."
+                                    : "Este número está ignorado pela Revenue. Ative para começar a analisar mensagens."}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
