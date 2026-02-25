@@ -276,6 +276,9 @@ function isValidRevenuePhone(phone: string): boolean {
   // Bloqueia placeholders clássicos e sequências artificiais
   if (/^(\d)\1{7}$/.test(subscriber)) return false;
   if (["12345678", "87654321", "01234567"].includes(subscriber)) return false;
+  if (subscriber.startsWith("9999")) return false;
+  if (/(0000|1234|4321)/.test(subscriber)) return false;
+  if (subscriber.endsWith("0000") || subscriber.endsWith("0001") || subscriber.endsWith("0002")) return false;
 
   return true;
 }
