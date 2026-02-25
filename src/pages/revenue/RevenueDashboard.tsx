@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatPhoneShort } from "@/lib/phoneUtils";
 import {
   Flame,
   AlertTriangle,
@@ -436,8 +437,8 @@ const RevenueDashboard = () => {
                         {idx + 1}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {lead.phone_e164}
+                        <p className="text-sm font-medium text-foreground font-mono">
+                          {formatPhoneShort(lead.phone_e164)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Score: {lead.score_total} • {lead.recommendedAction}
