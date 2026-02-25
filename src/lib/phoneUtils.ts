@@ -107,6 +107,13 @@ export const isValidPhoneNumber = (phone: string): boolean => {
 export const isLandlinePhone = (phone: string): boolean => {
   const digits = phone.replace(/\D/g, '');
   
+  // Only apply landline detection for Brazilian numbers
+  const isBrazilian =
+    (digits.startsWith('55') && digits.length >= 12 && digits.length <= 13) ||
+    (!digits.startsWith('55') && digits.length >= 10 && digits.length <= 11);
+
+  if (!isBrazilian) return false; // International numbers: never flag as landline
+
   // Remove country code if present
   let localNumber = digits;
   if (digits.startsWith('55') && digits.length >= 12) {
@@ -114,21 +121,18 @@ export const isLandlinePhone = (phone: string): boolean => {
   }
   
   // Brazilian landline: 10 digits (DDD + 8 digit number)
-  // The number after DDD does NOT start with 9
   if (localNumber.length === 10) {
     const afterDDD = localNumber.slice(2);
-    // If it starts with 9, it's likely an old mobile format
     if (!afterDDD.startsWith('9')) {
-      return true; // Landline
+      return true;
     }
   }
   
   // Mobile: 11 digits, number after DDD starts with 9
   if (localNumber.length === 11) {
     const afterDDD = localNumber.slice(2);
-    // If it doesn't start with 9, it might be invalid or landline with extra digit
     if (!afterDDD.startsWith('9')) {
-      return true; // Likely not a valid mobile
+      return true;
     }
   }
   
@@ -190,7 +194,7 @@ export const validateAndFormatPhone = (phone: string): {
   isLandline: boolean;
 } => {
   const digits = String(phone).replace(/\D/g, '');
-  const isValid = digits.length >= 10 && digits.length <= 13 && !digits.startsWith('120363');
+  const isValid = digits.length >= 10 && digits.length <= 15 && !digits.startsWith('120363');
   const isLandline = isLandlinePhone(digits);
   
   return { 
