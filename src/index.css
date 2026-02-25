@@ -174,6 +174,48 @@
       0 0 0 0.5px hsl(158 72% 38% / 0.04) inset;
   }
 
+  /* Revenue Dashboard tokens */
+  .revenue-bg {
+    background: linear-gradient(180deg, hsl(220 22% 5%) 0%, hsl(220 20% 7%) 100%);
+  }
+
+  .rv-card {
+    background: hsl(220 18% 8%);
+    border: 1px solid hsl(0 0% 100% / 0.04);
+    box-shadow: 0 6px 24px hsl(0 0% 0% / 0.35);
+    transition: border-color 0.2s ease;
+  }
+
+  .rv-card:hover {
+    border-color: hsl(0 0% 100% / 0.08);
+  }
+
+  .rv-card-hero {
+    background: linear-gradient(168deg, hsl(220 18% 9.5%) 0%, hsl(220 20% 6.5%) 100%);
+  }
+
+  .rv-glow-green {
+    box-shadow: 0 6px 24px hsl(0 0% 0% / 0.35), 0 0 40px -8px hsl(142 71% 45% / 0.15);
+    border-color: hsl(142 71% 45% / 0.12);
+  }
+
+  .rv-glow-red {
+    box-shadow: 0 6px 24px hsl(0 0% 0% / 0.35), 0 0 40px -8px hsl(0 72% 51% / 0.12);
+    border-color: hsl(0 72% 51% / 0.2);
+  }
+
+  .rv-border-red {
+    border-color: hsl(0 72% 51% / 0.15);
+  }
+
+  .rv-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(var(--muted-foreground));
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
