@@ -74,23 +74,11 @@ const RevenueSimulator = () => {
       </div>
 
       {/* Results comparison */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="bg-card border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign size={14} /> Receita Estimada Base
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{fmt(receitaAtual)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Projeção com taxas padrão</p>
-          </CardContent>
-        </Card>
-
+      <div className="grid md:grid-cols-2 gap-4">
         <Card className={cn("border-border/50", sim ? "bg-primary/5 border-primary/30" : "bg-card")}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp size={14} /> Receita Simulada
+              <TrendingUp size={14} /> Receita Projetada
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -102,7 +90,7 @@ const RevenueSimulator = () => {
         <Card className={cn("border-border/50", diff > 0 ? "bg-primary/5 border-primary/30" : diff < 0 ? "bg-destructive/5 border-destructive/30" : "bg-card")}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              {diff >= 0 ? <TrendingUp size={14} /> : <AlertTriangle size={14} />} Diferença
+              {diff >= 0 ? <TrendingUp size={14} /> : <AlertTriangle size={14} />} Diferença vs Base
             </CardTitle>
           </CardHeader>
           <CardContent>
