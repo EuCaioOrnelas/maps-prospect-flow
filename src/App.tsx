@@ -56,6 +56,10 @@ const RevenueLeadDetail = lazy(() => import("./pages/revenue/RevenueLeadDetail")
 const RevenueNumbers = lazy(() => import("./pages/revenue/RevenueNumbers"));
 const RevenueInsights = lazy(() => import("./pages/revenue/RevenueInsights"));
 const RevenueSettings = lazy(() => import("./pages/revenue/RevenueSettings"));
+const RevenueSimulator = lazy(() => import("./pages/revenue/RevenueSimulator"));
+const RevenueTeam = lazy(() => import("./pages/revenue/RevenueTeam"));
+const RevenueTrends = lazy(() => import("./pages/revenue/RevenueTrends"));
+const RevenueReport = lazy(() => import("./pages/revenue/RevenueReport"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -255,6 +259,10 @@ const App = () => (
                   <Route path="leads/:id" element={<RevenueLeadDetail />} />
                   <Route path="numbers" element={<RevenueNumbers />} />
                   <Route path="insights" element={<RevenueInsights />} />
+                  <Route path="simulator" element={<RevenueSimulator />} />
+                  <Route path="trends" element={<RevenueTrends />} />
+                  <Route path="team" element={<RevenueTeam />} />
+                  <Route path="report" element={<RevenueReport />} />
                   <Route path="settings" element={<RevenueSettings />} />
                 </Route>
                 {/* Explicit 404 route */}

@@ -8,6 +8,10 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  Calculator,
+  BarChart3,
+  UserCheck,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -16,8 +20,12 @@ import logoIconNew from "@/assets/logo-icon-new.png";
 const navItems = [
   { title: "Painel Geral", url: "/revenue", icon: LayoutDashboard },
   { title: "Leads", url: "/revenue/leads", icon: Users },
-  { title: "Números", url: "/revenue/numbers", icon: Smartphone },
+  { title: "Tendências", url: "/revenue/trends", icon: BarChart3 },
   { title: "Projeções", url: "/revenue/insights", icon: TrendingUp },
+  { title: "Simulador", url: "/revenue/simulator", icon: Calculator },
+  { title: "Equipe", url: "/revenue/team", icon: UserCheck },
+  { title: "Relatórios", url: "/revenue/report", icon: FileText },
+  { title: "Números", url: "/revenue/numbers", icon: Smartphone },
   { title: "Configurações", url: "/revenue/settings", icon: Settings },
 ];
 
