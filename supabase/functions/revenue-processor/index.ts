@@ -258,15 +258,22 @@ function scoreToBucket(score: number): string {
 function isValidRevenuePhone(phone: string): boolean {
   const digits = String(phone || "").replace(/\D/g, "");
 
-  // Revenue processa contatos WhatsApp em formato E.164 Brasil: 55 + DDD + número
-  if (!digits.startsWith("55") || digits.length < 12 || digits.length > 13) return false;
+  // Revenue aceita apenas WhatsApp BR em E.164: 55 + DDD + 9 dígitos (13 no total)
+  if (!digits.startsWith("55") || digits.length !== 13) return false;
 
-  const local = digits.slice(4); // sem país + DDD
-  if (![8, 9].includes(local.length)) return false;
+  const ddd = digits.slice(2, 4);
+  const local = digits.slice(4); // 9 dígitos
 
-  const subscriber = local.slice(-8);
+  // DDD brasileiro válido (11-99)
+  const dddNum = Number(ddd);
+  if (Number.isNaN(dddNum) || dddNum < 11 || dddNum > 99) return false;
 
-  // Bloqueia placeholders clássicos: 99999999, 00000000, sequências triviais
+  // Celular brasileiro deve iniciar com 9 após DDD
+  if (local.length !== 9 || !local.startsWith("9")) return false;
+
+  const subscriber = local.slice(1); // últimos 8 dígitos
+
+  // Bloqueia placeholders clássicos e sequências artificiais
   if (/^(\d)\1{7}$/.test(subscriber)) return false;
   if (["12345678", "87654321", "01234567"].includes(subscriber)) return false;
 
