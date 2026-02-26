@@ -130,22 +130,27 @@ const Upgrade = () => {
   // Automatic subscription check - runs on mount and polls briefly after returning from checkout/portal
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    let attempts = 0;
-    const maxAttempts = isFromCheckout ? 24 : 1; // up to 2 minutes after checkout
+    let cancelled = false;
 
     const checkSubscription = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
 
         console.log("[Upgrade] Checking subscription status...");
         const response = await supabase.functions.invoke("check-subscription");
+        if (cancelled) return;
 
         if (response.data && !response.error) {
           console.log("[Upgrade] Subscription check result:", response.data);
-          await refreshProfile();
 
-          // If the backend reports a different plan, stop polling and clear the checkout flag
+          // Só sincroniza perfil quando necessário para evitar loop de re-render
+          if (isFromCheckout || (response.data.plan && response.data.plan !== currentPlan)) {
+            await refreshProfile();
+          }
+
           if (isFromCheckout && response.data.plan && response.data.plan !== currentPlan) {
             toast({
               title: "🎉 Plano atualizado!",
@@ -159,10 +164,12 @@ const Upgrade = () => {
       }
     };
 
-    // Initial check
     checkSubscription();
 
     if (isFromCheckout) {
+      let attempts = 0;
+      const maxAttempts = 24; // até 2 minutos
+
       intervalId = setInterval(() => {
         attempts += 1;
         if (attempts >= maxAttempts) {
@@ -175,9 +182,8 @@ const Upgrade = () => {
     }
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
     };
   }, [refreshProfile, isFromCheckout, currentPlan, toast, navigate]);
 
