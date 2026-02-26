@@ -273,15 +273,6 @@ const UpgradePromo = () => {
 
         <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-4 relative">
           <Flame className="h-5 w-5 text-yellow-300 shrink-0" />
-          {!expired && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="shrink-0"
-            >
-              <Clock className="h-6 w-6 text-white" />
-            </motion.div>
-          )}
           {!expired ? (
             <>
               <span className="text-white text-sm font-semibold hidden sm:inline">
@@ -290,13 +281,25 @@ const UpgradePromo = () => {
               <span className="text-sm text-white font-semibold sm:hidden">
                 50% OFF expira em:
               </span>
-              <motion.span
-                className={`font-mono text-2xl sm:text-3xl font-black text-white tabular-nums ${isUrgent ? "text-yellow-300" : ""}`}
-                animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              >
-                {formatTime(timeLeft)}
-              </motion.span>
+              <div className="flex items-center gap-2">
+                <motion.span
+                  className={`font-mono text-2xl sm:text-3xl font-black text-white tabular-nums ${isUrgent ? "text-yellow-300" : ""}`}
+                  animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                >
+                  {formatTime(timeLeft)}
+                </motion.span>
+                <div className="relative h-7 w-7 shrink-0">
+                  <Clock className="h-7 w-7 text-white absolute inset-0" />
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div className="w-[1.5px] h-2.5 bg-white rounded-full origin-bottom" style={{ marginBottom: '2px' }} />
+                  </motion.div>
+                </div>
+              </div>
             </>
           ) : (
             <div className="flex items-center gap-2">
