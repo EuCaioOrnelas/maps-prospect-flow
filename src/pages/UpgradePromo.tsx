@@ -259,7 +259,7 @@ const UpgradePromo = () => {
       {/* Sticky Timer Bar */}
       <motion.div
         className="sticky top-0 z-50 overflow-hidden"
-        style={{ background: "linear-gradient(to right, hsl(158 72% 32%), hsl(170 65% 28%))" }}
+        style={{ background: "linear-gradient(to right, hsl(25 95% 53%), hsl(15 90% 50%))" }}
         initial={{ y: -60 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20 }}
@@ -272,7 +272,7 @@ const UpgradePromo = () => {
         />
 
         <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-4 relative">
-          <Flame className="h-5 w-5 text-emerald-200 shrink-0" />
+          <Flame className="h-5 w-5 text-yellow-300 shrink-0" />
           {!expired ? (
             <>
               <span className="text-white text-sm font-semibold hidden sm:inline">
@@ -400,10 +400,10 @@ const UpgradePromo = () => {
                 {/* Pricing with animation */}
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base text-muted-foreground line-through decoration-destructive decoration-2">
+                    <span className="text-base text-muted-foreground line-through decoration-orange-400 decoration-2">
                       R$ {plan.price}
                     </span>
-                    <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-orange-500/15 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">
                       -50%
                     </span>
                   </div>
