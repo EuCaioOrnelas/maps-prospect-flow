@@ -288,6 +288,7 @@ const UpgradePromo = () => {
                   transition={{ duration: 0.5, repeat: Infinity }}
                 >
                   {formatTime(timeLeft)}
+                  <span className="text-sm font-semibold opacity-80 ml-0.5">min</span>
                 </motion.span>
                 <motion.div
                   className="shrink-0"
