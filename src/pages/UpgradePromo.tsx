@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
+import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Crown, Check, Sparkles, Loader2, Shield, Clock, CreditCard,
@@ -116,7 +117,6 @@ const AnimatedPrice = ({ from, to, prefix = "R$ " }: { from: number; to: number;
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setValue(Math.round(from + (to - from) * eased));
       if (progress < 1) raf = requestAnimationFrame(animate);
@@ -148,14 +148,12 @@ const UpgradePromo = () => {
 
   const coupon = searchParams.get("coupon");
 
-  // Guard: only accessible with valid coupon
   useEffect(() => {
     if (coupon !== COUPON_CODE) {
       navigate("/upgrade", { replace: true });
     }
   }, [coupon, navigate]);
 
-  // Timer from localStorage (shared with popup)
   useEffect(() => {
     const savedStart = localStorage.getItem("promo_timer_start");
     if (savedStart) {
@@ -186,7 +184,6 @@ const UpgradePromo = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Trigger discount animation on mount
   useEffect(() => {
     const timeout = setTimeout(() => setAnimateDiscount(true), 600);
     return () => clearTimeout(timeout);
@@ -248,12 +245,12 @@ const UpgradePromo = () => {
       {/* Background decorations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          className="absolute top-20 -left-32 w-96 h-96 rounded-full bg-orange-500/5 blur-3xl"
+          className="absolute top-20 -left-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl"
           animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-red-500/5 blur-3xl"
+          className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl"
           animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -261,7 +258,8 @@ const UpgradePromo = () => {
 
       {/* Sticky Timer Bar */}
       <motion.div
-        className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-orange-500 overflow-hidden"
+        className="sticky top-0 z-50 overflow-hidden"
+        style={{ background: "linear-gradient(to right, hsl(158 72% 32%), hsl(170 65% 28%))" }}
         initial={{ y: -60 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20 }}
@@ -274,7 +272,7 @@ const UpgradePromo = () => {
         />
 
         <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-4 relative">
-          <Flame className="h-5 w-5 text-yellow-300 shrink-0" />
+          <Flame className="h-5 w-5 text-emerald-200 shrink-0" />
           {!expired ? (
             <>
               <span className="text-white text-sm font-semibold hidden sm:inline">
@@ -315,7 +313,12 @@ const UpgradePromo = () => {
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-sm font-semibold text-orange-400">
+          {/* Logo */}
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" asLink={false} />
+          </div>
+
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 text-sm font-semibold text-primary">
             <Sparkles className="h-4 w-4" />
             Oferta exclusiva — Válida apenas agora
           </div>
@@ -323,7 +326,7 @@ const UpgradePromo = () => {
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-black text-foreground leading-tight">
             Todos os planos com{" "}
             <motion.span
-              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500"
+              className="inline-block text-primary"
               animate={animateDiscount ? { scale: [1, 1.15, 1] } : {}}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
@@ -332,7 +335,7 @@ const UpgradePromo = () => {
           </h1>
 
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Aproveite o desconto especial no primeiro mês. O cupom <span className="font-mono font-bold text-orange-400">{COUPON_CODE}</span> já está aplicado automaticamente.
+            Aproveite o desconto especial no primeiro mês. O cupom <span className="font-mono font-bold text-primary">{COUPON_CODE}</span> já está aplicado automaticamente.
           </p>
         </motion.div>
       </div>
@@ -353,14 +356,15 @@ const UpgradePromo = () => {
                 transition={{ delay: 0.2 + index * 0.15, type: "spring", damping: 20 }}
                 className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 flex flex-col h-full ${
                   plan.popular
-                    ? "border-2 border-orange-500/60 shadow-[0_0_40px_-10px_rgba(249,115,22,0.3)] bg-gradient-to-b from-card to-orange-500/5"
+                    ? "border-2 border-primary/60 shadow-[0_0_40px_-10px_hsl(158_72%_38%_/_0.3)] bg-gradient-to-b from-card to-primary/5"
                     : "glass border border-border/50"
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <motion.div
-                      className="flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap shadow-lg"
+                      className="flex items-center gap-1 text-white px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap shadow-lg"
+                      style={{ background: "linear-gradient(to right, hsl(158 72% 38%), hsl(170 65% 32%))" }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
@@ -372,7 +376,8 @@ const UpgradePromo = () => {
 
                 {/* 50% OFF Badge */}
                 <motion.div
-                  className="absolute -top-3 -right-3 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-500/30"
+                  className="absolute -top-3 -right-3 flex items-center justify-center w-14 h-14 rounded-full shadow-lg shadow-primary/30"
+                  style={{ background: "linear-gradient(135deg, hsl(158 72% 38%), hsl(170 65% 28%))" }}
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.5 + index * 0.1, type: "spring", damping: 12 }}
@@ -384,8 +389,8 @@ const UpgradePromo = () => {
 
                 <div className="mb-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/15">
-                      <plan.icon className="h-5 w-5 text-orange-400" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary" />
                     </div>
                     <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground">{plan.name}</h3>
                   </div>
@@ -395,17 +400,17 @@ const UpgradePromo = () => {
                 {/* Pricing with animation */}
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base text-muted-foreground line-through decoration-red-400 decoration-2">
+                    <span className="text-base text-muted-foreground line-through decoration-destructive decoration-2">
                       R$ {plan.price}
                     </span>
-                    <span className="bg-orange-500/15 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
                       -50%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
                     <motion.span
-                      className="font-display text-4xl sm:text-5xl font-black text-orange-400"
+                      className="font-display text-4xl sm:text-5xl font-black text-primary"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -418,7 +423,7 @@ const UpgradePromo = () => {
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <motion.p
-                    className="text-sm text-emerald-400 font-semibold mt-1"
+                    className="text-sm text-primary font-semibold mt-1"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.2 + index * 0.1 }}
@@ -433,7 +438,7 @@ const UpgradePromo = () => {
                 <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm">
-                      <Check size={16} className="text-orange-400 flex-shrink-0 mt-0.5" />
+                      <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{feature}</span>
                     </li>
                   ))}
@@ -444,8 +449,8 @@ const UpgradePromo = () => {
                     size="lg"
                     className={`w-full font-bold text-base h-12 ${
                       plan.popular
-                        ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg shadow-orange-500/25 border-0"
-                        : "bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20"
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 border-0"
+                        : "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20"
                     }`}
                     disabled={isLoading || expired}
                     onClick={() => handleUpgrade(plan.key)}
@@ -483,8 +488,8 @@ const UpgradePromo = () => {
             { icon: CreditCard, title: "Garantia 7 dias", desc: "Devolução sem burocracia" },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/10 shrink-0">
-                <Icon className="h-5 w-5 text-orange-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                <Icon className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="font-semibold text-foreground text-sm">{title}</p>
@@ -507,7 +512,7 @@ const UpgradePromo = () => {
             "Seus dados e campanhas continuam ativos",
           ].map((text) => (
             <div key={text} className="flex items-center gap-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
               <span className="text-xs text-muted-foreground">{text}</span>
             </div>
           ))}
@@ -515,7 +520,7 @@ const UpgradePromo = () => {
 
         <p className="text-center text-muted-foreground mt-10 text-sm">
           Dúvidas? Entre em{" "}
-          <button onClick={() => navigate("/contato")} className="text-orange-400 hover:underline">
+          <button onClick={() => navigate("/contato")} className="text-primary hover:underline">
             contato com nosso suporte
           </button>.
         </p>
