@@ -47,6 +47,7 @@ const AgentReports = lazy(() => import("./pages/AgentReports"));
 const Consultoria = lazy(() => import("./pages/Consultoria"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const ProductionTests = lazy(() => import("./pages/ProductionTests"));
+const UpgradePromo = lazy(() => import("./pages/UpgradePromo"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
@@ -102,6 +103,7 @@ const App = () => (
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/seguranca-faq" element={<SecurityFAQ />} />
                 <Route path="/upgrade" element={<Upgrade />} />
+                <Route path="/upgrade-promo" element={<UpgradePromo />} />
                 <Route path="/checkout-success" element={<CheckoutSuccess />} />
                 <Route path="/checkout-failed" element={<CheckoutFailed />} />
                 <Route path="/contato" element={<Contact />} />
