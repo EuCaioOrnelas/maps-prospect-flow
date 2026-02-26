@@ -282,19 +282,12 @@ const UpgradePromo = () => {
                 50% OFF expira em:
               </span>
               <motion.span
-                className={`font-mono text-xl font-black text-white tabular-nums ${isUrgent ? "text-yellow-300" : ""}`}
+                className={`font-mono text-2xl sm:text-3xl font-black text-white tabular-nums ${isUrgent ? "text-yellow-300" : ""}`}
                 animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                 transition={{ duration: 0.5, repeat: Infinity }}
               >
                 {formatTime(timeLeft)}
               </motion.span>
-              <div className="hidden sm:block w-32 h-1.5 rounded-full bg-black/20 overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full ${isUrgent ? "bg-yellow-300" : "bg-white/70"}`}
-                  style={{ width: `${progressPct}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
             </>
           ) : (
             <div className="flex items-center gap-2">
