@@ -272,12 +272,7 @@ const UpgradePromo = () => {
         />
 
         <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-4 relative">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <Clock className="h-6 w-6 text-yellow-300 shrink-0" />
-          </motion.div>
+          <Flame className="h-5 w-5 text-yellow-300 shrink-0" />
           {!expired ? (
             <>
               <span className="text-white text-sm font-semibold hidden sm:inline">
