@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,7 @@ const Signup = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const isSubmittingRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUp, user } = useAuth();
@@ -94,6 +95,9 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Guard against double submission
+    if (isSubmittingRef.current || isLoading) return;
     
     if (!acceptedTerms) {
       toast({
@@ -113,12 +117,14 @@ const Signup = () => {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
 
     const { error } = await signUp(email, password, name);
 
     if (error) {
       setIsLoading(false);
+      isSubmittingRef.current = false;
       const { title, description } = getSignupErrorMessage(error);
       toast({ title, description, variant: "destructive" });
       return;
@@ -134,6 +140,7 @@ const Signup = () => {
     // Show email verification dialog
     setShowEmailVerification(true);
     setIsLoading(false);
+    // Note: don't reset isSubmittingRef here - prevent re-submission after success
   };
 
   const handleRetry = () => {
@@ -142,6 +149,7 @@ const Signup = () => {
     setPassword("");
     setName("");
     setAcceptedTerms(false);
+    isSubmittingRef.current = false;
   };
 
   const benefits = [
