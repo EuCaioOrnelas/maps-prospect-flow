@@ -289,26 +289,13 @@ const UpgradePromo = () => {
                 >
                   {formatTime(timeLeft)}
                 </motion.span>
-                <div className="relative h-7 w-7 shrink-0">
-                  {/* Clock face - circle only */}
-                  <svg className="h-7 w-7 text-white absolute inset-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    {/* Fixed minute hand */}
-                    <line x1="12" y1="12" x2="12" y2="6" />
-                    {/* Fixed hour hand */}
-                    <line x1="12" y1="12" x2="15.5" y2="12" />
-                  </svg>
-                  {/* Spinning seconds hand */}
-                  <motion.div
-                    className="absolute inset-0"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                  >
-                    <svg viewBox="0 0 24 24" className="h-7 w-7">
-                      <line x1="12" y1="12" x2="12" y2="4" stroke="hsl(45, 100%, 70%)" strokeWidth="1" strokeLinecap="round" />
-                    </svg>
-                  </motion.div>
-                </div>
+                <motion.div
+                  className="shrink-0"
+                  animate={{ rotate: [0, 0, 360] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", times: [0, 0.3, 1] }}
+                >
+                  <Clock className="h-7 w-7 text-white" />
+                </motion.div>
               </div>
             </>
           ) : (
