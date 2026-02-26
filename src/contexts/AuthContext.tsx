@@ -167,23 +167,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const data = await fetchProfile(session.user.id);
-        setProfile(data);
-        setLoading(false);
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
 
-        // Sync on initial load
-        setTimeout(() => {
-          syncAccountState(session.user.id, 'initial');
-        }, 500);
-      } else {
+        if (session?.user) {
+          const data = await fetchProfile(session.user.id);
+          setProfile(data);
+
+          // Sync on initial load
+          setTimeout(() => {
+            syncAccountState(session.user.id, 'initial');
+          }, 500);
+        }
+      } catch (error) {
+        console.error('[AuthContext] Initial session load failed:', error);
+      } finally {
         setLoading(false);
       }
-    });
+    })();
 
     // Periodic sync (keeps monthly reset working even if user stays logged-in for long time)
     const intervalId = window.setInterval(async () => {
