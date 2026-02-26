@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import Upgrade from "./pages/Upgrade";
 
 // Lazy load all other pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -24,7 +25,6 @@ const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Upgrade = lazy(() => import("./pages/Upgrade"));
 const Reports = lazy(() => import("./pages/Reports"));
 const CRMComingSoon = lazy(() => import("./pages/CRMComingSoon"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
