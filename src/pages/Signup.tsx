@@ -140,6 +140,7 @@ const Signup = () => {
     // Show email verification dialog
     setShowEmailVerification(true);
     setIsLoading(false);
+    // Note: don't reset isSubmittingRef here - prevent re-submission after success
   };
 
   const handleRetry = () => {
