@@ -272,7 +272,7 @@ const UpgradePromo = () => {
         />
 
         <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-4 relative">
-          <Flame className="h-5 w-5 text-emerald-200 shrink-0" />
+          <Flame className="h-5 w-5 text-yellow-300 shrink-0" />
           {!expired ? (
             <>
               <span className="text-white text-sm font-semibold hidden sm:inline">
