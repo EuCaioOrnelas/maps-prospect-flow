@@ -206,7 +206,7 @@ const Upgrade = () => {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
       
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail },
+        body: { priceId, guestEmail, couponCode: couponFromUrl || undefined },
       });
 
       if (response.error) {
