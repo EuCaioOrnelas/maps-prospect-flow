@@ -96,6 +96,9 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Guard against double submission
+    if (isSubmittingRef.current || isLoading) return;
+    
     if (!acceptedTerms) {
       toast({
         title: "Termos não aceitos",
@@ -114,6 +117,7 @@ const Signup = () => {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
 
     const { error } = await signUp(email, password, name);
