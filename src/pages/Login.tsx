@@ -61,19 +61,8 @@ const Login = () => {
 
     if (error) {
       setIsLoading(false);
-      let errorMessage = "Erro ao fazer login. Tente novamente.";
-      
-      if (error.message.includes("Invalid login credentials")) {
-        errorMessage = "Email ou senha incorretos.";
-      } else if (error.message.includes("Email not confirmed")) {
-        errorMessage = "Por favor, confirme seu email antes de fazer login.";
-      }
-
-      toast({
-        title: "Erro no login",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      const { title, description } = getLoginErrorMessage(error);
+      toast({ title, description, variant: "destructive" });
       return;
     }
 
