@@ -400,7 +400,7 @@ const UpgradePromo = () => {
                 {/* Pricing with animation */}
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base text-muted-foreground line-through decoration-destructive decoration-2">
+                    <span className="text-base text-muted-foreground line-through decoration-orange-400 decoration-2">
                       R$ {plan.price}
                     </span>
                     <span className="bg-orange-500/15 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">
