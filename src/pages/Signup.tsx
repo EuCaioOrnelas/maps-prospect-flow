@@ -55,7 +55,7 @@ const Signup = () => {
 
     setIsLoading(true);
 
-    const { error, data } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name);
 
     if (error) {
       setIsLoading(false);
