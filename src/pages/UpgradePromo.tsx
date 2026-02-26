@@ -259,7 +259,7 @@ const UpgradePromo = () => {
       {/* Sticky Timer Bar */}
       <motion.div
         className="sticky top-0 z-50 overflow-hidden"
-        style={{ background: "linear-gradient(to right, hsl(158 72% 32%), hsl(170 65% 28%))" }}
+        style={{ background: "linear-gradient(to right, hsl(25 95% 53%), hsl(15 90% 50%))" }}
         initial={{ y: -60 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20 }}
