@@ -81,8 +81,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
   }, [toast]);
 
   const handleGoToUpgrade = () => {
-    onClose();
     navigate(`/upgrade?coupon=${COUPON_CODE}`);
+    setTimeout(() => onClose(), 100);
   };
 
   const time = formatTime(timeLeft);
