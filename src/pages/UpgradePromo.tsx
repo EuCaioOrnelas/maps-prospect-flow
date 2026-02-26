@@ -291,8 +291,8 @@ const UpgradePromo = () => {
                 </motion.span>
                 <motion.div
                   className="shrink-0"
-                  animate={{ rotate: [0, 0, 360] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", times: [0, 0.3, 1] }}
+                  animate={{ rotate: [0, 15, -15, 15, -15, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Clock className="h-7 w-7 text-white" />
                 </motion.div>
