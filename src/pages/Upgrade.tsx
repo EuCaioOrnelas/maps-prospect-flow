@@ -113,6 +113,7 @@ const Upgrade = () => {
   const currentPlan = profile?.plan || "free";
   const isTrialExpired = searchParams.get("expired") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
+  const couponFromUrl = searchParams.get("coupon");
 
   // Check for checkout result
   useEffect(() => {
