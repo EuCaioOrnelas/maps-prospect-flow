@@ -117,69 +117,52 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
 
               {/* === TIMER BANNER === */}
               <motion.div
-                className="relative bg-gradient-to-r from-red-600 via-orange-500 to-red-600 px-4 py-3"
+                className="relative bg-gradient-to-r from-red-600 to-orange-500 px-4 py-4 overflow-hidden"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
+                {/* Shimmer */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
                   animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
                 />
 
                 {!expired ? (
-                  <div className="relative flex flex-col items-center gap-1.5">
-                    <p className="text-[10px] font-bold text-white/80 uppercase tracking-[0.2em]">
-                      Oferta exclusiva após sua 1ª campanha
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <motion.div
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                      >
-                        <Flame className="h-4 w-4 text-yellow-200" />
-                      </motion.div>
-                      <span className="text-sm font-bold text-white">
-                        🔥 50% OFF expira em
-                      </span>
-                      <motion.div
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-                      >
-                        <Flame className="h-4 w-4 text-yellow-200" />
-                      </motion.div>
+                  <div className="relative flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-baseline gap-1">
+                        <motion.span
+                          className="font-mono text-4xl font-black text-white tabular-nums"
+                          animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
+                          transition={{ duration: 0.5, repeat: Infinity }}
+                        >
+                          {time.minutes}
+                        </motion.span>
+                        <motion.span
+                          className="text-3xl font-black text-white/70"
+                          animate={{ opacity: [1, 0.3, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        >
+                          :
+                        </motion.span>
+                        <motion.span
+                          className="font-mono text-4xl font-black text-white tabular-nums"
+                          animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
+                          transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
+                        >
+                          {time.seconds}
+                        </motion.span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <motion.span
-                        className="font-mono text-3xl font-black text-white tabular-nums drop-shadow-lg"
-                        animate={isUrgent ? { scale: [1, 1.08, 1] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity }}
-                      >
-                        {time.minutes}
-                      </motion.span>
-                      <motion.span
-                        className="text-2xl font-black text-yellow-200"
-                        animate={{ opacity: [1, 0.2, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                      >
-                        :
-                      </motion.span>
-                      <motion.span
-                        className="font-mono text-3xl font-black text-white tabular-nums drop-shadow-lg"
-                        animate={isUrgent ? { scale: [1, 1.08, 1] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                      >
-                        {time.seconds}
-                      </motion.span>
-                    </div>
-                    <p className="text-[10px] text-white/60 font-medium">
-                      Depois do tempo, os valores voltam ao normal.
+                    <p className="text-[11px] font-semibold text-white/80 uppercase tracking-widest">
+                      {isUrgent ? "⚠️ Últimos segundos!" : "Oferta expira em breve"}
                     </p>
-                    {/* Progress bar */}
-                    <div className="w-full h-1.5 rounded-full bg-black/30 overflow-hidden mt-0.5">
+                    {/* Thin progress bar */}
+                    <div className="w-3/4 h-1 rounded-full bg-black/20 overflow-hidden">
                       <motion.div
-                        className={`h-full rounded-full ${isUrgent ? "bg-yellow-300" : "bg-white/80"}`}
+                        className={`h-full rounded-full ${isUrgent ? "bg-yellow-300" : "bg-white/70"}`}
                         animate={{ width: `${progressPct}%` }}
                         transition={{ duration: 0.5, ease: "linear" }}
                       />
