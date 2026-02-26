@@ -55,23 +55,12 @@ const Signup = () => {
 
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, name);
+    const { error, data } = await signUp(email, password, name);
 
     if (error) {
       setIsLoading(false);
-      let errorMessage = "Erro ao criar conta. Tente novamente.";
-      
-      if (error.message.includes("User already registered")) {
-        errorMessage = "Este email já está cadastrado. Faça login.";
-      } else if (error.message.includes("Invalid email")) {
-        errorMessage = "Email inválido. Verifique o formato.";
-      }
-
-      toast({
-        title: "Erro no cadastro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      const { title, description } = getSignupErrorMessage(error);
+      toast({ title, description, variant: "destructive" });
       return;
     }
 
