@@ -81,8 +81,12 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
   }, [toast]);
 
   const handleGoToUpgrade = () => {
-    navigate(`/upgrade?coupon=${COUPON_CODE}`);
-    setTimeout(() => onClose(), 100);
+    onClose();
+
+    // Aguarda o fechamento do modal antes de trocar de rota
+    requestAnimationFrame(() => {
+      navigate(`/upgrade?coupon=${encodeURIComponent(COUPON_CODE)}`);
+    });
   };
 
   const time = formatTime(timeLeft);
