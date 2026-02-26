@@ -113,6 +113,7 @@ const Upgrade = () => {
   const currentPlan = profile?.plan || "free";
   const isTrialExpired = searchParams.get("expired") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
+  const couponFromUrl = searchParams.get("coupon");
 
   // Check for checkout result
   useEffect(() => {
@@ -205,7 +206,7 @@ const Upgrade = () => {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
       
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail },
+        body: { priceId, guestEmail, couponCode: couponFromUrl || undefined },
       });
 
       if (response.error) {

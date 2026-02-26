@@ -82,7 +82,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
 
   const handleGoToUpgrade = () => {
     onClose();
-    navigate("/upgrade");
+    navigate(`/upgrade?coupon=${COUPON_CODE}`);
   };
 
   const time = formatTime(timeLeft);
