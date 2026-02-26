@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown, Copy, Check, Clock, Gift, Zap, AlertTriangle, Flame } from "lucide-react";
+import { Crown, Copy, Check, AlertTriangle, Flame, Rocket, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ interface FirstCampaignPromoModalProps {
   onClose: () => void;
 }
 
-const COUPON_CODE = "YOUT50OFF";
+const COUPON_CODE = "50OFF";
 const TIMER_SECONDS = 10 * 60;
 
 export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoModalProps) => {
@@ -89,22 +89,11 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
   const isUrgent = timeLeft <= 120;
   const isWarning = timeLeft <= 300 && timeLeft > 120;
 
-  const timerColor = isUrgent
-    ? "text-red-400"
-    : isWarning
-      ? "text-amber-400"
-      : "text-orange-300";
-
   const progressPct = Math.max(0, (timeLeft / TIMER_SECONDS) * 100);
-  const progressColor = isUrgent
-    ? "bg-red-500"
-    : isWarning
-      ? "bg-amber-500"
-      : "bg-orange-500";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[440px] border-orange-500/40 bg-card p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-[460px] border-orange-500/40 bg-card p-0 overflow-hidden gap-0">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -126,14 +115,13 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 />
               </div>
 
-              {/* === TIMER ON TOP — URGENT BANNER === */}
+              {/* === TIMER BANNER === */}
               <motion.div
                 className="relative bg-gradient-to-r from-red-600 via-orange-500 to-red-600 px-4 py-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
-                {/* Animated shimmer */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
                   animate={{ x: ["-100%", "100%"] }}
@@ -142,6 +130,9 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
 
                 {!expired ? (
                   <div className="relative flex flex-col items-center gap-1.5">
+                    <p className="text-[10px] font-bold text-white/80 uppercase tracking-[0.2em]">
+                      Oferta exclusiva após sua 1ª campanha
+                    </p>
                     <div className="flex items-center gap-2">
                       <motion.div
                         animate={{ scale: [1, 1.3, 1] }}
@@ -149,8 +140,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       >
                         <Flame className="h-4 w-4 text-yellow-200" />
                       </motion.div>
-                      <span className="text-xs font-bold text-white/90 uppercase tracking-wider">
-                        ⚡ Oferta expira em
+                      <span className="text-sm font-bold text-white">
+                        🔥 50% OFF expira em
                       </span>
                       <motion.div
                         animate={{ scale: [1, 1.3, 1] }}
@@ -182,8 +173,11 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                         {time.seconds}
                       </motion.span>
                     </div>
+                    <p className="text-[10px] text-white/60 font-medium">
+                      Depois do tempo, os valores voltam ao normal.
+                    </p>
                     {/* Progress bar */}
-                    <div className="w-full h-1.5 rounded-full bg-black/30 overflow-hidden mt-1">
+                    <div className="w-full h-1.5 rounded-full bg-black/30 overflow-hidden mt-0.5">
                       <motion.div
                         className={`h-full rounded-full ${isUrgent ? "bg-yellow-300" : "bg-white/80"}`}
                         animate={{ width: `${progressPct}%` }}
@@ -199,29 +193,24 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 )}
               </motion.div>
 
-              {/* === HEADER === */}
-              <div className="relative px-6 pt-5 pb-3 text-center">
+              {/* === HEADLINE === */}
+              <div className="relative px-6 pt-5 pb-2 text-center">
                 <motion.div
-                  className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500/20 ring-2 ring-orange-500/40"
+                  className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/20 ring-2 ring-orange-500/40"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", delay: 0.2, damping: 12 }}
                 >
-                  <motion.div
-                    animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  >
-                    <Gift className="h-7 w-7 text-orange-400" />
-                  </motion.div>
+                  <Rocket className="h-6 w-6 text-orange-400" />
                 </motion.div>
 
                 <motion.h2
-                  className="text-xl font-bold text-foreground"
+                  className="text-lg font-bold text-foreground leading-snug"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  🔥 Oportunidade ÚNICA!
+                  Sua primeira campanha foi só o começo.
                 </motion.h2>
                 <motion.p
                   className="mt-1.5 text-sm text-muted-foreground leading-relaxed"
@@ -229,7 +218,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  Essa oferta é <span className="font-bold text-orange-400">exclusiva</span> e só está disponível pelos próximos <span className="font-bold text-orange-400">10 minutos</span>. Depois disso, o desconto será removido permanentemente.
+                  Agora desbloqueie todos os recursos <span className="font-bold text-orange-400">PRO</span> com{" "}
+                  <span className="font-bold text-orange-400">50% OFF</span> no primeiro mês e escale seus resultados imediatamente.
                 </motion.p>
               </div>
 
@@ -255,25 +245,26 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                   <p className="text-sm font-medium text-muted-foreground mt-1.5">
                     em <span className="text-foreground font-semibold">qualquer plano</span>
                   </p>
+                  <p className="text-xs text-orange-400/80 font-semibold mt-2">
+                    Economize até R$ 448,50 no primeiro mês.
+                  </p>
                 </motion.div>
 
-                {/* Coupon */}
+                {/* Coupon — auto-applied */}
                 <motion.div
-                  className="space-y-1.5"
+                  className="space-y-1"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <p className="text-xs text-muted-foreground text-center">
-                    Copie o cupom e use no checkout:
-                  </p>
                   <motion.button
                     onClick={handleCopy}
-                    className="w-full flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-orange-500/40 bg-orange-500/5 px-4 py-3.5 transition-colors hover:border-orange-400 hover:bg-orange-500/10"
+                    className="w-full flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-orange-500/40 bg-orange-500/5 px-4 py-3 transition-colors hover:border-orange-400 hover:bg-orange-500/10"
                     whileTap={{ scale: 0.97 }}
                     whileHover={{ scale: 1.02 }}
                   >
-                    <span className="text-xl font-mono font-black tracking-[0.2em] text-orange-400">
+                    <span className="text-xs text-muted-foreground">Cupom aplicado automaticamente:</span>
+                    <span className="text-base font-mono font-black tracking-[0.15em] text-orange-400">
                       {COUPON_CODE}
                     </span>
                     <motion.div
@@ -283,12 +274,31 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       transition={{ type: "spring", damping: 15 }}
                     >
                       {copied ? (
-                        <Check className="h-5 w-5 text-emerald-500" />
+                        <Check className="h-4 w-4 text-emerald-500" />
                       ) : (
-                        <Copy className="h-5 w-5 text-muted-foreground" />
+                        <Copy className="h-4 w-4 text-muted-foreground" />
                       )}
                     </motion.div>
                   </motion.button>
+                </motion.div>
+
+                {/* Trust signals */}
+                <motion.div
+                  className="flex flex-col gap-1.5 px-1"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.65 }}
+                >
+                  {[
+                    "Recursos PRO liberados instantaneamente",
+                    "Seus dados e campanhas continuam ativos",
+                    "Cancele quando quiser",
+                  ].map((text) => (
+                    <div key={text} className="flex items-center gap-2">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span className="text-xs text-muted-foreground">{text}</span>
+                    </div>
+                  ))}
                 </motion.div>
 
                 {/* CTA */}
@@ -306,7 +316,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       disabled={expired}
                     >
                       <Crown className="h-5 w-5" />
-                      {expired ? "Promoção encerrada" : "Garantir 50% OFF agora"}
+                      {expired ? "Promoção encerrada" : "Desbloquear PRO com 50% OFF"}
                     </Button>
                   </motion.div>
                   <Button
