@@ -149,6 +149,7 @@ const Signup = () => {
     setPassword("");
     setName("");
     setAcceptedTerms(false);
+    isSubmittingRef.current = false;
   };
 
   const benefits = [
