@@ -26,8 +26,8 @@ const getSignupErrorMessage = (error: Error): { title: string; description: stri
 
   if (msg.includes("over_email_send_rate_limit") || msg.includes("rate limit") || msg.includes("after") && msg.includes("seconds")) {
     return {
-      title: "Muitas tentativas",
-      description: "Você tentou criar a conta várias vezes seguidas. Aguarde 30 segundos e tente novamente.",
+      title: "Conta já criada!",
+      description: "Sua conta já foi criada com sucesso! Verifique seu email para confirmar o cadastro. Não esqueça de olhar na pasta de Spam/Lixo eletrônico.",
     };
   }
 
