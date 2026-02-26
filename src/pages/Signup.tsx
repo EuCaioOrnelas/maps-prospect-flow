@@ -124,6 +124,7 @@ const Signup = () => {
 
     if (error) {
       setIsLoading(false);
+      isSubmittingRef.current = false;
       const { title, description } = getSignupErrorMessage(error);
       toast({ title, description, variant: "destructive" });
       return;
