@@ -216,18 +216,21 @@ export const LeadSelector = ({
         
         // Detectar formato: prospecção (com vários campos) ou modelo simples (Nome, Telefone)
         const isProspectionFormat = headers.some((h: string) => 
-          ['Categoria', 'categoria', 'Category', 'Endereço', 'endereco', 'Address'].includes(h)
+          ['Categoria', 'categoria', 'Category', 'category', 'Endereço', 'endereco', 'Address', 'address', 'mapsLink', 'mapslink', 'google_maps_link'].includes(h)
         );
 
         const leads: Lead[] = jsonData.map((row) => {
           let name = '';
           let phone = '';
           
+          // Universal phone detection — try known headers first
+          const phoneKeys = ['Telefone', 'telefone', 'Phone', 'phone', 'Celular', 'celular', 'WhatsApp', 'whatsapp', 'tel', 'Tel'];
+          const nameKeys = ['Nome', 'nome', 'Name', 'name', 'company_name', 'Empresa', 'empresa'];
+
           if (isProspectionFormat) {
             // Formato de prospecção - pegar campos específicos
-            name = row['Nome'] || row['nome'] || row['Name'] || row['name'] || 'Sem nome';
-            phone = row['Telefone'] || row['telefone'] || row['Phone'] || row['phone'] || 
-                   row['Celular'] || row['celular'] || row['WhatsApp'] || row['whatsapp'] || '';
+            name = nameKeys.reduce((acc, k) => acc || row[k], '' as string) || 'Sem nome';
+            phone = phoneKeys.reduce((acc, k) => acc || row[k], '' as string) || '';
           } else {
             // Formato simples - 1ª coluna: Nome, 2ª coluna: Telefone
             const firstHeader = headers[0];
@@ -241,10 +244,10 @@ export const LeadSelector = ({
             
             // Fallback para headers conhecidos
             if (!phone) {
-              phone = row['Telefone'] || row['telefone'] || row['Phone'] || '';
+              phone = phoneKeys.reduce((acc, k) => acc || row[k], '' as string) || '';
             }
             if (name === 'Sem nome') {
-              name = row['Nome'] || row['nome'] || row['Name'] || 'Sem nome';
+              name = nameKeys.reduce((acc, k) => acc || row[k], '' as string) || 'Sem nome';
             }
           }
           

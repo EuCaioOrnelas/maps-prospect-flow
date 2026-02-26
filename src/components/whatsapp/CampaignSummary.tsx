@@ -116,15 +116,21 @@ export const CampaignSummary = ({
         </div>
 
         {/* Selected Number */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+        <div className={`flex items-center justify-between p-4 rounded-lg border ${selectedNumber ? 'bg-muted/50 border-border' : 'bg-destructive/10 border-destructive/30'}`}>
           <div className="flex items-center gap-3">
-            <Smartphone size={18} className="text-primary" />
+            <Smartphone size={18} className={selectedNumber ? "text-primary" : "text-destructive"} />
             <span className="text-muted-foreground">Número WhatsApp</span>
           </div>
           <div className="text-right">
-            <span className="font-medium">{selectedNumber?.name || 'Não selecionado'}</span>
-            {selectedNumber?.phone_number && (
-              <p className="text-xs text-muted-foreground">{selectedNumber.phone_number}</p>
+            {selectedNumber ? (
+              <>
+                <span className="font-medium">{selectedNumber.name}</span>
+                {selectedNumber.phone_number && (
+                  <p className="text-xs text-muted-foreground">{selectedNumber.phone_number}</p>
+                )}
+              </>
+            ) : (
+              <span className="font-medium text-destructive">⚠️ Nenhum número selecionado</span>
             )}
           </div>
         </div>
@@ -213,8 +219,15 @@ export const CampaignSummary = ({
         </div>
       </div>
 
+      {/* No Number Warning */}
+      {!selectedNumber && (
+        <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-center">
+          <span className="text-destructive font-medium">⚠️ Selecione um número de envio nas Configurações antes de iniciar</span>
+        </div>
+      )}
+
       {/* Connection Warning */}
-      {!isScheduled && !isConnected && (
+      {!isScheduled && !isConnected && selectedNumber && (
         <div className="mt-4 p-4 rounded-lg bg-warning/10 border border-warning/20 text-sm text-center">
           <span className="text-warning">⚠️ Conecte seu WhatsApp para iniciar a campanha</span>
         </div>

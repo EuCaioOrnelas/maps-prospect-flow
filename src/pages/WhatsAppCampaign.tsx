@@ -701,7 +701,21 @@ const WhatsAppCampaign = () => {
     setIsScheduled(draft.is_scheduled || false);
     setScheduledDate(draft.scheduled_date ? new Date(draft.scheduled_date) : undefined);
     setScheduledTime(draft.scheduled_time || "09:00");
-    setSelectedNumberId(draft.selected_number_id);
+
+    // Validate that saved number still exists and is connected
+    const savedNumber = numbers.find(n => n.id === draft.selected_number_id && n.is_connected);
+    if (savedNumber) {
+      setSelectedNumberId(draft.selected_number_id);
+    } else {
+      setSelectedNumberId(null);
+      if (draft.selected_number_id) {
+        toast({
+          title: "Número não disponível",
+          description: "O número salvo no rascunho não está mais conectado. Selecione outro nas Configurações.",
+          variant: "destructive",
+        });
+      }
+    }
 
     toast({
       title: "Rascunho carregado",
