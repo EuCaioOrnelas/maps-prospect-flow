@@ -64,11 +64,22 @@ const normalizeBrazilianMobilePhone = (phone: string): CampaignPhoneValidation =
     digits = digits.slice(2);
   }
 
-  if (!digits.startsWith('55') && digits.length > 11) {
-    return { isValid: false, normalized: digits, reason: 'international' };
+  // 11 digits starting with 55 is ambiguous: could be country code + 9 digits (too short)
+  // or DDD 55 (Pelotas/Santa Maria) + 9-digit mobile. Treat as local (DDD 55).
+  const hasCountryCode = digits.startsWith('55') && digits.length >= 13;
+
+  if (!hasCountryCode && digits.length > 11) {
+    // Has some other country code prefix → international
+    if (!digits.startsWith('55')) {
+      return { isValid: false, normalized: digits, reason: 'international' };
+    }
+    // 12 digits starting with 55: country code + 10-digit landline
+    if (digits.length === 12) {
+      return { isValid: false, normalized: digits, reason: 'landline' };
+    }
   }
 
-  const local = digits.startsWith('55') ? digits.slice(2) : digits;
+  const local = hasCountryCode ? digits.slice(2) : digits;
 
   if (local.length !== 11) {
     if (local.length === 10) {
