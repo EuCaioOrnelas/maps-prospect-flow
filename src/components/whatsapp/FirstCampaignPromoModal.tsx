@@ -85,7 +85,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
 
     // Aguarda o fechamento do modal antes de trocar de rota
     requestAnimationFrame(() => {
-      navigate(`/upgrade?coupon=${encodeURIComponent(COUPON_CODE)}`);
+      navigate(`/upgrade-promo?coupon=${encodeURIComponent(COUPON_CODE)}`);
     });
   };
 

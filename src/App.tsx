@@ -47,6 +47,7 @@ const AgentReports = lazy(() => import("./pages/AgentReports"));
 const Consultoria = lazy(() => import("./pages/Consultoria"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const ProductionTests = lazy(() => import("./pages/ProductionTests"));
+const UpgradePromo = lazy(() => import("./pages/UpgradePromo"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
