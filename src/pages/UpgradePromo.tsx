@@ -403,7 +403,7 @@ const UpgradePromo = () => {
                     <span className="text-base text-muted-foreground line-through decoration-destructive decoration-2">
                       R$ {plan.price}
                     </span>
-                    <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-orange-500/15 text-orange-400 text-xs font-bold px-2 py-0.5 rounded-full">
                       -50%
                     </span>
                   </div>
