@@ -14,6 +14,66 @@ import { trackSignupCompleted } from "@/hooks/useLandingPageTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 
+const getSignupErrorMessage = (error: Error): { title: string; description: string } => {
+  const msg = error.message?.toLowerCase() || "";
+
+  if (msg.includes("user already registered") || msg.includes("already been registered")) {
+    return {
+      title: "Email já cadastrado",
+      description: "Este email já possui uma conta. Tente fazer login ou use outro email.",
+    };
+  }
+
+  if (msg.includes("over_email_send_rate_limit") || msg.includes("rate limit") || msg.includes("after") && msg.includes("seconds")) {
+    return {
+      title: "Muitas tentativas",
+      description: "Você tentou criar a conta várias vezes seguidas. Aguarde 30 segundos e tente novamente.",
+    };
+  }
+
+  if (msg.includes("invalid email") || msg.includes("invalid_email")) {
+    return {
+      title: "Email inválido",
+      description: "O formato do email está incorreto. Verifique e tente novamente.",
+    };
+  }
+
+  if (msg.includes("password") && (msg.includes("weak") || msg.includes("short") || msg.includes("least"))) {
+    return {
+      title: "Senha muito fraca",
+      description: "A senha precisa ter pelo menos 8 caracteres com letras e números.",
+    };
+  }
+
+  if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed to fetch")) {
+    return {
+      title: "Erro de conexão",
+      description: "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+    };
+  }
+
+  if (msg.includes("timeout") || msg.includes("timed out")) {
+    return {
+      title: "Servidor demorou para responder",
+      description: "O servidor está lento no momento. Tente novamente em alguns segundos.",
+    };
+  }
+
+  if (msg.includes("signup_disabled") || msg.includes("signups not allowed")) {
+    return {
+      title: "Cadastro desativado",
+      description: "O cadastro de novas contas está temporariamente desativado. Tente mais tarde.",
+    };
+  }
+
+  // Fallback genérico com a mensagem técnica para debugging
+  console.error("[Signup Error]", error.message);
+  return {
+    title: "Erro ao criar conta",
+    description: "Algo deu errado. Aguarde alguns segundos e tente novamente. Se o problema persistir, entre em contato com o suporte.",
+  };
+};
+
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -59,19 +119,8 @@ const Signup = () => {
 
     if (error) {
       setIsLoading(false);
-      let errorMessage = "Erro ao criar conta. Tente novamente.";
-      
-      if (error.message.includes("User already registered")) {
-        errorMessage = "Este email já está cadastrado. Faça login.";
-      } else if (error.message.includes("Invalid email")) {
-        errorMessage = "Email inválido. Verifique o formato.";
-      }
-
-      toast({
-        title: "Erro no cadastro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      const { title, description } = getSignupErrorMessage(error);
+      toast({ title, description, variant: "destructive" });
       return;
     }
 

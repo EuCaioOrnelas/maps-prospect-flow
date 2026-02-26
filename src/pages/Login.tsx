@@ -9,6 +9,29 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
 
+const getLoginErrorMessage = (error: Error): { title: string; description: string } => {
+  const msg = error.message?.toLowerCase() || "";
+
+  if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+    return { title: "Credenciais incorretas", description: "Email ou senha incorretos. Verifique e tente novamente." };
+  }
+  if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) {
+    return { title: "Email não confirmado", description: "Você precisa confirmar seu email antes de fazer login. Verifique sua caixa de entrada e spam." };
+  }
+  if (msg.includes("over_email_send_rate_limit") || msg.includes("rate limit") || (msg.includes("after") && msg.includes("seconds"))) {
+    return { title: "Muitas tentativas", description: "Aguarde 30 segundos antes de tentar novamente." };
+  }
+  if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed to fetch")) {
+    return { title: "Erro de conexão", description: "Verifique sua internet e tente novamente." };
+  }
+  if (msg.includes("user_banned") || msg.includes("blocked")) {
+    return { title: "Conta bloqueada", description: "Sua conta foi bloqueada. Entre em contato com o suporte." };
+  }
+
+  console.error("[Login Error]", error.message);
+  return { title: "Erro no login", description: "Algo deu errado. Tente novamente em alguns segundos." };
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,19 +61,8 @@ const Login = () => {
 
     if (error) {
       setIsLoading(false);
-      let errorMessage = "Erro ao fazer login. Tente novamente.";
-      
-      if (error.message.includes("Invalid login credentials")) {
-        errorMessage = "Email ou senha incorretos.";
-      } else if (error.message.includes("Email not confirmed")) {
-        errorMessage = "Por favor, confirme seu email antes de fazer login.";
-      }
-
-      toast({
-        title: "Erro no login",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      const { title, description } = getLoginErrorMessage(error);
+      toast({ title, description, variant: "destructive" });
       return;
     }
 
