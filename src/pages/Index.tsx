@@ -16,7 +16,6 @@ import { useState, useEffect } from "react";
 
 const Index = () => {
   const [isReady, setIsReady] = useState(false);
-  const [showPromoTest, setShowPromoTest] = useState(false);
   const { trackSignupClick } = useLandingPageTracking('index');
 
   // Wait for fonts and critical assets to load
