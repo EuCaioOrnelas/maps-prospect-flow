@@ -148,8 +148,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 {!expired ? (
                   <div className="relative flex flex-col items-center gap-2">
                     <div className="flex items-center gap-4">
-                      <div className="relative h-8 w-8 shrink-0">
-                        <svg viewBox="0 0 44 44" className="h-8 w-8">
+                      <div className="relative h-9 w-9 shrink-0">
+                        <svg viewBox="0 0 44 44" className="h-9 w-9">
                           <circle cx="22" cy="22" r="20" fill="none" stroke="white" strokeWidth="2" opacity="0.3" />
                           <circle cx="22" cy="22" r="16" fill="none" stroke="white" strokeWidth="1" opacity="0.15" />
                           <line x1="22" y1="22" x2="22" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -157,7 +157,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                         </svg>
                         <motion.svg
                           viewBox="0 0 44 44"
-                          className="absolute inset-0 h-8 w-8"
+                          className="absolute inset-0 h-9 w-9"
                           animate={{ rotate: 360 }}
                           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                         >
