@@ -283,6 +283,30 @@ export default function AIAgents() {
     }
   };
 
+  // If no access, show premium block (after all hooks)
+  if (!hasAccess && !loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+          <BackgroundGlow />
+          <AppSidebar profile={profile} />
+          
+          <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+            <AppHeader profile={profile} />
+            
+            <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+              <PremiumFeatureBlock 
+                featureName="Agentes de IA"
+                description="Automatize sua prospecção com agentes inteligentes que respondem leads automaticamente via WhatsApp. Disponível apenas nos planos pagos."
+                icon={<BotIcon className="h-10 w-10 text-primary" />}
+              />
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
