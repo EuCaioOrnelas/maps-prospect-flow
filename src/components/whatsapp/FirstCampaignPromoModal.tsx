@@ -166,7 +166,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       </div>
                       <div className="flex items-baseline gap-1">
                         <motion.span
-                          className="font-mono text-5xl font-black text-white tabular-nums"
+                           className="font-mono text-[2.5rem] font-black text-white tabular-nums leading-none"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity }}
                         >
