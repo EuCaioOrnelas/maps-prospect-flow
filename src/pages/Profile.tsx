@@ -592,7 +592,54 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Support Card */}
+          {/* Email Preferences Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Notificações por e-mail
+              </CardTitle>
+              <CardDescription>
+                Controle quais e-mails você deseja receber
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Alertas operacionais</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Campanhas iniciadas, números desconectados, falhas
+                  </p>
+                </div>
+                <Switch
+                  checked={transactionalEnabled}
+                  onCheckedChange={(v) => handleEmailPrefChange("transactional_enabled", v)}
+                  disabled={isLoadingEmailPrefs || isSavingEmailPrefs}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <BellOff className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Resumo semanal</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Relatório com métricas da semana enviado toda segunda-feira
+                  </p>
+                </div>
+                <Switch
+                  checked={transactionalEnabled}
+                  onCheckedChange={(v) => handleEmailPrefChange("transactional_enabled", v)}
+                  disabled={isLoadingEmailPrefs || isSavingEmailPrefs}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
