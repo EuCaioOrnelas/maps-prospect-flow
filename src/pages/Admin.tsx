@@ -44,6 +44,7 @@ import {
   Bug,
   Bell,
   FlaskConical,
+  Mail,
   Download,
   ChevronLeft,
   ChevronRight,
