@@ -1244,7 +1244,7 @@ REGRAS OBRIGATÓRIAS:
               // and forward the message for automatic processing
               // This runs for ALL received messages (not from me), regardless of lead existence
               try {
-              const { data: activeAgents } = await supabase
+                const { data: activeAgents } = await supabase
                   .from('ai_agents')
                   .select('id, name, status, objective')
                   .eq('whatsapp_number_id', whatsappNumber.id)
