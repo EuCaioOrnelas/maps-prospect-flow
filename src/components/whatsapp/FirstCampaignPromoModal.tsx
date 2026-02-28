@@ -173,7 +173,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                           {time.minutes}
                         </motion.span>
                         <motion.span
-                          className="text-4xl font-black text-white/70"
+                          className="text-[2.25rem] font-black text-white/70 leading-none"
                           animate={{ opacity: [1, 0.3, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
                         >
