@@ -216,12 +216,19 @@ export const useWhatsAppNumbers = () => {
         return true;
       }
 
-      // IMPORTANT: We no longer mark as disconnected here
-      // Only return true/false for informational purposes
-      // The database state is managed by webhooks only
+      // If evolution-check-status returns false, it already updated the DB
+      // We just need to update local state to reflect the disconnection
       const isReallyConnected = data?.connected === true;
-      console.log(`[useWhatsAppNumbers] Status for ${instanceName}: ${isReallyConnected ? 'connected' : 'not connected (but NOT updating DB)'}`);
-
+      
+      if (!isReallyConnected) {
+        console.log(`[useWhatsAppNumbers] ${instanceName} not connected — updating local state`);
+        setNumbers(prev => prev.map(n => 
+          n.instance_name === instanceName 
+            ? { ...n, is_connected: false, phone_number: null } 
+            : n
+        ));
+      }
+      
       return isReallyConnected;
     } catch (err) {
       console.error('Error verifying connection status:', err);
