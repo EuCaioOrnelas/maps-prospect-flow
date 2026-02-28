@@ -519,6 +519,16 @@ const WhatsAppCampaign = () => {
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
 
+      // Show promo popup for free users on their first campaign (only once)
+      if (isFreePlan && !isTrialExpired && user) {
+        const alreadySeen = localStorage.getItem(`promo_first_campaign_${user.id}`);
+        if (!alreadySeen) {
+          localStorage.setItem(`promo_first_campaign_${user.id}`, "true");
+          // Small delay to let the toast appear first
+          setTimeout(() => setShowPromoModal(true), 800);
+        }
+      }
+
       // Reset form state and redirect immediately
       handleNewCampaign();
       setIsStartingCampaign(false);
