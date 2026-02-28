@@ -1,6 +1,31 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ─── Email notification helper ─────────────────────────────────────────────
+async function sendEmailNotification(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+  emailType: string,
+  payload: Record<string, unknown>,
+  idempotencyKey?: string
+): Promise<void> {
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ user_id: userId, email_type: emailType, payload, idempotency_key: idempotencyKey }),
+    });
+    const data = await res.json();
+    console.log(`[email] ${emailType} -> ${res.ok ? 'sent' : 'failed'}`, data);
+  } catch (e) {
+    console.error(`[email] Failed to send ${emailType}:`, e);
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -286,6 +311,13 @@ serve(async (req) => {
         
         numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'failed', reason: 'Number not found' });
+        
+        // Email: campaign failed
+        sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+          { campaign_name: campaign.name, reason: 'Número WhatsApp não encontrado' },
+          `campaign_failed_${campaign.id}`
+        ).catch(() => {});
+        
         continue;
       }
 
@@ -361,6 +393,13 @@ serve(async (req) => {
         
         numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'failed', reason: 'Invalid data' });
+        
+        // Email: campaign failed
+        sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+          { campaign_name: campaign.name, reason: 'Dados inválidos (leads ou mensagens vazios)' },
+          `campaign_failed_data_${campaign.id}`
+        ).catch(() => {});
+        
         continue;
       }
 
@@ -373,6 +412,12 @@ serve(async (req) => {
           pause_reason: null
         })
         .eq('id', campaign.id);
+
+      // Email: campaign started
+      sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_SCHEDULED_STARTED',
+        { campaign_name: campaign.name, total_leads: leads.length, scheduled_time: campaign.scheduled_at },
+        `campaign_started_${campaign.id}`
+      ).catch(() => {});
 
       // Track messaged phones to prevent duplicates
       const messagedPhones = new Set<string>();

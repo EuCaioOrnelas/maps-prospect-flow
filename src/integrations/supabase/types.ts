@@ -617,6 +617,78 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          email_type: Database["public"]["Enums"]["email_type"]
+          error_message: string | null
+          id: string
+          idempotency_key: string | null
+          payload: Json | null
+          provider_message_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["email_status"]
+          to_email: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_type: Database["public"]["Enums"]["email_type"]
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          to_email: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_type?: Database["public"]["Enums"]["email_type"]
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          to_email?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          marketing_enabled: boolean
+          transactional_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marketing_enabled?: boolean
+          transactional_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marketing_enabled?: boolean
+          transactional_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ignored_contacts: {
         Row: {
           campaign_id: string | null
@@ -2522,6 +2594,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      email_status: "queued" | "sent" | "failed"
+      email_type:
+        | "CAMPAIGN_SCHEDULED_STARTED"
+        | "WEEKLY_SUMMARY"
+        | "NUMBER_DISCONNECTED"
+        | "CAMPAIGN_FAILED_TO_START"
+        | "ADMIN_BROADCAST"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
       revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
     }
@@ -2652,6 +2731,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      email_status: ["queued", "sent", "failed"],
+      email_type: [
+        "CAMPAIGN_SCHEDULED_STARTED",
+        "WEEKLY_SUMMARY",
+        "NUMBER_DISCONNECTED",
+        "CAMPAIGN_FAILED_TO_START",
+        "ADMIN_BROADCAST",
+      ],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
       revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],
     },
