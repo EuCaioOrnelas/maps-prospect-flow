@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-const COUPON_CODE = "50OFF";
+const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
 
 const PRICE_IDS = {
@@ -509,7 +509,7 @@ const UpgradePromo = () => {
           transition={{ delay: 1 }}
         >
           {[
-            "Cupom 50OFF aplicado automaticamente",
+            "Cupom FIRST50 aplicado automaticamente",
             "Recursos PRO liberados instantaneamente",
             "Seus dados e campanhas continuam ativos",
           ].map((text) => (

@@ -11,7 +11,7 @@ interface FirstCampaignPromoModalProps {
   onClose: () => void;
 }
 
-const COUPON_CODE = "50OFF";
+const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
 
 export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoModalProps) => {
