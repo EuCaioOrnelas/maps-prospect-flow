@@ -166,21 +166,21 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       </div>
                       <div className="flex items-baseline gap-1">
                         <motion.span
-                          className="font-mono text-5xl font-black text-white tabular-nums"
+                           className="font-mono text-[2.5rem] font-black text-white tabular-nums leading-none"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity }}
                         >
                           {time.minutes}
                         </motion.span>
                         <motion.span
-                          className="text-4xl font-black text-white/70"
+                          className="text-[2.25rem] font-black text-white/70 leading-none"
                           animate={{ opacity: [1, 0.3, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
                         >
                           :
                         </motion.span>
                         <motion.span
-                          className="font-mono text-5xl font-black text-white tabular-nums"
+                          className="font-mono text-[2.5rem] font-black text-white tabular-nums leading-none"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
                         >
