@@ -311,6 +311,13 @@ serve(async (req) => {
         
         numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
         results.push({ id: campaign.id, status: 'failed', reason: 'Number not found' });
+        
+        // Email: campaign failed
+        sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+          { campaign_name: campaign.name, reason: 'Número WhatsApp não encontrado' },
+          `campaign_failed_${campaign.id}`
+        ).catch(() => {});
+        
         continue;
       }
 
