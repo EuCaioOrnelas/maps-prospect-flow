@@ -820,6 +820,14 @@ async function processSingleMessage(
     // Check for postponed campaigns on the same number
     await startNextPostponedCampaign(supabase, campaign.whatsapp_number_id, campaign.user_id);
 
+    // Send email notification (fire-and-forget)
+    sendEmailNotification(
+      campaign.user_id,
+      'CAMPAIGN_SCHEDULED_STARTED',
+      { campaign_name: campaign.name, total_leads: leads.length, status: 'completed', sent: sentCount },
+      `campaign_completed2_${campaign.id}`
+    ).catch(() => {});
+
     return { processed: true, completed: true, skipped: false };
   }
 
