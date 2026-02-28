@@ -1238,6 +1238,7 @@ REGRAS OBRIGATÓRIAS:
                     .eq('phone', effectiveLeadPhone);
                 }
               }
+              }
               
               // ===== AI AGENT INTEGRATION =====
               // Check if there's an active AI agent configured for this WhatsApp number
