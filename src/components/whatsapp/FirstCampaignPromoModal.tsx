@@ -180,7 +180,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                           :
                         </motion.span>
                         <motion.span
-                          className="font-mono text-5xl font-black text-white tabular-nums"
+                          className="font-mono text-[2.5rem] font-black text-white tabular-nums leading-none"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
                         >
