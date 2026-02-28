@@ -40,7 +40,7 @@ import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
-import { FirstCampaignPromoModal } from "@/components/whatsapp/FirstCampaignPromoModal";
+
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
 import { useOnboardingModals } from "@/hooks/useOnboardingModals";
