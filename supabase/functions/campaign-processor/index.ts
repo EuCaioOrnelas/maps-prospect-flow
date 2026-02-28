@@ -202,17 +202,13 @@ async function checkInstanceConnection(
         return true;
       }
       
-      // If not connected but API responded, check if it's a temporary state
+      // If not connected, treat as definitively disconnected
+      // 'connecting' means the instance is stuck in a reconnection loop
+      // 'close' means explicitly disconnected
+      // Neither should be retried — they indicate the instance is not functional
       const state = data.state || data.instance?.state;
-      
-      // States that might be temporary - retry
-      if (state === 'connecting' || state === 'close') {
-        console.log(`⏳ Instance state is "${state}", waiting... (attempt ${attempt}/${maxRetries})`);
-        if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, 2000));
-          continue;
-        }
-      }
+      console.log(`📱 Instance not connected (state: "${state}"), treating as disconnected`);
+      return false;
       
       console.log(`📱 Instance connection state: ${state}`);
       return false;
