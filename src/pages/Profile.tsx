@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { SEO } from "@/components/SEO";
 import {
   Dialog,
@@ -34,7 +35,9 @@ import {
   Loader2,
   Check,
   AlertCircle,
-  RefreshCcw
+  RefreshCcw,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -54,6 +57,83 @@ const Profile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [transactionalEnabled, setTransactionalEnabled] = useState(true);
+  const [marketingEnabled, setMarketingEnabled] = useState(false);
+  const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
+  const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+
+  // Load email preferences
+  useEffect(() => {
+    const loadEmailPrefs = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("email_preferences")
+          .select("transactional_enabled, marketing_enabled")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (data) {
+          setTransactionalEnabled(data.transactional_enabled);
+          setMarketingEnabled(data.marketing_enabled);
+        }
+      } catch (err) {
+        console.error("Error loading email prefs:", err);
+      } finally {
+        setIsLoadingEmailPrefs(false);
+      }
+    };
+    loadEmailPrefs();
+  }, [user]);
+
+  const handleEmailPrefChange = async (
+    field: "transactional_enabled" | "marketing_enabled",
+    value: boolean
+  ) => {
+    if (!user) return;
+    setIsSavingEmailPrefs(true);
+
+    // Optimistic update
+    if (field === "transactional_enabled") setTransactionalEnabled(value);
+    else setMarketingEnabled(value);
+
+    try {
+      const { data: existing } = await supabase
+        .from("email_preferences")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("email_preferences")
+          .update({ [field]: value } as any)
+          .eq("user_id", user.id);
+      } else {
+        await supabase.from("email_preferences").insert({
+          user_id: user.id,
+          transactional_enabled: field === "transactional_enabled" ? value : true,
+          marketing_enabled: field === "marketing_enabled" ? value : false,
+        } as any);
+      }
+
+      toast({
+        title: "Preferência salva",
+        description: "Suas preferências de e-mail foram atualizadas",
+      });
+    } catch (err: any) {
+      // Revert on error
+      if (field === "transactional_enabled") setTransactionalEnabled(!value);
+      else setMarketingEnabled(!value);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a preferência",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingEmailPrefs(false);
+    }
+  };
 
   const getNextSearchResetLabel = () => {
     const isFreePlan = profile?.plan === 'free' || !profile?.plan;
@@ -512,7 +592,54 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Support Card */}
+          {/* Email Preferences Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Notificações por e-mail
+              </CardTitle>
+              <CardDescription>
+                Controle quais e-mails você deseja receber
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Alertas operacionais</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Campanhas iniciadas, números desconectados, falhas
+                  </p>
+                </div>
+                <Switch
+                  checked={transactionalEnabled}
+                  onCheckedChange={(v) => handleEmailPrefChange("transactional_enabled", v)}
+                  disabled={isLoadingEmailPrefs || isSavingEmailPrefs}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <BellOff className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Resumo semanal</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Relatório com métricas da semana enviado toda segunda-feira
+                  </p>
+                </div>
+                <Switch
+                  checked={transactionalEnabled}
+                  onCheckedChange={(v) => handleEmailPrefChange("transactional_enabled", v)}
+                  disabled={isLoadingEmailPrefs || isSavingEmailPrefs}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">

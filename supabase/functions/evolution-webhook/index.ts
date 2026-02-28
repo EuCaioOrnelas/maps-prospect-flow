@@ -1238,13 +1238,14 @@ REGRAS OBRIGATÓRIAS:
                     .eq('phone', effectiveLeadPhone);
                 }
               }
+              }
               
               // ===== AI AGENT INTEGRATION =====
               // Check if there's an active AI agent configured for this WhatsApp number
               // and forward the message for automatic processing
               // This runs for ALL received messages (not from me), regardless of lead existence
               try {
-              const { data: activeAgents } = await supabase
+                const { data: activeAgents } = await supabase
                   .from('ai_agents')
                   .select('id, name, status, objective')
                   .eq('whatsapp_number_id', whatsappNumber.id)
@@ -1973,8 +1974,45 @@ REGRAS OBRIGATÓRIAS:
             } else {
               console.log(`Updated connection status for ${instanceName}: connected`);
             }
+          } else if (state === 'close') {
+            // Number disconnected — mark as disconnected and notify user
+            console.log(`⚠️ Instance ${instanceName} DISCONNECTED (state: close)`);
+            
+            const { data: numberData, error: numErr } = await supabase
+              .from('whatsapp_numbers')
+              .update({ 
+                is_connected: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('instance_name', instanceName)
+              .select('id, phone_number, user_id')
+              .single();
+            
+            if (numErr) {
+              console.error('Error marking number as disconnected:', numErr);
+            } else if (numberData) {
+              console.log(`Marked ${instanceName} (${numberData.phone_number}) as disconnected`);
+              
+              // Send email notification to user
+              try {
+                await supabase.functions.invoke('send-email', {
+                  body: {
+                    user_id: numberData.user_id,
+                    email_type: 'NUMBER_DISCONNECTED',
+                    payload: {
+                      phone_number: numberData.phone_number || instanceName,
+                      instance_name: instanceName,
+                    },
+                    idempotency_key: `disconnect_${numberData.id}_${new Date().toISOString().slice(0, 13)}`,
+                  },
+                });
+                console.log(`📧 Disconnection email sent for ${instanceName}`);
+              } catch (emailErr) {
+                console.error('Failed to send disconnection email:', emailErr);
+              }
+            }
           } else {
-            console.log(`Ignoring non-open state "${state}" for ${instanceName} - NOT marking as disconnected`);
+            console.log(`Ignoring non-open/close state "${state}" for ${instanceName}`);
           }
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
