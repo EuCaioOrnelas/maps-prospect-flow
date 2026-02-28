@@ -1054,14 +1054,6 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
-        {/* DEV: Botão temporário para testar popup de promoção */}
-        <button
-          onClick={() => { localStorage.removeItem("promo_timer_start"); setShowPromoTest(true); }}
-          className="fixed bottom-4 right-4 z-50 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold shadow-lg hover:opacity-90"
-        >
-          🎁 Testar Popup Promo
-        </button>
-        <FirstCampaignPromoModal open={showPromoTest} onClose={() => setShowPromoTest(false)} />
         </div>
       </div>
     </SidebarProvider>
