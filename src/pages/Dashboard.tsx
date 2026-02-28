@@ -40,7 +40,7 @@ import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
-import { FirstCampaignPromoModal } from "@/components/whatsapp/FirstCampaignPromoModal";
+
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
 import { useOnboardingModals } from "@/hooks/useOnboardingModals";
@@ -87,7 +87,7 @@ const Dashboard = () => {
   const [showHistoryWarning, setShowHistoryWarning] = useState(false);
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [bulkExporting, setBulkExporting] = useState(false);
-  const [showPromoTest, setShowPromoTest] = useState(false);
+  
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
@@ -1054,14 +1054,6 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
-        {/* DEV: Botão temporário para testar popup de promoção */}
-        <button
-          onClick={() => { localStorage.removeItem("promo_timer_start"); setShowPromoTest(true); }}
-          className="fixed bottom-4 right-4 z-50 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold shadow-lg hover:opacity-90"
-        >
-          🎁 Testar Popup Promo
-        </button>
-        <FirstCampaignPromoModal open={showPromoTest} onClose={() => setShowPromoTest(false)} />
         </div>
       </div>
     </SidebarProvider>

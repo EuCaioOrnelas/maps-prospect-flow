@@ -150,28 +150,6 @@ const WhatsAppCampaign = () => {
     }
   }, [isFreePlan, isTrialExpired, hasReachedTrialLimit]);
 
-  // Check if free user completed first campaign → show promo
-  useEffect(() => {
-    if (!user || !isFreePlan || isTrialExpired) return;
-
-    const alreadySeen = localStorage.getItem(`promo_first_campaign_${user.id}`);
-    if (alreadySeen) return;
-
-    const checkFirstCampaign = async () => {
-      const { count, error } = await supabase
-        .from("whatsapp_campaigns")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("status", "completed");
-
-      if (!error && count && count > 0) {
-        setShowPromoModal(true);
-        localStorage.setItem(`promo_first_campaign_${user.id}`, "true");
-      }
-    };
-
-    checkFirstCampaign();
-  }, [user, isFreePlan, isTrialExpired]);
 
   // Use realtime hook for campaigns
   const { campaigns, setCampaigns, loading: loadingCampaigns, fetchCampaigns } = useCampaignRealtime();
@@ -540,6 +518,16 @@ const WhatsAppCampaign = () => {
         title: "Campanha iniciada!",
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
+
+      // Show promo popup for free users on their first campaign (only once)
+      if (isFreePlan && !isTrialExpired && user) {
+        const alreadySeen = localStorage.getItem(`promo_first_campaign_${user.id}`);
+        if (!alreadySeen) {
+          localStorage.setItem(`promo_first_campaign_${user.id}`, "true");
+          // Small delay to let the toast appear first
+          setTimeout(() => setShowPromoModal(true), 800);
+        }
+      }
 
       // Reset form state and redirect immediately
       handleNewCampaign();
