@@ -94,11 +94,9 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
 
   const handleGoToUpgrade = () => {
     onClose();
-
-    // Aguarda o fechamento do modal antes de trocar de rota
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       navigate(`/upgrade-promo?coupon=${encodeURIComponent(COUPON_CODE)}`);
-    });
+    }, 150);
   };
 
   const time = formatTime(timeLeft);
