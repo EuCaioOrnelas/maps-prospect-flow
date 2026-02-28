@@ -108,43 +108,50 @@ function templateCampaignFailed(payload: Record<string, unknown>): TemplateResul
   };
 }
 
-function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult {
-  const period = payload.period as string || "esta semana";
-  const messagesSent = payload.messages_sent as number || 0;
-  const responses = payload.responses as number || 0;
-  const responseRate = payload.response_rate as number || 0;
-  const newLeads = payload.new_leads as number || 0;
+function templateAdminBroadcast(payload: Record<string, unknown>): TemplateResult {
+  const subject = payload.subject as string || "Novidades da Wiize";
+  const title = payload.title as string || subject;
+  const content = payload.content as string || "";
 
   return {
-    subject: `📊 Seu resumo semanal — ${period}`,
-    html: baseLayout(`Resumo Semanal`, `
-      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Resumo da semana</h1>
-      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">Confira o desempenho da ${period}:</p>
+    subject,
+    html: baseLayout(title, `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">${title}</h1>
+      <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
+        ${content}
+      </div>
+    `),
+  };
+}
+
+function templateCampaignCompleted(payload: Record<string, unknown>): TemplateResult {
+  const name = payload.campaign_name as string || "Sua campanha";
+  const totalSent = payload.total_sent as number || 0;
+  const totalResponses = payload.total_responses as number || 0;
+  const responseRate = totalSent > 0 ? Math.round((totalResponses / totalSent) * 100) : 0;
+
+  return {
+    subject: `✅ Campanha "${name}" concluída!`,
+    html: baseLayout(`Campanha Concluída`, `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Campanha concluída!</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">A campanha <strong>"${name}"</strong> foi finalizada com sucesso.</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
         <tr>
-          <td width="50%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${messagesSent}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Mensagens enviadas</p>
+          <td width="33%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
           </td>
-          <td width="50%" style="padding:12px;background:#eff6ff;border-radius:0 8px 8px 0;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${responses}</p>
+          <td width="33%" style="padding:12px;background:#eff6ff;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalResponses}</p>
             <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Respostas</p>
           </td>
-        </tr>
-      </table>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td width="50%" style="padding:12px;background:#faf5ff;border-radius:8px 0 0 8px;text-align:center;">
+          <td width="33%" style="padding:12px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
             <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${responseRate}%</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa de resposta</p>
-          </td>
-          <td width="50%" style="padding:12px;background:#fffbeb;border-radius:0 8px 8px 0;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#92400e;">${newLeads}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Novos leads</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa</p>
           </td>
         </tr>
       </table>
-      <a href="${BRAND.url}/dashboard" style="display:inline-block;margin-top:24px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver dashboard completo</a>
+      <a href="${BRAND.url}/whatsapp" style="display:inline-block;margin-top:16px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver detalhes</a>
     `),
   };
 }
@@ -154,6 +161,8 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   WEEKLY_SUMMARY: templateWeeklySummary,
   NUMBER_DISCONNECTED: templateNumberDisconnected,
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
+  ADMIN_BROADCAST: templateAdminBroadcast,
+  CAMPAIGN_COMPLETED: templateCampaignCompleted,
 };
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
