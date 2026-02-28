@@ -519,12 +519,20 @@ const WhatsAppCampaign = () => {
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
 
-      // Show promo popup for free users on their first campaign (only once)
+      // Show promo popup for free users on their first campaign (only once, persisted in DB)
       if (isFreePlan && !isTrialExpired && user) {
-        const alreadySeen = localStorage.getItem(`promo_first_campaign_${user.id}`);
-        if (!alreadySeen) {
-          localStorage.setItem(`promo_first_campaign_${user.id}`, "true");
-          // Small delay to let the toast appear first
+        const { count } = await supabase
+          .from("user_events")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("event_name", "promo_first_campaign_seen");
+
+        if (!count || count === 0) {
+          await supabase.from("user_events").insert({
+            user_id: user.id,
+            event_name: "promo_first_campaign_seen",
+            event_data: { coupon: "FIRST50" },
+          });
           setTimeout(() => setShowPromoModal(true), 800);
         }
       }
