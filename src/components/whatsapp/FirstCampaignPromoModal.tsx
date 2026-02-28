@@ -136,15 +136,25 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 {!expired ? (
                   <div className="relative flex flex-col items-center gap-2">
                     <div className="flex items-center gap-4">
-                      <div className="relative h-10 w-10 rounded-full border-2 border-white/30 flex items-center justify-center">
-                        <div className="absolute h-[1px] w-3 bg-white origin-left top-1/2 left-1/2" style={{ transform: "rotate(-60deg)" }} />
-                        <div className="absolute h-[1px] w-[10px] bg-white origin-left top-1/2 left-1/2" style={{ transform: "rotate(80deg)" }} />
-                        <motion.div
-                          className="absolute h-[1px] w-3.5 bg-yellow-300/80 origin-left top-1/2 left-1/2"
+                      <div className="relative h-11 w-11 shrink-0">
+                        {/* Outer ring */}
+                        <svg viewBox="0 0 44 44" className="h-11 w-11">
+                          <circle cx="22" cy="22" r="20" fill="none" stroke="white" strokeWidth="2" opacity="0.3" />
+                          <circle cx="22" cy="22" r="16" fill="none" stroke="white" strokeWidth="1" opacity="0.15" />
+                          {/* Hour hand (fixed) */}
+                          <line x1="22" y1="22" x2="22" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                          {/* Center dot */}
+                          <circle cx="22" cy="22" r="2" fill="white" />
+                        </svg>
+                        {/* Minute hand (rotating) */}
+                        <motion.svg
+                          viewBox="0 0 44 44"
+                          className="absolute inset-0 h-11 w-11"
                           animate={{ rotate: 360 }}
-                          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                        />
-                        <div className="absolute h-1.5 w-1.5 rounded-full bg-white" />
+                          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                        >
+                          <line x1="22" y1="22" x2="22" y2="7" stroke="rgba(253,224,71,0.9)" strokeWidth="1.5" strokeLinecap="round" />
+                        </motion.svg>
                       </div>
                       <div className="flex items-baseline gap-1">
                         <motion.span
