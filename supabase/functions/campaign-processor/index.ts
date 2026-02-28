@@ -1,4 +1,29 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+
+// ─── Email notification helper ─────────────────────────────────────────────
+async function sendEmailNotification(
+  userId: string,
+  emailType: string,
+  payload: Record<string, unknown>,
+  idempotencyKey?: string
+): Promise<void> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ user_id: userId, email_type: emailType, payload, idempotency_key: idempotencyKey }),
+    });
+    const data = await res.json();
+    console.log(`[email] ${emailType} -> ${res.ok ? 'sent' : 'failed'}`, data);
+  } catch (e) {
+    console.error(`[email] Failed to send ${emailType}:`, e);
+  }
+}
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];

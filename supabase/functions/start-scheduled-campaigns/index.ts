@@ -1,6 +1,31 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ─── Email notification helper ─────────────────────────────────────────────
+async function sendEmailNotification(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+  emailType: string,
+  payload: Record<string, unknown>,
+  idempotencyKey?: string
+): Promise<void> {
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ user_id: userId, email_type: emailType, payload, idempotency_key: idempotencyKey }),
+    });
+    const data = await res.json();
+    console.log(`[email] ${emailType} -> ${res.ok ? 'sent' : 'failed'}`, data);
+  } catch (e) {
+    console.error(`[email] Failed to send ${emailType}:`, e);
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
