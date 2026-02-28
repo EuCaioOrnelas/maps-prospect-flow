@@ -1799,10 +1799,8 @@ const Admin = () => {
               )}
             </div>
 
-            {/* Email Panel */}
-            <div className="mt-8">
-              <AdminEmailPanel />
-            </div>
+
+
 
             {/* Proxy Manager Panel */}
             <div className="mt-8">
