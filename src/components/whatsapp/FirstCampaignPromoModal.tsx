@@ -22,6 +22,17 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
   const [pulse, setPulse] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const confettiFired = useRef(false);
+
+  useEffect(() => {
+    if (open && !confettiFired.current) {
+      confettiFired.current = true;
+      setTimeout(() => {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors: ["#f97316", "#facc15", "#ef4444", "#ffffff"] });
+      }, 600);
+    }
+    if (!open) confettiFired.current = false;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
