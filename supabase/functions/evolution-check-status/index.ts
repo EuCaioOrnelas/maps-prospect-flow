@@ -196,7 +196,26 @@ serve(async (req) => {
     const isConnected = state === 'open';
     
     if (!isConnected) {
-      console.log(`Instance ${instanceName} is not connected (state: ${state}). Returning status but NOT updating database.`);
+      console.log(`Instance ${instanceName} is not connected (state: ${state}).`);
+
+      // Mark as disconnected in DB when state is definitively not 'open'
+      // This covers: 'close' (explicit disconnect), 'connecting' (stuck reconnection loop),
+      // and any other non-open state that indicates the instance is not functional
+      if (numberId && (state === 'close' || state === 'connecting')) {
+        console.log(`⚠️ Marking ${instanceName} as disconnected (state: ${state})`);
+        const { error: updateErr } = await supabase
+          .from('whatsapp_numbers')
+          .update({ 
+            is_connected: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', numberId)
+          .eq('user_id', user.id);
+
+        if (updateErr) {
+          console.error('Error marking number as disconnected:', updateErr);
+        }
+      }
 
       return new Response(JSON.stringify({
         success: true,
