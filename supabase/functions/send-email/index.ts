@@ -10,9 +10,9 @@ const corsHeaders = {
 
 const BRAND = {
   name: "Wiize",
-  color: "#6C2BD9",
+  color: "#3daa57",
   url: "https://mapstack-pro.lovable.app",
-  logo: "https://mapstack-pro.lovable.app/favicon.png",
+  logo: "https://mapstack-pro.lovable.app/assets/logo_wiize.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
