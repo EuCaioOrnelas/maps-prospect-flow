@@ -1,0 +1,5 @@
+-- Add ADMIN_BROADCAST to email_type enum
+ALTER TYPE email_type ADD VALUE IF NOT EXISTS 'ADMIN_BROADCAST';
+
+-- Add CAMPAIGN_COMPLETED to email_type enum for future use
+ALTER TYPE email_type ADD VALUE IF NOT EXISTS 'CAMPAIGN_COMPLETED';

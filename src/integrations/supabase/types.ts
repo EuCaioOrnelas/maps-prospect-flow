@@ -2601,6 +2601,7 @@ export type Database = {
         | "NUMBER_DISCONNECTED"
         | "CAMPAIGN_FAILED_TO_START"
         | "ADMIN_BROADCAST"
+        | "CAMPAIGN_COMPLETED"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
       revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
     }
@@ -2738,6 +2739,7 @@ export const Constants = {
         "NUMBER_DISCONNECTED",
         "CAMPAIGN_FAILED_TO_START",
         "ADMIN_BROADCAST",
+        "CAMPAIGN_COMPLETED",
       ],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
       revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],
