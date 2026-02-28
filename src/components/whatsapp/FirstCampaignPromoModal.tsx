@@ -136,12 +136,10 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 {!expired ? (
                   <div className="relative flex flex-col items-center gap-2">
                     <div className="flex items-center gap-3">
-                      <motion.div
-                        animate={{ scale: [1, 1.2, 1], y: [0, -2, 0] }}
-                        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <Flame className={`h-6 w-6 ${isUrgent ? "text-yellow-300" : "text-yellow-200/90"}`} />
-                      </motion.div>
+                      <div className="relative flex items-center justify-center h-3 w-3">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-white/40 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                      </div>
                       <div className="flex items-baseline gap-1">
                         <motion.span
                           className="font-mono text-4xl font-black text-white tabular-nums"
@@ -165,12 +163,6 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                           {time.seconds}
                         </motion.span>
                       </div>
-                      <motion.div
-                        animate={{ scale: [1, 1.2, 1], y: [0, -2, 0] }}
-                        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-                      >
-                        <Flame className={`h-6 w-6 ${isUrgent ? "text-yellow-300" : "text-yellow-200/90"}`} />
-                      </motion.div>
                     </div>
                     <p className="text-[11px] font-semibold text-white/80 uppercase tracking-widest">
                       {isUrgent ? "⚠️ Últimos segundos!" : "Oferta expira em breve"}
