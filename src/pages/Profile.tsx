@@ -57,6 +57,83 @@ const Profile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [transactionalEnabled, setTransactionalEnabled] = useState(true);
+  const [marketingEnabled, setMarketingEnabled] = useState(false);
+  const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
+  const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+
+  // Load email preferences
+  useEffect(() => {
+    const loadEmailPrefs = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("email_preferences")
+          .select("transactional_enabled, marketing_enabled")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (data) {
+          setTransactionalEnabled(data.transactional_enabled);
+          setMarketingEnabled(data.marketing_enabled);
+        }
+      } catch (err) {
+        console.error("Error loading email prefs:", err);
+      } finally {
+        setIsLoadingEmailPrefs(false);
+      }
+    };
+    loadEmailPrefs();
+  }, [user]);
+
+  const handleEmailPrefChange = async (
+    field: "transactional_enabled" | "marketing_enabled",
+    value: boolean
+  ) => {
+    if (!user) return;
+    setIsSavingEmailPrefs(true);
+
+    // Optimistic update
+    if (field === "transactional_enabled") setTransactionalEnabled(value);
+    else setMarketingEnabled(value);
+
+    try {
+      const { data: existing } = await supabase
+        .from("email_preferences")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("email_preferences")
+          .update({ [field]: value } as any)
+          .eq("user_id", user.id);
+      } else {
+        await supabase.from("email_preferences").insert({
+          user_id: user.id,
+          transactional_enabled: field === "transactional_enabled" ? value : true,
+          marketing_enabled: field === "marketing_enabled" ? value : false,
+        } as any);
+      }
+
+      toast({
+        title: "Preferência salva",
+        description: "Suas preferências de e-mail foram atualizadas",
+      });
+    } catch (err: any) {
+      // Revert on error
+      if (field === "transactional_enabled") setTransactionalEnabled(!value);
+      else setMarketingEnabled(!value);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a preferência",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingEmailPrefs(false);
+    }
+  };
 
   const getNextSearchResetLabel = () => {
     const isFreePlan = profile?.plan === 'free' || !profile?.plan;
