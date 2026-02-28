@@ -248,6 +248,14 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/admin/email-tests" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminEmailTests />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Wiize Revenue (admin only, separate layout) */}
                 <Route
                   path="/revenue"

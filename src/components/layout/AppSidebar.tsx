@@ -331,6 +331,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
               </li>
             )}
+
+            {/* Email Tests (admin only) */}
+            {isAdmin && (
+              <li>
+                <SidebarNavItem
+                  title="Emails"
+                  icon={Mail}
+                  url="/admin/email-tests"
+                  isActive={currentPath === "/admin/email-tests"}
+                  isExpanded={isExpanded}
+                  tooltip="Teste de E-mails"
+                />
+              </li>
+            )}
           </ul>
         </nav>
 
