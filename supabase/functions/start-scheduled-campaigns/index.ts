@@ -413,6 +413,12 @@ serve(async (req) => {
         })
         .eq('id', campaign.id);
 
+      // Email: campaign started
+      sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_SCHEDULED_STARTED',
+        { campaign_name: campaign.name, total_leads: leads.length, scheduled_time: campaign.scheduled_at },
+        `campaign_started_${campaign.id}`
+      ).catch(() => {});
+
       // Track messaged phones to prevent duplicates
       const messagedPhones = new Set<string>();
 
