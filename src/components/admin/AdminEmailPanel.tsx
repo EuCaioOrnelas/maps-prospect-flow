@@ -238,8 +238,8 @@ function TestTab() {
                 <p className="text-xs text-muted-foreground font-mono">{et.type}</p>
               </div>
               <div className="flex items-center gap-2">
-                {status === "success" && <CheckCircle2 size={16} className="text-green-500" />}
-                {status === "error" && <XCircle size={16} className="text-red-500" />}
+                {status === "success" && <CheckCircle2 size={16} className="text-primary" />}
+                {status === "error" && <XCircle size={16} className="text-destructive" />}
                 <Button
                   variant="outline"
                   size="sm"
