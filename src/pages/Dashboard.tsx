@@ -87,7 +87,7 @@ const Dashboard = () => {
   const [showHistoryWarning, setShowHistoryWarning] = useState(false);
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [bulkExporting, setBulkExporting] = useState(false);
-  const [showPromoTest, setShowPromoTest] = useState(false);
+  
   // Pagination states
   const [currentResultPage, setCurrentResultPage] = useState(1);
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
