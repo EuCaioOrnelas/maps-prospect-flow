@@ -13,7 +13,6 @@ import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { useState, useEffect } from "react";
-import { FirstCampaignPromoModal } from "@/components/whatsapp/FirstCampaignPromoModal";
 
 const Index = () => {
   const [isReady, setIsReady] = useState(false);
