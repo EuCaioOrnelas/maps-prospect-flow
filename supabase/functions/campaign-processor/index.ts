@@ -471,6 +471,15 @@ async function processSingleMessage(
       .eq('campaign_id', campaign.id);
 
     campaignLog('✅', `COMPLETED`, { sent: sentCount, failed: failedCount });
+
+    // Send email notification (fire-and-forget)
+    sendEmailNotification(
+      campaign.user_id,
+      'CAMPAIGN_SCHEDULED_STARTED',
+      { campaign_name: campaign.name, total_leads: leads.length, status: 'completed', sent: sentCount },
+      `campaign_completed_${campaign.id}`
+    ).catch(() => {});
+
     return { processed: false, completed: true, skipped: false };
   }
 
