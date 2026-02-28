@@ -971,6 +971,12 @@ const Admin = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <Link to="/admin/email-tests">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Mail size={16} />
+                  <span className="hidden sm:inline">Emails</span>
+                </Button>
+              </Link>
               <Link to="/admin/tests">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <FlaskConical size={16} />
