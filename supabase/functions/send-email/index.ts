@@ -81,10 +81,20 @@ function templateNumberDisconnected(payload: Record<string, unknown>): TemplateR
     html: baseLayout(`Número Desconectado`, `
       <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Atenção: número desconectado</h1>
       <p style="margin:0 0 8px;color:#3f3f46;font-size:15px;">O número <strong>${phone}</strong>${instanceName ? ` (${instanceName})` : ""} foi desconectado do WhatsApp.</p>
-      <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;">
-        <p style="margin:0;font-size:14px;color:#991b1b;">⛔ Campanhas e agentes usando este número estão pausados.</p>
+      <div style="margin:16px 0;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">📱 Por que isso aconteceu?</p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;">Essa desconexão foi causada pelo próprio WhatsApp. Isso pode ocorrer quando:</p>
+        <ul style="margin:8px 0 0;padding-left:20px;font-size:13px;color:#78350f;line-height:1.8;">
+          <li>O WhatsApp Web/Desktop foi aberto em outro dispositivo ou navegador</li>
+          <li>A sessão expirou por inatividade prolongada</li>
+          <li>O aplicativo do WhatsApp no celular foi atualizado ou reinstalado</li>
+          <li>O WhatsApp encerrou sessões ativas por motivos de segurança</li>
+        </ul>
       </div>
-      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Reconecte o número para retomar as operações.</p>
+      <div style="margin:12px 0;padding:12px 16px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;">
+        <p style="margin:0;font-size:14px;color:#991b1b;">⛔ Campanhas e agentes usando este número estão pausados até a reconexão.</p>
+      </div>
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Reconecte o número para retomar as operações normalmente.</p>
       <a href="${BRAND.url}/whatsapp" style="display:inline-block;margin-top:16px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Reconectar agora</a>
     `),
   };
