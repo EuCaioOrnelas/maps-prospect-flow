@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-const COUPON_CODE = "50OFF";
+const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
 
 const PRICE_IDS = {
