@@ -55,6 +55,7 @@ import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog"
 import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
 import { AgentsMonitorPanel } from "@/components/admin/AgentsMonitorPanel";
+import { AdminEmailPanel } from "@/components/admin/AdminEmailPanel";
 import { CampaignDebugPanel } from "@/components/admin/CampaignDebugPanel";
 import { ProxyManagerPanel } from "@/components/admin/ProxyManagerPanel";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
@@ -1796,6 +1797,11 @@ const Admin = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Email Panel */}
+            <div className="mt-8">
+              <AdminEmailPanel />
             </div>
 
             {/* Proxy Manager Panel */}
