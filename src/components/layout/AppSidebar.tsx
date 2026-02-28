@@ -17,6 +17,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   DollarSign,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -327,6 +328,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   isExpanded={isExpanded}
                   highlight
                   tooltip="Wiize Revenue (Beta)"
+                />
+              </li>
+            )}
+
+            {/* Email Tests (admin only) */}
+            {isAdmin && (
+              <li>
+                <SidebarNavItem
+                  title="Emails"
+                  icon={Mail}
+                  url="/admin/email-tests"
+                  isActive={currentPath === "/admin/email-tests"}
+                  isExpanded={isExpanded}
+                  tooltip="Teste de E-mails"
                 />
               </li>
             )}
