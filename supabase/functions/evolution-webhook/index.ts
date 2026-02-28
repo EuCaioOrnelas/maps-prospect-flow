@@ -2011,8 +2011,29 @@ REGRAS OBRIGATÓRIAS:
                 console.error('Failed to send disconnection email:', emailErr);
               }
             }
+          } else if (state === 'connecting') {
+            // 'connecting' means the instance is trying to auto-reconnect
+            // This often happens when WhatsApp drops the session
+            // We treat this as a disconnection to stop campaigns immediately
+            console.log(`⚠️ Instance ${instanceName} is in CONNECTING state (auto-reconnect loop)`);
+            
+            const { data: numberData, error: numErr } = await supabase
+              .from('whatsapp_numbers')
+              .update({ 
+                is_connected: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('instance_name', instanceName)
+              .select('id, phone_number, user_id, is_connected')
+              .single();
+            
+            if (numErr) {
+              console.error('Error marking number as disconnected (connecting):', numErr);
+            } else if (numberData) {
+              console.log(`Marked ${instanceName} as disconnected (was in connecting loop)`);
+            }
           } else {
-            console.log(`Ignoring non-open/close state "${state}" for ${instanceName}`);
+            console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
