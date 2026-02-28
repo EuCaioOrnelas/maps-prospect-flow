@@ -96,7 +96,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
     onClose();
     setTimeout(() => {
       navigate(`/upgrade-promo?coupon=${encodeURIComponent(COUPON_CODE)}`);
-    }, 150);
+    }, 350);
   };
 
   const time = formatTime(timeLeft);
