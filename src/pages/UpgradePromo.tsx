@@ -509,7 +509,7 @@ const UpgradePromo = () => {
           transition={{ delay: 1 }}
         >
           {[
-            "Cupom 50OFF aplicado automaticamente",
+            "Cupom FIRST50 aplicado automaticamente",
             "Recursos PRO liberados instantaneamente",
             "Seus dados e campanhas continuam ativos",
           ].map((text) => (
