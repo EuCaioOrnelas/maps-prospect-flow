@@ -156,17 +156,28 @@ serve(async (req) => {
     // Apply coupon code if provided
     if (couponCode) {
       try {
-        // Verify the coupon exists
+        // First try as a coupon ID
         const coupon = await stripe.coupons.retrieve(couponCode);
         if (coupon && coupon.valid) {
           sessionOptions.discounts = [{ coupon: couponCode }];
-          // Remove allow_promotion_codes when using discounts
           delete sessionOptions.allow_promotion_codes;
           logStep("Coupon applied", { couponId: coupon.id, percentOff: coupon.percent_off });
         }
-      } catch (couponError) {
-        logStep("Invalid coupon code", { couponCode });
-        // Continue without the coupon
+      } catch (_couponError) {
+        // Not a coupon ID — try as a promotion code
+        try {
+          const promoCodes = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
+          if (promoCodes.data.length > 0) {
+            const promoCode = promoCodes.data[0];
+            sessionOptions.discounts = [{ promotion_code: promoCode.id }];
+            delete sessionOptions.allow_promotion_codes;
+            logStep("Promotion code applied", { promoCodeId: promoCode.id, code: couponCode });
+          } else {
+            logStep("No valid promotion code found", { couponCode });
+          }
+        } catch (promoError) {
+          logStep("Failed to lookup promotion code", { couponCode, error: String(promoError) });
+        }
       }
     }
 
