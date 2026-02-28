@@ -148,8 +148,8 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                 {!expired ? (
                   <div className="relative flex flex-col items-center gap-2">
                     <div className="flex items-center gap-4">
-                      <div className="relative h-9 w-9 shrink-0">
-                        <svg viewBox="0 0 44 44" className="h-9 w-9">
+                      <div className="relative h-10 w-10 shrink-0">
+                        <svg viewBox="0 0 44 44" className="h-10 w-10">
                           <circle cx="22" cy="22" r="20" fill="none" stroke="white" strokeWidth="2" opacity="0.3" />
                           <circle cx="22" cy="22" r="16" fill="none" stroke="white" strokeWidth="1" opacity="0.15" />
                           <line x1="22" y1="22" x2="22" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -157,7 +157,7 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                         </svg>
                         <motion.svg
                           viewBox="0 0 44 44"
-                          className="absolute inset-0 h-9 w-9"
+                          className="absolute inset-0 h-10 w-10"
                           animate={{ rotate: 360 }}
                           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                         >
@@ -166,21 +166,21 @@ export const FirstCampaignPromoModal = ({ open, onClose }: FirstCampaignPromoMod
                       </div>
                       <div className="flex items-baseline gap-1">
                         <motion.span
-                          className="font-mono text-4xl font-black text-white tabular-nums"
+                          className="font-mono text-5xl font-black text-white tabular-nums"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity }}
                         >
                           {time.minutes}
                         </motion.span>
                         <motion.span
-                          className="text-3xl font-black text-white/70"
+                          className="text-4xl font-black text-white/70"
                           animate={{ opacity: [1, 0.3, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
                         >
                           :
                         </motion.span>
                         <motion.span
-                          className="font-mono text-4xl font-black text-white tabular-nums"
+                          className="font-mono text-5xl font-black text-white tabular-nums"
                           animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
                         >
