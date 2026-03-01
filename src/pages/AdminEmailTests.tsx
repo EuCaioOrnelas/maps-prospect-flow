@@ -184,6 +184,115 @@ function ComposeTab() {
     }
   };
 
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const applyFormat = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+  };
+
+  const insertLink = () => {
+    const url = prompt("URL do link:");
+    if (!url) return;
+    const text = prompt("Texto do botão/link:", "Clique aqui");
+    if (!text) return;
+    const linkHtml = `<a href="${url}" style="display:inline-block;padding:10px 20px;background:#3daa57;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">${text}</a>`;
+    document.execCommand("insertHTML", false, linkHtml);
+    editorRef.current?.focus();
+  };
+
+  const getEditorContent = () => {
+    return editorRef.current?.innerHTML || "";
+  };
+
+  const handleSendWithEditor = async (isTest: boolean) => {
+    const htmlContent = getEditorContent();
+    if (!subject.trim() || !htmlContent.trim()) {
+      toast({ title: "Preencha o assunto e o conteúdo", variant: "destructive" });
+      return;
+    }
+    if (!isTest && selectedPlans.length === 0) {
+      toast({ title: "Selecione ao menos um plano", variant: "destructive" });
+      return;
+    }
+
+    setSending(true);
+    setResult(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      if (isTest) {
+        const { error } = await supabase.functions.invoke("send-email", {
+          body: {
+            user_id: user.id,
+            email_type: "ADMIN_BROADCAST",
+            payload: {
+              subject: `[TESTE] ${subject.trim()}`,
+              content: htmlContent,
+            },
+            idempotency_key: `test_compose_${Date.now()}`,
+            override_email: TARGET_EMAIL,
+          },
+        });
+        if (error) throw error;
+        toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
+      } else {
+        // Fetch target users
+        const { data: users, error: usersError } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan")
+          .in("plan", selectedPlans)
+          .eq("is_blocked", false);
+
+        if (usersError) throw usersError;
+        if (!users || users.length === 0) {
+          toast({ title: "Nenhum usuário encontrado para os planos selecionados" });
+          setSending(false);
+          return;
+        }
+
+        const userIds = users.map((u) => u.id);
+        const { data: prefs } = await supabase
+          .from("email_preferences")
+          .select("user_id, marketing_enabled")
+          .in("user_id", userIds);
+
+        const prefsMap = new Map(prefs?.map((p) => [p.user_id, p.marketing_enabled]) || []);
+
+        let sent = 0;
+        let failed = 0;
+        let skipped = 0;
+
+        for (const u of users) {
+          const marketingEnabled = prefsMap.get(u.id) ?? false;
+          if (!marketingEnabled) { skipped++; continue; }
+
+          try {
+            const { error } = await supabase.functions.invoke("send-email", {
+              body: {
+                user_id: u.id,
+                email_type: "ADMIN_BROADCAST",
+                payload: { subject: subject.trim(), content: htmlContent },
+                idempotency_key: `broadcast_${Date.now()}_${u.id}`,
+              },
+            });
+            if (error) throw error;
+            sent++;
+          } catch { failed++; }
+        }
+
+        setResult({ sent, failed, skipped });
+        toast({ title: `✅ Envio concluído: ${sent} enviados, ${skipped} opt-out, ${failed} erros` });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro no envio", description: err.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -198,30 +307,56 @@ function ComposeTab() {
             maxLength={150}
           />
         </div>
+
         <div>
-          <Label htmlFor="email-title" className="text-foreground">Título interno (opcional)</Label>
-          <Input
-            id="email-title"
-            placeholder="Título exibido dentro do e-mail (se vazio, usa o assunto)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1"
-            maxLength={150}
-          />
-        </div>
-        <div>
-          <Label htmlFor="email-content" className="text-foreground">Conteúdo *</Label>
-          <Textarea
-            id="email-content"
-            placeholder="Escreva o conteúdo do e-mail aqui. Cada linha vira um parágrafo."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="mt-1 min-h-[160px]"
-            maxLength={5000}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Cada linha será convertida em um parágrafo. {content.length}/5000
+          <Label className="text-foreground">Conteúdo do e-mail *</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            O header com logo e footer com "não responder" são incluídos automaticamente.
           </p>
+          {/* Toolbar */}
+          <div className="flex items-center gap-1 p-1.5 border border-b-0 rounded-t-md bg-muted/30">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => applyFormat("bold")}
+              title="Negrito"
+            >
+              <Bold size={14} />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => applyFormat("italic")}
+              title="Itálico"
+            >
+              <Italic size={14} />
+            </Button>
+            <div className="w-px h-5 bg-border mx-1" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 gap-1"
+              onClick={insertLink}
+              title="Inserir botão/link"
+            >
+              <Link2 size={14} />
+              <span className="text-xs">Botão</span>
+            </Button>
+          </div>
+          {/* Editable area */}
+          <div
+            ref={editorRef}
+            contentEditable
+            className="min-h-[160px] p-3 border rounded-b-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            style={{ lineHeight: 1.7 }}
+            data-placeholder="Escreva o conteúdo do e-mail aqui..."
+            suppressContentEditableWarning
+          />
         </div>
       </div>
 
@@ -233,6 +368,7 @@ function ComposeTab() {
         <div className="flex flex-wrap gap-3">
           {([
             { value: "free" as PlanFilter, label: "Free" },
+            { value: "start" as PlanFilter, label: "Start" },
             { value: "growth" as PlanFilter, label: "Growth" },
             { value: "scale" as PlanFilter, label: "Scale" },
           ]).map((plan) => (
