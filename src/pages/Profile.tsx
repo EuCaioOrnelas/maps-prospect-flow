@@ -624,16 +624,16 @@ const Profile = () => {
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <BellOff className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Resumo semanal</span>
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Comunicados e novidades</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Relatório com métricas da semana enviado toda segunda-feira
+                    E-mails promocionais, atualizações de produto e broadcasts do admin
                   </p>
                 </div>
                 <Switch
-                  checked={transactionalEnabled}
-                  onCheckedChange={(v) => handleEmailPrefChange("transactional_enabled", v)}
+                  checked={marketingEnabled}
+                  onCheckedChange={(v) => handleEmailPrefChange("marketing_enabled", v)}
                   disabled={isLoadingEmailPrefs || isSavingEmailPrefs}
                 />
               </div>
