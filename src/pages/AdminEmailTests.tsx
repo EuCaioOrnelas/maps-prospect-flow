@@ -405,7 +405,7 @@ function ComposeTab() {
       <div className="flex gap-2 pt-2">
         <Button
           variant="outline"
-          onClick={handleTestSend}
+          onClick={() => handleSendWithEditor(true)}
           disabled={sending}
           className="gap-2"
         >
@@ -413,7 +413,7 @@ function ComposeTab() {
           Enviar teste para mim
         </Button>
         <Button
-          onClick={handleSend}
+          onClick={() => handleSendWithEditor(false)}
           disabled={sending}
           className="gap-2"
         >
