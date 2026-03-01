@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const toEmail = profileResult.data.email;
+    const toEmail = override_email || profileResult.data.email;
 
     // Check preferences (default: enabled)
     const transactionalEnabled = prefsResult.data?.transactional_enabled ?? true;
