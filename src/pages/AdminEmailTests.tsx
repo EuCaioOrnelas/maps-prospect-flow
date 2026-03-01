@@ -161,11 +161,7 @@ function ComposeTab() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const htmlContent = content
-        .split("\n")
-        .filter((line) => line.trim() !== "")
-        .map((line) => `<p>${line}</p>`)
-        .join("");
+      const htmlContent = content.trim();
 
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
