@@ -67,8 +67,7 @@ function ComposeTab() {
       prev.includes(plan) ? prev.filter((p) => p !== plan) : [...prev, plan]
     );
   };
-
-
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const applyFormat = (command: string, value?: string) => {
     document.execCommand(command, false, value);
