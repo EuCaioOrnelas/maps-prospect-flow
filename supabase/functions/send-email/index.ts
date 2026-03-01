@@ -52,20 +52,33 @@ interface TemplateResult {
 
 function templateCampaignStarted(payload: Record<string, unknown>): TemplateResult {
   const name = payload.campaign_name as string || "Sua campanha";
-  const totalLeads = payload.total_leads as number || 0;
+  const totalContacts = payload.total_leads as number || payload.total_contacts as number || 0;
+  const totalSent = payload.total_sent as number || 0;
   const scheduledTime = payload.scheduled_time as string || "";
+  const sendRate = totalContacts > 0 ? Math.round((totalSent / totalContacts) * 100) : 0;
 
   return {
     subject: `🚀 Campanha "${name}" iniciada!`,
     html: baseLayout(`Campanha Iniciada`, `
       <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Campanha iniciada com sucesso!</h1>
       <p style="margin:0 0 8px;color:#3f3f46;font-size:15px;">Sua campanha <strong>"${name}"</strong> começou a enviar mensagens.</p>
-      <table role="presentation" width="100%" style="margin:16px 0;background:#f4f4f5;border-radius:8px;padding:16px;">
-        <tr><td style="padding:8px 16px;">
-          <p style="margin:0;font-size:14px;color:#71717a;">📋 Total de leads: <strong style="color:#18181b;">${totalLeads}</strong></p>
-          ${scheduledTime ? `<p style="margin:8px 0 0;font-size:14px;color:#71717a;">⏰ Horário: <strong style="color:#18181b;">${scheduledTime}</strong></p>` : ""}
-        </td></tr>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+        <tr>
+          <td width="33%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalContacts}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Contatos</p>
+          </td>
+          <td width="33%" style="padding:12px;background:#eff6ff;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
+          </td>
+          <td width="33%" style="padding:12px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${sendRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa de envio</p>
+          </td>
+        </tr>
       </table>
+      ${scheduledTime ? `<p style="margin:0 0 8px;font-size:14px;color:#71717a;">⏰ Horário: <strong style="color:#18181b;">${scheduledTime}</strong></p>` : ""}
       <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Você pode acompanhar o progresso em tempo real no painel.</p>
       <a href="${BRAND.url}/whatsapp" style="display:inline-block;margin-top:16px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver progresso</a>
     `),
@@ -158,9 +171,9 @@ function templateAdminBroadcast(payload: Record<string, unknown>): TemplateResul
 
 function templateCampaignCompleted(payload: Record<string, unknown>): TemplateResult {
   const name = payload.campaign_name as string || "Sua campanha";
+  const totalContacts = payload.total_contacts as number || payload.total_leads as number || 0;
   const totalSent = payload.total_sent as number || 0;
-  const totalResponses = payload.total_responses as number || 0;
-  const responseRate = totalSent > 0 ? Math.round((totalResponses / totalSent) * 100) : 0;
+  const sendRate = totalContacts > 0 ? Math.round((totalSent / totalContacts) * 100) : 0;
 
   return {
     subject: `✅ Campanha "${name}" concluída!`,
@@ -170,16 +183,16 @@ function templateCampaignCompleted(payload: Record<string, unknown>): TemplateRe
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
         <tr>
           <td width="33%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalSent}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalContacts}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Contatos</p>
           </td>
           <td width="33%" style="padding:12px;background:#eff6ff;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalResponses}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Respostas</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
           </td>
           <td width="33%" style="padding:12px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${responseRate}%</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${sendRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa de envio</p>
           </td>
         </tr>
       </table>
@@ -189,10 +202,10 @@ function templateCampaignCompleted(payload: Record<string, unknown>): TemplateRe
 }
 
 function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult {
+  const totalContacts = payload.total_contacts as number || 0;
   const totalSent = payload.total_sent as number || 0;
-  const totalResponses = payload.total_responses as number || 0;
   const activeCampaigns = payload.active_campaigns as number || 0;
-  const responseRate = totalSent > 0 ? Math.round((totalResponses / totalSent) * 100) : 0;
+  const sendRate = totalContacts > 0 ? Math.round((totalSent / totalContacts) * 100) : 0;
 
   return {
     subject: `📊 Resumo semanal da sua conta Wiize`,
@@ -202,16 +215,16 @@ function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
         <tr>
           <td width="33%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalSent}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Mensagens</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalContacts}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Contatos</p>
           </td>
           <td width="33%" style="padding:12px;background:#eff6ff;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalResponses}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Respostas</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
           </td>
           <td width="33%" style="padding:12px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${responseRate}%</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${sendRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa de envio</p>
           </td>
         </tr>
       </table>

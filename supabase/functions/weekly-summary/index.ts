@@ -46,40 +46,40 @@ Deno.serve(async (req) => {
       }
 
       // Get weekly stats for this user
-      const [campaignMsgs, responses, newLeads] = await Promise.all([
-        // Messages sent via campaigns this week
+      const [campaignData, newLeads, activeCampaigns] = await Promise.all([
+        // Campaigns updated this week
         supabase
           .from("whatsapp_campaigns")
-          .select("sent_count")
+          .select("sent_count, total_leads")
           .eq("user_id", user.id)
           .gte("updated_at", weekAgoISO),
-        // Responses received this week
-        supabase
-          .from("campaign_responses")
-          .select("id")
-          .eq("user_id", user.id)
-          .gte("created_at", weekAgoISO),
         // New leads this week
         supabase
           .from("leads")
           .select("id")
           .eq("user_id", user.id)
           .gte("created_at", weekAgoISO),
+        // Active campaigns
+        supabase
+          .from("whatsapp_campaigns")
+          .select("id")
+          .eq("user_id", user.id)
+          .in("status", ["RUNNING", "PAUSED"]),
       ]);
 
-      const messagesSent = (campaignMsgs.data || []).reduce(
+      const totalContacts = (campaignData.data || []).reduce(
+        (sum: number, c: any) => sum + (c.total_leads || 0),
+        0
+      );
+      const totalSent = (campaignData.data || []).reduce(
         (sum: number, c: any) => sum + (c.sent_count || 0),
         0
       );
-      const responsesCount = responses.data?.length || 0;
       const newLeadsCount = newLeads.data?.length || 0;
-      const responseRate =
-        messagesSent > 0
-          ? Math.round((responsesCount / messagesSent) * 100)
-          : 0;
+      const activeCampaignsCount = activeCampaigns.data?.length || 0;
 
       // Skip if no activity
-      if (messagesSent === 0 && responsesCount === 0 && newLeadsCount === 0) {
+      if (totalSent === 0 && newLeadsCount === 0) {
         skippedCount++;
         continue;
       }
@@ -92,9 +92,9 @@ Deno.serve(async (req) => {
             email_type: "WEEKLY_SUMMARY",
             payload: {
               period: periodLabel,
-              messages_sent: messagesSent,
-              responses: responsesCount,
-              response_rate: responseRate,
+              total_contacts: totalContacts,
+              total_sent: totalSent,
+              active_campaigns: activeCampaignsCount,
               new_leads: newLeadsCount,
             },
             idempotency_key: `weekly_${user.id}_${now.toISOString().slice(0, 10)}`,
