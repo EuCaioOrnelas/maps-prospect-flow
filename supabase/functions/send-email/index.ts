@@ -229,11 +229,13 @@ Deno.serve(async (req) => {
       email_type,
       payload = {},
       idempotency_key,
+      override_email,
     } = body as {
       user_id: string;
       email_type: string;
       payload?: Record<string, unknown>;
       idempotency_key?: string;
+      override_email?: string;
     };
 
     if (!user_id || !email_type) {
