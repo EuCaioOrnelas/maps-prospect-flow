@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2 } from "lucide-react";
 import { useRef } from "react";
+import { Link } from "react-router-dom";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 const TARGET_EMAIL = "caiowiize@gmail.com";
 
