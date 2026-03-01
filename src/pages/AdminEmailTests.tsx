@@ -50,16 +50,16 @@ const EMAIL_TYPES = [
 
 // ─── Compose Tab ────────────────────────────────────────────────────────────
 
-type PlanFilter = "free" | "growth" | "scale";
+type PlanFilter = "free" | "start" | "growth" | "scale";
 
 function ComposeTab() {
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
-  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [selectedPlans, setSelectedPlans] = useState<PlanFilter[]>(["free", "growth", "scale"]);
+  const [selectedPlans, setSelectedPlans] = useState<PlanFilter[]>(["free", "start", "growth", "scale"]);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+  const textareaRef = useState<HTMLTextAreaElement | null>(null);
 
   const togglePlan = (plan: PlanFilter) => {
     setSelectedPlans((prev) =>
