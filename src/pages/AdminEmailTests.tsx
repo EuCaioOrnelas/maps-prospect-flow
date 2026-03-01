@@ -107,12 +107,8 @@ function ComposeTab() {
 
       const prefsMap = new Map(prefs?.map((p) => [p.user_id, p.marketing_enabled]) || []);
 
-      // Convert content with line breaks to HTML
-      const htmlContent = content
-        .split("\n")
-        .filter((line) => line.trim() !== "")
-        .map((line) => `<p>${line}</p>`)
-        .join("");
+      // Content is already HTML-ready from the editor
+      const htmlContent = content.trim();
 
       let sent = 0;
       let failed = 0;
