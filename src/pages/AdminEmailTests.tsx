@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2 } from "lucide-react";
-import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
