@@ -129,7 +129,6 @@ function ComposeTab() {
               email_type: "ADMIN_BROADCAST",
               payload: {
                 subject: subject.trim(),
-                title: title.trim() || subject.trim(),
                 content: htmlContent,
               },
               idempotency_key: `broadcast_${Date.now()}_${u.id}`,
