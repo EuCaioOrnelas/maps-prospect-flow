@@ -120,17 +120,39 @@ function templateCampaignFailed(payload: Record<string, unknown>): TemplateResul
 
 function templateAdminBroadcast(payload: Record<string, unknown>): TemplateResult {
   const subject = payload.subject as string || "Novidades da Wiize";
-  const title = payload.title as string || subject;
   const content = payload.content as string || "";
 
   return {
     subject,
-    html: baseLayout(title, `
-      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">${title}</h1>
-      <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
-        ${content}
-      </div>
-    `),
+    html: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${subject}</title></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<!-- HEADER FIXO -->
+<tr><td style="background:${BRAND.color};padding:24px 32px;text-align:center;">
+  <img src="${BRAND.logo}" alt="${BRAND.name}" width="32" height="32" style="display:inline-block;vertical-align:middle;border-radius:8px;">
+  <span style="color:#ffffff;font-size:20px;font-weight:700;margin-left:8px;vertical-align:middle;">${BRAND.name}</span>
+</td></tr>
+<!-- BODY (conteúdo do admin) -->
+<tr><td style="padding:32px;">
+  <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
+    ${content}
+  </div>
+</td></tr>
+<!-- FOOTER FIXO -->
+<tr><td style="padding:20px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
+  <p style="margin:0 0 6px;font-size:12px;color:#a1a1aa;font-weight:600;">Este é um e-mail automático — por favor, não responda.</p>
+  <p style="margin:0 0 4px;font-size:11px;color:#a1a1aa;">Enviado por <strong>${BRAND.name}</strong> • <a href="${BRAND.url}" style="color:${BRAND.color};text-decoration:none;">${BRAND.url.replace('https://', '')}</a></p>
+  <p style="margin:0;font-size:11px;color:#a1a1aa;"><a href="${BRAND.url}/profile" style="color:${BRAND.color};text-decoration:none;">Gerenciar preferências de e-mail</a></p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`,
   };
 }
 
