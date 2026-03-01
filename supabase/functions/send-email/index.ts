@@ -202,10 +202,10 @@ function templateCampaignCompleted(payload: Record<string, unknown>): TemplateRe
 }
 
 function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult {
+  const totalContacts = payload.total_contacts as number || 0;
   const totalSent = payload.total_sent as number || 0;
-  const totalResponses = payload.total_responses as number || 0;
   const activeCampaigns = payload.active_campaigns as number || 0;
-  const responseRate = totalSent > 0 ? Math.round((totalResponses / totalSent) * 100) : 0;
+  const sendRate = totalContacts > 0 ? Math.round((totalSent / totalContacts) * 100) : 0;
 
   return {
     subject: `📊 Resumo semanal da sua conta Wiize`,
@@ -215,16 +215,16 @@ function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
         <tr>
           <td width="33%" style="padding:12px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalSent}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Mensagens</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${totalContacts}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Contatos</p>
           </td>
           <td width="33%" style="padding:12px;background:#eff6ff;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalResponses}</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Respostas</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${totalSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
           </td>
           <td width="33%" style="padding:12px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${responseRate}%</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${sendRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Taxa de envio</p>
           </td>
         </tr>
       </table>
