@@ -466,6 +466,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     if (!pendingStartNumber || !user) return;
     
     const numberId = pendingStartNumber.id;
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
     const existingSession = getSessionForNumber(numberId);
     const existingAssignment = getAssignmentForNumber(numberId);
     
@@ -476,7 +478,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
           .from('warming_search_assignments')
           .update({
             search_query: search.keyword,
-            search_city: search.location || null
+            search_city: search.location || null,
+            phone_key: phoneKey
           })
           .eq('whatsapp_number_id', numberId)
           .eq('user_id', user.id);
@@ -487,7 +490,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
             user_id: user.id,
             whatsapp_number_id: numberId,
             search_query: search.keyword,
-            search_city: search.location || null
+            search_city: search.location || null,
+            phone_key: phoneKey
           });
       }
       
