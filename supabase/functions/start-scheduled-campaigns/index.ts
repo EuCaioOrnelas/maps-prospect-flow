@@ -1,6 +1,20 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// --- Evolution API credentials helper (inlined) ---
+interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
+const PAID_PLANS = ['start', 'growth', 'scale'];
+function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
+  const normalized = (tierOrPlan || 'free').toLowerCase();
+  if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
+    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+  }
+  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
+  return { url, apiKey, tier: 'free' };
+}
+
 // ─── Email notification helper ─────────────────────────────────────────────
 async function sendEmailNotification(
   supabaseUrl: string,
@@ -160,8 +174,6 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL')!;
-  const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')!;
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -297,7 +309,7 @@ serve(async (req) => {
       // Get the WhatsApp number
       const { data: numberData, error: numberError } = await supabase
         .from('whatsapp_numbers')
-        .select('id, instance_name, is_connected, daily_sent_count, last_sent_at')
+        .select('id, instance_name, is_connected, daily_sent_count, last_sent_at, api_tier')
         .eq('id', campaign.whatsapp_number_id)
         .single();
 
@@ -320,6 +332,12 @@ serve(async (req) => {
         
         continue;
       }
+
+      // Resolve Evolution API credentials based on number's api_tier
+      const evoCredentials = getEvolutionCredentials(numberData.api_tier);
+      const EVOLUTION_API_URL = evoCredentials.url;
+      const EVOLUTION_API_KEY = evoCredentials.apiKey;
+      console.log(`[start-scheduled-campaigns] Using ${evoCredentials.tier} Evolution credentials for ${numberData.instance_name}`);
 
       // Check connection via Evolution API
       const connectionCheck = await checkInstanceConnection(
