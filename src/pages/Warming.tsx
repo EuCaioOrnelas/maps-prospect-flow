@@ -196,7 +196,7 @@ export default function Warming() {
       // Fetch search assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('warming_search_assignments')
-        .select('whatsapp_number_id, search_query, search_city')
+        .select('whatsapp_number_id, search_query, search_city, phone_key')
         .eq('user_id', user?.id);
 
       if (assignmentsError) throw assignmentsError;
