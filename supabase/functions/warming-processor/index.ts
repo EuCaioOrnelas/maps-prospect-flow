@@ -766,28 +766,11 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Calculate current day (days since started)
-        const startDate = new Date(session.started_at)
-        const now = new Date()
-        const daysDiff = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-        const currentDay = Math.max(1, daysDiff)
+        // Activity-based day counting: current_day only advances when warming
+        // actually runs on a new date. Paused time does NOT count.
+        const currentDay = session.current_day || 1
 
-        console.log(`Session day: ${currentDay}, leads used: ${session.leads_used}/${session.leads_limit}`)
-        
-        // Always update current_day in the database (even if no message is sent)
-        // This ensures the UI shows the correct day count
-        if (session.current_day !== currentDay) {
-          const level = getWarmingLevel(currentDay)
-          await supabase
-            .from('warming_sessions')
-            .update({
-              current_day: currentDay,
-              warming_level: level,
-              warming_status: getWarmingStatus(level)
-            })
-            .eq('id', session.id)
-          console.log(`Updated session current_day from ${session.current_day} to ${currentDay}`)
-        }
+        console.log(`Session day: ${currentDay} (activity-based), leads used: ${session.leads_used}/${session.leads_limit}`)
 
         // Check if warming is complete
         if (currentDay > 20 || session.leads_used >= session.leads_limit) {
