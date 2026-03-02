@@ -64,7 +64,16 @@ interface SearchAssignment {
   whatsapp_number_id: string;
   search_query: string;
   search_city: string | null;
+  phone_key?: string | null;
 }
+
+// Extract last 8 digits of a phone number for matching across formats
+const getPhoneKey = (phone: string | null): string | null => {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  return digits.slice(-8);
+};
 
 export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
