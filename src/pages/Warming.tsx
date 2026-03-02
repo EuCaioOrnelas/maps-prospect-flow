@@ -58,6 +58,7 @@ interface WarmingSession {
   error_message: string | null;
   messages_sent_today: number;
   last_message_at: string | null;
+  phone_key: string | null;
 }
 
 interface SearchAssignment {
