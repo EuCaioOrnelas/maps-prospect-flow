@@ -1102,9 +1102,9 @@ Deno.serve(async (req) => {
               leads_used: session.leads_used + 1,
               messages_sent_today: session.messages_sent_today + 1,
               last_message_at: new Date().toISOString(),
-              current_day: currentDay,
-              warming_level: level,
-              warming_status: getWarmingStatus(level)
+              current_day: advancedDay,
+              warming_level: getWarmingLevel(advancedDay),
+              warming_status: getWarmingStatus(getWarmingLevel(advancedDay))
             })
             .eq('id', session.id)
 
