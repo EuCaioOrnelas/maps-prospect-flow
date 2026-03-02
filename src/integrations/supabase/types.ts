@@ -2130,6 +2130,7 @@ export type Database = {
           created_at: string
           id: string
           leads_count: number | null
+          phone_key: string | null
           search_city: string | null
           search_query: string
           updated_at: string
@@ -2141,6 +2142,7 @@ export type Database = {
           created_at?: string
           id?: string
           leads_count?: number | null
+          phone_key?: string | null
           search_city?: string | null
           search_query: string
           updated_at?: string
@@ -2152,6 +2154,7 @@ export type Database = {
           created_at?: string
           id?: string
           leads_count?: number | null
+          phone_key?: string | null
           search_city?: string | null
           search_query?: string
           updated_at?: string
@@ -2186,12 +2189,14 @@ export type Database = {
           current_day: number
           error_message: string | null
           id: string
+          last_active_date: string | null
           last_message_at: string | null
           last_reset_date: string | null
           leads_limit: number
           leads_used: number
           messages_sent_today: number
           paused_at: string | null
+          phone_key: string | null
           started_at: string | null
           status: string
           updated_at: string
@@ -2209,12 +2214,14 @@ export type Database = {
           current_day?: number
           error_message?: string | null
           id?: string
+          last_active_date?: string | null
           last_message_at?: string | null
           last_reset_date?: string | null
           leads_limit?: number
           leads_used?: number
           messages_sent_today?: number
           paused_at?: string | null
+          phone_key?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string
@@ -2232,12 +2239,14 @@ export type Database = {
           current_day?: number
           error_message?: string | null
           id?: string
+          last_active_date?: string | null
           last_message_at?: string | null
           last_reset_date?: string | null
           leads_limit?: number
           leads_used?: number
           messages_sent_today?: number
           paused_at?: string | null
+          phone_key?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string

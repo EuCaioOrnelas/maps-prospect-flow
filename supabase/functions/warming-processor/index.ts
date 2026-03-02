@@ -738,13 +738,18 @@ Deno.serve(async (req) => {
         if (!session.whatsapp_numbers.is_connected || !session.whatsapp_numbers.instance_name) {
           console.log(`Number ${session.whatsapp_number_id} not connected, pausing warming session`)
           
+          // Compute and store phone_key for matching on reconnection
+          const phoneDigits = (session.whatsapp_numbers.phone_number || '').replace(/\D/g, '')
+          const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null
+          
           // Pause the session so it can be resumed when reconnected
           await supabase
             .from('warming_sessions')
             .update({
               status: 'paused',
               paused_at: new Date().toISOString(),
-              error_message: 'Número desconectado - reconecte para continuar o aquecimento'
+              error_message: 'Número desconectado - reconecte para continuar o aquecimento',
+              ...(phoneKey ? { phone_key: phoneKey } : {})
             })
             .eq('id', session.id)
           
@@ -766,28 +771,11 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Calculate current day (days since started)
-        const startDate = new Date(session.started_at)
-        const now = new Date()
-        const daysDiff = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-        const currentDay = Math.max(1, daysDiff)
+        // Activity-based day counting: current_day only advances when warming
+        // actually runs on a new date. Paused time does NOT count.
+        const currentDay = session.current_day || 1
 
-        console.log(`Session day: ${currentDay}, leads used: ${session.leads_used}/${session.leads_limit}`)
-        
-        // Always update current_day in the database (even if no message is sent)
-        // This ensures the UI shows the correct day count
-        if (session.current_day !== currentDay) {
-          const level = getWarmingLevel(currentDay)
-          await supabase
-            .from('warming_sessions')
-            .update({
-              current_day: currentDay,
-              warming_level: level,
-              warming_status: getWarmingStatus(level)
-            })
-            .eq('id', session.id)
-          console.log(`Updated session current_day from ${session.current_day} to ${currentDay}`)
-        }
+        console.log(`Session day: ${currentDay} (activity-based), leads used: ${session.leads_used}/${session.leads_limit}`)
 
         // Check if warming is complete
         if (currentDay > 20 || session.leads_used >= session.leads_limit) {
@@ -815,8 +803,33 @@ Deno.serve(async (req) => {
         const saoPauloNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
         const today = saoPauloNow.toISOString().split('T')[0]
         
-        if (session.last_reset_date !== today) {
-          console.log(`Resetting daily count for new day: ${today}`)
+        // Activity-based day advancement: increment current_day only on a new active date
+        const isNewActiveDay = session.last_active_date !== today
+        let advancedDay = currentDay
+        
+        if (isNewActiveDay) {
+          // Only advance if this is truly a new active day (not first day)
+          if (session.last_active_date) {
+            advancedDay = currentDay + 1
+          }
+          console.log(`New active day: ${today}, advancing to day ${advancedDay}`)
+          
+          const level = getWarmingLevel(advancedDay)
+          await supabase
+            .from('warming_sessions')
+            .update({
+              messages_sent_today: 0,
+              last_reset_date: today,
+              last_active_date: today,
+              current_day: advancedDay,
+              warming_level: level,
+              warming_status: getWarmingStatus(level)
+            })
+            .eq('id', session.id)
+          
+          session.messages_sent_today = 0
+        } else if (session.last_reset_date !== today) {
+          console.log(`Resetting daily count for date: ${today}`)
           await supabase
             .from('warming_sessions')
             .update({
@@ -1094,9 +1107,9 @@ Deno.serve(async (req) => {
               leads_used: session.leads_used + 1,
               messages_sent_today: session.messages_sent_today + 1,
               last_message_at: new Date().toISOString(),
-              current_day: currentDay,
-              warming_level: level,
-              warming_status: getWarmingStatus(level)
+              current_day: advancedDay,
+              warming_level: getWarmingLevel(advancedDay),
+              warming_status: getWarmingStatus(getWarmingLevel(advancedDay))
             })
             .eq('id', session.id)
 

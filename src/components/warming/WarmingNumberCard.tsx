@@ -176,7 +176,7 @@ export function WarmingNumberCard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {number.phone_number || 'Número não identificado'}
+              {number.phone_number || number.instance_name || 'Aguardando detecção...'}
             </p>
           </div>
 

@@ -58,13 +58,23 @@ interface WarmingSession {
   error_message: string | null;
   messages_sent_today: number;
   last_message_at: string | null;
+  phone_key: string | null;
 }
 
 interface SearchAssignment {
   whatsapp_number_id: string;
   search_query: string;
   search_city: string | null;
+  phone_key?: string | null;
 }
+
+// Extract last 8 digits of a phone number for matching across formats
+const getPhoneKey = (phone: string | null): string | null => {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  return digits.slice(-8);
+};
 
 export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
@@ -186,7 +196,7 @@ export default function Warming() {
       // Fetch search assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('warming_search_assignments')
-        .select('whatsapp_number_id, search_query, search_city')
+        .select('whatsapp_number_id, search_query, search_city, phone_key')
         .eq('user_id', user?.id);
 
       if (assignmentsError) throw assignmentsError;
@@ -200,11 +210,30 @@ export default function Warming() {
   };
 
   const getSessionForNumber = (numberId: string): WarmingSession | undefined => {
-    return sessions.find(s => s.whatsapp_number_id === numberId);
+    // First try exact match by number ID
+    const exact = sessions.find(s => s.whatsapp_number_id === numberId);
+    if (exact) return exact;
+    
+    // Then try matching by phone_key (for reconnected numbers with different format)
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
+    if (phoneKey) {
+      return sessions.find(s => s.phone_key === phoneKey);
+    }
+    return undefined;
   };
 
   const getAssignmentForNumber = (numberId: string): SearchAssignment | undefined => {
-    return assignments.find(a => a.whatsapp_number_id === numberId);
+    const exact = assignments.find(a => a.whatsapp_number_id === numberId);
+    if (exact) return exact;
+    
+    // Try matching by phone_key
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
+    if (phoneKey) {
+      return assignments.find(a => a.phone_key === phoneKey);
+    }
+    return undefined;
   };
 
   const handleStartWarming = async (numberId: string) => {
@@ -227,23 +256,51 @@ export default function Warming() {
 
   const startWarmingSession = async (numberId: string, searchQuery: string, searchCity: string | null) => {
     try {
+      const number = numbers.find(n => n.id === numberId);
+      const phoneKey = getPhoneKey(number?.phone_number || null);
       const existingSession = getSessionForNumber(numberId);
       
-      if (existingSession) {
-        // Resume existing session
+      // If no session for this number ID, check if there's one matching by phone_key
+      let matchedSession = existingSession;
+      if (!matchedSession && phoneKey) {
+        matchedSession = sessions.find(s => {
+          // Match by phone_key from any session of this user
+          const sessionData = s as any;
+          return sessionData.phone_key === phoneKey;
+        });
+        
+        // If found a session by phone_key, re-link it to the new number ID
+        if (matchedSession) {
+          console.log(`Found existing warming session by phone_key ${phoneKey}, re-linking to number ${numberId}`);
+          const { error: relinkError } = await supabase
+            .from('warming_sessions')
+            .update({ whatsapp_number_id: numberId })
+            .eq('id', matchedSession.id);
+          
+          if (relinkError) {
+            console.error('Error re-linking session:', relinkError);
+          }
+        }
+      }
+      
+      if (matchedSession) {
+        // Resume existing session - keep current_day as-is (activity-based)
         const { error } = await supabase
           .from('warming_sessions')
           .update({ 
             status: 'active',
             paused_at: null,
-            started_at: existingSession.started_at || new Date().toISOString(),
+            error_message: null,
+            whatsapp_number_id: numberId,
+            phone_key: phoneKey,
+            started_at: matchedSession.started_at || new Date().toISOString(),
             assigned_search_query: searchQuery,
             assigned_search_city: searchCity
           })
-          .eq('id', existingSession.id);
+          .eq('id', matchedSession.id);
 
         if (error) throw error;
-        toast.success('Aquecimento retomado');
+        toast.success(`Aquecimento retomado no dia ${matchedSession.current_day}`);
       } else {
         // Check limit before creating new session
         const plan = profile?.plan?.toLowerCase() || 'free';
@@ -255,7 +312,7 @@ export default function Warming() {
           return;
         }
         
-        // Create new session
+        // Create new session with phone_key
         const { error } = await supabase
           .from('warming_sessions')
           .insert({
@@ -264,7 +321,8 @@ export default function Warming() {
             status: 'active',
             started_at: new Date().toISOString(),
             assigned_search_query: searchQuery,
-            assigned_search_city: searchCity
+            assigned_search_city: searchCity,
+            phone_key: phoneKey
           });
 
         if (error) throw error;
@@ -408,6 +466,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     if (!pendingStartNumber || !user) return;
     
     const numberId = pendingStartNumber.id;
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
     const existingSession = getSessionForNumber(numberId);
     const existingAssignment = getAssignmentForNumber(numberId);
     
@@ -418,7 +478,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
           .from('warming_search_assignments')
           .update({
             search_query: search.keyword,
-            search_city: search.location || null
+            search_city: search.location || null,
+            phone_key: phoneKey
           })
           .eq('whatsapp_number_id', numberId)
           .eq('user_id', user.id);
@@ -429,7 +490,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
             user_id: user.id,
             whatsapp_number_id: numberId,
             search_query: search.keyword,
-            search_city: search.location || null
+            search_city: search.location || null,
+            phone_key: phoneKey
           });
       }
       
@@ -531,20 +593,31 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     // Refresh data and auto-resume warming if it was paused due to disconnection
     await fetchData();
     
-    // Find the session for this number and resume if paused due to disconnection
-    const session = getSessionForNumber(reconnectingNumber?.id || '');
-    if (session?.status === 'paused' && session?.error_message?.includes('desconectado')) {
+    // Find the session for this number - try by ID first, then by phone_key
+    const reconnectedNumber = numbers.find(n => n.id === reconnectingNumber?.id);
+    const phoneKey = getPhoneKey(reconnectedNumber?.phone_number || null);
+    
+    let session = getSessionForNumber(reconnectingNumber?.id || '');
+    
+    // Also try matching by phone_key in case the number ID changed
+    if (!session && phoneKey) {
+      session = sessions.find(s => s.phone_key === phoneKey) || undefined;
+    }
+    
+    if (session && (session.status === 'paused' || session.status === 'error')) {
       try {
         await supabase
           .from('warming_sessions')
           .update({
             status: 'active',
             paused_at: null,
-            error_message: null
+            error_message: null,
+            whatsapp_number_id: reconnectingNumber?.id, // Re-link to current number
+            phone_key: phoneKey
           })
           .eq('id', session.id);
         
-        toast.success('Aquecimento retomado automaticamente!');
+        toast.success(`Aquecimento retomado no dia ${session.current_day}!`);
         await fetchData();
       } catch (error) {
         console.error('Error resuming warming:', error);
