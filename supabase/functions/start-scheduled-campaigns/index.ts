@@ -309,7 +309,7 @@ serve(async (req) => {
       // Get the WhatsApp number
       const { data: numberData, error: numberError } = await supabase
         .from('whatsapp_numbers')
-        .select('id, instance_name, is_connected, daily_sent_count, last_sent_at')
+        .select('id, instance_name, is_connected, daily_sent_count, last_sent_at, api_tier')
         .eq('id', campaign.whatsapp_number_id)
         .single();
 
