@@ -134,13 +134,20 @@ function ComposeTab() {
           return;
         }
 
-        // Fetch users who EXPLICITLY opted out of marketing
-        const { data: optedOut } = await supabase
-          .from("email_preferences")
-          .select("user_id")
-          .eq("marketing_enabled", false);
+        const userIds = users.map((u) => u.id);
 
-        const optedOutIds = new Set((optedOut || []).map((p) => p.user_id));
+        const { data: prefs, error: prefsError } = await supabase
+          .from("email_preferences")
+          .select("user_id, marketing_enabled")
+          .in("user_id", userIds);
+
+        if (prefsError) throw prefsError;
+
+        const optedOutIds = new Set(
+          (prefs || [])
+            .filter((p) => p.marketing_enabled === false)
+            .map((p) => p.user_id)
+        );
 
         let sent = 0;
         let failed = 0;
