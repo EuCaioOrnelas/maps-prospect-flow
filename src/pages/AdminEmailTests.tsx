@@ -134,21 +134,11 @@ function ComposeTab() {
           return;
         }
 
-        const userIds = users.map((u) => u.id);
-        const { data: prefs } = await supabase
-          .from("email_preferences")
-          .select("user_id, marketing_enabled")
-          .in("user_id", userIds);
-
-        const prefsMap = new Map(prefs?.map((p) => [p.user_id, p.marketing_enabled]) || []);
-
         let sent = 0;
         let failed = 0;
         let skipped = 0;
 
         for (const u of users) {
-          const marketingEnabled = prefsMap.get(u.id) ?? false;
-          if (!marketingEnabled) { skipped++; continue; }
 
           try {
             const { error } = await supabase.functions.invoke("send-email", {
