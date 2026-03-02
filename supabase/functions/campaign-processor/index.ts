@@ -46,6 +46,7 @@ const corsHeaders = {
 const DAILY_LIMIT_PER_NUMBER = 200;
 const FREE_DAILY_LIMIT = 20;
 const FREE_TRIAL_MESSAGE_LIMIT = 400;
+const IGNORED_CONTACT_COOLDOWN_MINUTES = 30;
 
 // Start next postponed campaign for a number when the current one finishes
 async function startNextPostponedCampaign(
