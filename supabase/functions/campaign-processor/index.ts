@@ -238,13 +238,13 @@ async function sendMessage(
   phone: string,
   message: string,
   simulationMode: boolean = false
-): Promise<{ success: boolean; messageId?: string; error?: string; simulated?: boolean }> {
+): Promise<{ success: boolean; messageId?: string; error?: string; simulated?: boolean; status?: string }> {
   // If simulation mode, log and return success without actually sending
   if (simulationMode) {
     const simulatedMessageId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     console.log(`[SIMULATION] Would send to ${phone}: "${message.substring(0, 50)}..."`);
     console.log(`[SIMULATION] Instance: ${instanceName}, MessageId: ${simulatedMessageId}`);
-    return { success: true, messageId: simulatedMessageId, simulated: true };
+    return { success: true, messageId: simulatedMessageId, simulated: true, status: 'simulated' };
   }
 
   try {
@@ -263,13 +263,41 @@ async function sendMessage(
 
     clearTimeout(timeoutId);
 
-    if (response.ok) {
-      const result = await response.json();
-      return { success: true, messageId: result?.key?.id };
-    } else {
-      const errorText = await response.text();
-      return { success: false, error: errorText };
+    const responseText = await response.text();
+    let result: any = null;
+    try {
+      result = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      result = null;
     }
+
+    if (!response.ok) {
+      return { success: false, error: responseText || `HTTP ${response.status}` };
+    }
+
+    const messageId = result?.key?.id || result?.messageId || result?.id;
+    const status = String(result?.status || result?.message?.status || '').toLowerCase();
+    const explicitError = result?.error || result?.message === 'error';
+    const failedStatuses = ['error', 'failed', 'not_sent', 'rejected', 'invalid'];
+
+    if (explicitError || failedStatuses.includes(status)) {
+      return {
+        success: false,
+        error: result?.error || result?.message || `Evolution returned failure status: ${status || 'unknown'}`,
+        status,
+      };
+    }
+
+    // Critical guard: do not mark as sent/ignored without a provider message id
+    if (!messageId) {
+      return {
+        success: false,
+        error: 'Evolution returned success without messageId confirmation',
+        status,
+      };
+    }
+
+    return { success: true, messageId, status };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
