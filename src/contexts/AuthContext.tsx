@@ -318,7 +318,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           signup_ip: clientIP || 'unknown',
           device_fingerprint: fingerprint || 'unknown',
           fraud_check_skipped: fraudCheckSkipped,
-          stripe_whitelisted: isWhitelisted
+          stripe_whitelisted: isWhitelisted,
+          terms_accepted: 'true'
         }
       }
     });
