@@ -57,8 +57,8 @@ function ComposeTab() {
   const [content, setContent] = useState("");
   const [selectedPlans, setSelectedPlans] = useState<PlanFilter[]>(["free", "start", "growth", "scale"]);
   const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
-  const textareaRef = useState<HTMLTextAreaElement | null>(null);
 
   const togglePlan = (plan: PlanFilter) => {
     setSelectedPlans((prev) =>
@@ -99,6 +99,7 @@ function ComposeTab() {
 
     setSending(true);
     setResult(null);
+    setProgress(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,7 +121,6 @@ function ComposeTab() {
         if (error) throw error;
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
       } else {
-        // Fetch target users
         const { data: users, error: usersError } = await supabase
           .from("profiles")
           .select("id, email, name, plan")
@@ -149,28 +149,35 @@ function ComposeTab() {
             .map((p) => p.user_id)
         );
 
+        const eligibleUsers = users.filter((u) => !optedOutIds.has(u.id));
+        const skipped = users.length - eligibleUsers.length;
+
         let sent = 0;
         let failed = 0;
-        let skipped = 0;
+        setProgress({ current: 0, total: eligibleUsers.length });
 
-        for (const u of users) {
-          if (optedOutIds.has(u.id)) {
-            skipped++;
-            continue;
+        // Send in parallel batches of 5
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < eligibleUsers.length; i += BATCH_SIZE) {
+          const batch = eligibleUsers.slice(i, i + BATCH_SIZE);
+          const results = await Promise.allSettled(
+            batch.map((u) =>
+              supabase.functions.invoke("send-email", {
+                body: {
+                  user_id: u.id,
+                  email_type: "ADMIN_BROADCAST",
+                  payload: { subject: subject.trim(), content: htmlContent },
+                  idempotency_key: `broadcast_${Date.now()}_${u.id}`,
+                },
+              })
+            )
+          );
+
+          for (const r of results) {
+            if (r.status === "fulfilled" && !r.value.error) sent++;
+            else failed++;
           }
-
-          try {
-            const { error } = await supabase.functions.invoke("send-email", {
-              body: {
-                user_id: u.id,
-                email_type: "ADMIN_BROADCAST",
-                payload: { subject: subject.trim(), content: htmlContent },
-                idempotency_key: `broadcast_${Date.now()}_${u.id}`,
-              },
-            });
-            if (error) throw error;
-            sent++;
-          } catch { failed++; }
+          setProgress({ current: Math.min(i + BATCH_SIZE, eligibleUsers.length), total: eligibleUsers.length });
         }
 
         setResult({ sent, failed, skipped });
@@ -180,6 +187,7 @@ function ComposeTab() {
       toast({ title: "Erro no envio", description: err.message, variant: "destructive" });
     } finally {
       setSending(false);
+      setProgress(null);
     }
   };
 
@@ -278,6 +286,18 @@ function ComposeTab() {
           Apenas usuários com marketing habilitado receberão o e-mail.
         </p>
       </div>
+
+      {progress && (
+        <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
+          <p className="text-sm font-medium text-foreground">Enviando... {progress.current}/{progress.total}</p>
+          <div className="w-full bg-muted rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(progress.current / progress.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {result && (
         <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
