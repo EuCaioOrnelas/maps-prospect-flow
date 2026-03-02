@@ -58,7 +58,7 @@ const Profile = () => {
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [transactionalEnabled, setTransactionalEnabled] = useState(true);
-  const [marketingEnabled, setMarketingEnabled] = useState(false);
+  const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
   const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
 
@@ -113,7 +113,7 @@ const Profile = () => {
         await supabase.from("email_preferences").insert({
           user_id: user.id,
           transactional_enabled: field === "transactional_enabled" ? value : true,
-          marketing_enabled: field === "marketing_enabled" ? value : false,
+          marketing_enabled: field === "marketing_enabled" ? value : true,
         } as any);
       }
 
