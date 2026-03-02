@@ -19,10 +19,20 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  ShieldCheck,
+  ShieldAlert,
+  Filter
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TermsAcceptance {
   id: string;
@@ -33,39 +43,71 @@ interface TermsAcceptance {
   plan: string;
 }
 
+type FilterStatus = 'all' | 'accepted' | 'pending';
+
 export const TermsAcceptanceLog = () => {
   const [acceptances, setAcceptances] = useState<TermsAcceptance[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [acceptedCount, setAcceptedCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const pageSize = 20;
 
   const loadAcceptances = async () => {
     setLoading(true);
     try {
-      // Get total count
-      const { count } = await supabase
+      // Get counts
+      const { count: totalC } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: acceptedC } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .not('terms_accepted_at', 'is', null);
-      
-      setTotalCount(count || 0);
 
-      // Get paginated data
+      setAcceptedCount(acceptedC || 0);
+      setPendingCount((totalC || 0) - (acceptedC || 0));
+
+      // Build query
       let query = supabase
         .from('profiles')
         .select('id, email, name, terms_accepted_at, created_at, plan')
-        .not('terms_accepted_at', 'is', null)
-        .order('terms_accepted_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (filterStatus === 'accepted') {
+        query = query.not('terms_accepted_at', 'is', null);
+      } else if (filterStatus === 'pending') {
+        query = query.is('terms_accepted_at', null);
+      }
 
       if (searchTerm) {
         query = query.or(`email.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%`);
       }
 
-      const { data, error } = await query;
+      // Count for current filter
+      let countQuery = supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
 
+      if (filterStatus === 'accepted') {
+        countQuery = countQuery.not('terms_accepted_at', 'is', null);
+      } else if (filterStatus === 'pending') {
+        countQuery = countQuery.is('terms_accepted_at', null);
+      }
+
+      if (searchTerm) {
+        countQuery = countQuery.or(`email.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%`);
+      }
+
+      const { count: filteredCount } = await countQuery;
+      setTotalCount(filteredCount || 0);
+
+      const { data, error } = await query;
       if (error) throw error;
       setAcceptances(data || []);
     } catch (error) {
@@ -77,19 +119,25 @@ export const TermsAcceptanceLog = () => {
 
   useEffect(() => {
     loadAcceptances();
-  }, [page, searchTerm]);
+  }, [page, searchTerm, filterStatus]);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setPage(0);
   };
 
+  const handleFilterChange = (value: FilterStatus) => {
+    setFilterStatus(value);
+    setPage(0);
+  };
+
   const exportToCSV = () => {
-    const headers = ['Email', 'Nome', 'Plano', 'Data de Aceite', 'Data de Cadastro'];
+    const headers = ['Email', 'Nome', 'Plano', 'Status Termos', 'Data de Aceite', 'Data de Cadastro'];
     const rows = acceptances.map(a => [
       a.email,
       a.name || '-',
       a.plan,
+      a.terms_accepted_at ? 'Aceito' : 'Pendente',
       a.terms_accepted_at ? format(new Date(a.terms_accepted_at), "dd/MM/yyyy HH:mm:ss") : '-',
       format(new Date(a.created_at), "dd/MM/yyyy HH:mm:ss")
     ]);
@@ -112,7 +160,7 @@ export const TermsAcceptanceLog = () => {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileCheck className="h-5 w-5 text-primary" />
-          Histórico de Aceites de Termos
+          Aceite de Termos de Uso
         </CardTitle>
         <div className="flex items-center gap-2">
           <Button
@@ -135,7 +183,33 @@ export const TermsAcceptanceLog = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 mb-4">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
+            <FileCheck className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-sm font-semibold">{acceptedCount + pendingCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 border border-emerald-500/20">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <div>
+              <p className="text-xs text-muted-foreground">Aceitos</p>
+              <p className="text-sm font-semibold text-emerald-500">{acceptedCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 p-3 border border-amber-500/20">
+            <ShieldAlert className="h-4 w-4 text-amber-500" />
+            <div>
+              <p className="text-xs text-muted-foreground">Pendentes</p>
+              <p className="text-sm font-semibold text-amber-500">{pendingCount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-3 mb-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -145,8 +219,19 @@ export const TermsAcceptanceLog = () => {
               className="pl-10"
             />
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {totalCount} aceites registrados
+          <Select value={filterStatus} onValueChange={(v) => handleFilterChange(v as FilterStatus)}>
+            <SelectTrigger className="w-[160px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="accepted">Aceitos</SelectItem>
+              <SelectItem value="pending">Pendentes</SelectItem>
+            </SelectContent>
+          </Select>
+          <Badge variant="secondary" className="text-xs whitespace-nowrap">
+            {totalCount} resultados
           </Badge>
         </div>
 
@@ -157,6 +242,7 @@ export const TermsAcceptanceLog = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Plano</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Data do Aceite</TableHead>
                 <TableHead>Data de Cadastro</TableHead>
               </TableRow>
@@ -164,14 +250,14 @@ export const TermsAcceptanceLog = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : acceptances.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Nenhum aceite de termos encontrado
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nenhum registro encontrado
                   </TableCell>
                 </TableRow>
               ) : (
@@ -190,6 +276,19 @@ export const TermsAcceptanceLog = () => {
                       >
                         {acceptance.plan}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {acceptance.terms_accepted_at ? (
+                        <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-xs">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Aceito
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-xs">
+                          <ShieldAlert className="h-3 w-3 mr-1" />
+                          Pendente
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
                       {acceptance.terms_accepted_at ? (

@@ -318,47 +318,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           signup_ip: clientIP || 'unknown',
           device_fingerprint: fingerprint || 'unknown',
           fraud_check_skipped: fraudCheckSkipped,
-          stripe_whitelisted: isWhitelisted
+          stripe_whitelisted: isWhitelisted,
+          terms_accepted: 'true'
         }
       }
     });
 
 
-    // Update profile with IP, fingerprint and terms acceptance
-    if (!error && data.user) {
-      const updateProfile = async (retries = 3): Promise<boolean> => {
-        for (let i = 0; i < retries; i++) {
-          // Wait a bit for the profile trigger to create the row
-          await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
-          
-          try {
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                signup_ip: clientIP || 'unknown',
-                device_fingerprint: fingerprint || 'unknown',
-                terms_accepted_at: new Date().toISOString()
-              })
-              .eq('id', data.user!.id);
-            
-            if (!updateError) {
-              console.log('[AuthContext] Profile updated with fraud prevention data');
-              return true;
-            }
-            
-            console.warn(`[AuthContext] Profile update attempt ${i + 1} failed:`, updateError);
-          } catch (e) {
-            console.warn(`[AuthContext] Profile update attempt ${i + 1} exception:`, e);
-          }
-        }
-        // Don't fail signup if profile update fails - user can still use the app
-        console.warn('[AuthContext] Profile update failed after retries, continuing anyway');
-        return false;
-      };
-      
-      // Run update in background - don't block signup completion
-      updateProfile().catch(e => console.error('[AuthContext] Background profile update error:', e));
-    }
+    // Profile data (IP, fingerprint, terms) is now set by the handle_new_user trigger
+    // via user metadata, so no separate update is needed.
 
     return { error };
   };
