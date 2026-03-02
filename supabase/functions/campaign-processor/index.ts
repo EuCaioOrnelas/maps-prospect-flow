@@ -275,7 +275,7 @@ async function sendMessage(
   }
 }
 
-// Check if contact is in ignored list (should not receive new messages)
+// Check if contact is in ignored list (temporary anti-spam cooldown)
 async function isContactIgnored(
   supabase: any,
   userId: string,
@@ -284,12 +284,30 @@ async function isContactIgnored(
   const normalizedPhone = normalizePhone(phone);
   const { data } = await supabase
     .from('ignored_contacts')
-    .select('id')
+    .select('id, first_message_sent_at')
     .eq('user_id', userId)
     .eq('phone', normalizedPhone)
-    .single();
-  
-  return !!data;
+    .maybeSingle();
+
+  if (!data) return false;
+
+  const firstSentAt = data.first_message_sent_at ? new Date(data.first_message_sent_at).getTime() : null;
+  if (!firstSentAt || Number.isNaN(firstSentAt)) {
+    return true;
+  }
+
+  const cooldownMs = IGNORED_CONTACT_COOLDOWN_MINUTES * 60 * 1000;
+  const stillInCooldown = Date.now() - firstSentAt < cooldownMs;
+
+  if (!stillInCooldown) {
+    // Cleanup expired ignored contact to avoid permanent blocks on new campaigns
+    await supabase
+      .from('ignored_contacts')
+      .delete()
+      .eq('id', data.id);
+  }
+
+  return stillInCooldown;
 }
 
 // Add contact to ignored list
