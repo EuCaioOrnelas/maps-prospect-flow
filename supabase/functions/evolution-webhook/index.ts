@@ -2038,17 +2038,22 @@ REGRAS OBRIGATÓRIAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
-          if (state === 'open' && EVOLUTION_API_URL && EVOLUTION_API_KEY) {
-            console.log(`🔄 Auto-configuring webhook for newly connected instance: ${instanceName}`);
+          if (state === 'open') {
+            // Resolve correct API credentials for THIS instance (free vs paid)
+            const apiCreds = await getApiCredentials(instanceName);
+            const resolvedApiUrl = apiCreds.url;
+            const resolvedApiKey = apiCreds.apiKey;
+            
+            console.log(`🔄 Auto-configuring webhook for ${instanceName} on ${resolvedApiUrl.includes('paid') ? 'PAID' : 'FREE'} API`);
             const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
             const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
             
             const webhookFormats = [
-              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`, method: 'POST', body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
-              { url: `${EVOLUTION_API_URL}/webhook/instance/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${EVOLUTION_API_URL}/webhook/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${EVOLUTION_API_URL}/settings/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${resolvedApiUrl}/webhook/set/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${resolvedApiUrl}/webhook/set/${instanceName}`, method: 'POST', body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
+              { url: `${resolvedApiUrl}/webhook/instance/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${resolvedApiUrl}/webhook/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
+              { url: `${resolvedApiUrl}/settings/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
             ];
 
             let webhookOk = false;
@@ -2057,7 +2062,7 @@ REGRAS OBRIGATÓRIAS:
               try {
                 const wRes = await fetch(fmt.url, {
                   method: fmt.method,
-                  headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+                  headers: { 'Content-Type': 'application/json', 'apikey': resolvedApiKey },
                   body: JSON.stringify(fmt.body),
                 });
                 const wText = await wRes.text();
