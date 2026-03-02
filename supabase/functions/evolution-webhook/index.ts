@@ -2013,10 +2013,21 @@ REGRAS OBRIGATÓRIAS:
             }
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
-            // This is a TRANSIENT state — WhatsApp often recovers to 'open' within seconds
-            // DO NOT mark as disconnected here to avoid false disconnections
-            // Only 'close' should trigger a real disconnection
-            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state (auto-reconnect in progress — keeping current status)`);
+            // This is usually TRANSIENT — WhatsApp often recovers to 'open' within seconds
+            // We DON'T mark as disconnected here, but we UPDATE the timestamp
+            // so that evolution-check-status can detect instances stuck in this state for >30 min
+            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state — updating timestamp for stuck-detection`);
+            
+            // Touch updated_at WITHOUT changing is_connected so check-status can detect stuck instances
+            const { error: touchErr } = await supabase
+              .from('whatsapp_numbers')
+              .update({ updated_at: new Date().toISOString() })
+              .eq('instance_name', instanceName)
+              .eq('is_connected', false); // Only touch if already marked disconnected (avoid overwriting a good state)
+            
+            if (touchErr) {
+              console.error('Error touching updated_at for connecting state:', touchErr);
+            }
           } else {
             console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }

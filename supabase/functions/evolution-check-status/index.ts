@@ -216,14 +216,66 @@ serve(async (req) => {
         }
       }
 
-      // For 'connecting' state, return null (uncertain) so frontend keeps previous state
       const isDefinitelyDisconnected = state === 'close';
+
+      // Check if instance is STUCK in 'connecting' for too long (>30 min)
+      // If so, treat it as disconnected and attempt auto-reconnect
+      let isStuckConnecting = false;
+      if (state === 'connecting' && numberId) {
+        const { data: numberRow } = await supabase
+          .from('whatsapp_numbers')
+          .select('updated_at, is_connected')
+          .eq('id', numberId)
+          .single();
+
+        if (numberRow) {
+          const lastUpdate = new Date(numberRow.updated_at).getTime();
+          const now = Date.now();
+          const minutesSinceUpdate = (now - lastUpdate) / (1000 * 60);
+          
+          if (minutesSinceUpdate > 30) {
+            console.log(`⚠️ Instance ${instanceName} STUCK in connecting for ${Math.round(minutesSinceUpdate)} minutes — forcing reconnect`);
+            isStuckConnecting = true;
+
+            // Mark as disconnected in DB
+            await supabase
+              .from('whatsapp_numbers')
+              .update({ 
+                is_connected: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', numberId)
+              .eq('user_id', user.id);
+
+            // Try to force reconnect by restarting the instance
+            try {
+              const restartResponse = await fetch(`${evoCredentials.url}/instance/restart/${instanceName}`, {
+                method: 'PUT',
+                headers: { 'apikey': evoCredentials.apiKey },
+              });
+              console.log(`Restart attempt for stuck instance ${instanceName}: ${restartResponse.status}`);
+              
+              if (!restartResponse.ok) {
+                // If restart fails, try logout + connect to force new QR
+                const logoutResponse = await fetch(`${evoCredentials.url}/instance/logout/${instanceName}`, {
+                  method: 'DELETE',
+                  headers: { 'apikey': evoCredentials.apiKey },
+                });
+                console.log(`Logout attempt for stuck instance ${instanceName}: ${logoutResponse.status}`);
+              }
+            } catch (e) {
+              console.error(`Failed to restart stuck instance ${instanceName}:`, e);
+            }
+          }
+        }
+      }
 
       return new Response(JSON.stringify({
         success: true,
-        connected: isDefinitelyDisconnected ? false : null,
-        state: state || 'unknown',
+        connected: isDefinitelyDisconnected || isStuckConnecting ? false : null,
+        state: isStuckConnecting ? 'stuck_connecting' : (state || 'unknown'),
         phoneNumber: null,
+        stuckMinutes: isStuckConnecting ? undefined : null,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
