@@ -798,8 +798,33 @@ Deno.serve(async (req) => {
         const saoPauloNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
         const today = saoPauloNow.toISOString().split('T')[0]
         
-        if (session.last_reset_date !== today) {
-          console.log(`Resetting daily count for new day: ${today}`)
+        // Activity-based day advancement: increment current_day only on a new active date
+        const isNewActiveDay = session.last_active_date !== today
+        let advancedDay = currentDay
+        
+        if (isNewActiveDay) {
+          // Only advance if this is truly a new active day (not first day)
+          if (session.last_active_date) {
+            advancedDay = currentDay + 1
+          }
+          console.log(`New active day: ${today}, advancing to day ${advancedDay}`)
+          
+          const level = getWarmingLevel(advancedDay)
+          await supabase
+            .from('warming_sessions')
+            .update({
+              messages_sent_today: 0,
+              last_reset_date: today,
+              last_active_date: today,
+              current_day: advancedDay,
+              warming_level: level,
+              warming_status: getWarmingStatus(level)
+            })
+            .eq('id', session.id)
+          
+          session.messages_sent_today = 0
+        } else if (session.last_reset_date !== today) {
+          console.log(`Resetting daily count for date: ${today}`)
           await supabase
             .from('warming_sessions')
             .update({
