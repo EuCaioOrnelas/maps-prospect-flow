@@ -237,6 +237,13 @@ serve(async (req) => {
             console.log(`⚠️ Instance ${instanceName} STUCK in connecting for ${Math.round(minutesSinceUpdate)} minutes — forcing reconnect`);
             isStuckConnecting = true;
 
+            // Get phone_number for email notification before updating
+            const { data: fullNumberData } = await supabase
+              .from('whatsapp_numbers')
+              .select('phone_number, user_id')
+              .eq('id', numberId)
+              .single();
+
             // Mark as disconnected in DB
             await supabase
               .from('whatsapp_numbers')
@@ -246,6 +253,26 @@ serve(async (req) => {
               })
               .eq('id', numberId)
               .eq('user_id', user.id);
+
+            // Send disconnection email notification
+            if (fullNumberData) {
+              try {
+                await supabase.functions.invoke('send-email', {
+                  body: {
+                    user_id: fullNumberData.user_id,
+                    email_type: 'NUMBER_DISCONNECTED',
+                    payload: {
+                      phone_number: fullNumberData.phone_number || instanceName,
+                      instance_name: instanceName,
+                    },
+                    idempotency_key: `stuck_disconnect_${numberId}_${new Date().toISOString().slice(0, 13)}`,
+                  },
+                });
+                console.log(`📧 Stuck-connecting disconnection email sent for ${instanceName}`);
+              } catch (emailErr) {
+                console.error('Failed to send stuck-connecting email:', emailErr);
+              }
+            }
 
             // Try to force reconnect by restarting the instance
             try {

@@ -2014,20 +2014,10 @@ REGRAS OBRIGATÓRIAS:
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
             // This is usually TRANSIENT — WhatsApp often recovers to 'open' within seconds
-            // We DON'T mark as disconnected here, but we UPDATE the timestamp
-            // so that evolution-check-status can detect instances stuck in this state for >30 min
-            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state — updating timestamp for stuck-detection`);
-            
-            // Touch updated_at WITHOUT changing is_connected so check-status can detect stuck instances
-            const { error: touchErr } = await supabase
-              .from('whatsapp_numbers')
-              .update({ updated_at: new Date().toISOString() })
-              .eq('instance_name', instanceName)
-              .eq('is_connected', false); // Only touch if already marked disconnected (avoid overwriting a good state)
-            
-            if (touchErr) {
-              console.error('Error touching updated_at for connecting state:', touchErr);
-            }
+            // IMPORTANT: Do NOT touch updated_at here! The stuck detection in evolution-check-status
+            // relies on updated_at being the timestamp of the LAST 'open' state.
+            // If we keep resetting it on every 'connecting' event, the 30-min timer would never trigger.
+            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state — NOT updating timestamp (preserving for stuck-detection)`);
           } else {
             console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }
