@@ -589,20 +589,31 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     // Refresh data and auto-resume warming if it was paused due to disconnection
     await fetchData();
     
-    // Find the session for this number and resume if paused due to disconnection
-    const session = getSessionForNumber(reconnectingNumber?.id || '');
-    if (session?.status === 'paused' && session?.error_message?.includes('desconectado')) {
+    // Find the session for this number - try by ID first, then by phone_key
+    const reconnectedNumber = numbers.find(n => n.id === reconnectingNumber?.id);
+    const phoneKey = getPhoneKey(reconnectedNumber?.phone_number || null);
+    
+    let session = getSessionForNumber(reconnectingNumber?.id || '');
+    
+    // Also try matching by phone_key in case the number ID changed
+    if (!session && phoneKey) {
+      session = sessions.find(s => s.phone_key === phoneKey) || undefined;
+    }
+    
+    if (session && (session.status === 'paused' || session.status === 'error')) {
       try {
         await supabase
           .from('warming_sessions')
           .update({
             status: 'active',
             paused_at: null,
-            error_message: null
+            error_message: null,
+            whatsapp_number_id: reconnectingNumber?.id, // Re-link to current number
+            phone_key: phoneKey
           })
           .eq('id', session.id);
         
-        toast.success('Aquecimento retomado automaticamente!');
+        toast.success(`Aquecimento retomado no dia ${session.current_day}!`);
         await fetchData();
       } catch (error) {
         console.error('Error resuming warming:', error);
