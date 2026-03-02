@@ -1959,7 +1959,10 @@ REGRAS OBRIGATÓRIAS:
         // Update the whatsapp_numbers table based on connection state
           // IMPORTANT: Only set is_connected = true when state is 'open'
           // NEVER set is_connected = false from webhook events, as temporary states
-          // like 'connecting' would falsely mark numbers as disconnected and stop campaigns
+          // like 'close' or 'connecting' would falsely mark numbers as disconnected
+          // and cause the campaign-processor to pause campaigns prematurely.
+          // Disconnection detection is handled by evolution-check-status (user-facing)
+          // and the campaign-processor's own live connection check.
           if (state === 'open') {
             const { error } = await supabase
               .from('whatsapp_numbers')
@@ -1975,49 +1978,14 @@ REGRAS OBRIGATÓRIAS:
               console.log(`Updated connection status for ${instanceName}: connected`);
             }
           } else if (state === 'close') {
-            // Number disconnected — mark as disconnected and notify user
-            console.log(`⚠️ Instance ${instanceName} DISCONNECTED (state: close)`);
-            
-            const { data: numberData, error: numErr } = await supabase
-              .from('whatsapp_numbers')
-              .update({ 
-                is_connected: false,
-                updated_at: new Date().toISOString()
-              })
-              .eq('instance_name', instanceName)
-              .select('id, phone_number, user_id')
-              .single();
-            
-            if (numErr) {
-              console.error('Error marking number as disconnected:', numErr);
-            } else if (numberData) {
-              console.log(`Marked ${instanceName} (${numberData.phone_number}) as disconnected`);
-              
-              // Send email notification to user
-              try {
-                await supabase.functions.invoke('send-email', {
-                  body: {
-                    user_id: numberData.user_id,
-                    email_type: 'NUMBER_DISCONNECTED',
-                    payload: {
-                      phone_number: numberData.phone_number || instanceName,
-                      instance_name: instanceName,
-                    },
-                    idempotency_key: `disconnect_${numberData.id}_${new Date().toISOString().slice(0, 13)}`,
-                  },
-                });
-                console.log(`📧 Disconnection email sent for ${instanceName}`);
-              } catch (emailErr) {
-                console.error('Failed to send disconnection email:', emailErr);
-              }
-            }
+            // Log disconnection but do NOT update is_connected in DB
+            // The campaign-processor does a LIVE connection check before each message,
+            // so it will catch genuine disconnections without false positives from transient 'close' events
+            console.log(`⚠️ Instance ${instanceName} received 'close' event — NOT marking as disconnected (transient state)`);
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
-            // This is usually TRANSIENT — WhatsApp often recovers to 'open' within seconds
-            // IMPORTANT: Do NOT touch updated_at here! The stuck detection in evolution-check-status
-            // relies on updated_at being the timestamp of the LAST 'open' state.
-            // If we keep resetting it on every 'connecting' event, the 30-min timer would never trigger.
-            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state — NOT updating timestamp (preserving for stuck-detection)`);
+            // Do NOT touch updated_at or is_connected
+            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state — NOT updating (transient state)`);
           } else {
             console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }
