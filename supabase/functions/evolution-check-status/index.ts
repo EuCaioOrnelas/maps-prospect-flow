@@ -198,10 +198,9 @@ serve(async (req) => {
     if (!isConnected) {
       console.log(`Instance ${instanceName} is not connected (state: ${state}).`);
 
-      // Mark as disconnected in DB when state is definitively not 'open'
-      // This covers: 'close' (explicit disconnect), 'connecting' (stuck reconnection loop),
-      // and any other non-open state that indicates the instance is not functional
-      if (numberId && (state === 'close' || state === 'connecting')) {
+      // Only mark as disconnected for definitive 'close' state
+      // 'connecting' is transient — WhatsApp often recovers automatically
+      if (numberId && state === 'close') {
         console.log(`⚠️ Marking ${instanceName} as disconnected (state: ${state})`);
         const { error: updateErr } = await supabase
           .from('whatsapp_numbers')
@@ -217,9 +216,12 @@ serve(async (req) => {
         }
       }
 
+      // For 'connecting' state, return null (uncertain) so frontend keeps previous state
+      const isDefinitelyDisconnected = state === 'close';
+
       return new Response(JSON.stringify({
         success: true,
-        connected: false,
+        connected: isDefinitelyDisconnected ? false : null,
         state: state || 'unknown',
         phoneNumber: null,
       }), {
