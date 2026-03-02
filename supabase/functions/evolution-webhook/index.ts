@@ -2013,25 +2013,10 @@ REGRAS OBRIGATÓRIAS:
             }
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
-            // This often happens when WhatsApp drops the session
-            // We treat this as a disconnection to stop campaigns immediately
-            console.log(`⚠️ Instance ${instanceName} is in CONNECTING state (auto-reconnect loop)`);
-            
-            const { data: numberData, error: numErr } = await supabase
-              .from('whatsapp_numbers')
-              .update({ 
-                is_connected: false,
-                updated_at: new Date().toISOString()
-              })
-              .eq('instance_name', instanceName)
-              .select('id, phone_number, user_id, is_connected')
-              .single();
-            
-            if (numErr) {
-              console.error('Error marking number as disconnected (connecting):', numErr);
-            } else if (numberData) {
-              console.log(`Marked ${instanceName} as disconnected (was in connecting loop)`);
-            }
+            // This is a TRANSIENT state — WhatsApp often recovers to 'open' within seconds
+            // DO NOT mark as disconnected here to avoid false disconnections
+            // Only 'close' should trigger a real disconnection
+            console.log(`ℹ️ Instance ${instanceName} is in CONNECTING state (auto-reconnect in progress — keeping current status)`);
           } else {
             console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }
