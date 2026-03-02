@@ -210,11 +210,30 @@ export default function Warming() {
   };
 
   const getSessionForNumber = (numberId: string): WarmingSession | undefined => {
-    return sessions.find(s => s.whatsapp_number_id === numberId);
+    // First try exact match by number ID
+    const exact = sessions.find(s => s.whatsapp_number_id === numberId);
+    if (exact) return exact;
+    
+    // Then try matching by phone_key (for reconnected numbers with different format)
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
+    if (phoneKey) {
+      return sessions.find(s => s.phone_key === phoneKey);
+    }
+    return undefined;
   };
 
   const getAssignmentForNumber = (numberId: string): SearchAssignment | undefined => {
-    return assignments.find(a => a.whatsapp_number_id === numberId);
+    const exact = assignments.find(a => a.whatsapp_number_id === numberId);
+    if (exact) return exact;
+    
+    // Try matching by phone_key
+    const number = numbers.find(n => n.id === numberId);
+    const phoneKey = getPhoneKey(number?.phone_number || null);
+    if (phoneKey) {
+      return assignments.find(a => a.phone_key === phoneKey);
+    }
+    return undefined;
   };
 
   const handleStartWarming = async (numberId: string) => {
