@@ -236,23 +236,51 @@ export default function Warming() {
 
   const startWarmingSession = async (numberId: string, searchQuery: string, searchCity: string | null) => {
     try {
+      const number = numbers.find(n => n.id === numberId);
+      const phoneKey = getPhoneKey(number?.phone_number || null);
       const existingSession = getSessionForNumber(numberId);
       
-      if (existingSession) {
-        // Resume existing session
+      // If no session for this number ID, check if there's one matching by phone_key
+      let matchedSession = existingSession;
+      if (!matchedSession && phoneKey) {
+        matchedSession = sessions.find(s => {
+          // Match by phone_key from any session of this user
+          const sessionData = s as any;
+          return sessionData.phone_key === phoneKey;
+        });
+        
+        // If found a session by phone_key, re-link it to the new number ID
+        if (matchedSession) {
+          console.log(`Found existing warming session by phone_key ${phoneKey}, re-linking to number ${numberId}`);
+          const { error: relinkError } = await supabase
+            .from('warming_sessions')
+            .update({ whatsapp_number_id: numberId })
+            .eq('id', matchedSession.id);
+          
+          if (relinkError) {
+            console.error('Error re-linking session:', relinkError);
+          }
+        }
+      }
+      
+      if (matchedSession) {
+        // Resume existing session - keep current_day as-is (activity-based)
         const { error } = await supabase
           .from('warming_sessions')
           .update({ 
             status: 'active',
             paused_at: null,
-            started_at: existingSession.started_at || new Date().toISOString(),
+            error_message: null,
+            whatsapp_number_id: numberId,
+            phone_key: phoneKey,
+            started_at: matchedSession.started_at || new Date().toISOString(),
             assigned_search_query: searchQuery,
             assigned_search_city: searchCity
           })
-          .eq('id', existingSession.id);
+          .eq('id', matchedSession.id);
 
         if (error) throw error;
-        toast.success('Aquecimento retomado');
+        toast.success(`Aquecimento retomado no dia ${matchedSession.current_day}`);
       } else {
         // Check limit before creating new session
         const plan = profile?.plan?.toLowerCase() || 'free';
@@ -264,7 +292,7 @@ export default function Warming() {
           return;
         }
         
-        // Create new session
+        // Create new session with phone_key
         const { error } = await supabase
           .from('warming_sessions')
           .insert({
@@ -273,7 +301,8 @@ export default function Warming() {
             status: 'active',
             started_at: new Date().toISOString(),
             assigned_search_query: searchQuery,
-            assigned_search_city: searchCity
+            assigned_search_city: searchCity,
+            phone_key: phoneKey
           });
 
         if (error) throw error;
