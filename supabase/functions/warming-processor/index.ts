@@ -738,13 +738,18 @@ Deno.serve(async (req) => {
         if (!session.whatsapp_numbers.is_connected || !session.whatsapp_numbers.instance_name) {
           console.log(`Number ${session.whatsapp_number_id} not connected, pausing warming session`)
           
+          // Compute and store phone_key for matching on reconnection
+          const phoneDigits = (session.whatsapp_numbers.phone_number || '').replace(/\D/g, '')
+          const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null
+          
           // Pause the session so it can be resumed when reconnected
           await supabase
             .from('warming_sessions')
             .update({
               status: 'paused',
               paused_at: new Date().toISOString(),
-              error_message: 'Número desconectado - reconecte para continuar o aquecimento'
+              error_message: 'Número desconectado - reconecte para continuar o aquecimento',
+              ...(phoneKey ? { phone_key: phoneKey } : {})
             })
             .eq('id', session.id)
           
