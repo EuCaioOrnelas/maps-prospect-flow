@@ -333,6 +333,12 @@ serve(async (req) => {
         continue;
       }
 
+      // Resolve Evolution API credentials based on number's api_tier
+      const evoCredentials = getEvolutionCredentials(numberData.api_tier);
+      const EVOLUTION_API_URL = evoCredentials.url;
+      const EVOLUTION_API_KEY = evoCredentials.apiKey;
+      console.log(`[start-scheduled-campaigns] Using ${evoCredentials.tier} Evolution credentials for ${numberData.instance_name}`);
+
       // Check connection via Evolution API
       const connectionCheck = await checkInstanceConnection(
         EVOLUTION_API_URL, 
