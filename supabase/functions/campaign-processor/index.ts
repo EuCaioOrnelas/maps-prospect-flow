@@ -1188,7 +1188,9 @@ Deno.serve(async (req) => {
         // Resolve Evolution API credentials based on number's api_tier
         const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
 
-        // Validate real connection state before processing to avoid consuming leads on disconnected sessions
+        // Validate connection state - only check DB flag, skip live API check
+        // Live connection checks are expensive and cause false positives on transient issues
+        // The actual send attempt will reveal real disconnections (with retry logic)
         if (!numberData.is_connected) {
           console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, pausing campaign ${campaign.id}`);
           await supabase.from('whatsapp_campaigns').update({
@@ -1199,21 +1201,27 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const isConnectedNow = await checkInstanceConnection(
-          campaignEvoCredentials.url,
-          campaignEvoCredentials.apiKey,
-          numberData.instance_name,
-          2
-        );
+        // Only do live connection check every 10 messages to reduce false positives
+        const currentIndex = campaign.current_lead_index || 0;
+        const shouldCheckLive = currentIndex === 0 || currentIndex % 10 === 0;
+        
+        if (shouldCheckLive) {
+          const isConnectedNow = await checkInstanceConnection(
+            campaignEvoCredentials.url,
+            campaignEvoCredentials.apiKey,
+            numberData.instance_name,
+            2
+          );
 
-        if (!isConnectedNow) {
-          console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
-            updated_at: now.toISOString()
-          }).eq('id', campaign.id);
-          continue;
+          if (!isConnectedNow) {
+            console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
+            await supabase.from('whatsapp_campaigns').update({
+              status: 'paused',
+              pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
+              updated_at: now.toISOString()
+            }).eq('id', campaign.id);
+            continue;
+          }
         }
 
         const result = await processSingleMessage(
