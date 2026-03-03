@@ -47,6 +47,7 @@ const DAILY_LIMIT_PER_NUMBER = 200;
 const FREE_DAILY_LIMIT = 20;
 const FREE_TRIAL_MESSAGE_LIMIT = 400;
 const IGNORED_CONTACT_COOLDOWN_MINUTES = 30;
+const SEND_RETRY_ATTEMPTS = 2; // Retry sending on transient failures
 
 // Start next postponed campaign for a number when the current one finishes
 async function startNextPostponedCampaign(
@@ -304,17 +305,20 @@ async function sendMessage(
 }
 
 // Check if contact is in ignored list (temporary anti-spam cooldown)
+// Now scoped per-campaign: a lead ignored in Campaign A can still be sent in Campaign B
 async function isContactIgnored(
   supabase: any,
   userId: string,
-  phone: string
+  phone: string,
+  campaignId: string
 ): Promise<boolean> {
   const normalizedPhone = normalizePhone(phone);
   const { data } = await supabase
     .from('ignored_contacts')
-    .select('id, first_message_sent_at')
+    .select('id, first_message_sent_at, campaign_id')
     .eq('user_id', userId)
     .eq('phone', normalizedPhone)
+    .eq('campaign_id', campaignId)
     .maybeSingle();
 
   if (!data) return false;
@@ -328,7 +332,7 @@ async function isContactIgnored(
   const stillInCooldown = Date.now() - firstSentAt < cooldownMs;
 
   if (!stillInCooldown) {
-    // Cleanup expired ignored contact to avoid permanent blocks on new campaigns
+    // Cleanup expired ignored contact
     await supabase
       .from('ignored_contacts')
       .delete()
@@ -336,6 +340,26 @@ async function isContactIgnored(
   }
 
   return stillInCooldown;
+}
+
+// Clear all ignored contacts for a specific campaign (used when resuming after disconnection)
+async function clearCampaignIgnoredContacts(
+  supabase: any,
+  userId: string,
+  campaignId: string
+): Promise<number> {
+  const { data, error } = await supabase
+    .from('ignored_contacts')
+    .delete()
+    .eq('user_id', userId)
+    .eq('campaign_id', campaignId)
+    .select('id');
+
+  if (error) {
+    console.log('Error clearing ignored contacts:', error.message);
+    return 0;
+  }
+  return data?.length || 0;
 }
 
 // Add contact to ignored list
@@ -724,15 +748,13 @@ async function processSingleMessage(
 
   const formattedPhone = phoneValidation.normalized;
 
-  // Check if contact is ignored
-  const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
+  // Check if contact is ignored (per-campaign scope)
+  const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone, campaign.id);
   if (isIgnored) {
-    campaignLog('🚫', `Skipping IGNORED contact`, { phone: formattedPhone });
-    failedCount++;
-    
+    campaignLog('🚫', `Skipping IGNORED contact (already sent in this campaign)`, { phone: formattedPhone });
+    // Don't count as failed - just skip to next lead
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
-      failed_count: failedCount,
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
     
@@ -766,13 +788,13 @@ async function processSingleMessage(
     return { processed: false, completed: false, skipped: false };
   }
 
-  // Send the message (or simulate it)
+  // Send the message (or simulate it) with retry on transient failures
   const isSimulation = campaign.simulation_mode === true;
   if (isSimulation) {
     campaignLog('🧪', `SIMULATION MODE ACTIVE - Message will be logged but not sent`);
   }
   
-  const result = await sendMessage(
+  let result = await sendMessage(
     evolutionUrl,
     evolutionApiKey,
     numberData.instance_name,
@@ -780,6 +802,33 @@ async function processSingleMessage(
     personalizedMessage,
     isSimulation
   );
+
+  // Retry on transient failures (network timeout, temporary errors)
+  if (!result.success && !isSimulation) {
+    const isTransientError = result.error?.includes('abort') || 
+                              result.error?.includes('timeout') || 
+                              result.error?.includes('fetch') ||
+                              result.error?.includes('network') ||
+                              result.error?.includes('ECONNREFUSED');
+    
+    if (isTransientError) {
+      for (let retry = 1; retry <= SEND_RETRY_ATTEMPTS; retry++) {
+        campaignLog('🔄', `Retrying send (attempt ${retry}/${SEND_RETRY_ATTEMPTS})`, { error: result.error });
+        await new Promise(r => setTimeout(r, 2000 * retry)); // Exponential backoff
+        
+        result = await sendMessage(
+          evolutionUrl,
+          evolutionApiKey,
+          numberData.instance_name,
+          formattedPhone,
+          personalizedMessage,
+          false
+        );
+        
+        if (result.success) break;
+      }
+    }
+  }
 
   const now = new Date().toISOString();
 
@@ -816,6 +865,29 @@ async function processSingleMessage(
       }
     }
   } else {
+    // Check if failure indicates disconnection (pause campaign, don't skip lead)
+    const isDisconnectionError = result.error?.includes('not connected') ||
+                                  result.error?.includes('disconnected') ||
+                                  result.error?.includes('401') ||
+                                  result.error?.includes('404') ||
+                                  result.error?.includes('instance not found');
+    
+    if (isDisconnectionError) {
+      campaignLog('🔌', `DISCONNECTION DETECTED from send failure - pausing campaign`, {
+        phone: formattedPhone,
+        error: result.error
+      });
+      
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'WhatsApp desconectado durante envio. Reconecte o número para retomar.',
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+      
+      // Don't increment index - this lead should be retried after reconnection
+      return { processed: false, completed: false, skipped: false, error: 'Disconnected during send' };
+    }
+    
     campaignLog('❌', `MESSAGE FAILED`, {
       phone: formattedPhone,
       error: result.error,
@@ -1079,10 +1151,22 @@ Deno.serve(async (req) => {
 
       // Resume paused campaigns
       for (const paused of (pausedCampaigns || [])) {
+        const isDisconnectionPause = paused.pause_reason?.includes('desconectado') || 
+                                      paused.pause_reason?.includes('conexão') ||
+                                      paused.pause_reason?.includes('Reconecte');
+        
         console.log(`▶️ Resuming PAUSED campaign: ${paused.name}`, {
           pauseReason: paused.pause_reason,
-          resumeAt: paused.resume_at
+          resumeAt: paused.resume_at,
+          isDisconnectionPause
         });
+
+        // If campaign was paused due to disconnection, clear its ignored contacts
+        // so leads can be retried (they weren't actually delivered)
+        if (isDisconnectionPause) {
+          const cleared = await clearCampaignIgnoredContacts(supabase, paused.user_id, paused.id);
+          console.log(`🧹 Cleared ${cleared} ignored contacts for campaign ${paused.id} (was paused by disconnection)`);
+        }
         
         await supabase.from('whatsapp_campaigns').update({
           status: 'running',
@@ -1127,7 +1211,9 @@ Deno.serve(async (req) => {
         // Resolve Evolution API credentials based on number's api_tier
         const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
 
-        // Validate real connection state before processing to avoid consuming leads on disconnected sessions
+        // Validate connection state - only check DB flag, skip live API check
+        // Live connection checks are expensive and cause false positives on transient issues
+        // The actual send attempt will reveal real disconnections (with retry logic)
         if (!numberData.is_connected) {
           console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, pausing campaign ${campaign.id}`);
           await supabase.from('whatsapp_campaigns').update({
@@ -1138,21 +1224,27 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const isConnectedNow = await checkInstanceConnection(
-          campaignEvoCredentials.url,
-          campaignEvoCredentials.apiKey,
-          numberData.instance_name,
-          2
-        );
+        // Only do live connection check every 10 messages to reduce false positives
+        const currentIndex = campaign.current_lead_index || 0;
+        const shouldCheckLive = currentIndex === 0 || currentIndex % 10 === 0;
+        
+        if (shouldCheckLive) {
+          const isConnectedNow = await checkInstanceConnection(
+            campaignEvoCredentials.url,
+            campaignEvoCredentials.apiKey,
+            numberData.instance_name,
+            2
+          );
 
-        if (!isConnectedNow) {
-          console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
-            updated_at: now.toISOString()
-          }).eq('id', campaign.id);
-          continue;
+          if (!isConnectedNow) {
+            console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
+            await supabase.from('whatsapp_campaigns').update({
+              status: 'paused',
+              pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
+              updated_at: now.toISOString()
+            }).eq('id', campaign.id);
+            continue;
+          }
         }
 
         const result = await processSingleMessage(
