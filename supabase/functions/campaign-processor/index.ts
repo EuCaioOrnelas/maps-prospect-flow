@@ -865,6 +865,29 @@ async function processSingleMessage(
       }
     }
   } else {
+    // Check if failure indicates disconnection (pause campaign, don't skip lead)
+    const isDisconnectionError = result.error?.includes('not connected') ||
+                                  result.error?.includes('disconnected') ||
+                                  result.error?.includes('401') ||
+                                  result.error?.includes('404') ||
+                                  result.error?.includes('instance not found');
+    
+    if (isDisconnectionError) {
+      campaignLog('🔌', `DISCONNECTION DETECTED from send failure - pausing campaign`, {
+        phone: formattedPhone,
+        error: result.error
+      });
+      
+      await supabase.from('whatsapp_campaigns').update({
+        status: 'paused',
+        pause_reason: 'WhatsApp desconectado durante envio. Reconecte o número para retomar.',
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+      
+      // Don't increment index - this lead should be retried after reconnection
+      return { processed: false, completed: false, skipped: false, error: 'Disconnected during send' };
+    }
+    
     campaignLog('❌', `MESSAGE FAILED`, {
       phone: formattedPhone,
       error: result.error,
