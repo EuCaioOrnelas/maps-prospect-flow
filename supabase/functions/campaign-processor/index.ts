@@ -1234,8 +1234,8 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Resolve Evolution API credentials based on number's api_tier
-        const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
+        // Resolve Evolution API credentials based on number tier, with user-plan fallback
+        const campaignEvoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
 
         // Validate connection state - only check DB flag, skip live API check
         // Live connection checks are expensive and cause false positives on transient issues
