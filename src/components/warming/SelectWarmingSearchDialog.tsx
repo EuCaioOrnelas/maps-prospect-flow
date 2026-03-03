@@ -261,7 +261,7 @@ export function SelectWarmingSearchDialog({
                           </p>
                         </div>
                         <Badge variant="secondary" className="text-destructive">
-                          {s.leadsCount}/50 leads
+                          {s.leadsCount}/{MIN_LEADS_REQUIRED} leads
                         </Badge>
                       </div>
                     </div>
