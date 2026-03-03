@@ -67,7 +67,7 @@ export function SelectWarmingSearchDialog({
         .select('keyword, location, leads')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(50); // Fetch more to account for duplicates
+        .limit(50);
 
       if (searchError) throw searchError;
 
@@ -79,15 +79,37 @@ export function SelectWarmingSearchDialog({
 
       if (assignError) throw assignError;
 
-      // Group searches and count real leads from the leads JSON
+      // Fetch actual leads count from leads table grouped by category+city
+      const { data: leadsData, error: leadsError } = await supabase
+        .from('leads')
+        .select('category, city')
+        .eq('user_id', userId);
+
+      if (leadsError) throw leadsError;
+
+      // Build a map of category|city -> count from the real leads table
+      const realLeadsMap = new Map<string, number>();
+      leadsData?.forEach(lead => {
+        const key = `${lead.category || ''}|${lead.city || ''}`;
+        realLeadsMap.set(key, (realLeadsMap.get(key) || 0) + 1);
+      });
+
+      // Group searches and count leads
       const searchMap = new Map<string, SearchGroup>();
       
       searchHistory?.forEach(s => {
         const key = `${s.keyword}|${s.location}`;
         if (!searchMap.has(key) && searchMap.size < MAX_ITEMS) {
-          // Count real leads from the leads JSON array
+          // Count from search_history JSON
           const leadsArray = Array.isArray(s.leads) ? s.leads : [];
-          const realLeadsCount = leadsArray.length;
+          const jsonCount = leadsArray.length;
+
+          // Also check real leads table (match by category=keyword, city=location)
+          const realKey = `${s.keyword}|${s.location}`;
+          const realCount = realLeadsMap.get(realKey) || 0;
+
+          // Use the higher count between JSON and real leads table
+          const leadsCount = Math.max(jsonCount, realCount);
 
           // Check if assigned to another number
           const assignment = assignments?.find(
@@ -97,7 +119,7 @@ export function SelectWarmingSearchDialog({
           searchMap.set(key, {
             keyword: s.keyword,
             location: s.location,
-            leadsCount: realLeadsCount,
+            leadsCount,
             isAssigned: !!assignment && assignment.whatsapp_number_id !== numberId,
             assignedTo: assignment && assignment.whatsapp_number_id !== numberId
               ? (assignment.whatsapp_numbers as any)?.name
