@@ -339,7 +339,9 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Agent buffer processor started...');
+    const runStartedAt = Date.now();
+    const runDeadline = runStartedAt + RUN_TIME_BUDGET_MS;
+    console.log(`Agent buffer processor started... (max_conversations=${MAX_CONVERSATIONS_PER_RUN}, budget_ms=${RUN_TIME_BUDGET_MS})`);
 
     // Find conversations ready to process (process_after has passed and not currently processing)
     const now = new Date().toISOString();
@@ -351,7 +353,9 @@ serve(async (req) => {
       `)
       .lte('process_after', now)
       .eq('is_processing', false)
-      .not('process_after', 'is', null);
+      .not('process_after', 'is', null)
+      .order('process_after', { ascending: true })
+      .limit(MAX_CONVERSATIONS_PER_RUN);
 
     if (fetchError) {
       console.error('Error fetching ready conversations:', fetchError);
@@ -371,8 +375,15 @@ serve(async (req) => {
     let processedCount = 0;
     let errorCount = 0;
     let skippedDueToLimit = 0;
+    let stoppedByTimeBudget = false;
 
     for (const conv of readyConversations) {
+      if (Date.now() >= runDeadline) {
+        stoppedByTimeBudget = true;
+        console.warn(`Stopping early due to time budget. Processed so far: ${processedCount}`);
+        break;
+      }
+
       try {
         const agent = conv.agent;
         
