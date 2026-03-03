@@ -305,17 +305,20 @@ async function sendMessage(
 }
 
 // Check if contact is in ignored list (temporary anti-spam cooldown)
+// Now scoped per-campaign: a lead ignored in Campaign A can still be sent in Campaign B
 async function isContactIgnored(
   supabase: any,
   userId: string,
-  phone: string
+  phone: string,
+  campaignId: string
 ): Promise<boolean> {
   const normalizedPhone = normalizePhone(phone);
   const { data } = await supabase
     .from('ignored_contacts')
-    .select('id, first_message_sent_at')
+    .select('id, first_message_sent_at, campaign_id')
     .eq('user_id', userId)
     .eq('phone', normalizedPhone)
+    .eq('campaign_id', campaignId)
     .maybeSingle();
 
   if (!data) return false;
@@ -329,7 +332,7 @@ async function isContactIgnored(
   const stillInCooldown = Date.now() - firstSentAt < cooldownMs;
 
   if (!stillInCooldown) {
-    // Cleanup expired ignored contact to avoid permanent blocks on new campaigns
+    // Cleanup expired ignored contact
     await supabase
       .from('ignored_contacts')
       .delete()
@@ -337,6 +340,26 @@ async function isContactIgnored(
   }
 
   return stillInCooldown;
+}
+
+// Clear all ignored contacts for a specific campaign (used when resuming after disconnection)
+async function clearCampaignIgnoredContacts(
+  supabase: any,
+  userId: string,
+  campaignId: string
+): Promise<number> {
+  const { data, error } = await supabase
+    .from('ignored_contacts')
+    .delete()
+    .eq('user_id', userId)
+    .eq('campaign_id', campaignId)
+    .select('id');
+
+  if (error) {
+    console.log('Error clearing ignored contacts:', error.message);
+    return 0;
+  }
+  return data?.length || 0;
 }
 
 // Add contact to ignored list
