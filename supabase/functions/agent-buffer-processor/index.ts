@@ -9,12 +9,35 @@ const corsHeaders = {
 // Buffer delay in milliseconds (2 minutes)
 const BUFFER_DELAY_MS = 2 * 60 * 1000;
 
+function getEnvNumber(name: string, fallback: number, min: number, max: number): number {
+  const parsed = Number(Deno.env.get(name) ?? fallback);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
+}
+
+// Safety limits to avoid edge function timeout
+const MAX_CONVERSATIONS_PER_RUN = getEnvNumber('AGENT_BUFFER_MAX_CONVERSATIONS', 3, 1, 25);
+const RUN_TIME_BUDGET_MS = getEnvNumber('AGENT_BUFFER_RUN_BUDGET_MS', 100000, 15000, 120000);
+const OPENAI_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_OPENAI_TIMEOUT_MS', 20000, 5000, 60000);
+const EVOLUTION_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_EVOLUTION_TIMEOUT_MS', 15000, 3000, 60000);
+
 // Response limits by warming status
 const RESPONSE_LIMITS = {
   cold: 20,      // Número frio: 20 leads respondidos
   warm: 100,     // Número morno: 100 leads respondidos
   hot: null,     // Número aquecido: sem limite
 };
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // Get São Paulo time
 function getSaoPauloTime(): Date {
