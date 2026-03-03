@@ -182,8 +182,9 @@ export function SelectWarmingSearchDialog({
     }
   };
 
-  const availableSearches = searches.filter(s => !s.isAssigned && s.leadsCount >= 50);
-  const insufficientLeads = searches.filter(s => !s.isAssigned && s.leadsCount < 50 && s.leadsCount > 0);
+  const MIN_LEADS_REQUIRED = 10;
+  const availableSearches = searches.filter(s => !s.isAssigned && s.leadsCount >= MIN_LEADS_REQUIRED);
+  const insufficientLeads = searches.filter(s => !s.isAssigned && s.leadsCount < MIN_LEADS_REQUIRED && s.leadsCount > 0);
   const hasNoSearches = searches.length === 0;
   const hasNoAvailableSearches = availableSearches.length === 0;
 
