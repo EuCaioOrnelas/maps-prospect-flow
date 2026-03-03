@@ -547,7 +547,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
 
           console.log(`Generating AI response for conv ${conv.id}...`);
           
-          const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          const aiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${openaiApiKey}`,
@@ -562,7 +562,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               max_tokens: estimatedMaxTokens + 50, // Small buffer for safety
               temperature: 0.7,
             }),
-          });
+          }, OPENAI_TIMEOUT_MS);
 
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();
