@@ -788,13 +788,13 @@ async function processSingleMessage(
     return { processed: false, completed: false, skipped: false };
   }
 
-  // Send the message (or simulate it)
+  // Send the message (or simulate it) with retry on transient failures
   const isSimulation = campaign.simulation_mode === true;
   if (isSimulation) {
     campaignLog('🧪', `SIMULATION MODE ACTIVE - Message will be logged but not sent`);
   }
   
-  const result = await sendMessage(
+  let result = await sendMessage(
     evolutionUrl,
     evolutionApiKey,
     numberData.instance_name,
@@ -802,6 +802,33 @@ async function processSingleMessage(
     personalizedMessage,
     isSimulation
   );
+
+  // Retry on transient failures (network timeout, temporary errors)
+  if (!result.success && !isSimulation) {
+    const isTransientError = result.error?.includes('abort') || 
+                              result.error?.includes('timeout') || 
+                              result.error?.includes('fetch') ||
+                              result.error?.includes('network') ||
+                              result.error?.includes('ECONNREFUSED');
+    
+    if (isTransientError) {
+      for (let retry = 1; retry <= SEND_RETRY_ATTEMPTS; retry++) {
+        campaignLog('🔄', `Retrying send (attempt ${retry}/${SEND_RETRY_ATTEMPTS})`, { error: result.error });
+        await new Promise(r => setTimeout(r, 2000 * retry)); // Exponential backoff
+        
+        result = await sendMessage(
+          evolutionUrl,
+          evolutionApiKey,
+          numberData.instance_name,
+          formattedPhone,
+          personalizedMessage,
+          false
+        );
+        
+        if (result.success) break;
+      }
+    }
+  }
 
   const now = new Date().toISOString();
 
