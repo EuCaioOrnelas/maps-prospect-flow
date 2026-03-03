@@ -2093,9 +2093,8 @@ REGRAS OBRIGATÓRIAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
+          // Re-use the apiCreds already resolved above (avoid redundant DB query)
           if (state === 'open') {
-            // Resolve correct API credentials for THIS instance (free vs paid)
-            const apiCreds = await getApiCredentials(instanceName);
             const resolvedApiUrl = apiCreds.url;
             const resolvedApiKey = apiCreds.apiKey;
             
