@@ -2030,20 +2030,21 @@ REGRAS OBRIGATÓRIAS:
               // AUTO-RESUME: Find and resume paused campaigns on this number
               const { data: pausedCampaigns } = await supabase
                 .from('whatsapp_campaigns')
-                .select('id, name, pause_reason, user_id')
+                .select('id, name, pause_reason, user_id, status')
                 .eq('whatsapp_number_id', numberRow.id)
-                .eq('status', 'paused')
-                .eq('user_id', numberRow.user_id);
+                .eq('user_id', numberRow.user_id)
+                .in('status', ['paused', 'scheduled']);
 
               if (pausedCampaigns && pausedCampaigns.length > 0) {
-                const disconnectionPaused = pausedCampaigns.filter((c: any) => 
+                const disconnectionCampaigns = pausedCampaigns.filter((c: any) => 
                   c.pause_reason?.includes('desconectado') || 
                   c.pause_reason?.includes('conexão') ||
-                  c.pause_reason?.includes('Reconecte')
+                  c.pause_reason?.includes('Reconecte') ||
+                  c.pause_reason?.includes('não conectado')
                 );
 
-                for (const campaign of disconnectionPaused) {
-                  console.log(`🔄 AUTO-RESUMING campaign "${campaign.name}" after reconnection`);
+                for (const campaign of disconnectionCampaigns) {
+                  console.log(`🔄 AUTO-RESUMING campaign "${campaign.name}" (was ${campaign.status}) after reconnection`);
                   
                   // Clear ignored contacts for this campaign (leads weren't delivered)
                   const { data: clearedContacts } = await supabase
@@ -2059,12 +2060,13 @@ REGRAS OBRIGATÓRIAS:
                     status: 'running',
                     pause_reason: null,
                     resume_at: null,
+                    started_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   }).eq('id', campaign.id);
                 }
 
-                if (disconnectionPaused.length > 0) {
-                  console.log(`✅ Auto-resumed ${disconnectionPaused.length} campaigns after reconnection on ${instanceName}`);
+                if (disconnectionCampaigns.length > 0) {
+                  console.log(`✅ Auto-resumed ${disconnectionCampaigns.length} campaigns after reconnection on ${instanceName}`);
                 }
               }
             } else {

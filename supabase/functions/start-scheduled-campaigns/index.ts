@@ -175,6 +175,23 @@ serve(async (req) => {
     // Build processing queue
     const allToProcess = [...(scheduledCampaigns || [])];
     
+    // Also add campaigns that were previously stuck as 'scheduled' with a pause_reason
+    // (failed connection check on previous attempt)
+    const { data: stuckScheduled } = await supabase
+      .from('whatsapp_campaigns')
+      .select('id, name, user_id, whatsapp_number_id, leads, messages, scheduled_at, total_leads, pause_reason')
+      .eq('status', 'scheduled')
+      .not('pause_reason', 'is', null)
+      .gt('scheduled_at', '2000-01-01'); // Has a scheduled_at in the past (already checked by main query)
+    
+    for (const stuck of (stuckScheduled || [])) {
+      // Only add if not already in the main scheduled list
+      if (!allToProcess.find(c => c.id === stuck.id)) {
+        allToProcess.push(stuck);
+        console.log(`[start-scheduled-campaigns] Adding STUCK scheduled campaign ${stuck.name} (had pause_reason: ${stuck.pause_reason})`);
+      }
+    }
+    
     for (const postponed of (postponedCampaigns || [])) {
       if (!numbersWithActiveCampaigns.has(postponed.whatsapp_number_id)) {
         allToProcess.push(postponed);
@@ -259,23 +276,65 @@ serve(async (req) => {
         } else {
           console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} not connected: ${connectionCheck.error}`);
           
-          await supabase
-            .from('whatsapp_campaigns')
-            .update({ 
-              pause_reason: `Número não conectado: ${connectionCheck.error}. Verifique a conexão.`,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', campaign.id);
-          
-          numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
-          results.push({ id: campaign.id, status: 'pending_connection', reason: connectionCheck.error });
-          
-          sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
-            { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp: ${connectionCheck.error}` },
-            `campaign_conn_${campaign.id}_${Date.now()}`
-          ).catch(() => {});
-          
-          continue;
+          // Try to restart the instance to recover stale overnight sessions
+          try {
+            console.log(`[start-scheduled-campaigns] 🔄 Attempting auto-restart for ${numberData.instance_name}...`);
+            const restartResp = await fetch(`${evoCredentials.url}/instance/restart/${numberData.instance_name}`, {
+              method: 'PUT',
+              headers: { 'apikey': evoCredentials.apiKey },
+            });
+            console.log(`[start-scheduled-campaigns] Restart response: ${restartResp.status}`);
+            
+            // Wait a bit and re-check
+            await new Promise(r => setTimeout(r, 5000));
+            const recheck = await checkInstanceConnection(evoCredentials.url, evoCredentials.apiKey, numberData.instance_name);
+            
+            if (recheck.connected) {
+              console.log(`[start-scheduled-campaigns] ✅ Auto-restart successful for ${numberData.instance_name}! Proceeding with campaign.`);
+              // Update DB
+              await supabase.from('whatsapp_numbers').update({ 
+                is_connected: true, 
+                updated_at: new Date().toISOString() 
+              }).eq('id', numberData.id);
+              // Fall through to start the campaign
+            } else {
+              // Set status to 'paused' (NOT staying as 'scheduled') so webhook auto-resume can pick it up
+              await supabase
+                .from('whatsapp_campaigns')
+                .update({ 
+                  status: 'paused',
+                  pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', campaign.id);
+              
+              numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
+              results.push({ id: campaign.id, status: 'paused_connection', reason: connectionCheck.error });
+              
+              sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+                { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp. Reconecte para que a campanha retome automaticamente.` },
+                `campaign_conn_${campaign.id}_${Date.now()}`
+              ).catch(() => {});
+              
+              continue;
+            }
+          } catch (restartErr) {
+            console.error(`[start-scheduled-campaigns] Auto-restart failed:`, restartErr);
+            
+            // Set to paused so webhook auto-resume works
+            await supabase
+              .from('whatsapp_campaigns')
+              .update({ 
+                status: 'paused',
+                pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', campaign.id);
+            
+            numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
+            results.push({ id: campaign.id, status: 'paused_connection', reason: connectionCheck.error });
+            continue;
+          }
         }
       }
 
@@ -307,6 +366,19 @@ serve(async (req) => {
         ).catch(() => {});
         
         continue;
+      }
+
+      // Clear any stale ignored contacts for this campaign before starting
+      // This ensures a clean slate, especially for campaigns that failed previously
+      const { data: clearedIgnored } = await supabase
+        .from('ignored_contacts')
+        .delete()
+        .eq('user_id', campaign.user_id)
+        .eq('campaign_id', campaign.id)
+        .select('id');
+      
+      if (clearedIgnored?.length) {
+        console.log(`[start-scheduled-campaigns] 🧹 Cleared ${clearedIgnored.length} stale ignored contacts before starting campaign`);
       }
 
       // ✅ Just change status to 'running' — campaign-processor will handle the actual message sending
