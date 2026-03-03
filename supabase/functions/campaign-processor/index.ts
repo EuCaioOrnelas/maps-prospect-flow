@@ -38,6 +38,34 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   return { url, apiKey, tier: 'free' };
 }
 
+async function getEvolutionCredentialsForNumber(
+  supabase: any,
+  numberData: any,
+  userId: string
+): Promise<EvolutionCredentials> {
+  if (numberData?.api_tier) {
+    return getEvolutionCredentials(numberData.api_tier);
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const credentials = getEvolutionCredentials(profile?.plan);
+
+  // Self-heal: persist inferred tier for next runs
+  if (numberData?.id) {
+    await supabase
+      .from('whatsapp_numbers')
+      .update({ api_tier: credentials.tier, updated_at: new Date().toISOString() })
+      .eq('id', numberData.id);
+  }
+
+  return credentials;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -1007,8 +1035,8 @@ Deno.serve(async (req) => {
         .eq('id', campaign.whatsapp_number_id)
         .single();
 
-      // Resolve Evolution API credentials based on number's api_tier
-      const evoCredentials = getEvolutionCredentials(numberData?.api_tier);
+      // Resolve Evolution API credentials based on number tier, with user-plan fallback
+      const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
       const startEvoUrl = evoCredentials.url;
       const startEvoKey = evoCredentials.apiKey;
 
@@ -1031,23 +1059,26 @@ Deno.serve(async (req) => {
       );
 
       if (!isConnected) {
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'paused',
-          pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
-          updated_at: new Date().toISOString()
-        }).eq('id', campaignId);
+        // If DB still says connected, do not block start (avoid false negatives on transient checks)
+        if (numberData.is_connected) {
+          console.log(`⚠️ Connection check transient failure for ${numberData.instance_name}, but DB is connected — allowing start.`);
+        } else {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+            updated_at: new Date().toISOString()
+          }).eq('id', campaignId);
 
-        // NEVER update is_connected = false from backend
-        // Only pause campaign and ask user to reconnect the number manually
-        console.log(`⚠️ Connection check failed for ${numberData.instance_name}. Campaign paused awaiting reconnection.`);
+          console.log(`⚠️ Connection check failed for ${numberData.instance_name}. Campaign paused awaiting reconnection.`);
 
-        return new Response(JSON.stringify({ 
-          success: false, 
-          error: 'WhatsApp desconectado. Reconecte o número para iniciar a campanha.' 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'WhatsApp desconectado. Reconecte o número para iniciar a campanha.' 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       await supabase.from('whatsapp_campaigns').update({
@@ -1203,8 +1234,8 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Resolve Evolution API credentials based on number's api_tier
-        const campaignEvoCredentials = getEvolutionCredentials(numberData.api_tier);
+        // Resolve Evolution API credentials based on number tier, with user-plan fallback
+        const campaignEvoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
 
         // Validate connection state - only check DB flag, skip live API check
         // Live connection checks are expensive and cause false positives on transient issues
@@ -1232,13 +1263,9 @@ Deno.serve(async (req) => {
           );
 
           if (!isConnectedNow) {
-            console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
-            await supabase.from('whatsapp_campaigns').update({
-              status: 'paused',
-              pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
-              updated_at: now.toISOString()
-            }).eq('id', campaign.id);
-            continue;
+            // Soft-fail: avoid pausing on potentially transient provider checks.
+            // The real source of truth is the send attempt below (already has retry logic).
+            console.log(`⚠️ Live check reported disconnected for ${numberData.instance_name}, but processor will still attempt send before pausing.`);
           }
         }
 
