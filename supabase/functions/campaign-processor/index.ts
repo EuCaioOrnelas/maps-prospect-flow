@@ -898,12 +898,15 @@ async function processSingleMessage(
       }
     }
   } else {
-    // Check if failure indicates disconnection (pause campaign, don't skip lead)
-    const isDisconnectionError = result.error?.includes('not connected') ||
-                                  result.error?.includes('disconnected') ||
-                                  result.error?.includes('401') ||
-                                  result.error?.includes('404') ||
-                                  result.error?.includes('instance not found');
+    // Check if failure indicates REAL disconnection (pause campaign, don't skip lead)
+    // IMPORTANT: do NOT treat generic HTTP 404/401 as disconnection, these can be lead-specific/provider responses.
+    const normalizedError = String(result.error || '').toLowerCase();
+    const isDisconnectionError = normalizedError.includes('not connected') ||
+                                 normalizedError.includes('disconnected') ||
+                                 normalizedError.includes('instance not found') ||
+                                 normalizedError.includes('connection closed') ||
+                                 normalizedError.includes('session closed') ||
+                                 (normalizedError.includes('unauthorized') && normalizedError.includes('instance'));
     
     if (isDisconnectionError) {
       campaignLog('🔌', `DISCONNECTION DETECTED from send failure - pausing campaign`, {
