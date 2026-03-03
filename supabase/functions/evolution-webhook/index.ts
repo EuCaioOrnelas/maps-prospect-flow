@@ -1985,20 +1985,46 @@ REGRAS OBRIGATÓRIAS:
               .eq('instance_name', instanceName)
               .single();
 
+            const apiCreds = await getApiCredentials(instanceName);
+            const updatePayload: Record<string, any> = {
+              is_connected: true,
+              api_tier: apiCreds.tier,
+              updated_at: new Date().toISOString(),
+            };
+
+            // Try to hydrate phone_number when connection opens (self-heal for null owner)
+            try {
+              const infoResponse = await fetch(`${apiCreds.url}/instance/fetchInstances?instanceName=${instanceName}`, {
+                method: 'GET',
+                headers: { 'apikey': apiCreds.apiKey },
+              });
+
+              if (infoResponse.ok) {
+                const infoData = await infoResponse.json();
+                const instanceInfo = Array.isArray(infoData)
+                  ? infoData[0]
+                  : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
+
+                const ownerPhone = instanceInfo?.owner || instanceInfo?.instance?.owner || null;
+                if (ownerPhone) {
+                  updatePayload.phone_number = ownerPhone;
+                }
+              }
+            } catch (err) {
+              console.log(`Could not fetch owner phone for ${instanceName} on open event:`, err);
+            }
+
             if (numberRow) {
-              // Update connection status
+              // Update connection status + inferred tier/phone
               const { error } = await supabase
                 .from('whatsapp_numbers')
-                .update({ 
-                  is_connected: true,
-                  updated_at: new Date().toISOString()
-                })
+                .update(updatePayload)
                 .eq('instance_name', instanceName);
               
               if (error) {
                 console.error('Error updating connection status:', error);
               } else {
-                console.log(`Updated connection status for ${instanceName}: connected`);
+                console.log(`Updated connection status for ${instanceName}: connected (${apiCreds.tier})`);
               }
 
               // AUTO-RESUME: Find and resume paused campaigns on this number
@@ -2042,13 +2068,10 @@ REGRAS OBRIGATÓRIAS:
                 }
               }
             } else {
-              // Fallback: update without numberRow
+              // Fallback: update by instance_name even without row lookup
               const { error } = await supabase
                 .from('whatsapp_numbers')
-                .update({ 
-                  is_connected: true,
-                  updated_at: new Date().toISOString()
-                })
+                .update(updatePayload)
                 .eq('instance_name', instanceName);
               
               if (error) {

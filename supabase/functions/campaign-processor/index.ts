@@ -1263,13 +1263,9 @@ Deno.serve(async (req) => {
           );
 
           if (!isConnectedNow) {
-            console.log(`⚠️ Number ${numberData.instance_name} is not connected on provider. Pausing campaign ${campaign.id}`);
-            await supabase.from('whatsapp_campaigns').update({
-              status: 'paused',
-              pause_reason: 'WhatsApp desconectado na API. Reconecte o número para retomar os disparos.',
-              updated_at: now.toISOString()
-            }).eq('id', campaign.id);
-            continue;
+            // Soft-fail: avoid pausing on potentially transient provider checks.
+            // The real source of truth is the send attempt below (already has retry logic).
+            console.log(`⚠️ Live check reported disconnected for ${numberData.instance_name}, but processor will still attempt send before pausing.`);
           }
         }
 
