@@ -323,7 +323,9 @@ serve(async (req) => {
         console.log('Instance info:', JSON.stringify(infoData));
         
         if (infoData && infoData.length > 0) {
-          phoneNumber = infoData[0].owner || infoData[0].instance?.owner;
+          const rawOwner = infoData[0].owner || infoData[0].instance?.owner || infoData[0].number || infoData[0].instance?.number || infoData[0].wuid || infoData[0].instance?.wuid || null;
+          const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
+          phoneNumber = ownerDigits.length >= 10 ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`) : null;
         }
       }
     } catch (e) {

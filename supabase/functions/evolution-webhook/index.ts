@@ -2005,7 +2005,20 @@ REGRAS OBRIGATÓRIAS:
                   ? infoData[0]
                   : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
 
-                const ownerPhone = instanceInfo?.owner || instanceInfo?.instance?.owner || null;
+                const rawOwner =
+                  instanceInfo?.owner ||
+                  instanceInfo?.instance?.owner ||
+                  instanceInfo?.number ||
+                  instanceInfo?.instance?.number ||
+                  instanceInfo?.wuid ||
+                  instanceInfo?.instance?.wuid ||
+                  null;
+
+                const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
+                const ownerPhone = ownerDigits.length >= 10
+                  ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`)
+                  : null;
+
                 if (ownerPhone) {
                   updatePayload.phone_number = ownerPhone;
                 }
@@ -2095,10 +2108,10 @@ REGRAS OBRIGATÓRIAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
-          // Re-use the apiCreds already resolved above (avoid redundant DB query)
           if (state === 'open') {
-            const resolvedApiUrl = apiCreds.url;
-            const resolvedApiKey = apiCreds.apiKey;
+            const webhookCreds = await getApiCredentials(instanceName);
+            const resolvedApiUrl = webhookCreds.url;
+            const resolvedApiKey = webhookCreds.apiKey;
             
             console.log(`🔄 Auto-configuring webhook for ${instanceName} on ${resolvedApiUrl.includes('paid') ? 'PAID' : 'FREE'} API`);
             const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;

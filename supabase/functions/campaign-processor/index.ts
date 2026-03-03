@@ -898,12 +898,15 @@ async function processSingleMessage(
       }
     }
   } else {
-    // Check if failure indicates disconnection (pause campaign, don't skip lead)
-    const isDisconnectionError = result.error?.includes('not connected') ||
-                                  result.error?.includes('disconnected') ||
-                                  result.error?.includes('401') ||
-                                  result.error?.includes('404') ||
-                                  result.error?.includes('instance not found');
+    // Check if failure indicates REAL disconnection (pause campaign, don't skip lead)
+    // IMPORTANT: do NOT treat generic HTTP 404/401 as disconnection, these can be lead-specific/provider responses.
+    const normalizedError = String(result.error || '').toLowerCase();
+    const isDisconnectionError = normalizedError.includes('not connected') ||
+                                 normalizedError.includes('disconnected') ||
+                                 normalizedError.includes('instance not found') ||
+                                 normalizedError.includes('connection closed') ||
+                                 normalizedError.includes('session closed') ||
+                                 (normalizedError.includes('unauthorized') && normalizedError.includes('instance'));
     
     if (isDisconnectionError) {
       campaignLog('🔌', `DISCONNECTION DETECTED from send failure - pausing campaign`, {
@@ -1156,68 +1159,10 @@ Deno.serve(async (req) => {
       let campaignsProcessed = 0;
       let skippedDueToDelay = 0;
 
-      // Start scheduled campaigns (with connection validation)
-      for (const scheduled of (scheduledCampaigns || [])) {
-        console.log(`📅 Starting SCHEDULED campaign: ${scheduled.name}`);
-
-        if (!scheduled.whatsapp_number_id) {
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'failed',
-            pause_reason: 'Nenhum número WhatsApp atribuído à campanha',
-            updated_at: now.toISOString()
-          }).eq('id', scheduled.id);
-          console.log(`❌ Scheduled campaign failed (no number): ${scheduled.id}`);
-          campaignsProcessed++;
-          continue;
-        }
-
-        // Validate connection before starting scheduled campaign
-        const { data: schedNumberData } = await supabase
-          .from('whatsapp_numbers')
-          .select('id, instance_name, is_connected, api_tier')
-          .eq('id', scheduled.whatsapp_number_id)
-          .single();
-
-        if (!schedNumberData?.instance_name) {
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'failed',
-            pause_reason: 'Número WhatsApp não encontrado',
-            updated_at: now.toISOString()
-          }).eq('id', scheduled.id);
-          campaignsProcessed++;
-          continue;
-        }
-
-        // Check if number is connected (DB flag is sufficient here — live check done by start-scheduled-campaigns)
-        if (!schedNumberData.is_connected) {
-          console.log(`⚠️ Scheduled campaign ${scheduled.name}: number not connected in DB, setting to paused for auto-resume`);
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
-            updated_at: now.toISOString()
-          }).eq('id', scheduled.id);
-          campaignsProcessed++;
-          continue;
-        }
-        
-        await supabase.from('campaign_daily_reservations')
-          .delete()
-          .eq('campaign_id', scheduled.id);
-
-        // Clear stale ignored contacts before starting
-        await supabase.from('ignored_contacts')
-          .delete()
-          .eq('campaign_id', scheduled.id);
-
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'running',
-          started_at: now.toISOString(),
-          scheduled_at: null,
-          pause_reason: null,
-          updated_at: now.toISOString()
-        }).eq('id', scheduled.id);
-        
-        campaignsProcessed++;
+      // Scheduled campaign transitions are handled ONLY by start-scheduled-campaigns.
+      // Keeping it centralized avoids race conditions and false "desconectado" states overnight.
+      if ((scheduledCampaigns || []).length > 0) {
+        console.log(`ℹ️ Skipping scheduled transitions here (${scheduledCampaigns.length}) — delegated to start-scheduled-campaigns`);
       }
 
       // Resume paused campaigns

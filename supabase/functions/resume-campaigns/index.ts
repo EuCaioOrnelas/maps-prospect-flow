@@ -15,6 +15,34 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   return { url, apiKey, tier: 'free' };
 }
 
+async function getEvolutionCredentialsForNumber(
+  supabase: any,
+  numberData: { id?: string; api_tier?: string | null },
+  userId: string
+): Promise<EvolutionCredentials> {
+  if (numberData?.api_tier) {
+    return getEvolutionCredentials(numberData.api_tier);
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const credentials = getEvolutionCredentials(profile?.plan);
+
+  // Self-heal inferred tier to avoid future ambiguity
+  if (numberData?.id) {
+    await supabase
+      .from('whatsapp_numbers')
+      .update({ api_tier: credentials.tier, updated_at: new Date().toISOString() })
+      .eq('id', numberData.id);
+  }
+
+  return credentials;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -92,8 +120,9 @@ serve(async (req) => {
         continue;
       }
 
-      // Optionally do a quick live connection check using the correct API tier
-      const evoCredentials = getEvolutionCredentials(numberData.api_tier);
+      // Quick live check (soft-fail): if provider check is flaky/non-open, still trust DB flag and resume.
+      // campaign-processor will re-validate during real send and pause only on concrete send failures.
+      const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -108,25 +137,12 @@ serve(async (req) => {
           const statusData = await statusResponse.json();
           const state = statusData.state || statusData.instance?.state;
           if (state !== 'open') {
-            console.log(`Skipping campaign ${campaign.name} - live check shows state: ${state}`);
-            await supabase.from('whatsapp_campaigns').update({
-              pause_reason: `WhatsApp em estado "${state}". Reconecte para retomar.`,
-              paused_at_limit: false,
-              updated_at: new Date().toISOString()
-            }).eq('id', campaign.id);
-            
-            // Mark number as disconnected if definitively closed
-            if (state === 'close') {
-              await supabase.from('whatsapp_numbers').update({
-                is_connected: false,
-                updated_at: new Date().toISOString()
-              }).eq('id', numberData.id);
-            }
-            continue;
+            console.log(`Live check returned state="${state}" for ${numberData.instance_name}, but DB is connected — resuming campaign (soft-fail)`);
           }
+        } else {
+          console.log(`Live check HTTP ${statusResponse.status} for ${numberData.instance_name}, but DB is connected — resuming campaign (soft-fail)`);
         }
-      } catch (e) {
-        // If live check fails, still resume (trust DB flag) — campaign-processor will catch real disconnections
+      } catch (_e) {
         console.log(`Live check failed for ${numberData.instance_name}, but DB says connected — proceeding with resume`);
       }
 
