@@ -9,12 +9,35 @@ const corsHeaders = {
 // Buffer delay in milliseconds (2 minutes)
 const BUFFER_DELAY_MS = 2 * 60 * 1000;
 
+function getEnvNumber(name: string, fallback: number, min: number, max: number): number {
+  const parsed = Number(Deno.env.get(name) ?? fallback);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
+}
+
+// Safety limits to avoid edge function timeout
+const MAX_CONVERSATIONS_PER_RUN = getEnvNumber('AGENT_BUFFER_MAX_CONVERSATIONS', 3, 1, 25);
+const RUN_TIME_BUDGET_MS = getEnvNumber('AGENT_BUFFER_RUN_BUDGET_MS', 100000, 15000, 120000);
+const OPENAI_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_OPENAI_TIMEOUT_MS', 20000, 5000, 60000);
+const EVOLUTION_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_EVOLUTION_TIMEOUT_MS', 15000, 3000, 60000);
+
 // Response limits by warming status
 const RESPONSE_LIMITS = {
   cold: 20,      // Número frio: 20 leads respondidos
   warm: 100,     // Número morno: 100 leads respondidos
   hot: null,     // Número aquecido: sem limite
 };
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // Get São Paulo time
 function getSaoPauloTime(): Date {
@@ -316,7 +339,9 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Agent buffer processor started...');
+    const runStartedAt = Date.now();
+    const runDeadline = runStartedAt + RUN_TIME_BUDGET_MS;
+    console.log(`Agent buffer processor started... (max_conversations=${MAX_CONVERSATIONS_PER_RUN}, budget_ms=${RUN_TIME_BUDGET_MS})`);
 
     // Find conversations ready to process (process_after has passed and not currently processing)
     const now = new Date().toISOString();
@@ -328,7 +353,9 @@ serve(async (req) => {
       `)
       .lte('process_after', now)
       .eq('is_processing', false)
-      .not('process_after', 'is', null);
+      .not('process_after', 'is', null)
+      .order('process_after', { ascending: true })
+      .limit(MAX_CONVERSATIONS_PER_RUN);
 
     if (fetchError) {
       console.error('Error fetching ready conversations:', fetchError);
@@ -348,8 +375,15 @@ serve(async (req) => {
     let processedCount = 0;
     let errorCount = 0;
     let skippedDueToLimit = 0;
+    let stoppedByTimeBudget = false;
 
     for (const conv of readyConversations) {
+      if (Date.now() >= runDeadline) {
+        stoppedByTimeBudget = true;
+        console.warn(`Stopping early due to time budget. Processed so far: ${processedCount}`);
+        break;
+      }
+
       try {
         const agent = conv.agent;
         
@@ -513,7 +547,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
 
           console.log(`Generating AI response for conv ${conv.id}...`);
           
-          const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          const aiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${openaiApiKey}`,
@@ -528,7 +562,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               max_tokens: estimatedMaxTokens + 50, // Small buffer for safety
               temperature: 0.7,
             }),
-          });
+          }, OPENAI_TIMEOUT_MS);
 
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();
@@ -556,15 +590,15 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               for (let i = 0; i < messages.length; i++) {
                 const msgPart = messages[i];
                 
-                // Add delay between messages
+                // Add delay between messages (bounded to avoid function timeout)
                 if (i > 0) {
                   const delay = calculateTypingDelay(msgPart.length);
-                  await new Promise(resolve => setTimeout(resolve, Math.min(delay, 8000)));
+                  await new Promise(resolve => setTimeout(resolve, Math.min(delay, 1500)));
                 }
 
                 console.log(`Sending message ${i + 1}/${messages.length} to ${conv.lead_phone}...`);
                 
-                const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+                const sendResponse = await fetchWithTimeout(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
                   method: 'POST',
                   headers: {
                     'apikey': evolutionApiKey,
@@ -574,7 +608,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                     number: conv.lead_phone,
                     text: msgPart,
                   }),
-                });
+                }, EVOLUTION_TIMEOUT_MS);
 
                 if (sendResponse.ok) {
                   sentCount++;
@@ -677,7 +711,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
       }
     }
 
-    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}, Skipped (limit): ${skippedDueToLimit}`);
+    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}, Skipped (limit): ${skippedDueToLimit}, StoppedByBudget: ${stoppedByTimeBudget}`);
 
     return new Response(
       JSON.stringify({ 
@@ -685,7 +719,8 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
         processed: processedCount,
         errors: errorCount,
         skipped_limit: skippedDueToLimit,
-        total: readyConversations.length 
+        total: readyConversations.length,
+        stopped_by_time_budget: stoppedByTimeBudget
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
