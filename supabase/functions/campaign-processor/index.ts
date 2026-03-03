@@ -1059,23 +1059,26 @@ Deno.serve(async (req) => {
       );
 
       if (!isConnected) {
-        await supabase.from('whatsapp_campaigns').update({
-          status: 'paused',
-          pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
-          updated_at: new Date().toISOString()
-        }).eq('id', campaignId);
+        // If DB still says connected, do not block start (avoid false negatives on transient checks)
+        if (numberData.is_connected) {
+          console.log(`⚠️ Connection check transient failure for ${numberData.instance_name}, but DB is connected — allowing start.`);
+        } else {
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+            updated_at: new Date().toISOString()
+          }).eq('id', campaignId);
 
-        // NEVER update is_connected = false from backend
-        // Only pause campaign and ask user to reconnect the number manually
-        console.log(`⚠️ Connection check failed for ${numberData.instance_name}. Campaign paused awaiting reconnection.`);
+          console.log(`⚠️ Connection check failed for ${numberData.instance_name}. Campaign paused awaiting reconnection.`);
 
-        return new Response(JSON.stringify({ 
-          success: false, 
-          error: 'WhatsApp desconectado. Reconecte o número para iniciar a campanha.' 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'WhatsApp desconectado. Reconecte o número para iniciar a campanha.' 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       await supabase.from('whatsapp_campaigns').update({
