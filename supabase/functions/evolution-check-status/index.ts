@@ -332,14 +332,20 @@ serve(async (req) => {
 
     // Update database with connected status (only if numberId exists)
     if (numberId) {
+      const updatePayload: Record<string, any> = {
+        is_connected: true,
+        api_tier: evoCredentials.tier,
+        updated_at: new Date().toISOString()
+      };
+
+      // Never overwrite phone_number with null/empty values
+      if (phoneNumber) {
+        updatePayload.phone_number = phoneNumber;
+      }
+
       const { error: updateError } = await supabase
         .from('whatsapp_numbers')
-        .update({ 
-          is_connected: true,
-          phone_number: phoneNumber,
-          api_tier: evoCredentials.tier,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', numberId)
         .eq('user_id', user.id);
 
