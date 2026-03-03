@@ -590,15 +590,15 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               for (let i = 0; i < messages.length; i++) {
                 const msgPart = messages[i];
                 
-                // Add delay between messages
+                // Add delay between messages (bounded to avoid function timeout)
                 if (i > 0) {
                   const delay = calculateTypingDelay(msgPart.length);
-                  await new Promise(resolve => setTimeout(resolve, Math.min(delay, 8000)));
+                  await new Promise(resolve => setTimeout(resolve, Math.min(delay, 1500)));
                 }
 
                 console.log(`Sending message ${i + 1}/${messages.length} to ${conv.lead_phone}...`);
                 
-                const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+                const sendResponse = await fetchWithTimeout(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
                   method: 'POST',
                   headers: {
                     'apikey': evolutionApiKey,
@@ -608,7 +608,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                     number: conv.lead_phone,
                     text: msgPart,
                   }),
-                });
+                }, EVOLUTION_TIMEOUT_MS);
 
                 if (sendResponse.ok) {
                   sentCount++;
