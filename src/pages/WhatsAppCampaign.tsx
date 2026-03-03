@@ -399,6 +399,7 @@ const WhatsAppCampaign = () => {
           description: "Selecione uma data e horário para agendar",
           variant: "destructive",
         });
+        setIsStartingCampaign(false);
         return;
       }
 
@@ -415,11 +416,15 @@ const WhatsAppCampaign = () => {
           description: `O número selecionado só tem ${balanceInfo.available} disparos disponíveis para esta data. Você precisa de ${selectedLeads.length}.`,
           variant: "destructive",
         });
+        setIsStartingCampaign(false);
         return;
       }
 
       const campaignId = await createCampaign(true);
-      if (!campaignId) return;
+      if (!campaignId) {
+        setIsStartingCampaign(false);
+        return;
+      }
 
       toast({
         title: "Campanha agendada!",
@@ -428,6 +433,7 @@ const WhatsAppCampaign = () => {
 
       handleNewCampaign();
       setActiveTab("history");
+      setIsStartingCampaign(false);
       return;
     }
 
@@ -440,6 +446,7 @@ const WhatsAppCampaign = () => {
         description: `O número selecionado só tem ${balanceInfo.available} disparos disponíveis hoje. Você precisa de ${selectedLeads.length}.`,
         variant: "destructive",
       });
+      setIsStartingCampaign(false);
       return;
     }
 
@@ -451,6 +458,7 @@ const WhatsAppCampaign = () => {
           description: `Você só pode enviar mais ${remainingTrialMessages} mensagens no período de teste`,
           variant: "destructive",
         });
+        setIsStartingCampaign(false);
         return;
       }
     }
@@ -462,6 +470,7 @@ const WhatsAppCampaign = () => {
         description: "Conecte o número selecionado antes de iniciar",
         variant: "destructive",
       });
+      setIsStartingCampaign(false);
       return;
     }
 
@@ -474,6 +483,7 @@ const WhatsAppCampaign = () => {
         description: "Número não tem instância configurada. Reconecte o WhatsApp.",
         variant: "destructive",
       });
+      setIsStartingCampaign(false);
       return;
     }
 
@@ -485,10 +495,9 @@ const WhatsAppCampaign = () => {
         description: "Preencha todas as 5 variações de mensagem.",
         variant: "destructive",
       });
+      setIsStartingCampaign(false);
       return;
     }
-
-    setIsStartingCampaign(true);
 
     try {
       // Only create campaign AFTER all validations pass
