@@ -1362,12 +1362,14 @@ Deno.serve(async (req) => {
       console.log(`📱 Normalized phone: ${normalizedPhone}`);
 
       // Remove from ignored list since they responded
-      const { error: deleteError } = await supabase.from('ignored_contacts')
+      // Delete across ALL campaigns for this user+phone (response means they're active)
+      const { data: deletedRows, error: deleteError } = await supabase.from('ignored_contacts')
         .delete()
         .eq('user_id', userId)
-        .eq('phone', normalizedPhone);
+        .eq('phone', normalizedPhone)
+        .select('id');
       
-      console.log(`🗑️ Removed from ignored list:`, { success: !deleteError, error: deleteError?.message });
+      console.log(`🗑️ Removed from ignored list:`, { success: !deleteError, deletedCount: deletedRows?.length || 0, error: deleteError?.message });
 
       // If campaign specified, register response
       if (respCampaignId) {
