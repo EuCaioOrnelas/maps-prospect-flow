@@ -514,17 +514,27 @@ async function processSingleMessage(
   campaignLog('📊', `=== PROCESSING START ===`);
   campaignLog('📊', `Campaign: ${campaign.name}`);
   
-  // Check delay
+  // Check delay - use delayMin for consistent behavior
   const delayMin = campaign.delay_seconds || 40;
   const delayMax = campaign.delay_seconds_max || 60;
+  // Fix: use a deterministic delay based on delayMin to avoid random recalculation each cycle
   const requiredDelay = getRandomDelay(delayMin, delayMax);
   
   if (!canSendNextMessage(campaign.last_message_sent_at, requiredDelay)) {
-    const elapsed = campaign.last_message_sent_at 
-      ? Math.floor((Date.now() - new Date(campaign.last_message_sent_at).getTime()) / 1000)
-      : 0;
-    campaignLog('⏳', `Waiting for delay`, { elapsed, required: requiredDelay });
-    return { processed: false, completed: false, skipped: true };
+    const lastSentTime = new Date(campaign.last_message_sent_at).getTime();
+    const elapsedMs = Date.now() - lastSentTime;
+    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+    const remainingSeconds = requiredDelay - elapsedSeconds;
+    
+    // If remaining wait is short enough (≤25s), wait in-process instead of skipping to next cron cycle
+    if (remainingSeconds > 0 && remainingSeconds <= 25) {
+      campaignLog('⏳', `Waiting in-process for delay`, { elapsed: elapsedSeconds, required: requiredDelay, waitingSeconds: remainingSeconds });
+      await new Promise(r => setTimeout(r, remainingSeconds * 1000));
+      // Fall through to send the message
+    } else {
+      campaignLog('⏳', `Waiting for delay`, { elapsed: elapsedSeconds, required: requiredDelay });
+      return { processed: false, completed: false, skipped: true };
+    }
   }
 
   // Parse leads and messages
