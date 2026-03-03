@@ -1128,10 +1128,22 @@ Deno.serve(async (req) => {
 
       // Resume paused campaigns
       for (const paused of (pausedCampaigns || [])) {
+        const isDisconnectionPause = paused.pause_reason?.includes('desconectado') || 
+                                      paused.pause_reason?.includes('conexão') ||
+                                      paused.pause_reason?.includes('Reconecte');
+        
         console.log(`▶️ Resuming PAUSED campaign: ${paused.name}`, {
           pauseReason: paused.pause_reason,
-          resumeAt: paused.resume_at
+          resumeAt: paused.resume_at,
+          isDisconnectionPause
         });
+
+        // If campaign was paused due to disconnection, clear its ignored contacts
+        // so leads can be retried (they weren't actually delivered)
+        if (isDisconnectionPause) {
+          const cleared = await clearCampaignIgnoredContacts(supabase, paused.user_id, paused.id);
+          console.log(`🧹 Cleared ${cleared} ignored contacts for campaign ${paused.id} (was paused by disconnection)`);
+        }
         
         await supabase.from('whatsapp_campaigns').update({
           status: 'running',
