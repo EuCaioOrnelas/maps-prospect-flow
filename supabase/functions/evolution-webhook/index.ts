@@ -2005,7 +2005,20 @@ REGRAS OBRIGATÓRIAS:
                   ? infoData[0]
                   : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
 
-                const ownerPhone = instanceInfo?.owner || instanceInfo?.instance?.owner || null;
+                const rawOwner =
+                  instanceInfo?.owner ||
+                  instanceInfo?.instance?.owner ||
+                  instanceInfo?.number ||
+                  instanceInfo?.instance?.number ||
+                  instanceInfo?.wuid ||
+                  instanceInfo?.instance?.wuid ||
+                  null;
+
+                const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
+                const ownerPhone = ownerDigits.length >= 10
+                  ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`)
+                  : null;
+
                 if (ownerPhone) {
                   updatePayload.phone_number = ownerPhone;
                 }
