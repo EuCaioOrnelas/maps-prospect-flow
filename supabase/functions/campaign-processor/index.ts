@@ -748,15 +748,13 @@ async function processSingleMessage(
 
   const formattedPhone = phoneValidation.normalized;
 
-  // Check if contact is ignored
-  const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone);
+  // Check if contact is ignored (per-campaign scope)
+  const isIgnored = await isContactIgnored(supabase, campaign.user_id, formattedPhone, campaign.id);
   if (isIgnored) {
-    campaignLog('🚫', `Skipping IGNORED contact`, { phone: formattedPhone });
-    failedCount++;
-    
+    campaignLog('🚫', `Skipping IGNORED contact (already sent in this campaign)`, { phone: formattedPhone });
+    // Don't count as failed - just skip to next lead
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
-      failed_count: failedCount,
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
     
