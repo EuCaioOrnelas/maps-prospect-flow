@@ -1035,8 +1035,8 @@ Deno.serve(async (req) => {
         .eq('id', campaign.whatsapp_number_id)
         .single();
 
-      // Resolve Evolution API credentials based on number's api_tier
-      const evoCredentials = getEvolutionCredentials(numberData?.api_tier);
+      // Resolve Evolution API credentials based on number tier, with user-plan fallback
+      const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
       const startEvoUrl = evoCredentials.url;
       const startEvoKey = evoCredentials.apiKey;
 
