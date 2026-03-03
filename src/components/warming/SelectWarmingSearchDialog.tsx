@@ -243,7 +243,7 @@ export function SelectWarmingSearchDialog({
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Não há buscas disponíveis com pelo menos 50 leads. Todas as buscas estão sendo usadas por outros números ou não têm leads suficientes.
+                  Não há buscas disponíveis com pelo menos {MIN_LEADS_REQUIRED} leads. Todas as buscas estão sendo usadas por outros números ou não têm leads suficientes.
                 </AlertDescription>
               </Alert>
               
