@@ -372,13 +372,15 @@ async function addToIgnoredList(
 ): Promise<void> {
   const normalizedPhone = normalizePhone(phone);
   try {
-    await supabase.from('ignored_contacts').upsert({
+    // Use insert with ON CONFLICT DO NOTHING since the unique index uses COALESCE
+    // which can't be referenced in onConflict. Duplicates will simply be skipped.
+    await supabase.from('ignored_contacts').insert({
       user_id: userId,
       phone: normalizedPhone,
       campaign_id: campaignId,
       whatsapp_number_id: whatsappNumberId,
       first_message_sent_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,phone' });
+    });
   } catch (e) {
     console.log('Contact already in ignored list or error:', e);
   }
