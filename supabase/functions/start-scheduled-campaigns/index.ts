@@ -368,6 +368,19 @@ serve(async (req) => {
         continue;
       }
 
+      // Clear any stale ignored contacts for this campaign before starting
+      // This ensures a clean slate, especially for campaigns that failed previously
+      const { data: clearedIgnored } = await supabase
+        .from('ignored_contacts')
+        .delete()
+        .eq('user_id', campaign.user_id)
+        .eq('campaign_id', campaign.id)
+        .select('id');
+      
+      if (clearedIgnored?.length) {
+        console.log(`[start-scheduled-campaigns] 🧹 Cleared ${clearedIgnored.length} stale ignored contacts before starting campaign`);
+      }
+
       // ✅ Just change status to 'running' — campaign-processor will handle the actual message sending
       const { error: updateError } = await supabase
         .from('whatsapp_campaigns')
