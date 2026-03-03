@@ -13,9 +13,21 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
-  const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-  return getEvolutionCredentials(data?.api_tier || 'free');
+
+async function getEvolutionCredentialsForNumber(supabase: any, numberId: string, userId: string): Promise<EvolutionCredentials> {
+  // Try number's api_tier first
+  const { data: numberRow } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).maybeSingle();
+  if (numberRow?.api_tier) {
+    return getEvolutionCredentials(numberRow.api_tier);
+  }
+  // Fall back to user's plan
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).maybeSingle();
+  const credentials = getEvolutionCredentials(profile?.plan);
+  // Self-heal: persist inferred tier
+  if (numberId) {
+    await supabase.from('whatsapp_numbers').update({ api_tier: credentials.tier, updated_at: new Date().toISOString() }).eq('id', numberId);
+  }
+  return credentials;
 }
 
 const corsHeaders = {
@@ -48,27 +60,51 @@ serve(async (req) => {
 
     const { instanceName, numberId } = await req.json();
 
-    // Get the correct Evolution API based on the number's api_tier
-    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    // Get the correct Evolution API based on the number's api_tier WITH user plan fallback
+    const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
     console.log(`Reconnecting instance: ${instanceName} on ${evoCredentials.tier} API`);
 
-    console.log(`Attempting to reconnect instance: ${instanceName} on ${evoCredentials.tier} API`);
+    // Step 1: Check if instance exists — try primary API first, then fallback
+    let instanceExists = false;
+    let effectiveUrl = EVOLUTION_API_URL;
+    let effectiveKey = EVOLUTION_API_KEY;
 
-    // Step 1: Check if instance exists
     const instanceResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
       method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
+      headers: { 'apikey': EVOLUTION_API_KEY },
     });
 
-    let instanceExists = false;
     if (instanceResponse.ok) {
       const instances = await instanceResponse.json();
       instanceExists = instances && instances.length > 0;
+    }
+
+    // If not found on primary API, try the other one
+    if (!instanceExists) {
+      const altUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
+      const altKey = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_KEY') : Deno.env.get('EVOLUTION_API_KEY_PAID');
+      if (altUrl && altKey) {
+        try {
+          const altResponse = await fetch(`${altUrl}/instance/fetchInstances?instanceName=${instanceName}`, {
+            method: 'GET',
+            headers: { 'apikey': altKey },
+          });
+          if (altResponse.ok) {
+            const altInstances = await altResponse.json();
+            if (altInstances && altInstances.length > 0) {
+              instanceExists = true;
+              effectiveUrl = altUrl;
+              effectiveKey = altKey;
+              console.log(`Instance found on ${evoCredentials.tier === 'paid' ? 'free' : 'paid'} API fallback`);
+            }
+          }
+        } catch (e) {
+          console.log('Fallback API check failed:', e);
+        }
+      }
     }
 
     console.log(`Instance ${instanceName} exists: ${instanceExists}`);
@@ -77,11 +113,11 @@ serve(async (req) => {
     if (!instanceExists) {
       console.log('Creating new instance...');
       
-      const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+      const createResponse = await fetch(`${effectiveUrl}/instance/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY,
+          'apikey': effectiveKey,
         },
         body: JSON.stringify({
           instanceName: instanceName,
@@ -102,10 +138,11 @@ serve(async (req) => {
 
     // Step 3: Configure webhook
     const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
+    const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
     
     const webhookEndpoints = [
       {
-        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+        url: `${effectiveUrl}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
           webhook: {
@@ -113,19 +150,19 @@ serve(async (req) => {
             url: webhookUrl,
             webhookByEvents: false,
             webhookBase64: true,
-            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+            events: webhookEvents
           }
         }
       },
       {
-        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+        url: `${effectiveUrl}/webhook/set/${instanceName}`,
         method: 'POST',
         body: {
           enabled: true,
           url: webhookUrl,
           webhookByEvents: false,
           webhookBase64: true,
-          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATED", "SEND_MESSAGE"]
+          events: webhookEvents
         }
       }
     ];
@@ -136,7 +173,7 @@ serve(async (req) => {
           method: endpoint.method,
           headers: {
             'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY,
+            'apikey': effectiveKey,
           },
           body: JSON.stringify(endpoint.body),
         });
@@ -150,11 +187,9 @@ serve(async (req) => {
     }
 
     // Step 4: Try to connect/restart the instance
-    const connectResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+    const connectResponse = await fetch(`${effectiveUrl}/instance/connect/${instanceName}`, {
       method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
+      headers: { 'apikey': effectiveKey },
     });
 
     let qrCode = null;
@@ -164,12 +199,10 @@ serve(async (req) => {
       const connectData = await connectResponse.json();
       console.log('Connect response:', JSON.stringify(connectData));
 
-      // Check if we got a QR code or if already connected
       if (connectData.base64 || connectData.qrcode?.base64) {
         qrCode = connectData.base64 || connectData.qrcode?.base64;
         needsQR = true;
       } else if (connectData.instance?.state === 'open') {
-        // Already connected!
         await supabase
           .from('whatsapp_numbers')
           .update({ 
@@ -191,11 +224,9 @@ serve(async (req) => {
     }
 
     // Step 5: Check current state
-    const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
+    const statusResponse = await fetch(`${effectiveUrl}/instance/connectionState/${instanceName}`, {
       method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
+      headers: { 'apikey': effectiveKey },
     });
 
     if (statusResponse.ok) {
@@ -225,11 +256,9 @@ serve(async (req) => {
 
     // Step 6: If not connected, get QR code
     if (!qrCode) {
-      const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+      const qrResponse = await fetch(`${effectiveUrl}/instance/connect/${instanceName}`, {
         method: 'GET',
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+        headers: { 'apikey': effectiveKey },
       });
 
       if (qrResponse.ok) {

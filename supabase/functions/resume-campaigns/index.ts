@@ -1,6 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// --- Evolution API credentials helper (inlined) ---
+interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
+const PAID_PLANS = ['start', 'growth', 'scale'];
+function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
+  const normalized = (tierOrPlan || 'free').toLowerCase();
+  if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
+    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+  }
+  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
+  return { url, apiKey, tier: 'free' };
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -23,7 +37,7 @@ serve(async (req) => {
     // Find all campaigns that were paused due to daily limit
     const { data: pausedCampaigns, error: fetchError } = await supabase
       .from('whatsapp_campaigns')
-      .select('id, name, user_id, sent_count, total_leads')
+      .select('id, name, user_id, sent_count, total_leads, whatsapp_number_id')
       .eq('status', 'paused')
       .eq('paused_at_limit', true);
 
@@ -45,41 +59,107 @@ serve(async (req) => {
       );
     }
 
-    // Resume all paused campaigns
-    const { error: updateError } = await supabase
-      .from('whatsapp_campaigns')
-      .update({
+    const resumedDetails = [];
+
+    for (const campaign of pausedCampaigns) {
+      // Verify the WhatsApp number is still connected before resuming
+      const { data: numberData } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, instance_name, is_connected, api_tier')
+        .eq('id', campaign.whatsapp_number_id)
+        .single();
+
+      if (!numberData) {
+        console.log(`Skipping campaign ${campaign.name} - number not found`);
+        await supabase.from('whatsapp_campaigns').update({
+          status: 'failed',
+          pause_reason: 'Número WhatsApp não encontrado',
+          paused_at_limit: false,
+          updated_at: new Date().toISOString()
+        }).eq('id', campaign.id);
+        continue;
+      }
+
+      // Check DB connection flag
+      if (!numberData.is_connected) {
+        console.log(`Skipping campaign ${campaign.name} - number ${numberData.instance_name} is disconnected`);
+        // Don't resume, but update pause reason to reflect disconnection
+        await supabase.from('whatsapp_campaigns').update({
+          pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+          paused_at_limit: false,
+          updated_at: new Date().toISOString()
+        }).eq('id', campaign.id);
+        continue;
+      }
+
+      // Optionally do a quick live connection check using the correct API tier
+      const evoCredentials = getEvolutionCredentials(numberData.api_tier);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const statusResponse = await fetch(`${evoCredentials.url}/instance/connectionState/${numberData.instance_name}`, {
+          method: 'GET',
+          headers: { 'apikey': evoCredentials.apiKey },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          const state = statusData.state || statusData.instance?.state;
+          if (state !== 'open') {
+            console.log(`Skipping campaign ${campaign.name} - live check shows state: ${state}`);
+            await supabase.from('whatsapp_campaigns').update({
+              pause_reason: `WhatsApp em estado "${state}". Reconecte para retomar.`,
+              paused_at_limit: false,
+              updated_at: new Date().toISOString()
+            }).eq('id', campaign.id);
+            
+            // Mark number as disconnected if definitively closed
+            if (state === 'close') {
+              await supabase.from('whatsapp_numbers').update({
+                is_connected: false,
+                updated_at: new Date().toISOString()
+              }).eq('id', numberData.id);
+            }
+            continue;
+          }
+        }
+      } catch (e) {
+        // If live check fails, still resume (trust DB flag) — campaign-processor will catch real disconnections
+        console.log(`Live check failed for ${numberData.instance_name}, but DB says connected — proceeding with resume`);
+      }
+
+      // Resume the campaign
+      const { error: updateError } = await supabase.from('whatsapp_campaigns').update({
         status: 'running',
         paused_at_limit: false,
         pause_reason: null,
         resume_at: null,
         updated_at: new Date().toISOString()
-      })
-      .eq('status', 'paused')
-      .eq('paused_at_limit', true);
+      }).eq('id', campaign.id);
 
-    if (updateError) {
-      console.error('Error resuming campaigns:', updateError);
-      throw updateError;
+      if (updateError) {
+        console.error(`Error resuming campaign ${campaign.id}:`, updateError);
+        continue;
+      }
+
+      resumedDetails.push({
+        id: campaign.id,
+        name: campaign.name,
+        user_id: campaign.user_id,
+        progress: `${campaign.sent_count}/${campaign.total_leads}`
+      });
     }
 
-    console.log(`Successfully resumed ${pausedCampaigns.length} campaigns`);
-
-    // Log the resumed campaigns for tracking
-    const resumedDetails = pausedCampaigns.map(c => ({
-      id: c.id,
-      name: c.name,
-      user_id: c.user_id,
-      progress: `${c.sent_count}/${c.total_leads}`
-    }));
-
+    console.log(`Successfully resumed ${resumedDetails.length} campaigns`);
     console.log('Resumed campaigns details:', JSON.stringify(resumedDetails));
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Resumed ${pausedCampaigns.length} campaigns`,
-        resumedCount: pausedCampaigns.length,
+        message: `Resumed ${resumedDetails.length} campaigns`,
+        resumedCount: resumedDetails.length,
         campaigns: resumedDetails
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

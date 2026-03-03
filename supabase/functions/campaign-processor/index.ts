@@ -162,8 +162,18 @@ function normalizePhone(phone: string): string {
     normalized = normalized.slice(2);
   }
 
-  // Restore previous behavior: local BR numbers receive +55
+  // If already starts with 55 and is 12-13 digits, it's likely already E.164 BR format
+  if (normalized.startsWith('55') && normalized.length >= 12 && normalized.length <= 13) {
+    return normalized;
+  }
+
+  // Local BR numbers (10-11 digits) receive +55 prefix
+  // Handle DDD 55 ambiguity: a local number starting with "55" + 8-9 more digits = DDD 55
+  // E.g. "5591234567" (10 digits, DDD 55) should become "555591234567" not stay as "5591234567"
   if (!normalized.startsWith('55') && normalized.length >= 10 && normalized.length <= 11) {
+    normalized = `55${normalized}`;
+  } else if (normalized.startsWith('55') && normalized.length >= 10 && normalized.length <= 11) {
+    // This is a local number with DDD 55 (e.g. Cascavel-PR), add country code
     normalized = `55${normalized}`;
   }
 
@@ -1362,12 +1372,14 @@ Deno.serve(async (req) => {
       console.log(`📱 Normalized phone: ${normalizedPhone}`);
 
       // Remove from ignored list since they responded
-      const { error: deleteError } = await supabase.from('ignored_contacts')
+      // Delete across ALL campaigns for this user+phone (response means they're active)
+      const { data: deletedRows, error: deleteError } = await supabase.from('ignored_contacts')
         .delete()
         .eq('user_id', userId)
-        .eq('phone', normalizedPhone);
+        .eq('phone', normalizedPhone)
+        .select('id');
       
-      console.log(`🗑️ Removed from ignored list:`, { success: !deleteError, error: deleteError?.message });
+      console.log(`🗑️ Removed from ignored list:`, { success: !deleteError, deletedCount: deletedRows?.length || 0, error: deleteError?.message });
 
       // If campaign specified, register response
       if (respCampaignId) {
