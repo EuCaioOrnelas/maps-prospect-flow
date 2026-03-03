@@ -1964,18 +1964,81 @@ REGRAS OBRIGATÓRIAS:
           // Disconnection detection is handled by evolution-check-status (user-facing)
           // and the campaign-processor's own live connection check.
           if (state === 'open') {
-            const { error } = await supabase
+            const { data: numberRow } = await supabase
               .from('whatsapp_numbers')
-              .update({ 
-                is_connected: true,
-                updated_at: new Date().toISOString()
-              })
-              .eq('instance_name', instanceName);
-            
-            if (error) {
-              console.error('Error updating connection status:', error);
+              .select('id, user_id')
+              .eq('instance_name', instanceName)
+              .single();
+
+            if (numberRow) {
+              // Update connection status
+              const { error } = await supabase
+                .from('whatsapp_numbers')
+                .update({ 
+                  is_connected: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('instance_name', instanceName);
+              
+              if (error) {
+                console.error('Error updating connection status:', error);
+              } else {
+                console.log(`Updated connection status for ${instanceName}: connected`);
+              }
+
+              // AUTO-RESUME: Find and resume paused campaigns on this number
+              const { data: pausedCampaigns } = await supabase
+                .from('whatsapp_campaigns')
+                .select('id, name, pause_reason, user_id')
+                .eq('whatsapp_number_id', numberRow.id)
+                .eq('status', 'paused')
+                .eq('user_id', numberRow.user_id);
+
+              if (pausedCampaigns && pausedCampaigns.length > 0) {
+                const disconnectionPaused = pausedCampaigns.filter((c: any) => 
+                  c.pause_reason?.includes('desconectado') || 
+                  c.pause_reason?.includes('conexão') ||
+                  c.pause_reason?.includes('Reconecte')
+                );
+
+                for (const campaign of disconnectionPaused) {
+                  console.log(`🔄 AUTO-RESUMING campaign "${campaign.name}" after reconnection`);
+                  
+                  // Clear ignored contacts for this campaign (leads weren't delivered)
+                  const { data: clearedContacts } = await supabase
+                    .from('ignored_contacts')
+                    .delete()
+                    .eq('user_id', campaign.user_id)
+                    .eq('campaign_id', campaign.id)
+                    .select('id');
+                  
+                  console.log(`🧹 Cleared ${clearedContacts?.length || 0} ignored contacts for auto-resumed campaign`);
+
+                  await supabase.from('whatsapp_campaigns').update({
+                    status: 'running',
+                    pause_reason: null,
+                    resume_at: null,
+                    updated_at: new Date().toISOString()
+                  }).eq('id', campaign.id);
+                }
+
+                if (disconnectionPaused.length > 0) {
+                  console.log(`✅ Auto-resumed ${disconnectionPaused.length} campaigns after reconnection on ${instanceName}`);
+                }
+              }
             } else {
-              console.log(`Updated connection status for ${instanceName}: connected`);
+              // Fallback: update without numberRow
+              const { error } = await supabase
+                .from('whatsapp_numbers')
+                .update({ 
+                  is_connected: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('instance_name', instanceName);
+              
+              if (error) {
+                console.error('Error updating connection status:', error);
+              }
             }
           } else if (state === 'close') {
             // Log disconnection but do NOT update is_connected in DB
