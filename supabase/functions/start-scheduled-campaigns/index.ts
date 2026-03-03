@@ -175,6 +175,23 @@ serve(async (req) => {
     // Build processing queue
     const allToProcess = [...(scheduledCampaigns || [])];
     
+    // Also add campaigns that were previously stuck as 'scheduled' with a pause_reason
+    // (failed connection check on previous attempt)
+    const { data: stuckScheduled } = await supabase
+      .from('whatsapp_campaigns')
+      .select('id, name, user_id, whatsapp_number_id, leads, messages, scheduled_at, total_leads, pause_reason')
+      .eq('status', 'scheduled')
+      .not('pause_reason', 'is', null)
+      .gt('scheduled_at', '2000-01-01'); // Has a scheduled_at in the past (already checked by main query)
+    
+    for (const stuck of (stuckScheduled || [])) {
+      // Only add if not already in the main scheduled list
+      if (!allToProcess.find(c => c.id === stuck.id)) {
+        allToProcess.push(stuck);
+        console.log(`[start-scheduled-campaigns] Adding STUCK scheduled campaign ${stuck.name} (had pause_reason: ${stuck.pause_reason})`);
+      }
+    }
+    
     for (const postponed of (postponedCampaigns || [])) {
       if (!numbersWithActiveCampaigns.has(postponed.whatsapp_number_id)) {
         allToProcess.push(postponed);
