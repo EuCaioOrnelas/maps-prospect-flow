@@ -711,7 +711,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
       }
     }
 
-    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}, Skipped (limit): ${skippedDueToLimit}`);
+    console.log(`Buffer processor finished. Processed: ${processedCount}, Errors: ${errorCount}, Skipped (limit): ${skippedDueToLimit}, StoppedByBudget: ${stoppedByTimeBudget}`);
 
     return new Response(
       JSON.stringify({ 
@@ -719,7 +719,8 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
         processed: processedCount,
         errors: errorCount,
         skipped_limit: skippedDueToLimit,
-        total: readyConversations.length 
+        total: readyConversations.length,
+        stopped_by_time_budget: stoppedByTimeBudget
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
