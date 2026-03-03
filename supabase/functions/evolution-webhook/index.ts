@@ -23,18 +23,33 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Helper to resolve correct API credentials based on instance tier
-    async function getApiCredentials(instanceName: string): Promise<{ url: string; apiKey: string }> {
+    // Helper to resolve correct API credentials based on instance tier/user plan
+    async function getApiCredentials(instanceName: string): Promise<{ url: string; apiKey: string; tier: 'free' | 'paid' }> {
       const { data: numberRow } = await supabase
         .from('whatsapp_numbers')
-        .select('api_tier')
+        .select('api_tier, user_id')
         .eq('instance_name', instanceName)
         .maybeSingle();
-      
-      if (numberRow?.api_tier === 'paid' && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
-        return { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID };
+
+      const isPaidByNumber = numberRow?.api_tier === 'paid';
+      let isPaidByPlan = false;
+
+      if (!isPaidByNumber && numberRow?.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', numberRow.user_id)
+          .maybeSingle();
+
+        const normalizedPlan = (profile?.plan || 'free').toLowerCase();
+        isPaidByPlan = ['start', 'growth', 'scale'].includes(normalizedPlan);
       }
-      return { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY! };
+
+      if ((isPaidByNumber || isPaidByPlan) && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        return { url: EVOLUTION_API_URL_PAID, apiKey: EVOLUTION_API_KEY_PAID, tier: 'paid' };
+      }
+
+      return { url: EVOLUTION_API_URL!, apiKey: EVOLUTION_API_KEY!, tier: 'free' };
     }
 
     const payload = await req.json();

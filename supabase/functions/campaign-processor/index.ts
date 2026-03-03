@@ -38,6 +38,34 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   return { url, apiKey, tier: 'free' };
 }
 
+async function getEvolutionCredentialsForNumber(
+  supabase: any,
+  numberData: any,
+  userId: string
+): Promise<EvolutionCredentials> {
+  if (numberData?.api_tier) {
+    return getEvolutionCredentials(numberData.api_tier);
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const credentials = getEvolutionCredentials(profile?.plan);
+
+  // Self-heal: persist inferred tier for next runs
+  if (numberData?.id) {
+    await supabase
+      .from('whatsapp_numbers')
+      .update({ api_tier: credentials.tier, updated_at: new Date().toISOString() })
+      .eq('id', numberData.id);
+  }
+
+  return credentials;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
