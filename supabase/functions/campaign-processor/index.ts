@@ -204,15 +204,8 @@ async function checkInstanceConnection(
         return true;
       }
       
-      // If not connected, treat as definitively disconnected
-      // 'connecting' means the instance is stuck in a reconnection loop
-      // 'close' means explicitly disconnected
-      // Neither should be retried — they indicate the instance is not functional
       const state = data.state || data.instance?.state;
       console.log(`📱 Instance not connected (state: "${state}"), treating as disconnected`);
-      return false;
-      
-      console.log(`📱 Instance connection state: ${state}`);
       return false;
       
     } catch (error) {
