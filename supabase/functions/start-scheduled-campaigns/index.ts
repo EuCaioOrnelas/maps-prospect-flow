@@ -15,6 +15,24 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   return { url, apiKey, tier: 'free' };
 }
 
+async function getEvolutionCredentialsForNumber(
+  supabase: any,
+  numberData: { api_tier?: string | null; id?: string },
+  userId: string
+): Promise<EvolutionCredentials> {
+  if (numberData?.api_tier) {
+    return getEvolutionCredentials(numberData.api_tier);
+  }
+  // Fall back to user's plan
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).maybeSingle();
+  const credentials = getEvolutionCredentials(profile?.plan);
+  // Self-heal: persist inferred tier
+  if (numberData?.id) {
+    await supabase.from('whatsapp_numbers').update({ api_tier: credentials.tier, updated_at: new Date().toISOString() }).eq('id', numberData.id);
+  }
+  return credentials;
+}
+
 // ─── Email notification helper ─────────────────────────────────────────────
 async function sendEmailNotification(
   supabaseUrl: string,
@@ -223,8 +241,8 @@ serve(async (req) => {
         continue;
       }
 
-      // Resolve Evolution API credentials based on number's api_tier
-      const evoCredentials = getEvolutionCredentials(numberData.api_tier);
+      // Resolve Evolution API credentials based on number's api_tier WITH user plan fallback
+      const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
       console.log(`[start-scheduled-campaigns] Using ${evoCredentials.tier} Evolution credentials for ${numberData.instance_name}`);
 
       // Check connection via Evolution API
@@ -235,25 +253,30 @@ serve(async (req) => {
       );
 
       if (!connectionCheck.connected) {
-        console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} not connected: ${connectionCheck.error}`);
-        
-        await supabase
-          .from('whatsapp_campaigns')
-          .update({ 
-            pause_reason: `Número não conectado: ${connectionCheck.error}. Verifique a conexão.`,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', campaign.id);
-        
-        numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
-        results.push({ id: campaign.id, status: 'pending_connection', reason: connectionCheck.error });
-        
-        sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
-          { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp: ${connectionCheck.error}` },
-          `campaign_conn_${campaign.id}_${Date.now()}`
-        ).catch(() => {});
-        
-        continue;
+        // If DB says connected, allow start (soft-fail for transient API issues)
+        if (numberData.is_connected) {
+          console.log(`[start-scheduled-campaigns] ⚠️ Live check failed for ${numberData.instance_name} but DB says connected — allowing start`);
+        } else {
+          console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} not connected: ${connectionCheck.error}`);
+          
+          await supabase
+            .from('whatsapp_campaigns')
+            .update({ 
+              pause_reason: `Número não conectado: ${connectionCheck.error}. Verifique a conexão.`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', campaign.id);
+          
+          numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
+          results.push({ id: campaign.id, status: 'pending_connection', reason: connectionCheck.error });
+          
+          sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+            { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp: ${connectionCheck.error}` },
+            `campaign_conn_${campaign.id}_${Date.now()}`
+          ).catch(() => {});
+          
+          continue;
+        }
       }
 
       // Validate leads and messages

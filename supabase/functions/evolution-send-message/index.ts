@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
-function isPaidPlan(plan: string | null | undefined): boolean { return PAID_PLANS.includes((plan || 'free').toLowerCase()); }
 function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
   const normalized = (tierOrPlan || 'free').toLowerCase();
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
@@ -15,13 +14,21 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
-  const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-  return getEvolutionCredentials(data?.api_tier || 'free');
-}
-async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
-  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
-  return getEvolutionCredentials(data?.plan || 'free');
+
+async function getEvolutionCredentialsForNumber(supabase: any, numberId: string, userId: string): Promise<EvolutionCredentials> {
+  // Try number's api_tier first
+  const { data: numberRow } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).maybeSingle();
+  if (numberRow?.api_tier) {
+    return getEvolutionCredentials(numberRow.api_tier);
+  }
+  // Fall back to user's plan
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).maybeSingle();
+  const credentials = getEvolutionCredentials(profile?.plan);
+  // Self-heal: persist inferred tier
+  if (numberId) {
+    await supabase.from('whatsapp_numbers').update({ api_tier: credentials.tier, updated_at: new Date().toISOString() }).eq('id', numberId);
+  }
+  return credentials;
 }
 
 const corsHeaders = {
@@ -115,8 +122,8 @@ serve(async (req) => {
 
     const { instanceName, phoneNumber, message, numberId } = await req.json();
 
-    // Get the correct Evolution API based on the number's api_tier
-    const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+    // Get the correct Evolution API based on the number's api_tier WITH user plan fallback
+    const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
