@@ -376,6 +376,9 @@ const WhatsAppCampaign = () => {
   };
 
   const handleStartCampaign = async () => {
+    // Prevent double-submit
+    if (isStartingCampaign) return;
+
     if (!selectedNumberId) {
       toast({
         title: "Selecione um número",
@@ -384,6 +387,9 @@ const WhatsAppCampaign = () => {
       });
       return;
     }
+
+    // Set guard immediately to block concurrent calls
+    setIsStartingCampaign(true);
 
     // If scheduled, validate balance and create the campaign
     if (isScheduled) {
