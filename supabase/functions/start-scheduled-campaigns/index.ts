@@ -276,23 +276,65 @@ serve(async (req) => {
         } else {
           console.log(`[start-scheduled-campaigns] Instance ${numberData.instance_name} not connected: ${connectionCheck.error}`);
           
-          await supabase
-            .from('whatsapp_campaigns')
-            .update({ 
-              pause_reason: `Número não conectado: ${connectionCheck.error}. Verifique a conexão.`,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', campaign.id);
-          
-          numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
-          results.push({ id: campaign.id, status: 'pending_connection', reason: connectionCheck.error });
-          
-          sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
-            { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp: ${connectionCheck.error}` },
-            `campaign_conn_${campaign.id}_${Date.now()}`
-          ).catch(() => {});
-          
-          continue;
+          // Try to restart the instance to recover stale overnight sessions
+          try {
+            console.log(`[start-scheduled-campaigns] 🔄 Attempting auto-restart for ${numberData.instance_name}...`);
+            const restartResp = await fetch(`${evoCredentials.url}/instance/restart/${numberData.instance_name}`, {
+              method: 'PUT',
+              headers: { 'apikey': evoCredentials.apiKey },
+            });
+            console.log(`[start-scheduled-campaigns] Restart response: ${restartResp.status}`);
+            
+            // Wait a bit and re-check
+            await new Promise(r => setTimeout(r, 5000));
+            const recheck = await checkInstanceConnection(evoCredentials.url, evoCredentials.apiKey, numberData.instance_name);
+            
+            if (recheck.connected) {
+              console.log(`[start-scheduled-campaigns] ✅ Auto-restart successful for ${numberData.instance_name}! Proceeding with campaign.`);
+              // Update DB
+              await supabase.from('whatsapp_numbers').update({ 
+                is_connected: true, 
+                updated_at: new Date().toISOString() 
+              }).eq('id', numberData.id);
+              // Fall through to start the campaign
+            } else {
+              // Set status to 'paused' (NOT staying as 'scheduled') so webhook auto-resume can pick it up
+              await supabase
+                .from('whatsapp_campaigns')
+                .update({ 
+                  status: 'paused',
+                  pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', campaign.id);
+              
+              numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
+              results.push({ id: campaign.id, status: 'paused_connection', reason: connectionCheck.error });
+              
+              sendEmailNotification(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, campaign.user_id, 'CAMPAIGN_FAILED_TO_START',
+                { campaign_name: campaign.name, reason: `Número não conectado ao WhatsApp. Reconecte para que a campanha retome automaticamente.` },
+                `campaign_conn_${campaign.id}_${Date.now()}`
+              ).catch(() => {});
+              
+              continue;
+            }
+          } catch (restartErr) {
+            console.error(`[start-scheduled-campaigns] Auto-restart failed:`, restartErr);
+            
+            // Set to paused so webhook auto-resume works
+            await supabase
+              .from('whatsapp_campaigns')
+              .update({ 
+                status: 'paused',
+                pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', campaign.id);
+            
+            numbersWithActiveCampaigns.delete(campaign.whatsapp_number_id);
+            results.push({ id: campaign.id, status: 'paused_connection', reason: connectionCheck.error });
+            continue;
+          }
         }
       }
 
