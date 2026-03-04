@@ -11,6 +11,24 @@ serve(async (req) => {
   }
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const forceCleanup =
+      body?.force === true ||
+      body?.action === 'manual_cleanup' ||
+      body?.confirm === 'DELETE_ALL_INSTANCES';
+
+    // Safety guard: prevent destructive cleanup from scheduled jobs
+    if (!forceCleanup) {
+      console.warn('Cleanup skipped: destructive operation requires explicit confirmation payload');
+      return new Response(JSON.stringify({
+        success: true,
+        skipped: true,
+        message: 'Cleanup blocked. Use {"force": true} to run destructive cleanup manually.',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
