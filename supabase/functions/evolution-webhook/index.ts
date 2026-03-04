@@ -1993,38 +1993,84 @@ REGRAS OBRIGATÓRIAS:
             };
 
             // Try to hydrate phone_number when connection opens (self-heal for null owner)
-            try {
-              const infoResponse = await fetch(`${apiCreds.url}/instance/fetchInstances?instanceName=${instanceName}`, {
-                method: 'GET',
-                headers: { 'apikey': apiCreds.apiKey },
-              });
+            // Strategy: try multiple sources to maximize chance of getting the phone number
+            let ownerPhone: string | null = null;
 
-              if (infoResponse.ok) {
-                const infoData = await infoResponse.json();
-                const instanceInfo = Array.isArray(infoData)
-                  ? infoData[0]
-                  : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
-
-                const rawOwner =
-                  instanceInfo?.owner ||
-                  instanceInfo?.instance?.owner ||
-                  instanceInfo?.number ||
-                  instanceInfo?.instance?.number ||
-                  instanceInfo?.wuid ||
-                  instanceInfo?.instance?.wuid ||
-                  null;
-
-                const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
-                const ownerPhone = ownerDigits.length >= 10
-                  ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`)
-                  : null;
-
-                if (ownerPhone) {
-                  updatePayload.phone_number = ownerPhone;
-                }
+            // Source 1: payload.sender (root-level sender from Evolution API)
+            if (!ownerPhone && payload.sender) {
+              const senderDigits = String(payload.sender).replace(/\D/g, '');
+              if (senderDigits.length >= 10) {
+                ownerPhone = senderDigits.startsWith('55') ? senderDigits : `55${senderDigits}`;
+                console.log(`[phone-hydrate] Got phone from payload.sender: ${ownerPhone}`);
               }
-            } catch (err) {
-              console.log(`Could not fetch owner phone for ${instanceName} on open event:`, err);
+            }
+
+            // Source 2: fetchInstances API
+            if (!ownerPhone) {
+              try {
+                const infoResponse = await fetch(`${apiCreds.url}/instance/fetchInstances?instanceName=${instanceName}`, {
+                  method: 'GET',
+                  headers: { 'apikey': apiCreds.apiKey },
+                });
+
+                if (infoResponse.ok) {
+                  const infoData = await infoResponse.json();
+                  const instanceInfo = Array.isArray(infoData)
+                    ? infoData[0]
+                    : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
+
+                  const rawOwner =
+                    instanceInfo?.owner ||
+                    instanceInfo?.instance?.owner ||
+                    instanceInfo?.number ||
+                    instanceInfo?.instance?.number ||
+                    instanceInfo?.wuid ||
+                    instanceInfo?.instance?.wuid ||
+                    instanceInfo?.instance?.jid ||
+                    instanceInfo?.jid ||
+                    null;
+
+                  if (rawOwner) {
+                    const ownerDigits = String(rawOwner).replace(/\D/g, '');
+                    if (ownerDigits.length >= 10) {
+                      ownerPhone = ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`;
+                      console.log(`[phone-hydrate] Got phone from fetchInstances: ${ownerPhone}`);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.log(`[phone-hydrate] fetchInstances failed:`, err);
+              }
+            }
+
+            // Source 3: connectionState API (sometimes returns the owner number)
+            if (!ownerPhone) {
+              try {
+                const connResponse = await fetch(`${apiCreds.url}/instance/connectionState/${instanceName}`, {
+                  method: 'GET',
+                  headers: { 'apikey': apiCreds.apiKey },
+                });
+                if (connResponse.ok) {
+                  const connData = await connResponse.json();
+                  const rawNum = connData?.instance?.owner || connData?.instance?.wuid || connData?.number || null;
+                  if (rawNum) {
+                    const digits = String(rawNum).replace(/\D/g, '');
+                    if (digits.length >= 10) {
+                      ownerPhone = digits.startsWith('55') ? digits : `55${digits}`;
+                      console.log(`[phone-hydrate] Got phone from connectionState: ${ownerPhone}`);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.log(`[phone-hydrate] connectionState failed:`, err);
+              }
+            }
+
+            if (ownerPhone) {
+              updatePayload.phone_number = ownerPhone;
+              console.log(`[phone-hydrate] ✅ Will set phone_number = ${ownerPhone}`);
+            } else {
+              console.log(`[phone-hydrate] ⚠️ Could not resolve phone_number for ${instanceName} — will remain null`);
             }
 
             if (numberRow) {
