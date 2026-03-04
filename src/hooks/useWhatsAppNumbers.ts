@@ -119,13 +119,8 @@ export const useWhatsAppNumbers = () => {
         setSelectedNumberId(firstConnected.id);
       }
 
-      // Verify real connection status for ALL numbers marked as connected
-      const connectedNumbers = fetchedNumbers.filter(n => n.is_connected && n.instance_name);
-      const verificationPromises = connectedNumbers.map(number => 
-        verifyAndUpdateConnectionStatus(number.id, number.instance_name!)
-      );
-      
-      await Promise.all(verificationPromises);
+      // Connection status is verified server-side by the periodic health check.
+      // Do NOT re-verify all numbers on every page navigation to avoid flicker.
     } catch (err) {
       console.error('Error fetching numbers:', err);
     } finally {
