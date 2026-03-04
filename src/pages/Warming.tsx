@@ -1167,6 +1167,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                       setSelectSearchOpen(true);
                     }}
                     onReconnect={!number.is_connected && number.instance_name ? () => handleReconnect(number) : undefined}
+                    onSkipWarming={number.is_connected ? () => setSkipWarmingNumber(number) : undefined}
                   />
                 );
               })}
