@@ -4,15 +4,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
 function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
   const normalized = (tierOrPlan || 'free').toLowerCase();
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
-    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+    const rawUrl = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (rawUrl && apiKey) return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'paid' };
   }
-  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
-  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
-  return { url, apiKey, tier: 'free' };
+  const rawUrl = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!rawUrl || !apiKey) throw new Error('Evolution API credentials not configured');
+  return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'free' };
 }
 
 async function getEvolutionCredentialsForNumber(
@@ -83,6 +88,14 @@ async function checkInstanceConnection(
 
     if (!statusResponse.ok) {
       return { connected: false, error: `API error: HTTP ${statusResponse.status}` };
+    }
+
+    // Validate JSON before parsing
+    const contentType = statusResponse.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const preview = await statusResponse.text();
+      console.error(`[health-check] Expected JSON but got ${contentType}: ${preview.substring(0, 150)}`);
+      return { connected: false, error: `Non-JSON response: ${contentType}` };
     }
 
     const statusData = await statusResponse.json();
