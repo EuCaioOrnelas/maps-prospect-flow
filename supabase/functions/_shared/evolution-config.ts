@@ -14,6 +14,13 @@ export interface EvolutionCredentials {
 
 const PAID_PLANS = ['start', 'growth', 'scale'];
 
+// Normalize URL: remove trailing slashes and /manager suffix
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
+
 /**
  * Check if a plan is a paid plan
  */
@@ -30,30 +37,29 @@ export function getEvolutionCredentials(tierOrPlan: string | null | undefined): 
   const isPaid = normalized === 'paid' || PAID_PLANS.includes(normalized);
 
   if (isPaid) {
-    const url = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const rawUrl = Deno.env.get('EVOLUTION_API_URL_PAID');
     const apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
     
-    if (!url || !apiKey) {
+    if (!rawUrl || !apiKey) {
       console.error('[evolution-config] PAID credentials not configured, falling back to free API');
-      // Fallback to free API if paid not configured
       return getFreeCredentials();
     }
     
-    return { url, apiKey, tier: 'paid' };
+    return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'paid' };
   }
 
   return getFreeCredentials();
 }
 
 function getFreeCredentials(): EvolutionCredentials {
-  const url = Deno.env.get('EVOLUTION_API_URL');
+  const rawUrl = Deno.env.get('EVOLUTION_API_URL');
   const apiKey = Deno.env.get('EVOLUTION_API_KEY');
   
-  if (!url || !apiKey) {
+  if (!rawUrl || !apiKey) {
     throw new Error('Evolution API credentials not configured');
   }
   
-  return { url, apiKey, tier: 'free' };
+  return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'free' };
 }
 
 /**

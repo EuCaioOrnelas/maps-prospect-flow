@@ -4,14 +4,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
 function isPaidPlan(plan: string | null | undefined): boolean { return PAID_PLANS.includes((plan || 'free').toLowerCase()); }
+// Normalize URL: remove trailing slashes and /manager suffix
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
 function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
   const normalized = (tierOrPlan || 'free').toLowerCase();
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
-    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+    const rawUrl = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    if (rawUrl && apiKey) { const url = normalizeApiUrl(rawUrl); console.log(`[evo-config] Paid URL normalized: ${url}`); return { url, apiKey, tier: 'paid' }; }
   }
-  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
-  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
+  const rawUrl = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
+  if (!rawUrl || !apiKey) throw new Error('Evolution API credentials not configured');
+  const url = normalizeApiUrl(rawUrl);
   return { url, apiKey, tier: 'free' };
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
