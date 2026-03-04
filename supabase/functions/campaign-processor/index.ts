@@ -1228,17 +1228,37 @@ Deno.serve(async (req) => {
         // Resolve Evolution API credentials based on number tier, with user-plan fallback
         const campaignEvoCredentials = await getEvolutionCredentialsForNumber(supabase, numberData, campaign.user_id);
 
-        // Validate connection state - only check DB flag, skip live API check
-        // Live connection checks are expensive and cause false positives on transient issues
-        // The actual send attempt will reveal real disconnections (with retry logic)
+        // Validate connection state
+        // If DB says disconnected, do a LIVE check before pausing to avoid false negatives.
+        // The DB flag can become stale when Evolution auto-reconnects without sending a webhook event.
         if (!numberData.is_connected) {
-          console.log(`⏳ Number ${numberData.instance_name} is marked as disconnected in DB, pausing campaign ${campaign.id}`);
-          await supabase.from('whatsapp_campaigns').update({
-            status: 'paused',
-            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
-            updated_at: now.toISOString()
-          }).eq('id', campaign.id);
-          continue;
+          console.log(`⚠️ Number ${numberData.instance_name} is marked as disconnected in DB — performing LIVE verification before pausing...`);
+          
+          const liveConnected = await checkInstanceConnection(
+            campaignEvoCredentials.url,
+            campaignEvoCredentials.apiKey,
+            numberData.instance_name,
+            3 // 3 retries for this critical check
+          );
+
+          if (liveConnected) {
+            // Self-heal: DB was wrong, instance IS connected. Fix the flag and continue.
+            console.log(`✅ LIVE CHECK PASSED — ${numberData.instance_name} is actually connected! Self-healing DB flag...`);
+            await supabase.from('whatsapp_numbers').update({
+              is_connected: true,
+              updated_at: new Date().toISOString()
+            }).eq('id', numberData.id);
+            // Continue processing — don't pause
+          } else {
+            // Truly disconnected — pause campaign
+            console.log(`❌ LIVE CHECK CONFIRMED — ${numberData.instance_name} is truly disconnected. Pausing campaign ${campaign.id}`);
+            await supabase.from('whatsapp_campaigns').update({
+              status: 'paused',
+              pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar os disparos.',
+              updated_at: now.toISOString()
+            }).eq('id', campaign.id);
+            continue;
+          }
         }
 
         // Only do live connection check every 10 messages to reduce false positives
