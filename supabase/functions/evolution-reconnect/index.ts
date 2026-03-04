@@ -260,6 +260,7 @@ serve(async (req) => {
           success: true,
           connected: true,
           needsQR: false,
+          apiTier: effectiveTier,
           message: 'Reconnected successfully'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
