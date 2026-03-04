@@ -14,13 +14,19 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials> {
-  if (numberId) {
-    const { data, error } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-    console.log(`getEvolutionCredentialsByNumber(${numberId}): api_tier=${data?.api_tier}, error=${error?.message || 'none'}`);
-    if (data?.api_tier) return getEvolutionCredentials(data.api_tier);
-  }
-  return getEvolutionCredentials(null);
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials | null> {
+  if (!numberId) return null;
+
+  const { data, error } = await supabase
+    .from('whatsapp_numbers')
+    .select('api_tier')
+    .eq('id', numberId)
+    .single();
+
+  console.log(`getEvolutionCredentialsByNumber(${numberId}): api_tier=${data?.api_tier}, error=${error?.message || 'none'}`);
+
+  if (!data?.api_tier) return null;
+  return getEvolutionCredentials(data.api_tier);
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
   const { data, error } = await supabase.from('profiles').select('plan').eq('id', userId).single();

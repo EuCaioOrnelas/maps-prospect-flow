@@ -13,9 +13,10 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials | null> {
   const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-  return getEvolutionCredentials(data?.api_tier || 'free');
+  if (!data?.api_tier) return null;
+  return getEvolutionCredentials(data.api_tier);
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
   const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
