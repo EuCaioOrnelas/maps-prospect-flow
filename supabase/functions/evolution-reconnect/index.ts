@@ -227,6 +227,7 @@ serve(async (req) => {
           success: true,
           connected: true,
           needsQR: false,
+          apiTier: effectiveTier,
           message: 'Already connected'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
