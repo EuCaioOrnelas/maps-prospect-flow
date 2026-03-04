@@ -112,6 +112,105 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const now = new Date().toISOString();
 
+    // ─── PERIODIC CONNECTION HEALTH CHECK ───────────────────────────────
+    // Refresh is_connected flag for all numbers marked as connected in DB.
+    // This prevents stale flags from causing false "disconnected" states
+    // when the webhook misses a reconnection event overnight.
+    try {
+      const { data: connectedNumbers } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, instance_name, api_tier, user_id, is_connected, phone_number')
+        .eq('is_connected', true);
+
+      for (const num of (connectedNumbers || [])) {
+        if (!num.instance_name) continue;
+        const creds = await getEvolutionCredentialsForNumber(supabase, num, num.user_id);
+        const check = await checkInstanceConnection(creds.url, creds.apiKey, num.instance_name);
+
+        if (!check.connected) {
+          // Double-check with a retry before marking offline
+          await new Promise(r => setTimeout(r, 2000));
+          const recheck = await checkInstanceConnection(creds.url, creds.apiKey, num.instance_name);
+          
+          if (!recheck.connected) {
+            console.log(`[health-check] ⚠️ ${num.instance_name} is NOT connected (was marked true). Trying auto-restart...`);
+            
+            // Try restart before giving up
+            try {
+              await fetch(`${creds.url}/instance/restart/${num.instance_name}`, {
+                method: 'PUT',
+                headers: { 'apikey': creds.apiKey },
+              });
+              await new Promise(r => setTimeout(r, 5000));
+              const finalCheck = await checkInstanceConnection(creds.url, creds.apiKey, num.instance_name);
+              
+              if (finalCheck.connected) {
+                console.log(`[health-check] ✅ ${num.instance_name} recovered after restart`);
+                // Also try to hydrate phone_number if null
+                if (!num.phone_number) {
+                  try {
+                    const infoResp = await fetch(`${creds.url}/instance/fetchInstances?instanceName=${num.instance_name}`, {
+                      method: 'GET', headers: { 'apikey': creds.apiKey },
+                    });
+                    if (infoResp.ok) {
+                      const infoData = await infoResp.json();
+                      const inst = Array.isArray(infoData) ? infoData[0] : infoData;
+                      const rawOwner = inst?.owner || inst?.instance?.owner || inst?.number || inst?.wuid || null;
+                      if (rawOwner) {
+                        const digits = String(rawOwner).replace(/\D/g, '');
+                        if (digits.length >= 10) {
+                          const phone = digits.startsWith('55') ? digits : `55${digits}`;
+                          await supabase.from('whatsapp_numbers').update({ phone_number: phone, updated_at: new Date().toISOString() }).eq('id', num.id);
+                          console.log(`[health-check] 📱 Hydrated phone_number for ${num.instance_name}: ${phone}`);
+                        }
+                      }
+                    }
+                  } catch (e) { /* ignore */ }
+                }
+              } else {
+                console.log(`[health-check] ❌ ${num.instance_name} still disconnected after restart. Marking offline.`);
+                await supabase.from('whatsapp_numbers').update({
+                  is_connected: false,
+                  updated_at: new Date().toISOString()
+                }).eq('id', num.id);
+              }
+            } catch (e) {
+              console.log(`[health-check] Restart failed for ${num.instance_name}:`, e);
+              await supabase.from('whatsapp_numbers').update({
+                is_connected: false,
+                updated_at: new Date().toISOString()
+              }).eq('id', num.id);
+            }
+          }
+        } else {
+          // Connected — ensure phone_number is hydrated if null
+          if (!num.phone_number) {
+            try {
+              const infoResp = await fetch(`${creds.url}/instance/fetchInstances?instanceName=${num.instance_name}`, {
+                method: 'GET', headers: { 'apikey': creds.apiKey },
+              });
+              if (infoResp.ok) {
+                const infoData = await infoResp.json();
+                const inst = Array.isArray(infoData) ? infoData[0] : infoData;
+                const rawOwner = inst?.owner || inst?.instance?.owner || inst?.number || inst?.wuid || null;
+                if (rawOwner) {
+                  const digits = String(rawOwner).replace(/\D/g, '');
+                  if (digits.length >= 10) {
+                    const phone = digits.startsWith('55') ? digits : `55${digits}`;
+                    await supabase.from('whatsapp_numbers').update({ phone_number: phone, updated_at: new Date().toISOString() }).eq('id', num.id);
+                    console.log(`[health-check] 📱 Hydrated phone_number for ${num.instance_name}: ${phone}`);
+                  }
+                }
+              }
+            } catch (e) { /* ignore */ }
+          }
+        }
+      }
+    } catch (healthErr) {
+      console.error('[health-check] Error during periodic check:', healthErr);
+    }
+    // ─── END HEALTH CHECK ───────────────────────────────────────────────
+
     // Find scheduled campaigns that should start now
     const { data: scheduledCampaigns, error: fetchError } = await supabase
       .from('whatsapp_campaigns')
