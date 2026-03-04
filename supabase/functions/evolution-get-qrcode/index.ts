@@ -13,9 +13,10 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials | null> {
   const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-  return getEvolutionCredentials(data?.api_tier || 'free');
+  if (!data?.api_tier) return null;
+  return getEvolutionCredentials(data.api_tier);
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
   const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
@@ -56,23 +57,72 @@ serve(async (req) => {
 
     const { instanceName, phoneNumber, numberId } = await req.json();
 
-    // Get the correct Evolution API based on the number's api_tier
-    let EVOLUTION_API_URL: string;
-    let EVOLUTION_API_KEY: string;
-    
+    // Get the correct Evolution API based on the instance tier first (api_tier), then fallback to user plan
+    let evoCredentials: EvolutionCredentials | null = null;
+
     if (numberId) {
-      const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
-      EVOLUTION_API_URL = evoCredentials.url;
-      EVOLUTION_API_KEY = evoCredentials.apiKey;
-      console.log(`Getting QR Code on ${evoCredentials.tier} API`);
-    } else {
-      // Fallback: use user's plan
-      const evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
-      EVOLUTION_API_URL = evoCredentials.url;
-      EVOLUTION_API_KEY = evoCredentials.apiKey;
+      evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+      if (evoCredentials) {
+        console.log(`Getting QR Code on ${evoCredentials.tier} API (from number api_tier)`);
+      }
     }
 
+    if (!evoCredentials) {
+      evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+      console.log(`Getting QR Code on ${evoCredentials.tier} API (from user plan fallback)`);
+    }
+
+    let EVOLUTION_API_URL = evoCredentials.url;
+    let EVOLUTION_API_KEY = evoCredentials.apiKey;
+
     console.log(`Getting QR Code for instance: ${instanceName}, phoneNumber: ${phoneNumber || 'not provided'}`);
+
+    // If tier is stale, detect instance on the opposite API and self-heal api_tier
+    if (instanceName) {
+      try {
+        const probeResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
+          method: 'GET',
+          headers: { 'apikey': EVOLUTION_API_KEY },
+        });
+
+        const probeData = probeResponse.ok ? await probeResponse.json() : null;
+        const foundOnPrimary = !!(probeData && (Array.isArray(probeData) ? probeData.length > 0 : probeData.instance));
+
+        if (!foundOnPrimary) {
+          const altUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
+          const altKey = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_KEY') : Deno.env.get('EVOLUTION_API_KEY_PAID');
+
+          if (altUrl && altKey) {
+            const altProbe = await fetch(`${altUrl}/instance/fetchInstances?instanceName=${instanceName}`, {
+              method: 'GET',
+              headers: { 'apikey': altKey },
+            });
+
+            const altData = altProbe.ok ? await altProbe.json() : null;
+            const foundOnAlt = !!(altData && (Array.isArray(altData) ? altData.length > 0 : altData.instance));
+
+            if (foundOnAlt) {
+              const detectedTier: 'free' | 'paid' = evoCredentials.tier === 'paid' ? 'free' : 'paid';
+              EVOLUTION_API_URL = altUrl;
+              EVOLUTION_API_KEY = altKey;
+              evoCredentials = { url: altUrl, apiKey: altKey, tier: detectedTier };
+
+              console.log(`Instance found on ${detectedTier} API fallback, switching credentials`);
+
+              if (numberId) {
+                await supabase
+                  .from('whatsapp_numbers')
+                  .update({ api_tier: detectedTier, updated_at: new Date().toISOString() })
+                  .eq('id', numberId)
+                  .eq('user_id', user.id);
+              }
+            }
+          }
+        }
+      } catch (probeError) {
+        console.log('Tier probe failed, continuing with current credentials:', probeError);
+      }
+    }
 
     // Format phone number if provided
     const cleanNumber = phoneNumber ? phoneNumber.replace(/\D/g, '') : null;

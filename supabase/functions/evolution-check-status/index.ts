@@ -14,13 +14,19 @@ function getEvolutionCredentials(tierOrPlan: string | null | undefined): Evoluti
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
   return { url, apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials> {
-  if (numberId) {
-    const { data, error } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
-    console.log(`getEvolutionCredentialsByNumber(${numberId}): api_tier=${data?.api_tier}, error=${error?.message || 'none'}`);
-    if (data?.api_tier) return getEvolutionCredentials(data.api_tier);
-  }
-  return getEvolutionCredentials(null);
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials | null> {
+  if (!numberId) return null;
+
+  const { data, error } = await supabase
+    .from('whatsapp_numbers')
+    .select('api_tier')
+    .eq('id', numberId)
+    .single();
+
+  console.log(`getEvolutionCredentialsByNumber(${numberId}): api_tier=${data?.api_tier}, error=${error?.message || 'none'}`);
+
+  if (!data?.api_tier) return null;
+  return getEvolutionCredentials(data.api_tier);
 }
 async function getEvolutionCredentialsByUser(supabase: any, userId: string): Promise<EvolutionCredentials> {
   const { data, error } = await supabase.from('profiles').select('plan').eq('id', userId).single();
@@ -79,19 +85,12 @@ serve(async (req) => {
     const numberId = body.numberId && body.numberId !== 'null' ? body.numberId : null;
 
     // Get the correct Evolution API
-    // ALWAYS check user plan first (most reliable), then fall back to number's api_tier
-    let evoCredentials: EvolutionCredentials;
-    
-    // Primary: use user's plan from profiles (always up-to-date)
-    evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
-    
-    // If user plan says free but number has paid tier, use number's tier
-    if (evoCredentials.tier === 'free' && numberId) {
-      const numberCreds = await getEvolutionCredentialsByNumber(supabase, numberId);
-      if (numberCreds.tier === 'paid') {
-        console.log('User plan is free but number has paid tier, using paid credentials');
-        evoCredentials = numberCreds;
-      }
+    // Prefer number tier first (more accurate per instance), fallback to user plan
+    let evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+
+    if (!evoCredentials) {
+      evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+      console.log(`No api_tier for number ${numberId || 'n/a'}, using user plan tier: ${evoCredentials.tier}`);
     }
 
     const EVOLUTION_API_URL = evoCredentials.url;

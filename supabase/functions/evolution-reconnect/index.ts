@@ -71,6 +71,7 @@ serve(async (req) => {
     let instanceExists = false;
     let effectiveUrl = EVOLUTION_API_URL;
     let effectiveKey = EVOLUTION_API_KEY;
+    let effectiveTier: 'free' | 'paid' = evoCredentials.tier;
 
     const instanceResponse = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${instanceName}`, {
       method: 'GET',
@@ -98,13 +99,22 @@ serve(async (req) => {
               instanceExists = true;
               effectiveUrl = altUrl;
               effectiveKey = altKey;
-              console.log(`Instance found on ${evoCredentials.tier === 'paid' ? 'free' : 'paid'} API fallback`);
+              effectiveTier = evoCredentials.tier === 'paid' ? 'free' : 'paid';
+              console.log(`Instance found on ${effectiveTier} API fallback`);
             }
           }
         } catch (e) {
           console.log('Fallback API check failed:', e);
         }
       }
+    }
+
+    if (numberId && effectiveTier !== evoCredentials.tier) {
+      await supabase
+        .from('whatsapp_numbers')
+        .update({ api_tier: effectiveTier, updated_at: new Date().toISOString() })
+        .eq('id', numberId)
+        .eq('user_id', user.id);
     }
 
     console.log(`Instance ${instanceName} exists: ${instanceExists}`);
@@ -207,6 +217,7 @@ serve(async (req) => {
           .from('whatsapp_numbers')
           .update({ 
             is_connected: true,
+            api_tier: effectiveTier,
             updated_at: new Date().toISOString()
           })
           .eq('id', numberId)
@@ -216,6 +227,7 @@ serve(async (req) => {
           success: true,
           connected: true,
           needsQR: false,
+          apiTier: effectiveTier,
           message: 'Already connected'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -238,6 +250,7 @@ serve(async (req) => {
           .from('whatsapp_numbers')
           .update({ 
             is_connected: true,
+            api_tier: effectiveTier,
             updated_at: new Date().toISOString()
           })
           .eq('id', numberId)
@@ -247,6 +260,7 @@ serve(async (req) => {
           success: true,
           connected: true,
           needsQR: false,
+          apiTier: effectiveTier,
           message: 'Reconnected successfully'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -272,6 +286,7 @@ serve(async (req) => {
       success: true,
       connected: false,
       needsQR: needsQR,
+      apiTier: effectiveTier,
       qrCode: qrCode,
       message: needsQR ? 'QR code required for reconnection' : 'Attempting to reconnect...'
     }), {
