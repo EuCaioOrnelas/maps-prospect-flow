@@ -57,21 +57,23 @@ serve(async (req) => {
 
     const { instanceName, phoneNumber, numberId } = await req.json();
 
-    // Get the correct Evolution API based on the number's api_tier
-    let EVOLUTION_API_URL: string;
-    let EVOLUTION_API_KEY: string;
-    
+    // Get the correct Evolution API based on the instance tier first (api_tier), then fallback to user plan
+    let evoCredentials: EvolutionCredentials | null = null;
+
     if (numberId) {
-      const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
-      EVOLUTION_API_URL = evoCredentials.url;
-      EVOLUTION_API_KEY = evoCredentials.apiKey;
-      console.log(`Getting QR Code on ${evoCredentials.tier} API`);
-    } else {
-      // Fallback: use user's plan
-      const evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
-      EVOLUTION_API_URL = evoCredentials.url;
-      EVOLUTION_API_KEY = evoCredentials.apiKey;
+      evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
+      if (evoCredentials) {
+        console.log(`Getting QR Code on ${evoCredentials.tier} API (from number api_tier)`);
+      }
     }
+
+    if (!evoCredentials) {
+      evoCredentials = await getEvolutionCredentialsByUser(supabase, user.id);
+      console.log(`Getting QR Code on ${evoCredentials.tier} API (from user plan fallback)`);
+    }
+
+    let EVOLUTION_API_URL = evoCredentials.url;
+    let EVOLUTION_API_KEY = evoCredentials.apiKey;
 
     console.log(`Getting QR Code for instance: ${instanceName}, phoneNumber: ${phoneNumber || 'not provided'}`);
 
