@@ -412,6 +412,24 @@ serve(async (req) => {
           continue;
         }
 
+        // Resolve Evolution API credentials based on number's tier
+        const { data: numberProfile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', whatsappNumber.user_id)
+          .maybeSingle();
+        const creds = resolveEvolutionCredsSync(null, numberProfile?.plan);
+        // Also check number's api_tier directly
+        const { data: numInfo } = await supabase
+          .from('whatsapp_numbers')
+          .select('api_tier')
+          .eq('id', whatsappNumber.id)
+          .maybeSingle();
+        const finalCreds = resolveEvolutionCredsSync(numInfo?.api_tier, numberProfile?.plan);
+        const evolutionApiUrl = finalCreds.url;
+        const evolutionApiKey = finalCreds.apiKey;
+        console.log(`Resolved Evolution API for number ${whatsappNumber.id}: ${evolutionApiUrl}`);
+
         // Check if this is a NEW lead (first reply) - only count unique leads
         const isFirstReplyToLead = !conv.reply_sent;
         

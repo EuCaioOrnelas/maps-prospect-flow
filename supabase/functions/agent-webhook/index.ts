@@ -414,6 +414,14 @@ serve(async (req) => {
       );
     }
 
+    // Resolve Evolution API credentials based on number's tier
+    if (whatsappNumberId) {
+      const creds = await resolveEvolutionCreds(whatsappNumberId);
+      evolutionApiUrl = creds.url;
+      evolutionApiKey = creds.apiKey;
+      console.log(`Resolved Evolution API tier for number ${whatsappNumberId}: ${creds.url}`);
+    }
+
     // Check if agent is active
     if (agent.status !== 'active') {
       return new Response(
