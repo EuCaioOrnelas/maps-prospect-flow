@@ -1313,6 +1313,14 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Skip Warming Dialog */}
+      <SkipWarmingDialog
+        open={!!skipWarmingNumber}
+        onOpenChange={(open) => !open && setSkipWarmingNumber(null)}
+        onConfirm={() => skipWarmingNumber && handleSkipWarming(skipWarmingNumber.id)}
+        numberName={skipWarmingNumber?.name || skipWarmingNumber?.phone_number || 'Número'}
+      />
     </div>
   );
 }
