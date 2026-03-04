@@ -624,7 +624,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     }
   };
 
-
+  const handleViewDetails = (number: WhatsAppNumber) => {
     setSelectedNumber(number);
     setDetailsOpen(true);
   };
