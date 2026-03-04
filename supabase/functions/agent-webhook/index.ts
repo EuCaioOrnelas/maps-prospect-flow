@@ -263,9 +263,46 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
-    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+
+    // Evolution API credentials will be resolved per-number tier
+    const EVOLUTION_API_URL_FREE = Deno.env.get('EVOLUTION_API_URL')!;
+    const EVOLUTION_API_KEY_FREE = Deno.env.get('EVOLUTION_API_KEY')!;
+    const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
+
+    // Helper to resolve Evolution credentials based on number's api_tier
+    async function resolveEvolutionCreds(numberId: string): Promise<{ url: string; apiKey: string }> {
+      const { data: numRow } = await supabase
+        .from('whatsapp_numbers')
+        .select('api_tier, user_id')
+        .eq('id', numberId)
+        .maybeSingle();
+
+      const isPaidByNumber = numRow?.api_tier === 'paid';
+      let isPaidByPlan = false;
+
+      if (!isPaidByNumber && numRow?.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', numRow.user_id)
+          .maybeSingle();
+        const plan = (profile?.plan || 'free').toLowerCase();
+        isPaidByPlan = ['start', 'growth', 'scale'].includes(plan);
+      }
+
+      if ((isPaidByNumber || isPaidByPlan) && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        const cleanUrl = EVOLUTION_API_URL_PAID.replace(/\/+$/, '').replace(/\/manager$/, '');
+        return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_PAID };
+      }
+      const cleanUrl = EVOLUTION_API_URL_FREE.replace(/\/+$/, '').replace(/\/manager$/, '');
+      return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_FREE };
+    }
+
+    // Default credentials (will be overridden per-number when available)
+    let evolutionApiUrl = EVOLUTION_API_URL_FREE.replace(/\/+$/, '').replace(/\/manager$/, '');
+    let evolutionApiKey = EVOLUTION_API_KEY_FREE;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -375,6 +412,14 @@ serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Resolve Evolution API credentials based on number's tier
+    if (whatsappNumberId) {
+      const creds = await resolveEvolutionCreds(whatsappNumberId);
+      evolutionApiUrl = creds.url;
+      evolutionApiKey = creds.apiKey;
+      console.log(`Resolved Evolution API tier for number ${whatsappNumberId}: ${creds.url}`);
     }
 
     // Check if agent is active

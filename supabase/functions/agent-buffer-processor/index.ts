@@ -333,9 +333,23 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
-    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+
+    // Evolution API credentials - resolved per-number tier
+    const EVOLUTION_API_URL_FREE = Deno.env.get('EVOLUTION_API_URL')!;
+    const EVOLUTION_API_KEY_FREE = Deno.env.get('EVOLUTION_API_KEY')!;
+    const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
+
+    function resolveEvolutionCredsSync(apiTier: string | null, userPlan: string | null): { url: string; apiKey: string } {
+      const isPaid = apiTier === 'paid' || ['start', 'growth', 'scale'].includes((userPlan || 'free').toLowerCase());
+      if (isPaid && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        const cleanUrl = EVOLUTION_API_URL_PAID.replace(/\/+$/, '').replace(/\/manager$/, '');
+        return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_PAID };
+      }
+      const cleanUrl = EVOLUTION_API_URL_FREE.replace(/\/+$/, '').replace(/\/manager$/, '');
+      return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_FREE };
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -397,6 +411,24 @@ serve(async (req) => {
           console.log(`Skipping conv ${conv.id}: no WhatsApp number configured`);
           continue;
         }
+
+        // Resolve Evolution API credentials based on number's tier
+        const { data: numberProfile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', whatsappNumber.user_id)
+          .maybeSingle();
+        const creds = resolveEvolutionCredsSync(null, numberProfile?.plan);
+        // Also check number's api_tier directly
+        const { data: numInfo } = await supabase
+          .from('whatsapp_numbers')
+          .select('api_tier')
+          .eq('id', whatsappNumber.id)
+          .maybeSingle();
+        const finalCreds = resolveEvolutionCredsSync(numInfo?.api_tier, numberProfile?.plan);
+        const evolutionApiUrl = finalCreds.url;
+        const evolutionApiKey = finalCreds.apiKey;
+        console.log(`Resolved Evolution API for number ${whatsappNumber.id}: ${evolutionApiUrl}`);
 
         // Check if this is a NEW lead (first reply) - only count unique leads
         const isFirstReplyToLead = !conv.reply_sent;
