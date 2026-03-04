@@ -195,6 +195,16 @@ serve(async (req) => {
       });
     }
 
+    // Validate JSON response
+    const contentType = statusResponse.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const rawText = await statusResponse.text();
+      console.error('Expected JSON but got:', contentType, 'Preview:', rawText.substring(0, 200));
+      return new Response(JSON.stringify({
+        success: false, connected: null, state: 'unknown', phoneNumber: null,
+        error: 'Evolution API returned non-JSON response'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     const statusData = await statusResponse.json();
     console.log('Status response:', JSON.stringify(statusData));
 
