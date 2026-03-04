@@ -37,16 +37,15 @@ export function getEvolutionCredentials(tierOrPlan: string | null | undefined): 
   const isPaid = normalized === 'paid' || PAID_PLANS.includes(normalized);
 
   if (isPaid) {
-    const url = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const rawUrl = Deno.env.get('EVOLUTION_API_URL_PAID');
     const apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
     
-    if (!url || !apiKey) {
+    if (!rawUrl || !apiKey) {
       console.error('[evolution-config] PAID credentials not configured, falling back to free API');
-      // Fallback to free API if paid not configured
       return getFreeCredentials();
     }
     
-    return { url, apiKey, tier: 'paid' };
+    return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'paid' };
   }
 
   return getFreeCredentials();
