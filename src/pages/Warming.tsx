@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
+import { SkipWarmingDialog } from "@/components/warming/SkipWarmingDialog";
 import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
 import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical, Lock, Crown, Sparkles } from "lucide-react";
 import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
