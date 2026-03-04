@@ -98,6 +98,7 @@ export default function Warming() {
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const [skipWarmingNumber, setSkipWarmingNumber] = useState<WhatsAppNumber | null>(null);
 
   // Check if user has access to Warming (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
