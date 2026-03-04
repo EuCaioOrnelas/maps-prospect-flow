@@ -333,9 +333,23 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')!;
-    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+
+    // Evolution API credentials - resolved per-number tier
+    const EVOLUTION_API_URL_FREE = Deno.env.get('EVOLUTION_API_URL')!;
+    const EVOLUTION_API_KEY_FREE = Deno.env.get('EVOLUTION_API_KEY')!;
+    const EVOLUTION_API_URL_PAID = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const EVOLUTION_API_KEY_PAID = Deno.env.get('EVOLUTION_API_KEY_PAID');
+
+    function resolveEvolutionCredsSync(apiTier: string | null, userPlan: string | null): { url: string; apiKey: string } {
+      const isPaid = apiTier === 'paid' || ['start', 'growth', 'scale'].includes((userPlan || 'free').toLowerCase());
+      if (isPaid && EVOLUTION_API_URL_PAID && EVOLUTION_API_KEY_PAID) {
+        const cleanUrl = EVOLUTION_API_URL_PAID.replace(/\/+$/, '').replace(/\/manager$/, '');
+        return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_PAID };
+      }
+      const cleanUrl = EVOLUTION_API_URL_FREE.replace(/\/+$/, '').replace(/\/manager$/, '');
+      return { url: cleanUrl, apiKey: EVOLUTION_API_KEY_FREE };
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
