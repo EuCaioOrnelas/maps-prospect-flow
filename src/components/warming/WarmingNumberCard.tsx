@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   RefreshCw,
   Clock,
-  MessageSquare
+  MessageSquare,
+  SkipForward
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -60,6 +61,7 @@ interface WarmingNumberCardProps {
   onViewDetails: () => void;
   onSelectSearch?: () => void;
   onReconnect?: () => void;
+  onSkipWarming?: () => void;
 }
 
 const getWarmingStatusConfig = (status: 'cold' | 'warm' | 'hot' | undefined) => {
@@ -136,7 +138,8 @@ export function WarmingNumberCard({
   onPause,
   onViewDetails,
   onSelectSearch,
-  onReconnect
+  onReconnect,
+  onSkipWarming
 }: WarmingNumberCardProps) {
   const warmingStatus = getWarmingStatusConfig(session?.warming_status);
   const levelInfo = getLevelInfo(session?.warming_level || 0);
@@ -341,6 +344,27 @@ export function WarmingNumberCard({
               <Play className="w-4 h-4 mr-2" />
               {isPaused ? 'Retomar' : 'Iniciar'}
             </Button>
+          )}
+
+          {/* Skip Warming button - show when active or paused (not completed) */}
+          {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={onSkipWarming}
+                    className="text-muted-foreground hover:text-amber-500"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  Pular aquecimento
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           <TooltipProvider>

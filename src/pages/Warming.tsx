@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { WarmingNumberCard } from "@/components/warming/WarmingNumberCard";
 import { WarmingDetailsDialog } from "@/components/warming/WarmingDetailsDialog";
 import { SelectWarmingSearchDialog } from "@/components/warming/SelectWarmingSearchDialog";
+import { SkipWarmingDialog } from "@/components/warming/SkipWarmingDialog";
 import { ReconnectDialog } from "@/components/whatsapp/ReconnectDialog";
 import { Flame, Info, RefreshCw, Search, Wifi, TestTube, X, CheckCircle, XCircle, AlertCircle, MessageCircle, AlertTriangle, FlaskConical, Lock, Crown, Sparkles } from "lucide-react";
 import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
@@ -97,6 +98,7 @@ export default function Warming() {
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const [skipWarmingNumber, setSkipWarmingNumber] = useState<WhatsAppNumber | null>(null);
 
   // Check if user has access to Warming (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
@@ -571,6 +573,54 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     } catch (error) {
       console.error('Error pausing warming:', error);
       toast.error('Erro ao pausar aquecimento');
+    }
+  };
+
+  const handleSkipWarming = async (numberId: string) => {
+    try {
+      const session = getSessionForNumber(numberId);
+      const number = numbers.find(n => n.id === numberId);
+      const phoneKey = getPhoneKey(number?.phone_number || null);
+      
+      if (session) {
+        // Mark existing session as completed (skipped)
+        const { error } = await supabase
+          .from('warming_sessions')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            warming_status: 'hot',
+            warming_level: 4,
+            error_message: 'SKIPPED: Aquecimento pulado pelo usuário'
+          })
+          .eq('id', session.id);
+
+        if (error) throw error;
+      } else {
+        // Create a completed session
+        const { error } = await supabase
+          .from('warming_sessions')
+          .insert({
+            user_id: user?.id,
+            whatsapp_number_id: numberId,
+            status: 'completed',
+            started_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            warming_status: 'hot',
+            warming_level: 4,
+            current_day: 20,
+            phone_key: phoneKey
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success('Aquecimento pulado — número marcado como pronto');
+      setSkipWarmingNumber(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error skipping warming:', error);
+      toast.error('Erro ao pular aquecimento');
     }
   };
 
@@ -1117,6 +1167,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                       setSelectSearchOpen(true);
                     }}
                     onReconnect={!number.is_connected && number.instance_name ? () => handleReconnect(number) : undefined}
+                    onSkipWarming={number.is_connected ? () => setSkipWarmingNumber(number) : undefined}
                   />
                 );
               })}
@@ -1262,6 +1313,14 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Skip Warming Dialog */}
+      <SkipWarmingDialog
+        open={!!skipWarmingNumber}
+        onOpenChange={(open) => !open && setSkipWarmingNumber(null)}
+        onConfirm={() => skipWarmingNumber && handleSkipWarming(skipWarmingNumber.id)}
+        numberName={skipWarmingNumber?.name || skipWarmingNumber?.phone_number || 'Número'}
+      />
     </div>
   );
 }
