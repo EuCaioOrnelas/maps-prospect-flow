@@ -90,6 +90,14 @@ async function checkInstanceConnection(
       return { connected: false, error: `API error: HTTP ${statusResponse.status}` };
     }
 
+    // Validate JSON before parsing
+    const contentType = statusResponse.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const preview = await statusResponse.text();
+      console.error(`[health-check] Expected JSON but got ${contentType}: ${preview.substring(0, 150)}`);
+      return { connected: false, error: `Non-JSON response: ${contentType}` };
+    }
+
     const statusData = await statusResponse.json();
     const state = statusData.state || statusData.instance?.state;
     
