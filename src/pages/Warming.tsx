@@ -615,6 +615,17 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
         if (error) throw error;
       }
 
+      // Also update is_warmed on any AI agents linked to this number
+      const { error: agentError } = await supabase
+        .from('ai_agents')
+        .update({ is_warmed: true })
+        .eq('whatsapp_number_id', numberId)
+        .eq('user_id', user?.id);
+
+      if (agentError) {
+        console.error('Error updating agent is_warmed:', agentError);
+      }
+
       toast.success('Aquecimento pulado — número marcado como pronto');
       setSkipWarmingNumber(null);
       fetchData();

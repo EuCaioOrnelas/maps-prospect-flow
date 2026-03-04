@@ -346,27 +346,6 @@ export function WarmingNumberCard({
             </Button>
           )}
 
-          {/* Skip Warming button - show when active or paused (not completed) */}
-          {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={onSkipWarming}
-                    className="text-muted-foreground hover:text-amber-500"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Pular aquecimento
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
