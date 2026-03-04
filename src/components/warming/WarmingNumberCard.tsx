@@ -374,6 +374,19 @@ export function WarmingNumberCard({
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {/* Skip Warming button - secondary, below main actions */}
+        {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onSkipWarming}
+            className="w-full text-xs text-muted-foreground hover:text-amber-500"
+          >
+            <SkipForward className="w-3.5 h-3.5 mr-1.5" />
+            Pular aquecimento
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
