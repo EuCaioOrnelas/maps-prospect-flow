@@ -175,14 +175,33 @@ export default function Warming() {
       const connectedNumbers = (numbersData || []).filter(n => n.is_connected);
       setHasConnectedNumber(connectedNumbers.length > 0);
 
-      // Fetch leads count
-      const { count: leadsTotal, error: leadsError } = await supabase
+      // Fetch leads count from search_history (sum leads from all searches)
+      const { data: searchHistoryData, error: searchError } = await supabase
+        .from('search_history')
+        .select('leads, results_count')
+        .eq('user_id', user?.id);
+
+      if (searchError) throw searchError;
+      
+      // Count leads by summing from search history entries
+      // Use the greater of: JSON leads array length OR results_count
+      const totalFromHistory = (searchHistoryData || []).reduce((total, entry) => {
+        const leadsArray = Array.isArray(entry.leads) ? entry.leads : [];
+        const jsonCount = leadsArray.length;
+        const resultsCount = entry.results_count || 0;
+        return total + Math.max(jsonCount, resultsCount);
+      }, 0);
+
+      // Also get actual leads count from leads table as fallback
+      const { count: leadsTableCount, error: leadsError } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user?.id);
 
       if (leadsError) throw leadsError;
-      setLeadsCount(leadsTotal || 0);
+      
+      // Use the greater value between history sum and leads table count
+      setLeadsCount(Math.max(totalFromHistory, leadsTableCount || 0));
 
       // Fetch warming sessions
       const { data: sessionsData, error: sessionsError } = await supabase
@@ -695,7 +714,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
   };
 
   // Check prerequisites
-  const meetsLeadsRequirement = leadsCount >= 10;
+  const meetsLeadsRequirement = leadsCount >= 50;
   const meetsNumberRequirement = hasConnectedNumber;
   const canAccessWarming = meetsLeadsRequirement && meetsNumberRequirement;
   
@@ -925,12 +944,12 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                           </span>
                         ) : (
                           <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full">
-                            {leadsCount}/10 leads
+                            {leadsCount}/50 leads
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Você precisa ter pelo menos 10 leads prospectados para o aquecimento funcionar corretamente.
+                        Você precisa ter pelo menos 50 leads prospectados para o aquecimento funcionar corretamente.
                         {!meetsLeadsRequirement && ` Você tem ${leadsCount} lead${leadsCount !== 1 ? 's' : ''} atualmente.`}
                       </p>
                       {!meetsLeadsRequirement && (
