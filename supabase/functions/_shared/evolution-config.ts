@@ -52,14 +52,14 @@ export function getEvolutionCredentials(tierOrPlan: string | null | undefined): 
 }
 
 function getFreeCredentials(): EvolutionCredentials {
-  const url = Deno.env.get('EVOLUTION_API_URL');
+  const rawUrl = Deno.env.get('EVOLUTION_API_URL');
   const apiKey = Deno.env.get('EVOLUTION_API_KEY');
   
-  if (!url || !apiKey) {
+  if (!rawUrl || !apiKey) {
     throw new Error('Evolution API credentials not configured');
   }
   
-  return { url, apiKey, tier: 'free' };
+  return { url: normalizeApiUrl(rawUrl), apiKey, tier: 'free' };
 }
 
 /**
