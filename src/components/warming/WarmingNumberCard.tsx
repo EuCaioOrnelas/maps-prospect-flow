@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   RefreshCw,
   Clock,
-  MessageSquare
+  MessageSquare,
+  SkipForward
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
