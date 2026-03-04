@@ -346,27 +346,6 @@ export function WarmingNumberCard({
             </Button>
           )}
 
-          {/* Skip Warming button - show when active or paused (not completed) */}
-          {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={onSkipWarming}
-                    className="text-muted-foreground hover:text-amber-500"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Pular aquecimento
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -395,6 +374,19 @@ export function WarmingNumberCard({
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {/* Skip Warming button - secondary, below main actions */}
+        {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onSkipWarming}
+            className="w-full text-xs text-muted-foreground hover:text-amber-500"
+          >
+            <SkipForward className="w-3.5 h-3.5 mr-1.5" />
+            Pular aquecimento
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
