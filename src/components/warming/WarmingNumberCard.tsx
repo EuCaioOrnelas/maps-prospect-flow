@@ -137,7 +137,8 @@ export function WarmingNumberCard({
   onPause,
   onViewDetails,
   onSelectSearch,
-  onReconnect
+  onReconnect,
+  onSkipWarming
 }: WarmingNumberCardProps) {
   const warmingStatus = getWarmingStatusConfig(session?.warming_status);
   const levelInfo = getLevelInfo(session?.warming_level || 0);
