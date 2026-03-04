@@ -714,7 +714,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
   };
 
   // Check prerequisites
-  const meetsLeadsRequirement = leadsCount >= 10;
+  const meetsLeadsRequirement = leadsCount >= 50;
   const meetsNumberRequirement = hasConnectedNumber;
   const canAccessWarming = meetsLeadsRequirement && meetsNumberRequirement;
   
