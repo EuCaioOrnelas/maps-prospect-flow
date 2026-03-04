@@ -250,6 +250,7 @@ serve(async (req) => {
           .from('whatsapp_numbers')
           .update({ 
             is_connected: true,
+            api_tier: effectiveTier,
             updated_at: new Date().toISOString()
           })
           .eq('id', numberId)
