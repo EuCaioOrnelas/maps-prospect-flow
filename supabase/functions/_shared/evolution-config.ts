@@ -14,6 +14,13 @@ export interface EvolutionCredentials {
 
 const PAID_PLANS = ['start', 'growth', 'scale'];
 
+// Normalize URL: remove trailing slashes and /manager suffix
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
+
 /**
  * Check if a plan is a paid plan
  */
