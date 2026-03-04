@@ -925,7 +925,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                           </span>
                         ) : (
                           <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full">
-                            {leadsCount}/50 leads
+                            {leadsCount}/10 leads
                           </span>
                         )}
                       </div>
