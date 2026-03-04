@@ -286,6 +286,7 @@ serve(async (req) => {
       success: true,
       connected: false,
       needsQR: needsQR,
+      apiTier: effectiveTier,
       qrCode: qrCode,
       message: needsQR ? 'QR code required for reconnection' : 'Attempting to reconnect...'
     }), {
