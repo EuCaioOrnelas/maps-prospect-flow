@@ -2140,10 +2140,31 @@ REGRAS OBRIGATÓRIAS:
               }
             }
           } else if (state === 'close') {
-            // Log disconnection but do NOT update is_connected in DB
-            // The campaign-processor does a LIVE connection check before each message,
-            // so it will catch genuine disconnections without false positives from transient 'close' events
-            console.log(`⚠️ Instance ${instanceName} received 'close' event — NOT marking as disconnected (transient state)`);
+            // Log disconnection but do NOT update is_connected in DB immediately
+            // Instead, attempt auto-restart to recover the session before it goes stale
+            console.log(`⚠️ Instance ${instanceName} received 'close' event — attempting auto-restart`);
+            
+            const apiCreds = await getApiCredentials(instanceName);
+            
+            // Attempt restart to recover the session
+            try {
+              const restartResp = await fetch(`${apiCreds.url}/instance/restart/${instanceName}`, {
+                method: 'PUT',
+                headers: { 'apikey': apiCreds.apiKey },
+              });
+              console.log(`[auto-restart] Restart response for ${instanceName}: ${restartResp.status}`);
+              
+              if (!restartResp.ok) {
+                // If restart fails, try connect endpoint as fallback
+                const connectResp = await fetch(`${apiCreds.url}/instance/connect/${instanceName}`, {
+                  method: 'GET',
+                  headers: { 'apikey': apiCreds.apiKey },
+                });
+                console.log(`[auto-restart] Connect fallback for ${instanceName}: ${connectResp.status}`);
+              }
+            } catch (restartErr) {
+              console.log(`[auto-restart] Failed for ${instanceName}:`, restartErr);
+            }
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
             // Do NOT touch updated_at or is_connected
