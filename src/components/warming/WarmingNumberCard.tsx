@@ -60,6 +60,7 @@ interface WarmingNumberCardProps {
   onViewDetails: () => void;
   onSelectSearch?: () => void;
   onReconnect?: () => void;
+  onSkipWarming?: () => void;
 }
 
 const getWarmingStatusConfig = (status: 'cold' | 'warm' | 'hot' | undefined) => {
