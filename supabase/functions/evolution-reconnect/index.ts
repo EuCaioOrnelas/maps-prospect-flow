@@ -3,15 +3,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
 function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
   const normalized = (tierOrPlan || 'free').toLowerCase();
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
     const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+    if (url && apiKey) return { url: normalizeApiUrl(url), apiKey, tier: 'paid' };
   }
   const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
-  return { url, apiKey, tier: 'free' };
+  return { url: normalizeApiUrl(url), apiKey, tier: 'free' };
 }
 
 async function getEvolutionCredentialsForNumber(supabase: any, numberId: string, userId: string): Promise<EvolutionCredentials> {
