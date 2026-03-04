@@ -695,7 +695,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
   };
 
   // Check prerequisites
-  const meetsLeadsRequirement = leadsCount >= 50;
+  const meetsLeadsRequirement = leadsCount >= 10;
   const meetsNumberRequirement = hasConnectedNumber;
   const canAccessWarming = meetsLeadsRequirement && meetsNumberRequirement;
   
@@ -925,12 +925,12 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                           </span>
                         ) : (
                           <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full">
-                            {leadsCount}/50 leads
+                            {leadsCount}/10 leads
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Você precisa ter pelo menos 50 leads prospectados para o aquecimento funcionar corretamente.
+                        Você precisa ter pelo menos 10 leads prospectados para o aquecimento funcionar corretamente.
                         {!meetsLeadsRequirement && ` Você tem ${leadsCount} lead${leadsCount !== 1 ? 's' : ''} atualmente.`}
                       </p>
                       {!meetsLeadsRequirement && (
