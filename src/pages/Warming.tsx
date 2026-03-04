@@ -576,7 +576,55 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
     }
   };
 
-  const handleViewDetails = (number: WhatsAppNumber) => {
+  const handleSkipWarming = async (numberId: string) => {
+    try {
+      const session = getSessionForNumber(numberId);
+      const number = numbers.find(n => n.id === numberId);
+      const phoneKey = getPhoneKey(number?.phone_number || null);
+      
+      if (session) {
+        // Mark existing session as completed (skipped)
+        const { error } = await supabase
+          .from('warming_sessions')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            warming_status: 'hot',
+            warming_level: 4,
+            error_message: 'SKIPPED: Aquecimento pulado pelo usuário'
+          })
+          .eq('id', session.id);
+
+        if (error) throw error;
+      } else {
+        // Create a completed session
+        const { error } = await supabase
+          .from('warming_sessions')
+          .insert({
+            user_id: user?.id,
+            whatsapp_number_id: numberId,
+            status: 'completed',
+            started_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            warming_status: 'hot',
+            warming_level: 4,
+            current_day: 20,
+            phone_key: phoneKey
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success('Aquecimento pulado — número marcado como pronto');
+      setSkipWarmingNumber(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error skipping warming:', error);
+      toast.error('Erro ao pular aquecimento');
+    }
+  };
+
+
     setSelectedNumber(number);
     setDetailsOpen(true);
   };
