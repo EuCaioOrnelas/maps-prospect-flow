@@ -930,7 +930,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Você precisa ter pelo menos 50 leads prospectados para o aquecimento funcionar corretamente.
+                        Você precisa ter pelo menos 10 leads prospectados para o aquecimento funcionar corretamente.
                         {!meetsLeadsRequirement && ` Você tem ${leadsCount} lead${leadsCount !== 1 ? 's' : ''} atualmente.`}
                       </p>
                       {!meetsLeadsRequirement && (
