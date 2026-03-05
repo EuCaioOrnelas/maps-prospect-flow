@@ -805,6 +805,7 @@ Deno.serve(async (req) => {
         console.log(`Warming level: ${level} (${levelConfig.name})`)
 
         // Check if we need to reset daily count (based on São Paulo date)
+        const now = new Date()
         const saoPauloNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
         const today = saoPauloNow.toISOString().split('T')[0]
         
