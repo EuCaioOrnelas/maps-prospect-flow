@@ -474,13 +474,41 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    // VALIDATE BEFORE creating campaign - check instance_name first
-    const instanceName = selectedNumber?.instance_name;
+    // VALIDATE BEFORE creating campaign - verify number still exists in DB
+    // This prevents campaigns from being created with a deleted/invalid number
+    const { data: numberCheck, error: numberCheckError } = await supabase
+      .from("whatsapp_numbers")
+      .select("id, instance_name, is_connected")
+      .eq("id", selectedNumberId)
+      .maybeSingle();
+
+    if (numberCheckError || !numberCheck) {
+      toast({
+        title: "Número não encontrado",
+        description: "O número selecionado não existe mais. Selecione outro número.",
+        variant: "destructive",
+      });
+      setSelectedNumberId(null);
+      setIsStartingCampaign(false);
+      return;
+    }
+
+    const instanceName = numberCheck.instance_name;
 
     if (!instanceName) {
       toast({
         title: "Erro",
         description: "Número não tem instância configurada. Reconecte o WhatsApp.",
+        variant: "destructive",
+      });
+      setIsStartingCampaign(false);
+      return;
+    }
+
+    if (!numberCheck.is_connected) {
+      toast({
+        title: "WhatsApp desconectado",
+        description: "O número selecionado perdeu a conexão. Reconecte antes de iniciar.",
         variant: "destructive",
       });
       setIsStartingCampaign(false);
