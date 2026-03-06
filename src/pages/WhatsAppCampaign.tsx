@@ -250,7 +250,10 @@ const WhatsAppCampaign = () => {
   const canStart = canStartCampaign && (!isScheduled || isValidSchedule());
 
   const createCampaign = async (scheduled: boolean = false): Promise<string | null> => {
-    if (!user || !selectedNumberId) return null;
+    if (!user || !selectedNumberId) {
+      console.error("[createCampaign] Blocked: missing user or selectedNumberId", { userId: user?.id, selectedNumberId });
+      return null;
+    }
 
     const name = campaignName || `Campanha ${new Date().toLocaleDateString("pt-BR")}`;
 
