@@ -516,6 +516,29 @@ export const NumbersManager = ({
     if (!numberToDelete) return;
 
     setLoading(true);
+
+    // Check for active campaigns on this number before deleting
+    try {
+      const { data: activeCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('id, name, status')
+        .eq('whatsapp_number_id', numberToDelete)
+        .in('status', ['running', 'paused', 'scheduled', 'postponed', 'pending']);
+
+      if (activeCampaigns && activeCampaigns.length > 0) {
+        const campaignNames = activeCampaigns.map(c => c.name).join(', ');
+        toast({
+          title: "Não é possível excluir",
+          description: `Este número possui campanhas ativas: ${campaignNames}. Cancele ou finalize as campanhas antes de excluir o número.`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        setDeleteConfirmOpen(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking active campaigns:', err);
+    }
     try {
       // Find the number to get instance name
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
