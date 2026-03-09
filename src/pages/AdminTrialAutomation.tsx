@@ -487,19 +487,19 @@ export default function AdminTrialAutomation() {
 
                 return (
                   <Card key={trigger.id} className={cn("transition-all", trigger.status === "active" ? "border-primary/10" : "opacity-60")}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", trigger.status === "active" ? "bg-amber-500/10" : "bg-muted")}>
-                            <Target className={cn("h-4 w-4", trigger.status === "active" ? "text-amber-400" : "text-muted-foreground")} />
+                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", trigger.status === "active" ? "bg-amber-500/10" : "bg-muted")}>
+                            <Target className={cn("h-5 w-5", trigger.status === "active" ? "text-amber-400" : "text-muted-foreground")} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-sm">{trigger.name}</h3>
-                              <Badge variant="outline" className="text-[10px] font-mono">P{trigger.priority}</Badge>
+                              <h3 className="font-medium text-base">{trigger.name}</h3>
+                              <Badge variant="outline" className="text-xs font-mono">P{trigger.priority}</Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground mb-2">{trigger.description}</p>
-                            <div className="flex flex-wrap gap-3 text-[11px]">
+                            <p className="text-sm text-muted-foreground mb-2">{trigger.description}</p>
+                            <div className="flex flex-wrap gap-3 text-xs">
                               <span className="flex items-center gap-1 text-muted-foreground">
                                 <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                                 <strong>{matched}</strong> qualificados
