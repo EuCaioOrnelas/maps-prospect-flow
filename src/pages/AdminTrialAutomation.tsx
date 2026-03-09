@@ -534,7 +534,7 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ ANALYTICS TAB ═════════════════════════════ */}
-          <TabsContent value="analytics" className="space-y-6 mt-4">
+          <TabsContent value="analytics" className="space-y-6 mt-5">
             {/* Funnel at top */}
             <Card>
               <CardHeader className="pb-3">
