@@ -6,9 +6,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// This function handles two tracking endpoints:
-// - /open?uid=USER_ID&tid=TEMPLATE_ID&aid=AUTOMATION_ID  → 1x1 pixel (tracks opens)
-// - /click?uid=USER_ID&tid=TEMPLATE_ID&aid=AUTOMATION_ID&url=ENCODED_URL → redirect (tracks clicks)
+// This function handles tracking endpoints:
+// - ?action=open → 1x1 pixel (tracks opens)
+// - ?action=click → redirect with tracking (tracks clicks)
+// - ?action=conversion → records purchase attribution from email CTA
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
     const userId = url.searchParams.get("uid");
     const templateId = url.searchParams.get("tid");
     const automationId = url.searchParams.get("aid");
-    const action = url.searchParams.get("action"); // "open" or "click"
+    const action = url.searchParams.get("action"); // "open", "click", or "conversion"
     const redirectUrl = url.searchParams.get("url");
 
     if (!userId || !action) {
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "open") {
-      // Record open event (deduplicate by checking if already exists)
+      // Record open event (deduplicate)
       const { data: existing } = await supabase
         .from("trial_email_events")
         .select("id")
@@ -71,40 +72,88 @@ Deno.serve(async (req) => {
         return new Response("Missing redirect URL", { status: 400 });
       }
 
+      const decodedUrl = decodeURIComponent(redirectUrl);
+
       // Record click event
       await supabase.from("trial_email_events").insert({
         user_id: userId,
         email_template_id: templateId,
         automation_id: automationId || null,
         event_type: "clicked",
-        metadata: { url: redirectUrl },
+        metadata: { url: decodedUrl },
       });
 
-      // Also record in trial_link_clicks if table exists
+      // Also record in trial_link_clicks
       try {
         await supabase.from("trial_link_clicks").insert({
           user_id: userId,
           email_template_id: templateId,
-          redirect_url: decodeURIComponent(redirectUrl),
+          redirect_url: decodedUrl,
         });
       } catch (_) {
         // Ignore if table doesn't exist
       }
 
-      // Redirect user to actual URL
+      // Append UTM params to the redirect URL for conversion attribution
+      const finalUrl = new URL(decodedUrl);
+      finalUrl.searchParams.set("utm_source", "trial_email");
+      finalUrl.searchParams.set("utm_medium", "email");
+      finalUrl.searchParams.set("utm_campaign", automationId || "direct");
+      finalUrl.searchParams.set("utm_content", templateId || "unknown");
+      finalUrl.searchParams.set("tuid", userId);
+      finalUrl.searchParams.set("ttid", templateId || "");
+      finalUrl.searchParams.set("taid", automationId || "");
+
+      // Redirect user to actual URL with attribution params
       return new Response(null, {
         status: 302,
         headers: {
-          Location: decodeURIComponent(redirectUrl),
+          Location: finalUrl.toString(),
           "Cache-Control": "no-store",
         },
       });
     }
 
+    if (action === "conversion") {
+      // Record conversion attribution from a purchase
+      const revenueAmount = url.searchParams.get("amount") || "0";
+      const planName = url.searchParams.get("plan") || "unknown";
+
+      await supabase.from("trial_email_events").insert({
+        user_id: userId,
+        email_template_id: templateId,
+        automation_id: automationId || null,
+        event_type: "converted",
+        metadata: {
+          revenue_amount: parseFloat(revenueAmount),
+          plan: planName,
+          converted_at: new Date().toISOString(),
+        },
+      });
+
+      // Also record in revenue attribution
+      try {
+        await supabase.from("trial_revenue_attribution").insert({
+          user_id: userId,
+          email_template_id: templateId,
+          automation_id: automationId || null,
+          revenue_amount: parseFloat(revenueAmount),
+          plan_name: planName,
+          attribution_type: "email_cta_click",
+        });
+      } catch (_) {
+        // Ignore if table doesn't exist yet
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response("Invalid action", { status: 400 });
   } catch (error) {
     console.error("Tracking error:", error);
-    // Even on error, return pixel/redirect so user experience isn't broken
     return new Response(null, { status: 204 });
   }
 });
