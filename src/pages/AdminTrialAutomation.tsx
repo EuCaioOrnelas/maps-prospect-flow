@@ -20,7 +20,7 @@ import { SEO } from "@/components/SEO";
 import {
   ArrowLeft, Zap, Mail, Target, BarChart3, Settings, Plus, Edit, Trash2,
   Play, Pause, Eye, TrendingUp, Users, MousePointerClick, DollarSign,
-  CheckCircle2, XCircle, Clock, Loader2, RefreshCw,
+  CheckCircle2, XCircle, Clock, Loader2, RefreshCw, Rocket,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
