@@ -1330,7 +1330,7 @@ const Admin = () => {
                   Taxa de Cancelamento
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
-                  Cancelados / (Ativos + Cancelados)
+                  Cancelados / Ativos
                 </p>
               </div>
 
