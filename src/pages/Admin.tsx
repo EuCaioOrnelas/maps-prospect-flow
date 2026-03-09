@@ -285,7 +285,7 @@ const Admin = () => {
     );
 
     // Group events by month
-    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; downgrades: number; salesValue: number; refundValue: number; refundCount: number } } = {};
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
     
     for (const event of filteredEvents) {
       const eventDate = new Date(event.created_at);
