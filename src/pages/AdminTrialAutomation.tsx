@@ -709,18 +709,6 @@ export default function AdminTrialAutomation() {
               </Card>
             </div>
 
-            {/* Funnel */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Funil de Conversão Trial</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <TrialFunnel analytics={analytics} />
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
