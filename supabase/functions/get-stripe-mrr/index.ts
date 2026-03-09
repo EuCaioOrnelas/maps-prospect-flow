@@ -192,8 +192,6 @@ Deno.serve(async (req) => {
     // --- Process paid invoices FIRST to know which subs had real payments ---
     const invoicesBySubId: { [subId: string]: Stripe.Invoice[] } = {};
     const monthlyMRR: { [month: string]: number } = {};
-    let totalSalesValue = 0;
-    let totalSalesCount = 0;
 
     for (const invoice of allPaidInvoices) {
       if (!invoice.subscription) continue;
@@ -214,9 +212,6 @@ Deno.serve(async (req) => {
       const paymentDate = new Date(paymentTimestamp * 1000);
       const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
-
-      totalSalesValue += invoice.amount_paid / 100;
-      totalSalesCount++;
 
       if (!invoicesBySubId[subId]) {
         invoicesBySubId[subId] = [];
