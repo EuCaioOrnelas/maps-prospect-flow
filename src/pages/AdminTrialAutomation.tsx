@@ -345,8 +345,8 @@ export default function AdminTrialAutomation() {
                                  automation.trigger_event === "trial_expiring" ? "⚠️ Trial expirando" :
                                  automation.trigger_event === "trial_ended" ? "🔴 Trial encerrado" : automation.trigger_event}
                               </Badge>
-                              <span className="text-[10px] text-muted-foreground">{autoSteps.length} etapas</span>
-                              <span className="text-[10px] text-muted-foreground">{stateCount} entraram • {activeCount} ativos</span>
+                              <span className="text-xs text-muted-foreground">{autoSteps.length} etapas</span>
+                              <span className="text-xs text-muted-foreground">{stateCount} entraram • {activeCount} ativos</span>
                             </div>
                           </div>
                         </div>
