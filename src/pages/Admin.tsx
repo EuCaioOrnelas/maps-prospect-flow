@@ -1382,6 +1382,13 @@ const Admin = () => {
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
+                        yAxisId="left"
+                        dataKey="downgrades" 
+                        name="Downgrades p/ Free"
+                        fill="#a855f7" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
                         yAxisId="right"
                         dataKey="salesValue" 
                         name="Valor em Vendas"
