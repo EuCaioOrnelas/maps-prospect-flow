@@ -1287,14 +1287,14 @@ const Admin = () => {
               
               {/* Summary Cards */}
               {processedSalesChartData.length > 0 && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
                   <div className="bg-success/10 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-1">Total Vendas</p>
                     <p className="text-lg font-bold text-success">
                       R$ {processedSalesChartData.reduce((sum, item) => sum + item.salesValue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales + item.upgrades + item.refundCount, 0)} transações
+                      {processedSalesChartData.reduce((sum, item) => sum + item.newSales + item.upgrades, 0)} transações
                     </p>
                   </div>
                   <div className="bg-destructive/10 rounded-lg p-3">
@@ -1316,6 +1316,12 @@ const Admin = () => {
                     <p className="text-xs text-muted-foreground mb-1">Cancelamentos</p>
                     <p className="text-lg font-bold text-warning">
                       {processedSalesChartData.reduce((sum, item) => sum + item.cancellations, 0)}
+                    </p>
+                  </div>
+                  <div className="bg-purple-500/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Downgrades p/ Free</p>
+                    <p className="text-lg font-bold text-purple-500">
+                      {processedSalesChartData.reduce((sum, item) => sum + item.downgrades, 0)}
                     </p>
                   </div>
                 </div>
