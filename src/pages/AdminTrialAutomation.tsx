@@ -173,7 +173,7 @@ export default function AdminTrialAutomation() {
     toast({ title: "Configuração atualizada" });
   };
 
-  const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
+
 
   const sendTestEmail = async (templateId: string) => {
     if (!profile?.email) {
