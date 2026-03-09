@@ -327,15 +327,15 @@ export default function AdminTrialAutomation() {
 
                 return (
                   <Card key={automation.id} className={cn("transition-all", automation.status === "active" ? "border-primary/20" : "opacity-70")}>
-                    <CardContent className="p-5">
+                    <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-3">
-                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", automation.status === "active" ? "bg-primary/10" : "bg-muted")}>
-                            <Zap className={cn("h-4 w-4", automation.status === "active" ? "text-primary" : "text-muted-foreground")} />
+                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", automation.status === "active" ? "bg-primary/10" : "bg-muted")}>
+                            <Zap className={cn("h-5 w-5", automation.status === "active" ? "text-primary" : "text-muted-foreground")} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-sm">{automation.name}</h3>
+                              <h3 className="font-semibold text-base">{automation.name}</h3>
                               <StatusDot active={automation.status === "active"} />
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">{automation.description}</p>
