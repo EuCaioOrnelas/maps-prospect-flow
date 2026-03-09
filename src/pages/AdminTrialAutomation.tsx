@@ -338,9 +338,9 @@ export default function AdminTrialAutomation() {
                               <h3 className="font-semibold text-base">{automation.name}</h3>
                               <StatusDot active={automation.status === "active"} />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{automation.description}</p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <Badge variant="outline" className="text-[10px]">
+                            <p className="text-sm text-muted-foreground mt-1">{automation.description}</p>
+                            <div className="flex items-center gap-3 mt-2.5">
+                              <Badge variant="outline" className="text-xs">
                                 {automation.trigger_event === "user_inactive" ? "⏰ Inatividade" :
                                  automation.trigger_event === "trial_expiring" ? "⚠️ Trial expirando" :
                                  automation.trigger_event === "trial_ended" ? "🔴 Trial encerrado" : automation.trigger_event}
