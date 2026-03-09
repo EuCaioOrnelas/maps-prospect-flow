@@ -412,15 +412,43 @@ async function processPendingSteps(
         .maybeSingle();
 
       if (template) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const trackerBase = `${supabaseUrl}/functions/v1/trial-email-tracker`;
+
+        // Calculate real trial data for variables
+        const trialStart = user.trial_start_at ? new Date(user.trial_start_at) : new Date(user.created_at);
+        const trialEnd = new Date(trialStart.getTime() + 14 * 86400000);
+        const trialDaysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000));
+
+        // Count user's projects/features
+        const { count: featureCount } = await supabase
+          .from("trial_product_events")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+
         // Compile template
-        const compiledBody = compileTemplate(template.body, {
+        let compiledBody = compileTemplate(template.body, {
           user_name: user.name || user.email?.split("@")[0] || "usuário",
           product_name: "Wiize",
           cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
-          trial_days_left: "poucos",
+          trial_days_left: String(trialDaysLeft),
           projects_created: "0",
-          feature_usage: "0",
+          feature_usage: String(featureCount || 0),
         });
+
+        // Inject tracking: rewrite links for click tracking
+        compiledBody = compiledBody.replace(
+          /href="(https?:\/\/[^"]+)"/g,
+          (match: string, url: string) => {
+            // Don't track the tracker itself
+            if (url.includes("trial-email-tracker")) return match;
+            const trackUrl = `${trackerBase}?action=click&uid=${user.id}&tid=${template.id}&aid=${state.automation_id}&url=${encodeURIComponent(url)}`;
+            return `href="${trackUrl}"`;
+          }
+        );
+
+        // Add tracking pixel for open tracking
+        const trackPixel = `<img src="${trackerBase}?action=open&uid=${user.id}&tid=${template.id}&aid=${state.automation_id}" width="1" height="1" alt="" style="display:none;" />`;
 
         // Send email via Resend
         const sent = await sendEmail(resendApiKey, {
@@ -429,7 +457,7 @@ async function processPendingSteps(
             user_name: user.name || "usuário",
             product_name: "Wiize",
           }),
-          html: wrapInEmailLayout(template.subject, compiledBody),
+          html: wrapInEmailLayout(template.subject, compiledBody, trackPixel),
         });
 
         if (sent) {
