@@ -533,6 +533,20 @@ export default function AdminTrialAutomation() {
 
           {/* ═══════════════════════ ANALYTICS TAB ═════════════════════════════ */}
           <TabsContent value="analytics" className="space-y-6 mt-4">
+            {/* Funnel at top */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-base">Funil de Conversão Trial</CardTitle>
+                </div>
+                <CardDescription className="text-sm">Dados reais do sistema de automação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TrialFunnel analytics={analytics} />
+              </CardContent>
+            </Card>
+
             {/* Email Performance per Template */}
             <Card>
               <CardHeader className="pb-3">
