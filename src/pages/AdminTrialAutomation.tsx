@@ -386,11 +386,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ TEMPLATES TAB ═════════════════════════════ */}
-          <TabsContent value="templates" className="space-y-4 mt-4">
+          <TabsContent value="templates" className="space-y-5 mt-5">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold">Templates de Email</h2>
-                <p className="text-xs text-muted-foreground">Crie e edite templates com preview em tempo real</p>
+                <h2 className="text-lg font-semibold">Templates de Email</h2>
+                <p className="text-sm text-muted-foreground">Crie e edite templates com preview em tempo real</p>
               </div>
               <Button size="sm" className="h-8 text-xs" onClick={() => { setEditTemplate(null); setTemplateDialogOpen(true); }}>
                 <Plus className="h-3 w-3 mr-1.5" />Novo Template
