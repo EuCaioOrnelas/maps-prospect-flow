@@ -37,17 +37,17 @@ interface BehaviourTrigger { id: string; name: string; description: string | nul
 function KPICard({ label, value, icon: Icon, color, subtitle }: { label: string; value: string | number; icon: any; color: string; subtitle?: string }) {
   return (
     <Card className="group hover:border-primary/20 transition-colors">
-      <CardContent className="p-3">
-        <div className="flex items-center gap-2.5">
-          <div className={cn("p-1.5 rounded-lg shrink-0", color)}>
-            <Icon className="h-3.5 w-3.5" />
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("p-2 rounded-lg shrink-0", color)}>
+            <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5">
-              <p className="text-lg font-bold tracking-tight leading-none">{value}</p>
-              {subtitle && <span className="text-[10px] text-muted-foreground/70 truncate">{subtitle}</span>}
+              <p className="text-xl font-bold tracking-tight leading-none">{value}</p>
+              {subtitle && <span className="text-xs text-muted-foreground/70 truncate">{subtitle}</span>}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">{label}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-none">{label}</p>
           </div>
         </div>
       </CardContent>
