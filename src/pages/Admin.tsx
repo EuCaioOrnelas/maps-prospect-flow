@@ -123,6 +123,7 @@ interface SalesChartData {
   newSales: number;
   upgrades: number;
   cancellations: number;
+  downgrades: number;
   salesValue: number;
   refundValue: number;
   refundCount: number;
