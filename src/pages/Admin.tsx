@@ -1350,6 +1350,7 @@ const Admin = () => {
                             newSales: 'Novas Vendas',
                             upgrades: 'Upgrades',
                             cancellations: 'Cancelamentos',
+                            downgrades: 'Downgrades p/ Free',
                             salesValue: 'Valor em Vendas',
                             refundValue: 'Valor Reembolsado'
                           };
