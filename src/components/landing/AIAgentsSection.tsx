@@ -68,8 +68,8 @@ export const AIAgentsSection = () => {
             <span className="text-gradient">24 horas por dia</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Crie um agente de IA que responde, qualifica e organiza seus leads no CRM —
-            sem código, sem prompts complexos, sem esforço.
+            Crie um agente de IA que responde, qualifica e organiza seus leads no CRM.
+            Sem código, sem prompts complexos, sem esforço.
           </p>
         </div>
 
