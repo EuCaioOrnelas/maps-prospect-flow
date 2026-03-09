@@ -116,6 +116,7 @@ interface StripeMRRData {
   churnRate: number;
   monthlyMRR: Array<{ month: string; mrr: number }>;
   monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
+  monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
 
 interface SalesChartData {
@@ -251,8 +252,6 @@ const Admin = () => {
 
   // Process sales events based on period filter
   const processedSalesChartData = useMemo(() => {
-    if (!allSalesEvents.length && !stripeMRR?.monthlyRefunds?.length) return [];
-
     // Calculate date range based on filter
     const now = new Date();
     let startDate: Date;
@@ -271,72 +270,86 @@ const Admin = () => {
         startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
         break;
       case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1); // Jan 1 of current year
+        startDate = new Date(now.getFullYear(), 0, 1);
         break;
       case 'all':
       default:
-        startDate = new Date(2024, 0, 1); // Start from 2024
+        startDate = new Date(2024, 0, 1);
         break;
     }
 
-    // Filter events by date
-    const filteredEvents = allSalesEvents.filter(event => 
-      new Date(event.created_at) >= startDate
-    );
-
-    // Group events by month
     const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
-    
-    for (const event of filteredEvents) {
-      const eventDate = new Date(event.created_at);
-      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
-      }
-      
-      // Categorize events based on actual event_type from webhook
-      const eventType = event.event_type?.toLowerCase();
-      const previousPlan = event.previous_plan?.toLowerCase();
-      const newPlan = event.new_plan?.toLowerCase();
-      
-      // Get REAL amount paid from metadata (includes discounts/coupons)
-      // Fallback to plan price only if amount_paid not available
-      const metadata = event.metadata || {};
-      const realAmountPaid = typeof metadata.amount_paid === 'number' ? metadata.amount_paid : null;
-      const planPrice = realAmountPaid ?? (PLAN_PRICES[newPlan] || 0);
-      
-      if (eventType === 'checkout_completed') {
-        // Check if it's a new sale or upgrade
-        if (!previousPlan || previousPlan === 'free') {
-          // New sale (from free or no previous plan)
-          monthlyData[monthKey].newSales++;
-          monthlyData[monthKey].salesValue += planPrice;
-        } else if (previousPlan !== newPlan) {
-          // Upgrade (from another paid plan to a different plan)
-          monthlyData[monthKey].upgrades++;
-          // Use real amount paid for upgrades too
-          monthlyData[monthKey].salesValue += planPrice;
+
+    // Use Stripe monthlySales data as primary source (always available)
+    if (stripeMRR?.monthlySales) {
+      for (const sale of stripeMRR.monthlySales) {
+        const saleDate = monthKeyToLocalDate(sale.month);
+        if (saleDate >= startDate) {
+          if (!monthlyData[sale.month]) {
+            monthlyData[sale.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+          }
+          monthlyData[sale.month].newSales = sale.newSales;
+          monthlyData[sale.month].salesValue = sale.salesValue;
+          monthlyData[sale.month].cancellations = sale.cancellations;
         }
-      } else if (eventType === 'subscription_upgrade') {
-        monthlyData[monthKey].upgrades++;
-        monthlyData[monthKey].salesValue += planPrice;
-      } else if (
-        eventType === 'subscription_deleted' || 
-        eventType === 'subscription_canceled' ||
-        (eventType === 'subscription_updated' && newPlan === 'free')
-      ) {
-        // All cancellations including downgrades to free (which is essentially a cancellation)
-        monthlyData[monthKey].cancellations++;
-      } else if (eventType === 'refund' || eventType === 'charge_refunded') {
-        // Refund from subscription_events - get amount from metadata
-        const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
-        monthlyData[monthKey].refundValue += refundAmount;
-        monthlyData[monthKey].refundCount++;
+      }
+    }
+
+    // Override with subscription_events data if available (more granular)
+    if (allSalesEvents.length > 0) {
+      // Reset and use subscription_events as source
+      Object.keys(monthlyData).forEach(k => {
+        monthlyData[k].newSales = 0;
+        monthlyData[k].upgrades = 0;
+        monthlyData[k].cancellations = 0;
+        monthlyData[k].salesValue = 0;
+      });
+
+      const filteredEvents = allSalesEvents.filter(event => 
+        new Date(event.created_at) >= startDate
+      );
+
+      for (const event of filteredEvents) {
+        const eventDate = new Date(event.created_at);
+        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+        }
+        
+        const eventType = event.event_type?.toLowerCase();
+        const previousPlan = event.previous_plan?.toLowerCase();
+        const newPlan = event.new_plan?.toLowerCase();
+        const metadata = event.metadata || {};
+        const realAmountPaid = typeof metadata.amount_paid === 'number' ? metadata.amount_paid : null;
+        const planPrice = realAmountPaid ?? (PLAN_PRICES[newPlan] || 0);
+        
+        if (eventType === 'checkout_completed') {
+          if (!previousPlan || previousPlan === 'free') {
+            monthlyData[monthKey].newSales++;
+            monthlyData[monthKey].salesValue += planPrice;
+          } else if (previousPlan !== newPlan) {
+            monthlyData[monthKey].upgrades++;
+            monthlyData[monthKey].salesValue += planPrice;
+          }
+        } else if (eventType === 'subscription_upgrade') {
+          monthlyData[monthKey].upgrades++;
+          monthlyData[monthKey].salesValue += planPrice;
+        } else if (
+          eventType === 'subscription_deleted' || 
+          eventType === 'subscription_canceled' ||
+          (eventType === 'subscription_updated' && newPlan === 'free')
+        ) {
+          monthlyData[monthKey].cancellations++;
+        } else if (eventType === 'refund' || eventType === 'charge_refunded') {
+          const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
+          monthlyData[monthKey].refundValue += refundAmount;
+          monthlyData[monthKey].refundCount++;
+        }
       }
     }
     
-    // Merge refund data from Stripe API (historical refunds not in subscription_events)
+    // Merge refund data from Stripe API
     if (stripeMRR?.monthlyRefunds) {
       for (const refund of stripeMRR.monthlyRefunds) {
         const refundDate = monthKeyToLocalDate(refund.month);
@@ -344,21 +357,19 @@ const Admin = () => {
           if (!monthlyData[refund.month]) {
             monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
-          // Use Stripe data as the authoritative source for refunds
           monthlyData[refund.month].refundValue = refund.amount;
           monthlyData[refund.month].refundCount = refund.count;
         }
       }
     }
     
-    // Convert to array and sort by month
     return Object.entries(monthlyData)
       .map(([month, data]) => ({
         month,
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [allSalesEvents, chartPeriodFilter, stripeMRR?.monthlyRefunds]);
+  }, [allSalesEvents, chartPeriodFilter, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
@@ -1213,7 +1224,7 @@ const Admin = () => {
                   Taxa de Cancelamento
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
-                  Cancelados / (Ativos + Cancelados)
+                  Cancelados / Ativos
                 </p>
               </div>
 
