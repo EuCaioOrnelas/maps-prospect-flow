@@ -172,20 +172,24 @@ export default function AdminTrialAutomation() {
     toast({ title: "Configuração atualizada" });
   };
 
-  const runProcessor = async () => {
-    setRunningProcessor(true);
+  const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
+
+  const sendTestEmail = async (templateId: string) => {
+    if (!profile?.email) {
+      toast({ title: "Erro", description: "Email do admin não encontrado", variant: "destructive" });
+      return;
+    }
+    setSendingTestEmail(templateId);
     try {
-      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
-      if (error) throw error;
-      toast({
-        title: "Processador executado com sucesso",
-        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
+      const { data, error } = await supabase.functions.invoke("send-test-trial-email", {
+        body: { templateId, recipientEmail: profile.email },
       });
-      fetchAll();
+      if (error) throw error;
+      toast({ title: "✉️ Email de teste enviado!", description: `Verifique ${profile.email}` });
     } catch (err: any) {
-      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
     } finally {
-      setRunningProcessor(false);
+      setSendingTestEmail(null);
     }
   };
 
