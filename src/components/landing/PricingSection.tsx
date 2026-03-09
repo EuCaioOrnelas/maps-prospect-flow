@@ -344,7 +344,7 @@ export const PricingSection = () => {
                     </div>
                     <div className="flex items-center gap-1 md:block min-w-0">
                       <p className="font-bold text-xs md:text-lg text-foreground">10 buscas com IA</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">até 500 leads por busca</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">até 50 leads por busca (500 leads no total)</p>
                     </div>
                   </div>
                   
