@@ -534,7 +534,7 @@ function compileTemplate(
   return result;
 }
 
-function wrapInEmailLayout(title: string, body: string): string {
+function wrapInEmailLayout(title: string, body: string, trackPixel: string = ""): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title></head>
@@ -554,6 +554,7 @@ ${body}
 </table>
 </td></tr>
 </table>
+${trackPixel}
 </body>
 </html>`;
 }
