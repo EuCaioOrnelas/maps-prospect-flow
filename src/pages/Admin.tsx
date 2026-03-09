@@ -52,6 +52,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { SubscriptionEventsLog } from "@/components/admin/SubscriptionEventsLog";
 import { PhoneCleanupTool } from "@/components/admin/PhoneCleanupTool";
 import { TermsAcceptanceLog } from "@/components/admin/TermsAcceptanceLog";
@@ -132,7 +137,7 @@ interface SalesChartData {
   refundCount: number;
 }
 
-type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all';
+type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all' | 'custom';
 
 interface Stats {
   totalUsers: number;
@@ -186,6 +191,8 @@ const Admin = () => {
   const [allSalesEvents, setAllSalesEvents] = useState<any[]>([]);
   const [loadingSalesChart, setLoadingSalesChart] = useState(false);
   const [chartPeriodFilter, setChartPeriodFilter] = useState<ChartPeriodFilter>('6m');
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
@@ -253,11 +260,11 @@ const Admin = () => {
     }
   }, []);
 
-  // Process sales events based on period filter
-  const processedSalesChartData = useMemo(() => {
-    // Calculate date range based on filter
+  // Helper to get date range from filter
+  const getFilterDateRange = useCallback((): { startDate: Date; endDate: Date | null } => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date | null = null;
     
     switch (chartPeriodFilter) {
       case '1m':
@@ -275,19 +282,28 @@ const Admin = () => {
       case 'year':
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
+      case 'custom':
+        startDate = customStartDate || new Date(2024, 0, 1);
+        endDate = customEndDate || now;
+        break;
       case 'all':
       default:
         startDate = new Date(2024, 0, 1);
         break;
     }
+    return { startDate, endDate };
+  }, [chartPeriodFilter, customStartDate, customEndDate]);
+
+  // Process sales events based on period filter
+  const processedSalesChartData = useMemo(() => {
+    const { startDate, endDate } = getFilterDateRange();
 
     const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
 
-    // Use Stripe monthlySales data as PRIMARY and ONLY source for sales/cancellations
     if (stripeMRR?.monthlySales) {
       for (const sale of stripeMRR.monthlySales) {
         const saleDate = monthKeyToLocalDate(sale.month);
-        if (saleDate >= startDate) {
+        if (saleDate >= startDate && (!endDate || saleDate <= endDate)) {
           if (!monthlyData[sale.month]) {
             monthlyData[sale.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
@@ -298,11 +314,10 @@ const Admin = () => {
       }
     }
     
-    // Merge refund data from Stripe API
     if (stripeMRR?.monthlyRefunds) {
       for (const refund of stripeMRR.monthlyRefunds) {
         const refundDate = monthKeyToLocalDate(refund.month);
-        if (refundDate >= startDate) {
+        if (refundDate >= startDate && (!endDate || refundDate <= endDate)) {
           if (!monthlyData[refund.month]) {
             monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
@@ -318,44 +333,19 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [chartPeriodFilter, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
+  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
     if (!allSalesEvents.length) return [];
 
-    // Calculate date range based on filter (same as sales)
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (chartPeriodFilter) {
-      case '1m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        break;
-      case '3m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        break;
-      case '6m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        break;
-      case '12m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      case 'all':
-      default:
-        startDate = new Date(2024, 0, 1);
-        break;
-    }
+    const { startDate, endDate } = getFilterDateRange();
 
-    // Filter events by date
-    const filteredEvents = allSalesEvents.filter(event => 
-      new Date(event.created_at) >= startDate
-    );
+    const filteredEvents = allSalesEvents.filter(event => {
+      const eventDate = new Date(event.created_at);
+      return eventDate >= startDate && (!endDate || eventDate <= endDate);
+    });
 
-    // Churn reasons counters
     const churnReasons: { [key: string]: number } = {
       canceled: 0,
       deleted: 0,
@@ -381,7 +371,6 @@ const Admin = () => {
       }
     }
 
-    // Map to readable labels and colors
     const churnData = [
       { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
@@ -391,42 +380,19 @@ const Admin = () => {
     ].filter(item => item.value > 0);
 
     return churnData;
-  }, [allSalesEvents, chartPeriodFilter]);
+  }, [allSalesEvents, getFilterDateRange]);
 
   // Filter MRR data by period
   const filteredMRRData = useMemo(() => {
     if (!stripeMRR?.monthlyMRR?.length) return [];
 
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (chartPeriodFilter) {
-      case '1m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        break;
-      case '3m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        break;
-      case '6m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        break;
-      case '12m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      case 'all':
-      default:
-        startDate = new Date(2024, 0, 1);
-        break;
-    }
+    const { startDate, endDate } = getFilterDateRange();
 
     return stripeMRR.monthlyMRR.filter(item => {
       const itemDate = monthKeyToLocalDate(item.month);
-      return itemDate >= startDate;
+      return itemDate >= startDate && (!endDate || itemDate <= endDate);
     });
-  }, [stripeMRR?.monthlyMRR, chartPeriodFilter]);
+  }, [stripeMRR?.monthlyMRR, getFilterDateRange]);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
@@ -1194,31 +1160,75 @@ const Admin = () => {
             </div>
 
             {/* Period Filter */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold flex items-center gap-2">
-                <Calendar size={20} className="text-primary" />
-                Período de Análise
-              </h2>
-              <div className="flex gap-2">
-                {[
-                  { value: '1m', label: '1 Mês' },
-                  { value: '3m', label: '3 Meses' },
-                  { value: '6m', label: '6 Meses' },
-                  { value: '12m', label: '12 Meses' },
-                  { value: 'year', label: 'Este Ano' },
-                  { value: 'all', label: 'Tudo' },
-                ].map(option => (
-                  <Button
-                    key={option.value}
-                    variant={chartPeriodFilter === option.value ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setChartPeriodFilter(option.value as ChartPeriodFilter)}
-                    className="text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold flex items-center gap-2">
+                  <Calendar size={20} className="text-primary" />
+                  Período de Análise
+                </h2>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { value: '1m', label: '1 Mês' },
+                    { value: '3m', label: '3 Meses' },
+                    { value: '6m', label: '6 Meses' },
+                    { value: '12m', label: '12 Meses' },
+                    { value: 'year', label: 'Este Ano' },
+                    { value: 'all', label: 'Tudo' },
+                    { value: 'custom', label: 'Personalizado' },
+                  ].map(option => (
+                    <Button
+                      key={option.value}
+                      variant={chartPeriodFilter === option.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartPeriodFilter(option.value as ChartPeriodFilter)}
+                      className="text-xs"
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
+
+              {chartPeriodFilter === 'custom' && (
+                <div className="flex items-center gap-3 glass rounded-lg p-3">
+                  <span className="text-xs text-muted-foreground font-medium">De:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start", !customStartDate && "text-muted-foreground")}>
+                        <Calendar size={14} className="mr-1.5" />
+                        {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customStartDate}
+                        onSelect={setCustomStartDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-xs text-muted-foreground font-medium">Até:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start", !customEndDate && "text-muted-foreground")}>
+                        <Calendar size={14} className="mr-1.5" />
+                        {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customEndDate}
+                        onSelect={setCustomEndDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
 
             {/* Sales/Upgrades/Cancellations Chart - Full Width */}
