@@ -15,7 +15,7 @@ const features = [
   {
     icon: Bot,
     title: "Agente de IA no WhatsApp",
-    description: "Um vendedor virtual que responde, qualifica e organiza seus leads 24h. Sem prompts complexos — configure em minutos e ele cuida do operacional.",
+    description: "Um vendedor virtual que responde, qualifica e organiza seus leads 24h. Sem prompts complexos, configure em minutos e ele cuida do operacional.",
     badge: "Beta",
   },
   {

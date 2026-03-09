@@ -214,7 +214,7 @@ export const AIAgentsSection = () => {
               <Sparkles className="w-5 h-5 text-primary" />
               <h3 className="font-display text-xl md:text-2xl font-semibold">Por que é diferente</h3>
             </div>
-            <p className="text-sm text-muted-foreground">Chatbots tradicionais vs. Agente Wiize — sem comparação.</p>
+            <p className="text-sm text-muted-foreground">Chatbots tradicionais vs. Agente Wiize: sem comparação.</p>
           </div>
 
           <div className="divide-y divide-border/20">
