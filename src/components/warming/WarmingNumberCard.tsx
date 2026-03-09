@@ -170,7 +170,7 @@ export function WarmingNumberCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-foreground truncate">
-                {number.name}
+                {number.phone_number || number.name}
               </span>
               {number.is_connected ? (
                 <Wifi className="w-4 h-4 text-green-500 shrink-0" />
@@ -179,7 +179,7 @@ export function WarmingNumberCard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {number.phone_number || number.instance_name || 'Aguardando detecção...'}
+              {number.name}
             </p>
           </div>
 
