@@ -221,7 +221,11 @@ export default function AdminTrialAutomation() {
             <Zap className="h-5 w-5 text-primary" />
             <h1 className="font-semibold text-lg">Automação Trial</h1>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="default" size="sm" onClick={runProcessor} disabled={runningProcessor}>
+              {runningProcessor ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5 mr-1.5" />}
+              Executar Processador
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchAll}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Atualizar
