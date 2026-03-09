@@ -267,50 +267,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Determine first invoice per UNIQUE CUSTOMER for newSales tracking
-    // Group subs by customer to deduplicate (customer who canceled & re-subscribed = 1 new sale)
-    const customerFirstInvoice: { [customerId: string]: Stripe.Invoice } = {};
-    
-    for (const [subId, invoices] of Object.entries(invoicesBySubId)) {
-      invoices.sort((a, b) => a.created - b.created);
-      const firstInvoice = invoices[0];
-      
-      const customerId = typeof firstInvoice.customer === "string" 
-        ? firstInvoice.customer 
-        : (firstInvoice.customer as Stripe.Customer)?.id || subId;
-      
-      // Keep the earliest first invoice per customer
-      if (!customerFirstInvoice[customerId] || firstInvoice.created < customerFirstInvoice[customerId].created) {
-        customerFirstInvoice[customerId] = firstInvoice;
-      }
-    }
-
-    // Now compute totalSalesValue, totalSalesCount, totalNewSales from unique customers
+    // Count ALL paid invoices as sales (including renewals)
     let totalSalesValue = 0;
     let totalSalesCount = 0;
 
-    for (const [customerId, firstInvoice] of Object.entries(customerFirstInvoice)) {
-      totalSalesValue += firstInvoice.amount_paid / 100;
-      totalSalesCount++;
-
-      const paymentTimestamp = firstInvoice.status_transitions?.paid_at || firstInvoice.created;
-      const paymentDate = new Date(paymentTimestamp * 1000);
-      const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
-
-      if (!monthlySales[monthKey]) {
-        monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
-      }
-      monthlySales[monthKey].newSales++;
-      monthlySales[monthKey].salesValue += firstInvoice.amount_paid / 100;
-    }
-
-    // Also add renewal revenue to total sales (all invoices beyond the first per customer)
-    let totalAllInvoicesValue = 0;
-    let totalAllInvoicesCount = 0;
     for (const invoices of Object.values(invoicesBySubId)) {
       for (const inv of invoices) {
-        totalAllInvoicesValue += inv.amount_paid / 100;
-        totalAllInvoicesCount++;
+        totalSalesValue += inv.amount_paid / 100;
+        totalSalesCount++;
+
+        const paymentTimestamp = inv.status_transitions?.paid_at || inv.created;
+        const paymentDate = new Date(paymentTimestamp * 1000);
+        const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
+
+        if (!monthlySales[monthKey]) {
+          monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+        }
+        monthlySales[monthKey].newSales++;
+        monthlySales[monthKey].salesValue += inv.amount_paid / 100;
       }
     }
 
@@ -321,8 +295,7 @@ Deno.serve(async (req) => {
     const churnRate = totalBase > 0 ? ((canceledCount / totalBase) * 100) : 0;
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
-    console.log(`[GET-STRIPE-MRR] Total Sales (first per customer): R$ ${totalSalesValue} (${totalSalesCount} customers)`);
-    console.log(`[GET-STRIPE-MRR] Total All Invoices: R$ ${totalAllInvoicesValue} (${totalAllInvoicesCount} transactions)`);
+    console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${totalSalesValue} (${totalSalesCount} transactions)`);
     console.log(`[GET-STRIPE-MRR] Refunds: ${wiizeRefundCount} (R$ ${wiizeRefundedAmount})`);
 
     return new Response(
