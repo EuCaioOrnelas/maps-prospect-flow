@@ -1426,6 +1426,10 @@ const Admin = () => {
                   <span className="text-muted-foreground">Cancelamentos</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#a855f7]" />
+                  <span className="text-muted-foreground">Downgrades p/ Free</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-[#10b981] opacity-60" />
                   <span className="text-muted-foreground">R$ Vendas</span>
                 </div>
