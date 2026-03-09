@@ -111,6 +111,25 @@ const getLevelInfo = (level: number) => {
   }
 };
 
+const formatPhoneNumber = (phone: string): string => {
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // Expected: 55 + DD (2 digits) + number (8 or 9 digits)
+  if (digits.startsWith('55') && digits.length >= 12) {
+    const ddd = digits.slice(2, 4);
+    const number = digits.slice(4);
+    if (number.length === 9) {
+      return `+55 (${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
+    }
+    if (number.length === 8) {
+      return `+55 (${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    }
+    return `+55 (${ddd}) ${number}`;
+  }
+  return phone;
+};
+
 // Calculate estimated next message time based on interval (10-30 min)
 const getNextMessageEstimate = (lastMessageAt: string | null): string => {
   if (!lastMessageAt) return 'Aguardando...';
@@ -179,7 +198,7 @@ export function WarmingNumberCard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {number.phone_number || 'Aguardando detecção...'}
+              {number.phone_number ? formatPhoneNumber(number.phone_number) : 'Aguardando detecção...'}
             </p>
           </div>
 
