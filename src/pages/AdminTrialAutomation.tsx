@@ -831,8 +831,9 @@ function TrialFunnel({ analytics }: { analytics: any }) {
   return (
     <div className="flex flex-col items-center gap-1.5 py-4">
       {funnelSteps.map((step, i) => {
-        // Funnel shape: first bar is 100% width, last is ~30%
-        const widthPct = 100 - ((i / (totalSteps - 1)) * 65);
+        const maxValue = funnelSteps[0].value;
+        // Width based on actual data proportion - minimum 30% so it's still visible when zero
+        const widthPct = maxValue > 0 ? Math.max(30, (step.value / maxValue) * 100) : (100 - ((i / (totalSteps - 1)) * 65));
         const prevValue = i > 0 ? funnelSteps[i - 1].value : step.value;
         const dropoff = prevValue > 0 && i > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
 
@@ -840,16 +841,16 @@ function TrialFunnel({ analytics }: { analytics: any }) {
           <div
             key={step.label}
             className={cn(
-              "relative flex items-center justify-between px-5 py-3 rounded-lg border bg-gradient-to-r transition-all",
+              "relative flex items-center justify-between px-5 py-3.5 rounded-lg border bg-gradient-to-r transition-all",
               step.color, step.border
             )}
-            style={{ width: `${widthPct}%`, minHeight: "48px" }}
+            style={{ width: `${widthPct}%`, minHeight: "50px" }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">{step.label}</span>
+              <span className="text-base font-semibold">{step.label}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-lg font-bold">{step.value}</span>
+              <span className="text-xl font-bold">{step.value}</span>
               {dropoff > 0 && i > 0 && (
                 <span className="text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded">
                   -{dropoff}%
