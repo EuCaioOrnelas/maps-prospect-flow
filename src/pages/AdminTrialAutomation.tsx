@@ -556,9 +556,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-blue-400" />
-                  <CardTitle className="text-lg">Performance Individual de Emails</CardTitle>
+                  <CardTitle className="text-xl">Performance Individual de Emails</CardTitle>
                 </div>
-                <CardDescription>Métricas reais por template de email</CardDescription>
+                <CardDescription className="text-sm">Métricas reais por template de email</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
