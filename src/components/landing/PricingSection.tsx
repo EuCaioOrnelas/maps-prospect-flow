@@ -343,8 +343,8 @@ export const PricingSection = () => {
                       <Search className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                     </div>
                     <div className="flex items-center gap-1 md:block min-w-0">
-                      <p className="font-bold text-xs md:text-lg text-foreground">10 buscas IA</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
+                      <p className="font-bold text-xs md:text-lg text-foreground">10 buscas com IA</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">até 500 leads por busca</p>
                     </div>
                   </div>
                   
