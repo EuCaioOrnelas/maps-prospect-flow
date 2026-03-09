@@ -401,7 +401,7 @@ const Admin = () => {
       deleted: 0,
       past_due: 0,
       unpaid: 0,
-      downgraded: 0,
+      downgraded_to_free: 0,
     };
 
     for (const event of filteredEvents) {
@@ -417,7 +417,7 @@ const Admin = () => {
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
       } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        churnReasons.downgraded++;
+        churnReasons.downgraded_to_free++;
       }
     }
 
