@@ -210,6 +210,28 @@ const Upgrade = () => {
     
     try {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
+
+      // Track checkout_started event for trial users
+      if (user?.id && currentPlan === 'free') {
+        supabase.from('trial_product_events').insert({
+          user_id: user.id,
+          event_name: 'checkout_started',
+          event_source: 'frontend',
+          metadata: { plan: planKey, price_id: priceId },
+        }).then(() => {});
+
+        // Send conversion attribution if came from email CTA
+        try {
+          const attrStr = sessionStorage.getItem('trial_email_attribution');
+          if (attrStr) {
+            const attr = JSON.parse(attrStr);
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            fetch(`${supabaseUrl}/functions/v1/trial-email-tracker?action=conversion&uid=${attr.user_id}&tid=${attr.template_id}&aid=${attr.automation_id}&plan=${planKey}&amount=0`, {
+              method: 'GET',
+            }).catch(() => {});
+          }
+        } catch (_) {}
+      }
       
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail, couponCode: couponFromUrl || undefined },
