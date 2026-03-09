@@ -318,7 +318,7 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [allSalesEvents, chartPeriodFilter, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
+  }, [chartPeriodFilter, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
