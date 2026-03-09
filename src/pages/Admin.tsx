@@ -404,10 +404,12 @@ const Admin = () => {
       deleted: 0,
       past_due: 0,
       unpaid: 0,
+      downgraded: 0,
     };
 
     for (const event of filteredEvents) {
       const eventType = event.event_type?.toLowerCase() || '';
+      const newPlan = event.new_plan?.toLowerCase();
       
       if (eventType === 'subscription_canceled') {
         churnReasons.canceled++;
@@ -417,6 +419,8 @@ const Admin = () => {
         churnReasons.past_due++;
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
+      } else if (eventType === 'subscription_updated' && newPlan === 'free') {
+        churnReasons.downgraded++;
       }
     }
 
@@ -424,6 +428,7 @@ const Admin = () => {
     const churnData = [
       { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
+      { name: 'Downgrade p/ Free', value: churnReasons.downgraded, color: '#a855f7' },
       { name: 'Pagamento Atrasado', value: churnReasons.past_due, color: '#eab308' },
       { name: 'Não Pago', value: churnReasons.unpaid, color: '#6b7280' },
     ].filter(item => item.value > 0);
