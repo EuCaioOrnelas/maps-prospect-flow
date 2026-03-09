@@ -160,6 +160,39 @@ export default function AdminTrialAutomation() {
     return analytics.revenue.reduce((sum: number, r: any) => sum + Number(r.revenue_amount || 0), 0);
   };
 
+  const runProcessor = async () => {
+    setRunningProcessor(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
+      if (error) throw error;
+      toast({
+        title: "Processador executado",
+        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
+      });
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
+    } finally {
+      setRunningProcessor(false);
+    }
+  };
+
+  // Toggle all automations
+  const toggleAllAutomations = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(automations.map((a) => supabase.from("trial_automations").update({ status: newStatus }).eq("id", a.id)));
+    toast({ title: activate ? "Todos os fluxos ativados" : "Todos os fluxos pausados" });
+    fetchAll();
+  };
+
+  // Toggle all triggers
+  const toggleAllTriggers = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(triggers.map((t) => supabase.from("trial_behaviour_triggers").update({ status: newStatus }).eq("id", t.id)));
+    toast({ title: activate ? "Todos os triggers ativados" : "Todos os triggers pausados" });
+    fetchAll();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
