@@ -425,7 +425,7 @@ const Admin = () => {
     const churnData = [
       { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
-      { name: 'Downgrade p/ Free', value: churnReasons.downgraded, color: '#a855f7' },
+      { name: 'Downgrade p/ Free', value: churnReasons.downgraded_to_free, color: '#a855f7' },
       { name: 'Pagamento Atrasado', value: churnReasons.past_due, color: '#eab308' },
       { name: 'Não Pago', value: churnReasons.unpaid, color: '#6b7280' },
     ].filter(item => item.value > 0);
