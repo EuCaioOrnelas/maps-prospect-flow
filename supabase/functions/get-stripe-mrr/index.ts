@@ -16,6 +16,13 @@ const WIIZE_PRICE_IDS = [
 // Admin emails to exclude from MRR calculations
 const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
+// Plan name mapping from price IDs
+const PRICE_TO_PLAN: { [key: string]: string } = {
+  "price_1SlykAK8CM0R6xMMOCM684rz": "start",
+  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
+};
+
 // Helper to paginate through all Stripe list results
 async function fetchAllPages<T>(
   fetchFn: (params: { limit: number; starting_after?: string }) => Promise<Stripe.ApiList<T>>,
@@ -41,6 +48,15 @@ async function fetchAllPages<T>(
   }
 
   return allItems;
+}
+
+function isAdminEmail(email: string): boolean {
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+function getCustomerEmail(customer: Stripe.Customer | string): string {
+  if (typeof customer === "string") return "";
+  return customer?.email || "";
 }
 
 Deno.serve(async (req) => {
@@ -91,16 +107,34 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get ALL subscriptions with pagination (up to 1000)
-    console.log("[GET-STRIPE-MRR] Fetching all subscriptions...");
-    const allSubsData = await fetchAllPages<Stripe.Subscription>(
-      (params) => stripe.subscriptions.list({
-        ...params,
-        status: "all",
-        expand: ["data.customer", "data.latest_invoice"],
-      }),
-      10 // max 10 pages = 1000 subscriptions
-    );
+    // Fetch all data in parallel
+    console.log("[GET-STRIPE-MRR] Fetching subscriptions, refunds, and invoices...");
+    
+    const [allSubsData, allRefunds, allPaidInvoices] = await Promise.all([
+      fetchAllPages<Stripe.Subscription>(
+        (params) => stripe.subscriptions.list({
+          ...params,
+          status: "all",
+          expand: ["data.customer", "data.latest_invoice"],
+        }),
+        10
+      ),
+      fetchAllPages<Stripe.Refund>(
+        (params) => stripe.refunds.list({
+          ...params,
+          expand: ["data.charge"],
+        }),
+        5
+      ),
+      fetchAllPages<Stripe.Invoice>(
+        (params) => stripe.invoices.list({
+          ...params,
+          status: "paid",
+          expand: ["data.customer"],
+        }),
+        10
+      ),
+    ]);
 
     // Filter only WiizeProspect subscriptions
     const wiizeSubs = allSubsData.filter((sub: Stripe.Subscription) => {
@@ -108,153 +142,83 @@ Deno.serve(async (req) => {
       return WIIZE_PRICE_IDS.includes(priceId);
     });
 
-    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subscriptions (from ${allSubsData.length} total)`);
+    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subs, ${allRefunds.length} refunds, ${allPaidInvoices.length} paid invoices`);
 
-    // Get ALL refunds with pagination
-    console.log("[GET-STRIPE-MRR] Fetching all refunds...");
-    const allRefunds = await fetchAllPages<Stripe.Refund>(
-      (params) => stripe.refunds.list({
-        ...params,
-        expand: ["data.charge"],
-      }),
-      5 // max 5 pages = 500 refunds
-    );
+    // Build set of WiizeProspect subscription IDs for quick lookup
+    const wiizeSubIds = new Set(wiizeSubs.map((s: Stripe.Subscription) => s.id));
 
-    // Find refunded charges that belong to WiizeProspect subscriptions
+    // --- Process refunds ---
     const refundedChargeIds = new Set<string>();
     let wiizeRefundCount = 0;
     let wiizeRefundedAmount = 0;
-
-    for (const refund of allRefunds) {
-      if (refund.status === "succeeded" && refund.charge) {
-        const charge = typeof refund.charge === "string" 
-          ? await stripe.charges.retrieve(refund.charge)
-          : refund.charge;
-        
-        // Check if this charge's invoice belongs to a WiizeProspect subscription
-        if (charge.invoice) {
-          const invoice = await stripe.invoices.retrieve(charge.invoice as string);
-          const subId = invoice.subscription;
-          
-          if (subId) {
-            const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === subId);
-            if (sub) {
-              wiizeRefundCount++;
-              wiizeRefundedAmount += refund.amount / 100;
-              refundedChargeIds.add(charge.id);
-              console.log(`[GET-STRIPE-MRR] Found WiizeProspect refund: R$ ${refund.amount / 100}`);
-            }
-          }
-        }
-      }
-    }
-
-    // Get ALL paid invoices with pagination for complete MRR history
-    console.log("[GET-STRIPE-MRR] Fetching all paid invoices...");
-    const allPaidInvoices = await fetchAllPages<Stripe.Invoice>(
-      (params) => stripe.invoices.list({
-        ...params,
-        status: "paid",
-        expand: ["data.customer"],
-      }),
-      10 // max 10 pages = 1000 invoices
-    );
-
-    console.log(`[GET-STRIPE-MRR] Found ${allPaidInvoices.length} paid invoices`);
-
-    // Track monthly revenue by invoice paid date (not subscription start date)
-    const monthlyMRR: { [month: string]: number } = {};
-    
-    // Track monthly refunds by refund date (amount and count)
     const monthlyRefunds: { [month: string]: { amount: number; count: number } } = {};
 
-    // Process refunds to get monthly breakdown
     for (const refund of allRefunds) {
-      if (refund.status === "succeeded") {
-        const refundDate = new Date(refund.created * 1000);
-        const monthKey = `${refundDate.getFullYear()}-${String(refundDate.getMonth() + 1).padStart(2, "0")}`;
-        
-        // Check if this refund belongs to a WiizeProspect subscription
-        if (refund.charge) {
-          const charge = typeof refund.charge === "string" 
-            ? await stripe.charges.retrieve(refund.charge)
-            : refund.charge;
-          
-          if (charge.invoice) {
-            const invoice = await stripe.invoices.retrieve(charge.invoice as string);
-            const subId = invoice.subscription;
-            
-            if (subId) {
-              const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === subId);
-              if (sub) {
-                const customer = sub.customer as Stripe.Customer;
-                const customerEmail = customer?.email || "";
-                
-                // Skip admin emails
-                if (!ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-                  if (!monthlyRefunds[monthKey]) {
-                    monthlyRefunds[monthKey] = { amount: 0, count: 0 };
-                  }
-                  monthlyRefunds[monthKey].amount += refund.amount / 100;
-                  monthlyRefunds[monthKey].count += 1;
-                }
-              }
-            }
-          }
-        }
+      if (refund.status !== "succeeded" || !refund.charge) continue;
+
+      const charge = typeof refund.charge === "string" 
+        ? await stripe.charges.retrieve(refund.charge)
+        : refund.charge;
+      
+      if (!charge.invoice) continue;
+
+      const invoice = await stripe.invoices.retrieve(charge.invoice as string);
+      const subId = invoice.subscription;
+      
+      if (!subId || !wiizeSubIds.has(subId as string)) continue;
+
+      // Check if admin email
+      const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === subId);
+      if (!sub) continue;
+      const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
+      if (isAdminEmail(customerEmail)) continue;
+
+      wiizeRefundCount++;
+      wiizeRefundedAmount += refund.amount / 100;
+      refundedChargeIds.add(charge.id);
+
+      // Track monthly refunds by refund date
+      const refundDate = new Date(refund.created * 1000);
+      const monthKey = `${refundDate.getFullYear()}-${String(refundDate.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthlyRefunds[monthKey]) {
+        monthlyRefunds[monthKey] = { amount: 0, count: 0 };
       }
+      monthlyRefunds[monthKey].amount += refund.amount / 100;
+      monthlyRefunds[monthKey].count += 1;
+      
+      console.log(`[GET-STRIPE-MRR] WiizeProspect refund: R$ ${refund.amount / 100}`);
     }
 
-    // Plan name mapping from price IDs
-    const PRICE_TO_PLAN: { [key: string]: string } = {
-      "price_1SlykAK8CM0R6xMMOCM684rz": "start",
-      "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
-      "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
-    };
-
-    // Process WiizeProspect subscriptions
+    // --- Process subscriptions for active MRR, cancellations ---
     let activeMRR = 0;
     let activeCount = 0;
     let canceledCount = 0;
     const planDistribution: { [plan: string]: number } = {};
-
-    // Track monthly sales and cancellations from Stripe data
     const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
 
+    // Set of refunded subscription IDs (subs whose charge was refunded)
+    const refundedSubIds = new Set<string>();
+
     for (const sub of wiizeSubs) {
-      const customer = sub.customer as Stripe.Customer;
-      const customerEmail = customer?.email || "";
-      
-      // Skip admin emails
-      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-        continue;
-      }
+      const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
+      if (isAdminEmail(customerEmail)) continue;
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
-
-      // Skip if no real payment (admin-granted)
-      if (amountPaid === 0) {
-        continue;
-      }
-
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
 
-      if (sub.status === "active") {
-        // Check if this subscription's charge was refunded
-        const chargeId = latestInvoice?.charge;
-        const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
-        
-        if (!wasRefunded) {
-          activeMRR += amountPaid;
-          activeCount++;
-          planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        }
-      } else if (sub.status === "canceled") {
+      // Check if latest invoice charge was refunded
+      const chargeId = latestInvoice?.charge;
+      const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
+      if (wasRefunded) {
+        refundedSubIds.add(sub.id);
+      }
+
+      // Count cancellations REGARDLESS of amountPaid (fix: was skipping $0 subs)
+      if (sub.status === "canceled") {
         canceledCount++;
         
-        // Track cancellation month
         if (sub.canceled_at) {
           const cancelDate = new Date(sub.canceled_at * 1000);
           const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
@@ -265,61 +229,78 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Track new sale month (subscription creation)
-      const startDate = new Date(sub.created * 1000);
-      const startMonthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
-      if (!monthlySales[startMonthKey]) {
-        monthlySales[startMonthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+      // For active MRR, skip $0 or refunded subs
+      if (sub.status === "active" && amountPaid > 0 && !wasRefunded) {
+        activeMRR += amountPaid;
+        activeCount++;
+        planDistribution[planName] = (planDistribution[planName] || 0) + 1;
       }
-      monthlySales[startMonthKey].newSales++;
-      // Use the first invoice amount for the sale value
-      const firstInvoiceAmount = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
-      monthlySales[startMonthKey].salesValue += firstInvoiceAmount;
     }
 
-    // Process paid invoices to get correct monthly MRR by payment date
+    // --- Process paid invoices for accurate sales tracking ---
+    // Group invoices by subscription to find first invoice per sub
+    const invoicesBySubId: { [subId: string]: Stripe.Invoice[] } = {};
+    const monthlyMRR: { [month: string]: number } = {};
+    let totalSalesValue = 0;
+    let totalSalesCount = 0;
+
     for (const invoice of allPaidInvoices) {
-      // Only process WiizeProspect invoices
       if (!invoice.subscription) continue;
-      
-      const sub = wiizeSubs.find((s: Stripe.Subscription) => s.id === invoice.subscription);
-      if (!sub) continue;
+      const subId = invoice.subscription as string;
+      if (!wiizeSubIds.has(subId)) continue;
 
-      const customer = invoice.customer as Stripe.Customer;
-      const customerEmail = customer?.email || "";
-      
-      // Skip admin emails
-      if (ADMIN_EMAILS.includes(customerEmail.toLowerCase())) {
-        continue;
-      }
+      const customerEmail = getCustomerEmail(invoice.customer as Stripe.Customer);
+      if (isAdminEmail(customerEmail)) continue;
+      if (invoice.amount_paid === 0) continue;
 
-      // Skip zero amount invoices (admin-granted)
-      if (invoice.amount_paid === 0) {
-        continue;
-      }
-
-      // Check if this invoice's charge was refunded
+      // Check if refunded
       const chargeId = invoice.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       if (wasRefunded) continue;
 
-      // Use the invoice paid_at timestamp (when the payment was actually made)
-      // Fall back to created timestamp if paid_at is not available
+      // Track for monthly MRR (all valid paid invoices)
       const paymentTimestamp = invoice.status_transitions?.paid_at || invoice.created;
       const paymentDate = new Date(paymentTimestamp * 1000);
       const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
-      
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
+
+      // Track total sales (non-refunded paid invoices)
+      totalSalesValue += invoice.amount_paid / 100;
+      totalSalesCount++;
+
+      // Group by sub for first-invoice detection
+      if (!invoicesBySubId[subId]) {
+        invoicesBySubId[subId] = [];
+      }
+      invoicesBySubId[subId].push(invoice);
+    }
+
+    // Determine first invoice per subscription for newSales tracking
+    for (const [subId, invoices] of Object.entries(invoicesBySubId)) {
+      // Sort by created date ascending to find the first invoice
+      invoices.sort((a, b) => a.created - b.created);
+      const firstInvoice = invoices[0];
+
+      const paymentTimestamp = firstInvoice.status_transitions?.paid_at || firstInvoice.created;
+      const paymentDate = new Date(paymentTimestamp * 1000);
+      const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
+
+      if (!monthlySales[monthKey]) {
+        monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+      }
+      monthlySales[monthKey].newSales++;
+      monthlySales[monthKey].salesValue += firstInvoice.amount_paid / 100;
     }
 
     // Calculate churn rate: canceled / (active + canceled)
     const totalBase = activeCount + canceledCount;
     const churnRate = totalBase > 0 ? ((canceledCount / totalBase) * 100) : 0;
 
-    console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunds: ${wiizeRefundCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
-    console.log(`[GET-STRIPE-MRR] Monthly MRR entries: ${Object.keys(monthlyMRR).length}`);
-    console.log(`[GET-STRIPE-MRR] Monthly Refunds entries: ${Object.keys(monthlyRefunds).length}`);
-    console.log(`[GET-STRIPE-MRR] Monthly Sales entries: ${Object.keys(monthlySales).length}`);
+    const totalNewSales = Object.values(monthlySales).reduce((sum, m) => sum + m.newSales, 0);
+
+    console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
+    console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${totalSalesValue} (${totalSalesCount} transactions), New Sales: ${totalNewSales}`);
+    console.log(`[GET-STRIPE-MRR] Refunds: ${wiizeRefundCount} (R$ ${wiizeRefundedAmount})`);
 
     return new Response(
       JSON.stringify({
@@ -329,6 +310,9 @@ Deno.serve(async (req) => {
         refundCount: wiizeRefundCount,
         canceledSubscriptions: canceledCount,
         churnRate: parseFloat(churnRate.toFixed(1)),
+        totalSalesValue,
+        totalSalesCount,
+        totalNewSales,
         planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
           .map(([month, mrr]) => ({ month, mrr }))
