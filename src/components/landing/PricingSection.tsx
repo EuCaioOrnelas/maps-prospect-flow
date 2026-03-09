@@ -361,7 +361,7 @@ export const PricingSection = () => {
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-xs md:text-lg text-foreground">400 disparos</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">grátis (máx. 20/dia)</p>
                       </div>
                     </div>
                     
