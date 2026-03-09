@@ -791,9 +791,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Usuários com Score Ativo</CardTitle>
+                  <CardTitle className="text-base">Usuários com Score Ativo</CardTitle>
                 </div>
-                <CardDescription className="text-xs">Baseado nos eventos rastreados no sistema</CardDescription>
+                <CardDescription>Baseado nos eventos rastreados no sistema</CardDescription>
               </CardHeader>
               <CardContent>
                 <UserScoreTable productEvents={analytics?.productEvents || []} scoreConfigs={scoreConfigs} />
