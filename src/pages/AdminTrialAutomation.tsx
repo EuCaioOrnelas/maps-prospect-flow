@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,24 +10,53 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
+import { TemplateEditorDialog } from "@/components/admin/TemplateEditorDialog";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ArrowLeft, Zap, Mail, Target, BarChart3, Settings, Plus, Edit, Trash2,
   Play, Pause, Eye, TrendingUp, Users, MousePointerClick, DollarSign,
-  CheckCircle2, XCircle, Clock, Loader2, RefreshCw, Rocket,
+  CheckCircle2, XCircle, Clock, Loader2, RefreshCw, Rocket, Activity,
+  ArrowUpRight, ArrowDownRight, Hash, Gauge, Star, AlertTriangle,
+  ChevronRight, Send, MailOpen,
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Automation { id: string; name: string; description: string | null; trigger_event: string; trigger_conditions: any; status: string; automation_type: string; created_at: string; }
 interface AutomationStep { id: string; automation_id: string; step_order: number; delay_hours: number; condition: any; action_type: string; template_id: string | null; stop_condition: any; }
 interface MessageTemplate { id: string; name: string; subject: string; body: string; variables: any; channel: string; is_active: boolean; }
 interface BehaviourTrigger { id: string; name: string; description: string | null; trigger_type: string; conditions: any; entry_rules: any; cooldown_hours: number; priority: number; target_automation_id: string | null; status: string; success_condition: any; stop_condition: any; }
+
+// ─── KPI Card ────────────────────────────────────────────────────────────────
+function KPICard({ label, value, icon: Icon, color, subtitle }: { label: string; value: string | number; icon: any; color: string; subtitle?: string }) {
+  return (
+    <Card className="group hover:border-primary/20 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className={cn("p-2 rounded-lg", color)}>
+            <Icon className="h-4 w-4" />
+          </div>
+        </div>
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+        {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Status Dot ──────────────────────────────────────────────────────────────
+function StatusDot({ active }: { active: boolean }) {
+  return (
+    <span className={cn("inline-block h-2 w-2 rounded-full", active ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-muted-foreground/30")} />
+  );
+}
 
 export default function AdminTrialAutomation() {
   const { profile } = useAuth();
@@ -43,12 +71,11 @@ export default function AdminTrialAutomation() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [triggers, setBehaviourTriggers] = useState<BehaviourTrigger[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]);
 
   // Dialog states
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
-  const [editTrigger, setEditTrigger] = useState<BehaviourTrigger | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
   const [runningProcessor, setRunningProcessor] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -65,13 +92,13 @@ export default function AdminTrialAutomation() {
     if (templatesRes.data) setTemplates(templatesRes.data as any[]);
     if (triggersRes.data) setBehaviourTriggers(triggersRes.data as any[]);
 
-    // Fetch analytics
-    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes] = await Promise.all([
+    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes, configsRes] = await Promise.all([
       supabase.from("trial_email_events").select("*"),
       supabase.from("trial_product_events").select("*"),
       supabase.from("trial_user_automation_state").select("*"),
       supabase.from("trial_behaviour_trigger_logs").select("*"),
       supabase.from("trial_revenue_attribution").select("*"),
+      supabase.from("trial_activation_config").select("*").order("config_type"),
     ]);
 
     setAnalytics({
@@ -82,12 +109,13 @@ export default function AdminTrialAutomation() {
       revenue: revenueRes.data || [],
     });
 
+    if (configsRes.data) setScoreConfigs(configsRes.data);
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ─── Automation Actions ─────────────────────────────────────────────────────
+  // ─── Actions ────────────────────────────────────────────────────────────────
   const toggleAutomationStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "paused" : "active";
     await supabase.from("trial_automations").update({ status: newStatus }).eq("id", id);
@@ -95,7 +123,6 @@ export default function AdminTrialAutomation() {
     fetchAll();
   };
 
-  // ─── Template Actions ─────────────────────────────────────────────────────
   const saveTemplate = async (template: Partial<MessageTemplate>) => {
     if (editTemplate?.id) {
       await supabase.from("trial_message_templates").update(template as any).eq("id", editTemplate.id);
@@ -114,7 +141,6 @@ export default function AdminTrialAutomation() {
     fetchAll();
   };
 
-  // ─── Trigger Actions ─────────────────────────────────────────────────────
   const toggleTriggerStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "paused" : "active";
     await supabase.from("trial_behaviour_triggers").update({ status: newStatus }).eq("id", id);
@@ -122,7 +148,44 @@ export default function AdminTrialAutomation() {
     fetchAll();
   };
 
-  // ─── Analytics helpers ─────────────────────────────────────────────────────
+  const toggleAllAutomations = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(automations.map((a) => supabase.from("trial_automations").update({ status: newStatus }).eq("id", a.id)));
+    toast({ title: activate ? "Todos os fluxos ativados" : "Todos os fluxos pausados" });
+    fetchAll();
+  };
+
+  const toggleAllTriggers = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(triggers.map((t) => supabase.from("trial_behaviour_triggers").update({ status: newStatus }).eq("id", t.id)));
+    toast({ title: activate ? "Todos os triggers ativados" : "Todos os triggers pausados" });
+    fetchAll();
+  };
+
+  const toggleScoreConfig = async (id: string, isActive: boolean) => {
+    await supabase.from("trial_activation_config").update({ is_active: !isActive }).eq("id", id);
+    setScoreConfigs((prev) => prev.map((c) => (c.id === id ? { ...c, is_active: !isActive } : c)));
+    toast({ title: "Configuração atualizada" });
+  };
+
+  const runProcessor = async () => {
+    setRunningProcessor(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
+      if (error) throw error;
+      toast({
+        title: "Processador executado com sucesso",
+        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
+      });
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
+    } finally {
+      setRunningProcessor(false);
+    }
+  };
+
+  // ─── Analytics Helpers ──────────────────────────────────────────────────────
   const getEmailStats = () => {
     if (!analytics) return { sent: 0, opened: 0, clicked: 0, openRate: 0, clickRate: 0 };
     const events = analytics.emailEvents;
@@ -146,88 +209,68 @@ export default function AdminTrialAutomation() {
     };
   };
 
-  const getTriggerStats = () => {
-    if (!analytics) return { matched: 0, entered: 0 };
-    const logs = analytics.triggerLogs;
-    return {
-      matched: logs.filter((l: any) => l.action === "behavior_trigger_matched").length,
-      entered: logs.filter((l: any) => l.action === "behavior_automation_entered").length,
-    };
-  };
-
   const getTotalRevenue = () => {
     if (!analytics?.revenue) return 0;
     return analytics.revenue.reduce((sum: number, r: any) => sum + Number(r.revenue_amount || 0), 0);
   };
 
-  const runProcessor = async () => {
-    setRunningProcessor(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
-      if (error) throw error;
-      toast({
-        title: "Processador executado",
-        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
-      });
-      fetchAll();
-    } catch (err: any) {
-      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
-    } finally {
-      setRunningProcessor(false);
-    }
+  const getConversions = () => {
+    if (!analytics) return 0;
+    return analytics.productEvents.filter((e: any) => e.event_name === "subscription_started").length;
   };
 
-  // Toggle all automations
-  const toggleAllAutomations = async (activate: boolean) => {
-    const newStatus = activate ? "active" : "paused";
-    await Promise.all(automations.map((a) => supabase.from("trial_automations").update({ status: newStatus }).eq("id", a.id)));
-    toast({ title: activate ? "Todos os fluxos ativados" : "Todos os fluxos pausados" });
-    fetchAll();
-  };
-
-  // Toggle all triggers
-  const toggleAllTriggers = async (activate: boolean) => {
-    const newStatus = activate ? "active" : "paused";
-    await Promise.all(triggers.map((t) => supabase.from("trial_behaviour_triggers").update({ status: newStatus }).eq("id", t.id)));
-    toast({ title: activate ? "Todos os triggers ativados" : "Todos os triggers pausados" });
-    fetchAll();
+  const getScoreTotal = () => {
+    const activeConfigs = scoreConfigs.filter((c) => c.is_active);
+    return activeConfigs.reduce((sum, c) => sum + (c.config_value?.points || 0), 0);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando automações...</p>
+        </div>
       </div>
     );
   }
 
   const emailStats = getEmailStats();
   const automationStats = getAutomationStats();
-  const triggerStats = getTriggerStats();
   const totalRevenue = getTotalRevenue();
+  const conversions = getConversions();
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <BackgroundGlow />
       <SEO title="Automação Trial | Admin" description="Sistema de automação de trial e ativação" />
 
-      {/* Header */}
+      {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/admin")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            <h1 className="font-semibold text-lg">Automação Trial</h1>
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-semibold text-sm leading-tight">Automação Trial</h1>
+              <p className="text-[10px] text-muted-foreground leading-tight">Motor de conversão e ativação</p>
+            </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="default" size="sm" onClick={runProcessor} disabled={runningProcessor}>
-              {runningProcessor ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5 mr-1.5" />}
-              Executar Processador
+            <Badge variant="outline" className="text-[10px] hidden sm:flex">
+              <StatusDot active={automations.some((a) => a.status === "active")} />
+              <span className="ml-1.5">{automations.filter((a) => a.status === "active").length} fluxos ativos</span>
+            </Badge>
+            <Button variant="default" size="sm" className="h-8 text-xs" onClick={runProcessor} disabled={runningProcessor}>
+              {runningProcessor ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Rocket className="h-3 w-3 mr-1.5" />}
+              Executar
             </Button>
-            <Button variant="outline" size="sm" onClick={fetchAll}>
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={fetchAll}>
+              <RefreshCw className="h-3 w-3 mr-1.5" />
               Atualizar
             </Button>
           </div>
@@ -235,178 +278,198 @@ export default function AdminTrialAutomation() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 relative z-10">
-        {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {[
-            { label: "Emails Enviados", value: emailStats.sent, icon: Mail, color: "text-blue-500" },
-            { label: "Taxa Abertura", value: `${emailStats.openRate}%`, icon: Eye, color: "text-emerald-500" },
-            { label: "Taxa Clique", value: `${emailStats.clickRate}%`, icon: MousePointerClick, color: "text-amber-500" },
-            { label: "Usuários em Fluxos", value: automationStats.active, icon: Users, color: "text-purple-500" },
-            { label: "Receita Atribuída", value: `R$ ${totalRevenue.toFixed(0)}`, icon: DollarSign, color: "text-primary" },
-          ].map((kpi) => (
-            <Card key={kpi.label}>
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-                  <span className="text-xs text-muted-foreground">{kpi.label}</span>
-                </div>
-                <p className="text-xl font-bold">{kpi.value}</p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* ─── KPI Row ──────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <KPICard label="Emails Enviados" value={emailStats.sent} icon={Send} color="bg-blue-500/10 text-blue-400" />
+          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened} abertos`} />
+          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked} cliques`} />
+          <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} entraram`} />
+          <KPICard label="Conversões" value={conversions} icon={CheckCircle2} color="bg-primary/10 text-primary" />
+          <KPICard label="Receita Atribuída" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
         </div>
 
-        {/* Tabs */}
+        {/* ─── Tabs ─────────────────────────────────────────────────────────── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="automations" className="gap-1.5"><Zap className="h-3.5 w-3.5" />Automações</TabsTrigger>
-            <TabsTrigger value="templates" className="gap-1.5"><Mail className="h-3.5 w-3.5" />Templates</TabsTrigger>
-            <TabsTrigger value="triggers" className="gap-1.5"><Target className="h-3.5 w-3.5" />Triggers</TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Analytics</TabsTrigger>
-            <TabsTrigger value="config" className="gap-1.5"><Settings className="h-3.5 w-3.5" />Config</TabsTrigger>
+          <TabsList className="h-9 bg-muted/50 p-0.5">
+            <TabsTrigger value="automations" className="text-xs gap-1.5 data-[state=active]:bg-background"><Zap className="h-3 w-3" />Automações</TabsTrigger>
+            <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background"><Mail className="h-3 w-3" />Templates</TabsTrigger>
+            <TabsTrigger value="triggers" className="text-xs gap-1.5 data-[state=active]:bg-background"><Target className="h-3 w-3" />Triggers</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs gap-1.5 data-[state=active]:bg-background"><BarChart3 className="h-3 w-3" />Analytics</TabsTrigger>
+            <TabsTrigger value="score" className="text-xs gap-1.5 data-[state=active]:bg-background"><Gauge className="h-3 w-3" />Score</TabsTrigger>
           </TabsList>
 
-          {/* ═══ AUTOMATIONS TAB ═══ */}
-          <TabsContent value="automations" className="space-y-4">
+          {/* ═══════════════════════ AUTOMATIONS TAB ═══════════════════════════ */}
+          <TabsContent value="automations" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Fluxos de Automação</h2>
+              <div>
+                <h2 className="text-base font-semibold">Fluxos de Automação</h2>
+                <p className="text-xs text-muted-foreground">Gerencie os fluxos de email automatizados para trial</p>
+              </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(true)}>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllAutomations(true)}>
                   <Play className="h-3 w-3 mr-1" /> Ativar Todos
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(false)}>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllAutomations(false)}>
                   <Pause className="h-3 w-3 mr-1" /> Pausar Todos
                 </Button>
               </div>
             </div>
-            {automations.map((automation) => {
-              const autoSteps = steps.filter((s) => s.automation_id === automation.id);
-              return (
-                <Card key={automation.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-base">{automation.name}</CardTitle>
-                        <CardDescription className="text-xs">{automation.description}</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={automation.status === "active" ? "default" : "secondary"}>
-                          {automation.status === "active" ? "Ativo" : "Pausado"}
-                        </Badge>
+
+            <div className="grid gap-3">
+              {automations.map((automation) => {
+                const autoSteps = steps.filter((s) => s.automation_id === automation.id);
+                const stateCount = analytics?.automationStates?.filter((s: any) => s.automation_id === automation.id).length || 0;
+                const activeCount = analytics?.automationStates?.filter((s: any) => s.automation_id === automation.id && s.status === "active").length || 0;
+
+                return (
+                  <Card key={automation.id} className={cn("transition-all", automation.status === "active" ? "border-primary/20" : "opacity-70")}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", automation.status === "active" ? "bg-primary/10" : "bg-muted")}>
+                            <Zap className={cn("h-4 w-4", automation.status === "active" ? "text-primary" : "text-muted-foreground")} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-sm">{automation.name}</h3>
+                              <StatusDot active={automation.status === "active"} />
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{automation.description}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <Badge variant="outline" className="text-[10px]">
+                                {automation.trigger_event === "user_inactive" ? "⏰ Inatividade" :
+                                 automation.trigger_event === "trial_expiring" ? "⚠️ Trial expirando" :
+                                 automation.trigger_event === "trial_ended" ? "🔴 Trial encerrado" : automation.trigger_event}
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground">{autoSteps.length} etapas</span>
+                              <span className="text-[10px] text-muted-foreground">{stateCount} entraram • {activeCount} ativos</span>
+                            </div>
+                          </div>
+                        </div>
                         <Switch
                           checked={automation.status === "active"}
                           onCheckedChange={() => toggleAutomationStatus(automation.id, automation.status)}
                         />
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Trigger: <code className="bg-muted px-1 rounded">{automation.trigger_event}</code> |
-                        Tipo: <code className="bg-muted px-1 rounded">{automation.automation_type}</code>
-                      </p>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">#</TableHead>
-                            <TableHead>Delay</TableHead>
-                            <TableHead>Ação</TableHead>
-                            <TableHead>Template</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {autoSteps.map((step) => {
+
+                      {/* Steps Timeline */}
+                      {autoSteps.length > 0 && (
+                        <div className="pl-4 border-l-2 border-border/50 ml-4 space-y-2">
+                          {autoSteps.map((step, i) => {
                             const template = templates.find((t) => t.id === step.template_id);
                             return (
-                              <TableRow key={step.id}>
-                                <TableCell className="font-mono text-xs">{step.step_order}</TableCell>
-                                <TableCell className="text-xs">
-                                  {step.delay_hours >= 24 ? `${Math.round(step.delay_hours / 24)}d` : `${step.delay_hours}h`}
-                                </TableCell>
-                                <TableCell className="text-xs">{step.action_type}</TableCell>
-                                <TableCell className="text-xs">{template?.name || "—"}</TableCell>
-                              </TableRow>
+                              <div key={step.id} className="flex items-center gap-3 relative">
+                                <div className="absolute -left-[21px] h-3 w-3 rounded-full bg-muted border-2 border-border" />
+                                <div className="flex items-center gap-2 text-xs bg-muted/30 rounded-md px-3 py-1.5 flex-1">
+                                  <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  <span className="text-muted-foreground">
+                                    {step.delay_hours >= 24 ? `${Math.round(step.delay_hours / 24)}d` : `${step.delay_hours}h`}
+                                  </span>
+                                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                                  <Mail className="h-3 w-3 text-blue-400 shrink-0" />
+                                  <span className="font-medium truncate">{template?.name || "Sem template"}</span>
+                                </div>
+                              </div>
                             );
                           })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </TabsContent>
-
-          {/* ═══ TEMPLATES TAB ═══ */}
-          <TabsContent value="templates" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Templates de Email</h2>
-              <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" onClick={() => setEditTemplate(null)}>
-                    <Plus className="h-3.5 w-3.5 mr-1" />Novo Template
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{editTemplate ? "Editar Template" : "Novo Template"}</DialogTitle>
-                  </DialogHeader>
-                  <TemplateForm
-                    template={editTemplate}
-                    onSave={saveTemplate}
-                    onCancel={() => { setTemplateDialogOpen(false); setEditTemplate(null); }}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid gap-3">
-              {templates.map((template) => (
-                <Card key={template.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-sm">{template.name}</h3>
-                          <Badge variant={template.is_active ? "default" : "secondary"} className="text-[10px]">
-                            {template.is_active ? "Ativo" : "Inativo"}
-                          </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2">Assunto: {template.subject}</p>
-                        <div className="text-xs text-muted-foreground/80 bg-muted/30 rounded p-2 max-h-20 overflow-hidden" dangerouslySetInnerHTML={{ __html: template.body.substring(0, 200) + "..." }} />
-                      </div>
-                      <div className="flex items-center gap-1 ml-3">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                          setEditTemplate(template);
-                          setTemplateDialogOpen(true);
-                        }}>
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteTemplate(template.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
-          {/* ═══ TRIGGERS TAB ═══ */}
-          <TabsContent value="triggers" className="space-y-4">
+          {/* ═══════════════════════ TEMPLATES TAB ═════════════════════════════ */}
+          <TabsContent value="templates" className="space-y-4 mt-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
-                <Badge variant="outline">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+              <div>
+                <h2 className="text-base font-semibold">Templates de Email</h2>
+                <p className="text-xs text-muted-foreground">Crie e edite templates com preview em tempo real</p>
+              </div>
+              <Button size="sm" className="h-8 text-xs" onClick={() => { setEditTemplate(null); setTemplateDialogOpen(true); }}>
+                <Plus className="h-3 w-3 mr-1.5" />Novo Template
+              </Button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {templates.map((template) => {
+                const tEvents = analytics?.emailEvents?.filter((e: any) => e.email_template_id === template.id) || [];
+                const sent = tEvents.filter((e: any) => e.event_type === "sent").length;
+                const opened = tEvents.filter((e: any) => e.event_type === "opened").length;
+                const clicked = tEvents.filter((e: any) => e.event_type === "clicked").length;
+
+                return (
+                  <Card key={template.id} className={cn("group hover:border-primary/20 transition-all", !template.is_active && "opacity-60")}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Mail className="h-4 w-4 text-blue-400" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-sm leading-tight">{template.name}</h3>
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{template.subject}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <StatusDot active={template.is_active} />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setEditTemplate(template); setTemplateDialogOpen(true); }}>
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive" onClick={() => deleteTemplate(template.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Mini stats */}
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div className="bg-muted/30 rounded-md p-2 text-center">
+                          <p className="text-lg font-bold">{sent}</p>
+                          <p className="text-[10px] text-muted-foreground">Enviados</p>
+                        </div>
+                        <div className="bg-muted/30 rounded-md p-2 text-center">
+                          <p className="text-lg font-bold">{sent ? `${Math.round((opened / sent) * 100)}%` : "—"}</p>
+                          <p className="text-[10px] text-muted-foreground">Open Rate</p>
+                        </div>
+                        <div className="bg-muted/30 rounded-md p-2 text-center">
+                          <p className="text-lg font-bold">{sent ? `${Math.round((clicked / sent) * 100)}%` : "—"}</p>
+                          <p className="text-[10px] text-muted-foreground">Click Rate</p>
+                        </div>
+                      </div>
+
+                      {/* Preview snippet */}
+                      <div className="mt-3 text-[10px] text-muted-foreground/60 bg-muted/20 rounded p-2 max-h-12 overflow-hidden leading-relaxed" dangerouslySetInnerHTML={{ __html: template.body.substring(0, 120) + "..." }} />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <TemplateEditorDialog
+              open={templateDialogOpen}
+              onOpenChange={(open) => { setTemplateDialogOpen(open); if (!open) setEditTemplate(null); }}
+              template={editTemplate}
+              onSave={saveTemplate}
+            />
+          </TabsContent>
+
+          {/* ═══════════════════════ TRIGGERS TAB ══════════════════════════════ */}
+          <TabsContent value="triggers" className="space-y-4 mt-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-base font-semibold">Triggers Comportamentais</h2>
+                <p className="text-xs text-muted-foreground">Regras automáticas baseadas no comportamento do usuário</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(true)}>
-                  <Play className="h-3 w-3 mr-1" /> Ativar Todos
+                <Badge variant="outline" className="text-[10px]">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllTriggers(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Ativar
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(false)}>
-                  <Pause className="h-3 w-3 mr-1" /> Pausar Todos
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllTriggers(false)}>
+                  <Pause className="h-3 w-3 mr-1" /> Pausar
                 </Button>
               </div>
             </div>
@@ -416,24 +479,42 @@ export default function AdminTrialAutomation() {
                 const logs = analytics?.triggerLogs?.filter((l: any) => l.trigger_id === trigger.id) || [];
                 const matched = logs.filter((l: any) => l.action === "behavior_trigger_matched").length;
                 const entered = logs.filter((l: any) => l.action === "behavior_automation_entered").length;
+                const targetAutomation = automations.find((a) => a.id === trigger.target_automation_id);
 
                 return (
-                  <Card key={trigger.id}>
+                  <Card key={trigger.id} className={cn("transition-all", trigger.status === "active" ? "border-primary/10" : "opacity-60")}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-sm">{trigger.name}</h3>
-                            <Badge variant={trigger.status === "active" ? "default" : "secondary"} className="text-[10px]">
-                              {trigger.status}
-                            </Badge>
-                            <Badge variant="outline" className="text-[10px]">P{trigger.priority}</Badge>
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", trigger.status === "active" ? "bg-amber-500/10" : "bg-muted")}>
+                            <Target className={cn("h-4 w-4", trigger.status === "active" ? "text-amber-400" : "text-muted-foreground")} />
                           </div>
-                          <p className="text-xs text-muted-foreground mb-2">{trigger.description}</p>
-                          <div className="flex gap-4 text-xs text-muted-foreground">
-                            <span>Matched: <strong>{matched}</strong></span>
-                            <span>Entrou: <strong>{entered}</strong></span>
-                            <span>Cooldown: <strong>{trigger.cooldown_hours}h</strong></span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium text-sm">{trigger.name}</h3>
+                              <Badge variant="outline" className="text-[10px] font-mono">P{trigger.priority}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2">{trigger.description}</p>
+                            <div className="flex flex-wrap gap-3 text-[11px]">
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                                <strong>{matched}</strong> qualificados
+                              </span>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <ArrowUpRight className="h-3 w-3 text-blue-400" />
+                                <strong>{entered}</strong> entraram
+                              </span>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                Cooldown: {trigger.cooldown_hours}h
+                              </span>
+                              {targetAutomation && (
+                                <span className="flex items-center gap-1 text-muted-foreground">
+                                  <Zap className="h-3 w-3 text-primary" />
+                                  → {targetAutomation.name}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <Switch
@@ -448,93 +529,273 @@ export default function AdminTrialAutomation() {
             </div>
           </TabsContent>
 
-          {/* ═══ ANALYTICS TAB ═══ */}
-          <TabsContent value="analytics" className="space-y-6">
-            {/* Trial Funnel */}
+          {/* ═══════════════════════ ANALYTICS TAB ═════════════════════════════ */}
+          <TabsContent value="analytics" className="space-y-6 mt-4">
+            {/* Email Performance per Template */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Funil do Trial</CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-blue-400" />
+                  <CardTitle className="text-sm">Performance Individual de Emails</CardTitle>
+                </div>
+                <CardDescription className="text-xs">Métricas reais por template de email</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-xs">Template</TableHead>
+                        <TableHead className="text-xs text-center">Enviados</TableHead>
+                        <TableHead className="text-xs text-center">Abertos</TableHead>
+                        <TableHead className="text-xs text-center">Open Rate</TableHead>
+                        <TableHead className="text-xs text-center">Cliques</TableHead>
+                        <TableHead className="text-xs text-center">Click Rate</TableHead>
+                        <TableHead className="text-xs text-right">Receita</TableHead>
+                        <TableHead className="text-xs text-center">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {templates.map((template) => {
+                        const tEvents = analytics?.emailEvents?.filter((e: any) => e.email_template_id === template.id) || [];
+                        const sent = tEvents.filter((e: any) => e.event_type === "sent").length;
+                        const opened = tEvents.filter((e: any) => e.event_type === "opened").length;
+                        const clicked = tEvents.filter((e: any) => e.event_type === "clicked").length;
+                        const rev = (analytics?.revenue || []).filter((r: any) => r.email_template_id === template.id).reduce((s: number, r: any) => {
+                          const amount = Number(r.revenue_amount || 0);
+                          const discount = Number(r.coupon_discount || 0);
+                          return s + (amount - discount);
+                        }, 0);
+                        const openRate = sent ? Math.round((opened / sent) * 100) : 0;
+                        const clickRate = sent ? Math.round((clicked / sent) * 100) : 0;
+
+                        return (
+                          <TableRow key={template.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <StatusDot active={template.is_active} />
+                                <span className="text-xs font-medium">{template.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center text-xs font-mono">{sent}</TableCell>
+                            <TableCell className="text-center text-xs font-mono">{opened}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={openRate >= 30 ? "default" : openRate >= 15 ? "secondary" : "outline"} className="text-[10px] font-mono">
+                                {sent ? `${openRate}%` : "—"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center text-xs font-mono">{clicked}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={clickRate >= 5 ? "default" : "outline"} className="text-[10px] font-mono">
+                                {sent ? `${clickRate}%` : "—"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-xs font-mono font-medium">
+                              {rev > 0 ? `R$ ${rev.toFixed(2)}` : "—"}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={template.is_active ? "default" : "secondary"} className="text-[10px]">
+                                {template.is_active ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Automation Revenue & Conversions */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-yellow-400" />
+                    <CardTitle className="text-sm">Receita por Automação</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-xs">Automação</TableHead>
+                        <TableHead className="text-xs text-center">Conversões</TableHead>
+                        <TableHead className="text-xs text-right">Receita</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {automations.map((automation) => {
+                        const autoRevenue = (analytics?.revenue || []).filter((r: any) => r.automation_id === automation.id);
+                        const total = autoRevenue.reduce((s: number, r: any) => {
+                          const amount = Number(r.revenue_amount || 0);
+                          const discount = Number(r.coupon_discount || 0);
+                          return s + (amount - discount);
+                        }, 0);
+                        return (
+                          <TableRow key={automation.id}>
+                            <TableCell className="text-xs font-medium flex items-center gap-1.5">
+                              <StatusDot active={automation.status === "active"} />
+                              {automation.name}
+                            </TableCell>
+                            <TableCell className="text-center text-xs font-mono">{autoRevenue.length}</TableCell>
+                            <TableCell className="text-right text-xs font-mono font-medium">
+                              {total > 0 ? `R$ ${total.toFixed(2)}` : "—"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Trigger Performance */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-amber-400" />
+                    <CardTitle className="text-sm">Performance de Triggers</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-xs">Trigger</TableHead>
+                        <TableHead className="text-xs text-center">Qualificados</TableHead>
+                        <TableHead className="text-xs text-center">Entraram</TableHead>
+                        <TableHead className="text-xs text-center">P</TableHead>
+                        <TableHead className="text-xs text-center">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {triggers.map((trigger) => {
+                        const logs = (analytics?.triggerLogs || []).filter((l: any) => l.trigger_id === trigger.id);
+                        const matched = logs.filter((l: any) => l.action === "behavior_trigger_matched").length;
+                        const entered = logs.filter((l: any) => l.action === "behavior_automation_entered").length;
+                        return (
+                          <TableRow key={trigger.id}>
+                            <TableCell className="text-xs font-medium">{trigger.name}</TableCell>
+                            <TableCell className="text-center text-xs font-mono">{matched}</TableCell>
+                            <TableCell className="text-center text-xs font-mono">{entered}</TableCell>
+                            <TableCell className="text-center text-xs font-mono">{trigger.priority}</TableCell>
+                            <TableCell className="text-center">
+                              <StatusDot active={trigger.status === "active"} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Funnel */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">Funil de Conversão Trial</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <TrialFunnel analytics={analytics} />
               </CardContent>
             </Card>
-
-            {/* Email Performance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Performance de Emails</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <EmailPerformanceTable templates={templates} emailEvents={analytics?.emailEvents || []} revenue={analytics?.revenue || []} />
-              </CardContent>
-            </Card>
-
-            {/* Revenue Attribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Atribuição de Receita</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RevenueAttribution automations={automations} revenue={analytics?.revenue || []} />
-              </CardContent>
-            </Card>
-
-            {/* Trigger Performance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Performance por Trigger</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TriggerPerformanceTable triggers={triggers} triggerLogs={analytics?.triggerLogs || []} />
-              </CardContent>
-            </Card>
           </TabsContent>
 
-          {/* ═══ CONFIG TAB ═══ */}
-          <TabsContent value="config" className="space-y-4">
-            <ActivationConfigPanel />
+          {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
+          <TabsContent value="score" className="space-y-4 mt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold">Sistema de Score de Engajamento</h2>
+                <p className="text-xs text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
+              </div>
+              <Badge variant="outline" className="font-mono text-xs">
+                Score máx.: {getScoreTotal()} pts
+              </Badge>
+            </div>
+
+            {/* Score explanation */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Gauge className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">Como funciona o Score</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Cada ação do usuário no produto gera pontos. O score total determina a prioridade do usuário nos
+                      triggers comportamentais e ajuda a personalizar as automações. Ative/desative os eventos abaixo e
+                      ajuste os pontos para calibrar o sistema de engajamento.
+                    </p>
+                    <div className="flex gap-4 mt-2 text-[11px]">
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> 0-3: Baixo</span>
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" /> 4-6: Médio</span>
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> 7-9+: Alto</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Score configs grouped */}
+            {(() => {
+              const grouped = {
+                activation_event: { label: "🎯 Eventos de Ativação", desc: "Ações que indicam que o usuário está usando o produto", items: scoreConfigs.filter((c) => c.config_type === "activation_event") },
+                high_value_feature: { label: "⭐ Features de Alto Valor", desc: "Uso de funcionalidades premium ou avançadas", items: scoreConfigs.filter((c) => c.config_type === "high_value_feature") },
+                intent_signal: { label: "💡 Sinais de Intenção", desc: "Indicadores de que o usuário está considerando comprar", items: scoreConfigs.filter((c) => c.config_type === "intent_signal") },
+              };
+
+              return Object.entries(grouped).map(([type, group]) => (
+                <Card key={type}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{group.label}</CardTitle>
+                    <CardDescription className="text-xs">{group.desc}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="divide-y divide-border/50">
+                      {group.items.map((config: any) => (
+                        <div key={config.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-3">
+                            <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold", config.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+                              +{config.config_value?.points || 0}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{config.config_value?.label || config.config_key}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{config.config_key}</p>
+                            </div>
+                          </div>
+                          <Switch checked={config.is_active} onCheckedChange={() => toggleScoreConfig(config.id, config.is_active)} />
+                        </div>
+                      ))}
+                      {group.items.length === 0 && (
+                        <p className="text-xs text-muted-foreground py-3">Nenhuma configuração nesta categoria</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ));
+            })()}
+
+            {/* Active User Scores */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">Usuários com Score Ativo</CardTitle>
+                </div>
+                <CardDescription className="text-xs">Baseado nos eventos rastreados no sistema</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserScoreTable productEvents={analytics?.productEvents || []} scoreConfigs={scoreConfigs} />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
-    </div>
-  );
-}
-
-// ─── Template Form ─────────────────────────────────────────────────────────────
-function TemplateForm({ template, onSave, onCancel }: { template: MessageTemplate | null; onSave: (t: any) => void; onCancel: () => void }) {
-  const [name, setName] = useState(template?.name || "");
-  const [subject, setSubject] = useState(template?.subject || "");
-  const [body, setBody] = useState(template?.body || "");
-  const [isActive, setIsActive] = useState(template?.is_active ?? true);
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label>Nome</Label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do template" />
-      </div>
-      <div>
-        <Label>Assunto</Label>
-        <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Assunto do email" />
-      </div>
-      <div>
-        <Label>Corpo (HTML)</Label>
-        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="HTML do email..." className="font-mono text-xs" />
-        <p className="text-xs text-muted-foreground mt-1">
-          Variáveis: {"{{user_name}}"}, {"{{cta_link}}"}, {"{{trial_days_left}}"}, {"{{projects_created}}"}, {"{{feature_usage}}"}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <Switch checked={isActive} onCheckedChange={setIsActive} />
-        <Label>Ativo</Label>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-        <Button onClick={() => onSave({ name, subject, body, is_active: isActive, channel: "email", variables: [] })}>
-          Salvar
-        </Button>
-      </DialogFooter>
     </div>
   );
 }
@@ -548,194 +809,108 @@ function TrialFunnel({ analytics }: { analytics: any }) {
   const emailEvents = analytics.emailEvents || [];
 
   const funnelSteps = [
-    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0 },
-    { label: "Entraram em Automação", value: states.length },
-    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length },
-    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length },
-    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length },
-    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length },
-    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length },
+    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0, color: "bg-blue-500" },
+    { label: "Entraram em Automação", value: states.length, color: "bg-indigo-500" },
+    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length, color: "bg-violet-500" },
+    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length, color: "bg-purple-500" },
+    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length, color: "bg-pink-500" },
+    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length, color: "bg-amber-500" },
+    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length, color: "bg-emerald-500" },
   ];
 
   const maxValue = Math.max(...funnelSteps.map((s) => s.value), 1);
 
   return (
     <div className="space-y-2">
-      {funnelSteps.map((step, i) => (
-        <div key={step.label} className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-40 text-right">{step.label}</span>
-          <div className="flex-1">
-            <div className="h-6 bg-muted/30 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary/70 rounded-full transition-all flex items-center justify-end pr-2"
-                style={{ width: `${Math.max((step.value / maxValue) * 100, 5)}%` }}
-              >
-                <span className="text-[10px] font-bold text-primary-foreground">{step.value}</span>
+      {funnelSteps.map((step, i) => {
+        const pct = Math.max((step.value / maxValue) * 100, 8);
+        const prevValue = i > 0 ? funnelSteps[i - 1].value : step.value;
+        const dropoff = prevValue > 0 && i > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
+
+        return (
+          <div key={step.label} className="flex items-center gap-3">
+            <span className="text-[11px] text-muted-foreground w-44 text-right shrink-0">{step.label}</span>
+            <div className="flex-1">
+              <div className="h-7 bg-muted/20 rounded-md overflow-hidden">
+                <div
+                  className={cn("h-full rounded-md transition-all flex items-center justify-between px-3", step.color + "/30")}
+                  style={{ width: `${pct}%` }}
+                >
+                  <span className="text-xs font-bold">{step.value}</span>
+                  {dropoff > 0 && i > 0 && (
+                    <span className="text-[9px] text-muted-foreground">-{dropoff}%</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// ─── Email Performance Table ─────────────────────────────────────────────────
-function EmailPerformanceTable({ templates, emailEvents, revenue }: { templates: MessageTemplate[]; emailEvents: any[]; revenue: any[] }) {
+// ─── User Score Table ────────────────────────────────────────────────────────
+function UserScoreTable({ productEvents, scoreConfigs }: { productEvents: any[]; scoreConfigs: any[] }) {
+  // Calculate scores per user from product events
+  const activeConfigs = scoreConfigs.filter((c) => c.is_active);
+  const configMap = new Map(activeConfigs.map((c) => [c.config_key, c.config_value?.points || 0]));
+
+  const userScores = new Map<string, { score: number; events: number; lastEvent: string }>();
+
+  productEvents.forEach((event: any) => {
+    const userId = event.user_id;
+    const points = configMap.get(event.event_name) || 1; // Default 1 point per event
+    const current = userScores.get(userId) || { score: 0, events: 0, lastEvent: "" };
+    current.score += points;
+    current.events += 1;
+    if (!current.lastEvent || event.created_at > current.lastEvent) {
+      current.lastEvent = event.created_at;
+    }
+    userScores.set(userId, current);
+  });
+
+  const sortedUsers = Array.from(userScores.entries())
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, 20);
+
+  if (sortedUsers.length === 0) {
+    return <p className="text-xs text-muted-foreground py-4 text-center">Nenhum evento rastreado ainda</p>;
+  }
+
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Template</TableHead>
-          <TableHead className="text-right">Enviados</TableHead>
-          <TableHead className="text-right">Abertos</TableHead>
-          <TableHead className="text-right">Open Rate</TableHead>
-          <TableHead className="text-right">Cliques</TableHead>
-          <TableHead className="text-right">Click Rate</TableHead>
-          <TableHead className="text-right">Receita</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="text-xs">Usuário ID</TableHead>
+          <TableHead className="text-xs text-center">Score</TableHead>
+          <TableHead className="text-xs text-center">Eventos</TableHead>
+          <TableHead className="text-xs text-center">Nível</TableHead>
+          <TableHead className="text-xs text-right">Último Evento</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {templates.map((template) => {
-          const tEvents = emailEvents.filter((e: any) => e.email_template_id === template.id);
-          const sent = tEvents.filter((e: any) => e.event_type === "sent").length;
-          const opened = tEvents.filter((e: any) => e.event_type === "opened").length;
-          const clicked = tEvents.filter((e: any) => e.event_type === "clicked").length;
-          const rev = revenue.filter((r: any) => r.email_template_id === template.id).reduce((s: number, r: any) => s + Number(r.revenue_amount || 0), 0);
+        {sortedUsers.map(([userId, data]) => {
+          const level = data.score >= 7 ? "Alto" : data.score >= 4 ? "Médio" : "Baixo";
+          const levelColor = data.score >= 7 ? "text-red-400" : data.score >= 4 ? "text-amber-400" : "text-emerald-400";
 
           return (
-            <TableRow key={template.id}>
-              <TableCell className="text-xs font-medium">{template.name}</TableCell>
-              <TableCell className="text-right text-xs">{sent}</TableCell>
-              <TableCell className="text-right text-xs">{opened}</TableCell>
-              <TableCell className="text-right text-xs">{sent ? `${Math.round((opened / sent) * 100)}%` : "—"}</TableCell>
-              <TableCell className="text-right text-xs">{clicked}</TableCell>
-              <TableCell className="text-right text-xs">{sent ? `${Math.round((clicked / sent) * 100)}%` : "—"}</TableCell>
-              <TableCell className="text-right text-xs font-medium">R$ {rev.toFixed(0)}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
-
-// ─── Revenue Attribution ─────────────────────────────────────────────────────
-function RevenueAttribution({ automations, revenue }: { automations: Automation[]; revenue: any[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Automação</TableHead>
-          <TableHead className="text-right">Conversões</TableHead>
-          <TableHead className="text-right">Receita Total</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {automations.map((automation) => {
-          const autoRevenue = revenue.filter((r: any) => r.automation_id === automation.id);
-          const total = autoRevenue.reduce((s: number, r: any) => s + Number(r.revenue_amount || 0), 0);
-          return (
-            <TableRow key={automation.id}>
-              <TableCell className="text-xs font-medium">{automation.name}</TableCell>
-              <TableCell className="text-right text-xs">{autoRevenue.length}</TableCell>
-              <TableCell className="text-right text-xs font-medium">R$ {total.toFixed(0)}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
-
-// ─── Trigger Performance ─────────────────────────────────────────────────────
-function TriggerPerformanceTable({ triggers, triggerLogs }: { triggers: BehaviourTrigger[]; triggerLogs: any[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Trigger</TableHead>
-          <TableHead className="text-right">Qualificados</TableHead>
-          <TableHead className="text-right">Entraram</TableHead>
-          <TableHead className="text-right">Prioridade</TableHead>
-          <TableHead className="text-right">Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {triggers.map((trigger) => {
-          const logs = triggerLogs.filter((l: any) => l.trigger_id === trigger.id);
-          const matched = logs.filter((l: any) => l.action === "behavior_trigger_matched").length;
-          const entered = logs.filter((l: any) => l.action === "behavior_automation_entered").length;
-
-          return (
-            <TableRow key={trigger.id}>
-              <TableCell className="text-xs font-medium">{trigger.name}</TableCell>
-              <TableCell className="text-right text-xs">{matched}</TableCell>
-              <TableCell className="text-right text-xs">{entered}</TableCell>
-              <TableCell className="text-right text-xs">{trigger.priority}</TableCell>
-              <TableCell className="text-right">
-                <Badge variant={trigger.status === "active" ? "default" : "secondary"} className="text-[10px]">
-                  {trigger.status}
-                </Badge>
+            <TableRow key={userId}>
+              <TableCell className="text-xs font-mono">{userId.substring(0, 8)}...</TableCell>
+              <TableCell className="text-center">
+                <span className="text-sm font-bold">{data.score}</span>
+              </TableCell>
+              <TableCell className="text-center text-xs font-mono">{data.events}</TableCell>
+              <TableCell className="text-center">
+                <Badge variant="outline" className={cn("text-[10px]", levelColor)}>{level}</Badge>
+              </TableCell>
+              <TableCell className="text-right text-[10px] text-muted-foreground">
+                {new Date(data.lastEvent).toLocaleDateString("pt-BR")}
               </TableCell>
             </TableRow>
           );
         })}
       </TableBody>
     </Table>
-  );
-}
-
-// ─── Activation Config Panel ─────────────────────────────────────────────────
-function ActivationConfigPanel() {
-  const [configs, setConfigs] = useState<any[]>([]);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    supabase.from("trial_activation_config").select("*").order("config_type").then(({ data }) => {
-      if (data) setConfigs(data);
-    });
-  }, []);
-
-  const toggleConfig = async (id: string, isActive: boolean) => {
-    await supabase.from("trial_activation_config").update({ is_active: !isActive }).eq("id", id);
-    setConfigs((prev) => prev.map((c) => (c.id === id ? { ...c, is_active: !isActive } : c)));
-    toast({ title: "Configuração atualizada" });
-  };
-
-  const grouped = {
-    activation_event: configs.filter((c) => c.config_type === "activation_event"),
-    high_value_feature: configs.filter((c) => c.config_type === "high_value_feature"),
-    intent_signal: configs.filter((c) => c.config_type === "intent_signal"),
-  };
-
-  return (
-    <div className="space-y-6">
-      {Object.entries(grouped).map(([type, items]) => (
-        <Card key={type}>
-          <CardHeader>
-            <CardTitle className="text-base capitalize">
-              {type === "activation_event" ? "🎯 Eventos de Ativação" : type === "high_value_feature" ? "⭐ Features de Alto Valor" : "💡 Sinais de Intenção"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {items.map((config: any) => (
-                <div key={config.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{config.config_value?.label || config.config_key}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Chave: <code className="bg-muted px-1 rounded">{config.config_key}</code>
-                      {config.config_value?.points && ` | Score: +${config.config_value.points}`}
-                    </p>
-                  </div>
-                  <Switch checked={config.is_active} onCheckedChange={() => toggleConfig(config.id, config.is_active)} />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
   );
 }
