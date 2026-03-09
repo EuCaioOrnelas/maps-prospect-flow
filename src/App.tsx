@@ -51,6 +51,7 @@ const ProductionTests = lazy(() => import("./pages/ProductionTests"));
 const UpgradePromo = lazy(() => import("./pages/UpgradePromo"));
 const AdminEmailTests = lazy(() => import("./pages/AdminEmailTests"));
 const AdminTrialAutomation = lazy(() => import("./pages/AdminTrialAutomation"));
+const AdminUserScoring = lazy(() => import("./pages/AdminUserScoring"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
@@ -264,6 +265,14 @@ const App = () => (
                   element={
                     <ProtectedRoute requireAdmin>
                       <AdminTrialAutomation />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/user-scoring" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminUserScoring />
                     </ProtectedRoute>
                   } 
                 />

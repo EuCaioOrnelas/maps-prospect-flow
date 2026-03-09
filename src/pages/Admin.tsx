@@ -945,6 +945,11 @@ const Admin = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/admin/user-scoring" className="flex items-center gap-2 cursor-pointer">
+                      <BarChart3 size={14} /> Score de Usuários
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/admin/insights" className="flex items-center gap-2 cursor-pointer">
                       <BarChart3 size={14} /> Insights
                     </Link>

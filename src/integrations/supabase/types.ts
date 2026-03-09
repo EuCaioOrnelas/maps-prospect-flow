@@ -1704,6 +1704,78 @@ export type Database = {
         }
         Relationships: []
       }
+      score_decay_config: {
+        Row: {
+          created_at: string
+          id: string
+          max_days: number
+          min_days: number
+          multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_days?: number
+          min_days?: number
+          multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_days?: number
+          min_days?: number
+          multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      score_rules: {
+        Row: {
+          apply_decay: boolean
+          category: string
+          created_at: string
+          description: string | null
+          event_name: string
+          id: string
+          is_active: boolean
+          is_negative: boolean
+          max_applications_per_period: number | null
+          period_type: string | null
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          apply_decay?: boolean
+          category: string
+          created_at?: string
+          description?: string | null
+          event_name: string
+          id?: string
+          is_active?: boolean
+          is_negative?: boolean
+          max_applications_per_period?: number | null
+          period_type?: string | null
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          apply_decay?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_name?: string
+          id?: string
+          is_active?: boolean
+          is_negative?: boolean
+          max_applications_per_period?: number | null
+          period_type?: string | null
+          points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -2594,6 +2666,147 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_score_events: {
+        Row: {
+          adjusted_points: number
+          base_points: number
+          created_at: string
+          decay_multiplier: number
+          event_category: string
+          event_name: string
+          event_occurred_at: string
+          id: string
+          metadata: Json | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          adjusted_points?: number
+          base_points?: number
+          created_at?: string
+          decay_multiplier?: number
+          event_category: string
+          event_name: string
+          event_occurred_at?: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          adjusted_points?: number
+          base_points?: number
+          created_at?: string
+          decay_multiplier?: number
+          event_category?: string
+          event_name?: string
+          event_occurred_at?: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_score_history: {
+        Row: {
+          created_at: string
+          id: string
+          new_score: number
+          previous_score: number
+          reason: string | null
+          snapshot: Json | null
+          user_id: string
+          variation: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_score?: number
+          previous_score?: number
+          reason?: string | null
+          snapshot?: Json | null
+          user_id: string
+          variation?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_score?: number
+          previous_score?: number
+          reason?: string | null
+          snapshot?: Json | null
+          user_id?: string
+          variation?: number
+        }
+        Relationships: []
+      }
+      user_scores: {
+        Row: {
+          activation_score: number
+          churn_risk_score: number
+          created_at: string
+          engagement_score: number
+          id: string
+          last_calculated_at: string | null
+          last_event_at: string | null
+          normalized_score: number
+          previous_score: number
+          purchase_intent_score: number
+          raw_score: number
+          score_band: string
+          score_label: string
+          score_version: number
+          total_score: number
+          trend: string
+          updated_at: string
+          user_id: string
+          value_score: number
+        }
+        Insert: {
+          activation_score?: number
+          churn_risk_score?: number
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          last_calculated_at?: string | null
+          last_event_at?: string | null
+          normalized_score?: number
+          previous_score?: number
+          purchase_intent_score?: number
+          raw_score?: number
+          score_band?: string
+          score_label?: string
+          score_version?: number
+          total_score?: number
+          trend?: string
+          updated_at?: string
+          user_id: string
+          value_score?: number
+        }
+        Update: {
+          activation_score?: number
+          churn_risk_score?: number
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          last_calculated_at?: string | null
+          last_event_at?: string | null
+          normalized_score?: number
+          previous_score?: number
+          purchase_intent_score?: number
+          raw_score?: number
+          score_band?: string
+          score_label?: string
+          score_version?: number
+          total_score?: number
+          trend?: string
+          updated_at?: string
+          user_id?: string
+          value_score?: number
         }
         Relationships: []
       }
