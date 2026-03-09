@@ -46,7 +46,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
       event_name: eventName,
       event_source: 'frontend',
       metadata: { path: location.pathname },
-    }).then(() => {}).catch(() => {});
+    }).then(() => {});
   }, [user?.id, profile, location.pathname]);
 
   if (loading || (requireAdmin && isAdminLoading)) {
