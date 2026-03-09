@@ -731,8 +731,8 @@ export default function AdminTrialAutomation() {
                 <div className="flex items-start gap-3">
                   <Gauge className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-1.5">
-                    <p className="text-sm font-medium">Como funciona o Score</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-base font-medium">Como funciona o Score</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Cada ação do usuário no produto gera pontos. O score total determina a prioridade do usuário nos
                       triggers comportamentais e ajuda a personalizar as automações. Ative/desative os eventos abaixo e
                       ajuste os pontos para calibrar o sistema de engajamento.
