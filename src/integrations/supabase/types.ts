@@ -1878,6 +1878,275 @@ export type Database = {
         }
         Relationships: []
       }
+      trial_activation_config: {
+        Row: {
+          config_key: string
+          config_type: string
+          config_value: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_type: string
+          config_value?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_type?: string
+          config_value?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trial_automation_steps: {
+        Row: {
+          action_type: string
+          automation_id: string
+          condition: Json
+          created_at: string
+          delay_hours: number
+          id: string
+          step_order: number
+          stop_condition: Json
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          automation_id: string
+          condition?: Json
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          step_order?: number
+          stop_condition?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          automation_id?: string
+          condition?: Json
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          step_order?: number
+          stop_condition?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_automation_steps_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_automation_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "trial_message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_automations: {
+        Row: {
+          automation_type: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          trigger_conditions: Json
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          automation_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          trigger_conditions?: Json
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          automation_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          trigger_conditions?: Json
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trial_behaviour_trigger_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json
+          trigger_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          trigger_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          trigger_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_behaviour_trigger_logs_trigger_id_fkey"
+            columns: ["trigger_id"]
+            isOneToOne: false
+            referencedRelation: "trial_behaviour_triggers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_behaviour_triggers: {
+        Row: {
+          conditions: Json
+          cooldown_hours: number
+          created_at: string
+          description: string | null
+          entry_rules: Json
+          id: string
+          name: string
+          priority: number
+          status: string
+          stop_condition: Json
+          success_condition: Json
+          target_automation_id: string | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          cooldown_hours?: number
+          created_at?: string
+          description?: string | null
+          entry_rules?: Json
+          id?: string
+          name: string
+          priority?: number
+          status?: string
+          stop_condition?: Json
+          success_condition?: Json
+          target_automation_id?: string | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          cooldown_hours?: number
+          created_at?: string
+          description?: string | null
+          entry_rules?: Json
+          id?: string
+          name?: string
+          priority?: number
+          status?: string
+          stop_condition?: Json
+          success_condition?: Json
+          target_automation_id?: string | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_behaviour_triggers_target_automation_id_fkey"
+            columns: ["target_automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_email_events: {
+        Row: {
+          automation_id: string | null
+          created_at: string
+          email_template_id: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          step_id: string | null
+          user_id: string
+        }
+        Insert: {
+          automation_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          step_id?: string | null
+          user_id: string
+        }
+        Update: {
+          automation_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          step_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_email_events_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_email_events_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "trial_message_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_email_events_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trial_feedback: {
         Row: {
           created_at: string
@@ -1904,6 +2173,281 @@ export type Database = {
           missing_features?: string | null
           not_continue_reason?: string | null
           nps_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trial_link_clicks: {
+        Row: {
+          automation_id: string | null
+          clicked_at: string
+          email_template_id: string | null
+          id: string
+          link_id: string | null
+          redirect_url: string | null
+          step_id: string | null
+          user_id: string
+        }
+        Insert: {
+          automation_id?: string | null
+          clicked_at?: string
+          email_template_id?: string | null
+          id?: string
+          link_id?: string | null
+          redirect_url?: string | null
+          step_id?: string | null
+          user_id: string
+        }
+        Update: {
+          automation_id?: string | null
+          clicked_at?: string
+          email_template_id?: string | null
+          id?: string
+          link_id?: string | null
+          redirect_url?: string | null
+          step_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_link_clicks_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_link_clicks_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "trial_message_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_link_clicks_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_message_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
+      trial_product_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_source: string
+          id: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_source?: string
+          id?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_source?: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trial_revenue_attribution: {
+        Row: {
+          automation_id: string | null
+          created_at: string
+          email_template_id: string | null
+          id: string
+          revenue_amount: number
+          step_id: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          automation_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          revenue_amount?: number
+          step_id?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          automation_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          revenue_amount?: number
+          step_id?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_revenue_attribution_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_revenue_attribution_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "trial_message_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_revenue_attribution_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_user_automation_state: {
+        Row: {
+          automation_id: string
+          completed_at: string | null
+          created_at: string
+          current_step_id: string | null
+          entered_at: string
+          id: string
+          metadata: Json
+          next_step_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          automation_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_step_id?: string | null
+          entered_at?: string
+          id?: string
+          metadata?: Json
+          next_step_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          automation_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_step_id?: string | null
+          entered_at?: string
+          id?: string
+          metadata?: Json
+          next_step_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_user_automation_state_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_user_automation_state_current_step_id_fkey"
+            columns: ["current_step_id"]
+            isOneToOne: false
+            referencedRelation: "trial_automation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_activation_progress: {
+        Row: {
+          activation_completed: boolean
+          created_at: string
+          dismissed: boolean
+          first_activation_at: string | null
+          id: string
+          progress_percentage: number
+          step_explore_ai_crm_completed: boolean
+          step_first_campaign_completed: boolean
+          step_prospect_clients_completed: boolean
+          step_scheduled_campaign_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activation_completed?: boolean
+          created_at?: string
+          dismissed?: boolean
+          first_activation_at?: string | null
+          id?: string
+          progress_percentage?: number
+          step_explore_ai_crm_completed?: boolean
+          step_first_campaign_completed?: boolean
+          step_prospect_clients_completed?: boolean
+          step_scheduled_campaign_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activation_completed?: boolean
+          created_at?: string
+          dismissed?: boolean
+          first_activation_at?: string | null
+          id?: string
+          progress_percentage?: number
+          step_explore_ai_crm_completed?: boolean
+          step_first_campaign_completed?: boolean
+          step_prospect_clients_completed?: boolean
+          step_scheduled_campaign_completed?: boolean
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

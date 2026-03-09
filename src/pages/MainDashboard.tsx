@@ -14,6 +14,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
+import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -64,6 +65,9 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+
+              {/* Activation Checklist */}
+              <ActivationChecklist />
 
               {/* 1️⃣ Impacto Financeiro */}
               <DashboardImpactAccumulated

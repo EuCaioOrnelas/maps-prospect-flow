@@ -50,6 +50,7 @@ const ThankYou = lazy(() => import("./pages/ThankYou"));
 const ProductionTests = lazy(() => import("./pages/ProductionTests"));
 const UpgradePromo = lazy(() => import("./pages/UpgradePromo"));
 const AdminEmailTests = lazy(() => import("./pages/AdminEmailTests"));
+const AdminTrialAutomation = lazy(() => import("./pages/AdminTrialAutomation"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
@@ -255,6 +256,14 @@ const App = () => (
                   element={
                     <ProtectedRoute requireAdmin>
                       <AdminEmailTests />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/trial-automation" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminTrialAutomation />
                     </ProtectedRoute>
                   } 
                 />

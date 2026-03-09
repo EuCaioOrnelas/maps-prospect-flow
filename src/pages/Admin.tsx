@@ -927,6 +927,12 @@ const Admin = () => {
                   <span className="hidden sm:inline">Landing Pages</span>
                 </Button>
               </Link>
+              <Link to="/admin/trial-automation">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Zap size={16} />
+                  <span className="hidden sm:inline">Trial Automação</span>
+                </Button>
+              </Link>
               <Link to="/admin/insights">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <BarChart3 size={16} />
