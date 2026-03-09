@@ -68,8 +68,8 @@ export const AIAgentsSection = () => {
             <span className="text-gradient">24 horas por dia</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Crie um agente de IA que responde, qualifica e organiza seus leads no CRM —
-            sem código, sem prompts complexos, sem esforço.
+            Crie um agente de IA que responde, qualifica e organiza seus leads no CRM.
+            Sem código, sem prompts complexos, sem esforço.
           </p>
         </div>
 
@@ -214,7 +214,7 @@ export const AIAgentsSection = () => {
               <Sparkles className="w-5 h-5 text-primary" />
               <h3 className="font-display text-xl md:text-2xl font-semibold">Por que é diferente</h3>
             </div>
-            <p className="text-sm text-muted-foreground">Chatbots tradicionais vs. Agente Wiize — sem comparação.</p>
+            <p className="text-sm text-muted-foreground">Chatbots tradicionais vs. Agente Wiize: sem comparação.</p>
           </div>
 
           <div className="divide-y divide-border/20">

@@ -10,7 +10,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const faqs = [
   {
     question: "O que é uma busca estratégica?",
-    answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados — empresas ativas, com contatos verificados e alto potencial de conversão. Diferente de ferramentas comuns, priorizamos qualidade sobre quantidade."
+    answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Diferente de ferramentas comuns, priorizamos qualidade sobre quantidade."
   },
   {
     question: "Quantos leads recebo por busca?",
