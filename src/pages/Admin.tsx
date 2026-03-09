@@ -342,7 +342,7 @@ const Admin = () => {
         const refundDate = monthKeyToLocalDate(refund.month);
         if (refundDate >= startDate) {
           if (!monthlyData[refund.month]) {
-            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, downgrades: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
           // Use Stripe data as the authoritative source for refunds
           monthlyData[refund.month].refundValue = refund.amount;
