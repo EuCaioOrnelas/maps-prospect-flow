@@ -1,4 +1,4 @@
-import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, Flame } from "lucide-react";
+import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, Flame, Bot } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const features = [
@@ -9,13 +9,14 @@ const features = [
   },
   {
     icon: Target,
-    title: "Leads Pré-Qualificados",
-    description: "Cada lead é estrategicamente selecionado: contatos verificados, avaliações reais e histórico de atividade recente.",
+    title: "Leads Estratégicos e Geolocalizados",
+    description: "Cada lead é selecionado por localização, atividade recente e contatos verificados. Filtre por cidade, bairro ou região e encontre leads exatamente onde você precisa atuar.",
   },
   {
-    icon: MapPin,
-    title: "Segmentação Geográfica",
-    description: "Filtre por cidade, bairro ou região para encontrar leads exatamente onde você precisa atuar.",
+    icon: Bot,
+    title: "Agente de IA no WhatsApp",
+    description: "Um vendedor virtual que responde, qualifica e organiza seus leads 24h. Sem prompts complexos — configure em minutos e ele cuida do operacional.",
+    badge: "Beta",
   },
   {
     icon: Download,
