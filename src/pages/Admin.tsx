@@ -285,14 +285,14 @@ const Admin = () => {
     );
 
     // Group events by month
-    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; downgrades: number; salesValue: number; refundValue: number; refundCount: number } } = {};
     
     for (const event of filteredEvents) {
       const eventDate = new Date(event.created_at);
       const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, downgrades: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
       }
       
       // Categorize events based on actual event_type from webhook
@@ -323,11 +323,13 @@ const Admin = () => {
         monthlyData[monthKey].salesValue += planPrice;
       } else if (
         eventType === 'subscription_deleted' || 
-        eventType === 'subscription_canceled' ||
-        (eventType === 'subscription_updated' && newPlan === 'free')
+        eventType === 'subscription_canceled'
       ) {
-        // Cancellation
+        // Only real cancellations (not downgrades to free)
         monthlyData[monthKey].cancellations++;
+      } else if (eventType === 'subscription_updated' && newPlan === 'free') {
+        // Downgrade to free - tracked separately, NOT as cancellation
+        monthlyData[monthKey].downgrades++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
         // Refund from subscription_events - get amount from metadata
         const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
