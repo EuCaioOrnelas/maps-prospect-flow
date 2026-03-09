@@ -1,18 +1,53 @@
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { BlockedUserModal } from '@/components/BlockedUserModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
 }
 
+// Maps routes to meaningful event names for trial tracking
+const ROUTE_EVENTS: Record<string, string> = {
+  '/dashboard': 'visited_dashboard',
+  '/crm': 'visited_crm',
+  '/upgrade': 'visited_pricing_page',
+  '/whatsapp-campaign': 'visited_campaigns',
+  '/ai-agents': 'visited_ai_agents',
+  '/warming': 'visited_warming',
+  '/reports': 'visited_reports',
+  '/profile': 'visited_profile',
+};
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
   const { user, loading, isTrialExpired, profile, isBlocked, signOut } = useAuth();
   const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
+  const trackedPaths = useRef<Set<string>>(new Set());
+
+  // Track page visits for free trial users
+  useEffect(() => {
+    if (!user?.id || !profile || profile.plan !== 'free') return;
+    
+    const eventName = ROUTE_EVENTS[location.pathname];
+    if (!eventName) return;
+
+    // Only track once per session per path
+    const key = `${location.pathname}_${user.id}`;
+    if (trackedPaths.current.has(key)) return;
+    trackedPaths.current.add(key);
+
+    supabase.from('trial_product_events').insert({
+      user_id: user.id,
+      event_name: eventName,
+      event_source: 'frontend',
+      metadata: { path: location.pathname },
+    }).then(() => {}).catch(() => {});
+  }, [user?.id, profile, location.pathname]);
 
   if (loading || (requireAdmin && isAdminLoading)) {
     return (
