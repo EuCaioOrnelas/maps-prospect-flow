@@ -186,6 +186,8 @@ const Admin = () => {
   const [allSalesEvents, setAllSalesEvents] = useState<any[]>([]);
   const [loadingSalesChart, setLoadingSalesChart] = useState(false);
   const [chartPeriodFilter, setChartPeriodFilter] = useState<ChartPeriodFilter>('6m');
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({
     serpApi: { 
       status: 'ok', 
