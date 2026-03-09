@@ -461,11 +461,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ TRIGGERS TAB ══════════════════════════════ */}
-          <TabsContent value="triggers" className="space-y-4 mt-4">
+          <TabsContent value="triggers" className="space-y-5 mt-5">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold">Triggers Comportamentais</h2>
-                <p className="text-xs text-muted-foreground">Regras automáticas baseadas no comportamento do usuário</p>
+                <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
+                <p className="text-sm text-muted-foreground">Regras automáticas baseadas no comportamento do usuário</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-[10px]">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
