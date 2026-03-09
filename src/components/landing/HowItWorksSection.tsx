@@ -75,7 +75,7 @@ export const HowItWorksSection = () => {
         <div className="hidden md:block">
           <div className="relative">
             {/* Connection line - positioned at icon center */}
-            <div className="absolute top-[40px] lg:top-[48px] left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-primary/50 via-primary/70 to-primary/50 z-0" />
+            <div className={`absolute top-[40px] lg:top-[48px] left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-primary/50 via-primary/70 to-primary/50 z-0 transition-all duration-700 delay-500 ${isVisible ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
             
             <div className="grid grid-cols-3 gap-6 lg:gap-10 relative z-10">
               {steps.map((step, index) => (
