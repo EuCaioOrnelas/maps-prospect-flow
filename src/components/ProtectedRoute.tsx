@@ -29,6 +29,30 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   const location = useLocation();
   const trackedPaths = useRef<Set<string>>(new Set());
 
+  // Capture email attribution UTM params from CTA clicks
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const utmSource = params.get('utm_source');
+    const tuid = params.get('tuid');
+    const ttid = params.get('ttid');
+    const taid = params.get('taid');
+
+    if (utmSource === 'trial_email' && tuid && ttid) {
+      // Store attribution data for checkout conversion tracking
+      const attribution = {
+        user_id: tuid,
+        template_id: ttid,
+        automation_id: taid || '',
+        utm_campaign: params.get('utm_campaign') || '',
+        utm_content: params.get('utm_content') || '',
+        landed_at: new Date().toISOString(),
+      };
+      try {
+        sessionStorage.setItem('trial_email_attribution', JSON.stringify(attribution));
+      } catch (_) {}
+    }
+  }, [location.search]);
+
   // Track page visits for free trial users
   useEffect(() => {
     if (!user?.id || !profile || profile.plan !== 'free') return;

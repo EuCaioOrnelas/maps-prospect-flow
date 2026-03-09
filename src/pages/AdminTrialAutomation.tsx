@@ -81,6 +81,7 @@ export default function AdminTrialAutomation() {
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [runningProcessor, setRunningProcessor] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -172,20 +173,24 @@ export default function AdminTrialAutomation() {
     toast({ title: "Configuração atualizada" });
   };
 
-  const runProcessor = async () => {
-    setRunningProcessor(true);
+
+
+  const sendTestEmail = async (templateId: string) => {
+    if (!profile?.email) {
+      toast({ title: "Erro", description: "Email do admin não encontrado", variant: "destructive" });
+      return;
+    }
+    setSendingTestEmail(templateId);
     try {
-      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
-      if (error) throw error;
-      toast({
-        title: "Processador executado com sucesso",
-        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
+      const { data, error } = await supabase.functions.invoke("send-test-trial-email", {
+        body: { templateId, recipientEmail: profile.email },
       });
-      fetchAll();
+      if (error) throw error;
+      toast({ title: "✉️ Email de teste enviado!", description: `Verifique ${profile.email}` });
     } catch (err: any) {
-      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
     } finally {
-      setRunningProcessor(false);
+      setSendingTestEmail(null);
     }
   };
 
@@ -417,6 +422,22 @@ export default function AdminTrialAutomation() {
                         </div>
                         <div className="flex items-center gap-1">
                           <StatusDot active={template.is_active} />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400"
+                                  onClick={() => sendTestEmail(template.id)}
+                                  disabled={sendingTestEmail === template.id}
+                                >
+                                  {sendingTestEmail === template.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="text-xs">Enviar email de teste</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setEditTemplate(template); setTemplateDialogOpen(true); }}>
                             <Edit className="h-3 w-3" />
                           </Button>
