@@ -116,6 +116,7 @@ interface StripeMRRData {
   churnRate: number;
   monthlyMRR: Array<{ month: string; mrr: number }>;
   monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
+  monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
 
 interface SalesChartData {
