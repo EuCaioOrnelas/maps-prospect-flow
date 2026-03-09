@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         await supabase.from("trial_link_clicks").insert({
           user_id: userId,
           email_template_id: templateId,
-          url: redirectUrl,
+          redirect_url: decodeURIComponent(redirectUrl),
         });
       } catch (_) {
         // Ignore if table doesn't exist
