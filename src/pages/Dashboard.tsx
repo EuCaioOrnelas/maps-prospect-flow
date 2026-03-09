@@ -300,6 +300,16 @@ const Dashboard = () => {
 
       setLeads(data.leads || []);
       await refreshProfile();
+
+      // Track search for trial automation
+      if (user && profile?.plan === 'free') {
+        supabase.from('trial_product_events').insert({
+          user_id: user.id,
+          event_name: 'search_executed',
+          event_source: 'frontend',
+          metadata: { keyword, location, results: (data.leads || []).length },
+        }).then(() => {});
+      }
       
       // Refresh history (limit to MAX_HISTORY_ITEMS)
       if (user) {
