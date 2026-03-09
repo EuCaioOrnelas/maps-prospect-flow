@@ -758,8 +758,8 @@ export default function AdminTrialAutomation() {
               return Object.entries(grouped).map(([type, group]) => (
                 <Card key={type}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{group.label}</CardTitle>
-                    <CardDescription className="text-xs">{group.desc}</CardDescription>
+                   <CardTitle className="text-base">{group.label}</CardTitle>
+                    <CardDescription>{group.desc}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="divide-y divide-border/50">
