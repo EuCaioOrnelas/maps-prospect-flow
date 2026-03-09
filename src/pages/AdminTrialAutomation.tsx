@@ -37,15 +37,15 @@ interface BehaviourTrigger { id: string; name: string; description: string | nul
 function KPICard({ label, value, icon: Icon, color, subtitle }: { label: string; value: string | number; icon: any; color: string; subtitle?: string }) {
   return (
     <Card className="group hover:border-primary/20 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className={cn("p-2 rounded-lg", color)}>
-            <Icon className="h-4 w-4" />
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className={cn("p-2.5 rounded-xl", color)}>
+            <Icon className="h-5 w-5" />
           </div>
         </div>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-        {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
+        <p className="text-3xl font-bold tracking-tight">{value}</p>
+        <p className="text-sm text-muted-foreground mt-1">{label}</p>
+        {subtitle && <p className="text-xs text-muted-foreground/70 mt-0.5">{subtitle}</p>}
       </CardContent>
     </Card>
   );
@@ -279,10 +279,12 @@ export default function AdminTrialAutomation() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 relative z-10">
         {/* ─── KPI Row ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Emails Enviados" value={emailStats.sent} icon={Send} color="bg-blue-500/10 text-blue-400" />
           <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened} abertos`} />
           <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked} cliques`} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} entraram`} />
           <KPICard label="Conversões" value={conversions} icon={CheckCircle2} color="bg-primary/10 text-primary" />
           <KPICard label="Receita Atribuída" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
@@ -531,28 +533,42 @@ export default function AdminTrialAutomation() {
 
           {/* ═══════════════════════ ANALYTICS TAB ═════════════════════════════ */}
           <TabsContent value="analytics" className="space-y-6 mt-4">
+            {/* Funnel at top */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-base">Funil de Conversão Trial</CardTitle>
+                </div>
+                <CardDescription className="text-sm">Dados reais do sistema de automação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TrialFunnel analytics={analytics} />
+              </CardContent>
+            </Card>
+
             {/* Email Performance per Template */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-blue-400" />
-                  <CardTitle className="text-sm">Performance Individual de Emails</CardTitle>
+                  <Mail className="h-5 w-5 text-blue-400" />
+                  <CardTitle className="text-base">Performance Individual de Emails</CardTitle>
                 </div>
-                <CardDescription className="text-xs">Métricas reais por template de email</CardDescription>
+                <CardDescription className="text-sm">Métricas reais por template de email</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-xs">Template</TableHead>
-                        <TableHead className="text-xs text-center">Enviados</TableHead>
-                        <TableHead className="text-xs text-center">Abertos</TableHead>
-                        <TableHead className="text-xs text-center">Open Rate</TableHead>
-                        <TableHead className="text-xs text-center">Cliques</TableHead>
-                        <TableHead className="text-xs text-center">Click Rate</TableHead>
-                        <TableHead className="text-xs text-right">Receita</TableHead>
-                        <TableHead className="text-xs text-center">Status</TableHead>
+                        <TableHead className="text-sm">Template</TableHead>
+                        <TableHead className="text-sm text-center">Enviados</TableHead>
+                        <TableHead className="text-sm text-center">Abertos</TableHead>
+                        <TableHead className="text-sm text-center">Open Rate</TableHead>
+                        <TableHead className="text-sm text-center">Cliques</TableHead>
+                        <TableHead className="text-sm text-center">Click Rate</TableHead>
+                        <TableHead className="text-sm text-right">Receita</TableHead>
+                        <TableHead className="text-sm text-center">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -574,27 +590,27 @@ export default function AdminTrialAutomation() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <StatusDot active={template.is_active} />
-                                <span className="text-xs font-medium">{template.name}</span>
+                                <span className="text-sm font-medium">{template.name}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs font-mono">{sent}</TableCell>
-                            <TableCell className="text-center text-xs font-mono">{opened}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{sent}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{opened}</TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={openRate >= 30 ? "default" : openRate >= 15 ? "secondary" : "outline"} className="text-[10px] font-mono">
+                              <Badge variant={openRate >= 30 ? "default" : openRate >= 15 ? "secondary" : "outline"} className="text-xs font-mono">
                                 {sent ? `${openRate}%` : "—"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs font-mono">{clicked}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{clicked}</TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={clickRate >= 5 ? "default" : "outline"} className="text-[10px] font-mono">
+                              <Badge variant={clickRate >= 5 ? "default" : "outline"} className="text-xs font-mono">
                                 {sent ? `${clickRate}%` : "—"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right text-xs font-mono font-medium">
+                            <TableCell className="text-right text-sm font-mono font-medium">
                               {rev > 0 ? `R$ ${rev.toFixed(2)}` : "—"}
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={template.is_active ? "default" : "secondary"} className="text-[10px]">
+                              <Badge variant={template.is_active ? "default" : "secondary"} className="text-xs">
                                 {template.is_active ? "Ativo" : "Inativo"}
                               </Badge>
                             </TableCell>
@@ -693,18 +709,6 @@ export default function AdminTrialAutomation() {
               </Card>
             </div>
 
-            {/* Funnel */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Funil de Conversão Trial</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <TrialFunnel analytics={analytics} />
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
@@ -800,48 +804,53 @@ export default function AdminTrialAutomation() {
   );
 }
 
-// ─── Trial Funnel ──────────────────────────────────────────────────────────────
+// ─── Trial Funnel (real funnel shape, centered) ──────────────────────────────
 function TrialFunnel({ analytics }: { analytics: any }) {
-  if (!analytics) return <p className="text-sm text-muted-foreground">Sem dados</p>;
+  if (!analytics) return <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>;
 
   const events = analytics.productEvents || [];
   const states = analytics.automationStates || [];
   const emailEvents = analytics.emailEvents || [];
 
   const funnelSteps = [
-    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0, color: "bg-blue-500" },
-    { label: "Entraram em Automação", value: states.length, color: "bg-indigo-500" },
-    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length, color: "bg-violet-500" },
-    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length, color: "bg-purple-500" },
-    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length, color: "bg-pink-500" },
-    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length, color: "bg-amber-500" },
-    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length, color: "bg-emerald-500" },
+    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0, color: "from-blue-500/40 to-blue-600/40", border: "border-blue-500/50" },
+    { label: "Entraram em Automação", value: states.length, color: "from-indigo-500/40 to-indigo-600/40", border: "border-indigo-500/50" },
+    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length, color: "from-violet-500/40 to-violet-600/40", border: "border-violet-500/50" },
+    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length, color: "from-purple-500/40 to-purple-600/40", border: "border-purple-500/50" },
+    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length, color: "from-pink-500/40 to-pink-600/40", border: "border-pink-500/50" },
+    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length, color: "from-amber-500/40 to-amber-600/40", border: "border-amber-500/50" },
+    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length, color: "from-emerald-500/40 to-emerald-600/40", border: "border-emerald-500/50" },
   ];
 
-  const maxValue = Math.max(...funnelSteps.map((s) => s.value), 1);
+  const totalSteps = funnelSteps.length;
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col items-center gap-1.5 py-4">
       {funnelSteps.map((step, i) => {
-        const pct = Math.max((step.value / maxValue) * 100, 8);
+        // Funnel shape: first bar is 100% width, last is ~30%
+        const widthPct = 100 - ((i / (totalSteps - 1)) * 65);
         const prevValue = i > 0 ? funnelSteps[i - 1].value : step.value;
         const dropoff = prevValue > 0 && i > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
 
         return (
-          <div key={step.label} className="flex items-center gap-3">
-            <span className="text-[11px] text-muted-foreground w-44 text-right shrink-0">{step.label}</span>
-            <div className="flex-1">
-              <div className="h-7 bg-muted/20 rounded-md overflow-hidden">
-                <div
-                  className={cn("h-full rounded-md transition-all flex items-center justify-between px-3", step.color + "/30")}
-                  style={{ width: `${pct}%` }}
-                >
-                  <span className="text-xs font-bold">{step.value}</span>
-                  {dropoff > 0 && i > 0 && (
-                    <span className="text-[9px] text-muted-foreground">-{dropoff}%</span>
-                  )}
-                </div>
-              </div>
+          <div
+            key={step.label}
+            className={cn(
+              "relative flex items-center justify-between px-5 py-3 rounded-lg border bg-gradient-to-r transition-all",
+              step.color, step.border
+            )}
+            style={{ width: `${widthPct}%`, minHeight: "48px" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{step.label}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold">{step.value}</span>
+              {dropoff > 0 && i > 0 && (
+                <span className="text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded">
+                  -{dropoff}%
+                </span>
+              )}
             </div>
           </div>
         );
