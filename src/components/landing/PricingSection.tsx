@@ -360,8 +360,8 @@ export const PricingSection = () => {
                         <MessageSquare className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">20 disparos/dia</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">até 400 no total</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">400 disparos grátis</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">limite de 20 por dia</p>
                       </div>
                     </div>
                     
@@ -375,8 +375,8 @@ export const PricingSection = () => {
                         <Smartphone className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">1 WhatsApp</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">1 número WhatsApp</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">conecte e dispare</p>
                       </div>
                     </div>
                   </div>
