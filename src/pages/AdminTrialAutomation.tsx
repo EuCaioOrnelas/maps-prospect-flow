@@ -303,11 +303,11 @@ export default function AdminTrialAutomation() {
           </TabsList>
 
           {/* ═══════════════════════ AUTOMATIONS TAB ═══════════════════════════ */}
-          <TabsContent value="automations" className="space-y-4 mt-4">
+          <TabsContent value="automations" className="space-y-5 mt-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Fluxos de Automação</h2>
-                <p className="text-xs text-muted-foreground">Gerencie os fluxos de email automatizados para trial</p>
+                <h2 className="text-lg font-semibold">Fluxos de Automação</h2>
+                <p className="text-sm text-muted-foreground">Gerencie os fluxos de email automatizados para trial</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllAutomations(true)}>
