@@ -312,8 +312,9 @@ Deno.serve(async (req) => {
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
     }
 
-    // Calculate churn rate: canceled / active (percentage of active base that was lost)
-    const churnRate = activeCount > 0 ? ((canceledCount / activeCount) * 100) : 0;
+    // Calculate churn rate: canceled / (active + canceled)
+    const totalBase = activeCount + canceledCount;
+    const churnRate = totalBase > 0 ? ((canceledCount / totalBase) * 100) : 0;
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunds: ${wiizeRefundCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
     console.log(`[GET-STRIPE-MRR] Monthly MRR entries: ${Object.keys(monthlyMRR).length}`);
