@@ -268,6 +268,14 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/admin/user-scoring" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminUserScoring />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Wiize Revenue (admin only, separate layout) */}
                 <Route
                   path="/revenue"
