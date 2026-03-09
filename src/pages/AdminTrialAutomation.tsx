@@ -714,11 +714,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
-          <TabsContent value="score" className="space-y-4 mt-4">
+          <TabsContent value="score" className="space-y-5 mt-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Sistema de Score de Engajamento</h2>
-                <p className="text-xs text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
+                <h2 className="text-lg font-semibold">Sistema de Score de Engajamento</h2>
+                <p className="text-sm text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
               </div>
               <Badge variant="outline" className="font-mono text-xs">
                 Score máx.: {getScoreTotal()} pts
