@@ -37,15 +37,19 @@ interface BehaviourTrigger { id: string; name: string; description: string | nul
 function KPICard({ label, value, icon: Icon, color, subtitle }: { label: string; value: string | number; icon: any; color: string; subtitle?: string }) {
   return (
     <Card className="group hover:border-primary/20 transition-colors">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className={cn("p-2.5 rounded-xl", color)}>
-            <Icon className="h-5 w-5" />
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2.5">
+          <div className={cn("p-1.5 rounded-lg shrink-0", color)}>
+            <Icon className="h-3.5 w-3.5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-1.5">
+              <p className="text-lg font-bold tracking-tight leading-none">{value}</p>
+              {subtitle && <span className="text-[10px] text-muted-foreground/70 truncate">{subtitle}</span>}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">{label}</p>
           </div>
         </div>
-        <p className="text-3xl font-bold tracking-tight">{value}</p>
-        <p className="text-sm text-muted-foreground mt-1">{label}</p>
-        {subtitle && <p className="text-xs text-muted-foreground/70 mt-0.5">{subtitle}</p>}
       </CardContent>
     </Card>
   );
@@ -279,15 +283,13 @@ export default function AdminTrialAutomation() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 relative z-10">
         {/* ─── KPI Row ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <KPICard label="Emails Enviados" value={emailStats.sent} icon={Send} color="bg-blue-500/10 text-blue-400" />
-          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened} abertos`} />
-          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked} cliques`} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} entraram`} />
+          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened}`} />
+          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked}`} />
+          <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} total`} />
           <KPICard label="Conversões" value={conversions} icon={CheckCircle2} color="bg-primary/10 text-primary" />
-          <KPICard label="Receita Atribuída" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
+          <KPICard label="Receita" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
         </div>
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}
@@ -301,11 +303,11 @@ export default function AdminTrialAutomation() {
           </TabsList>
 
           {/* ═══════════════════════ AUTOMATIONS TAB ═══════════════════════════ */}
-          <TabsContent value="automations" className="space-y-4 mt-4">
+          <TabsContent value="automations" className="space-y-5 mt-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Fluxos de Automação</h2>
-                <p className="text-xs text-muted-foreground">Gerencie os fluxos de email automatizados para trial</p>
+                <h2 className="text-lg font-semibold">Fluxos de Automação</h2>
+                <p className="text-sm text-muted-foreground">Gerencie os fluxos de email automatizados para trial</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => toggleAllAutomations(true)}>
@@ -325,26 +327,26 @@ export default function AdminTrialAutomation() {
 
                 return (
                   <Card key={automation.id} className={cn("transition-all", automation.status === "active" ? "border-primary/20" : "opacity-70")}>
-                    <CardContent className="p-5">
+                    <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-3">
-                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", automation.status === "active" ? "bg-primary/10" : "bg-muted")}>
-                            <Zap className={cn("h-4 w-4", automation.status === "active" ? "text-primary" : "text-muted-foreground")} />
+                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", automation.status === "active" ? "bg-primary/10" : "bg-muted")}>
+                            <Zap className={cn("h-5 w-5", automation.status === "active" ? "text-primary" : "text-muted-foreground")} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-sm">{automation.name}</h3>
+                              <h3 className="font-semibold text-base">{automation.name}</h3>
                               <StatusDot active={automation.status === "active"} />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{automation.description}</p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <Badge variant="outline" className="text-[10px]">
+                            <p className="text-sm text-muted-foreground mt-1">{automation.description}</p>
+                            <div className="flex items-center gap-3 mt-2.5">
+                              <Badge variant="outline" className="text-xs">
                                 {automation.trigger_event === "user_inactive" ? "⏰ Inatividade" :
                                  automation.trigger_event === "trial_expiring" ? "⚠️ Trial expirando" :
                                  automation.trigger_event === "trial_ended" ? "🔴 Trial encerrado" : automation.trigger_event}
                               </Badge>
-                              <span className="text-[10px] text-muted-foreground">{autoSteps.length} etapas</span>
-                              <span className="text-[10px] text-muted-foreground">{stateCount} entraram • {activeCount} ativos</span>
+                              <span className="text-xs text-muted-foreground">{autoSteps.length} etapas</span>
+                              <span className="text-xs text-muted-foreground">{stateCount} entraram • {activeCount} ativos</span>
                             </div>
                           </div>
                         </div>
@@ -384,11 +386,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ TEMPLATES TAB ═════════════════════════════ */}
-          <TabsContent value="templates" className="space-y-4 mt-4">
+          <TabsContent value="templates" className="space-y-5 mt-5">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold">Templates de Email</h2>
-                <p className="text-xs text-muted-foreground">Crie e edite templates com preview em tempo real</p>
+                <h2 className="text-lg font-semibold">Templates de Email</h2>
+                <p className="text-sm text-muted-foreground">Crie e edite templates com preview em tempo real</p>
               </div>
               <Button size="sm" className="h-8 text-xs" onClick={() => { setEditTemplate(null); setTemplateDialogOpen(true); }}>
                 <Plus className="h-3 w-3 mr-1.5" />Novo Template
@@ -459,11 +461,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ TRIGGERS TAB ══════════════════════════════ */}
-          <TabsContent value="triggers" className="space-y-4 mt-4">
+          <TabsContent value="triggers" className="space-y-5 mt-5">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold">Triggers Comportamentais</h2>
-                <p className="text-xs text-muted-foreground">Regras automáticas baseadas no comportamento do usuário</p>
+                <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
+                <p className="text-sm text-muted-foreground">Regras automáticas baseadas no comportamento do usuário</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-[10px]">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
@@ -485,19 +487,19 @@ export default function AdminTrialAutomation() {
 
                 return (
                   <Card key={trigger.id} className={cn("transition-all", trigger.status === "active" ? "border-primary/10" : "opacity-60")}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", trigger.status === "active" ? "bg-amber-500/10" : "bg-muted")}>
-                            <Target className={cn("h-4 w-4", trigger.status === "active" ? "text-amber-400" : "text-muted-foreground")} />
+                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", trigger.status === "active" ? "bg-amber-500/10" : "bg-muted")}>
+                            <Target className={cn("h-5 w-5", trigger.status === "active" ? "text-amber-400" : "text-muted-foreground")} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-sm">{trigger.name}</h3>
-                              <Badge variant="outline" className="text-[10px] font-mono">P{trigger.priority}</Badge>
+                              <h3 className="font-medium text-base">{trigger.name}</h3>
+                              <Badge variant="outline" className="text-xs font-mono">P{trigger.priority}</Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground mb-2">{trigger.description}</p>
-                            <div className="flex flex-wrap gap-3 text-[11px]">
+                            <p className="text-sm text-muted-foreground mb-2">{trigger.description}</p>
+                            <div className="flex flex-wrap gap-3 text-xs">
                               <span className="flex items-center gap-1 text-muted-foreground">
                                 <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                                 <strong>{matched}</strong> qualificados
@@ -532,15 +534,15 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ ANALYTICS TAB ═════════════════════════════ */}
-          <TabsContent value="analytics" className="space-y-6 mt-4">
+          <TabsContent value="analytics" className="space-y-6 mt-5">
             {/* Funnel at top */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">Funil de Conversão Trial</CardTitle>
+                  <CardTitle className="text-lg">Funil de Conversão Trial</CardTitle>
                 </div>
-                <CardDescription className="text-sm">Dados reais do sistema de automação</CardDescription>
+                <CardDescription>Dados reais do sistema de automação</CardDescription>
               </CardHeader>
               <CardContent>
                 <TrialFunnel analytics={analytics} />
@@ -552,9 +554,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-blue-400" />
-                  <CardTitle className="text-base">Performance Individual de Emails</CardTitle>
+                  <CardTitle className="text-lg">Performance Individual de Emails</CardTitle>
                 </div>
-                <CardDescription className="text-sm">Métricas reais por template de email</CardDescription>
+                <CardDescription>Métricas reais por template de email</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -712,11 +714,11 @@ export default function AdminTrialAutomation() {
           </TabsContent>
 
           {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
-          <TabsContent value="score" className="space-y-4 mt-4">
+          <TabsContent value="score" className="space-y-5 mt-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Sistema de Score de Engajamento</h2>
-                <p className="text-xs text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
+                <h2 className="text-lg font-semibold">Sistema de Score de Engajamento</h2>
+                <p className="text-sm text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
               </div>
               <Badge variant="outline" className="font-mono text-xs">
                 Score máx.: {getScoreTotal()} pts
@@ -729,8 +731,8 @@ export default function AdminTrialAutomation() {
                 <div className="flex items-start gap-3">
                   <Gauge className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-1.5">
-                    <p className="text-sm font-medium">Como funciona o Score</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-base font-medium">Como funciona o Score</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Cada ação do usuário no produto gera pontos. O score total determina a prioridade do usuário nos
                       triggers comportamentais e ajuda a personalizar as automações. Ative/desative os eventos abaixo e
                       ajuste os pontos para calibrar o sistema de engajamento.
@@ -756,8 +758,8 @@ export default function AdminTrialAutomation() {
               return Object.entries(grouped).map(([type, group]) => (
                 <Card key={type}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{group.label}</CardTitle>
-                    <CardDescription className="text-xs">{group.desc}</CardDescription>
+                   <CardTitle className="text-base">{group.label}</CardTitle>
+                    <CardDescription>{group.desc}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="divide-y divide-border/50">
@@ -789,9 +791,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Usuários com Score Ativo</CardTitle>
+                  <CardTitle className="text-base">Usuários com Score Ativo</CardTitle>
                 </div>
-                <CardDescription className="text-xs">Baseado nos eventos rastreados no sistema</CardDescription>
+                <CardDescription>Baseado nos eventos rastreados no sistema</CardDescription>
               </CardHeader>
               <CardContent>
                 <UserScoreTable productEvents={analytics?.productEvents || []} scoreConfigs={scoreConfigs} />
