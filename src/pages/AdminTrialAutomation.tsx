@@ -422,6 +422,22 @@ export default function AdminTrialAutomation() {
                         </div>
                         <div className="flex items-center gap-1">
                           <StatusDot active={template.is_active} />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400"
+                                  onClick={() => sendTestEmail(template.id)}
+                                  disabled={sendingTestEmail === template.id}
+                                >
+                                  {sendingTestEmail === template.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="text-xs">Enviar email de teste</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setEditTemplate(template); setTemplateDialogOpen(true); }}>
                             <Edit className="h-3 w-3" />
                           </Button>
