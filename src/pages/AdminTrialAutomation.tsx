@@ -283,13 +283,15 @@ export default function AdminTrialAutomation() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 relative z-10">
         {/* ─── KPI Row ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Emails Enviados" value={emailStats.sent} icon={Send} color="bg-blue-500/10 text-blue-400" />
-          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened}`} />
-          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked}`} />
+          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened} abertos`} />
+          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked} cliques`} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} total`} />
           <KPICard label="Conversões" value={conversions} icon={CheckCircle2} color="bg-primary/10 text-primary" />
-          <KPICard label="Receita" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
+          <KPICard label="Receita Atribuída" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
         </div>
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}
