@@ -218,6 +218,9 @@ Deno.serve(async (req) => {
     let canceledCount = 0;
     const planDistribution: { [plan: string]: number } = {};
 
+    // Track monthly sales and cancellations from Stripe data
+    const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
+
     for (const sub of wiizeSubs) {
       const customer = sub.customer as Stripe.Customer;
       const customerEmail = customer?.email || "";
@@ -250,7 +253,28 @@ Deno.serve(async (req) => {
         }
       } else if (sub.status === "canceled") {
         canceledCount++;
+        
+        // Track cancellation month
+        if (sub.canceled_at) {
+          const cancelDate = new Date(sub.canceled_at * 1000);
+          const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
+          if (!monthlySales[monthKey]) {
+            monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+          }
+          monthlySales[monthKey].cancellations++;
+        }
       }
+
+      // Track new sale month (subscription creation)
+      const startDate = new Date(sub.created * 1000);
+      const startMonthKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthlySales[startMonthKey]) {
+        monthlySales[startMonthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+      }
+      monthlySales[startMonthKey].newSales++;
+      // Use the first invoice amount for the sale value
+      const firstInvoiceAmount = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
+      monthlySales[startMonthKey].salesValue += firstInvoiceAmount;
     }
 
     // Process paid invoices to get correct monthly MRR by payment date
@@ -288,13 +312,13 @@ Deno.serve(async (req) => {
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
     }
 
-    // Calculate churn rate
-    const totalPaying = activeCount + canceledCount;
-    const churnRate = totalPaying > 0 ? ((canceledCount / totalPaying) * 100) : 0;
+    // Calculate churn rate: canceled / active (percentage of active base that was lost)
+    const churnRate = activeCount > 0 ? ((canceledCount / activeCount) * 100) : 0;
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Refunds: ${wiizeRefundCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
     console.log(`[GET-STRIPE-MRR] Monthly MRR entries: ${Object.keys(monthlyMRR).length}`);
     console.log(`[GET-STRIPE-MRR] Monthly Refunds entries: ${Object.keys(monthlyRefunds).length}`);
+    console.log(`[GET-STRIPE-MRR] Monthly Sales entries: ${Object.keys(monthlySales).length}`);
 
     return new Response(
       JSON.stringify({
@@ -310,6 +334,9 @@ Deno.serve(async (req) => {
           .sort((a, b) => a.month.localeCompare(b.month)),
         monthlyRefunds: Object.entries(monthlyRefunds)
           .map(([month, data]) => ({ month, amount: data.amount, count: data.count }))
+          .sort((a, b) => a.month.localeCompare(b.month)),
+        monthlySales: Object.entries(monthlySales)
+          .map(([month, data]) => ({ month, newSales: data.newSales, salesValue: data.salesValue, cancellations: data.cancellations }))
           .sort((a, b) => a.month.localeCompare(b.month)),
       }),
       {
