@@ -132,7 +132,7 @@ interface SalesChartData {
   refundCount: number;
 }
 
-type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all';
+type ChartPeriodFilter = '1m' | '3m' | '6m' | '12m' | 'year' | 'all' | 'custom';
 
 interface Stats {
   totalUsers: number;
