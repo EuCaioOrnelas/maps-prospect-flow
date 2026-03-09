@@ -360,9 +360,8 @@ export const PricingSection = () => {
                         <MessageSquare className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">400 disparos</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
-                        <p className="text-[10px] md:text-xs text-amber-500 font-semibold mt-0.5">⚠️ Limite: 20 disparos/dia</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">20 disparos/dia</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">até 400 no total</p>
                       </div>
                     </div>
                     
