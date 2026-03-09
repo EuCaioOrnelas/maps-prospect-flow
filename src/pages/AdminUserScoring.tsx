@@ -148,22 +148,6 @@ const AdminUserScoring = () => {
           ))}
         </div>
 
-        {/* Score Types Info */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {[
-            { icon: "🚀", label: "Ativação", desc: "Onboarding, integrações, setup" },
-            { icon: "💬", label: "Engajamento", desc: "Logins, uso diário, interações" },
-            { icon: "💎", label: "Valor", desc: "Features premium, campanhas" },
-            { icon: "🛒", label: "Intenção Compra", desc: "Pricing, checkout, upgrade" },
-            { icon: "⚠️", label: "Risco Churn", desc: "Inatividade, cancelamentos" },
-          ].map((type) => (
-            <div key={type.label} className="p-3 rounded-lg bg-card border border-border/50 text-center">
-              <span className="text-xl">{type.icon}</span>
-              <p className="text-xs font-semibold mt-1">{type.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{type.desc}</p>
-            </div>
-          ))}
-        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="dashboard" className="space-y-4">
