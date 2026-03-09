@@ -551,10 +551,10 @@ export default function AdminTrialAutomation() {
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-blue-400" />
-                  <CardTitle className="text-sm">Performance Individual de Emails</CardTitle>
+                  <Mail className="h-5 w-5 text-blue-400" />
+                  <CardTitle className="text-base">Performance Individual de Emails</CardTitle>
                 </div>
-                <CardDescription className="text-xs">Métricas reais por template de email</CardDescription>
+                <CardDescription className="text-sm">Métricas reais por template de email</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
