@@ -590,7 +590,7 @@ export default function AdminTrialAutomation() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <StatusDot active={template.is_active} />
-                                <span className="text-xs font-medium">{template.name}</span>
+                                <span className="text-sm font-medium">{template.name}</span>
                               </div>
                             </TableCell>
                             <TableCell className="text-center text-xs font-mono">{sent}</TableCell>
