@@ -921,7 +921,7 @@ const Admin = () => {
                 <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuItem asChild>
                     <Link to="/admin/email-tests" className="flex items-center gap-2 cursor-pointer">
-                      <Mail size={14} /> Testes de Email
+                      <Mail size={14} /> Emails
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

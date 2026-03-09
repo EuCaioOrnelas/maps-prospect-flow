@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { ScoreUserDetailDialog } from "./ScoreUserDetailDialog";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface UserScore {
   id: string;
@@ -34,12 +36,15 @@ const LABEL_COLORS: Record<string, string> = {
   "Pronto para upgrade": "bg-purple-500/20 text-purple-400 border-purple-500/30",
 };
 
+const PAID_PLANS = ["start", "growth", "scale"];
+
 export const ScoreUsersTab = () => {
   const [users, setUsers] = useState<UserScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterLabel, setFilterLabel] = useState("all");
   const [filterTrend, setFilterTrend] = useState("all");
+  const [filterPurchase, setFilterPurchase] = useState("all");
   const [sortBy, setSortBy] = useState("total_score");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
@@ -66,6 +71,14 @@ export const ScoreUsersTab = () => {
       if (error) throw error;
 
       let filtered = (data as any[]) || [];
+
+      // Apply purchase filter
+      if (filterPurchase === "purchased") {
+        filtered = filtered.filter(u => PAID_PLANS.includes(u.profiles?.plan));
+      } else if (filterPurchase === "not_purchased") {
+        filtered = filtered.filter(u => u.profiles?.plan === "free");
+      }
+
       if (search) {
         const s = search.toLowerCase();
         filtered = filtered.filter(
@@ -80,11 +93,49 @@ export const ScoreUsersTab = () => {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortAsc, page, filterLabel, filterTrend, search]);
+  }, [sortBy, sortAsc, page, filterLabel, filterTrend, filterPurchase, search]);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  const getPurchaseLabel = (plan: string) => {
+    return PAID_PLANS.includes(plan) ? "Comprou" : "Não comprou";
+  };
+
+  const getPurchaseBadgeColor = (plan: string) => {
+    return PAID_PLANS.includes(plan)
+      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+      : "bg-orange-500/20 text-orange-400 border-orange-500/30";
+  };
+
+  const handleExport = () => {
+    if (users.length === 0) {
+      toast.error("Nenhum usuário para exportar");
+      return;
+    }
+
+    const exportData = users.map((u) => ({
+      Nome: u.profiles?.name || "Sem nome",
+      Email: u.profiles?.email || "",
+      Plano: u.profiles?.plan || "free",
+      "Comprou?": getPurchaseLabel(u.profiles?.plan || "free"),
+      "Score Total": Number(u.total_score).toFixed(1),
+      Classificação: u.score_label,
+      Tendência: u.trend === "rising" ? "Em alta" : u.trend === "falling" ? "Em queda" : "Estável",
+      "Score Ativação": Number(u.activation_score).toFixed(1),
+      "Score Engajamento": Number(u.engagement_score).toFixed(1),
+      "Score Valor": Number(u.value_score).toFixed(1),
+      "Score Intenção Compra": Number(u.purchase_intent_score).toFixed(1),
+      "Score Risco Churn": Number(u.churn_risk_score).toFixed(1),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Usuários Score");
+    XLSX.writeFile(wb, `usuarios_score_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success(`${exportData.length} usuários exportados`);
+  };
 
   const TrendIcon = ({ trend }: { trend: string }) => {
     if (trend === "rising") return <TrendingUp className="h-4 w-4 text-emerald-400" />;
@@ -103,7 +154,13 @@ export const ScoreUsersTab = () => {
   return (
     <Card className="bg-card border-border/50">
       <CardHeader>
-        <CardTitle className="text-base">Usuários por Score</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Usuários por Score</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            Exportar Excel
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-3 mt-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -114,7 +171,7 @@ export const ScoreUsersTab = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Select value={filterLabel} onValueChange={setFilterLabel}>
+          <Select value={filterLabel} onValueChange={(v) => { setFilterLabel(v); setPage(0); }}>
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Classificação" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas classificações</SelectItem>
@@ -125,7 +182,15 @@ export const ScoreUsersTab = () => {
               <SelectItem value="Pronto para upgrade">Pronto para upgrade</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filterTrend} onValueChange={setFilterTrend}>
+          <Select value={filterPurchase} onValueChange={(v) => { setFilterPurchase(v); setPage(0); }}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Compra" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="purchased">Compraram</SelectItem>
+              <SelectItem value="not_purchased">Não compraram</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterTrend} onValueChange={(v) => { setFilterTrend(v); setPage(0); }}>
             <SelectTrigger className="w-[150px]"><SelectValue placeholder="Tendência" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas tendências</SelectItem>
@@ -162,6 +227,7 @@ export const ScoreUsersTab = () => {
                     <TableHead>Usuário</TableHead>
                     <TableHead className="text-center">Score</TableHead>
                     <TableHead className="text-center">Classificação</TableHead>
+                    <TableHead className="text-center">Compra</TableHead>
                     <TableHead className="text-center">Tendência</TableHead>
                     <TableHead className="text-center">Ativação</TableHead>
                     <TableHead className="text-center">Engajamento</TableHead>
@@ -192,6 +258,11 @@ export const ScoreUsersTab = () => {
                       <TableCell className="text-center">
                         <Badge variant="outline" className={LABEL_COLORS[u.score_label] || ""}>
                           {u.score_label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={getPurchaseBadgeColor(u.profiles?.plan || "free")}>
+                          {getPurchaseLabel(u.profiles?.plan || "free")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center"><TrendIcon trend={u.trend} /></TableCell>
