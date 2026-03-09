@@ -334,38 +334,13 @@ const Admin = () => {
   const churnByReasonData = useMemo(() => {
     if (!allSalesEvents.length) return [];
 
-    // Calculate date range based on filter (same as sales)
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (chartPeriodFilter) {
-      case '1m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        break;
-      case '3m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        break;
-      case '6m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        break;
-      case '12m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      case 'all':
-      default:
-        startDate = new Date(2024, 0, 1);
-        break;
-    }
+    const { startDate, endDate } = getFilterDateRange();
 
-    // Filter events by date
-    const filteredEvents = allSalesEvents.filter(event => 
-      new Date(event.created_at) >= startDate
-    );
+    const filteredEvents = allSalesEvents.filter(event => {
+      const eventDate = new Date(event.created_at);
+      return eventDate >= startDate && (!endDate || eventDate <= endDate);
+    });
 
-    // Churn reasons counters
     const churnReasons: { [key: string]: number } = {
       canceled: 0,
       deleted: 0,
@@ -391,7 +366,6 @@ const Admin = () => {
       }
     }
 
-    // Map to readable labels and colors
     const churnData = [
       { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
@@ -401,42 +375,19 @@ const Admin = () => {
     ].filter(item => item.value > 0);
 
     return churnData;
-  }, [allSalesEvents, chartPeriodFilter]);
+  }, [allSalesEvents, getFilterDateRange]);
 
   // Filter MRR data by period
   const filteredMRRData = useMemo(() => {
     if (!stripeMRR?.monthlyMRR?.length) return [];
 
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (chartPeriodFilter) {
-      case '1m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        break;
-      case '3m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        break;
-      case '6m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        break;
-      case '12m':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      case 'all':
-      default:
-        startDate = new Date(2024, 0, 1);
-        break;
-    }
+    const { startDate, endDate } = getFilterDateRange();
 
     return stripeMRR.monthlyMRR.filter(item => {
       const itemDate = monthKeyToLocalDate(item.month);
-      return itemDate >= startDate;
+      return itemDate >= startDate && (!endDate || itemDate <= endDate);
     });
-  }, [stripeMRR?.monthlyMRR, chartPeriodFilter]);
+  }, [stripeMRR?.monthlyMRR, getFilterDateRange]);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
