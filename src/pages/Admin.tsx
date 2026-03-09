@@ -910,52 +910,57 @@ const Admin = () => {
               </span>
             </div>
             
-            <div className="flex items-center gap-4">
-              <Link to="/admin/email-tests">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Mail size={16} />
-                  <span className="hidden sm:inline">Emails</span>
-                </Button>
-              </Link>
-              <Link to="/admin/tests">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <FlaskConical size={16} />
-                  <span className="hidden sm:inline">Testes</span>
-                </Button>
-              </Link>
-              <Link to="/admin/announcements">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Bell size={16} />
-                  <span className="hidden sm:inline">Avisos</span>
-                </Button>
-              </Link>
-              <Link to="/admin/landing-pages">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <LayoutDashboard size={16} />
-                  <span className="hidden sm:inline">Landing Pages</span>
-                </Button>
-              </Link>
-              <Link to="/admin/trial-automation">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Zap size={16} />
-                  <span className="hidden sm:inline">Trial Automação</span>
-                </Button>
-              </Link>
-              <Link to="/admin/insights">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <BarChart3 size={16} />
-                  <span className="hidden sm:inline">Insights</span>
-                </Button>
-              </Link>
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <ArrowLeft size={16} />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </Button>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut size={20} />
-              </Button>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Menu size={16} />
+                    <span className="hidden sm:inline">Menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/email-tests" className="flex items-center gap-2 cursor-pointer">
+                      <Mail size={14} /> Testes de Email
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/tests" className="flex items-center gap-2 cursor-pointer">
+                      <FlaskConical size={14} /> Testes de Produção
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/announcements" className="flex items-center gap-2 cursor-pointer">
+                      <Bell size={14} /> Avisos
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/landing-pages" className="flex items-center gap-2 cursor-pointer">
+                      <LayoutDashboard size={14} /> Landing Pages
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/trial-automation" className="flex items-center gap-2 cursor-pointer">
+                      <Zap size={14} /> Trial Automação
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/insights" className="flex items-center gap-2 cursor-pointer">
+                      <BarChart3 size={14} /> Insights
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                      <ArrowLeft size={14} /> Voltar ao Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut size={14} /> Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

@@ -397,8 +397,18 @@ export default function AdminTrialAutomation() {
           {/* ═══ TRIGGERS TAB ═══ */}
           <TabsContent value="triggers" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
-              <Badge variant="outline">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
+                <Badge variant="outline">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Ativar Todos
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(false)}>
+                  <Pause className="h-3 w-3 mr-1" /> Pausar Todos
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-3">
