@@ -37,17 +37,17 @@ interface BehaviourTrigger { id: string; name: string; description: string | nul
 function KPICard({ label, value, icon: Icon, color, subtitle }: { label: string; value: string | number; icon: any; color: string; subtitle?: string }) {
   return (
     <Card className="group hover:border-primary/20 transition-colors">
-      <CardContent className="p-3">
-        <div className="flex items-center gap-2.5">
-          <div className={cn("p-1.5 rounded-lg shrink-0", color)}>
-            <Icon className="h-3.5 w-3.5" />
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("p-2 rounded-lg shrink-0", color)}>
+            <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5">
-              <p className="text-lg font-bold tracking-tight leading-none">{value}</p>
-              {subtitle && <span className="text-[10px] text-muted-foreground/70 truncate">{subtitle}</span>}
+              <p className="text-xl font-bold tracking-tight leading-none">{value}</p>
+              {subtitle && <span className="text-xs text-muted-foreground/70 truncate">{subtitle}</span>}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">{label}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-none">{label}</p>
           </div>
         </div>
       </CardContent>
@@ -283,13 +283,15 @@ export default function AdminTrialAutomation() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 relative z-10">
         {/* ─── KPI Row ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Emails Enviados" value={emailStats.sent} icon={Send} color="bg-blue-500/10 text-blue-400" />
-          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened}`} />
-          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked}`} />
+          <KPICard label="Taxa Abertura" value={`${emailStats.openRate}%`} icon={MailOpen} color="bg-emerald-500/10 text-emerald-400" subtitle={`${emailStats.opened} abertos`} />
+          <KPICard label="Taxa Clique" value={`${emailStats.clickRate}%`} icon={MousePointerClick} color="bg-amber-500/10 text-amber-400" subtitle={`${emailStats.clicked} cliques`} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard label="Em Fluxos" value={automationStats.active} icon={Users} color="bg-purple-500/10 text-purple-400" subtitle={`${automationStats.entered} total`} />
           <KPICard label="Conversões" value={conversions} icon={CheckCircle2} color="bg-primary/10 text-primary" />
-          <KPICard label="Receita" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
+          <KPICard label="Receita Atribuída" value={`R$ ${totalRevenue.toFixed(0)}`} icon={DollarSign} color="bg-yellow-500/10 text-yellow-400" />
         </div>
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}
@@ -540,9 +542,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Funil de Conversão Trial</CardTitle>
+                  <CardTitle className="text-xl">Funil de Conversão Trial</CardTitle>
                 </div>
-                <CardDescription>Dados reais do sistema de automação</CardDescription>
+                <CardDescription className="text-sm">Dados reais do sistema de automação</CardDescription>
               </CardHeader>
               <CardContent>
                 <TrialFunnel analytics={analytics} />
@@ -554,9 +556,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-blue-400" />
-                  <CardTitle className="text-lg">Performance Individual de Emails</CardTitle>
+                  <CardTitle className="text-xl">Performance Individual de Emails</CardTitle>
                 </div>
-                <CardDescription>Métricas reais por template de email</CardDescription>
+                <CardDescription className="text-sm">Métricas reais por template de email</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -829,8 +831,9 @@ function TrialFunnel({ analytics }: { analytics: any }) {
   return (
     <div className="flex flex-col items-center gap-1.5 py-4">
       {funnelSteps.map((step, i) => {
-        // Funnel shape: first bar is 100% width, last is ~30%
-        const widthPct = 100 - ((i / (totalSteps - 1)) * 65);
+        const maxValue = funnelSteps[0].value;
+        // Width based on actual data proportion - minimum 30% so it's still visible when zero
+        const widthPct = maxValue > 0 ? Math.max(30, (step.value / maxValue) * 100) : (100 - ((i / (totalSteps - 1)) * 65));
         const prevValue = i > 0 ? funnelSteps[i - 1].value : step.value;
         const dropoff = prevValue > 0 && i > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
 
@@ -838,16 +841,16 @@ function TrialFunnel({ analytics }: { analytics: any }) {
           <div
             key={step.label}
             className={cn(
-              "relative flex items-center justify-between px-5 py-3 rounded-lg border bg-gradient-to-r transition-all",
+              "relative flex items-center justify-between px-5 py-3.5 rounded-lg border bg-gradient-to-r transition-all",
               step.color, step.border
             )}
-            style={{ width: `${widthPct}%`, minHeight: "48px" }}
+            style={{ width: `${widthPct}%`, minHeight: "50px" }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">{step.label}</span>
+              <span className="text-base font-semibold">{step.label}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-lg font-bold">{step.value}</span>
+              <span className="text-xl font-bold">{step.value}</span>
               {dropoff > 0 && i > 0 && (
                 <span className="text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded">
                   -{dropoff}%
