@@ -375,8 +375,8 @@ export const PricingSection = () => {
                         <Smartphone className="h-4 w-4 md:h-7 md:w-7 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">1 WhatsApp</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">grátis</p>
+                        <p className="font-bold text-xs md:text-lg text-foreground">1 número WhatsApp</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">conecte e dispare</p>
                       </div>
                     </div>
                   </div>
