@@ -268,6 +268,17 @@ export default function AdminTrialAutomation() {
 
           {/* ═══ AUTOMATIONS TAB ═══ */}
           <TabsContent value="automations" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Fluxos de Automação</h2>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Ativar Todos
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(false)}>
+                  <Pause className="h-3 w-3 mr-1" /> Pausar Todos
+                </Button>
+              </div>
+            </div>
             {automations.map((automation) => {
               const autoSteps = steps.filter((s) => s.automation_id === automation.id);
               return (
