@@ -123,7 +123,6 @@ interface SalesChartData {
   newSales: number;
   upgrades: number;
   cancellations: number;
-  downgrades: number;
   salesValue: number;
   refundValue: number;
   refundCount: number;
@@ -286,14 +285,14 @@ const Admin = () => {
     );
 
     // Group events by month
-    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; downgrades: number; salesValue: number; refundValue: number; refundCount: number } } = {};
+    const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
     
     for (const event of filteredEvents) {
       const eventDate = new Date(event.created_at);
       const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, downgrades: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
       }
       
       // Categorize events based on actual event_type from webhook
@@ -324,13 +323,11 @@ const Admin = () => {
         monthlyData[monthKey].salesValue += planPrice;
       } else if (
         eventType === 'subscription_deleted' || 
-        eventType === 'subscription_canceled'
+        eventType === 'subscription_canceled' ||
+        (eventType === 'subscription_updated' && newPlan === 'free')
       ) {
-        // Only real cancellations (not downgrades to free)
+        // All cancellations including downgrades to free (which is essentially a cancellation)
         monthlyData[monthKey].cancellations++;
-      } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        // Downgrade to free - tracked separately, NOT as cancellation
-        monthlyData[monthKey].downgrades++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
         // Refund from subscription_events - get amount from metadata
         const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
@@ -345,7 +342,7 @@ const Admin = () => {
         const refundDate = monthKeyToLocalDate(refund.month);
         if (refundDate >= startDate) {
           if (!monthlyData[refund.month]) {
-            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, downgrades: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+            monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
           // Use Stripe data as the authoritative source for refunds
           monthlyData[refund.month].refundValue = refund.amount;
@@ -404,7 +401,7 @@ const Admin = () => {
       deleted: 0,
       past_due: 0,
       unpaid: 0,
-      downgraded: 0,
+      downgraded_to_free: 0,
     };
 
     for (const event of filteredEvents) {
@@ -420,7 +417,7 @@ const Admin = () => {
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
       } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        churnReasons.downgraded++;
+        churnReasons.downgraded_to_free++;
       }
     }
 
@@ -428,7 +425,7 @@ const Admin = () => {
     const churnData = [
       { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
-      { name: 'Downgrade p/ Free', value: churnReasons.downgraded, color: '#a855f7' },
+      { name: 'Downgrade p/ Free', value: churnReasons.downgraded_to_free, color: '#a855f7' },
       { name: 'Pagamento Atrasado', value: churnReasons.past_due, color: '#eab308' },
       { name: 'Não Pago', value: churnReasons.unpaid, color: '#6b7280' },
     ].filter(item => item.value > 0);
@@ -1290,7 +1287,7 @@ const Admin = () => {
               
               {/* Summary Cards */}
               {processedSalesChartData.length > 0 && (
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                   <div className="bg-success/10 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-1">Total Vendas</p>
                     <p className="text-lg font-bold text-success">
@@ -1320,12 +1317,7 @@ const Admin = () => {
                     <p className="text-lg font-bold text-warning">
                       {processedSalesChartData.reduce((sum, item) => sum + item.cancellations, 0)}
                     </p>
-                  </div>
-                  <div className="bg-purple-500/10 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Downgrades p/ Free</p>
-                    <p className="text-lg font-bold text-purple-500">
-                      {processedSalesChartData.reduce((sum, item) => sum + item.downgrades, 0)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Inclui downgrades p/ free</p>
                   </div>
                 </div>
               )}
@@ -1353,7 +1345,6 @@ const Admin = () => {
                             newSales: 'Novas Vendas',
                             upgrades: 'Upgrades',
                             cancellations: 'Cancelamentos',
-                            downgrades: 'Downgrades p/ Free',
                             salesValue: 'Valor em Vendas',
                             refundValue: 'Valor Reembolsado'
                           };
@@ -1382,13 +1373,6 @@ const Admin = () => {
                         dataKey="cancellations" 
                         name="Cancelamentos"
                         fill="#ef4444" 
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar 
-                        yAxisId="left"
-                        dataKey="downgrades" 
-                        name="Downgrades p/ Free"
-                        fill="#a855f7" 
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
@@ -1427,10 +1411,6 @@ const Admin = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-[#ef4444]" />
                   <span className="text-muted-foreground">Cancelamentos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-[#a855f7]" />
-                  <span className="text-muted-foreground">Downgrades p/ Free</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm bg-[#10b981] opacity-60" />
