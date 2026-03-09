@@ -1160,31 +1160,75 @@ const Admin = () => {
             </div>
 
             {/* Period Filter */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold flex items-center gap-2">
-                <Calendar size={20} className="text-primary" />
-                Período de Análise
-              </h2>
-              <div className="flex gap-2">
-                {[
-                  { value: '1m', label: '1 Mês' },
-                  { value: '3m', label: '3 Meses' },
-                  { value: '6m', label: '6 Meses' },
-                  { value: '12m', label: '12 Meses' },
-                  { value: 'year', label: 'Este Ano' },
-                  { value: 'all', label: 'Tudo' },
-                ].map(option => (
-                  <Button
-                    key={option.value}
-                    variant={chartPeriodFilter === option.value ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setChartPeriodFilter(option.value as ChartPeriodFilter)}
-                    className="text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold flex items-center gap-2">
+                  <Calendar size={20} className="text-primary" />
+                  Período de Análise
+                </h2>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { value: '1m', label: '1 Mês' },
+                    { value: '3m', label: '3 Meses' },
+                    { value: '6m', label: '6 Meses' },
+                    { value: '12m', label: '12 Meses' },
+                    { value: 'year', label: 'Este Ano' },
+                    { value: 'all', label: 'Tudo' },
+                    { value: 'custom', label: 'Personalizado' },
+                  ].map(option => (
+                    <Button
+                      key={option.value}
+                      variant={chartPeriodFilter === option.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartPeriodFilter(option.value as ChartPeriodFilter)}
+                      className="text-xs"
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
+
+              {chartPeriodFilter === 'custom' && (
+                <div className="flex items-center gap-3 glass rounded-lg p-3">
+                  <span className="text-xs text-muted-foreground font-medium">De:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start", !customStartDate && "text-muted-foreground")}>
+                        <Calendar size={14} className="mr-1.5" />
+                        {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customStartDate}
+                        onSelect={setCustomStartDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-xs text-muted-foreground font-medium">Até:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start", !customEndDate && "text-muted-foreground")}>
+                        <Calendar size={14} className="mr-1.5" />
+                        {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customEndDate}
+                        onSelect={setCustomEndDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
 
             {/* Sales/Upgrades/Cancellations Chart - Full Width */}
