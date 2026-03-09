@@ -189,56 +189,7 @@ Deno.serve(async (req) => {
       console.log(`[GET-STRIPE-MRR] WiizeProspect refund: R$ ${refund.amount / 100}`);
     }
 
-    // --- Process subscriptions for active MRR, cancellations ---
-    let activeMRR = 0;
-    let activeCount = 0;
-    let canceledCount = 0;
-    const planDistribution: { [plan: string]: number } = {};
-    const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
-
-    // Set of refunded subscription IDs (subs whose charge was refunded)
-    const refundedSubIds = new Set<string>();
-
-    for (const sub of wiizeSubs) {
-      const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
-      if (isAdminEmail(customerEmail)) continue;
-
-      const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
-      const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
-      const priceId = sub.items.data[0]?.price.id;
-      const planName = PRICE_TO_PLAN[priceId] || "unknown";
-
-      // Check if latest invoice charge was refunded
-      const chargeId = latestInvoice?.charge;
-      const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
-      if (wasRefunded) {
-        refundedSubIds.add(sub.id);
-      }
-
-      // Count cancellations REGARDLESS of amountPaid (fix: was skipping $0 subs)
-      if (sub.status === "canceled") {
-        canceledCount++;
-        
-        if (sub.canceled_at) {
-          const cancelDate = new Date(sub.canceled_at * 1000);
-          const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
-          if (!monthlySales[monthKey]) {
-            monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
-          }
-          monthlySales[monthKey].cancellations++;
-        }
-      }
-
-      // For active MRR, skip $0 or refunded subs
-      if (sub.status === "active" && amountPaid > 0 && !wasRefunded) {
-        activeMRR += amountPaid;
-        activeCount++;
-        planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-      }
-    }
-
-    // --- Process paid invoices for accurate sales tracking ---
-    // Group invoices by subscription to find first invoice per sub
+    // --- Process paid invoices FIRST to know which subs had real payments ---
     const invoicesBySubId: { [subId: string]: Stripe.Invoice[] } = {};
     const monthlyMRR: { [month: string]: number } = {};
     let totalSalesValue = 0;
@@ -258,26 +209,71 @@ Deno.serve(async (req) => {
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       if (wasRefunded) continue;
 
-      // Track for monthly MRR (all valid paid invoices)
+      // Track for monthly MRR
       const paymentTimestamp = invoice.status_transitions?.paid_at || invoice.created;
       const paymentDate = new Date(paymentTimestamp * 1000);
       const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
       monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
 
-      // Track total sales (non-refunded paid invoices)
       totalSalesValue += invoice.amount_paid / 100;
       totalSalesCount++;
 
-      // Group by sub for first-invoice detection
       if (!invoicesBySubId[subId]) {
         invoicesBySubId[subId] = [];
       }
       invoicesBySubId[subId].push(invoice);
     }
 
+    // Set of sub IDs that ever had a real (non-refunded) payment
+    const subsWithPayment = new Set(Object.keys(invoicesBySubId));
+
+    // --- Process subscriptions for active MRR, cancellations ---
+    let activeMRR = 0;
+    let activeCount = 0;
+    let canceledCount = 0;
+    const planDistribution: { [plan: string]: number } = {};
+    const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
+
+    for (const sub of wiizeSubs) {
+      const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
+      if (isAdminEmail(customerEmail)) continue;
+
+      const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
+      const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
+      const priceId = sub.items.data[0]?.price.id;
+      const planName = PRICE_TO_PLAN[priceId] || "unknown";
+
+      // Count cancellations only for subs that had at least one real payment
+      // This includes refunded subs (they DID have a payment, even if refunded)
+      const hadAnyPayment = subsWithPayment.has(sub.id) || 
+        (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
+
+      if (sub.status === "canceled" && hadAnyPayment) {
+        canceledCount++;
+        
+        if (sub.canceled_at) {
+          const cancelDate = new Date(sub.canceled_at * 1000);
+          const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
+          if (!monthlySales[monthKey]) {
+            monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+          }
+          monthlySales[monthKey].cancellations++;
+        }
+      }
+
+      // For active MRR, skip $0 or refunded subs
+      const chargeId = latestInvoice?.charge;
+      const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
+      
+      if (sub.status === "active" && amountPaid > 0 && !wasRefunded) {
+        activeMRR += amountPaid;
+        activeCount++;
+        planDistribution[planName] = (planDistribution[planName] || 0) + 1;
+      }
+    }
+
     // Determine first invoice per subscription for newSales tracking
     for (const [subId, invoices] of Object.entries(invoicesBySubId)) {
-      // Sort by created date ascending to find the first invoice
       invoices.sort((a, b) => a.created - b.created);
       const firstInvoice = invoices[0];
 
