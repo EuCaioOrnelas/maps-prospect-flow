@@ -259,6 +259,14 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/admin/trial-automation" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminTrialAutomation />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Wiize Revenue (admin only, separate layout) */}
                 <Route
                   path="/revenue"
