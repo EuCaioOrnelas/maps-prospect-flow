@@ -135,6 +135,13 @@ const Signup = () => {
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
       await trackSignupCompleted(newUser.id);
+      // Track for trial automation system
+      await supabase.from('trial_product_events').insert({
+        user_id: newUser.id,
+        event_name: 'user_signed_up',
+        event_source: 'frontend',
+        metadata: { method: 'email' },
+      });
     }
 
     // Show email verification dialog
