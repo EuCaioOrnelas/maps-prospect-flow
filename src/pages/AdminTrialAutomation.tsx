@@ -49,6 +49,7 @@ export default function AdminTrialAutomation() {
   const [editTrigger, setEditTrigger] = useState<BehaviourTrigger | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
+  const [runningProcessor, setRunningProcessor] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
