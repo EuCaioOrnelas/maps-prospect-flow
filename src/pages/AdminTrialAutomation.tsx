@@ -593,24 +593,24 @@ export default function AdminTrialAutomation() {
                                 <span className="text-sm font-medium">{template.name}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs font-mono">{sent}</TableCell>
-                            <TableCell className="text-center text-xs font-mono">{opened}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{sent}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{opened}</TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={openRate >= 30 ? "default" : openRate >= 15 ? "secondary" : "outline"} className="text-[10px] font-mono">
+                              <Badge variant={openRate >= 30 ? "default" : openRate >= 15 ? "secondary" : "outline"} className="text-xs font-mono">
                                 {sent ? `${openRate}%` : "—"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs font-mono">{clicked}</TableCell>
+                            <TableCell className="text-center text-sm font-mono">{clicked}</TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={clickRate >= 5 ? "default" : "outline"} className="text-[10px] font-mono">
+                              <Badge variant={clickRate >= 5 ? "default" : "outline"} className="text-xs font-mono">
                                 {sent ? `${clickRate}%` : "—"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right text-xs font-mono font-medium">
+                            <TableCell className="text-right text-sm font-mono font-medium">
                               {rev > 0 ? `R$ ${rev.toFixed(2)}` : "—"}
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={template.is_active ? "default" : "secondary"} className="text-[10px]">
+                              <Badge variant={template.is_active ? "default" : "secondary"} className="text-xs">
                                 {template.is_active ? "Ativo" : "Inativo"}
                               </Badge>
                             </TableCell>
