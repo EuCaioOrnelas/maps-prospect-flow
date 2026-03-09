@@ -255,11 +255,11 @@ const Admin = () => {
     }
   }, []);
 
-  // Process sales events based on period filter
-  const processedSalesChartData = useMemo(() => {
-    // Calculate date range based on filter
+  // Helper to get date range from filter
+  const getFilterDateRange = useCallback((): { startDate: Date; endDate: Date | null } => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date | null = null;
     
     switch (chartPeriodFilter) {
       case '1m':
@@ -277,19 +277,28 @@ const Admin = () => {
       case 'year':
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
+      case 'custom':
+        startDate = customStartDate || new Date(2024, 0, 1);
+        endDate = customEndDate || now;
+        break;
       case 'all':
       default:
         startDate = new Date(2024, 0, 1);
         break;
     }
+    return { startDate, endDate };
+  }, [chartPeriodFilter, customStartDate, customEndDate]);
+
+  // Process sales events based on period filter
+  const processedSalesChartData = useMemo(() => {
+    const { startDate, endDate } = getFilterDateRange();
 
     const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
 
-    // Use Stripe monthlySales data as PRIMARY and ONLY source for sales/cancellations
     if (stripeMRR?.monthlySales) {
       for (const sale of stripeMRR.monthlySales) {
         const saleDate = monthKeyToLocalDate(sale.month);
-        if (saleDate >= startDate) {
+        if (saleDate >= startDate && (!endDate || saleDate <= endDate)) {
           if (!monthlyData[sale.month]) {
             monthlyData[sale.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
@@ -300,11 +309,10 @@ const Admin = () => {
       }
     }
     
-    // Merge refund data from Stripe API
     if (stripeMRR?.monthlyRefunds) {
       for (const refund of stripeMRR.monthlyRefunds) {
         const refundDate = monthKeyToLocalDate(refund.month);
-        if (refundDate >= startDate) {
+        if (refundDate >= startDate && (!endDate || refundDate <= endDate)) {
           if (!monthlyData[refund.month]) {
             monthlyData[refund.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
           }
@@ -320,7 +328,7 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [chartPeriodFilter, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
+  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
