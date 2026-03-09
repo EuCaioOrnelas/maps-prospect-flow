@@ -48,9 +48,7 @@ export const AIAgentsSection = () => {
       className="py-20 md:py-32 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-10" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+      {/* No custom background - inherits site background */}
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         {/* Header */}
