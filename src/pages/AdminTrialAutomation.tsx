@@ -81,6 +81,7 @@ export default function AdminTrialAutomation() {
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [runningProcessor, setRunningProcessor] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
