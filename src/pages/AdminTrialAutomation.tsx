@@ -20,7 +20,7 @@ import { SEO } from "@/components/SEO";
 import {
   ArrowLeft, Zap, Mail, Target, BarChart3, Settings, Plus, Edit, Trash2,
   Play, Pause, Eye, TrendingUp, Users, MousePointerClick, DollarSign,
-  CheckCircle2, XCircle, Clock, Loader2, RefreshCw,
+  CheckCircle2, XCircle, Clock, Loader2, RefreshCw, Rocket,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -49,6 +49,7 @@ export default function AdminTrialAutomation() {
   const [editTrigger, setEditTrigger] = useState<BehaviourTrigger | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
+  const [runningProcessor, setRunningProcessor] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -159,6 +160,39 @@ export default function AdminTrialAutomation() {
     return analytics.revenue.reduce((sum: number, r: any) => sum + Number(r.revenue_amount || 0), 0);
   };
 
+  const runProcessor = async () => {
+    setRunningProcessor(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("trial-automation-processor");
+      if (error) throw error;
+      toast({
+        title: "Processador executado",
+        description: `Automações: ${data?.results?.automations_processed || 0} | Emails: ${data?.results?.emails_sent || 0} | Triggers: ${data?.results?.triggers_evaluated || 0}`,
+      });
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: "Erro ao executar", description: err.message, variant: "destructive" });
+    } finally {
+      setRunningProcessor(false);
+    }
+  };
+
+  // Toggle all automations
+  const toggleAllAutomations = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(automations.map((a) => supabase.from("trial_automations").update({ status: newStatus }).eq("id", a.id)));
+    toast({ title: activate ? "Todos os fluxos ativados" : "Todos os fluxos pausados" });
+    fetchAll();
+  };
+
+  // Toggle all triggers
+  const toggleAllTriggers = async (activate: boolean) => {
+    const newStatus = activate ? "active" : "paused";
+    await Promise.all(triggers.map((t) => supabase.from("trial_behaviour_triggers").update({ status: newStatus }).eq("id", t.id)));
+    toast({ title: activate ? "Todos os triggers ativados" : "Todos os triggers pausados" });
+    fetchAll();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -187,7 +221,11 @@ export default function AdminTrialAutomation() {
             <Zap className="h-5 w-5 text-primary" />
             <h1 className="font-semibold text-lg">Automação Trial</h1>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="default" size="sm" onClick={runProcessor} disabled={runningProcessor}>
+              {runningProcessor ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5 mr-1.5" />}
+              Executar Processador
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchAll}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Atualizar
@@ -230,6 +268,17 @@ export default function AdminTrialAutomation() {
 
           {/* ═══ AUTOMATIONS TAB ═══ */}
           <TabsContent value="automations" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Fluxos de Automação</h2>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Ativar Todos
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAllAutomations(false)}>
+                  <Pause className="h-3 w-3 mr-1" /> Pausar Todos
+                </Button>
+              </div>
+            </div>
             {automations.map((automation) => {
               const autoSteps = steps.filter((s) => s.automation_id === automation.id);
               return (
@@ -348,8 +397,18 @@ export default function AdminTrialAutomation() {
           {/* ═══ TRIGGERS TAB ═══ */}
           <TabsContent value="triggers" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
-              <Badge variant="outline">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold">Triggers Comportamentais</h2>
+                <Badge variant="outline">{triggers.filter((t) => t.status === "active").length} ativos</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Ativar Todos
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAllTriggers(false)}>
+                  <Pause className="h-3 w-3 mr-1" /> Pausar Todos
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-3">
