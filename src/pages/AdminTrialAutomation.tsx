@@ -97,9 +97,9 @@ export default function AdminTrialAutomation() {
   // ─── Template Actions ─────────────────────────────────────────────────────
   const saveTemplate = async (template: Partial<MessageTemplate>) => {
     if (editTemplate?.id) {
-      await supabase.from("trial_message_templates").update(template).eq("id", editTemplate.id);
+      await supabase.from("trial_message_templates").update(template as any).eq("id", editTemplate.id);
     } else {
-      await supabase.from("trial_message_templates").insert(template);
+      await supabase.from("trial_message_templates").insert(template as any);
     }
     toast({ title: "Template salvo!" });
     setTemplateDialogOpen(false);
