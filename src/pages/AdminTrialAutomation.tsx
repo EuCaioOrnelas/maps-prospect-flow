@@ -804,48 +804,53 @@ export default function AdminTrialAutomation() {
   );
 }
 
-// ─── Trial Funnel ──────────────────────────────────────────────────────────────
+// ─── Trial Funnel (real funnel shape, centered) ──────────────────────────────
 function TrialFunnel({ analytics }: { analytics: any }) {
-  if (!analytics) return <p className="text-sm text-muted-foreground">Sem dados</p>;
+  if (!analytics) return <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>;
 
   const events = analytics.productEvents || [];
   const states = analytics.automationStates || [];
   const emailEvents = analytics.emailEvents || [];
 
   const funnelSteps = [
-    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0, color: "bg-blue-500" },
-    { label: "Entraram em Automação", value: states.length, color: "bg-indigo-500" },
-    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length, color: "bg-violet-500" },
-    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length, color: "bg-purple-500" },
-    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length, color: "bg-pink-500" },
-    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length, color: "bg-amber-500" },
-    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length, color: "bg-emerald-500" },
+    { label: "Cadastrados", value: new Set(events.filter((e: any) => e.event_name === "user_signed_up").map((e: any) => e.user_id)).size || states.length || 0, color: "from-blue-500/40 to-blue-600/40", border: "border-blue-500/50" },
+    { label: "Entraram em Automação", value: states.length, color: "from-indigo-500/40 to-indigo-600/40", border: "border-indigo-500/50" },
+    { label: "Emails Enviados", value: emailEvents.filter((e: any) => e.event_type === "sent").length, color: "from-violet-500/40 to-violet-600/40", border: "border-violet-500/50" },
+    { label: "Emails Abertos", value: emailEvents.filter((e: any) => e.event_type === "opened").length, color: "from-purple-500/40 to-purple-600/40", border: "border-purple-500/50" },
+    { label: "Emails Clicados", value: emailEvents.filter((e: any) => e.event_type === "clicked").length, color: "from-pink-500/40 to-pink-600/40", border: "border-pink-500/50" },
+    { label: "Ativaram Produto", value: events.filter((e: any) => e.event_name === "activation_completed").length, color: "from-amber-500/40 to-amber-600/40", border: "border-amber-500/50" },
+    { label: "Converteram (Pagos)", value: events.filter((e: any) => e.event_name === "subscription_started").length, color: "from-emerald-500/40 to-emerald-600/40", border: "border-emerald-500/50" },
   ];
 
-  const maxValue = Math.max(...funnelSteps.map((s) => s.value), 1);
+  const totalSteps = funnelSteps.length;
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col items-center gap-1.5 py-4">
       {funnelSteps.map((step, i) => {
-        const pct = Math.max((step.value / maxValue) * 100, 8);
+        // Funnel shape: first bar is 100% width, last is ~30%
+        const widthPct = 100 - ((i / (totalSteps - 1)) * 65);
         const prevValue = i > 0 ? funnelSteps[i - 1].value : step.value;
         const dropoff = prevValue > 0 && i > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
 
         return (
-          <div key={step.label} className="flex items-center gap-3">
-            <span className="text-[11px] text-muted-foreground w-44 text-right shrink-0">{step.label}</span>
-            <div className="flex-1">
-              <div className="h-7 bg-muted/20 rounded-md overflow-hidden">
-                <div
-                  className={cn("h-full rounded-md transition-all flex items-center justify-between px-3", step.color + "/30")}
-                  style={{ width: `${pct}%` }}
-                >
-                  <span className="text-xs font-bold">{step.value}</span>
-                  {dropoff > 0 && i > 0 && (
-                    <span className="text-[9px] text-muted-foreground">-{dropoff}%</span>
-                  )}
-                </div>
-              </div>
+          <div
+            key={step.label}
+            className={cn(
+              "relative flex items-center justify-between px-5 py-3 rounded-lg border bg-gradient-to-r transition-all",
+              step.color, step.border
+            )}
+            style={{ width: `${widthPct}%`, minHeight: "48px" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{step.label}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold">{step.value}</span>
+              {dropoff > 0 && i > 0 && (
+                <span className="text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded">
+                  -{dropoff}%
+                </span>
+              )}
             </div>
           </div>
         );
