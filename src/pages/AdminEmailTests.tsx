@@ -50,21 +50,34 @@ const EMAIL_TYPES = [
 // ─── Compose Tab ────────────────────────────────────────────────────────────
 
 type PlanFilter = "free" | "start" | "growth" | "scale";
+type ScoreLevelFilter = "Frio" | "Baixo engajamento" | "Engajado" | "Alto valor" | "Pronto para upgrade";
+type PurchaseFilter = "all" | "purchased" | "not_purchased";
 
 function ComposeTab() {
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [selectedPlans, setSelectedPlans] = useState<PlanFilter[]>(["free", "start", "growth", "scale"]);
+  const [selectedScoreLevels, setSelectedScoreLevels] = useState<ScoreLevelFilter[]>([]);
+  const [purchaseFilter, setPurchaseFilter] = useState<PurchaseFilter>("all");
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+  const [matchCount, setMatchCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount] = useState(false);
 
   const togglePlan = (plan: PlanFilter) => {
     setSelectedPlans((prev) =>
       prev.includes(plan) ? prev.filter((p) => p !== plan) : [...prev, plan]
     );
   };
+
+  const toggleScoreLevel = (level: ScoreLevelFilter) => {
+    setSelectedScoreLevels((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level]
+    );
+  };
+
   const editorRef = useRef<HTMLDivElement>(null);
 
   const applyFormat = (command: string, value?: string) => {
@@ -85,6 +98,77 @@ function ComposeTab() {
   const getEditorContent = () => {
     return editorRef.current?.innerHTML || "";
   };
+
+  const PAID_PLANS = ["start", "growth", "scale"];
+
+  const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
+    // Step 1: Get profiles matching plan + purchase filter
+    let planFilter = [...selectedPlans];
+    if (purchaseFilter === "purchased") {
+      planFilter = planFilter.filter(p => PAID_PLANS.includes(p));
+    } else if (purchaseFilter === "not_purchased") {
+      planFilter = planFilter.filter(p => p === "free");
+    }
+    if (planFilter.length === 0) return { eligible: [], skipped: 0 };
+
+    const { data: users, error: usersError } = await supabase
+      .from("profiles")
+      .select("id, email, name, plan")
+      .in("plan", planFilter)
+      .eq("is_blocked", false);
+
+    if (usersError) throw usersError;
+    if (!users || users.length === 0) return { eligible: [], skipped: 0 };
+
+    let filteredUsers = users;
+
+    // Step 2: If score levels selected, filter by user_scores
+    if (selectedScoreLevels.length > 0) {
+      const userIds = users.map(u => u.id);
+      const { data: scores } = await supabase
+        .from("user_scores")
+        .select("user_id, score_label")
+        .in("user_id", userIds)
+        .in("score_label", selectedScoreLevels);
+
+      const scoredIds = new Set((scores || []).map(s => s.user_id));
+      filteredUsers = filteredUsers.filter(u => scoredIds.has(u.id));
+    }
+
+    // Step 3: Check email preferences
+    const userIds = filteredUsers.map(u => u.id);
+    const { data: prefs } = await supabase
+      .from("email_preferences")
+      .select("user_id, marketing_enabled")
+      .in("user_id", userIds);
+
+    const optedOutIds = new Set(
+      (prefs || [])
+        .filter((p) => p.marketing_enabled === false)
+        .map((p) => p.user_id)
+    );
+
+    const eligible = filteredUsers.filter(u => !optedOutIds.has(u.id));
+    const skipped = filteredUsers.length - eligible.length;
+    return { eligible, skipped };
+  };
+
+  const handleCountPreview = async () => {
+    setLoadingCount(true);
+    try {
+      const { eligible } = await getFilteredUserIds();
+      setMatchCount(eligible.length);
+    } catch (err: any) {
+      toast({ title: "Erro ao contar", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingCount(false);
+    }
+  };
+
+  // Reset count when filters change
+  useEffect(() => {
+    setMatchCount(null);
+  }, [selectedPlans, selectedScoreLevels, purchaseFilter]);
 
   const handleSendWithEditor = async (isTest: boolean) => {
     const htmlContent = getEditorContent();
@@ -121,42 +205,18 @@ function ComposeTab() {
         if (error) throw error;
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
       } else {
-        const { data: users, error: usersError } = await supabase
-          .from("profiles")
-          .select("id, email, name, plan")
-          .in("plan", selectedPlans)
-          .eq("is_blocked", false);
+        const { eligible: eligibleUsers, skipped } = await getFilteredUserIds();
 
-        if (usersError) throw usersError;
-        if (!users || users.length === 0) {
-          toast({ title: "Nenhum usuário encontrado para os planos selecionados" });
+        if (eligibleUsers.length === 0) {
+          toast({ title: "Nenhum usuário encontrado para os filtros selecionados" });
           setSending(false);
           return;
         }
-
-        const userIds = users.map((u) => u.id);
-
-        const { data: prefs, error: prefsError } = await supabase
-          .from("email_preferences")
-          .select("user_id, marketing_enabled")
-          .in("user_id", userIds);
-
-        if (prefsError) throw prefsError;
-
-        const optedOutIds = new Set(
-          (prefs || [])
-            .filter((p) => p.marketing_enabled === false)
-            .map((p) => p.user_id)
-        );
-
-        const eligibleUsers = users.filter((u) => !optedOutIds.has(u.id));
-        const skipped = users.length - eligibleUsers.length;
 
         let sent = 0;
         let failed = 0;
         setProgress({ current: 0, total: eligibleUsers.length });
 
-        // Send in parallel batches of 5
         const BATCH_SIZE = 5;
         for (let i = 0; i < eligibleUsers.length; i += BATCH_SIZE) {
           const batch = eligibleUsers.slice(i, i + BATCH_SIZE);
@@ -191,6 +251,14 @@ function ComposeTab() {
     }
   };
 
+  const scoreLevels: { value: ScoreLevelFilter; label: string; color: string }[] = [
+    { value: "Frio", label: "Frio (0-20)", color: "text-red-400" },
+    { value: "Baixo engajamento", label: "Baixo engajamento (21-40)", color: "text-yellow-400" },
+    { value: "Engajado", label: "Engajado (41-60)", color: "text-blue-400" },
+    { value: "Alto valor", label: "Alto valor (61-80)", color: "text-emerald-400" },
+    { value: "Pronto para upgrade", label: "Pronto p/ upgrade (81-100)", color: "text-purple-400" },
+  ];
+
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -213,35 +281,14 @@ function ComposeTab() {
           </p>
           {/* Toolbar */}
           <div className="flex items-center gap-1 p-1.5 border border-b-0 rounded-t-md bg-muted/30">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => applyFormat("bold")}
-              title="Negrito"
-            >
+            <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => applyFormat("bold")} title="Negrito">
               <Bold size={14} />
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => applyFormat("italic")}
-              title="Itálico"
-            >
+            <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => applyFormat("italic")} title="Itálico">
               <Italic size={14} />
             </Button>
             <div className="w-px h-5 bg-border mx-1" />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 gap-1"
-              onClick={insertLink}
-              title="Inserir botão/link"
-            >
+            <Button type="button" variant="ghost" size="sm" className="h-7 px-2 gap-1" onClick={insertLink} title="Inserir botão/link">
               <Link2 size={14} />
               <span className="text-xs">Botão</span>
             </Button>
@@ -258,34 +305,87 @@ function ComposeTab() {
         </div>
       </div>
 
-      <div>
-        <Label className="text-foreground mb-2 block">
-          <Users size={14} className="inline mr-1" />
-          Público-alvo (planos)
-        </Label>
-        <div className="flex flex-wrap gap-3">
-          {([
-            { value: "free" as PlanFilter, label: "Free" },
-            { value: "start" as PlanFilter, label: "Start" },
-            { value: "growth" as PlanFilter, label: "Growth" },
-            { value: "scale" as PlanFilter, label: "Scale" },
-          ]).map((plan) => (
-            <label
-              key={plan.value}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Checkbox
-                checked={selectedPlans.includes(plan.value)}
-                onCheckedChange={() => togglePlan(plan.value)}
-              />
-              <span className="text-sm text-foreground">{plan.label}</span>
-            </label>
-          ))}
+      {/* Targeting Filters */}
+      <div className="space-y-4 p-4 rounded-lg border bg-muted/20">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Users size={14} />
+          Público-alvo
+        </h3>
+
+        {/* Plan filter */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Por plano</Label>
+          <div className="flex flex-wrap gap-3">
+            {([
+              { value: "free" as PlanFilter, label: "Free" },
+              { value: "start" as PlanFilter, label: "Start" },
+              { value: "growth" as PlanFilter, label: "Growth" },
+              { value: "scale" as PlanFilter, label: "Scale" },
+            ]).map((plan) => (
+              <label key={plan.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={selectedPlans.includes(plan.value)} onCheckedChange={() => togglePlan(plan.value)} />
+                <span className="text-sm text-foreground">{plan.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Apenas usuários com marketing habilitado receberão o e-mail.
-        </p>
+
+        {/* Purchase filter */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Status de compra</Label>
+          <div className="flex flex-wrap gap-3">
+            {([
+              { value: "all" as PurchaseFilter, label: "Todos" },
+              { value: "purchased" as PurchaseFilter, label: "✅ Compraram (plano pago)" },
+              { value: "not_purchased" as PurchaseFilter, label: "❌ Não compraram (free)" },
+            ]).map((opt) => (
+              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={purchaseFilter === opt.value}
+                  onCheckedChange={() => setPurchaseFilter(opt.value)}
+                />
+                <span className="text-sm text-foreground">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Score level filter */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Por nível de score (opcional)</Label>
+          <div className="flex flex-wrap gap-3">
+            {scoreLevels.map((level) => (
+              <label key={level.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={selectedScoreLevels.includes(level.value)}
+                  onCheckedChange={() => toggleScoreLevel(level.value)}
+                />
+                <span className={`text-sm ${level.color}`}>{level.label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Se nenhum nível for selecionado, envia para todos os usuários dos planos selecionados.
+          </p>
+        </div>
+
+        {/* Preview count */}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={handleCountPreview} disabled={loadingCount} className="gap-2">
+            {loadingCount ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+            Contar destinatários
+          </Button>
+          {matchCount !== null && (
+            <span className="text-sm font-medium text-foreground">
+              {matchCount} usuário(s) correspondem aos filtros
+            </span>
+          )}
+        </div>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        Apenas usuários com marketing habilitado receberão o e-mail.
+      </p>
 
       {progress && (
         <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
