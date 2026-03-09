@@ -292,7 +292,7 @@ const Admin = () => {
       const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, downgrades: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+        monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
       }
       
       // Categorize events based on actual event_type from webhook
