@@ -269,10 +269,6 @@ export default function AdminTrialAutomation() {
               <StatusDot active={automations.some((a) => a.status === "active")} />
               <span className="ml-1.5">{automations.filter((a) => a.status === "active").length} fluxos ativos</span>
             </Badge>
-            <Button variant="default" size="sm" className="h-8 text-xs" onClick={runProcessor} disabled={runningProcessor}>
-              {runningProcessor ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Rocket className="h-3 w-3 mr-1.5" />}
-              Executar
-            </Button>
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={fetchAll}>
               <RefreshCw className="h-3 w-3 mr-1.5" />
               Atualizar
