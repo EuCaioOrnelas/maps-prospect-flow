@@ -540,9 +540,9 @@ export default function AdminTrialAutomation() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">Funil de Conversão Trial</CardTitle>
+                  <CardTitle className="text-lg">Funil de Conversão Trial</CardTitle>
                 </div>
-                <CardDescription className="text-sm">Dados reais do sistema de automação</CardDescription>
+                <CardDescription>Dados reais do sistema de automação</CardDescription>
               </CardHeader>
               <CardContent>
                 <TrialFunnel analytics={analytics} />
