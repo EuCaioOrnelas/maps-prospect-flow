@@ -1218,6 +1218,9 @@ const Admin = () => {
                 <p className="text-xs text-muted-foreground/70 mt-1">
                   Cancelados / (Ativos + Cancelados)
                 </p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
                     <XCircle size={20} className="text-muted-foreground" />
@@ -1227,7 +1230,7 @@ const Admin = () => {
                   {stripeMRR?.canceledSubscriptions ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Cancelamentos
+                  Cancelamentos (Total)
                 </p>
               </div>
 
