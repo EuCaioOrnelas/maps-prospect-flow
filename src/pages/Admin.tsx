@@ -283,7 +283,7 @@ const Admin = () => {
 
     const monthlyData: { [month: string]: { newSales: number; upgrades: number; cancellations: number; salesValue: number; refundValue: number; refundCount: number } } = {};
 
-    // Use Stripe monthlySales data as primary source (always available)
+    // Use Stripe monthlySales data as PRIMARY and ONLY source for sales/cancellations
     if (stripeMRR?.monthlySales) {
       for (const sale of stripeMRR.monthlySales) {
         const saleDate = monthKeyToLocalDate(sale.month);
@@ -294,60 +294,6 @@ const Admin = () => {
           monthlyData[sale.month].newSales = sale.newSales;
           monthlyData[sale.month].salesValue = sale.salesValue;
           monthlyData[sale.month].cancellations = sale.cancellations;
-        }
-      }
-    }
-
-    // Override with subscription_events data if available (more granular)
-    if (allSalesEvents.length > 0) {
-      // Reset and use subscription_events as source
-      Object.keys(monthlyData).forEach(k => {
-        monthlyData[k].newSales = 0;
-        monthlyData[k].upgrades = 0;
-        monthlyData[k].cancellations = 0;
-        monthlyData[k].salesValue = 0;
-      });
-
-      const filteredEvents = allSalesEvents.filter(event => 
-        new Date(event.created_at) >= startDate
-      );
-
-      for (const event of filteredEvents) {
-        const eventDate = new Date(event.created_at);
-        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
-        }
-        
-        const eventType = event.event_type?.toLowerCase();
-        const previousPlan = event.previous_plan?.toLowerCase();
-        const newPlan = event.new_plan?.toLowerCase();
-        const metadata = event.metadata || {};
-        const realAmountPaid = typeof metadata.amount_paid === 'number' ? metadata.amount_paid : null;
-        const planPrice = realAmountPaid ?? (PLAN_PRICES[newPlan] || 0);
-        
-        if (eventType === 'checkout_completed') {
-          if (!previousPlan || previousPlan === 'free') {
-            monthlyData[monthKey].newSales++;
-            monthlyData[monthKey].salesValue += planPrice;
-          } else if (previousPlan !== newPlan) {
-            monthlyData[monthKey].upgrades++;
-            monthlyData[monthKey].salesValue += planPrice;
-          }
-        } else if (eventType === 'subscription_upgrade') {
-          monthlyData[monthKey].upgrades++;
-          monthlyData[monthKey].salesValue += planPrice;
-        } else if (
-          eventType === 'subscription_deleted' || 
-          eventType === 'subscription_canceled' ||
-          (eventType === 'subscription_updated' && newPlan === 'free')
-        ) {
-          monthlyData[monthKey].cancellations++;
-        } else if (eventType === 'refund' || eventType === 'charge_refunded') {
-          const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
-          monthlyData[monthKey].refundValue += refundAmount;
-          monthlyData[monthKey].refundCount++;
         }
       }
     }
