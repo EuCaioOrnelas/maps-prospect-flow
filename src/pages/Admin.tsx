@@ -323,13 +323,11 @@ const Admin = () => {
         monthlyData[monthKey].salesValue += planPrice;
       } else if (
         eventType === 'subscription_deleted' || 
-        eventType === 'subscription_canceled'
+        eventType === 'subscription_canceled' ||
+        (eventType === 'subscription_updated' && newPlan === 'free')
       ) {
-        // Only real cancellations (not downgrades to free)
+        // All cancellations including downgrades to free (which is essentially a cancellation)
         monthlyData[monthKey].cancellations++;
-      } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        // Downgrade to free - tracked separately, NOT as cancellation
-        monthlyData[monthKey].downgrades++;
       } else if (eventType === 'refund' || eventType === 'charge_refunded') {
         // Refund from subscription_events - get amount from metadata
         const refundAmount = metadata.amount_refunded || metadata.amount || metadata.amount_paid || PLAN_PRICES[previousPlan] || PLAN_PRICES[newPlan] || 0;
