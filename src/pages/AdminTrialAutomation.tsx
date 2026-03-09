@@ -561,14 +561,14 @@ export default function AdminTrialAutomation() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-xs">Template</TableHead>
-                        <TableHead className="text-xs text-center">Enviados</TableHead>
-                        <TableHead className="text-xs text-center">Abertos</TableHead>
-                        <TableHead className="text-xs text-center">Open Rate</TableHead>
-                        <TableHead className="text-xs text-center">Cliques</TableHead>
-                        <TableHead className="text-xs text-center">Click Rate</TableHead>
-                        <TableHead className="text-xs text-right">Receita</TableHead>
-                        <TableHead className="text-xs text-center">Status</TableHead>
+                        <TableHead className="text-sm">Template</TableHead>
+                        <TableHead className="text-sm text-center">Enviados</TableHead>
+                        <TableHead className="text-sm text-center">Abertos</TableHead>
+                        <TableHead className="text-sm text-center">Open Rate</TableHead>
+                        <TableHead className="text-sm text-center">Cliques</TableHead>
+                        <TableHead className="text-sm text-center">Click Rate</TableHead>
+                        <TableHead className="text-sm text-right">Receita</TableHead>
+                        <TableHead className="text-sm text-center">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
