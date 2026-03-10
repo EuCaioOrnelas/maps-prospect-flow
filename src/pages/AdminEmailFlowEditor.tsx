@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ReactFlow,
   Background,
+  BackgroundVariant,
   Controls,
   MiniMap,
   addEdge,
