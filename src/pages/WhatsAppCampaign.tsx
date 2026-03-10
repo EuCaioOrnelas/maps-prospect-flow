@@ -436,6 +436,9 @@ const WhatsAppCampaign = () => {
         description: `A campanha será iniciada no horário programado`,
       });
 
+      // Track score event for scheduled campaign
+      trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length, scheduled: true });
+
       handleNewCampaign();
       setActiveTab("history");
       setIsStartingCampaign(false);
