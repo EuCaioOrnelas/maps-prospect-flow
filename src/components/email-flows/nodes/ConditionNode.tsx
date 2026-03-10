@@ -17,36 +17,38 @@ export function ConditionNode({ data }: NodeProps) {
   const metrics = data.metrics as any;
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-60 overflow-hidden backdrop-blur-sm">
-      <div className="px-3.5 py-2 flex items-center gap-2 border-b border-border">
-        <div className="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
+    <div className="relative w-48 h-48">
+      {/* Diamond shape */}
+      <div
+        className="absolute inset-0 bg-card border border-border shadow-[0_2px_16px_hsl(0_0%_0%/0.3)] backdrop-blur-sm"
+        style={{ transform: "rotate(45deg)", borderRadius: "8px" }}
+      />
+      {/* Content (not rotated) */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-10">
+        <div className="w-6 h-6 rounded-full bg-purple-500/10 flex items-center justify-center mb-1">
           <GitBranch size={13} className="text-purple-400" />
         </div>
-        <span className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Condição</span>
-      </div>
-      <div className="px-3.5 py-3">
-        <p className="text-sm font-medium text-foreground truncate">{String(data.label || "Condição")}</p>
+        <p className="text-xs font-semibold text-foreground truncate w-full">{String(data.label || "Condição")}</p>
         {isConfigured ? (
-          <p className="text-[11px] text-muted-foreground mt-1.5">
+          <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
             {conditionLabels[cfg.condition_type] || cfg.condition_type}
             {cfg.value ? ` · ${cfg.value}` : ""}
           </p>
         ) : (
-          <p className="text-[11px] text-muted-foreground/60 mt-1.5 italic">Configure a condição</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5 italic">Configurar</p>
         )}
         {metrics && metrics.passed > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50">
-            <span className="text-[10px] text-muted-foreground">{metrics.passed} avaliados</span>
-          </div>
+          <p className="text-[9px] text-muted-foreground mt-1">{metrics.passed} avaliados</p>
         )}
       </div>
-      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-purple-400 !border-2 !border-card !rounded-full" />
-      <Handle type="source" position={Position.Right} id="yes" style={{ top: "35%" }} className="!w-2.5 !h-2.5 !bg-primary !border-2 !border-card !rounded-full" />
-      <Handle type="source" position={Position.Right} id="no" style={{ top: "65%" }} className="!w-2.5 !h-2.5 !bg-destructive !border-2 !border-card !rounded-full" />
-      <div className="absolute right-[-22px] text-[9px] font-medium" style={{ top: "28%" }}>
+      {/* Handles */}
+      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-purple-400 !border-2 !border-card !rounded-full" style={{ left: "-4px", top: "50%" }} />
+      <Handle type="source" position={Position.Right} id="yes" className="!w-2.5 !h-2.5 !bg-primary !border-2 !border-card !rounded-full" style={{ right: "-4px", top: "35%" }} />
+      <Handle type="source" position={Position.Right} id="no" className="!w-2.5 !h-2.5 !bg-destructive !border-2 !border-card !rounded-full" style={{ right: "-4px", top: "65%" }} />
+      <div className="absolute text-[9px] font-medium z-10" style={{ right: "-24px", top: "30%" }}>
         <span className="text-primary/80">Sim</span>
       </div>
-      <div className="absolute right-[-22px] text-[9px] font-medium" style={{ top: "60%" }}>
+      <div className="absolute text-[9px] font-medium z-10" style={{ right: "-24px", top: "60%" }}>
         <span className="text-destructive/80">Não</span>
       </div>
     </div>
