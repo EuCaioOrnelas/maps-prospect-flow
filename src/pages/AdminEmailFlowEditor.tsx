@@ -109,6 +109,7 @@ export default function AdminEmailFlowEditor() {
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
       animated: true,
+      zIndex: 10,
     }));
 
     setNodes(rfNodes);
