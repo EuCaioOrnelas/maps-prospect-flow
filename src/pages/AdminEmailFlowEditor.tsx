@@ -272,6 +272,11 @@ export default function AdminEmailFlowEditor() {
 
       {/* Canvas */}
       <div className="flex-1 relative" ref={reactFlowWrapper}>
+        {/* Glow effect */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-primary/[0.04] blur-[100px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-primary/[0.03] blur-[80px]" />
+        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -282,31 +287,32 @@ export default function AdminEmailFlowEditor() {
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode="Delete"
-          className="bg-background"
+          className="bg-transparent"
+          style={{ background: 'hsl(var(--background))' }}
         >
-          <Background color="hsl(var(--muted-foreground))" gap={20} size={1} style={{ opacity: 0.15 }} />
-          <Controls className="!bg-card !border-border !shadow-md [&>button]:!bg-card [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-accent" />
+          <Background color="hsl(158 72% 38%)" gap={24} size={0.5} style={{ opacity: 0.08 }} />
+          <Controls className="!bg-card/90 !backdrop-blur-sm !border-border !shadow-lg !rounded-xl [&>button]:!bg-transparent [&>button]:!border-border/50 [&>button]:!text-muted-foreground [&>button:hover]:!bg-accent/10 [&>button:hover]:!text-foreground" />
           <MiniMap
-            className="!bg-card !border-border"
+            className="!bg-card/80 !backdrop-blur-sm !border-border !rounded-xl"
             nodeColor="hsl(var(--primary))"
-            maskColor="hsl(var(--background) / 0.7)"
+            maskColor="hsl(220 20% 4% / 0.8)"
           />
 
           {/* Add node toolbar */}
           <Panel position="top-left" className="!m-3">
-            <div className="bg-card border border-border rounded-xl p-2 shadow-lg flex flex-col gap-1">
-              <p className="text-[10px] font-medium text-muted-foreground px-2 py-1 uppercase tracking-wider">Adicionar Bloco</p>
-              <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs h-8" onClick={() => addNode("email")}>
-                <Mail size={14} className="text-blue-400" /> Email
+            <div className="bg-card/90 backdrop-blur-md border border-border rounded-xl p-2 shadow-lg flex flex-col gap-0.5">
+              <p className="text-[10px] font-medium text-muted-foreground/70 px-2 py-1.5 uppercase tracking-wider">Adicionar Bloco</p>
+              <Button variant="ghost" size="sm" className="justify-start gap-2.5 text-xs h-8 text-muted-foreground hover:text-foreground" onClick={() => addNode("email")}>
+                <div className="w-5 h-5 rounded bg-blue-500/10 flex items-center justify-center"><Mail size={12} className="text-blue-400" /></div> Email
               </Button>
-              <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs h-8" onClick={() => addNode("wait")}>
-                <Clock size={14} className="text-amber-400" /> Espera
+              <Button variant="ghost" size="sm" className="justify-start gap-2.5 text-xs h-8 text-muted-foreground hover:text-foreground" onClick={() => addNode("wait")}>
+                <div className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center"><Clock size={12} className="text-amber-400" /></div> Espera
               </Button>
-              <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs h-8" onClick={() => addNode("condition")}>
-                <GitBranch size={14} className="text-purple-400" /> Condição
+              <Button variant="ghost" size="sm" className="justify-start gap-2.5 text-xs h-8 text-muted-foreground hover:text-foreground" onClick={() => addNode("condition")}>
+                <div className="w-5 h-5 rounded bg-purple-500/10 flex items-center justify-center"><GitBranch size={12} className="text-purple-400" /></div> Condição
               </Button>
-              <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs h-8" onClick={() => addNode("end")}>
-                <Flag size={14} className="text-red-400" /> Finalização
+              <Button variant="ghost" size="sm" className="justify-start gap-2.5 text-xs h-8 text-muted-foreground hover:text-foreground" onClick={() => addNode("end")}>
+                <div className="w-5 h-5 rounded bg-destructive/10 flex items-center justify-center"><Flag size={12} className="text-destructive" /></div> Finalização
               </Button>
             </div>
           </Panel>
