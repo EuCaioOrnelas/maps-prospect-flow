@@ -409,6 +409,21 @@ serve(async (req) => {
                 const amount = PLAN_PRICES[plan] || 0;
                 await trackPurchase(supabaseClient, profile.id, plan, amount);
 
+                // Mark checkout lead as completed
+                try {
+                  await supabaseClient
+                    .from('checkout_leads')
+                    .update({ 
+                      checkout_completed: true, 
+                      checkout_completed_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('stripe_session_id', session.id);
+                  logStep("Checkout lead marked as completed");
+                } catch (e) {
+                  logStep("Failed to mark checkout lead", { error: String(e) });
+                }
+
                 // If upgrading from free to paid, cleanup all free tier instances
                 if (transitionType === "upgrade" && (profile.plan === "free" || !profile.plan)) {
                   logStep("Triggering free tier cleanup on upgrade", { 

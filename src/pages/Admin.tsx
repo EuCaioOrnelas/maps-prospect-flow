@@ -159,6 +159,19 @@ interface Stats {
   payingUsers: number;
 }
 
+interface PeriodStats {
+  usersInPeriod: number;
+  searchesInPeriod: number;
+  activeUsersInPeriod: number;
+  conversionRateInPeriod: number;
+  activatedInPeriod: number;
+  purchasesInPeriod: number;
+  usedAIInPeriod: number;
+  createdCampaignInPeriod: number;
+  checkoutStartedInPeriod: number;
+  checkoutNotCompletedInPeriod: number;
+}
+
 interface ApiKeyStatus {
   name: string;
   status: 'ok' | 'warning' | 'error' | 'unknown' | 'exhausted' | 'not_configured';
@@ -222,11 +235,26 @@ const Admin = () => {
   const [checkingApis, setCheckingApis] = useState(false);
   
   // User table states - pagination and filters
-  type UserActivityFilter = 'all' | 'active_7d' | 'active_30d' | 'inactive_30d';
+  type UserActivityFilter = 'all' | 'active_7d' | 'active_30d' | 'inactive_30d' | 'checkout_not_completed';
   const [userPlanFilter, setUserPlanFilter] = useState<string>('all');
   const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const USERS_PER_PAGE = 20;
+
+  // Period date filter for stats cards
+  const [statsStartDate, setStatsStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [statsEndDate, setStatsEndDate] = useState<Date>(new Date());
+  const [periodStats, setPeriodStats] = useState<PeriodStats>({
+    usersInPeriod: 0, searchesInPeriod: 0, activeUsersInPeriod: 0,
+    conversionRateInPeriod: 0, activatedInPeriod: 0, purchasesInPeriod: 0,
+    usedAIInPeriod: 0, createdCampaignInPeriod: 0, checkoutStartedInPeriod: 0,
+    checkoutNotCompletedInPeriod: 0,
+  });
+  const [checkoutLeadsList, setCheckoutLeadsList] = useState<any[]>([]);
 
   // Fetch real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
@@ -594,8 +622,90 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData()]);
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData(), loadPeriodStats()]);
   };
+
+  // Load period-filtered stats
+  const loadPeriodStats = useCallback(async () => {
+    try {
+      const startISO = statsStartDate.toISOString();
+      const endISO = statsEndDate.toISOString();
+
+      const [
+        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes
+      ] = await Promise.all([
+        // Users created in period
+        supabase.from('profiles').select('id, searches_used, plan, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Searches in period
+        supabase.from('search_history' as any).select('id, user_id, results_count, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Campaigns created in period
+        supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Agents created in period
+        supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Checkout leads in period
+        supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
+        // Purchases (subscription events) in period
+        supabase.from('subscription_events').select('id, user_id, event_type, created_at')
+          .in('event_type', ['subscription_created', 'subscription_renewed'])
+          .gte('created_at', startISO).lte('created_at', endISO),
+      ]);
+
+      const usersInPeriod = usersRes.data?.length || 0;
+      
+      // Searches: count unique users who searched
+      const searchUsers = new Set((searchesRes.data || []).map((s: any) => s.user_id));
+      const searchesCount = (searchesRes.data || []).reduce((sum: number, s: any) => sum + (s.results_count || 0), 0);
+      
+      // Active users = users who did searches or campaigns
+      const campaignUsers = new Set((campaignsRes.data || []).map((c: any) => c.user_id));
+      const activeUsersSet = new Set([...searchUsers, ...campaignUsers]);
+      
+      // Activated = users who created account in period AND did a search or campaign
+      const usersCreatedInPeriod = new Set((usersRes.data || []).map((u: any) => u.id));
+      const activatedCount = [...usersCreatedInPeriod].filter(uid => activeUsersSet.has(uid)).length;
+      
+      // Used AI = unique users who created agents in period
+      const aiUsers = new Set((agentsRes.data || []).map((a: any) => a.user_id));
+      
+      // Created campaign = unique users
+      const campaignCreators = campaignUsers.size;
+      
+      // Checkout
+      const checkoutData = checkoutRes.data || [];
+      const checkoutStarted = checkoutData.length;
+      const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
+      
+      // Purchases
+      const purchasesCount = purchasesRes.data?.length || 0;
+      
+      // Conversion rate: paying users created in period / total users in period
+      const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;
+      const conversionRate = usersInPeriod > 0 ? (payingInPeriod / usersInPeriod) * 100 : 0;
+
+      setPeriodStats({
+        usersInPeriod,
+        searchesInPeriod: searchesCount,
+        activeUsersInPeriod: activeUsersSet.size,
+        conversionRateInPeriod: conversionRate,
+        activatedInPeriod: activatedCount,
+        purchasesInPeriod: purchasesCount,
+        usedAIInPeriod: aiUsers.size,
+        createdCampaignInPeriod: campaignCreators,
+        checkoutStartedInPeriod: checkoutStarted,
+        checkoutNotCompletedInPeriod: checkoutNotCompleted,
+      });
+      setCheckoutLeadsList(checkoutData.filter((c: any) => !c.checkout_completed));
+    } catch (err) {
+      console.error('Error loading period stats:', err);
+    }
+  }, [statsStartDate, statsEndDate]);
+
+  // Reload period stats when dates change
+  useEffect(() => {
+    if (isAdmin) {
+      loadPeriodStats();
+    }
+  }, [statsStartDate, statsEndDate, isAdmin, loadPeriodStats]);
 
   const loadData = async () => {
     setLoading(true);
@@ -792,16 +902,16 @@ const Admin = () => {
       
       switch (userActivityFilter) {
         case 'active_7d':
-          // Acessou nos últimos 7 dias
           matchesActivity = updatedAt >= sevenDaysAgo;
           break;
         case 'active_30d':
-          // Acessou nos últimos 30 dias (mas não nos últimos 7)
           matchesActivity = updatedAt >= thirtyDaysAgo && updatedAt < sevenDaysAgo;
           break;
         case 'inactive_30d':
-          // Não acessou há mais de 30 dias (31+ dias sem acesso)
           matchesActivity = updatedAt < thirtyDaysAgo;
+          break;
+        case 'checkout_not_completed':
+          matchesActivity = checkoutLeadsList.some((c: any) => c.user_id === u.id);
           break;
         default:
           matchesActivity = true;
@@ -809,7 +919,7 @@ const Admin = () => {
       
       return matchesSearch && matchesPlan && matchesActivity;
     });
-  }, [users, searchTerm, userPlanFilter, userActivityFilter]);
+  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
@@ -1588,50 +1698,154 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* General Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.7s' }}>
+            {/* Period Filter for Stats */}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold flex items-center gap-2">
+                  <Filter size={20} className="text-primary" />
+                  Métricas por Período
+                </h2>
+              </div>
+              <div className="flex items-center gap-3 glass rounded-lg p-3">
+                <span className="text-xs text-muted-foreground font-medium">De:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start")}>
+                      <Calendar size={14} className="mr-1.5" />
+                      {format(statsStartDate, "dd/MM/yyyy", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={statsStartDate}
+                      onSelect={(d) => d && setStatsStartDate(d)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground font-medium">Até:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start")}>
+                      <Calendar size={14} className="mr-1.5" />
+                      {format(statsEndDate, "dd/MM/yyyy", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={statsEndDate}
+                      onSelect={(d) => d && setStatsEndDate(d)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* General Stats - Period filtered */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Users size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.totalUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Total de Usuários</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.usersInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usuários no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Search size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.totalSearches || 0}</p>
-                <p className="text-sm text-muted-foreground">Buscas Realizadas</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.searchesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Buscas no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.9s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Activity size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.activeUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Usuários Ativos (total)</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.activeUsersInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usuários Ativos no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <TrendingUp size={20} className="text-primary" />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.totalUsers && (stripeMRR?.activeSubscriptions ?? 0) > 0 
-                    ? (((stripeMRR?.activeSubscriptions ?? 0) / stats.totalUsers) * 100).toFixed(1)
-                    : '0.0'}%
+                  {periodStats.conversionRateInPeriod.toFixed(1)}%
                 </p>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                <p className="text-sm text-muted-foreground">Taxa de Conversão no Período</p>
+              </div>
+            </div>
+
+            {/* New Metric Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 size={20} className="text-success" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.activatedInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Activated</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Criou conta + campanha ou prospecção</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <DollarSign size={20} className="text-success" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.purchasesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Compras</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Vendas no período</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <Zap size={20} className="text-purple-400" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-purple-400">{periodStats.usedAIInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usou IA</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Usuários que criaram agentes</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <BarChart3 size={20} className="text-blue-400" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-400">{periodStats.createdCampaignInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Criou Campanha</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Usuários únicos</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-warning" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-warning">{periodStats.checkoutStartedInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Checkout Iniciados</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">{periodStats.checkoutNotCompletedInPeriod} não finalizados</p>
               </div>
             </div>
 
@@ -1668,7 +1882,7 @@ const Admin = () => {
                       </SelectContent>
                     </Select>
                     <Select value={userActivityFilter} onValueChange={(v) => setUserActivityFilter(v as typeof userActivityFilter)}>
-                      <SelectTrigger className="w-40 bg-secondary">
+                      <SelectTrigger className="w-48 bg-secondary">
                         <Activity size={14} className="mr-1" />
                         <SelectValue placeholder="Atividade" />
                       </SelectTrigger>
@@ -1677,6 +1891,7 @@ const Admin = () => {
                         <SelectItem value="active_7d">Ativos 7 dias</SelectItem>
                         <SelectItem value="active_30d">Ativos 30 dias</SelectItem>
                         <SelectItem value="inactive_30d">Inativos +30 dias</SelectItem>
+                        <SelectItem value="checkout_not_completed">Checkout não finalizado</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="icon" onClick={loadData} title="Atualizar">

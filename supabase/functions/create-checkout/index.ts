@@ -12,14 +12,12 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Get client IP from request
 function getClientIP(req: Request): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
          req.headers.get('x-real-ip') || 
          'unknown';
 }
 
-// Rate limiting helper
 async function checkRateLimit(
   supabase: any, 
   identifier: string, 
@@ -60,7 +58,6 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  // Rate limiting check
   const clientIP = getClientIP(req);
   const rateLimitResult = await checkRateLimit(supabaseClient, clientIP, 'create-checkout', 10, 60);
   
@@ -95,10 +92,11 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://leadspro.lovable.app";
     
-    // Check if user is authenticated
     const authHeader = req.headers.get("Authorization");
     let userEmail: string | null = null;
+    let userId: string | null = null;
     let customerId: string | undefined;
+    let userName: string | null = null;
 
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
@@ -107,9 +105,17 @@ serve(async (req) => {
       
       if (user?.email) {
         userEmail = user.email;
+        userId = user.id;
         logStep("User authenticated", { userId: user.id, email: userEmail });
 
-        // Check if customer already exists in Stripe
+        // Get user name from profile
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle();
+        userName = profile?.name || null;
+
         const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
         if (customers.data.length > 0) {
           customerId = customers.data[0].id;
@@ -118,12 +124,10 @@ serve(async (req) => {
       }
     }
 
-    // Use guest email if no authenticated user
     if (!userEmail && guestEmail) {
       userEmail = guestEmail;
       logStep("Using guest email", { email: guestEmail });
       
-      // Check if customer already exists in Stripe for guest
       const customers = await stripe.customers.list({ email: guestEmail, limit: 1 });
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
@@ -131,32 +135,32 @@ serve(async (req) => {
       }
     }
 
-    // Build checkout session options
+    // Determine plan from priceId
+    let planAttempted = 'unknown';
+    try {
+      const price = await stripe.prices.retrieve(priceId);
+      const product = await stripe.products.retrieve(price.product as string);
+      planAttempted = product.name || 'unknown';
+    } catch (e) {
+      logStep("Could not determine plan from price", { priceId });
+    }
+
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/checkout-success`,
       cancel_url: `${origin}/checkout-failed`,
       allow_promotion_codes: true,
     };
 
-    // If user is logged in or guest email provided, use their email
     if (customerId) {
       sessionOptions.customer = customerId;
     } else if (userEmail) {
       sessionOptions.customer_email = userEmail;
     }
-    // If no email provided, Stripe Checkout will collect it
 
-    // Apply coupon code if provided
     if (couponCode) {
       try {
-        // First try as a coupon ID
         const coupon = await stripe.coupons.retrieve(couponCode);
         if (coupon && coupon.valid) {
           sessionOptions.discounts = [{ coupon: couponCode }];
@@ -164,7 +168,6 @@ serve(async (req) => {
           logStep("Coupon applied", { couponId: coupon.id, percentOff: coupon.percent_off });
         }
       } catch (_couponError) {
-        // Not a coupon ID — try as a promotion code
         try {
           const promoCodes = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
           if (promoCodes.data.length > 0) {
@@ -183,6 +186,26 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionOptions);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
+
+    // Track checkout lead in database
+    if (userId && userEmail) {
+      try {
+        await supabaseClient
+          .from('checkout_leads')
+          .insert({
+            user_id: userId,
+            email: userEmail,
+            name: userName,
+            plan_attempted: planAttempted,
+            stripe_session_id: session.id,
+            checkout_started_at: new Date().toISOString(),
+            checkout_completed: false,
+          });
+        logStep("Checkout lead tracked", { userId, planAttempted });
+      } catch (e) {
+        logStep("Failed to track checkout lead", { error: String(e) });
+      }
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

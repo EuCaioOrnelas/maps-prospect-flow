@@ -617,6 +617,48 @@ export type Database = {
           },
         ]
       }
+      checkout_leads: {
+        Row: {
+          checkout_completed: boolean
+          checkout_completed_at: string | null
+          checkout_started_at: string
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          plan_attempted: string
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkout_completed?: boolean
+          checkout_completed_at?: string | null
+          checkout_started_at?: string
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          plan_attempted: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkout_completed?: boolean
+          checkout_completed_at?: string | null
+          checkout_started_at?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          plan_attempted?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string
