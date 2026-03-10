@@ -919,7 +919,7 @@ const Admin = () => {
       
       return matchesSearch && matchesPlan && matchesActivity;
     });
-  }, [users, searchTerm, userPlanFilter, userActivityFilter]);
+  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
