@@ -889,6 +889,11 @@ const Admin = () => {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
     return users.filter(u => {
+      // Period date filter - filter by created_at within selected range
+      const createdAt = new Date(u.created_at);
+      const matchesPeriod = createdAt >= statsStartDate && createdAt <= statsEndDate;
+      if (!matchesPeriod) return false;
+
       // Search filter
       const matchesSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -919,7 +924,7 @@ const Admin = () => {
       
       return matchesSearch && matchesPlan && matchesActivity;
     });
-  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList]);
+  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList, statsStartDate, statsEndDate]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
