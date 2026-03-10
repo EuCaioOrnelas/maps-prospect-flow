@@ -59,7 +59,7 @@ function BroadcastTab() {
 
       let sent = 0, skipped = 0, errors = 0;
 
-      for (const user of users || []) {
+      for (const user of usersToSend) {
         try {
           const { error: sendErr } = await supabase.functions.invoke("send-email", {
             body: {
