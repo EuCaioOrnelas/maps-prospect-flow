@@ -345,6 +345,7 @@ export const useCRM = () => {
     
     // Log activity
     await logActivity(leadId, 'stage_changed', `Movido para ${newStage.name}`);
+    trackScoreEvent("crm_advanced_feature_used", { action: "move_stage" });
   };
 
   // Delete lead
