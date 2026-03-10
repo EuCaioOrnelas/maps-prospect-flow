@@ -335,6 +335,7 @@ export const LeadSelector = ({
         });
 
         onLeadsChange(validLeads);
+        trackScoreEvent("contacts_imported", { count: validLeads.length });
         
         if (invalidPhones.length > 0 || landlineLeads.length > 0 || internationalBlocked > 0) {
           const parts = [];
