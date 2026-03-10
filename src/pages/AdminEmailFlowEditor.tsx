@@ -172,12 +172,28 @@ export default function AdminEmailFlowEditor() {
     setEdgeToDelete(edge);
   }, []);
 
-  const confirmDeleteEdge = useCallback(() => {
+  const confirmDeleteEdge = useCallback(async () => {
     if (!edgeToDelete) return;
+
+    const isTempEdge = edgeToDelete.id.startsWith("temp-");
+
+    if (!isTempEdge && id) {
+      const { error } = await supabase
+        .from("email_flow_edges")
+        .delete()
+        .eq("id", edgeToDelete.id)
+        .eq("flow_id", id);
+
+      if (error) {
+        toast.error("Erro ao remover conexão");
+        return;
+      }
+    }
+
     setEdges(eds => eds.filter(e => e.id !== edgeToDelete.id));
     setEdgeToDelete(null);
     toast.success("Conexão removida");
-  }, [edgeToDelete, setEdges]);
+  }, [edgeToDelete, id, setEdges]);
 
   const addNode = async (type: string) => {
     if (!id) return;
