@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
   try {
     await enrollEligibleLeads(supabase, results);
-    await advanceEnrollments(supabase, resendApiKey, results);
+    await advanceEnrollments(supabase, supabaseUrl, resendApiKey, results);
 
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,11 +54,10 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     const audienceType = flow.audience_type;
     const entryRules = flow.entry_rules || {};
 
-    // Build query based on audience
     let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
 
     switch (audienceType) {
-      case "all": break; // no filter
+      case "all": break;
       case "all_free": query = query.eq("plan", "free"); break;
       case "all_paid": query = query.neq("plan", "free"); break;
       case "trial_active":
@@ -82,7 +81,6 @@ async function enrollEligibleLeads(supabase: any, results: any) {
       const eligible = checkTriggerEligibility(triggerType, user, flow.trigger_config || {}, now);
       if (!eligible) continue;
 
-      // Audience post-filter
       if (audienceType === "trial_expired") {
         const ts = user.trial_start_at ? new Date(user.trial_start_at) : new Date(user.created_at);
         const trialEnd = new Date(ts.getTime() + 14 * 86400000);
@@ -95,8 +93,6 @@ async function enrollEligibleLeads(supabase: any, results: any) {
         if (inactiveDays < days) continue;
       }
 
-      // === DEDUP RULE: 1 active enrollment per trigger_type per user ===
-      // Check if user already has an active enrollment in ANY flow with the same trigger_type
       const { data: activeFlows } = await supabase
         .from("email_flows")
         .select("id")
@@ -113,10 +109,9 @@ async function enrollEligibleLeads(supabase: any, results: any) {
           .eq("user_id", user.id)
           .eq("status", "active");
 
-        if ((activeCount || 0) > 0) continue; // already active in a flow with same trigger
+        if ((activeCount || 0) > 0) continue;
       }
 
-      // Check max entries per flow
       const maxEntries = entryRules.max_entries_per_user || 1;
       const { count } = await supabase
         .from("email_flow_enrollments")
@@ -142,7 +137,6 @@ async function enrollEligibleLeads(supabase: any, results: any) {
         }
       }
 
-      // Get first node after entry
       const { data: entryNode } = await supabase
         .from("email_flow_nodes")
         .select("id")
@@ -192,13 +186,13 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
     case "free_trial": return !!trialStart && trialEnd! > now;
     case "signup": return true;
     case "checkout_started": return true;
-    case "checkout_abandoned": return true; // filtered by checkout_leads check in processor
+    case "checkout_abandoned": return true;
     case "trial_expired_10d": {
       if (!trialEnd) return false;
       const daysSinceExpiry = Math.floor((now.getTime() - trialEnd.getTime()) / 86400000);
       return daysSinceExpiry >= 10;
     }
-    case "downgrade": return true; // matched via event tracking
+    case "downgrade": return true;
     case "inactive": {
       const days = triggerConfig.inactive_days || 7;
       return inactiveDays >= days;
@@ -209,7 +203,7 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
   }
 }
 
-async function advanceEnrollments(supabase: any, resendApiKey: string, results: any) {
+async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiKey: string, results: any) {
   const now = new Date().toISOString();
 
   const { data: pendingEnrollments } = await supabase
@@ -248,21 +242,49 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       case "email": {
         const config = node.config || {};
         if (config.subject && config.body) {
-          const compiledBody = compileTemplate(config.body, {
+          const templateVars: Record<string, string> = {
             user_name: user.name || user.email?.split("@")[0] || "usuário",
             user_email: user.email,
             product_name: "Wiize",
             plan: user.plan,
             cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
-          });
+          };
+
+          const compiledBody = compileTemplate(config.body, templateVars);
+          const compiledSubject = compileTemplate(config.subject, templateVars);
+
+          // Build tracking URLs
+          const trackerBase = `${supabaseUrl}/functions/v1/email-flow-tracker`;
+          const trackParams = `uid=${user.id}&fid=${enrollment.flow_id}&eid=${enrollment.id}&nid=${node.id}`;
+
+          // Inject open tracking pixel
+          let finalBody = compiledBody;
+          if (config.track_opens !== false) {
+            const openPixel = `<img src="${trackerBase}?action=open&${trackParams}" width="1" height="1" style="display:none;" alt="" />`;
+            finalBody += openPixel;
+          }
+
+          // Wrap links for click tracking
+          if (config.track_clicks !== false) {
+            finalBody = finalBody.replace(
+              /href="(https?:\/\/[^"]+)"/g,
+              (match: string, url: string) => {
+                const trackUrl = `${trackerBase}?action=click&${trackParams}&url=${encodeURIComponent(url)}`;
+                return `href="${trackUrl}"`;
+              }
+            );
+          }
+
+          const fromName = config.from_name || "Wiize";
+          const replyTo = config.reply_to || undefined;
+          const previewText = config.preview_text || "";
 
           const sent = await sendEmail(resendApiKey, {
             to: user.email,
-            subject: compileTemplate(config.subject, {
-              user_name: user.name || "usuário",
-              product_name: "Wiize",
-            }),
-            html: wrapEmailLayout(config.subject, compiledBody),
+            from: `${fromName} <no-reply@wiize.com.br>`,
+            replyTo,
+            subject: compiledSubject,
+            html: wrapEmailLayout(compiledSubject, finalBody, previewText),
           });
 
           await supabase.from("email_flow_execution_logs").insert({
@@ -272,7 +294,14 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
             node_id: node.id,
             action_type: "email_sent",
             status: sent ? "success" : "error",
-            details: { subject: config.subject, track_clicks: config.track_clicks !== false, track_purchases: config.track_purchases || false },
+            details: {
+              subject: config.subject,
+              from_name: fromName,
+              reply_to: replyTo || null,
+              track_opens: config.track_opens !== false,
+              track_clicks: config.track_clicks !== false,
+              track_purchases: config.track_purchases || false,
+            },
           });
 
           if (sent) results.emails_sent++;
@@ -293,6 +322,8 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       }
 
       case "condition": {
+        const conditionResult = await evaluateCondition(supabase, node, enrollment, user);
+
         await supabase.from("email_flow_execution_logs").insert({
           flow_id: enrollment.flow_id,
           enrollment_id: enrollment.id,
@@ -300,9 +331,43 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
           node_id: node.id,
           action_type: "condition_evaluated",
           status: "success",
-          details: { condition_type: (node.config as any)?.condition_type },
+          details: {
+            condition_type: (node.config as any)?.condition_type,
+            result: conditionResult,
+          },
         });
-        break;
+
+        // Route to yes or no branch based on evaluation
+        const handle = conditionResult ? "yes" : "no";
+        const { data: nextEdge } = await supabase
+          .from("email_flow_edges")
+          .select("target_node_id")
+          .eq("flow_id", enrollment.flow_id)
+          .eq("source_node_id", node.id)
+          .eq("source_handle", handle)
+          .maybeSingle();
+
+        if (nextEdge) {
+          await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
+        } else {
+          // Fallback: try any edge from this node
+          const { data: fallbackEdge } = await supabase
+            .from("email_flow_edges")
+            .select("target_node_id")
+            .eq("flow_id", enrollment.flow_id)
+            .eq("source_node_id", node.id)
+            .limit(1)
+            .maybeSingle();
+
+          if (fallbackEdge) {
+            await moveToNextNode(supabase, enrollment, fallbackEdge.target_node_id);
+          } else {
+            await completeEnrollment(supabase, enrollment, "no_next_node_after_condition");
+          }
+        }
+
+        results.steps_advanced++;
+        continue; // Skip the generic next-node logic below
       }
 
       case "end": {
@@ -320,38 +385,118 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       }
     }
 
-    // Move to next node
-    const sourceHandle = node.node_type === "condition" ? "yes" : "source";
+    // Move to next node (for email/wait nodes — conditions handle their own routing above)
     const { data: nextEdge } = await supabase
       .from("email_flow_edges")
       .select("target_node_id")
       .eq("flow_id", enrollment.flow_id)
       .eq("source_node_id", node.id)
-      .eq("source_handle", sourceHandle)
+      .limit(1)
       .maybeSingle();
 
     if (!nextEdge) {
-      const { data: anyEdge } = await supabase
-        .from("email_flow_edges")
-        .select("target_node_id")
-        .eq("flow_id", enrollment.flow_id)
-        .eq("source_node_id", node.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (!anyEdge) {
-        await completeEnrollment(supabase, enrollment, "no_next_node");
-        results.steps_advanced++;
-        continue;
-      }
-      await moveToNextNode(supabase, enrollment, anyEdge.target_node_id);
-    } else {
-      await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
+      await completeEnrollment(supabase, enrollment, "no_next_node");
+      results.steps_advanced++;
+      continue;
     }
+    await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
 
     results.steps_advanced++;
   }
 }
+
+// ========== CONDITION EVALUATION ==========
+
+async function evaluateCondition(supabase: any, node: any, enrollment: any, user: any): Promise<boolean> {
+  const config = node.config || {};
+  const conditionType = config.condition_type;
+
+  switch (conditionType) {
+    case "email_opened": {
+      // Check if the previous email node in this enrollment was opened
+      const { count } = await supabase
+        .from("email_flow_execution_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("enrollment_id", enrollment.id)
+        .eq("flow_id", enrollment.flow_id)
+        .eq("user_id", user.id)
+        .eq("action_type", "email_opened");
+      return (count || 0) > 0;
+    }
+
+    case "email_clicked": {
+      const { count } = await supabase
+        .from("email_flow_execution_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("enrollment_id", enrollment.id)
+        .eq("flow_id", enrollment.flow_id)
+        .eq("user_id", user.id)
+        .eq("action_type", "email_clicked");
+      return (count || 0) > 0;
+    }
+
+    case "score_above": {
+      const threshold = parseInt(config.value) || 50;
+      // Check user_score_events or scoring table
+      const { data: scoreData } = await supabase
+        .from("profiles")
+        .select("searches_used")
+        .eq("id", user.id)
+        .maybeSingle();
+      // Fallback: use searches_used as a proxy, or check revenue scoring
+      const { data: revLead } = await supabase
+        .from("revenue_leads")
+        .select("score_total")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      const score = revLead?.score_total || 0;
+      return score >= threshold;
+    }
+
+    case "has_tag": {
+      const tag = config.value || "";
+      if (!tag) return false;
+      // Check leads table for tags matching this user
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("tags")
+        .eq("user_id", user.id)
+        .not("tags", "is", null);
+      return (leads || []).some((l: any) => (l.tags || []).includes(tag));
+    }
+
+    case "is_customer": {
+      return user.plan !== "free";
+    }
+
+    case "checkout_started": {
+      const { count } = await supabase
+        .from("checkout_leads")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      return (count || 0) > 0;
+    }
+
+    case "inactive_days": {
+      const days = parseInt(config.value) || 7;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("updated_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!profile) return false;
+      const lastActive = new Date(profile.updated_at);
+      const inactiveDays = Math.floor((Date.now() - lastActive.getTime()) / 86400000);
+      return inactiveDays >= days;
+    }
+
+    default:
+      return false;
+  }
+}
+
+// ========== HELPERS ==========
 
 async function moveToNextNode(supabase: any, enrollment: any, nextNodeId: string) {
   const { data: nextNode } = await supabase
@@ -394,11 +539,16 @@ function compileTemplate(template: string, variables: Record<string, string>): s
   return result;
 }
 
-function wrapEmailLayout(title: string, body: string): string {
+function wrapEmailLayout(title: string, body: string, previewText: string): string {
+  const previewHtml = previewText
+    ? `<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${previewText}${"&zwnj;&nbsp;".repeat(40)}</div>`
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+${previewHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
 <tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -418,26 +568,33 @@ ${body}
 </html>`;
 }
 
-async function sendEmail(resendApiKey: string, options: { to: string; subject: string; html: string }): Promise<boolean> {
+async function sendEmail(resendApiKey: string, options: { to: string; from: string; replyTo?: string; subject: string; html: string }): Promise<boolean> {
   try {
+    const payload: any = {
+      from: options.from,
+      to: [options.to],
+      subject: options.subject,
+      html: options.html,
+    };
+
+    if (options.replyTo) {
+      payload.reply_to = options.replyTo;
+    }
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${resendApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: "Wiize <no-reply@wiize.com.br>",
-        to: [options.to],
-        subject: options.subject,
-        html: options.html,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       console.error("Resend error:", await response.text());
       return false;
     }
+    await response.text(); // consume body
     return true;
   } catch (error) {
     console.error("Send email error:", error);
