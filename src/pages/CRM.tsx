@@ -38,6 +38,7 @@ export default function CRM() {
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+  useAutoScoreTracking("crm");
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const {

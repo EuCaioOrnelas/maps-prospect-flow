@@ -111,6 +111,7 @@ export default function AIAgents() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { trackScoreEvent } = useAutoScoreTracking("agents");
   
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);

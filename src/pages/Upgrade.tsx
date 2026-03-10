@@ -112,6 +112,7 @@ const Upgrade = () => {
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
+  const { trackScoreEvent } = useAutoScoreTracking("upgrade");
   const isTrialExpired = searchParams.get("expired") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");

@@ -98,6 +98,7 @@ const Dashboard = () => {
   const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
+  const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
