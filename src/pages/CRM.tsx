@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAutoScoreTracking } from '@/hooks/useAutoScoreTracking';
+import { usePagePopupDismiss } from '@/hooks/usePagePopupDismiss';
 import {
   Dialog,
   DialogContent,

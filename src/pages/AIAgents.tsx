@@ -129,6 +129,15 @@ export default function AIAgents() {
   // DB-backed beta warning popup
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
 
+  // WhatsApp numbers management (shared with mass messaging)
+  const { 
+    numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
+  } = useWhatsAppNumbers();
+
+  // Check if user has access to AI Agents (paid plans only)
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
+
   const handleCloseBetaWarning = () => {
     dismissBetaWarning();
   };
