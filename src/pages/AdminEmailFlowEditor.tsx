@@ -142,6 +142,17 @@ export default function AdminEmailFlowEditor() {
     setDrawerOpen(true);
   }, []);
 
+  const onEdgeClick = useCallback((_: any, edge: Edge) => {
+    setEdgeToDelete(edge);
+  }, []);
+
+  const confirmDeleteEdge = useCallback(() => {
+    if (!edgeToDelete) return;
+    setEdges(eds => eds.filter(e => e.id !== edgeToDelete.id));
+    setEdgeToDelete(null);
+    toast.success("Conexão removida");
+  }, [edgeToDelete, setEdges]);
+
   const addNode = async (type: string) => {
     if (!id) return;
     if (type === "entry" && nodes.some(n => n.type === "entry")) {
