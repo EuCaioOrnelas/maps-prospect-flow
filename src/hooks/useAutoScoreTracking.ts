@@ -27,6 +27,12 @@ export function useAutoScoreTracking(pageName: string) {
         break;
       case "upgrade":
         trackScoreEvent("visited_pricing_page");
+        // Track multiple visits to upgrade page
+        const visitCount = parseInt(sessionStorage.getItem("upgrade_page_visits") || "0") + 1;
+        sessionStorage.setItem("upgrade_page_visits", String(visitCount));
+        if (visitCount >= 3) {
+          trackScoreEvent("upgrade_page_viewed_multiple", { visit_count: visitCount });
+        }
         break;
       case "agents":
       case "crm":
