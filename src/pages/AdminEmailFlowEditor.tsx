@@ -357,6 +357,23 @@ export default function AdminEmailFlowEditor() {
 
       <FlowAnalyticsDialog open={analyticsOpen} onOpenChange={setAnalyticsOpen} flowId={id!} />
       <FlowTestDialog open={testOpen} onOpenChange={setTestOpen} flowId={id!} />
+
+      <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => !open && setEdgeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover conexão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa conexão entre os blocos será removida. Você pode reconectá-los depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteEdge} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 size={14} className="mr-1.5" /> Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
