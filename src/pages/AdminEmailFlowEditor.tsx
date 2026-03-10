@@ -64,6 +64,7 @@ export default function AdminEmailFlowEditor() {
   const [flowName, setFlowName] = useState("");
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const [edgeToDelete, setEdgeToDelete] = useState<Edge | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
