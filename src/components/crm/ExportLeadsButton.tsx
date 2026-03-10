@@ -63,6 +63,7 @@ export const ExportLeadsButton = ({ leads, stages }: ExportLeadsButtonProps) => 
       XLSX.writeFile(wb, fileName);
 
       toast.success(`${leads.length} leads exportados com sucesso!`);
+      trackScoreEvent("export_report", { type: "crm_leads", count: leads.length });
     } catch (error) {
       console.error('Export error:', error);
       toast.error('Erro ao exportar leads');
