@@ -309,6 +309,7 @@ export const useCRM = () => {
 
     // Log activity
     await logActivity(data.id, 'created', 'Lead criado');
+    trackScoreEvent("prospect_created");
     
     return data;
   };
