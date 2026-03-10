@@ -67,6 +67,7 @@ const EXPERIENCE_OPTIONS = [
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const { user } = useAuth();
   const { trackEvent } = useUserEvents();
+  const { trackScoreEvent } = useUserScoreTracking();
   const { fireConfetti, fireSides } = useConfetti();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
