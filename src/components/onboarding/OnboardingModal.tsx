@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserEvents } from "@/hooks/useUserEvents";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, Sparkles, PartyPopper } from "lucide-react";
 import { useConfetti } from "@/components/ui/confetti";

@@ -82,6 +82,7 @@ export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
+  useAutoScoreTracking("warming");
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [sessions, setSessions] = useState<WarmingSession[]>([]);
   const [assignments, setAssignments] = useState<SearchAssignment[]>([]);
