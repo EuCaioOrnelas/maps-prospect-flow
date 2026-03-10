@@ -124,6 +124,7 @@ export const LeadSelector = ({
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const remaining = dailyLimit - usedToday;
   const willExceed = selectedLeads.length > remaining;
