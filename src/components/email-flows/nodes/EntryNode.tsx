@@ -57,14 +57,8 @@ export function EntryNode({ data }: NodeProps) {
           <p className="text-[11px] text-muted-foreground/60 mt-1.5 italic">Clique para configurar</p>
         )}
         {metrics && metrics.passed > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+          <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5">
             <span className="text-[10px] font-medium text-muted-foreground">{metrics.passed} entraram</span>
-            {metrics.converted != null && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground">Conversão</span>
-                <span className="text-[10px] font-medium text-primary">{metrics.converted} ({metrics.passed > 0 ? ((metrics.converted / metrics.passed) * 100).toFixed(1) : 0}%)</span>
-              </div>
-            )}
           </div>
         )}
       </div>
