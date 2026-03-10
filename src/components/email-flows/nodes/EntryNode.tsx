@@ -30,36 +30,24 @@ export function EntryNode({ data }: NodeProps) {
   const metrics = data.metrics as any;
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-60 overflow-hidden backdrop-blur-sm">
-      <div className="px-3.5 py-2 flex items-center gap-2 border-b border-border">
-        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-          <Zap size={13} className="text-primary" />
+    <div className="bg-card border-2 border-primary/30 rounded-full shadow-[0_2px_16px_hsl(var(--primary)/0.15)] w-56 backdrop-blur-sm relative">
+      <div className="px-5 py-4 flex flex-col items-center text-center">
+        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
+          <Zap size={14} className="text-primary" />
         </div>
-        <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">Entrada</span>
-        {isConfigured && <span className="ml-auto text-[10px] text-primary">●</span>}
-      </div>
-      <div className="px-3.5 py-3">
-        <p className="text-sm font-medium text-foreground truncate">{String(data.label || "Entrada")}</p>
+        <p className="text-sm font-semibold text-foreground truncate w-full">{String(data.label || "Entrada")}</p>
         {isConfigured ? (
-          <div className="mt-1.5 space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">Gatilho</span>
-              <span className="text-[11px] text-muted-foreground font-medium">{triggerLabels[cfg.trigger_type] || cfg.trigger_type}</span>
-            </div>
+          <div className="mt-1 space-y-0.5">
+            <span className="text-[10px] text-muted-foreground font-medium">{triggerLabels[cfg.trigger_type] || cfg.trigger_type}</span>
             {cfg.audience_type && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">Público</span>
-                <span className="text-[11px] text-muted-foreground font-medium">{audienceLabels[cfg.audience_type] || cfg.audience_type}</span>
-              </div>
+              <p className="text-[10px] text-muted-foreground/70">{audienceLabels[cfg.audience_type] || cfg.audience_type}</p>
             )}
           </div>
         ) : (
-          <p className="text-[11px] text-muted-foreground/60 mt-1.5 italic">Clique para configurar</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1 italic">Clique para configurar</p>
         )}
         {metrics && metrics.passed > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-muted-foreground">{metrics.passed} entraram</span>
-          </div>
+          <p className="text-[10px] font-medium text-muted-foreground mt-1.5">{metrics.passed} entraram</p>
         )}
       </div>
       <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-primary !border-2 !border-card !rounded-full" />

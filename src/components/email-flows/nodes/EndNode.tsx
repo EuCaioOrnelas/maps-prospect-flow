@@ -4,22 +4,17 @@ import { Flag } from "lucide-react";
 export function EndNode({ data }: NodeProps) {
   const metrics = data.metrics as any;
   return (
-    <div className="bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-60 overflow-hidden backdrop-blur-sm">
-      <div className="px-3.5 py-2 flex items-center gap-2 border-b border-border">
-        <div className="w-6 h-6 rounded-md bg-destructive/10 flex items-center justify-center">
-          <Flag size={13} className="text-destructive" />
+    <div className="bg-card border-2 border-destructive/30 rounded-full shadow-[0_2px_16px_hsl(var(--destructive)/0.1)] w-48 backdrop-blur-sm relative">
+      <div className="px-5 py-4 flex flex-col items-center text-center">
+        <div className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center mb-1.5">
+          <Flag size={14} className="text-destructive" />
         </div>
-        <span className="text-[11px] font-semibold text-destructive uppercase tracking-wider">Finalização</span>
-      </div>
-      <div className="px-3.5 py-3">
-        <p className="text-sm font-medium text-foreground truncate">{String(data.label || "Fim do Fluxo")}</p>
+        <p className="text-sm font-semibold text-foreground truncate w-full">{String(data.label || "Fim do Fluxo")}</p>
         {(data.config as any)?.note && (
-          <p className="text-[11px] text-muted-foreground mt-1.5 truncate">{(data.config as any).note}</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate w-full">{(data.config as any).note}</p>
         )}
         {metrics && metrics.passed > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50">
-            <span className="text-[10px] text-muted-foreground">{metrics.passed} finalizaram</span>
-          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">{metrics.passed} finalizaram</p>
         )}
       </div>
       <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-destructive !border-2 !border-card !rounded-full" />
