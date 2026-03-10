@@ -120,41 +120,16 @@ export default function AIAgents() {
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
   const [showManageTemplates, setShowManageTemplates] = useState(false);
   const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
-  
-  // WhatsApp numbers management (shared with mass messaging)
-  const { 
-    numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
-  } = useWhatsAppNumbers();
 
-  // Check if user has access to AI Agents (paid plans only)
-  const userPlan = profile?.plan?.toLowerCase() || 'free';
-  const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
-
-  // Check if beta warning should be shown (every 30 days)
-  useEffect(() => {
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const acceptedAt = localStorage.getItem('agents_beta_warning_accepted_at');
-    
-    if (!acceptedAt) {
-      setShowBetaWarning(true);
-      return;
-    }
-    
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setShowBetaWarning(true);
-    }
-  }, []);
+  // DB-backed beta warning popup
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
 
   const handleCloseBetaWarning = () => {
-    localStorage.setItem('agents_beta_warning_accepted_at', new Date().toISOString());
-    setShowBetaWarning(false);
+    dismissBetaWarning();
   };
 
   // Check if user has seen warning before

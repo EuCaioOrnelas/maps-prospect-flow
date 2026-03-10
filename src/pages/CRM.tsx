@@ -37,7 +37,7 @@ export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
@@ -79,27 +79,9 @@ export default function CRM() {
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
-  // Check if beta warning should be shown (every 30 days)
-  useEffect(() => {
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const acceptedAt = localStorage.getItem('crm_beta_warning_accepted_at');
-    
-    if (!acceptedAt) {
-      setShowBetaWarning(true);
-      return;
-    }
-    
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setShowBetaWarning(true);
-    }
-  }, []);
-
-  const handleCloseBetaWarning = useCallback(() => {
-    localStorage.setItem('crm_beta_warning_accepted_at', new Date().toISOString());
-    setShowBetaWarning(false);
-  }, []);
+  const handleCloseBetaWarning = () => {
+    dismissBetaWarning();
+  };
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
