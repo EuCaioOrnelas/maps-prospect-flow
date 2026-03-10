@@ -6,6 +6,7 @@ const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "
 export function WaitNode({ data }: NodeProps) {
   const cfg = data.config as any || {};
   const isConfigured = cfg.delay_value > 0;
+  const metrics = data.metrics as any;
 
   return (
     <div className="bg-card border-2 border-amber-500/50 rounded-xl shadow-lg w-56 overflow-hidden">
@@ -22,6 +23,11 @@ export function WaitNode({ data }: NodeProps) {
           </p>
         ) : (
           <p className="text-[11px] text-amber-400 mt-1">⚠ Defina o tempo</p>
+        )}
+        {metrics && (
+          <div className="mt-1.5 text-[10px] text-muted-foreground border-t border-border pt-1.5">
+            <span>👥 {metrics.passed} passaram</span>
+          </div>
         )}
       </div>
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-amber-400 !border-2 !border-card" />
