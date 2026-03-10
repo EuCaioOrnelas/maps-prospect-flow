@@ -214,7 +214,13 @@ export function ActivationChecklist() {
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs shrink-0"
-                          onClick={() => navigate(step.action)}
+                          onClick={() => {
+                            if (step.key === "step_explore_ai_crm_completed") {
+                              handleExploreAICRM();
+                            } else {
+                              navigate(step.action);
+                            }
+                          }}
                         >
                           <Icon className="h-3 w-3 mr-1" />
                           {step.actionLabel}
@@ -228,6 +234,47 @@ export function ActivationChecklist() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Upgrade Popup for Free Users */}
+      <Dialog open={showUpgradePopup} onOpenChange={setShowUpgradePopup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle className="text-xl">Recurso Premium</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                Os <strong>Agentes de IA</strong> e o <strong>CRM</strong> são funcionalidades exclusivas para assinantes.
+              </p>
+              <p>
+                Faça upgrade do seu plano para ter acesso a automações inteligentes, CRM integrado e muito mais!
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradePopup(false)}
+              className="w-full sm:w-auto"
+            >
+              Fechar
+            </Button>
+            <Button
+              onClick={() => {
+                setShowUpgradePopup(false);
+                navigate("/upgrade");
+              }}
+              className="w-full sm:w-auto"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Ver planos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AnimatePresence>
   );
 }
