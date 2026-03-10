@@ -56,6 +56,7 @@ import {
 import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
 import { Bot as BotIcon } from "lucide-react";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { Smartphone } from "lucide-react";
 

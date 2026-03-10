@@ -25,6 +25,7 @@ const PERIOD_OPTIONS = [
 
 export default function MainDashboard() {
   const { profile } = useAuth();
+  useAutoScoreTracking("main_dashboard");
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);

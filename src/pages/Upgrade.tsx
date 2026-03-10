@@ -9,6 +9,7 @@ import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import type { LucideIcon } from "lucide-react";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
