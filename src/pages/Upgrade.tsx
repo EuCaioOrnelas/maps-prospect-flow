@@ -263,6 +263,7 @@ const Upgrade = () => {
   };
 
   const handleUpgrade = (planKey: string) => {
+    trackScoreEvent("clicked_upgrade_button", { plan: planKey });
     if (user) {
       // User is logged in, go directly to checkout
       handleCheckout(planKey);
