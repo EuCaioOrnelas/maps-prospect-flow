@@ -235,11 +235,26 @@ const Admin = () => {
   const [checkingApis, setCheckingApis] = useState(false);
   
   // User table states - pagination and filters
-  type UserActivityFilter = 'all' | 'active_7d' | 'active_30d' | 'inactive_30d';
+  type UserActivityFilter = 'all' | 'active_7d' | 'active_30d' | 'inactive_30d' | 'checkout_not_completed';
   const [userPlanFilter, setUserPlanFilter] = useState<string>('all');
   const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const USERS_PER_PAGE = 20;
+
+  // Period date filter for stats cards
+  const [statsStartDate, setStatsStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [statsEndDate, setStatsEndDate] = useState<Date>(new Date());
+  const [periodStats, setPeriodStats] = useState<PeriodStats>({
+    usersInPeriod: 0, searchesInPeriod: 0, activeUsersInPeriod: 0,
+    conversionRateInPeriod: 0, activatedInPeriod: 0, purchasesInPeriod: 0,
+    usedAIInPeriod: 0, createdCampaignInPeriod: 0, checkoutStartedInPeriod: 0,
+    checkoutNotCompletedInPeriod: 0,
+  });
+  const [checkoutLeadsList, setCheckoutLeadsList] = useState<any[]>([]);
 
   // Fetch real MRR from Stripe
   const loadStripeMRR = useCallback(async () => {
