@@ -105,6 +105,7 @@ export const NumbersManager = ({
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   // Fetch warming sessions when dialog opens
   useEffect(() => {
