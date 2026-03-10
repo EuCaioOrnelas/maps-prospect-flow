@@ -1760,12 +1760,13 @@ const Admin = () => {
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Search size={20} className="text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 size={20} className="text-success" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{periodStats.searchesInPeriod}</p>
-                <p className="text-sm text-muted-foreground">Buscas no Período</p>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.activatedInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Activated</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Criou conta + campanha ou prospecção</p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
@@ -1795,24 +1796,23 @@ const Admin = () => {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <CheckCircle2 size={20} className="text-success" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Search size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.activatedInPeriod}</p>
-                <p className="text-sm text-muted-foreground">Activated</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Criou conta + campanha ou prospecção</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.searchesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Buscas no Período</p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <DollarSign size={20} className="text-success" />
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <BarChart3 size={20} className="text-blue-400" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.purchasesInPeriod}</p>
-                <p className="text-sm text-muted-foreground">Compras</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Vendas no período</p>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-400">{periodStats.createdCampaignInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Criou Campanha</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Usuários únicos</p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
@@ -1828,13 +1828,13 @@ const Admin = () => {
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <BarChart3 size={20} className="text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <DollarSign size={20} className="text-success" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold text-blue-400">{periodStats.createdCampaignInPeriod}</p>
-                <p className="text-sm text-muted-foreground">Criou Campanha</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Usuários únicos</p>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.purchasesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Compras</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Vendas no período</p>
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
