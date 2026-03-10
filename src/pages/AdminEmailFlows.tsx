@@ -53,13 +53,6 @@ export default function AdminEmailFlows() {
   const navigate = useNavigate();
   const [flows, setFlows] = useState<EmailFlow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (user) {
-      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
-    }
-  }, [user]);
 
   useEffect(() => {
     loadFlows();
