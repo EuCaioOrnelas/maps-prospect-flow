@@ -313,6 +313,9 @@ const Dashboard = () => {
         }).then(() => {});
       }
       
+      // Track score event for search
+      trackScoreEvent("leads_searched", { keyword, location, results: (data.leads || []).length });
+      
       // Refresh history (limit to MAX_HISTORY_ITEMS)
       if (user) {
         const { data: historyData } = await supabase
