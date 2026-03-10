@@ -19,6 +19,7 @@ import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
