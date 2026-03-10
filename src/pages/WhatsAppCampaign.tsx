@@ -45,6 +45,7 @@ import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 export interface Lead {
   name: string;
