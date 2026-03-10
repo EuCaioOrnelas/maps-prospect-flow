@@ -35,13 +35,13 @@ const triggers = [
 ];
 
 const audiences = [
+  { value: "all", label: "Todos" },
   { value: "all_free", label: "Todos Free" },
   { value: "all_paid", label: "Todos Pagos" },
   { value: "trial_active", label: "Trial Ativo" },
   { value: "trial_expired", label: "Trial Expirado" },
   { value: "inactive_7d", label: "Inativos 7 dias" },
   { value: "inactive_30d", label: "Inativos 30 dias" },
-  { value: "checkout_abandoned", label: "Checkout Abandonado" },
 ];
 
 const conditions = [
