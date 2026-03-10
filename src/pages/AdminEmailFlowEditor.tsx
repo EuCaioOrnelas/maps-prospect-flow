@@ -109,6 +109,7 @@ export default function AdminEmailFlowEditor() {
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
       animated: true,
+      zIndex: 10,
     }));
 
     setNodes(rfNodes);
@@ -121,6 +122,7 @@ export default function AdminEmailFlowEditor() {
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
       animated: true,
+      zIndex: 10,
     }, eds));
   }, [setEdges]);
 
@@ -289,7 +291,7 @@ export default function AdminEmailFlowEditor() {
           fitView
           deleteKeyCode="Delete"
           style={{ background: 'transparent' }}
-          className="[&_.react-flow__edges]:!z-[5] [&_.react-flow__edge-path]:!z-[5] [&_.react-flow__handle]:!z-[10]"
+          className=""
         >
           <Background variant={BackgroundVariant.Lines} color="hsl(158 72% 38%)" gap={32} lineWidth={0.5} style={{ opacity: 0.06 }} />
           <Controls className="!bg-card/90 !backdrop-blur-sm !border-border !shadow-lg !rounded-xl [&>button]:!bg-transparent [&>button]:!border-border/50 [&>button]:!text-muted-foreground [&>button:hover]:!bg-accent/10 [&>button:hover]:!text-foreground" />
