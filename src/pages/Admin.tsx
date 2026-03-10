@@ -1065,6 +1065,11 @@ const Admin = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/admin/email-flows" className="flex items-center gap-2 cursor-pointer">
+                      <Zap size={14} /> Fluxos de Email
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/admin/insights" className="flex items-center gap-2 cursor-pointer">
                       <BarChart3 size={14} /> Insights
                     </Link>
