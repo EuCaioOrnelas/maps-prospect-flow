@@ -127,15 +127,41 @@ export default function AdminEmailFlowEditor() {
     setEdges(rfEdges);
   };
 
-  const onConnect = useCallback((params: Connection) => {
+  const onConnect = useCallback(async (params: Connection) => {
+    if (!id || !params.source || !params.target) return;
+
+    const tempEdgeId = `temp-${crypto.randomUUID()}`;
+
     setEdges(eds => addEdge({
+      id: tempEdgeId,
       ...params,
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
       animated: true,
       zIndex: 10,
     }, eds));
-  }, [setEdges]);
+
+    const { data, error } = await supabase
+      .from("email_flow_edges")
+      .insert({
+        flow_id: id,
+        source_node_id: params.source,
+        target_node_id: params.target,
+        source_handle: params.sourceHandle || "source",
+        target_handle: params.targetHandle || "target",
+        condition_label: null,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      setEdges(eds => eds.filter(e => e.id !== tempEdgeId));
+      toast.error("Erro ao salvar conexão");
+      return;
+    }
+
+    setEdges(eds => eds.map(e => e.id === tempEdgeId ? { ...e, id: data.id } : e));
+  }, [id, setEdges]);
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     setSelectedNode(node);
