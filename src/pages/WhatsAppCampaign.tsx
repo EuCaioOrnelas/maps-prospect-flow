@@ -567,6 +567,9 @@ const WhatsAppCampaign = () => {
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
 
+      // Track score event
+      trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length });
+
       // Show promo popup for free users on their first campaign (only once, persisted in DB)
       if (isFreePlan && !isTrialExpired && user) {
         const { count } = await supabase
