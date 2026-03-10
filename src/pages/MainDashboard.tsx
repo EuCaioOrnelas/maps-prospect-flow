@@ -15,6 +15,7 @@ import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
 import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
