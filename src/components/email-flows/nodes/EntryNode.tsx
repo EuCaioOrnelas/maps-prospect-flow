@@ -14,9 +14,20 @@ const triggerLabels: Record<string, string> = {
   manual: "Manual",
 };
 
+const audienceLabels: Record<string, string> = {
+  all: "Todos",
+  all_free: "Todos Free",
+  all_paid: "Todos Pagos",
+  trial_active: "Trial Ativo",
+  trial_expired: "Trial Expirado",
+  inactive_7d: "Inativos 7d",
+  inactive_30d: "Inativos 30d",
+};
+
 export function EntryNode({ data }: NodeProps) {
   const cfg = data.config as any || {};
   const isConfigured = !!cfg.trigger_type;
+  const metrics = data.metrics as any;
 
   return (
     <div className="bg-card border-2 border-emerald-500/50 rounded-xl shadow-lg w-56 overflow-hidden">
@@ -29,10 +40,15 @@ export function EntryNode({ data }: NodeProps) {
         {isConfigured ? (
           <div className="mt-1 space-y-0.5">
             <p className="text-[11px] text-muted-foreground">Gatilho: {triggerLabels[cfg.trigger_type] || cfg.trigger_type}</p>
-            {cfg.audience_type && <p className="text-[11px] text-muted-foreground">Público: {cfg.audience_type}</p>}
+            {cfg.audience_type && <p className="text-[11px] text-muted-foreground">Público: {audienceLabels[cfg.audience_type] || cfg.audience_type}</p>}
           </div>
         ) : (
           <p className="text-[11px] text-amber-400 mt-1">⚠ Clique para configurar</p>
+        )}
+        {metrics && (
+          <div className="mt-1.5 text-[10px] text-muted-foreground border-t border-border pt-1.5">
+            <span>👥 {metrics.passed} entraram</span>
+          </div>
         )}
       </div>
       <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-card" />

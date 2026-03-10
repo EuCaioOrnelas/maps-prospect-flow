@@ -271,6 +271,10 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
                   <Label className="text-xs">Track cliques</Label>
                   <Switch checked={config.track_clicks !== false} onCheckedChange={v => setConfig({ ...config, track_clicks: v })} />
                 </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Track compras (conversão)</Label>
+                  <Switch checked={config.track_purchases || false} onCheckedChange={v => setConfig({ ...config, track_purchases: v })} />
+                </div>
               </TabsContent>
               <TabsContent value="template" className="space-y-3 mt-3">
                 {templates.length > 0 ? (
