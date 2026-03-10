@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useActivationProgress } from "@/hooks/useTrialAutomation";
+import { useAuth } from "@/contexts/AuthContext";
+import { useConfetti } from "@/components/ui/confetti";
 import {
   Rocket,
   CheckCircle2,
@@ -14,7 +16,16 @@ import {
   Bot,
   X,
   PartyPopper,
+  Crown,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
