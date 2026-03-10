@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 export interface PipelineStage {
   id: string;
@@ -117,6 +118,7 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 
 export const useCRM = () => {
   const { user } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -307,6 +309,7 @@ export const useCRM = () => {
 
     // Log activity
     await logActivity(data.id, 'created', 'Lead criado');
+    trackScoreEvent("prospect_created");
     
     return data;
   };
@@ -342,6 +345,7 @@ export const useCRM = () => {
     
     // Log activity
     await logActivity(leadId, 'stage_changed', `Movido para ${newStage.name}`);
+    trackScoreEvent("crm_advanced_feature_used", { action: "move_stage" });
   };
 
   // Delete lead
@@ -530,6 +534,7 @@ export const useCRM = () => {
     }
 
     await fetchStages();
+    trackScoreEvent("crm_pipeline_created", { stage_name: name });
     return data;
   };
 

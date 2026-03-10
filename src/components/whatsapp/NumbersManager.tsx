@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +105,7 @@ export const NumbersManager = ({
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   // Fetch warming sessions when dialog opens
   useEffect(() => {
@@ -278,6 +280,7 @@ export const NumbersManager = ({
           
           // Show success animation
           setShowSuccessAnimation(true);
+          trackScoreEvent("integration_connected", { type: "whatsapp" });
           
           if (isNewNumber && user) {
             // Guard against duplicate inserts

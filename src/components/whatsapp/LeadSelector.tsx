@@ -23,6 +23,7 @@ import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
 // Use centralized phone validation helper
 import { validateAndFormatPhone, isLandlinePhone } from '@/lib/phoneUtils';
+import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 interface SearchHistoryItem {
   id: string;
@@ -123,6 +124,7 @@ export const LeadSelector = ({
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const remaining = dailyLimit - usedToday;
   const willExceed = selectedLeads.length > remaining;
@@ -333,6 +335,7 @@ export const LeadSelector = ({
         });
 
         onLeadsChange(validLeads);
+        trackScoreEvent("contacts_imported", { count: validLeads.length });
         
         if (invalidPhones.length > 0 || landlineLeads.length > 0 || internationalBlocked > 0) {
           const parts = [];

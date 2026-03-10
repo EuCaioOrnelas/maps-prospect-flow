@@ -436,8 +436,10 @@ const WhatsAppCampaign = () => {
         description: `A campanha será iniciada no horário programado`,
       });
 
-      // Track score event for scheduled campaign
+      // Track score events for scheduled campaign
       trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length, scheduled: true });
+      trackScoreEvent("scheduled_campaign_created");
+      trackScoreEvent("message_campaign_created");
 
       handleNewCampaign();
       setActiveTab("history");
@@ -570,8 +572,9 @@ const WhatsAppCampaign = () => {
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
 
-      // Track score event
+      // Track score events
       trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length });
+      trackScoreEvent("message_campaign_created");
 
       // Show promo popup for free users on their first campaign (only once, persisted in DB)
       if (isFreePlan && !isTrialExpired && user) {

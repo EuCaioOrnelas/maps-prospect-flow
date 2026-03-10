@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { type Lead, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
+import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 interface ExportLeadsButtonProps {
   leads: Lead[];
@@ -12,6 +13,7 @@ interface ExportLeadsButtonProps {
 
 export const ExportLeadsButton = ({ leads, stages }: ExportLeadsButtonProps) => {
   const [exporting, setExporting] = useState(false);
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const handleExport = () => {
     if (leads.length === 0) {
@@ -61,6 +63,7 @@ export const ExportLeadsButton = ({ leads, stages }: ExportLeadsButtonProps) => 
       XLSX.writeFile(wb, fileName);
 
       toast.success(`${leads.length} leads exportados com sucesso!`);
+      trackScoreEvent("export_report", { type: "crm_leads", count: leads.length });
     } catch (error) {
       console.error('Export error:', error);
       toast.error('Erro ao exportar leads');
