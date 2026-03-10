@@ -194,12 +194,30 @@ export default function AdminEmailFlows() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppSidebar profile={profile} />
-      <MobileNav profile={profile} />
-      <div className="lg:pl-[72px]">
-        <AppHeader profile={profile} />
-        <main className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background relative">
+      <BackgroundGlow />
+      {/* Admin Header */}
+      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Logo size="md" />
+              <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <Crown size={14} />
+                Admin
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin" className="gap-2">
+                  <ArrowLeft size={14} /> Voltar ao Admin
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
