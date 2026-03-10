@@ -159,6 +159,19 @@ interface Stats {
   payingUsers: number;
 }
 
+interface PeriodStats {
+  usersInPeriod: number;
+  searchesInPeriod: number;
+  activeUsersInPeriod: number;
+  conversionRateInPeriod: number;
+  activatedInPeriod: number;
+  purchasesInPeriod: number;
+  usedAIInPeriod: number;
+  createdCampaignInPeriod: number;
+  checkoutStartedInPeriod: number;
+  checkoutNotCompletedInPeriod: number;
+}
+
 interface ApiKeyStatus {
   name: string;
   status: 'ok' | 'warning' | 'error' | 'unknown' | 'exhausted' | 'not_configured';
