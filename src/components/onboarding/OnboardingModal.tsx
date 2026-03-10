@@ -160,6 +160,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         team_size: teamSize
       });
 
+      // Track score event
+      trackScoreEvent("onboarding_completed");
+
       // Go to congratulations step instead of closing
       setStep(6);
     } catch (error) {
