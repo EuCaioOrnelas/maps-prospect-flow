@@ -659,6 +659,313 @@ export type Database = {
         }
         Relationships: []
       }
+      email_flow_edges: {
+        Row: {
+          condition_label: string | null
+          created_at: string
+          flow_id: string
+          id: string
+          source_handle: string | null
+          source_node_id: string
+          target_handle: string | null
+          target_node_id: string
+        }
+        Insert: {
+          condition_label?: string | null
+          created_at?: string
+          flow_id: string
+          id?: string
+          source_handle?: string | null
+          source_node_id: string
+          target_handle?: string | null
+          target_node_id: string
+        }
+        Update: {
+          condition_label?: string | null
+          created_at?: string
+          flow_id?: string
+          id?: string
+          source_handle?: string | null
+          source_node_id?: string
+          target_handle?: string | null
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_flow_edges_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "email_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_flow_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "email_flow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_flow_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "email_flow_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_flow_enrollments: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_node_id: string | null
+          entered_at: string
+          exit_reason: string | null
+          exited_at: string | null
+          flow_id: string
+          id: string
+          metadata: Json | null
+          next_step_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          entered_at?: string
+          exit_reason?: string | null
+          exited_at?: string | null
+          flow_id: string
+          id?: string
+          metadata?: Json | null
+          next_step_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          entered_at?: string
+          exit_reason?: string | null
+          exited_at?: string | null
+          flow_id?: string
+          id?: string
+          metadata?: Json | null
+          next_step_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_flow_enrollments_current_node_id_fkey"
+            columns: ["current_node_id"]
+            isOneToOne: false
+            referencedRelation: "email_flow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_flow_enrollments_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "email_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_flow_execution_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          enrollment_id: string | null
+          executed_at: string
+          flow_id: string
+          id: string
+          node_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          enrollment_id?: string | null
+          executed_at?: string
+          flow_id: string
+          id?: string
+          node_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          enrollment_id?: string | null
+          executed_at?: string
+          flow_id?: string
+          id?: string
+          node_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_flow_execution_logs_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "email_flow_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_flow_execution_logs_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "email_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_flow_execution_logs_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "email_flow_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_flow_nodes: {
+        Row: {
+          config: Json | null
+          created_at: string
+          flow_id: string
+          id: string
+          name: string
+          node_type: string
+          position_x: number
+          position_y: number
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          flow_id: string
+          id?: string
+          name?: string
+          node_type: string
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          flow_id?: string
+          id?: string
+          name?: string
+          node_type?: string
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_flow_nodes_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "email_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_flow_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          preview_text: string | null
+          subject: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          preview_text?: string | null
+          subject: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          preview_text?: string | null
+          subject?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
+      email_flows: {
+        Row: {
+          audience_config: Json | null
+          audience_type: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entry_rules: Json | null
+          id: string
+          name: string
+          settings: Json | null
+          status: string
+          trigger_config: Json | null
+          trigger_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience_config?: Json | null
+          audience_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_rules?: Json | null
+          id?: string
+          name: string
+          settings?: Json | null
+          status?: string
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience_config?: Json | null
+          audience_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_rules?: Json | null
+          id?: string
+          name?: string
+          settings?: Json | null
+          status?: string
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string
