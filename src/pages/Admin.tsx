@@ -937,7 +937,7 @@ const Admin = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, userPlanFilter, userActivityFilter]);
+  }, [searchTerm, userPlanFilter, userActivityFilter, statsStartDate, statsEndDate]);
 
   // Export users to Excel
   const exportUsersToExcel = () => {
