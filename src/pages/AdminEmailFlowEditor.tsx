@@ -246,10 +246,11 @@ export default function AdminEmailFlowEditor() {
       }).eq("id", node.id);
     }
 
-    // Sync edges: delete old, insert new
+    // Sync edges: delete old, insert current state
     await supabase.from("email_flow_edges").delete().eq("flow_id", id);
     for (const edge of edges) {
       await supabase.from("email_flow_edges").insert({
+        ...(edge.id.startsWith("temp-") ? {} : { id: edge.id }),
         flow_id: id,
         source_node_id: edge.source,
         target_node_id: edge.target,
