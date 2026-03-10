@@ -65,11 +65,38 @@ const STEPS = [
 ] as const;
 
 export function ActivationChecklist() {
-  const { progress, loading, dismiss } = useActivationProgress();
+  const { progress, loading, dismiss, updateStep } = useActivationProgress();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [confettiTriggered, setConfettiTriggered] = useState(false);
+  const { fireConfetti, fireSides } = useConfetti();
+
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const isFreePlan = userPlan === 'free';
+
+  // Fire confetti when 100%
+  useEffect(() => {
+    if (progress?.progress_percentage === 100 && !confettiTriggered) {
+      setConfettiTriggered(true);
+      fireConfetti();
+      setTimeout(() => fireSides(), 400);
+    }
+  }, [progress?.progress_percentage, confettiTriggered, fireConfetti, fireSides]);
 
   if (loading || !progress || progress.dismissed) return null;
+
+  const handleExploreAICRM = async () => {
+    // Always mark as completed
+    await updateStep("step_explore_ai_crm_completed", true);
+
+    if (isFreePlan) {
+      setShowUpgradePopup(true);
+    } else {
+      navigate("/agents");
+    }
+  };
 
   // Show success message if all steps completed
   if (progress.progress_percentage === 100) {
@@ -84,7 +111,7 @@ export function ActivationChecklist() {
             <div className="flex items-center gap-3">
               <PartyPopper className="h-6 w-6 text-primary" />
               <div>
-                <p className="font-semibold text-sm">Parabéns!</p>
+                <p className="font-semibold text-sm">Parabéns! 🎉</p>
                 <p className="text-xs text-muted-foreground">
                   Você completou todos os passos iniciais!
                 </p>
