@@ -533,6 +533,7 @@ export const useCRM = () => {
     }
 
     await fetchStages();
+    trackScoreEvent("crm_pipeline_created", { stage_name: name });
     return data;
   };
 
