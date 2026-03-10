@@ -209,7 +209,8 @@ const Upgrade = () => {
 
   const handleCheckout = async (planKey: string, guestEmail?: string) => {
     setLoadingPlan(planKey);
-    
+    trackScoreEvent("checkout_started", { plan: planKey });
+    trackScoreEvent("plan_selected", { plan: planKey });
     try {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
 
