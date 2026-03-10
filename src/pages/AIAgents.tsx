@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -120,12 +121,14 @@ export default function AIAgents() {
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
   const [showManageTemplates, setShowManageTemplates] = useState(false);
   const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
-  
+
+  // DB-backed beta warning popup
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
+
   // WhatsApp numbers management (shared with mass messaging)
   const { 
     numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
@@ -135,26 +138,8 @@ export default function AIAgents() {
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
 
-  // Check if beta warning should be shown (every 30 days)
-  useEffect(() => {
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const acceptedAt = localStorage.getItem('agents_beta_warning_accepted_at');
-    
-    if (!acceptedAt) {
-      setShowBetaWarning(true);
-      return;
-    }
-    
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setShowBetaWarning(true);
-    }
-  }, []);
-
   const handleCloseBetaWarning = () => {
-    localStorage.setItem('agents_beta_warning_accepted_at', new Date().toISOString());
-    setShowBetaWarning(false);
+    dismissBetaWarning();
   };
 
   // Check if user has seen warning before
@@ -555,8 +540,8 @@ export default function AIAgents() {
       />
 
       {/* Beta Warning Dialog */}
-      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showBetaWarning} onOpenChange={() => { if (canCloseBeta) handleCloseBetaWarning(); }}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => { if (!canCloseBeta) e.preventDefault(); }}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -590,9 +575,10 @@ export default function AIAgents() {
             </Button>
             <Button 
               onClick={handleCloseBetaWarning}
+              disabled={!canCloseBeta}
               className="w-full sm:w-auto"
             >
-              Entendi, continuar
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useActivationProgress } from "@/hooks/useTrialAutomation";
+import { useAuth } from "@/contexts/AuthContext";
+import { useConfetti } from "@/components/ui/confetti";
 import {
   Rocket,
   CheckCircle2,
@@ -14,7 +16,16 @@ import {
   Bot,
   X,
   PartyPopper,
+  Crown,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -54,11 +65,38 @@ const STEPS = [
 ] as const;
 
 export function ActivationChecklist() {
-  const { progress, loading, dismiss } = useActivationProgress();
+  const { progress, loading, dismiss, updateStep } = useActivationProgress();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [confettiTriggered, setConfettiTriggered] = useState(false);
+  const { fireConfetti, fireSides } = useConfetti();
+
+  const userPlan = profile?.plan?.toLowerCase() || 'free';
+  const isFreePlan = userPlan === 'free';
+
+  // Fire confetti when 100%
+  useEffect(() => {
+    if (progress?.progress_percentage === 100 && !confettiTriggered) {
+      setConfettiTriggered(true);
+      fireConfetti();
+      setTimeout(() => fireSides(), 400);
+    }
+  }, [progress?.progress_percentage, confettiTriggered, fireConfetti, fireSides]);
 
   if (loading || !progress || progress.dismissed) return null;
+
+  const handleExploreAICRM = async () => {
+    // Always mark as completed
+    await updateStep("step_explore_ai_crm_completed", true);
+
+    if (isFreePlan) {
+      setShowUpgradePopup(true);
+    } else {
+      navigate("/agents");
+    }
+  };
 
   // Show success message if all steps completed
   if (progress.progress_percentage === 100) {
@@ -73,7 +111,7 @@ export function ActivationChecklist() {
             <div className="flex items-center gap-3">
               <PartyPopper className="h-6 w-6 text-primary" />
               <div>
-                <p className="font-semibold text-sm">Parabéns!</p>
+                <p className="font-semibold text-sm">Parabéns! 🎉</p>
                 <p className="text-xs text-muted-foreground">
                   Você completou todos os passos iniciais!
                 </p>
@@ -176,7 +214,13 @@ export function ActivationChecklist() {
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs shrink-0"
-                          onClick={() => navigate(step.action)}
+                          onClick={() => {
+                            if (step.key === "step_explore_ai_crm_completed") {
+                              handleExploreAICRM();
+                            } else {
+                              navigate(step.action);
+                            }
+                          }}
                         >
                           <Icon className="h-3 w-3 mr-1" />
                           {step.actionLabel}
@@ -190,6 +234,47 @@ export function ActivationChecklist() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Upgrade Popup for Free Users */}
+      <Dialog open={showUpgradePopup} onOpenChange={setShowUpgradePopup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle className="text-xl">Recurso Premium</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                Os <strong>Agentes de IA</strong> e o <strong>CRM</strong> são funcionalidades exclusivas para assinantes.
+              </p>
+              <p>
+                Faça upgrade do seu plano para ter acesso a automações inteligentes, CRM integrado e muito mais!
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradePopup(false)}
+              className="w-full sm:w-auto"
+            >
+              Fechar
+            </Button>
+            <Button
+              onClick={() => {
+                setShowUpgradePopup(false);
+                navigate("/upgrade");
+              }}
+              className="w-full sm:w-auto"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Ver planos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AnimatePresence>
   );
 }

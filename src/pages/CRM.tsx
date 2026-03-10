@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAutoScoreTracking } from '@/hooks/useAutoScoreTracking';
+import { usePagePopupDismiss } from '@/hooks/usePagePopupDismiss';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,7 @@ export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
@@ -79,27 +80,9 @@ export default function CRM() {
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
-  // Check if beta warning should be shown (every 30 days)
-  useEffect(() => {
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const acceptedAt = localStorage.getItem('crm_beta_warning_accepted_at');
-    
-    if (!acceptedAt) {
-      setShowBetaWarning(true);
-      return;
-    }
-    
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setShowBetaWarning(true);
-    }
-  }, []);
-
-  const handleCloseBetaWarning = useCallback(() => {
-    localStorage.setItem('crm_beta_warning_accepted_at', new Date().toISOString());
-    setShowBetaWarning(false);
-  }, []);
+  const handleCloseBetaWarning = () => {
+    dismissBetaWarning();
+  };
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -547,8 +530,8 @@ export default function CRM() {
       />
 
       {/* Beta Warning Dialog */}
-      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showBetaWarning} onOpenChange={() => { if (canCloseBeta) dismissBetaWarning(); }}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => { if (!canCloseBeta) e.preventDefault(); }}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -581,10 +564,11 @@ export default function CRM() {
               Ir para Contato
             </Button>
             <Button 
-              onClick={handleCloseBetaWarning}
+              onClick={() => dismissBetaWarning()}
+              disabled={!canCloseBeta}
               className="w-full sm:w-auto"
             >
-              Entendi, continuar
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
             </Button>
           </DialogFooter>
         </DialogContent>

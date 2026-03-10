@@ -8,49 +8,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Shield, MessageSquare, Clock, X } from "lucide-react";
-
-const DISCLAIMER_KEY = "wiize_whatsapp_disclaimer_accepted_at";
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+import { AlertTriangle, Shield, MessageSquare, Clock } from "lucide-react";
+import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 
 export function DisclaimerModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const acceptedAt = localStorage.getItem(DISCLAIMER_KEY);
-    if (!acceptedAt) {
-      setIsOpen(true);
-      return;
-    }
-
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setIsOpen(true);
-    }
-  }, []);
-
-  const handleAccept = () => {
-    localStorage.setItem(DISCLAIMER_KEY, new Date().toISOString());
-    setIsOpen(false);
-  };
-
-  const handleClose = () => {
-    localStorage.setItem(DISCLAIMER_KEY, new Date().toISOString());
-    setIsOpen(false);
-  };
+  const { showPopup, dismiss, canClose, countdown } = usePagePopupDismiss("whatsapp_disclaimer");
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-lg border-border/50 bg-gradient-to-b from-card to-card/95">
-        <button
-          onClick={handleClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Fechar</span>
-        </button>
-        
+    <Dialog open={showPopup} onOpenChange={() => { if (canClose) dismiss(); }}>
+      <DialogContent className="sm:max-w-lg border-border/50 bg-gradient-to-b from-card to-card/95" onPointerDownOutside={(e) => { if (!canClose) e.preventDefault(); }}>
         <DialogHeader className="space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
             <AlertTriangle className="h-7 w-7 text-amber-500" />
@@ -104,11 +70,12 @@ export function DisclaimerModal() {
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button 
-            onClick={handleAccept} 
+            onClick={dismiss} 
+            disabled={!canClose}
             className="w-full"
             size="lg"
           >
-            Estou ciente, continuar
+            {canClose ? "Estou ciente, continuar" : `Aguarde ${countdown}s`}
           </Button>
           <p className="text-[10px] text-muted-foreground/70 text-center">
             Ao continuar, você declara estar ciente desses riscos.

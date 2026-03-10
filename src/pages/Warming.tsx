@@ -20,6 +20,7 @@ import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractions
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -99,33 +100,15 @@ export default function Warming() {
   const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
   const [reconnectingNumber, setReconnectingNumber] = useState<WhatsAppNumber | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("warming_beta_warning");
   const [skipWarmingNumber, setSkipWarmingNumber] = useState<WhatsAppNumber | null>(null);
 
   // Check if user has access to Warming (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
 
-  // Check if beta warning should be shown (every 30 days)
-  useEffect(() => {
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const acceptedAt = localStorage.getItem('warming_beta_warning_accepted_at');
-    
-    if (!acceptedAt) {
-      setShowBetaWarning(true);
-      return;
-    }
-    
-    const acceptedDate = new Date(acceptedAt).getTime();
-    const now = Date.now();
-    if (now - acceptedDate > THIRTY_DAYS_MS) {
-      setShowBetaWarning(true);
-    }
-  }, []);
-
   const handleCloseBetaWarning = () => {
-    localStorage.setItem('warming_beta_warning_accepted_at', new Date().toISOString());
-    setShowBetaWarning(false);
+    dismissBetaWarning();
   };
 
   useEffect(() => {
@@ -1284,8 +1267,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
       )}
 
       {/* Beta Warning Dialog */}
-      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showBetaWarning} onOpenChange={() => { if (canCloseBeta) handleCloseBetaWarning(); }}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => { if (!canCloseBeta) e.preventDefault(); }}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -1319,9 +1302,10 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
             </Button>
             <Button 
               onClick={handleCloseBetaWarning}
+              disabled={!canCloseBeta}
               className="w-full sm:w-auto"
             >
-              Entendi, continuar
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
             </Button>
           </DialogFooter>
         </DialogContent>
