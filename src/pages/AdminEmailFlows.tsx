@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { MobileNav } from "@/components/layout/MobileNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Play, Pause, Archive, Trash2, Mail, Workflow } from "lucide-react";
+import { Plus, Edit, Copy, Play, Pause, Archive, Trash2, Mail, Workflow, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 interface EmailFlow {
   id: string;
@@ -54,13 +53,6 @@ export default function AdminEmailFlows() {
   const navigate = useNavigate();
   const [flows, setFlows] = useState<EmailFlow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (user) {
-      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
-    }
-  }, [user]);
 
   useEffect(() => {
     loadFlows();
@@ -195,12 +187,30 @@ export default function AdminEmailFlows() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppSidebar profile={profile} />
-      <MobileNav profile={profile} />
-      <div className="lg:pl-[72px]">
-        <AppHeader profile={profile} />
-        <main className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background relative">
+      <BackgroundGlow />
+      {/* Admin Header */}
+      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Logo size="md" />
+              <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <Crown size={14} />
+                Admin
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin" className="gap-2">
+                  <ArrowLeft size={14} /> Voltar ao Admin
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -265,7 +275,6 @@ export default function AdminEmailFlows() {
             </div>
           )}
         </main>
-      </div>
     </div>
   );
 }
