@@ -13,6 +13,7 @@ interface ExportLeadsButtonProps {
 
 export const ExportLeadsButton = ({ leads, stages }: ExportLeadsButtonProps) => {
   const [exporting, setExporting] = useState(false);
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const handleExport = () => {
     if (leads.length === 0) {
