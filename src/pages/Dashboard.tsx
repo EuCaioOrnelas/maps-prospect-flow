@@ -406,6 +406,7 @@ const Dashboard = () => {
       title: "Download iniciado!",
       description: "Sua planilha Excel está sendo baixada",
     });
+    trackScoreEvent("export_report", { type: "leads_excel" });
   };
 
   const handleLogout = async () => {
