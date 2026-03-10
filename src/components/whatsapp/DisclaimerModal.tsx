@@ -15,8 +15,8 @@ export function DisclaimerModal() {
   const { showPopup, dismiss, canClose, countdown } = usePagePopupDismiss("whatsapp_disclaimer");
 
   return (
-    <Dialog open={showPopup} onOpenChange={() => { if (canClose) dismiss(); }}>
-      <DialogContent className="sm:max-w-lg border-border/50 bg-gradient-to-b from-card to-card/95" onPointerDownOutside={(e) => { if (!canClose) e.preventDefault(); }}>
+    <Dialog open={showPopup} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-lg border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader className="space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
             <AlertTriangle className="h-7 w-7 text-amber-500" />
