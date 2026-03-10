@@ -902,16 +902,16 @@ const Admin = () => {
       
       switch (userActivityFilter) {
         case 'active_7d':
-          // Acessou nos últimos 7 dias
           matchesActivity = updatedAt >= sevenDaysAgo;
           break;
         case 'active_30d':
-          // Acessou nos últimos 30 dias (mas não nos últimos 7)
           matchesActivity = updatedAt >= thirtyDaysAgo && updatedAt < sevenDaysAgo;
           break;
         case 'inactive_30d':
-          // Não acessou há mais de 30 dias (31+ dias sem acesso)
           matchesActivity = updatedAt < thirtyDaysAgo;
+          break;
+        case 'checkout_not_completed':
+          matchesActivity = checkoutLeadsList.some((c: any) => c.user_id === u.id);
           break;
         default:
           matchesActivity = true;
