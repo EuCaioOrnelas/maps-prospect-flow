@@ -10,32 +10,31 @@ export function WaitNode({ data }: NodeProps) {
 
   return (
     <div
-      className="bg-card border border-border shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-52 backdrop-blur-sm relative"
+      className="bg-card border border-border shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-40 backdrop-blur-sm relative"
       style={{
-        clipPath: "polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)",
-        padding: "0",
+        clipPath: "polygon(14% 0%, 100% 0%, 86% 100%, 0% 100%)",
       }}
     >
-      <div className="px-8 py-4 flex flex-col items-center text-center">
-        <div className="w-6 h-6 rounded-full bg-amber-500/10 flex items-center justify-center mb-1">
-          <Clock size={13} className="text-amber-400" />
+      <div className="px-6 py-3 flex items-center gap-2">
+        <Clock size={12} className="text-amber-400 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-foreground truncate">{String(data.label || "Espera")}</p>
+          {isConfigured ? (
+            <p className="text-[10px] text-muted-foreground">
+              {cfg.delay_value} {unitLabels[cfg.delay_unit] || cfg.delay_unit}
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground/60 italic">Tempo</p>
+          )}
         </div>
-        <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider mb-0.5">Espera</p>
-        <p className="text-sm font-medium text-foreground truncate w-full">{String(data.label || "Espera")}</p>
-        {isConfigured ? (
-          <p className="text-[10px] text-muted-foreground mt-1">
-            {cfg.delay_value} {unitLabels[cfg.delay_unit] || cfg.delay_unit}
-            {cfg.business_hours_only ? " · Comercial" : ""}
-          </p>
-        ) : (
-          <p className="text-[10px] text-muted-foreground/60 mt-1 italic">Defina o tempo</p>
-        )}
-        {metrics && metrics.passed > 0 && (
-          <p className="text-[10px] text-muted-foreground mt-1">{metrics.passed} passaram</p>
-        )}
       </div>
-      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-amber-400 !border-2 !border-card !rounded-full" style={{ left: "10%" }} />
-      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-amber-400 !border-2 !border-card !rounded-full" style={{ right: "10%" }} />
+      {metrics && metrics.passed > 0 && (
+        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2">
+          <span className="text-[9px] text-muted-foreground bg-card/80 px-1.5 py-0.5 rounded-full border border-border/50">{metrics.passed} passaram</span>
+        </div>
+      )}
+      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-amber-400 !border-2 !border-card !rounded-full" style={{ left: "8%" }} />
+      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-amber-400 !border-2 !border-card !rounded-full" style={{ right: "8%" }} />
     </div>
   );
 }
