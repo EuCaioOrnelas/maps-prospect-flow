@@ -622,8 +622,90 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData()]);
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData(), loadPeriodStats()]);
   };
+
+  // Load period-filtered stats
+  const loadPeriodStats = useCallback(async () => {
+    try {
+      const startISO = statsStartDate.toISOString();
+      const endISO = statsEndDate.toISOString();
+
+      const [
+        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes
+      ] = await Promise.all([
+        // Users created in period
+        supabase.from('profiles').select('id, searches_used, plan, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Searches in period
+        supabase.from('search_history' as any).select('id, user_id, results_count, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Campaigns created in period
+        supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Agents created in period
+        supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
+        // Checkout leads in period
+        supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
+        // Purchases (subscription events) in period
+        supabase.from('subscription_events').select('id, user_id, event_type, created_at')
+          .in('event_type', ['subscription_created', 'subscription_renewed'])
+          .gte('created_at', startISO).lte('created_at', endISO),
+      ]);
+
+      const usersInPeriod = usersRes.data?.length || 0;
+      
+      // Searches: count unique users who searched
+      const searchUsers = new Set((searchesRes.data || []).map((s: any) => s.user_id));
+      const searchesCount = (searchesRes.data || []).reduce((sum: number, s: any) => sum + (s.results_count || 0), 0);
+      
+      // Active users = users who did searches or campaigns
+      const campaignUsers = new Set((campaignsRes.data || []).map((c: any) => c.user_id));
+      const activeUsersSet = new Set([...searchUsers, ...campaignUsers]);
+      
+      // Activated = users who created account in period AND did a search or campaign
+      const usersCreatedInPeriod = new Set((usersRes.data || []).map((u: any) => u.id));
+      const activatedCount = [...usersCreatedInPeriod].filter(uid => activeUsersSet.has(uid)).length;
+      
+      // Used AI = unique users who created agents in period
+      const aiUsers = new Set((agentsRes.data || []).map((a: any) => a.user_id));
+      
+      // Created campaign = unique users
+      const campaignCreators = campaignUsers.size;
+      
+      // Checkout
+      const checkoutData = checkoutRes.data || [];
+      const checkoutStarted = checkoutData.length;
+      const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
+      
+      // Purchases
+      const purchasesCount = purchasesRes.data?.length || 0;
+      
+      // Conversion rate: paying users created in period / total users in period
+      const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;
+      const conversionRate = usersInPeriod > 0 ? (payingInPeriod / usersInPeriod) * 100 : 0;
+
+      setPeriodStats({
+        usersInPeriod,
+        searchesInPeriod: searchesCount,
+        activeUsersInPeriod: activeUsersSet.size,
+        conversionRateInPeriod: conversionRate,
+        activatedInPeriod: activatedCount,
+        purchasesInPeriod: purchasesCount,
+        usedAIInPeriod: aiUsers.size,
+        createdCampaignInPeriod: campaignCreators,
+        checkoutStartedInPeriod: checkoutStarted,
+        checkoutNotCompletedInPeriod: checkoutNotCompleted,
+      });
+      setCheckoutLeadsList(checkoutData.filter((c: any) => !c.checkout_completed));
+    } catch (err) {
+      console.error('Error loading period stats:', err);
+    }
+  }, [statsStartDate, statsEndDate]);
+
+  // Reload period stats when dates change
+  useEffect(() => {
+    if (isAdmin) {
+      loadPeriodStats();
+    }
+  }, [statsStartDate, statsEndDate, isAdmin, loadPeriodStats]);
 
   const loadData = async () => {
     setLoading(true);
