@@ -21,7 +21,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Play, Pause, Plus, Mail, Clock, GitBranch, Flag, Zap, BarChart3, TestTube } from "lucide-react";
+import { ArrowLeft, Save, Play, Pause, Plus, Mail, Clock, GitBranch, Flag, Zap, BarChart3, TestTube, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { EntryNode } from "@/components/email-flows/nodes/EntryNode";
 import { EmailNode } from "@/components/email-flows/nodes/EmailNode";
@@ -54,6 +64,7 @@ export default function AdminEmailFlowEditor() {
   const [flowName, setFlowName] = useState("");
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const [edgeToDelete, setEdgeToDelete] = useState<Edge | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,6 +141,17 @@ export default function AdminEmailFlowEditor() {
     setSelectedNode(node);
     setDrawerOpen(true);
   }, []);
+
+  const onEdgeClick = useCallback((_: any, edge: Edge) => {
+    setEdgeToDelete(edge);
+  }, []);
+
+  const confirmDeleteEdge = useCallback(() => {
+    if (!edgeToDelete) return;
+    setEdges(eds => eds.filter(e => e.id !== edgeToDelete.id));
+    setEdgeToDelete(null);
+    toast.success("Conexão removida");
+  }, [edgeToDelete, setEdges]);
 
   const addNode = async (type: string) => {
     if (!id) return;
@@ -287,6 +309,7 @@ export default function AdminEmailFlowEditor() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode="Delete"
@@ -334,6 +357,23 @@ export default function AdminEmailFlowEditor() {
 
       <FlowAnalyticsDialog open={analyticsOpen} onOpenChange={setAnalyticsOpen} flowId={id!} />
       <FlowTestDialog open={testOpen} onOpenChange={setTestOpen} flowId={id!} />
+
+      <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => !open && setEdgeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover conexão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa conexão entre os blocos será removida. Você pode reconectá-los depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteEdge} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 size={14} className="mr-1.5" /> Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
