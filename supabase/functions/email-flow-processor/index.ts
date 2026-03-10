@@ -1,0 +1,429 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const results = {
+    flows_processed: 0,
+    enrollments_created: 0,
+    steps_advanced: 0,
+    emails_sent: 0,
+    errors: [] as string[],
+  };
+
+  try {
+    // 1. Process active flows: enroll eligible leads
+    await enrollEligibleLeads(supabase, results);
+
+    // 2. Advance active enrollments
+    await advanceEnrollments(supabase, resendApiKey, results);
+
+    return new Response(JSON.stringify({ success: true, results }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Email flow processor error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+async function enrollEligibleLeads(supabase: any, results: any) {
+  const { data: flows } = await supabase
+    .from("email_flows")
+    .select("*")
+    .eq("status", "active");
+
+  if (!flows?.length) return;
+
+  for (const flow of flows) {
+    results.flows_processed++;
+    const triggerType = flow.trigger_type;
+    const audienceType = flow.audience_type;
+    const entryRules = flow.entry_rules || {};
+
+    // Build query based on audience
+    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
+
+    switch (audienceType) {
+      case "all_free": query = query.eq("plan", "free"); break;
+      case "all_paid": query = query.neq("plan", "free"); break;
+      case "trial_active":
+        query = query.eq("plan", "free").not("trial_start_at", "is", null);
+        break;
+      case "trial_expired":
+        query = query.eq("plan", "free");
+        break;
+      case "inactive_7d":
+      case "inactive_30d":
+        query = query.eq("plan", "free");
+        break;
+      case "checkout_abandoned":
+        // Handle separately
+        break;
+    }
+
+    const { data: users } = await query;
+    if (!users?.length) continue;
+
+    const now = new Date();
+
+    for (const user of users) {
+      // Check trigger eligibility
+      const eligible = checkTriggerEligibility(triggerType, user, flow.trigger_config || {}, now);
+      if (!eligible) continue;
+
+      // Audience post-filter
+      if (audienceType === "trial_expired") {
+        const ts = user.trial_start_at ? new Date(user.trial_start_at) : new Date(user.created_at);
+        const trialEnd = new Date(ts.getTime() + 14 * 86400000);
+        if (now < trialEnd) continue;
+      }
+      if (audienceType === "inactive_7d" || audienceType === "inactive_30d") {
+        const days = audienceType === "inactive_7d" ? 7 : 30;
+        const lastActive = new Date(user.updated_at);
+        const inactiveDays = Math.floor((now.getTime() - lastActive.getTime()) / 86400000);
+        if (inactiveDays < days) continue;
+      }
+
+      // Check entry rules
+      const maxEntries = entryRules.max_entries_per_user || 1;
+      const { count } = await supabase
+        .from("email_flow_enrollments")
+        .select("*", { count: "exact", head: true })
+        .eq("flow_id", flow.id)
+        .eq("user_id", user.id);
+
+      if ((count || 0) >= maxEntries) continue;
+
+      if (entryRules.reentry_after_days && (count || 0) > 0) {
+        const { data: lastEnrollment } = await supabase
+          .from("email_flow_enrollments")
+          .select("entered_at")
+          .eq("flow_id", flow.id)
+          .eq("user_id", user.id)
+          .order("entered_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastEnrollment) {
+          const daysSince = Math.floor((now.getTime() - new Date(lastEnrollment.entered_at).getTime()) / 86400000);
+          if (daysSince < entryRules.reentry_after_days) continue;
+        }
+      }
+
+      // Get first node after entry
+      const { data: entryNode } = await supabase
+        .from("email_flow_nodes")
+        .select("id")
+        .eq("flow_id", flow.id)
+        .eq("node_type", "entry")
+        .maybeSingle();
+
+      if (!entryNode) continue;
+
+      const { data: firstEdge } = await supabase
+        .from("email_flow_edges")
+        .select("target_node_id")
+        .eq("flow_id", flow.id)
+        .eq("source_node_id", entryNode.id)
+        .maybeSingle();
+
+      const firstNodeId = firstEdge?.target_node_id || entryNode.id;
+
+      await supabase.from("email_flow_enrollments").insert({
+        flow_id: flow.id,
+        user_id: user.id,
+        current_node_id: firstNodeId,
+        next_step_at: now.toISOString(),
+      });
+
+      await supabase.from("email_flow_execution_logs").insert({
+        flow_id: flow.id,
+        user_id: user.id,
+        node_id: entryNode.id,
+        action_type: "enrolled",
+        status: "success",
+        details: { trigger: triggerType, audience: audienceType },
+      });
+
+      results.enrollments_created++;
+    }
+  }
+}
+
+function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: any, now: Date): boolean {
+  const trialStart = user.trial_start_at ? new Date(user.trial_start_at) : null;
+  const trialEnd = trialStart ? new Date(trialStart.getTime() + 14 * 86400000) : null;
+  const lastActive = new Date(user.updated_at);
+  const inactiveDays = Math.floor((now.getTime() - lastActive.getTime()) / 86400000);
+
+  switch (triggerType) {
+    case "free_trial": return !!trialStart && trialEnd! > now;
+    case "signup": return true; // all matched users
+    case "checkout_started": return true;
+    case "inactive": {
+      const days = triggerConfig.inactive_days || 7;
+      return inactiveDays >= days;
+    }
+    case "score_reached": return true; // would need score check
+    case "manual": return false;
+    default: return false;
+  }
+}
+
+async function advanceEnrollments(supabase: any, resendApiKey: string, results: any) {
+  const now = new Date().toISOString();
+
+  const { data: pendingEnrollments } = await supabase
+    .from("email_flow_enrollments")
+    .select("*")
+    .eq("status", "active")
+    .lte("next_step_at", now)
+    .limit(100);
+
+  if (!pendingEnrollments?.length) return;
+
+  for (const enrollment of pendingEnrollments) {
+    const { data: node } = await supabase
+      .from("email_flow_nodes")
+      .select("*")
+      .eq("id", enrollment.current_node_id)
+      .maybeSingle();
+
+    if (!node) {
+      await completeEnrollment(supabase, enrollment, "node_not_found");
+      continue;
+    }
+
+    const { data: user } = await supabase
+      .from("profiles")
+      .select("id, email, name, plan")
+      .eq("id", enrollment.user_id)
+      .maybeSingle();
+
+    if (!user) {
+      await completeEnrollment(supabase, enrollment, "user_not_found");
+      continue;
+    }
+
+    // Execute node action
+    switch (node.node_type) {
+      case "email": {
+        const config = node.config || {};
+        if (config.subject && config.body) {
+          const compiledBody = compileTemplate(config.body, {
+            user_name: user.name || user.email?.split("@")[0] || "usuário",
+            user_email: user.email,
+            product_name: "Wiize",
+            plan: user.plan,
+            cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
+          });
+
+          const sent = await sendEmail(resendApiKey, {
+            to: user.email,
+            subject: compileTemplate(config.subject, {
+              user_name: user.name || "usuário",
+              product_name: "Wiize",
+            }),
+            html: wrapEmailLayout(config.subject, compiledBody),
+          });
+
+          await supabase.from("email_flow_execution_logs").insert({
+            flow_id: enrollment.flow_id,
+            enrollment_id: enrollment.id,
+            user_id: user.id,
+            node_id: node.id,
+            action_type: "email_sent",
+            status: sent ? "success" : "error",
+            details: { subject: config.subject },
+          });
+
+          if (sent) results.emails_sent++;
+        }
+        break;
+      }
+
+      case "wait": {
+        // Wait node: the delay is applied when moving to next node
+        await supabase.from("email_flow_execution_logs").insert({
+          flow_id: enrollment.flow_id,
+          enrollment_id: enrollment.id,
+          user_id: user.id,
+          node_id: node.id,
+          action_type: "wait_completed",
+          status: "success",
+        });
+        break;
+      }
+
+      case "condition": {
+        // Basic condition evaluation
+        await supabase.from("email_flow_execution_logs").insert({
+          flow_id: enrollment.flow_id,
+          enrollment_id: enrollment.id,
+          user_id: user.id,
+          node_id: node.id,
+          action_type: "condition_evaluated",
+          status: "success",
+          details: { condition_type: (node.config as any)?.condition_type },
+        });
+        break;
+      }
+
+      case "end": {
+        await completeEnrollment(supabase, enrollment, "flow_completed");
+        await supabase.from("email_flow_execution_logs").insert({
+          flow_id: enrollment.flow_id,
+          enrollment_id: enrollment.id,
+          user_id: user.id,
+          node_id: node.id,
+          action_type: "flow_ended",
+          status: "success",
+        });
+        results.steps_advanced++;
+        continue;
+      }
+    }
+
+    // Move to next node
+    const sourceHandle = node.node_type === "condition" ? "yes" : "source";
+    const { data: nextEdge } = await supabase
+      .from("email_flow_edges")
+      .select("target_node_id")
+      .eq("flow_id", enrollment.flow_id)
+      .eq("source_node_id", node.id)
+      .eq("source_handle", sourceHandle)
+      .maybeSingle();
+
+    if (!nextEdge) {
+      // Try without handle filter
+      const { data: anyEdge } = await supabase
+        .from("email_flow_edges")
+        .select("target_node_id")
+        .eq("flow_id", enrollment.flow_id)
+        .eq("source_node_id", node.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!anyEdge) {
+        await completeEnrollment(supabase, enrollment, "no_next_node");
+        results.steps_advanced++;
+        continue;
+      }
+      // Move with any edge
+      await moveToNextNode(supabase, enrollment, anyEdge.target_node_id);
+    } else {
+      await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
+    }
+
+    results.steps_advanced++;
+  }
+}
+
+async function moveToNextNode(supabase: any, enrollment: any, nextNodeId: string) {
+  const { data: nextNode } = await supabase
+    .from("email_flow_nodes")
+    .select("*")
+    .eq("id", nextNodeId)
+    .maybeSingle();
+
+  let delayMs = 0;
+  if (nextNode?.node_type === "wait") {
+    const cfg = nextNode.config || {};
+    const value = cfg.delay_value || 1;
+    const unit = cfg.delay_unit || "days";
+    switch (unit) {
+      case "minutes": delayMs = value * 60000; break;
+      case "hours": delayMs = value * 3600000; break;
+      case "days": delayMs = value * 86400000; break;
+    }
+  }
+
+  await supabase.from("email_flow_enrollments").update({
+    current_node_id: nextNodeId,
+    next_step_at: new Date(Date.now() + delayMs).toISOString(),
+  }).eq("id", enrollment.id);
+}
+
+async function completeEnrollment(supabase: any, enrollment: any, reason: string) {
+  await supabase.from("email_flow_enrollments").update({
+    status: "completed",
+    completed_at: new Date().toISOString(),
+    exit_reason: reason,
+  }).eq("id", enrollment.id);
+}
+
+function compileTemplate(template: string, variables: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value || "");
+  }
+  return result;
+}
+
+function wrapEmailLayout(title: string, body: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<tr><td style="background:#3daa57;padding:24px 32px;text-align:center;">
+  <span style="color:#ffffff;font-size:20px;font-weight:700;">Wiize</span>
+</td></tr>
+<tr><td style="padding:32px;">
+${body}
+</td></tr>
+<tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
+  <p style="margin:0;font-size:12px;color:#a1a1aa;">Você recebeu este e-mail porque tem uma conta na Wiize.</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+async function sendEmail(resendApiKey: string, options: { to: string; subject: string; html: string }): Promise<boolean> {
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Wiize <no-reply@wiize.com.br>",
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Resend error:", await response.text());
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Send email error:", error);
+    return false;
+  }
+}
