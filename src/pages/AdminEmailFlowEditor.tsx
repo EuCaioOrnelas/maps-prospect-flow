@@ -21,7 +21,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Play, Pause, Plus, Mail, Clock, GitBranch, Flag, Zap, BarChart3, TestTube } from "lucide-react";
+import { ArrowLeft, Save, Play, Pause, Plus, Mail, Clock, GitBranch, Flag, Zap, BarChart3, TestTube, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { EntryNode } from "@/components/email-flows/nodes/EntryNode";
 import { EmailNode } from "@/components/email-flows/nodes/EmailNode";
