@@ -17,14 +17,8 @@ export function EndNode({ data }: NodeProps) {
           <p className="text-[11px] text-muted-foreground mt-1.5 truncate">{(data.config as any).note}</p>
         )}
         {metrics && metrics.passed > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+          <div className="mt-2 pt-2 border-t border-border/50">
             <span className="text-[10px] text-muted-foreground">{metrics.passed} finalizaram</span>
-            {metrics.converted != null && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground">Conversão</span>
-                <span className="text-[10px] font-medium text-primary">{metrics.converted} ({metrics.total_entered > 0 ? ((metrics.converted / metrics.total_entered) * 100).toFixed(1) : 0}%)</span>
-              </div>
-            )}
           </div>
         )}
       </div>
