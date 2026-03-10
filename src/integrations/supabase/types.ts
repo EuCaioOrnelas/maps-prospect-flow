@@ -2553,6 +2553,27 @@ export type Database = {
           },
         ]
       }
+      user_dismissed_popups: {
+        Row: {
+          dismissed_at: string
+          id: string
+          popup_key: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          popup_key: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          popup_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_events: {
         Row: {
           created_at: string
