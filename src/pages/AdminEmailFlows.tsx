@@ -282,7 +282,6 @@ export default function AdminEmailFlows() {
             </div>
           )}
         </main>
-      </div>
     </div>
   );
 }
