@@ -318,10 +318,6 @@ export default function AdminEmailFlowEditor() {
           </Panel>
         </ReactFlow>
       </div>
-            </div>
-          </Panel>
-        </ReactFlow>
-      </div>
 
       {/* Config Drawer */}
       <NodeConfigDrawer
