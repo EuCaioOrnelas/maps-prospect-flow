@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { type Lead, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
+import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 interface ExportLeadsButtonProps {
   leads: Lead[];
