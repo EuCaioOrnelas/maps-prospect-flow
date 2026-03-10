@@ -45,6 +45,7 @@ import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 export interface Lead {
   name: string;
@@ -120,6 +121,7 @@ const WhatsAppCampaign = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile, isTrialExpired, refreshProfile } = useAuth();
+  const { trackScoreEvent } = useAutoScoreTracking("whatsapp");
 
   // Free trial limits
   const FREE_TRIAL_MESSAGE_LIMIT = 400;
@@ -434,6 +436,9 @@ const WhatsAppCampaign = () => {
         description: `A campanha será iniciada no horário programado`,
       });
 
+      // Track score event for scheduled campaign
+      trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length, scheduled: true });
+
       handleNewCampaign();
       setActiveTab("history");
       setIsStartingCampaign(false);
@@ -564,6 +569,9 @@ const WhatsAppCampaign = () => {
         title: "Campanha iniciada!",
         description: `Enviando mensagens para ${selectedLeads.length} contatos. O processamento começará em instantes.`,
       });
+
+      // Track score event
+      trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length });
 
       // Show promo popup for free users on their first campaign (only once, persisted in DB)
       if (isFreePlan && !isTrialExpired && user) {

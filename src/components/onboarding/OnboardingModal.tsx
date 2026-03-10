@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserEvents } from "@/hooks/useUserEvents";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, Sparkles, PartyPopper } from "lucide-react";
 import { useConfetti } from "@/components/ui/confetti";
@@ -66,6 +67,7 @@ const EXPERIENCE_OPTIONS = [
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const { user } = useAuth();
   const { trackEvent } = useUserEvents();
+  const { trackScoreEvent } = useUserScoreTracking();
   const { fireConfetti, fireSides } = useConfetti();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -157,6 +159,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         main_objective: mainObjective,
         team_size: teamSize
       });
+
+      // Track score event
+      trackScoreEvent("onboarding_completed");
 
       // Go to congratulations step instead of closing
       setStep(6);

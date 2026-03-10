@@ -48,6 +48,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 interface Lead {
   name: string;
   category: string;
@@ -97,6 +98,7 @@ const Dashboard = () => {
   const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
+  const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
   const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
@@ -310,6 +312,9 @@ const Dashboard = () => {
           metadata: { keyword, location, results: (data.leads || []).length },
         }).then(() => {});
       }
+      
+      // Track score event for search
+      trackScoreEvent("leads_searched", { keyword, location, results: (data.leads || []).length });
       
       // Refresh history (limit to MAX_HISTORY_ITEMS)
       if (user) {

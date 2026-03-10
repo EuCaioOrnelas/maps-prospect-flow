@@ -19,6 +19,7 @@ import { PremiumFeatureBlock } from "@/components/PremiumFeatureBlock";
 import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractionsLog";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -81,6 +82,7 @@ export default function Warming() {
   const { user, profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
+  useAutoScoreTracking("warming");
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [sessions, setSessions] = useState<WarmingSession[]>([]);
   const [assignments, setAssignments] = useState<SearchAssignment[]>([]);

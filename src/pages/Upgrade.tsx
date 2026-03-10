@@ -9,6 +9,7 @@ import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import type { LucideIcon } from "lucide-react";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
@@ -111,6 +112,7 @@ const Upgrade = () => {
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
+  const { trackScoreEvent } = useAutoScoreTracking("upgrade");
   const isTrialExpired = searchParams.get("expired") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");
@@ -207,7 +209,8 @@ const Upgrade = () => {
 
   const handleCheckout = async (planKey: string, guestEmail?: string) => {
     setLoadingPlan(planKey);
-    
+    trackScoreEvent("checkout_started", { plan: planKey });
+    trackScoreEvent("plan_selected", { plan: planKey });
     try {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
 
@@ -260,6 +263,7 @@ const Upgrade = () => {
   };
 
   const handleUpgrade = (planKey: string) => {
+    trackScoreEvent("clicked_upgrade_button", { plan: planKey });
     if (user) {
       // User is logged in, go directly to checkout
       handleCheckout(planKey);

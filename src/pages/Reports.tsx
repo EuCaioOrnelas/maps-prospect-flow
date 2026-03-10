@@ -60,6 +60,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { AgentMetricsDashboard } from "@/components/agents/AgentMetricsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 interface SearchHistoryItem {
   id: string;
@@ -100,6 +101,7 @@ const Reports = () => {
   const [copied, setCopied] = useState(false);
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  useAutoScoreTracking("reports");
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
 import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -24,6 +25,7 @@ const PERIOD_OPTIONS = [
 
 export default function MainDashboard() {
   const { profile } = useAuth();
+  useAutoScoreTracking("main_dashboard");
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);

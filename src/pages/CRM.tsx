@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAutoScoreTracking } from '@/hooks/useAutoScoreTracking';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ export default function CRM() {
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
   const [showBetaWarning, setShowBetaWarning] = useState(false);
+  useAutoScoreTracking("crm");
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const {

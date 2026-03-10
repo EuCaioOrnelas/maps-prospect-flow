@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -276,6 +277,7 @@ const STEPS = [
 export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgentWizardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { trackScoreEvent } = useUserScoreTracking();
   const navigate = useNavigate();
   
   const [currentStep, setCurrentStep] = useState(0);
@@ -914,6 +916,10 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         });
 
       if (error) throw error;
+
+      // Track score event
+      trackScoreEvent("first_ai_agent_created", { agent_name: name });
+      trackScoreEvent("ai_agent_feature_used");
 
       // Reconfigure webhook for the selected number to ensure agent receives messages
       try {
