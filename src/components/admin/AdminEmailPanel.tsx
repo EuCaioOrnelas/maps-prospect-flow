@@ -31,14 +31,31 @@ function BroadcastTab() {
     setResult(null);
 
     try {
-      // Get target users
-      let query = supabase.from("profiles").select("id, email, plan").eq("is_blocked", false);
-      if (targetPlan !== "all") {
-        query = query.eq("plan", targetPlan);
-      }
+      let usersToSend: { id: string; email: string }[] = [];
 
-      const { data: users, error } = await query;
-      if (error) throw error;
+      if (targetPlan === 'checkout_abandoned') {
+        // Get users who started checkout but didn't complete
+        const { data: checkoutLeads, error: clError } = await supabase
+          .from('checkout_leads' as any)
+          .select('user_id, email')
+          .eq('checkout_completed', false);
+        if (clError) throw clError;
+        // Deduplicate by user_id
+        const seen = new Set<string>();
+        usersToSend = (checkoutLeads || []).filter((c: any) => {
+          if (seen.has(c.user_id)) return false;
+          seen.add(c.user_id);
+          return true;
+        }).map((c: any) => ({ id: c.user_id, email: c.email }));
+      } else {
+        let query = supabase.from("profiles").select("id, email, plan").eq("is_blocked", false);
+        if (targetPlan !== "all") {
+          query = query.eq("plan", targetPlan);
+        }
+        const { data: users, error } = await query;
+        if (error) throw error;
+        usersToSend = (users || []).map(u => ({ id: u.id, email: u.email }));
+      }
 
       let sent = 0, skipped = 0, errors = 0;
 
