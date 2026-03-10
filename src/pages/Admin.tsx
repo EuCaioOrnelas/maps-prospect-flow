@@ -1698,50 +1698,154 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* General Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.7s' }}>
+            {/* Period Filter for Stats */}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold flex items-center gap-2">
+                  <Filter size={20} className="text-primary" />
+                  Métricas por Período
+                </h2>
+              </div>
+              <div className="flex items-center gap-3 glass rounded-lg p-3">
+                <span className="text-xs text-muted-foreground font-medium">De:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start")}>
+                      <Calendar size={14} className="mr-1.5" />
+                      {format(statsStartDate, "dd/MM/yyyy", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={statsStartDate}
+                      onSelect={(d) => d && setStatsStartDate(d)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground font-medium">Até:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("text-xs h-8 w-[140px] justify-start")}>
+                      <Calendar size={14} className="mr-1.5" />
+                      {format(statsEndDate, "dd/MM/yyyy", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={statsEndDate}
+                      onSelect={(d) => d && setStatsEndDate(d)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* General Stats - Period filtered */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Users size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.totalUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Total de Usuários</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.usersInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usuários no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Search size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.totalSearches || 0}</p>
-                <p className="text-sm text-muted-foreground">Buscas Realizadas</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.searchesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Buscas no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.9s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Activity size={20} className="text-primary" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats?.activeUsers || 0}</p>
-                <p className="text-sm text-muted-foreground">Usuários Ativos (total)</p>
+                <p className="text-2xl sm:text-3xl font-bold">{periodStats.activeUsersInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usuários Ativos no Período</p>
               </div>
 
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '1s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <TrendingUp size={20} className="text-primary" />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stats?.totalUsers && (stripeMRR?.activeSubscriptions ?? 0) > 0 
-                    ? (((stripeMRR?.activeSubscriptions ?? 0) / stats.totalUsers) * 100).toFixed(1)
-                    : '0.0'}%
+                  {periodStats.conversionRateInPeriod.toFixed(1)}%
                 </p>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                <p className="text-sm text-muted-foreground">Taxa de Conversão no Período</p>
+              </div>
+            </div>
+
+            {/* New Metric Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 size={20} className="text-success" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.activatedInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Activated</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Criou conta + campanha ou prospecção</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <DollarSign size={20} className="text-success" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-success">{periodStats.purchasesInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Compras</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Vendas no período</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <Zap size={20} className="text-purple-400" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-purple-400">{periodStats.usedAIInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Usou IA</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Usuários que criaram agentes</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <BarChart3 size={20} className="text-blue-400" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-400">{periodStats.createdCampaignInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Criou Campanha</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Usuários únicos</p>
+              </div>
+
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-warning" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-warning">{periodStats.checkoutStartedInPeriod}</p>
+                <p className="text-sm text-muted-foreground">Checkout Iniciados</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">{periodStats.checkoutNotCompletedInPeriod} não finalizados</p>
               </div>
             </div>
 
