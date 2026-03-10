@@ -278,6 +278,22 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/admin/email-flows" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminEmailFlows />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/email-flows/:id" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminEmailFlowEditor />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Wiize Revenue (admin only, separate layout) */}
                 <Route
                   path="/revenue"
