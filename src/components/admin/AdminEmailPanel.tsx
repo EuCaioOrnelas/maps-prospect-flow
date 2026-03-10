@@ -110,7 +110,7 @@ function BroadcastTab() {
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Enviar para</label>
           <Select value={targetPlan} onValueChange={setTargetPlan}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[220px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -119,6 +119,7 @@ function BroadcastTab() {
               <SelectItem value="start">Apenas Start</SelectItem>
               <SelectItem value="growth">Apenas Growth</SelectItem>
               <SelectItem value="scale">Apenas Scale</SelectItem>
+              <SelectItem value="checkout_abandoned">Checkout Abandonado</SelectItem>
             </SelectContent>
           </Select>
         </div>
