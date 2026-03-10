@@ -101,7 +101,7 @@ const Reports = () => {
   const [copied, setCopied] = useState(false);
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  useAutoScoreTracking("reports");
+  const { trackScoreEvent } = useAutoScoreTracking("reports");
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
