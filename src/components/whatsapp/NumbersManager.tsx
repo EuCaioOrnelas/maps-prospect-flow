@@ -280,6 +280,7 @@ export const NumbersManager = ({
           
           // Show success animation
           setShowSuccessAnimation(true);
+          trackScoreEvent("integration_connected", { type: "whatsapp" });
           
           if (isNewNumber && user) {
             // Guard against duplicate inserts
