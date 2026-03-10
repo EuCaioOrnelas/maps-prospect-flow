@@ -125,7 +125,7 @@ export function FlowAnalyticsDialog({ open, onOpenChange, flowId }: Props) {
                       </>
                     )}
                     {n.node_type !== "email" && (
-                      <span className="text-primary">Conversão: <span className="font-medium">{n.purchased}</span> <span className="text-primary/70">({pct(n.passed, metrics.total_enrolled)})</span></span>
+                      <span>Passaram: <span className="text-foreground font-medium">{n.passed}</span> <span className="text-muted-foreground/70">({pct(n.passed, metrics.total_enrolled)})</span></span>
                     )}
                   </div>
                 </div>
