@@ -23,6 +23,7 @@ import type { Lead } from "@/pages/WhatsAppCampaign";
 import { BalanceIndicator } from "./BalanceIndicator";
 // Use centralized phone validation helper
 import { validateAndFormatPhone, isLandlinePhone } from '@/lib/phoneUtils';
+import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 interface SearchHistoryItem {
   id: string;
