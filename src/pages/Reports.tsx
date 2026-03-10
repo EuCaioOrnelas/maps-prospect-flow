@@ -233,6 +233,7 @@ const Reports = () => {
     setExportMode(null);
     setLinkPassword("");
     setGeneratedLink("");
+    trackScoreEvent("export_report", { type: "report" });
   };
 
   const handleGenerateLink = async () => {
