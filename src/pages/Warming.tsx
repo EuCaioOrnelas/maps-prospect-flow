@@ -20,6 +20,7 @@ import { WarmingInteractionsLog } from "@/components/warming/WarmingInteractions
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
