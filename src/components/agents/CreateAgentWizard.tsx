@@ -917,6 +917,10 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
       if (error) throw error;
 
+      // Track score event
+      trackScoreEvent("first_ai_agent_created", { agent_name: name });
+      trackScoreEvent("ai_agent_feature_used");
+
       // Reconfigure webhook for the selected number to ensure agent receives messages
       try {
         const { data: numberData } = await supabase
