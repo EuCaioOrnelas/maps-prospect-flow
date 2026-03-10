@@ -530,8 +530,8 @@ export default function CRM() {
       />
 
       {/* Beta Warning Dialog */}
-      <Dialog open={showBetaWarning} onOpenChange={setShowBetaWarning}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showBetaWarning} onOpenChange={() => { if (canCloseBeta) dismissBetaWarning(); }}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => { if (!canCloseBeta) e.preventDefault(); }}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -564,10 +564,11 @@ export default function CRM() {
               Ir para Contato
             </Button>
             <Button 
-              onClick={handleCloseBetaWarning}
+              onClick={() => dismissBetaWarning()}
+              disabled={!canCloseBeta}
               className="w-full sm:w-auto"
             >
-              Entendi, continuar
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
             </Button>
           </DialogFooter>
         </DialogContent>
