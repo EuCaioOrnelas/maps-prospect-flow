@@ -309,6 +309,7 @@ export default function AdminEmailFlowEditor() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode="Delete"
