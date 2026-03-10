@@ -127,15 +127,41 @@ export default function AdminEmailFlowEditor() {
     setEdges(rfEdges);
   };
 
-  const onConnect = useCallback((params: Connection) => {
+  const onConnect = useCallback(async (params: Connection) => {
+    if (!id || !params.source || !params.target) return;
+
+    const tempEdgeId = `temp-${crypto.randomUUID()}`;
+
     setEdges(eds => addEdge({
+      id: tempEdgeId,
       ...params,
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
       animated: true,
       zIndex: 10,
     }, eds));
-  }, [setEdges]);
+
+    const { data, error } = await supabase
+      .from("email_flow_edges")
+      .insert({
+        flow_id: id,
+        source_node_id: params.source,
+        target_node_id: params.target,
+        source_handle: params.sourceHandle || "source",
+        target_handle: params.targetHandle || "target",
+        condition_label: null,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      setEdges(eds => eds.filter(e => e.id !== tempEdgeId));
+      toast.error("Erro ao salvar conexão");
+      return;
+    }
+
+    setEdges(eds => eds.map(e => e.id === tempEdgeId ? { ...e, id: data.id } : e));
+  }, [id, setEdges]);
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     setSelectedNode(node);
@@ -146,12 +172,28 @@ export default function AdminEmailFlowEditor() {
     setEdgeToDelete(edge);
   }, []);
 
-  const confirmDeleteEdge = useCallback(() => {
+  const confirmDeleteEdge = useCallback(async () => {
     if (!edgeToDelete) return;
+
+    const isTempEdge = edgeToDelete.id.startsWith("temp-");
+
+    if (!isTempEdge && id) {
+      const { error } = await supabase
+        .from("email_flow_edges")
+        .delete()
+        .eq("id", edgeToDelete.id)
+        .eq("flow_id", id);
+
+      if (error) {
+        toast.error("Erro ao remover conexão");
+        return;
+      }
+    }
+
     setEdges(eds => eds.filter(e => e.id !== edgeToDelete.id));
     setEdgeToDelete(null);
     toast.success("Conexão removida");
-  }, [edgeToDelete, setEdges]);
+  }, [edgeToDelete, id, setEdges]);
 
   const addNode = async (type: string) => {
     if (!id) return;
@@ -204,10 +246,11 @@ export default function AdminEmailFlowEditor() {
       }).eq("id", node.id);
     }
 
-    // Sync edges: delete old, insert new
+    // Sync edges: delete old, insert current state
     await supabase.from("email_flow_edges").delete().eq("flow_id", id);
     for (const edge of edges) {
       await supabase.from("email_flow_edges").insert({
+        ...(edge.id.startsWith("temp-") ? {} : { id: edge.id }),
         flow_id: id,
         source_node_id: edge.source,
         target_node_id: edge.target,
