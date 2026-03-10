@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { MobileNav } from "@/components/layout/MobileNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Copy, Play, Pause, Archive, Trash2, Mail, Workflow } from "lucide-react";
+import { Plus, Edit, Copy, Play, Pause, Archive, Trash2, Mail, Workflow, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 interface EmailFlow {
   id: string;
