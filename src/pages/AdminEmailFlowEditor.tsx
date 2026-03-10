@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ReactFlow,
   Background,
+  BackgroundVariant,
   Controls,
   MiniMap,
   addEdge,
@@ -271,11 +272,11 @@ export default function AdminEmailFlowEditor() {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative" ref={reactFlowWrapper}>
-        {/* Glow effect */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-primary/[0.04] blur-[100px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-primary/[0.03] blur-[80px]" />
+      <div className="flex-1 relative overflow-hidden" ref={reactFlowWrapper} style={{ background: 'hsl(220 20% 4%)' }}>
+        {/* Glow effects */}
+        <div className="absolute inset-0 pointer-events-none z-[1]">
+          <div className="absolute top-[30%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full" style={{ background: 'radial-gradient(ellipse, hsl(158 72% 38% / 0.07) 0%, transparent 70%)' }} />
+          <div className="absolute bottom-[20%] right-[20%] w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(ellipse, hsl(158 72% 38% / 0.05) 0%, transparent 70%)' }} />
         </div>
         <ReactFlow
           nodes={nodes}
@@ -287,10 +288,9 @@ export default function AdminEmailFlowEditor() {
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode="Delete"
-          className="bg-transparent"
-          style={{ background: 'hsl(var(--background))' }}
+          style={{ background: 'transparent' }}
         >
-          <Background color="hsl(158 72% 38%)" gap={24} size={0.5} style={{ opacity: 0.08 }} />
+          <Background variant={BackgroundVariant.Lines} color="hsl(158 72% 38%)" gap={32} lineWidth={0.5} style={{ opacity: 0.06 }} />
           <Controls className="!bg-card/90 !backdrop-blur-sm !border-border !shadow-lg !rounded-xl [&>button]:!bg-transparent [&>button]:!border-border/50 [&>button]:!text-muted-foreground [&>button:hover]:!bg-accent/10 [&>button:hover]:!text-foreground" />
           <MiniMap
             className="!bg-card/80 !backdrop-blur-sm !border-border !rounded-xl"
