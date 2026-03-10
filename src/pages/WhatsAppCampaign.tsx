@@ -121,6 +121,7 @@ const WhatsAppCampaign = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile, isTrialExpired, refreshProfile } = useAuth();
+  const { trackScoreEvent } = useAutoScoreTracking("whatsapp");
 
   // Free trial limits
   const FREE_TRIAL_MESSAGE_LIMIT = 400;
