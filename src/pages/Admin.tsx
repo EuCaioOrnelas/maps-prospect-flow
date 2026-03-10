@@ -1882,7 +1882,7 @@ const Admin = () => {
                       </SelectContent>
                     </Select>
                     <Select value={userActivityFilter} onValueChange={(v) => setUserActivityFilter(v as typeof userActivityFilter)}>
-                      <SelectTrigger className="w-40 bg-secondary">
+                      <SelectTrigger className="w-48 bg-secondary">
                         <Activity size={14} className="mr-1" />
                         <SelectValue placeholder="Atividade" />
                       </SelectTrigger>
@@ -1891,6 +1891,7 @@ const Admin = () => {
                         <SelectItem value="active_7d">Ativos 7 dias</SelectItem>
                         <SelectItem value="active_30d">Ativos 30 dias</SelectItem>
                         <SelectItem value="inactive_30d">Inativos +30 dias</SelectItem>
+                        <SelectItem value="checkout_not_completed">Checkout não finalizado</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="icon" onClick={loadData} title="Atualizar">
