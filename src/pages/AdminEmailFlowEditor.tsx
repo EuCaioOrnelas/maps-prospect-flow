@@ -59,20 +59,43 @@ export default function AdminEmailFlowEditor() {
     if (id) loadFlow();
   }, [id]);
 
+  const loadNodeMetrics = async (flowId: string) => {
+    const { data: logs } = await supabase
+      .from("email_flow_execution_logs")
+      .select("node_id, action_type")
+      .eq("flow_id", flowId);
+
+    const metricsMap: Record<string, any> = {};
+    (logs || []).forEach(log => {
+      if (!log.node_id) return;
+      if (!metricsMap[log.node_id]) metricsMap[log.node_id] = { passed: 0, sent: 0, opened: 0, clicked: 0, purchased: 0 };
+      metricsMap[log.node_id].passed++;
+      if (log.action_type === "email_sent") metricsMap[log.node_id].sent++;
+      if (log.action_type === "email_opened") metricsMap[log.node_id].opened++;
+      if (log.action_type === "email_clicked") metricsMap[log.node_id].clicked++;
+      if (log.action_type === "email_purchased") metricsMap[log.node_id].purchased++;
+    });
+    return metricsMap;
+  };
+
   const loadFlow = async () => {
     const { data: flowData } = await supabase.from("email_flows").select("*").eq("id", id).single();
     if (!flowData) { navigate("/admin/email-flows"); return; }
     setFlow(flowData);
     setFlowName(flowData.name);
 
-    const { data: dbNodes } = await supabase.from("email_flow_nodes").select("*").eq("flow_id", id);
-    const { data: dbEdges } = await supabase.from("email_flow_edges").select("*").eq("flow_id", id);
+    const [{ data: dbNodes }, { data: dbEdges }] = await Promise.all([
+      supabase.from("email_flow_nodes").select("*").eq("flow_id", id),
+      supabase.from("email_flow_edges").select("*").eq("flow_id", id),
+    ]);
+
+    const metricsMap = await loadNodeMetrics(id!);
 
     const rfNodes: Node[] = (dbNodes || []).map(n => ({
       id: n.id,
       type: n.node_type,
       position: { x: n.position_x, y: n.position_y },
-      data: { label: n.name, config: n.config || {}, node_type: n.node_type },
+      data: { label: n.name, config: n.config || {}, node_type: n.node_type, metrics: metricsMap[n.id] || { passed: 0, sent: 0, opened: 0, clicked: 0, purchased: 0 } },
     }));
 
     const rfEdges: Edge[] = (dbEdges || []).map(e => ({

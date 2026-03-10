@@ -25,10 +25,7 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // 1. Process active flows: enroll eligible leads
     await enrollEligibleLeads(supabase, results);
-
-    // 2. Advance active enrollments
     await advanceEnrollments(supabase, resendApiKey, results);
 
     return new Response(JSON.stringify({ success: true, results }), {
@@ -61,6 +58,7 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
 
     switch (audienceType) {
+      case "all": break; // no filter
       case "all_free": query = query.eq("plan", "free"); break;
       case "all_paid": query = query.neq("plan", "free"); break;
       case "trial_active":
@@ -73,9 +71,6 @@ async function enrollEligibleLeads(supabase: any, results: any) {
       case "inactive_30d":
         query = query.eq("plan", "free");
         break;
-      case "checkout_abandoned":
-        // Handle separately
-        break;
     }
 
     const { data: users } = await query;
@@ -84,7 +79,6 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     const now = new Date();
 
     for (const user of users) {
-      // Check trigger eligibility
       const eligible = checkTriggerEligibility(triggerType, user, flow.trigger_config || {}, now);
       if (!eligible) continue;
 
@@ -101,7 +95,28 @@ async function enrollEligibleLeads(supabase: any, results: any) {
         if (inactiveDays < days) continue;
       }
 
-      // Check entry rules
+      // === DEDUP RULE: 1 active enrollment per trigger_type per user ===
+      // Check if user already has an active enrollment in ANY flow with the same trigger_type
+      const { data: activeFlows } = await supabase
+        .from("email_flows")
+        .select("id")
+        .eq("trigger_type", triggerType)
+        .eq("status", "active");
+
+      const activeFlowIds = (activeFlows || []).map((f: any) => f.id);
+
+      if (activeFlowIds.length > 0) {
+        const { count: activeCount } = await supabase
+          .from("email_flow_enrollments")
+          .select("*", { count: "exact", head: true })
+          .in("flow_id", activeFlowIds)
+          .eq("user_id", user.id)
+          .eq("status", "active");
+
+        if ((activeCount || 0) > 0) continue; // already active in a flow with same trigger
+      }
+
+      // Check max entries per flow
       const maxEntries = entryRules.max_entries_per_user || 1;
       const { count } = await supabase
         .from("email_flow_enrollments")
@@ -175,13 +190,20 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
 
   switch (triggerType) {
     case "free_trial": return !!trialStart && trialEnd! > now;
-    case "signup": return true; // all matched users
+    case "signup": return true;
     case "checkout_started": return true;
+    case "checkout_abandoned": return true; // filtered by checkout_leads check in processor
+    case "trial_expired_10d": {
+      if (!trialEnd) return false;
+      const daysSinceExpiry = Math.floor((now.getTime() - trialEnd.getTime()) / 86400000);
+      return daysSinceExpiry >= 10;
+    }
+    case "downgrade": return true; // matched via event tracking
     case "inactive": {
       const days = triggerConfig.inactive_days || 7;
       return inactiveDays >= days;
     }
-    case "score_reached": return true; // would need score check
+    case "score_reached": return true;
     case "manual": return false;
     default: return false;
   }
@@ -222,7 +244,6 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       continue;
     }
 
-    // Execute node action
     switch (node.node_type) {
       case "email": {
         const config = node.config || {};
@@ -251,7 +272,7 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
             node_id: node.id,
             action_type: "email_sent",
             status: sent ? "success" : "error",
-            details: { subject: config.subject },
+            details: { subject: config.subject, track_clicks: config.track_clicks !== false, track_purchases: config.track_purchases || false },
           });
 
           if (sent) results.emails_sent++;
@@ -260,7 +281,6 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       }
 
       case "wait": {
-        // Wait node: the delay is applied when moving to next node
         await supabase.from("email_flow_execution_logs").insert({
           flow_id: enrollment.flow_id,
           enrollment_id: enrollment.id,
@@ -273,7 +293,6 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       }
 
       case "condition": {
-        // Basic condition evaluation
         await supabase.from("email_flow_execution_logs").insert({
           flow_id: enrollment.flow_id,
           enrollment_id: enrollment.id,
@@ -312,7 +331,6 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
       .maybeSingle();
 
     if (!nextEdge) {
-      // Try without handle filter
       const { data: anyEdge } = await supabase
         .from("email_flow_edges")
         .select("target_node_id")
@@ -326,7 +344,6 @@ async function advanceEnrollments(supabase: any, resendApiKey: string, results: 
         results.steps_advanced++;
         continue;
       }
-      // Move with any edge
       await moveToNextNode(supabase, enrollment, anyEdge.target_node_id);
     } else {
       await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);

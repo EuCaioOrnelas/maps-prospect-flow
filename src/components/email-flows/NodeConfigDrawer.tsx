@@ -35,13 +35,13 @@ const triggers = [
 ];
 
 const audiences = [
+  { value: "all", label: "Todos" },
   { value: "all_free", label: "Todos Free" },
   { value: "all_paid", label: "Todos Pagos" },
   { value: "trial_active", label: "Trial Ativo" },
   { value: "trial_expired", label: "Trial Expirado" },
   { value: "inactive_7d", label: "Inativos 7 dias" },
   { value: "inactive_30d", label: "Inativos 30 dias" },
-  { value: "checkout_abandoned", label: "Checkout Abandonado" },
 ];
 
 const conditions = [
@@ -270,6 +270,10 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
                 <div className="flex items-center justify-between">
                   <Label className="text-xs">Track cliques</Label>
                   <Switch checked={config.track_clicks !== false} onCheckedChange={v => setConfig({ ...config, track_clicks: v })} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Track compras (conversão)</Label>
+                  <Switch checked={config.track_purchases || false} onCheckedChange={v => setConfig({ ...config, track_purchases: v })} />
                 </div>
               </TabsContent>
               <TabsContent value="template" className="space-y-3 mt-3">

@@ -2,6 +2,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Flag } from "lucide-react";
 
 export function EndNode({ data }: NodeProps) {
+  const metrics = data.metrics as any;
   return (
     <div className="bg-card border-2 border-red-500/50 rounded-xl shadow-lg w-56 overflow-hidden">
       <div className="bg-red-500/15 px-3 py-2 flex items-center gap-2 border-b border-red-500/20">
@@ -12,6 +13,11 @@ export function EndNode({ data }: NodeProps) {
         <p className="text-sm font-medium text-foreground truncate">{String(data.label || "Fim do Fluxo")}</p>
         {(data.config as any)?.note && (
           <p className="text-[11px] text-muted-foreground mt-1 truncate">{(data.config as any).note}</p>
+        )}
+        {metrics && (
+          <div className="mt-1.5 text-[10px] text-muted-foreground border-t border-border pt-1.5">
+            <span>👥 {metrics.passed} finalizaram</span>
+          </div>
         )}
       </div>
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-red-400 !border-2 !border-card" />
