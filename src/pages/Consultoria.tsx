@@ -7,6 +7,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ComingSoonDialog } from "@/components/consultoria/ComingSoonDialog";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { Loader2 } from "lucide-react";
 
 const FASE_ICONS = [Shield, Zap, TrendingUp, BarChart3, Award];
