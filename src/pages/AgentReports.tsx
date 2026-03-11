@@ -30,6 +30,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 // Types
 interface Agent {
