@@ -5,6 +5,7 @@ import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 
 export function useOnboardingModals() {
   const { user, profile, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTrialFeedback, setShowTrialFeedback] = useState(false);
   const [loading, setLoading] = useState(true);
