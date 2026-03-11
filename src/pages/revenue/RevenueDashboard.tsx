@@ -38,6 +38,7 @@ import { ActionRequiredToday } from "@/components/revenue/ActionRequiredToday";
 import { MoneyLossSection } from "@/components/revenue/MoneyLossSection";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const bucketLabels: Record<string, string> = {
   COLD: "Frio", ENGAGED: "Morno", HOT: "Engajado", VERY_HOT: "Quente",
