@@ -62,6 +62,7 @@ const possibleReasons = [
 const CheckoutFailed = () => {
   const navigate = useNavigate();
   const [expandedReason, setExpandedReason] = useState<number | null>(null);
+  useAutoScoreTracking("checkout_failed");
 
   const handleTryAgain = () => {
     navigate("/upgrade");

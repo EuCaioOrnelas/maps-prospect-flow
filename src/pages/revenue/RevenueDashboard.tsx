@@ -99,6 +99,7 @@ const performanceDiagnostic = (score: number, hasData: boolean) => {
 };
 
 const RevenueDashboard = () => {
+  useAutoScoreTracking("revenue");
   const { data: stats, isLoading } = useRevenueDashboardStats();
   const { data: settings } = useRevenueSettings();
   const { data: intentDist } = useRevenueIntentDistribution();

@@ -94,6 +94,7 @@ interface DailyStats {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--muted))'];
 
 const WhatsAppReports = () => {
+  useAutoScoreTracking("whatsapp_reports");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [selectedNumber, setSelectedNumber] = useState<string>('all');

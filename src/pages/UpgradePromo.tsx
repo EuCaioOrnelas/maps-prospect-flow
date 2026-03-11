@@ -139,6 +139,7 @@ const UpgradePromo = () => {
   const [searchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { trackScoreEvent } = useAutoScoreTracking("upgrade_promo");
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [emailModalOpen, setEmailModalOpen] = useState(false);

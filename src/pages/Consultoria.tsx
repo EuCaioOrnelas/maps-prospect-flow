@@ -18,6 +18,7 @@ type View =
   | { screen: "player"; fase: Fase; faseIndex: number; video: Video; videoIndex: number };
 
 const Consultoria = () => {
+  useAutoScoreTracking("consultoria");
   const [view, setView] = useState<View>({ screen: "home" });
   const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const [comingSoonTitle, setComingSoonTitle] = useState("");

@@ -30,6 +30,7 @@ interface WhatsAppNumber {
 
 export default function WarmingReports() {
   const { user, profile } = useAuth();
+  useAutoScoreTracking("warming_reports");
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

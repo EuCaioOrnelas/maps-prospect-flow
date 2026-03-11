@@ -227,6 +227,7 @@ const calculateHealthScore = (
 export default function AgentReports() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  useAutoScoreTracking("agent_reports");
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
