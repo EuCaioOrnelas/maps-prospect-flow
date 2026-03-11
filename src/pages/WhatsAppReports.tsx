@@ -63,7 +63,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
-
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 interface Campaign {
   id: string;
