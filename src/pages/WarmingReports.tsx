@@ -12,6 +12,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Flame, RefreshCw, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber } from '@/lib/phoneUtils';
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import {
   Select,
   SelectContent,
