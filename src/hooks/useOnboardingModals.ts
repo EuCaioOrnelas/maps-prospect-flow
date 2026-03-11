@@ -46,11 +46,13 @@ export function useOnboardingModals() {
       if (!onboarding) {
         setShowOnboarding(true);
         setShowTrialFeedback(false);
+        trackScoreEvent("onboarding_modal_shown");
       } 
       // Show trial feedback if trial expired/expiring and no feedback submitted
       else if (isFreePlan && (isTrialExpired || trialExpiringTomorrow) && !feedback) {
         setShowOnboarding(false);
         setShowTrialFeedback(true);
+        trackScoreEvent("trial_feedback_modal_shown", { trial_expired: isTrialExpired, days_remaining: trialDaysRemaining });
       } else {
         setShowOnboarding(false);
         setShowTrialFeedback(false);

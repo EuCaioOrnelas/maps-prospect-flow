@@ -41,6 +41,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, isTrialExpired, profile, loading } = useAuth();
+  useAutoScoreTracking("login");
 
   useEffect(() => {
     // Wait for profile to load before redirecting
