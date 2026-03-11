@@ -42,6 +42,9 @@ export function useAutoScoreTracking(pageName: string) {
       case "checkout_failed":
         trackScoreEvent("checkout_failed");
         break;
+      case "login":
+        trackScoreEvent("login_page_viewed");
+        break;
       case "profile":
         trackScoreEvent("profile_viewed");
         break;

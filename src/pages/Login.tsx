@@ -8,6 +8,7 @@ import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const getLoginErrorMessage = (error: Error): { title: string; description: string } => {
   const msg = error.message?.toLowerCase() || "";
@@ -40,6 +41,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, isTrialExpired, profile, loading } = useAuth();
+  useAutoScoreTracking("login");
 
   useEffect(() => {
     // Wait for profile to load before redirecting

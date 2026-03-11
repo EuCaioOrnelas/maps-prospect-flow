@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 
 export function useOnboardingModals() {
   const { user, profile, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTrialFeedback, setShowTrialFeedback] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,11 +46,13 @@ export function useOnboardingModals() {
       if (!onboarding) {
         setShowOnboarding(true);
         setShowTrialFeedback(false);
+        trackScoreEvent("onboarding_modal_shown");
       } 
       // Show trial feedback if trial expired/expiring and no feedback submitted
       else if (isFreePlan && (isTrialExpired || trialExpiringTomorrow) && !feedback) {
         setShowOnboarding(false);
         setShowTrialFeedback(true);
+        trackScoreEvent("trial_feedback_modal_shown", { trial_expired: isTrialExpired, days_remaining: trialDaysRemaining });
       } else {
         setShowOnboarding(false);
         setShowTrialFeedback(false);
