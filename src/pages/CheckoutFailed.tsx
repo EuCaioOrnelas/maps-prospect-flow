@@ -18,6 +18,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const possibleReasons = [
   {
