@@ -12,6 +12,7 @@ import {
   Rocket, TrendingUp, Building2, Flame, ShieldCheck, AlertTriangle
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
