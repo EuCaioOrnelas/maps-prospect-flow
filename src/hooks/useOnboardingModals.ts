@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 
 export function useOnboardingModals() {
   const { user, profile, isTrialExpired, trialDaysRemaining } = useAuth();
