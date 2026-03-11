@@ -46,9 +46,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const Profile = () => {
   const { profile, user, refreshProfile } = useAuth();
+  useAutoScoreTracking("profile");
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);

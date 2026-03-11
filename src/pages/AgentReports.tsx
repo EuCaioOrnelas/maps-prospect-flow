@@ -30,6 +30,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 // Types
 interface Agent {
@@ -226,6 +227,7 @@ const calculateHealthScore = (
 export default function AgentReports() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  useAutoScoreTracking("agent_reports");
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);

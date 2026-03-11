@@ -26,6 +26,7 @@ export function useAutoScoreTracking(pageName: string) {
         trackScoreEvent("dashboard_viewed");
         break;
       case "upgrade":
+      case "upgrade_promo":
         trackScoreEvent("visited_pricing_page");
         // Track multiple visits to upgrade page
         const visitCount = parseInt(sessionStorage.getItem("upgrade_page_visits") || "0") + 1;
@@ -34,12 +35,26 @@ export function useAutoScoreTracking(pageName: string) {
           trackScoreEvent("upgrade_page_viewed_multiple", { visit_count: visitCount });
         }
         break;
+      case "checkout_success":
+        trackScoreEvent("checkout_completed");
+        trackScoreEvent("subscription_started");
+        break;
+      case "checkout_failed":
+        trackScoreEvent("checkout_failed");
+        break;
+      case "profile":
+        trackScoreEvent("profile_viewed");
+        break;
       case "agents":
       case "crm":
       case "warming":
       case "reports":
       case "whatsapp":
       case "revenue":
+      case "consultoria":
+      case "warming_reports":
+      case "whatsapp_reports":
+      case "agent_reports":
         trackScoreEvent("feature_page_viewed", { page: pageName });
         break;
     }

@@ -12,6 +12,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Flame, RefreshCw, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber } from '@/lib/phoneUtils';
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ interface WhatsAppNumber {
 
 export default function WarmingReports() {
   const { user, profile } = useAuth();
+  useAutoScoreTracking("warming_reports");
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

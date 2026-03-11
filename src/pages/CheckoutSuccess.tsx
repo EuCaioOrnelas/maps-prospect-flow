@@ -22,11 +22,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
 import { motion } from "framer-motion";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  useAutoScoreTracking("checkout_success");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

@@ -18,6 +18,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const possibleReasons = [
   {
@@ -61,6 +62,7 @@ const possibleReasons = [
 const CheckoutFailed = () => {
   const navigate = useNavigate();
   const [expandedReason, setExpandedReason] = useState<number | null>(null);
+  useAutoScoreTracking("checkout_failed");
 
   const handleTryAgain = () => {
     navigate("/upgrade");
