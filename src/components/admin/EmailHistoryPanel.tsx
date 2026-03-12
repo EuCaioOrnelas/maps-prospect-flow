@@ -7,10 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import {
   Mail, Send, CheckCircle2, XCircle, Clock, Eye, MousePointerClick,
   Search, Loader2, ChevronLeft, ChevronRight, RefreshCw, BarChart3,
-  ExternalLink, Calendar, User, AlertTriangle
+  ExternalLink, CalendarIcon, User, AlertTriangle
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -134,7 +139,7 @@ function EmailDetailDialog({ log, open, onClose }: { log: EmailLog | null; open:
               <div className="space-y-1">
                 <span className="text-xs text-muted-foreground">Enviado em</span>
                 <p className="text-sm text-foreground flex items-center gap-1.5">
-                  <Calendar size={12} className="text-muted-foreground" />
+                  <CalendarIcon size={12} className="text-muted-foreground" />
                   {log.sent_at ? new Date(log.sent_at).toLocaleString("pt-BR") : new Date(log.created_at).toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -224,6 +229,8 @@ export function EmailHistoryPanel() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -231,9 +238,20 @@ export function EmailHistoryPanel() {
   const loadKPIs = useCallback(async () => {
     setKpisLoading(true);
     try {
-      const { data: allLogs, error } = await supabase
+      let kpiQuery = supabase
         .from("email_logs")
         .select("status, opened_count, clicked_count");
+
+      if (dateFrom) {
+        kpiQuery = kpiQuery.gte("created_at", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        kpiQuery = kpiQuery.lte("created_at", endOfDay.toISOString());
+      }
+
+      const { data: allLogs, error } = await kpiQuery;
 
       if (error) throw error;
 
@@ -259,7 +277,7 @@ export function EmailHistoryPanel() {
     } finally {
       setKpisLoading(false);
     }
-  }, []);
+  }, [dateFrom, dateTo]);
 
   // Load logs with pagination and filters
   const loadLogs = useCallback(async () => {
@@ -279,6 +297,14 @@ export function EmailHistoryPanel() {
       if (typeFilter !== "all") {
         query = query.eq("email_type", typeFilter as any);
       }
+      if (dateFrom) {
+        query = query.gte("created_at", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endOfDay.toISOString());
+      }
 
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -293,7 +319,7 @@ export function EmailHistoryPanel() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, typeFilter]);
+  }, [page, search, statusFilter, typeFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     loadKPIs();
@@ -305,7 +331,7 @@ export function EmailHistoryPanel() {
 
   useEffect(() => {
     setPage(0);
-  }, [search, statusFilter, typeFilter]);
+  }, [search, statusFilter, typeFilter, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -323,6 +349,55 @@ export function EmailHistoryPanel() {
     <div className="space-y-5">
       {/* KPIs */}
       <KPICards kpis={kpis} loading={kpisLoading} />
+
+      {/* Date Range Filter */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-9", dateFrom && "border-primary/50 bg-primary/5")}>
+              <CalendarIcon size={13} />
+              {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data início"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFrom}
+              onSelect={setDateFrom}
+              disabled={(date) => date > new Date() || (dateTo ? date > dateTo : false)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <span className="text-xs text-muted-foreground">até</span>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-9", dateTo && "border-primary/50 bg-primary/5")}>
+              <CalendarIcon size={13} />
+              {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data fim"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateTo}
+              onSelect={setDateTo}
+              disabled={(date) => date > new Date() || (dateFrom ? date < dateFrom : false)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {(dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+            Limpar datas
+          </Button>
+        )}
+      </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
