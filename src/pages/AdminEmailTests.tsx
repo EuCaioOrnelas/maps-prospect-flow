@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2 } from "lucide-react";
+import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2, History } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 
 const TARGET_EMAIL = "caiowiize@gmail.com";
 
@@ -538,8 +539,11 @@ const AdminEmailTests = () => {
 
         <Card>
           <CardContent className="pt-6">
-            <Tabs defaultValue="compose" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs defaultValue="history" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="history" className="gap-1">
+                  <History size={14} /> Histórico
+                </TabsTrigger>
                 <TabsTrigger value="compose" className="gap-1">
                   <PenLine size={14} /> Compor
                 </TabsTrigger>
@@ -550,6 +554,9 @@ const AdminEmailTests = () => {
                   <AlertTriangle size={14} /> Logs
                 </TabsTrigger>
               </TabsList>
+              <TabsContent value="history" className="mt-4">
+                <EmailHistoryPanel />
+              </TabsContent>
               <TabsContent value="compose" className="mt-4">
                 <ComposeTab />
               </TabsContent>
