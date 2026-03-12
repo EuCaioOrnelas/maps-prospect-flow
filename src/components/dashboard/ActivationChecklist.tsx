@@ -161,9 +161,22 @@ export function ActivationChecklist() {
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={dismiss}
+                title="Não mostrar mais"
+              >
+                Não mostrar mais
+              </Button>
+              <Button
+                variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={dismiss}
+                onClick={() => {
+                  sessionStorage.setItem("checklist_dismissed", "true");
+                  setSessionDismissed(true);
+                }}
+                title="Fechar nesta sessão"
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
