@@ -238,9 +238,20 @@ export function EmailHistoryPanel() {
   const loadKPIs = useCallback(async () => {
     setKpisLoading(true);
     try {
-      const { data: allLogs, error } = await supabase
+      let kpiQuery = supabase
         .from("email_logs")
         .select("status, opened_count, clicked_count");
+
+      if (dateFrom) {
+        kpiQuery = kpiQuery.gte("created_at", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        kpiQuery = kpiQuery.lte("created_at", endOfDay.toISOString());
+      }
+
+      const { data: allLogs, error } = await kpiQuery;
 
       if (error) throw error;
 
