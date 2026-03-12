@@ -70,6 +70,9 @@ export function ActivationChecklist() {
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [sessionDismissed, setSessionDismissed] = useState(() => {
+    return sessionStorage.getItem("checklist_dismissed") === "true";
+  });
   const [confettiTriggered, setConfettiTriggered] = useState(false);
   const { fireConfetti, fireSides } = useConfetti();
 
@@ -85,7 +88,7 @@ export function ActivationChecklist() {
     }
   }, [progress?.progress_percentage, confettiTriggered, fireConfetti, fireSides]);
 
-  if (loading || !progress || progress.dismissed) return null;
+  if (loading || !progress || progress.dismissed || sessionDismissed) return null;
 
   const handleExploreAICRM = async () => {
     // Always mark as completed
@@ -158,9 +161,22 @@ export function ActivationChecklist() {
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={dismiss}
+                title="Não mostrar mais"
+              >
+                Não mostrar mais
+              </Button>
+              <Button
+                variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={dismiss}
+                onClick={() => {
+                  sessionStorage.setItem("checklist_dismissed", "true");
+                  setSessionDismissed(true);
+                }}
+                title="Fechar nesta sessão"
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
