@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2 } from "lucide-react";
+import { Mail, Send, FlaskConical, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, PenLine, Users, Bold, Italic, Link2, History } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 
 const TARGET_EMAIL = "caiowiize@gmail.com";
 
