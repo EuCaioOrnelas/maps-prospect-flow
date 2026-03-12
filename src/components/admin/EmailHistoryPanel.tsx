@@ -319,7 +319,7 @@ export function EmailHistoryPanel() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, typeFilter]);
+  }, [page, search, statusFilter, typeFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     loadKPIs();
