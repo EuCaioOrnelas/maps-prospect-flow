@@ -139,7 +139,7 @@ function EmailDetailDialog({ log, open, onClose }: { log: EmailLog | null; open:
               <div className="space-y-1">
                 <span className="text-xs text-muted-foreground">Enviado em</span>
                 <p className="text-sm text-foreground flex items-center gap-1.5">
-                  <Calendar size={12} className="text-muted-foreground" />
+                  <CalendarIcon size={12} className="text-muted-foreground" />
                   {log.sent_at ? new Date(log.sent_at).toLocaleString("pt-BR") : new Date(log.created_at).toLocaleString("pt-BR")}
                 </p>
               </div>
