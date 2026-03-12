@@ -69,7 +69,9 @@ export function ActivationChecklist() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [sessionDismissed, setSessionDismissed] = useState(() => {
+    return sessionStorage.getItem("checklist_dismissed") === "true";
+  });
   const [confettiTriggered, setConfettiTriggered] = useState(false);
   const { fireConfetti, fireSides } = useConfetti();
 
