@@ -350,6 +350,55 @@ export function EmailHistoryPanel() {
       {/* KPIs */}
       <KPICards kpis={kpis} loading={kpisLoading} />
 
+      {/* Date Range Filter */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-9", dateFrom && "border-primary/50 bg-primary/5")}>
+              <CalendarIcon size={13} />
+              {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data início"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFrom}
+              onSelect={setDateFrom}
+              disabled={(date) => date > new Date() || (dateTo ? date > dateTo : false)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <span className="text-xs text-muted-foreground">até</span>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs h-9", dateTo && "border-primary/50 bg-primary/5")}>
+              <CalendarIcon size={13} />
+              {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data fim"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateTo}
+              onSelect={setDateTo}
+              disabled={(date) => date > new Date() || (dateFrom ? date < dateFrom : false)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {(dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+            Limpar datas
+          </Button>
+        )}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
