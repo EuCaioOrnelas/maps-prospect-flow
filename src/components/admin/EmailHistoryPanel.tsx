@@ -277,7 +277,7 @@ export function EmailHistoryPanel() {
     } finally {
       setKpisLoading(false);
     }
-  }, []);
+  }, [dateFrom, dateTo]);
 
   // Load logs with pagination and filters
   const loadLogs = useCallback(async () => {
