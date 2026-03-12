@@ -691,7 +691,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
               </Card>
               <Card>
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <p className="text-lg sm:text-2xl font-bold">{agent.daily_limit}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{agent.daily_limit >= 9999 || agent.is_warmed ? '∞' : agent.daily_limit}</p>
                   <p className="text-[10px] sm:text-xs text-muted-foreground">Limite diário</p>
                 </CardContent>
               </Card>
