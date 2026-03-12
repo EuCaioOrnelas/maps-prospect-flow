@@ -437,20 +437,13 @@ async function evaluateCondition(supabase: any, node: any, enrollment: any, user
 
     case "score_above": {
       const threshold = parseInt(config.value) || 50;
-      // Check user_score_events or scoring table
-      const { data: scoreData } = await supabase
-        .from("profiles")
-        .select("searches_used")
-        .eq("id", user.id)
-        .maybeSingle();
-      // Fallback: use searches_used as a proxy, or check revenue scoring
-      const { data: revLead } = await supabase
-        .from("revenue_leads")
-        .select("score_total")
+      // Check user_scores table (from score-processor)
+      const { data: userScore } = await supabase
+        .from("user_scores")
+        .select("total_score")
         .eq("user_id", user.id)
-        .limit(1)
         .maybeSingle();
-      const score = revLead?.score_total || 0;
+      const score = userScore?.total_score || 0;
       return score >= threshold;
     }
 

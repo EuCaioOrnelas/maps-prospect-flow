@@ -75,7 +75,7 @@ export default function AdminTrialAutomation() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [triggers, setBehaviourTriggers] = useState<BehaviourTrigger[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]);
+  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]); // kept for analytics compatibility
 
   // Dialog states
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
@@ -302,7 +302,7 @@ export default function AdminTrialAutomation() {
             <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background"><Mail className="h-3 w-3" />Templates</TabsTrigger>
             <TabsTrigger value="triggers" className="text-xs gap-1.5 data-[state=active]:bg-background"><Target className="h-3 w-3" />Triggers</TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs gap-1.5 data-[state=active]:bg-background"><BarChart3 className="h-3 w-3" />Analytics</TabsTrigger>
-            <TabsTrigger value="score" className="text-xs gap-1.5 data-[state=active]:bg-background"><Gauge className="h-3 w-3" />Score</TabsTrigger>
+            <TabsTrigger value="score" className="text-xs gap-1.5 data-[state=active]:bg-background" onClick={(e) => { e.preventDefault(); navigate("/admin/user-scoring"); }}><Gauge className="h-3 w-3" />Score ↗</TabsTrigger>
           </TabsList>
 
           {/* ═══════════════════════ AUTOMATIONS TAB ═══════════════════════════ */}
@@ -732,93 +732,7 @@ export default function AdminTrialAutomation() {
 
           </TabsContent>
 
-          {/* ═══════════════════════ SCORE TAB ═════════════════════════════════ */}
-          <TabsContent value="score" className="space-y-5 mt-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Sistema de Score de Engajamento</h2>
-                <p className="text-sm text-muted-foreground">Configure pontos por evento para calcular o score de cada usuário trial</p>
-              </div>
-              <Badge variant="outline" className="font-mono text-xs">
-                Score máx.: {getScoreTotal()} pts
-              </Badge>
-            </div>
-
-            {/* Score explanation */}
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Gauge className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div className="space-y-1.5">
-                    <p className="text-base font-medium">Como funciona o Score</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Cada ação do usuário no produto gera pontos. O score total determina a prioridade do usuário nos
-                      triggers comportamentais e ajuda a personalizar as automações. Ative/desative os eventos abaixo e
-                      ajuste os pontos para calibrar o sistema de engajamento.
-                    </p>
-                    <div className="flex gap-4 mt-2 text-[11px]">
-                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> 0-3: Baixo</span>
-                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" /> 4-6: Médio</span>
-                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> 7-9+: Alto</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Score configs grouped */}
-            {(() => {
-              const grouped = {
-                activation_event: { label: "🎯 Eventos de Ativação", desc: "Ações que indicam que o usuário está usando o produto", items: scoreConfigs.filter((c) => c.config_type === "activation_event") },
-                high_value_feature: { label: "⭐ Features de Alto Valor", desc: "Uso de funcionalidades premium ou avançadas", items: scoreConfigs.filter((c) => c.config_type === "high_value_feature") },
-                intent_signal: { label: "💡 Sinais de Intenção", desc: "Indicadores de que o usuário está considerando comprar", items: scoreConfigs.filter((c) => c.config_type === "intent_signal") },
-              };
-
-              return Object.entries(grouped).map(([type, group]) => (
-                <Card key={type}>
-                  <CardHeader className="pb-2">
-                   <CardTitle className="text-base">{group.label}</CardTitle>
-                    <CardDescription>{group.desc}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="divide-y divide-border/50">
-                      {group.items.map((config: any) => (
-                        <div key={config.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                          <div className="flex items-center gap-3">
-                            <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold", config.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                              +{config.config_value?.points || 0}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">{config.config_value?.label || config.config_key}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{config.config_key}</p>
-                            </div>
-                          </div>
-                          <Switch checked={config.is_active} onCheckedChange={() => toggleScoreConfig(config.id, config.is_active)} />
-                        </div>
-                      ))}
-                      {group.items.length === 0 && (
-                        <p className="text-xs text-muted-foreground py-3">Nenhuma configuração nesta categoria</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ));
-            })()}
-
-            {/* Active User Scores */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Usuários com Score Ativo</CardTitle>
-                </div>
-                <CardDescription>Baseado nos eventos rastreados no sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <UserScoreTable productEvents={analytics?.productEvents || []} scoreConfigs={scoreConfigs} />
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* Score tab redirects to /admin/user-scoring */}
         </Tabs>
       </main>
     </div>
@@ -878,70 +792,5 @@ function TrialFunnel({ analytics }: { analytics: any }) {
         );
       })}
     </div>
-  );
-}
-
-// ─── User Score Table ────────────────────────────────────────────────────────
-function UserScoreTable({ productEvents, scoreConfigs }: { productEvents: any[]; scoreConfigs: any[] }) {
-  // Calculate scores per user from product events
-  const activeConfigs = scoreConfigs.filter((c) => c.is_active);
-  const configMap = new Map(activeConfigs.map((c) => [c.config_key, c.config_value?.points || 0]));
-
-  const userScores = new Map<string, { score: number; events: number; lastEvent: string }>();
-
-  productEvents.forEach((event: any) => {
-    const userId = event.user_id;
-    const points = configMap.get(event.event_name) || 1; // Default 1 point per event
-    const current = userScores.get(userId) || { score: 0, events: 0, lastEvent: "" };
-    current.score += points;
-    current.events += 1;
-    if (!current.lastEvent || event.created_at > current.lastEvent) {
-      current.lastEvent = event.created_at;
-    }
-    userScores.set(userId, current);
-  });
-
-  const sortedUsers = Array.from(userScores.entries())
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, 20);
-
-  if (sortedUsers.length === 0) {
-    return <p className="text-xs text-muted-foreground py-4 text-center">Nenhum evento rastreado ainda</p>;
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="text-xs">Usuário ID</TableHead>
-          <TableHead className="text-xs text-center">Score</TableHead>
-          <TableHead className="text-xs text-center">Eventos</TableHead>
-          <TableHead className="text-xs text-center">Nível</TableHead>
-          <TableHead className="text-xs text-right">Último Evento</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedUsers.map(([userId, data]) => {
-          const level = data.score >= 7 ? "Alto" : data.score >= 4 ? "Médio" : "Baixo";
-          const levelColor = data.score >= 7 ? "text-red-400" : data.score >= 4 ? "text-amber-400" : "text-emerald-400";
-
-          return (
-            <TableRow key={userId}>
-              <TableCell className="text-xs font-mono">{userId.substring(0, 8)}...</TableCell>
-              <TableCell className="text-center">
-                <span className="text-sm font-bold">{data.score}</span>
-              </TableCell>
-              <TableCell className="text-center text-xs font-mono">{data.events}</TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" className={cn("text-[10px]", levelColor)}>{level}</Badge>
-              </TableCell>
-              <TableCell className="text-right text-[10px] text-muted-foreground">
-                {new Date(data.lastEvent).toLocaleDateString("pt-BR")}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
   );
 }
