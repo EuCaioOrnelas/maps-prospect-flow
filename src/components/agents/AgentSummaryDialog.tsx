@@ -165,7 +165,7 @@ export function AgentSummaryDialog({
                 <span className={`text-sm font-semibold tabular-nums ${
                   isAtLimit ? 'text-red-500' : isNearLimit ? 'text-yellow-500' : 'text-foreground'
                 }`}>
-                  {agent.messages_sent_today} / {agent.daily_limit}
+                  {agent.messages_sent_today} / {isUnlimited ? '∞' : agent.daily_limit}
                 </span>
                 <button
                   onClick={() => onShowLeadsLimitInfo()}
