@@ -428,7 +428,7 @@ export function EmailHistoryPanel() {
                     <td className="p-3">{statusBadge(log.status)}</td>
                     <td className="p-3 text-center">
                       {(log.opened_count || 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-blue-400 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold">
                           <Eye size={12} /> {log.opened_count}
                         </span>
                       ) : (
