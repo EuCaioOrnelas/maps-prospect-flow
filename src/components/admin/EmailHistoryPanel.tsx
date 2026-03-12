@@ -50,8 +50,8 @@ function KPICards({ kpis, loading }: { kpis: KPIs; loading: boolean }) {
   const cards = [
     { label: "Total Enviados", value: kpis.sent, icon: Send, color: "text-primary" },
     { label: "Falhas", value: kpis.failed, icon: XCircle, color: "text-destructive" },
-    { label: "Aberturas", value: kpis.opened, icon: Eye, color: "text-blue-400", sub: `${kpis.openRate.toFixed(1)}%` },
-    { label: "Cliques", value: kpis.clicked, icon: MousePointerClick, color: "text-amber-400", sub: `${kpis.clickRate.toFixed(1)}%` },
+    { label: "Aberturas", value: kpis.opened, icon: Eye, color: "text-accent", sub: `${kpis.openRate.toFixed(1)}%` },
+    { label: "Cliques", value: kpis.clicked, icon: MousePointerClick, color: "text-primary", sub: `${kpis.clickRate.toFixed(1)}%` },
   ];
 
   return (
