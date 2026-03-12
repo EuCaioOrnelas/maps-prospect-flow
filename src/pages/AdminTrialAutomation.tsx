@@ -75,7 +75,7 @@ export default function AdminTrialAutomation() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [triggers, setBehaviourTriggers] = useState<BehaviourTrigger[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]);
+  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]); // kept for analytics compatibility
 
   // Dialog states
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
