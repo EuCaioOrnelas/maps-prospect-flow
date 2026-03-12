@@ -169,7 +169,7 @@ function EmailDetailDialog({ log, open, onClose }: { log: EmailLog | null; open:
               </div>
               <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <MousePointerClick size={12} className="text-amber-400" /> Cliques
+                  <MousePointerClick size={12} className="text-primary" /> Cliques
                 </div>
                 <p className="text-xl font-bold text-foreground">{log.clicked_count || 0}</p>
                 {log.clicked_at && (
