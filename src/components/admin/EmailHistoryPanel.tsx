@@ -437,7 +437,7 @@ export function EmailHistoryPanel() {
                     </td>
                     <td className="p-3 text-center">
                       {(log.clicked_count || 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-amber-400 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold">
                           <MousePointerClick size={12} /> {log.clicked_count}
                         </span>
                       ) : (
