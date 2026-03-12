@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import {
   Mail, Send, CheckCircle2, XCircle, Clock, Eye, MousePointerClick,
   Search, Loader2, ChevronLeft, ChevronRight, RefreshCw, BarChart3,
-  ExternalLink, Calendar, User, AlertTriangle
+  ExternalLink, CalendarIcon, User, AlertTriangle
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
