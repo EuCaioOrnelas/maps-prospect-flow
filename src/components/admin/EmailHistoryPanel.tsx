@@ -331,7 +331,7 @@ export function EmailHistoryPanel() {
 
   useEffect(() => {
     setPage(0);
-  }, [search, statusFilter, typeFilter]);
+  }, [search, statusFilter, typeFilter, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
