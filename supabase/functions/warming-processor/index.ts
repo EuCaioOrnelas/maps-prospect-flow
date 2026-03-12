@@ -794,6 +794,9 @@ Deno.serve(async (req) => {
             })
             .eq('id', session.id)
           
+          // Sync daily_limit on linked AI agents
+          await syncAgentDailyLimit(supabase, session.whatsapp_number_id, 'hot')
+          
           console.log(`Warming completed for session ${session.id}`)
           continue
         }
