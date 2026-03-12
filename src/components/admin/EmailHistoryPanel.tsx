@@ -190,7 +190,7 @@ function EmailDetailDialog({ log, open, onClose }: { log: EmailLog | null; open:
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-foreground">Preview do Conteúdo</h4>
                 <div
-                  className="rounded-lg border bg-white p-4 text-sm text-gray-800 prose prose-sm max-w-none"
+                  className="rounded-lg border bg-background p-4 text-sm text-foreground prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: emailContent }}
                 />
               </div>
