@@ -97,13 +97,12 @@ export default function AdminTrialAutomation() {
     if (templatesRes.data) setTemplates(templatesRes.data as any[]);
     if (triggersRes.data) setBehaviourTriggers(triggersRes.data as any[]);
 
-    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes, configsRes] = await Promise.all([
+    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes] = await Promise.all([
       supabase.from("trial_email_events").select("*"),
       supabase.from("trial_product_events").select("*"),
       supabase.from("trial_user_automation_state").select("*"),
       supabase.from("trial_behaviour_trigger_logs").select("*"),
       supabase.from("trial_revenue_attribution").select("*"),
-      supabase.from("trial_activation_config").select("*").order("config_type"),
     ]);
 
     setAnalytics({
@@ -113,8 +112,6 @@ export default function AdminTrialAutomation() {
       triggerLogs: triggerLogsRes.data || [],
       revenue: revenueRes.data || [],
     });
-
-    if (configsRes.data) setScoreConfigs(configsRes.data);
     setLoading(false);
   }, []);
 
