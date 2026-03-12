@@ -471,7 +471,7 @@ export function EmailHistoryPanel() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setAllLogs((data as EmailLog[]) || []);
+      setAllLogs((data as unknown as EmailLog[]) || []);
     } catch (err) {
       console.error("Error loading logs:", err);
       setAllLogs([]);
