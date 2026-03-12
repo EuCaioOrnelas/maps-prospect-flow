@@ -158,7 +158,7 @@ function EmailDetailDialog({ log, open, onClose }: { log: EmailLog | null; open:
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Eye size={12} className="text-blue-400" /> Aberturas
+                  <Eye size={12} className="text-accent" /> Aberturas
                 </div>
                 <p className="text-xl font-bold text-foreground">{log.opened_count || 0}</p>
                 {log.opened_at && (
