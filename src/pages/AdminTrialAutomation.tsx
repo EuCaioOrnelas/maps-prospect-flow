@@ -220,10 +220,6 @@ export default function AdminTrialAutomation() {
     return analytics.productEvents.filter((e: any) => e.event_name === "subscription_started").length;
   };
 
-  const getScoreTotal = () => {
-    const activeConfigs = scoreConfigs.filter((c) => c.is_active);
-    return activeConfigs.reduce((sum, c) => sum + (c.config_value?.points || 0), 0);
-  };
 
   if (loading) {
     return (
