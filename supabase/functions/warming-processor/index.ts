@@ -824,6 +824,7 @@ Deno.serve(async (req) => {
           console.log(`New active day: ${today}, advancing to day ${advancedDay}`)
           
           const level = getWarmingLevel(advancedDay)
+          const newWarmingStatus = getWarmingStatus(level)
           await supabase
             .from('warming_sessions')
             .update({
@@ -832,9 +833,12 @@ Deno.serve(async (req) => {
               last_active_date: today,
               current_day: advancedDay,
               warming_level: level,
-              warming_status: getWarmingStatus(level)
+              warming_status: newWarmingStatus
             })
             .eq('id', session.id)
+          
+          // Sync daily_limit on linked AI agents when level changes
+          await syncAgentDailyLimit(supabase, session.whatsapp_number_id, newWarmingStatus)
           
           session.messages_sent_today = 0
         } else if (session.last_reset_date !== today) {
