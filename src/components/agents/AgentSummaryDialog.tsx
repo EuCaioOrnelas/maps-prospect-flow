@@ -96,9 +96,10 @@ export function AgentSummaryDialog({
 }: AgentSummaryDialogProps) {
   if (!agent) return null;
 
-  const progressPercent = Math.min((agent.messages_sent_today / agent.daily_limit) * 100, 100);
-  const isAtLimit = agent.messages_sent_today >= agent.daily_limit;
-  const isNearLimit = agent.messages_sent_today >= agent.daily_limit * 0.8;
+  const isUnlimited = agent.daily_limit >= 9999 || agent.is_warmed;
+  const progressPercent = isUnlimited ? 0 : Math.min((agent.messages_sent_today / agent.daily_limit) * 100, 100);
+  const isAtLimit = !isUnlimited && agent.messages_sent_today >= agent.daily_limit;
+  const isNearLimit = !isUnlimited && agent.messages_sent_today >= agent.daily_limit * 0.8;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -164,7 +165,7 @@ export function AgentSummaryDialog({
                 <span className={`text-sm font-semibold tabular-nums ${
                   isAtLimit ? 'text-red-500' : isNearLimit ? 'text-yellow-500' : 'text-foreground'
                 }`}>
-                  {agent.messages_sent_today} / {agent.daily_limit}
+                  {agent.messages_sent_today} / {isUnlimited ? '∞' : agent.daily_limit}
                 </span>
                 <button
                   onClick={() => onShowLeadsLimitInfo()}

@@ -420,7 +420,7 @@ export function AgentsMonitorPanel() {
                     <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Mensagens hoje</p>
-                        <p className="font-medium">{agent.messages_sent_today}/{agent.daily_limit}</p>
+                        <p className="font-medium">{agent.messages_sent_today}/{agent.daily_limit >= 9999 ? '∞' : agent.daily_limit}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Conversas</p>

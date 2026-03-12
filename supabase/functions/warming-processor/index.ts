@@ -261,7 +261,29 @@ function getWarmingStatus(level: number): 'cold' | 'warm' | 'hot' {
   return 'hot'
 }
 
-// Get random element from array
+// Sync daily_limit on AI agents linked to a WhatsApp number based on warming status
+async function syncAgentDailyLimit(supabase: any, whatsappNumberId: string, warmingStatus: string) {
+  const AGENT_LIMITS: Record<string, number> = {
+    cold: 20,
+    warm: 100,
+    hot: 9999, // effectively unlimited
+  }
+  const newLimit = AGENT_LIMITS[warmingStatus] ?? 20
+  const isWarmed = warmingStatus === 'hot'
+  
+  const { error } = await supabase
+    .from('ai_agents')
+    .update({ daily_limit: newLimit, is_warmed: isWarmed })
+    .eq('whatsapp_number_id', whatsappNumberId)
+  
+  if (error) {
+    console.error(`Error syncing agent daily_limit for number ${whatsappNumberId}:`, error)
+  } else {
+    console.log(`Synced agent daily_limit to ${newLimit} (warming: ${warmingStatus}) for number ${whatsappNumberId}`)
+  }
+}
+
+
 function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -794,6 +816,9 @@ Deno.serve(async (req) => {
             })
             .eq('id', session.id)
           
+          // Sync daily_limit on linked AI agents
+          await syncAgentDailyLimit(supabase, session.whatsapp_number_id, 'hot')
+          
           console.log(`Warming completed for session ${session.id}`)
           continue
         }
@@ -821,6 +846,7 @@ Deno.serve(async (req) => {
           console.log(`New active day: ${today}, advancing to day ${advancedDay}`)
           
           const level = getWarmingLevel(advancedDay)
+          const newWarmingStatus = getWarmingStatus(level)
           await supabase
             .from('warming_sessions')
             .update({
@@ -829,9 +855,12 @@ Deno.serve(async (req) => {
               last_active_date: today,
               current_day: advancedDay,
               warming_level: level,
-              warming_status: getWarmingStatus(level)
+              warming_status: newWarmingStatus
             })
             .eq('id', session.id)
+          
+          // Sync daily_limit on linked AI agents when level changes
+          await syncAgentDailyLimit(supabase, session.whatsapp_number_id, newWarmingStatus)
           
           session.messages_sent_today = 0
         } else if (session.last_reset_date !== today) {
@@ -980,6 +1009,9 @@ Deno.serve(async (req) => {
                 completed_at: new Date().toISOString()
               })
               .eq('id', session.id)
+            
+            // Sync daily_limit on linked AI agents
+            await syncAgentDailyLimit(supabase, session.whatsapp_number_id, 'hot')
           } else {
             // Otherwise, pause and request new leads
             console.log(`Pausing session ${session.id} - needs more leads to continue`)
