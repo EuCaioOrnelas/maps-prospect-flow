@@ -600,10 +600,10 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
         if (error) throw error;
       }
 
-      // Also update is_warmed on any AI agents linked to this number
+      // Also update is_warmed and daily_limit on any AI agents linked to this number
       const { error: agentError } = await supabase
         .from('ai_agents')
-        .update({ is_warmed: true })
+        .update({ is_warmed: true, daily_limit: 9999 })
         .eq('whatsapp_number_id', numberId)
         .eq('user_id', user?.id);
 
