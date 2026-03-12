@@ -302,7 +302,7 @@ export default function AdminTrialAutomation() {
             <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background"><Mail className="h-3 w-3" />Templates</TabsTrigger>
             <TabsTrigger value="triggers" className="text-xs gap-1.5 data-[state=active]:bg-background"><Target className="h-3 w-3" />Triggers</TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs gap-1.5 data-[state=active]:bg-background"><BarChart3 className="h-3 w-3" />Analytics</TabsTrigger>
-            <TabsTrigger value="score" className="text-xs gap-1.5 data-[state=active]:bg-background"><Gauge className="h-3 w-3" />Score</TabsTrigger>
+            <TabsTrigger value="score" className="text-xs gap-1.5 data-[state=active]:bg-background" onClick={(e) => { e.preventDefault(); navigate("/admin/user-scoring"); }}><Gauge className="h-3 w-3" />Score ↗</TabsTrigger>
           </TabsList>
 
           {/* ═══════════════════════ AUTOMATIONS TAB ═══════════════════════════ */}
