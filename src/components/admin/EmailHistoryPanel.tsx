@@ -274,10 +274,10 @@ export function EmailHistoryPanel() {
         query = query.ilike("to_email", `%${search.trim()}%`);
       }
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        query = query.eq("status", statusFilter as "sent" | "failed" | "queued");
       }
       if (typeFilter !== "all") {
-        query = query.eq("email_type", typeFilter);
+        query = query.eq("email_type", typeFilter as any);
       }
 
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
