@@ -88,7 +88,7 @@ export function ActivationChecklist() {
     }
   }, [progress?.progress_percentage, confettiTriggered, fireConfetti, fireSides]);
 
-  if (loading || !progress || progress.dismissed) return null;
+  if (loading || !progress || progress.dismissed || sessionDismissed) return null;
 
   const handleExploreAICRM = async () => {
     // Always mark as completed
