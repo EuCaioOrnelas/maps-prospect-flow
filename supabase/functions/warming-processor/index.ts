@@ -266,7 +266,7 @@ async function syncAgentDailyLimit(supabase: any, whatsappNumberId: string, warm
   const AGENT_LIMITS: Record<string, number> = {
     cold: 20,
     warm: 100,
-    hot: 9999, // effectively unlimited
+    hot: 999999, // effectively unlimited
   }
   const newLimit = AGENT_LIMITS[warmingStatus] ?? 20
   const isWarmed = warmingStatus === 'hot'
