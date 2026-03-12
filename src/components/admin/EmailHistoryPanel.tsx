@@ -221,7 +221,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
 
       const { data, error, count } = await query;
       if (error) throw error;
-      setRecipients((data as EmailLog[]) || []);
+      setRecipients((data as unknown as EmailLog[]) || []);
       setTotalCount(count || 0);
     } catch (err) {
       console.error("Error loading recipients:", err);
