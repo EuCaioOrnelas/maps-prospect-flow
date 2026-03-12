@@ -968,43 +968,58 @@ export type Database = {
       }
       email_logs: {
         Row: {
+          clicked_at: string | null
+          clicked_count: number | null
           created_at: string
           email_type: Database["public"]["Enums"]["email_type"]
           error_message: string | null
           id: string
           idempotency_key: string | null
+          opened_at: string | null
+          opened_count: number | null
           payload: Json | null
           provider_message_id: string | null
           sent_at: string | null
           status: Database["public"]["Enums"]["email_status"]
+          subject: string | null
           to_email: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          clicked_at?: string | null
+          clicked_count?: number | null
           created_at?: string
           email_type: Database["public"]["Enums"]["email_type"]
           error_message?: string | null
           id?: string
           idempotency_key?: string | null
+          opened_at?: string | null
+          opened_count?: number | null
           payload?: Json | null
           provider_message_id?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["email_status"]
+          subject?: string | null
           to_email: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          clicked_at?: string | null
+          clicked_count?: number | null
           created_at?: string
           email_type?: Database["public"]["Enums"]["email_type"]
           error_message?: string | null
           id?: string
           idempotency_key?: string | null
+          opened_at?: string | null
+          opened_count?: number | null
           payload?: Json | null
           provider_message_id?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["email_status"]
+          subject?: string | null
           to_email?: string
           updated_at?: string
           user_id?: string
