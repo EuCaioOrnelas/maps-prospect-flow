@@ -237,6 +237,49 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
   const payload = group.samplePayload as any;
   const emailContent = payload?.content || payload?.title || "";
 
+  // Build a realistic email preview with brand layout
+  const renderEmailPreview = () => {
+    if (!emailContent) return null;
+    return (
+      <div className="space-y-2 pt-2 border-t border-border">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <Eye size={11} /> Preview do E-mail
+        </h4>
+        <div className="rounded-lg border overflow-hidden max-h-[450px] overflow-y-auto bg-[#f4f4f5]">
+          {/* Email mockup */}
+          <div className="max-w-[560px] mx-auto my-4">
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+              {/* Brand header */}
+              <div className="bg-[#3daa57] px-8 py-5 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <img src="/assets/logo_wiize_white.png" alt="Wiize" className="w-7 h-7 rounded-lg" />
+                  <span className="text-white text-lg font-bold">Wiize</span>
+                </div>
+              </div>
+              {/* Email body */}
+              <div
+                className="px-8 py-6 text-sm text-[#3f3f46] leading-relaxed prose prose-sm max-w-none
+                  [&_h1]:text-[#18181b] [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:mb-3
+                  [&_h2]:text-[#18181b] [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-3
+                  [&_p]:mb-2 [&_strong]:text-[#18181b]
+                  [&_a]:text-[#3daa57] [&_a]:font-semibold [&_a]:no-underline
+                  [&_code]:bg-[#f4f4f5] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                dangerouslySetInnerHTML={{ __html: emailContent }}
+              />
+              {/* Brand footer */}
+              <div className="px-8 py-4 bg-[#fafafa] border-t border-[#e4e4e7] text-center">
+                <p className="text-[11px] text-[#a1a1aa] m-0">Este é um e-mail automático — por favor, não responda.</p>
+                <p className="text-[11px] text-[#a1a1aa] mt-1 m-0">
+                  Enviado por <strong>Wiize</strong> • <span className="text-[#3daa57]">wiize.com.br</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-5">
       {/* Header with back */}
@@ -281,15 +324,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         </div>
 
         {/* Email preview */}
-        {emailContent && (
-          <div className="space-y-2 pt-2 border-t border-border">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview do Conteúdo</h4>
-            <div
-              className="rounded-lg border bg-background p-4 text-sm text-foreground prose prose-sm max-w-none max-h-[300px] overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: emailContent }}
-            />
-          </div>
-        )}
+        {renderEmailPreview()}
       </div>
 
       {/* Recipients search */}

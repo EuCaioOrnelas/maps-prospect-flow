@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
 
     const { subject, html } = templateFn(payload);
 
-    // Insert log as queued
+    // Insert log as queued (with subject)
     const { data: logEntry, error: logError } = await supabase
       .from("email_logs")
       .insert({
@@ -327,6 +327,7 @@ Deno.serve(async (req) => {
         to_email: toEmail,
         email_type,
         status: "queued",
+        subject,
         payload,
         idempotency_key: idempotency_key || null,
       })
@@ -335,6 +336,27 @@ Deno.serve(async (req) => {
 
     if (logError) {
       console.error("[send-email] Log insert error:", logError);
+    }
+
+    // Inject tracking into HTML
+    let trackedHtml = html;
+    if (logEntry?.id) {
+      const trackerBase = `${supabaseUrl}/functions/v1/email-tracker`;
+
+      // 1) Rewrite <a href="..."> links for click tracking (skip mailto: and #)
+      trackedHtml = trackedHtml.replace(
+        /(<a\s[^>]*href=["'])([^"'#][^"']*)(["'][^>]*>)/gi,
+        (match, prefix, url, suffix) => {
+          if (url.startsWith("mailto:") || url.startsWith("#")) return match;
+          const trackUrl = `${trackerBase}?lid=${logEntry.id}&action=click&url=${encodeURIComponent(url)}`;
+          return `${prefix}${trackUrl}${suffix}`;
+        }
+      );
+
+      // 2) Inject open tracking pixel before </body>
+      const pixelUrl = `${trackerBase}?lid=${logEntry.id}&action=open`;
+      const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+      trackedHtml = trackedHtml.replace("</body>", `${pixel}</body>`);
     }
 
     // Send via Resend
@@ -348,7 +370,7 @@ Deno.serve(async (req) => {
         from: BRAND.from,
         to: [toEmail],
         subject,
-        html,
+        html: trackedHtml,
       }),
     });
 
