@@ -1009,6 +1009,9 @@ Deno.serve(async (req) => {
                 completed_at: new Date().toISOString()
               })
               .eq('id', session.id)
+            
+            // Sync daily_limit on linked AI agents
+            await syncAgentDailyLimit(supabase, session.whatsapp_number_id, 'hot')
           } else {
             // Otherwise, pause and request new leads
             console.log(`Pausing session ${session.id} - needs more leads to continue`)
