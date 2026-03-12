@@ -164,11 +164,6 @@ export default function AdminTrialAutomation() {
     fetchAll();
   };
 
-  const toggleScoreConfig = async (id: string, isActive: boolean) => {
-    await supabase.from("trial_activation_config").update({ is_active: !isActive }).eq("id", id);
-    setScoreConfigs((prev) => prev.map((c) => (c.id === id ? { ...c, is_active: !isActive } : c)));
-    toast({ title: "Configuração atualizada" });
-  };
 
 
 
