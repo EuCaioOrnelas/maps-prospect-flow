@@ -297,6 +297,14 @@ export function EmailHistoryPanel() {
       if (typeFilter !== "all") {
         query = query.eq("email_type", typeFilter as any);
       }
+      if (dateFrom) {
+        query = query.gte("created_at", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endOfDay.toISOString());
+      }
 
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
