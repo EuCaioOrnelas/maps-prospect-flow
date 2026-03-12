@@ -75,7 +75,7 @@ export default function AdminTrialAutomation() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [triggers, setBehaviourTriggers] = useState<BehaviourTrigger[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [scoreConfigs, setScoreConfigs] = useState<any[]>([]); // kept for analytics compatibility
+  
 
   // Dialog states
   const [editTemplate, setEditTemplate] = useState<MessageTemplate | null>(null);
@@ -97,13 +97,12 @@ export default function AdminTrialAutomation() {
     if (templatesRes.data) setTemplates(templatesRes.data as any[]);
     if (triggersRes.data) setBehaviourTriggers(triggersRes.data as any[]);
 
-    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes, configsRes] = await Promise.all([
+    const [emailEventsRes, productEventsRes, automationStatesRes, triggerLogsRes, revenueRes] = await Promise.all([
       supabase.from("trial_email_events").select("*"),
       supabase.from("trial_product_events").select("*"),
       supabase.from("trial_user_automation_state").select("*"),
       supabase.from("trial_behaviour_trigger_logs").select("*"),
       supabase.from("trial_revenue_attribution").select("*"),
-      supabase.from("trial_activation_config").select("*").order("config_type"),
     ]);
 
     setAnalytics({
@@ -113,8 +112,6 @@ export default function AdminTrialAutomation() {
       triggerLogs: triggerLogsRes.data || [],
       revenue: revenueRes.data || [],
     });
-
-    if (configsRes.data) setScoreConfigs(configsRes.data);
     setLoading(false);
   }, []);
 
@@ -167,11 +164,6 @@ export default function AdminTrialAutomation() {
     fetchAll();
   };
 
-  const toggleScoreConfig = async (id: string, isActive: boolean) => {
-    await supabase.from("trial_activation_config").update({ is_active: !isActive }).eq("id", id);
-    setScoreConfigs((prev) => prev.map((c) => (c.id === id ? { ...c, is_active: !isActive } : c)));
-    toast({ title: "Configuração atualizada" });
-  };
 
 
 
@@ -228,10 +220,6 @@ export default function AdminTrialAutomation() {
     return analytics.productEvents.filter((e: any) => e.event_name === "subscription_started").length;
   };
 
-  const getScoreTotal = () => {
-    const activeConfigs = scoreConfigs.filter((c) => c.is_active);
-    return activeConfigs.reduce((sum, c) => sum + (c.config_value?.points || 0), 0);
-  };
 
   if (loading) {
     return (
