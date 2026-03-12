@@ -207,7 +207,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         .from("email_logs")
         .select("*", { count: "exact" })
         .eq("email_type", group.email_type as any)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as any;
 
       if (group.subject && group.subject !== "Sem assunto") {
         query = query.eq("subject", group.subject);
