@@ -178,13 +178,22 @@ async function getWarmingStatus(supabase: any, whatsappNumberId: string): Promis
   return session.warming_status || 'cold';
 }
 
-// Count unique leads responded to by this agent (not total messages)
+// Count unique leads responded to by this agent TODAY (São Paulo timezone)
 async function countUniqueLeadsResponded(supabase: any, agentId: string): Promise<number> {
+  // Get today's start in São Paulo timezone (UTC-3)
+  const now = new Date();
+  const spNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const todayStart = new Date(spNow);
+  todayStart.setHours(0, 0, 0, 0);
+  // Convert back to UTC for DB query
+  const todayStartUTC = new Date(todayStart.getTime() + (3 * 3600000)).toISOString();
+
   const { count, error } = await supabase
     .from('agent_conversations')
     .select('*', { count: 'exact', head: true })
     .eq('agent_id', agentId)
-    .eq('reply_sent', true);
+    .eq('reply_sent', true)
+    .gte('reply_sent_at', todayStartUTC);
   
   if (error) {
     console.error('Error counting unique leads:', error);
@@ -440,6 +449,18 @@ serve(async (req) => {
         const evolutionApiUrl = finalCreds.url;
         const evolutionApiKey = finalCreds.apiKey;
         console.log(`Resolved Evolution API for number ${whatsappNumber.id}: ${evolutionApiUrl}`);
+
+        // Self-heal: reset agent messages_sent_today if last_reset_date is before today (São Paulo)
+        const spToday = getSaoPauloTime().toISOString().split('T')[0];
+        if (agent.last_reset_date && agent.last_reset_date < spToday && agent.messages_sent_today > 0) {
+          console.log(`Self-healing: resetting agent ${agent.id} messages_sent_today (last_reset: ${agent.last_reset_date}, today: ${spToday})`);
+          await supabase
+            .from('ai_agents')
+            .update({ messages_sent_today: 0, last_reset_date: spToday, updated_at: new Date().toISOString() })
+            .eq('id', agent.id);
+          agent.messages_sent_today = 0;
+          agent.last_reset_date = spToday;
+        }
 
         // Check if this is a NEW lead (first reply) - only count unique leads
         const isFirstReplyToLead = !conv.reply_sent;
