@@ -513,7 +513,7 @@ serve(async (req) => {
           ? (Date.now() - new Date(completedAt).getTime()) / (1000 * 60 * 60) 
           : 999;
         
-        const REOPEN_COOLDOWN_HOURS = 24;
+        const REOPEN_COOLDOWN_HOURS = 3;
         
         if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS) {
           // Too soon - ignore to avoid loop, but still update CRM
