@@ -111,12 +111,12 @@ export const ScoreUsersTab = () => {
   };
 
   const handleExport = () => {
-    if (users.length === 0) {
+    if (filteredUsers.length === 0) {
       toast.error("Nenhum usuário para exportar");
       return;
     }
 
-    const exportData = users.map((u) => ({
+    const exportData = filteredUsers.map((u) => ({
       Nome: u.profiles?.name || "Sem nome",
       Email: u.profiles?.email || "",
       Plano: u.profiles?.plan || "free",
