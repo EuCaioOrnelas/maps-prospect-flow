@@ -72,7 +72,7 @@ interface SearchHistoryItem {
 
 const RESULTS_PER_PAGE = 10;
 const HISTORY_PER_PAGE = 6;
-const MAX_HISTORY_ITEMS = 10; // Limite reduzido para economia de espaço
+const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
 const Dashboard = () => {
   const [keyword, setKeyword] = useState("");
