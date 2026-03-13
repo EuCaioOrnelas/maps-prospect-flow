@@ -178,13 +178,22 @@ async function getWarmingStatus(supabase: any, whatsappNumberId: string): Promis
   return session.warming_status || 'cold';
 }
 
-// Count unique leads responded to by this agent (not total messages)
+// Count unique leads responded to by this agent TODAY (São Paulo timezone)
 async function countUniqueLeadsResponded(supabase: any, agentId: string): Promise<number> {
+  // Get today's start in São Paulo timezone (UTC-3)
+  const now = new Date();
+  const spNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const todayStart = new Date(spNow);
+  todayStart.setHours(0, 0, 0, 0);
+  // Convert back to UTC for DB query
+  const todayStartUTC = new Date(todayStart.getTime() + (3 * 3600000)).toISOString();
+
   const { count, error } = await supabase
     .from('agent_conversations')
     .select('*', { count: 'exact', head: true })
     .eq('agent_id', agentId)
-    .eq('reply_sent', true);
+    .eq('reply_sent', true)
+    .gte('reply_sent_at', todayStartUTC);
   
   if (error) {
     console.error('Error counting unique leads:', error);

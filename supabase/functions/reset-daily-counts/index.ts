@@ -59,6 +59,33 @@ serve(async (req) => {
 
     console.log(`Successfully reset ${numbersToReset.length} numbers`);
 
+    // Also reset AI agents daily message counts
+    const { data: agentsToReset, error: agentsFetchError } = await supabase
+      .from('ai_agents')
+      .select('id, name, messages_sent_today')
+      .gt('messages_sent_today', 0);
+
+    if (agentsFetchError) {
+      console.error('Error fetching agents to reset:', agentsFetchError);
+    } else if (agentsToReset && agentsToReset.length > 0) {
+      const { error: agentsUpdateError } = await supabase
+        .from('ai_agents')
+        .update({
+          messages_sent_today: 0,
+          last_reset_date: new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString()
+        })
+        .gt('messages_sent_today', 0);
+
+      if (agentsUpdateError) {
+        console.error('Error resetting agent counts:', agentsUpdateError);
+      } else {
+        console.log(`Successfully reset ${agentsToReset.length} AI agents`);
+      }
+    } else {
+      console.log('No AI agents to reset');
+    }
+
     // Log the reset details
     const resetDetails = numbersToReset.map(n => ({
       id: n.id,
