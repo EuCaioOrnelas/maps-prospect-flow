@@ -642,6 +642,30 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
             // Remove the marker from the actual message
             replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
 
+            // Extract media markers before cleaning
+            const mediaToSend: { type: 'image' | 'pdf'; url: string; caption: string }[] = [];
+            
+            // Match [ENVIAR_IMAGEM:url|caption] pattern
+            const imageRegex = /\[ENVIAR_IMAGEM:([^|\]]+)\|?([^\]]*)\]/g;
+            let imageMatch;
+            while ((imageMatch = imageRegex.exec(replyContent)) !== null) {
+              mediaToSend.push({ type: 'image', url: imageMatch[1].trim(), caption: imageMatch[2]?.trim() || '' });
+            }
+            
+            // Match [ENVIAR_PDF:url|filename] pattern
+            const pdfRegex = /\[ENVIAR_PDF:([^|\]]+)\|?([^\]]*)\]/g;
+            let pdfMatch;
+            while ((pdfMatch = pdfRegex.exec(replyContent)) !== null) {
+              mediaToSend.push({ type: 'pdf', url: pdfMatch[1].trim(), caption: pdfMatch[2]?.trim() || 'documento.pdf' });
+            }
+            
+            // Remove media markers from text
+            replyContent = replyContent
+              .replace(/\s*\[ENVIAR_IMAGEM:[^\]]+\]\s*/g, ' ')
+              .replace(/\s*\[ENVIAR_PDF:[^\]]+\]\s*/g, ' ')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+
             // Clean up incomplete endings (fallback safety)
             replyContent = cleanIncompleteResponse(replyContent, maxChars);
 
@@ -652,6 +676,7 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
             if (instanceName) {
               let sentCount = 0;
               
+              // Send text messages first
               for (let i = 0; i < messages.length; i++) {
                 const msgPart = messages[i];
                 
@@ -687,6 +712,50 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
                   });
                 } else {
                   console.error(`Failed to send message ${i + 1}:`, await sendResponse.text());
+                }
+              }
+
+              // Send media files after text
+              for (const media of mediaToSend) {
+                try {
+                  await new Promise(resolve => setTimeout(resolve, 1500)); // Delay before media
+                  
+                  const mediaPayload: Record<string, any> = {
+                    number: conv.lead_phone,
+                    mediatype: media.type === 'image' ? 'image' : 'document',
+                    mimetype: media.type === 'image' ? 'image/jpeg' : 'application/pdf',
+                    media: media.url,
+                    caption: media.type === 'image' ? media.caption : '',
+                    fileName: media.type === 'pdf' ? media.caption : undefined,
+                  };
+
+                  console.log(`Sending ${media.type} to ${conv.lead_phone}: ${media.url}`);
+                  
+                  const mediaResponse = await fetchWithTimeout(`${evolutionApiUrl}/message/sendMedia/${instanceName}`, {
+                    method: 'POST',
+                    headers: {
+                      'apikey': evolutionApiKey,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(mediaPayload),
+                  }, EVOLUTION_TIMEOUT_MS);
+
+                  if (mediaResponse.ok) {
+                    sentCount++;
+                    await supabase.from('agent_message_logs').insert({
+                      agent_id: agent.id,
+                      conversation_id: conv.id,
+                      direction: 'sent',
+                      content: `[${media.type === 'image' ? 'Imagem' : 'PDF'} enviado: ${media.caption || media.url}]`,
+                      message_type: media.type === 'image' ? 'image' : 'document',
+                    });
+                    console.log(`${media.type} sent successfully`);
+                  } else {
+                    const errText = await mediaResponse.text();
+                    console.error(`Failed to send ${media.type}:`, errText);
+                  }
+                } catch (mediaErr) {
+                  console.error(`Error sending ${media.type}:`, mediaErr);
                 }
               }
 

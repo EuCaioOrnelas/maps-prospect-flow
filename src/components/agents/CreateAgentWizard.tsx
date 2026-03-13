@@ -269,7 +269,7 @@ const STEPS = [
   { id: 'conduct', title: 'Condução', icon: Zap },
   { id: 'objections', title: 'Objeções', icon: ShieldAlert },
   { id: 'cta', title: 'CTA', icon: CheckCircle },
-  { id: 'links', title: 'Links', icon: Link },
+  { id: 'links', title: 'Links e Mídias', icon: Link },
   { id: 'rules', title: 'Regras', icon: Settings },
   { id: 'review', title: 'Revisão', icon: CheckCircle },
 ];
@@ -345,9 +345,13 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [whatsappGroupLink, setWhatsappGroupLink] = useState("");
   const [customLinks, setCustomLinks] = useState<{ name: string; url: string; when: string }[]>([]);
   
+  // Media (imagens e PDFs)
+  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string; type: 'image' | 'pdf'; when: string }[]>([]);
+  
   // Rules
   const [canSendAudio, setCanSendAudio] = useState(false);
   const [canSendLinks, setCanSendLinks] = useState(true);
+  const [canSendMedia, setCanSendMedia] = useState(false);
   const [canSendLongMessages, setCanSendLongMessages] = useState(false);
   const [maxChars, setMaxChars] = useState("300");
   const [maxConsecutiveMessages, setMaxConsecutiveMessages] = useState("2");
@@ -590,8 +594,10 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setCheckoutLink("");
     setWhatsappGroupLink("");
     setCustomLinks([]);
+    setMediaFiles([]);
     setCanSendAudio(false);
     setCanSendLinks(true);
+    setCanSendMedia(false);
     setCanSendLongMessages(false);
     setMaxChars("300");
     setMaxConsecutiveMessages("2");
@@ -726,6 +732,36 @@ ${websiteLink ? `- Envie o site quando o lead pedir mais informações gerais` :
 `;
     }
 
+    // Build media section
+    let mediaSection = "";
+    const configuredMedia = mediaFiles.filter(m => m.url && m.name);
+    if (configuredMedia.length > 0 && canSendMedia) {
+      const mediaItems = configuredMedia.map(m => {
+        const typeLabel = m.type === 'image' ? '🖼️ Imagem' : '📄 PDF';
+        return `- ${typeLabel} "${m.name}": ${m.url} → Enviar quando: ${m.when || 'quando relevante na conversa'}`;
+      });
+      
+      mediaSection = `
+---
+
+# ARQUIVOS DISPONÍVEIS (IMAGENS E PDFs)
+
+Você tem os seguintes arquivos que pode enviar via WhatsApp:
+${mediaItems.join('\n')}
+
+**COMO ENVIAR ARQUIVOS:**
+- Quando identificar que é o momento certo de enviar um arquivo, use o marcador especial na sua resposta:
+  - Para imagens: [ENVIAR_IMAGEM:URL_DA_IMAGEM|LEGENDA_OPCIONAL]
+  - Para PDFs: [ENVIAR_PDF:URL_DO_PDF|NOME_DO_ARQUIVO.pdf]
+- Exemplo: "Segue nosso catálogo completo! [ENVIAR_PDF:https://exemplo.com/catalogo.pdf|Catálogo 2025.pdf]"
+- Exemplo: "Veja como fica o resultado! [ENVIAR_IMAGEM:https://exemplo.com/resultado.jpg|Exemplo de resultado]"
+- O marcador NÃO será exibido ao lead, apenas o arquivo será enviado junto com o texto.
+- Envie o texto da mensagem normalmente e adicione o marcador no ponto apropriado.
+- A IA deve decidir INTELIGENTEMENTE quando enviar: NÃO envie todos de uma vez, envie conforme o contexto da conversa.
+- Priorize enviar o arquivo mais relevante para o momento da conversa.
+`;
+    }
+
     // Build product section
     let productSection = "";
     if (productDescription || (wantToTalkPrice && productPrice)) {
@@ -805,6 +841,7 @@ ${(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && wantToTalkPr
 ${howToTalkPrice ? `- Abordagem: ${howToTalkPrice}` : '- Sempre contextualize o valor entregue antes de falar o preço'}
 ` : ''}
 ${linksSection}
+${mediaSection}
 ---
 
 # OBJEÇÕES COMUNS E COMO RESPONDER
@@ -831,6 +868,7 @@ ${endConditions.map(cond => `- ${cond}`).join('\n') || '- Lead não demonstrar i
 
 ${canSendAudio ? '✓ PODE enviar áudios' : '✗ NÃO enviar áudios'}
 ${canSendLinks ? '✓ PODE enviar links' : '✗ NÃO enviar links'}
+${canSendMedia ? '✓ PODE enviar imagens e PDFs (use os marcadores [ENVIAR_IMAGEM:...] e [ENVIAR_PDF:...])' : '✗ NÃO enviar imagens ou PDFs'}
 ${canSendLongMessages ? '✓ PODE enviar mensagens longas' : '✗ NÃO enviar mensagens longas'}
 
 **Limites:**
@@ -1075,6 +1113,20 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
 
   const removeCustomLink = (index: number) => {
     setCustomLinks(customLinks.filter((_, i) => i !== index));
+  };
+
+  const addMediaFile = () => {
+    setMediaFiles([...mediaFiles, { name: '', url: '', type: 'image', when: '' }]);
+  };
+
+  const updateMediaFile = (index: number, field: 'name' | 'url' | 'type' | 'when', value: string) => {
+    const updated = [...mediaFiles];
+    (updated[index] as any)[field] = value;
+    setMediaFiles(updated);
+  };
+
+  const removeMediaFile = (index: number) => {
+    setMediaFiles(mediaFiles.filter((_, i) => i !== index));
   };
 
   const renderStep = () => {
@@ -1671,7 +1723,7 @@ Preciso falar com meu marido/esposa"
           <div className="space-y-4">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">
-                💡 Opcional: Configure os links que o agente pode enviar. Deixe em branco os que não usar.
+                💡 Opcional: Configure links, imagens e PDFs que o agente pode enviar. A IA decide automaticamente o momento certo de enviar cada um com base no contexto da conversa.
               </p>
             </div>
 
@@ -1755,6 +1807,78 @@ Preciso falar com meu marido/esposa"
                 </div>
               ))}
             </div>
+
+            {/* Media Files Section */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="flex items-center gap-1.5">
+                    📎 Imagens e PDFs
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Adicione URLs de imagens ou PDFs que o agente pode enviar. A IA decide quando enviar com base no treinamento.
+                  </p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={addMediaFile}>
+                  <Plus className="h-3 w-3 mr-1" /> Adicionar
+                </Button>
+              </div>
+
+              {mediaFiles.length === 0 && (
+                <div className="p-3 border border-dashed rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum arquivo configurado. Clique em "Adicionar" para configurar imagens ou PDFs que o agente pode enviar automaticamente.
+                  </p>
+                </div>
+              )}
+
+              {mediaFiles.map((media, index) => (
+                <div key={index} className="space-y-2 p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      {media.type === 'image' ? '🖼️' : '📄'} Arquivo {index + 1}
+                    </span>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeMediaFile(index)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Nome (ex: Catálogo de Produtos)"
+                      value={media.name}
+                      onChange={(e) => updateMediaFile(index, 'name', e.target.value)}
+                    />
+                    <select
+                      value={media.type}
+                      onChange={(e) => updateMediaFile(index, 'type', e.target.value)}
+                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="image">🖼️ Imagem</option>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
+                  </div>
+                  <Input
+                    placeholder="URL do arquivo (ex: https://seusite.com/catalogo.pdf)"
+                    value={media.url}
+                    onChange={(e) => updateMediaFile(index, 'url', e.target.value)}
+                  />
+                  <Input
+                    placeholder="Quando enviar? (ex: Quando o lead pedir catálogo ou tabela de preços)"
+                    value={media.when}
+                    onChange={(e) => updateMediaFile(index, 'when', e.target.value)}
+                  />
+                </div>
+              ))}
+
+              {mediaFiles.length > 0 && (
+                <div className="p-2.5 bg-primary/5 rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    💡 <strong>Como funciona:</strong> A IA analisa a conversa e decide automaticamente quando é o melhor momento para enviar cada arquivo. 
+                    Por exemplo: se o lead pedir um catálogo, a IA envia a imagem/PDF configurado. Se o lead perguntar preço, a IA pode enviar a tabela de preços em PDF.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -1766,6 +1890,7 @@ Preciso falar com meu marido/esposa"
               <div className="space-y-2">
                 <CheckboxOption label="Enviar áudios" checked={canSendAudio} onCheckedChange={(c) => setCanSendAudio(!!c)} />
                 <CheckboxOption label="Enviar links" checked={canSendLinks} onCheckedChange={(c) => setCanSendLinks(!!c)} />
+                <CheckboxOption label="Enviar imagens e PDFs" checked={canSendMedia} onCheckedChange={(c) => setCanSendMedia(!!c)} />
                 <CheckboxOption label="Enviar mensagens longas" checked={canSendLongMessages} onCheckedChange={(c) => setCanSendLongMessages(!!c)} />
                 <CheckboxOption label="Sempre esperar resposta" checked={alwaysWaitResponse} onCheckedChange={(c) => setAlwaysWaitResponse(!!c)} />
               </div>
@@ -1957,6 +2082,12 @@ Preciso falar com meu marido/esposa"
                 <span className="text-muted-foreground">Links configurados</span>
                 <span className="font-medium">
                   {[schedulingLink, demoLink, websiteLink, checkoutLink, whatsappGroupLink].filter(Boolean).length + customLinks.filter(l => l.url).length}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Imagens/PDFs configurados</span>
+                <span className="font-medium">
+                  {mediaFiles.filter(m => m.url).length}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
