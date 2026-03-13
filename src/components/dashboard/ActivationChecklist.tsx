@@ -156,10 +156,20 @@ export function ActivationChecklist() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                 onClick={() => setIsCollapsed(!isCollapsed)}
               >
-                {isCollapsed ? "Expandir" : "Minimizar"}
+                {isCollapsed ? (
+                  <>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    Ver passos
+                  </>
+                ) : (
+                  <>
+                    <ChevronUp className="h-3.5 w-3.5" />
+                    Recolher
+                  </>
+                )}
               </Button>
               <Button
                 variant="ghost"
