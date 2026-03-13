@@ -233,7 +233,7 @@ export default function AgentReports() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("7");
+  const [dateRange, setDateRange] = useState<string>("30");
   const [activeTab, setActiveTab] = useState("overview");
   const [healthAlerts, setHealthAlerts] = useState<HealthAlert[]>([]);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
@@ -244,7 +244,8 @@ export default function AgentReports() {
     if (!user) return;
     setLoading(true);
 
-    const startDate = subDays(new Date(), parseInt(dateRange)).toISOString();
+    const useAllTime = dateRange === "all";
+    const startDate = useAllTime ? undefined : subDays(new Date(), parseInt(dateRange)).toISOString();
 
     try {
       // First fetch agents
@@ -262,8 +263,8 @@ export default function AgentReports() {
 
       setAgents(agentsData || []);
       const agentIds = (agentsData || []).map(a => a.id);
+      console.log('[AgentReports] Found agents:', agentIds.length, agentIds);
 
-      // If no agents, skip fetching conversations and logs
       if (agentIds.length === 0) {
         setConversations([]);
         setMessageLogs([]);
@@ -272,36 +273,74 @@ export default function AgentReports() {
         return;
       }
 
-      // Fetch conversations and message logs filtered by user's agents
-      const [conversationsRes, messageLogsRes] = await Promise.all([
-        supabase
+      // Fetch ALL conversations with pagination (avoid 1000 row limit)
+      let allConversations: Conversation[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
           .from('agent_conversations')
           .select('*')
           .in('agent_id', agentIds)
-          .gte('created_at', startDate)
-          .order('created_at', { ascending: false }),
-        supabase
+          .order('created_at', { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (startDate) query = query.gte('created_at', startDate);
+
+        const { data, error } = await query;
+        if (error) {
+          console.error('[AgentReports] Error fetching conversations page', page, ':', error);
+          break;
+        }
+        if (data && data.length > 0) {
+          allConversations = [...allConversations, ...data];
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      // Fetch ALL message logs with pagination
+      let allMessageLogs: MessageLog[] = [];
+      page = 0;
+      hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
           .from('agent_message_logs')
           .select('*')
           .in('agent_id', agentIds)
-          .gte('created_at', startDate)
           .order('created_at', { ascending: false })
-      ]);
+          .range(page * pageSize, (page + 1) * pageSize - 1);
 
-      if (conversationsRes.error) {
-        console.error('[AgentReports] Error fetching conversations:', conversationsRes.error);
-      }
-      if (messageLogsRes.error) {
-        console.error('[AgentReports] Error fetching message logs:', messageLogsRes.error);
+        if (startDate) query = query.gte('created_at', startDate);
+
+        const { data, error } = await query;
+        if (error) {
+          console.error('[AgentReports] Error fetching message logs page', page, ':', error);
+          break;
+        }
+        if (data && data.length > 0) {
+          allMessageLogs = [...allMessageLogs, ...data];
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
       }
 
-      setConversations(conversationsRes.data || []);
-      setMessageLogs(messageLogsRes.data || []);
+      setConversations(allConversations);
+      setMessageLogs(allMessageLogs);
 
       console.log('[AgentReports] Loaded data:', {
         agents: agentsData?.length || 0,
-        conversations: conversationsRes.data?.length || 0,
-        messageLogs: messageLogsRes.data?.length || 0
+        conversations: allConversations.length,
+        messageLogs: allMessageLogs.length,
+        dateRange,
+        startDate: startDate || 'all time',
       });
     } catch (error) {
       console.error('[AgentReports] Error fetching data:', error);
@@ -642,7 +681,7 @@ export default function AgentReports() {
 
   // Daily metrics for charts
   const dailyMetrics = useMemo((): DailyMetrics[] => {
-    const days = parseInt(dateRange);
+    const days = dateRange === "all" ? 90 : parseInt(dateRange);
     const dailyData: DailyMetrics[] = [];
     
     for (let i = days - 1; i >= 0; i--) {
@@ -982,6 +1021,8 @@ export default function AgentReports() {
                 <SelectItem value="14">Últimos 14 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
                 <SelectItem value="60">Últimos 60 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+                <SelectItem value="all">Todo período</SelectItem>
               </SelectContent>
             </Select>
             
