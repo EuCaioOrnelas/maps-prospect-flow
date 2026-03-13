@@ -730,6 +730,36 @@ ${websiteLink ? `- Envie o site quando o lead pedir mais informações gerais` :
 `;
     }
 
+    // Build media section
+    let mediaSection = "";
+    const configuredMedia = mediaFiles.filter(m => m.url && m.name);
+    if (configuredMedia.length > 0 && canSendMedia) {
+      const mediaItems = configuredMedia.map(m => {
+        const typeLabel = m.type === 'image' ? '🖼️ Imagem' : '📄 PDF';
+        return `- ${typeLabel} "${m.name}": ${m.url} → Enviar quando: ${m.when || 'quando relevante na conversa'}`;
+      });
+      
+      mediaSection = `
+---
+
+# ARQUIVOS DISPONÍVEIS (IMAGENS E PDFs)
+
+Você tem os seguintes arquivos que pode enviar via WhatsApp:
+${mediaItems.join('\n')}
+
+**COMO ENVIAR ARQUIVOS:**
+- Quando identificar que é o momento certo de enviar um arquivo, use o marcador especial na sua resposta:
+  - Para imagens: [ENVIAR_IMAGEM:URL_DA_IMAGEM|LEGENDA_OPCIONAL]
+  - Para PDFs: [ENVIAR_PDF:URL_DO_PDF|NOME_DO_ARQUIVO.pdf]
+- Exemplo: "Segue nosso catálogo completo! [ENVIAR_PDF:https://exemplo.com/catalogo.pdf|Catálogo 2025.pdf]"
+- Exemplo: "Veja como fica o resultado! [ENVIAR_IMAGEM:https://exemplo.com/resultado.jpg|Exemplo de resultado]"
+- O marcador NÃO será exibido ao lead, apenas o arquivo será enviado junto com o texto.
+- Envie o texto da mensagem normalmente e adicione o marcador no ponto apropriado.
+- A IA deve decidir INTELIGENTEMENTE quando enviar: NÃO envie todos de uma vez, envie conforme o contexto da conversa.
+- Priorize enviar o arquivo mais relevante para o momento da conversa.
+`;
+    }
+
     // Build product section
     let productSection = "";
     if (productDescription || (wantToTalkPrice && productPrice)) {
