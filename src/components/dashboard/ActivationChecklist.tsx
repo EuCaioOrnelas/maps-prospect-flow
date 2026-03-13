@@ -323,8 +323,10 @@ export function ActivationChecklist() {
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               onClick={() => setIsExpanded(true)}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-lg border cursor-pointer",
-                "bg-card border-primary/20 hover:border-primary/40 hover:shadow-xl",
+                "flex items-center gap-2.5 px-4 py-3 rounded-2xl border cursor-pointer",
+                "bg-card border-primary/20 hover:border-primary/40",
+                "shadow-[0_8px_50px_-6px_rgba(0,0,0,0.7),0_4px_20px_-4px_rgba(0,0,0,0.5)]",
+                "hover:shadow-[0_12px_60px_-4px_rgba(0,0,0,0.8),0_6px_24px_-2px_rgba(0,0,0,0.6)]",
                 "transition-shadow duration-200"
               )}
             >
