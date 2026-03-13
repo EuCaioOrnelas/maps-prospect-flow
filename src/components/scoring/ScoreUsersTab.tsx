@@ -283,13 +283,13 @@ export const ScoreUsersTab = () => {
 
             {/* Pagination */}
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">{users.length} resultado(s)</p>
+              <p className="text-sm text-muted-foreground">{filteredUsers.length} resultado(s)</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm flex items-center px-2">Página {page + 1}</span>
-                <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={users.length < pageSize}>
+                <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={(page + 1) * pageSize >= filteredUsers.length}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
