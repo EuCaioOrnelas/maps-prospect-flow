@@ -872,6 +872,15 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <>
+                  {selectedHistoryIds.size > 0 && (
+                    <div className="flex items-center gap-3 p-3 mb-4 rounded-lg bg-primary/10 border border-primary/20 animate-fade-in">
+                      <CheckSquare size={16} className="text-primary flex-shrink-0" />
+                      <p className="text-sm text-foreground">
+                        <strong>{selectedHistoryIds.size}</strong> {selectedHistoryIds.size === 1 ? 'busca selecionada' : 'buscas selecionadas'}. 
+                        Navegue entre as páginas normalmente — as seleções serão mantidas.
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {paginatedHistory.map((item, index) => (
                       <div
