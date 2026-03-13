@@ -135,8 +135,22 @@ export function ActivationChecklist() {
 
   return (
     <>
+      {/* Backdrop when expanded */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[49] bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setIsExpanded(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Floating popup - fixed bottom-right */}
-      <div className="fixed bottom-5 right-5 z-50" style={{ maxWidth: 380 }}>
+      <div className="fixed bottom-5 right-5 z-50" style={{ maxWidth: 360 }}>
         <AnimatePresence mode="wait">
           {!isExpanded ? (
             /* Minimized: floating badge/button */
@@ -185,7 +199,7 @@ export function ActivationChecklist() {
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
               className={cn(
                 "rounded-2xl shadow-2xl border overflow-hidden",
-                "bg-card border-primary/20"
+                "bg-card border-border"
               )}
             >
               {/* Header */}
