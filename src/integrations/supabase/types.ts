@@ -3094,7 +3094,15 @@ export type Database = {
           source?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_score_events_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_score_history: {
         Row: {
@@ -3127,7 +3135,15 @@ export type Database = {
           user_id?: string
           variation?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_score_history_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_scores: {
         Row: {
@@ -3193,7 +3209,15 @@ export type Database = {
           user_id?: string
           value_score?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_scores_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warming_interactions: {
         Row: {

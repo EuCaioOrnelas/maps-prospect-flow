@@ -56,7 +56,7 @@ export const ScoreUsersTab = () => {
     try {
       let query = supabase
         .from("user_scores")
-        .select("*, profiles!inner(name, email, plan)")
+        .select("*, profiles(name, email, plan)")
         .order(sortBy as any, { ascending: sortAsc })
         .range(page * pageSize, (page + 1) * pageSize - 1);
 

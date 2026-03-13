@@ -374,7 +374,7 @@ async function getRanking(supabase: any, limit: number, sortBy: string) {
 
   const { data } = await supabase
     .from("user_scores")
-    .select("*, profiles!inner(name, email, plan)")
+    .select("*, profiles(name, email, plan)")
     .order(orderCol, { ascending: sortBy === "churn_risk" ? true : false })
     .limit(limit);
 
