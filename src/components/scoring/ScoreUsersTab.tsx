@@ -217,7 +217,7 @@ export const ScoreUsersTab = () => {
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">Nenhum usuário com score encontrado.</p>
         ) : (
           <>
