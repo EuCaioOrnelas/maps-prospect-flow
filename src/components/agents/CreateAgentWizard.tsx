@@ -594,8 +594,10 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
     setCheckoutLink("");
     setWhatsappGroupLink("");
     setCustomLinks([]);
+    setMediaFiles([]);
     setCanSendAudio(false);
     setCanSendLinks(true);
+    setCanSendMedia(false);
     setCanSendLongMessages(false);
     setMaxChars("300");
     setMaxConsecutiveMessages("2");
