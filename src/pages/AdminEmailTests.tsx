@@ -153,7 +153,7 @@ function ComposeTab() {
 
     // Check email preferences (batched)
     const userIds = filteredUsers.map(u => u.id);
-    const prefs = await batchInQuery<{ user_id: string; marketing_enabled: boolean }>(
+    const prefs = await batchInQuery(
       "email_preferences", "user_id, marketing_enabled", "user_id", userIds
     );
 
