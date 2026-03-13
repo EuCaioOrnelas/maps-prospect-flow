@@ -516,9 +516,18 @@ serve(async (req) => {
         const REOPEN_COOLDOWN_HOURS = 3;
         
         if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS) {
-          // Too soon - ignore to avoid loop, but still update CRM
-          console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), ignoring`);
+          // Too soon to reopen - but SAVE the message for context when it reopens
+          console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), buffering message without processing`);
           
+          // Save to message logs so the AI has full context when conversation reopens
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: existingConv.id,
+            direction: 'received',
+            content: message,
+          });
+          
+          // Update CRM with latest response
           const userId = agent.whatsapp_number?.user_id;
           if (userId) {
             const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
@@ -531,9 +540,9 @@ serve(async (req) => {
           
           return new Response(
             JSON.stringify({ 
-              success: false, 
-              reason: 'cooldown_active',
-              message: `Conversation completed ${hoursSinceCompletion.toFixed(1)}h ago, cooldown ${REOPEN_COOLDOWN_HOURS}h` 
+              success: true, 
+              reason: 'cooldown_active_message_logged',
+              message: `Message saved to history. Conversation will reopen after cooldown (${(REOPEN_COOLDOWN_HOURS - hoursSinceCompletion).toFixed(1)}h remaining)` 
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
