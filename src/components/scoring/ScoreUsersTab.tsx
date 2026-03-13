@@ -39,7 +39,7 @@ const LABEL_COLORS: Record<string, string> = {
 const PAID_PLANS = ["start", "growth", "scale"];
 
 export const ScoreUsersTab = () => {
-  const [users, setUsers] = useState<UserScore[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterLabel, setFilterLabel] = useState("all");
@@ -50,6 +50,7 @@ export const ScoreUsersTab = () => {
   const [page, setPage] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const pageSize = 20;
+  const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
