@@ -450,6 +450,18 @@ serve(async (req) => {
         const evolutionApiKey = finalCreds.apiKey;
         console.log(`Resolved Evolution API for number ${whatsappNumber.id}: ${evolutionApiUrl}`);
 
+        // Self-heal: reset agent messages_sent_today if last_reset_date is before today (São Paulo)
+        const spToday = getSaoPauloTime().toISOString().split('T')[0];
+        if (agent.last_reset_date && agent.last_reset_date < spToday && agent.messages_sent_today > 0) {
+          console.log(`Self-healing: resetting agent ${agent.id} messages_sent_today (last_reset: ${agent.last_reset_date}, today: ${spToday})`);
+          await supabase
+            .from('ai_agents')
+            .update({ messages_sent_today: 0, last_reset_date: spToday, updated_at: new Date().toISOString() })
+            .eq('id', agent.id);
+          agent.messages_sent_today = 0;
+          agent.last_reset_date = spToday;
+        }
+
         // Check if this is a NEW lead (first reply) - only count unique leads
         const isFirstReplyToLead = !conv.reply_sent;
         
