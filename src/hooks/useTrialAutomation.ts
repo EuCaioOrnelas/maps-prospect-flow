@@ -58,10 +58,10 @@ export function useActivationProgress() {
     const autoDetect = async () => {
       const stepUpdates: Record<string, boolean> = {};
 
-      // Step 1: Check if user has prospected (has leads)
+      // Step 1: Check if user has prospected (has search history)
       if (!progress.step_prospect_clients_completed) {
         const { count } = await supabase
-          .from("leads")
+          .from("search_history")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id);
         if (count && count > 0) stepUpdates.step_prospect_clients_completed = true;
