@@ -14,7 +14,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
-import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PERIOD_OPTIONS = [
