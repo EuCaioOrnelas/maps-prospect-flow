@@ -506,27 +506,83 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
-      // If conversation is completed, do NOT restart the flow
-      // The agent already finished its objective - ignore further messages
+      // If conversation is completed or limit_reached, handle smartly
       if (existingConv && (existingConv.status === 'completed' || existingConv.status === 'limit_reached')) {
-        console.log(`Conversation ${existingConv.id} already ${existingConv.status} for ${phone}, ignoring new message`);
+        const completedAt = existingConv.reply_sent_at || existingConv.updated_at;
+        const hoursSinceCompletion = completedAt 
+          ? (Date.now() - new Date(completedAt).getTime()) / (1000 * 60 * 60) 
+          : 999;
         
-        // Still update CRM with the latest response info
+        const REOPEN_COOLDOWN_HOURS = 24;
+        
+        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS) {
+          // Too soon - ignore to avoid loop, but still update CRM
+          console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), ignoring`);
+          
+          const userId = agent.whatsapp_number?.user_id;
+          if (userId) {
+            const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+            await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+              last_response: message,
+              last_response_at: new Date().toISOString(),
+              whatsapp_status: 'replied',
+            });
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              reason: 'cooldown_active',
+              message: `Conversation completed ${hoursSinceCompletion.toFixed(1)}h ago, cooldown ${REOPEN_COOLDOWN_HOURS}h` 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Cooldown passed - REOPEN the conversation with full history (don't delete!)
+        console.log(`Reopening conversation ${existingConv.id} for ${phone} (completed ${hoursSinceCompletion.toFixed(1)}h ago, history preserved)`);
+        
+        const processAfterReopen = new Date(Date.now() + BUFFER_DELAY_MS).toISOString();
+        await supabase
+          .from('agent_conversations')
+          .update({
+            status: 'buffering',
+            process_after: processAfterReopen,
+            is_processing: false,
+            response_received: true,
+            response_received_at: new Date().toISOString(),
+            response_content: message,
+          })
+          .eq('id', existingConv.id);
+        
+        // Buffer the new message (history in agent_message_logs is preserved!)
+        await supabase.from('agent_message_buffer').insert({
+          agent_id: agentId,
+          conversation_id: existingConv.id,
+          lead_phone: phone,
+          lead_name: lead_name,
+          message_content: message,
+          received_at: new Date().toISOString(),
+        });
+        
+        // Update CRM
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
           const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
           await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
             last_response: message,
             last_response_at: new Date().toISOString(),
-            whatsapp_status: 'replied',
+            whatsapp_status: 'in_conversation',
           });
         }
         
         return new Response(
           JSON.stringify({ 
-            success: false, 
-            reason: 'conversation_ended',
-            message: `Conversation already ${existingConv.status}, not restarting flow` 
+            success: true, 
+            action: 'conversation_reopened',
+            conversation_id: existingConv.id,
+            process_after: processAfterReopen,
+            message: 'Conversation reopened with full history'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
