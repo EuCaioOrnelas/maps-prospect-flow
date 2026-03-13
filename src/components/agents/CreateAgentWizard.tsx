@@ -269,7 +269,7 @@ const STEPS = [
   { id: 'conduct', title: 'Condução', icon: Zap },
   { id: 'objections', title: 'Objeções', icon: ShieldAlert },
   { id: 'cta', title: 'CTA', icon: CheckCircle },
-  { id: 'links', title: 'Links', icon: Link },
+  { id: 'links', title: 'Links e Mídias', icon: Link },
   { id: 'rules', title: 'Regras', icon: Settings },
   { id: 'review', title: 'Revisão', icon: CheckCircle },
 ];
