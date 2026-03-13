@@ -233,7 +233,7 @@ export default function AgentReports() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("7");
+  const [dateRange, setDateRange] = useState<string>("30");
   const [activeTab, setActiveTab] = useState("overview");
   const [healthAlerts, setHealthAlerts] = useState<HealthAlert[]>([]);
   const [realtimeEnabled, setRealtimeEnabled] = useState(true);
