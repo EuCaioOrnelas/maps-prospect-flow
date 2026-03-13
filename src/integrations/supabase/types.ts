@@ -3193,7 +3193,15 @@ export type Database = {
           user_id?: string
           value_score?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_scores_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warming_interactions: {
         Row: {
