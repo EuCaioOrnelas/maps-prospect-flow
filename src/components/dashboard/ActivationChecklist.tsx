@@ -273,7 +273,10 @@ export function ActivationChecklistInline() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-3">
-            <Progress value={progress!.progress_percentage} className="h-2" />
+            <div className="flex items-center gap-2">
+              <Progress value={progress!.progress_percentage} className="h-2 flex-1" />
+              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{Math.round(progress!.progress_percentage)}%</span>
+            </div>
             {!isCollapsed && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-2">
                 <StepsList progress={progress} onStepClick={state.handleStepClick} />
@@ -386,7 +389,10 @@ export function ActivationChecklist() {
 
               {/* Content */}
               <div className="px-4 py-3 space-y-3">
-                <Progress value={progress!.progress_percentage} className="h-1.5" />
+                <div className="flex items-center gap-2">
+                  <Progress value={progress!.progress_percentage} className="h-1.5 flex-1" />
+                  <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">{Math.round(progress!.progress_percentage)}%</span>
+                </div>
                 {isComplete ? (
                   <p className="text-xs text-muted-foreground text-center py-1">Você completou todos os passos iniciais!</p>
                 ) : (
