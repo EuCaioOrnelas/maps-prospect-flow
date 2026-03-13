@@ -356,7 +356,7 @@ export function ActivationChecklist() {
               className={cn(
                 "rounded-2xl overflow-hidden border",
                 "bg-card border-border",
-                "shadow-[0_0_40px_-4px_hsl(var(--primary)/0.25),0_8px_30px_-8px_hsl(0_0%_0%/0.4)]"
+                "shadow-[0_8px_50px_-6px_rgba(0,0,0,0.7),0_4px_20px_-4px_rgba(0,0,0,0.5)]"
               )}
             >
               {/* Header */}
