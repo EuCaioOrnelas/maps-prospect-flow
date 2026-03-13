@@ -351,6 +351,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   // Rules
   const [canSendAudio, setCanSendAudio] = useState(false);
   const [canSendLinks, setCanSendLinks] = useState(true);
+  const [canSendMedia, setCanSendMedia] = useState(false);
   const [canSendLongMessages, setCanSendLongMessages] = useState(false);
   const [maxChars, setMaxChars] = useState("300");
   const [maxConsecutiveMessages, setMaxConsecutiveMessages] = useState("2");
