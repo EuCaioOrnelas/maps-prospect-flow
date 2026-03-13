@@ -73,7 +73,7 @@ export function useActivationProgress() {
           .from("whatsapp_campaigns")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .in("status", ["completed", "in_progress", "paused", "sent"]);
+          .neq("status", "draft" as any);
         if (count && count > 0) updates.push("step_first_campaign_completed");
       }
 
