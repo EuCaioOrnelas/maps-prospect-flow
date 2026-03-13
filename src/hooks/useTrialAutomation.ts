@@ -83,7 +83,7 @@ export function useActivationProgress() {
           .from("whatsapp_campaigns")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .eq("is_scheduled", true);
+          .not("scheduled_at", "is", null);
         if (count && count > 0) updates.push("step_scheduled_campaign_completed");
       }
 
