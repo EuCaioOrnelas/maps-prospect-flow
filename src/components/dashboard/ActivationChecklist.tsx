@@ -291,6 +291,6 @@ export function ActivationChecklist() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AnimatePresence>
+    </>
   );
 }
