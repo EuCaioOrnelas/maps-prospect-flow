@@ -58,8 +58,7 @@ export const ScoreUsersTab = () => {
       let query = supabase
         .from("user_scores")
         .select("*, profiles(name, email, plan)")
-        .order(sortBy as any, { ascending: sortAsc })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .order(sortBy as any, { ascending: sortAsc });
 
       if (filterLabel !== "all") {
         query = query.eq("score_label", filterLabel);
@@ -88,13 +87,14 @@ export const ScoreUsersTab = () => {
             u.profiles?.email?.toLowerCase().includes(s)
         );
       }
-      setUsers(filtered);
+
+      setFilteredUsers(filtered);
     } catch (err) {
       console.error("Load users error:", err);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortAsc, page, filterLabel, filterTrend, filterPurchase, search]);
+  }, [sortBy, sortAsc, filterLabel, filterTrend, filterPurchase, search]);
 
   useEffect(() => {
     loadUsers();
