@@ -839,6 +839,7 @@ ${(pricePolicy === 'if_asked' || pricePolicy === 'with_context') && wantToTalkPr
 ${howToTalkPrice ? `- Abordagem: ${howToTalkPrice}` : '- Sempre contextualize o valor entregue antes de falar o preço'}
 ` : ''}
 ${linksSection}
+${mediaSection}
 ---
 
 # OBJEÇÕES COMUNS E COMO RESPONDER
