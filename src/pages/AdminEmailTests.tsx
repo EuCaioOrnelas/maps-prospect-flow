@@ -96,21 +96,21 @@ function ComposeTab() {
   };
 
   // Helper to batch .in() queries in chunks of 500 to avoid Supabase's row limit
-  const batchInQuery = async <T,>(
+  const batchInQuery = async (
     table: string,
     selectCols: string,
     filterCol: string,
     filterValues: string[],
     extraFilters?: (q: any) => any
-  ): Promise<T[]> => {
+  ): Promise<any[]> => {
     const CHUNK = 500;
-    const results: T[] = [];
+    const results: any[] = [];
     for (let i = 0; i < filterValues.length; i += CHUNK) {
       const chunk = filterValues.slice(i, i + CHUNK);
-      let query = supabase.from(table).select(selectCols).in(filterCol, chunk);
+      let query = (supabase.from(table as any) as any).select(selectCols).in(filterCol, chunk);
       if (extraFilters) query = extraFilters(query);
       const { data } = await query;
-      if (data) results.push(...(data as T[]));
+      if (data) results.push(...data);
     }
     return results;
   };
