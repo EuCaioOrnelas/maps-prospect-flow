@@ -194,28 +194,39 @@ async function countUniqueLeadsResponded(supabase: any, agentId: string): Promis
   return count || 0;
 }
 
-// Check if agent has reached response limit based on warming status
+// Check if agent has reached response limit
 async function hasReachedResponseLimit(
-  supabase: any, 
-  agentId: string, 
-  whatsappNumberId: string
-): Promise<{ reached: boolean; currentCount: number; limit: number | null; warmingStatus: string }> {
+  supabase: any,
+  agentId: string,
+  whatsappNumberId: string,
+  agentDailyLimit?: number | null
+): Promise<{ reached: boolean; currentCount: number; limit: number | null; warmingStatus: string; source: 'agent_daily_limit' | 'warming_status' }> {
   const warmingStatus = await getWarmingStatus(supabase, whatsappNumberId);
-  const limit = RESPONSE_LIMITS[warmingStatus];
+  const warmingLimit = RESPONSE_LIMITS[warmingStatus];
+
+  const hasConfiguredLimit = typeof agentDailyLimit === 'number' && Number.isFinite(agentDailyLimit) && agentDailyLimit > 0;
+  const configuredLimit = hasConfiguredLimit ? Math.floor(agentDailyLimit as number) : null;
+
+  // 999999+ is treated as unlimited in UI and processing
+  const limit = configuredLimit !== null
+    ? (configuredLimit >= 999999 ? null : configuredLimit)
+    : warmingLimit;
+
+  const source: 'agent_daily_limit' | 'warming_status' = configuredLimit !== null ? 'agent_daily_limit' : 'warming_status';
   const currentCount = await countUniqueLeadsResponded(supabase, agentId);
-  
-  console.log(`Agent ${agentId} - Warming: ${warmingStatus}, Limit: ${limit ?? 'unlimited'}, Current: ${currentCount}`);
-  
-  // No limit for hot numbers
+
+  console.log(`Agent ${agentId} - Source: ${source}, Warming: ${warmingStatus}, Limit: ${limit ?? 'unlimited'}, Current: ${currentCount}`);
+
   if (limit === null) {
-    return { reached: false, currentCount, limit, warmingStatus };
+    return { reached: false, currentCount, limit, warmingStatus, source };
   }
-  
-  return { 
-    reached: currentCount >= limit, 
-    currentCount, 
-    limit, 
-    warmingStatus 
+
+  return {
+    reached: currentCount >= limit,
+    currentCount,
+    limit,
+    warmingStatus,
+    source
   };
 }
 
