@@ -95,42 +95,70 @@ function ComposeTab() {
     }
   };
 
+  // Helper to batch .in() queries in chunks of 500 to avoid Supabase's row limit
+  const batchInQuery = async <T,>(
+    table: string,
+    selectCols: string,
+    filterCol: string,
+    filterValues: string[],
+    extraFilters?: (q: any) => any
+  ): Promise<T[]> => {
+    const CHUNK = 500;
+    const results: T[] = [];
+    for (let i = 0; i < filterValues.length; i += CHUNK) {
+      const chunk = filterValues.slice(i, i + CHUNK);
+      let query = supabase.from(table).select(selectCols).in(filterCol, chunk);
+      if (extraFilters) query = extraFilters(query);
+      const { data } = await query;
+      if (data) results.push(...(data as T[]));
+    }
+    return results;
+  };
+
   const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
     const plans = getPlansForSegment();
 
-    const { data: users, error: usersError } = await supabase
-      .from("profiles")
-      .select("id, email, name, plan")
-      .in("plan", plans)
-      .eq("is_blocked", false);
+    // Paginate profiles fetch
+    const PAGE = 1000;
+    let allUsers: any[] = [];
+    let page = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, name, plan")
+        .in("plan", plans)
+        .eq("is_blocked", false)
+        .range(page * PAGE, (page + 1) * PAGE - 1);
+      if (error) throw error;
+      if (data) allUsers.push(...data);
+      hasMore = (data?.length || 0) === PAGE;
+      page++;
+    }
 
-    if (usersError) throw usersError;
-    if (!users || users.length === 0) return { eligible: [], skipped: 0 };
+    if (allUsers.length === 0) return { eligible: [], skipped: 0 };
 
-    let filteredUsers = users;
+    let filteredUsers = allUsers;
 
-    // Filter by score level if selected
+    // Filter by score level if selected (batched)
     if (scoreLevel !== "all") {
-      const userIds = users.map(u => u.id);
-      const { data: scores } = await supabase
-        .from("user_scores")
-        .select("user_id, score_label")
-        .in("user_id", userIds)
-        .eq("score_label", scoreLevel);
-
-      const scoredIds = new Set((scores || []).map(s => s.user_id));
+      const userIds = filteredUsers.map(u => u.id);
+      const scores = await batchInQuery<{ user_id: string }>(
+        "user_scores", "user_id, score_label", "user_id", userIds,
+        (q: any) => q.eq("score_label", scoreLevel)
+      );
+      const scoredIds = new Set(scores.map(s => s.user_id));
       filteredUsers = filteredUsers.filter(u => scoredIds.has(u.id));
     }
 
-    // Check email preferences
+    // Check email preferences (batched)
     const userIds = filteredUsers.map(u => u.id);
-    const { data: prefs } = await supabase
-      .from("email_preferences")
-      .select("user_id, marketing_enabled")
-      .in("user_id", userIds);
+    const prefs = await batchInQuery<{ user_id: string; marketing_enabled: boolean }>(
+      "email_preferences", "user_id, marketing_enabled", "user_id", userIds
+    );
 
     const optedOutIds = new Set(
-      (prefs || []).filter(p => p.marketing_enabled === false).map(p => p.user_id)
+      prefs.filter(p => p.marketing_enabled === false).map(p => p.user_id)
     );
 
     const eligible = filteredUsers.filter(u => !optedOutIds.has(u.id));
