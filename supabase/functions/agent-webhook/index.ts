@@ -506,22 +506,30 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
-      // If conversation is completed, start a NEW conversation (reset)
-      if (existingConv && existingConv.status === 'completed') {
-        console.log(`Conversation ${existingConv.id} was completed, creating new conversation for ${phone}`);
+      // If conversation is completed, do NOT restart the flow
+      // The agent already finished its objective - ignore further messages
+      if (existingConv && (existingConv.status === 'completed' || existingConv.status === 'limit_reached')) {
+        console.log(`Conversation ${existingConv.id} already ${existingConv.status} for ${phone}, ignoring new message`);
         
-        // Delete the old completed conversation to start fresh
-        await supabase
-          .from('agent_message_buffer')
-          .delete()
-          .eq('conversation_id', existingConv.id);
+        // Still update CRM with the latest response info
+        const userId = agent.whatsapp_number?.user_id;
+        if (userId) {
+          const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+            last_response: message,
+            last_response_at: new Date().toISOString(),
+            whatsapp_status: 'replied',
+          });
+        }
         
-        await supabase
-          .from('agent_conversations')
-          .delete()
-          .eq('id', existingConv.id);
-        
-        existingConv = null; // Force creation of new conversation below
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'conversation_ended',
+            message: `Conversation already ${existingConv.status}, not restarting flow` 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // Get configurable CRM stage names from agent
