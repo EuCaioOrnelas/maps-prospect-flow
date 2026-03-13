@@ -395,7 +395,7 @@ export function WarmingNumberCard({
         </div>
 
         {/* Skip Warming button - secondary, below main actions */}
-        {onSkipWarming && (isActive || isPaused || (!session && number.is_connected)) && !isCompleted && (
+        {onSkipWarming && (isActive || isPaused || isCompleted || (!session && number.is_connected)) && (
           <Button 
             variant="ghost" 
             size="sm"
