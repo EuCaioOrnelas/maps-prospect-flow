@@ -1029,43 +1029,6 @@ const Dashboard = () => {
       {/* Trial Feedback Modal */}
       <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
 
-      {/* History Warning Modal */}
-      <Dialog open={showHistoryWarning} onOpenChange={setShowHistoryWarning}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-warning" />
-              Exporte seus resultados!
-            </DialogTitle>
-            <DialogDescription className="space-y-3 pt-2">
-              <p>
-                Para economizar espaço, o histórico armazena <strong>apenas as 10 últimas buscas</strong> por até 7 dias.
-              </p>
-              <p>
-                Recomendamos que você <strong>exporte os resultados</strong> para o seu computador para consultas futuras.
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2 pt-4">
-            <Button 
-              onClick={() => {
-                handleExport();
-                setShowHistoryWarning(false);
-              }}
-              className="w-full"
-            >
-              <Download size={16} className="mr-2" />
-              Exportar Resultados Agora
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowHistoryWarning(false)}
-            >
-              Entendi, exportar depois
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
         </div>
       </div>
     </SidebarProvider>
