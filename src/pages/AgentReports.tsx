@@ -982,6 +982,8 @@ export default function AgentReports() {
                 <SelectItem value="14">Últimos 14 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
                 <SelectItem value="60">Últimos 60 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+                <SelectItem value="all">Todo período</SelectItem>
               </SelectContent>
             </Select>
             
