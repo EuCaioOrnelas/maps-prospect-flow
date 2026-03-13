@@ -1856,6 +1856,7 @@ Preciso falar com meu marido/esposa"
               <div className="space-y-2">
                 <CheckboxOption label="Enviar áudios" checked={canSendAudio} onCheckedChange={(c) => setCanSendAudio(!!c)} />
                 <CheckboxOption label="Enviar links" checked={canSendLinks} onCheckedChange={(c) => setCanSendLinks(!!c)} />
+                <CheckboxOption label="Enviar imagens e PDFs" checked={canSendMedia} onCheckedChange={(c) => setCanSendMedia(!!c)} />
                 <CheckboxOption label="Enviar mensagens longas" checked={canSendLongMessages} onCheckedChange={(c) => setCanSendLongMessages(!!c)} />
                 <CheckboxOption label="Sempre esperar resposta" checked={alwaysWaitResponse} onCheckedChange={(c) => setAlwaysWaitResponse(!!c)} />
               </div>
