@@ -1081,6 +1081,20 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setCustomLinks(customLinks.filter((_, i) => i !== index));
   };
 
+  const addMediaFile = () => {
+    setMediaFiles([...mediaFiles, { name: '', url: '', type: 'image', when: '' }]);
+  };
+
+  const updateMediaFile = (index: number, field: 'name' | 'url' | 'type' | 'when', value: string) => {
+    const updated = [...mediaFiles];
+    (updated[index] as any)[field] = value;
+    setMediaFiles(updated);
+  };
+
+  const removeMediaFile = (index: number) => {
+    setMediaFiles(mediaFiles.filter((_, i) => i !== index));
+  };
+
   const renderStep = () => {
     const stepId = STEPS[currentStep].id;
 
