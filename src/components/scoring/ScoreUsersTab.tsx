@@ -39,7 +39,7 @@ const LABEL_COLORS: Record<string, string> = {
 const PAID_PLANS = ["start", "growth", "scale"];
 
 export const ScoreUsersTab = () => {
-  const [users, setUsers] = useState<UserScore[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterLabel, setFilterLabel] = useState("all");
@@ -50,6 +50,7 @@ export const ScoreUsersTab = () => {
   const [page, setPage] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const pageSize = 20;
+  const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -57,8 +58,7 @@ export const ScoreUsersTab = () => {
       let query = supabase
         .from("user_scores")
         .select("*, profiles(name, email, plan)")
-        .order(sortBy as any, { ascending: sortAsc })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .order(sortBy as any, { ascending: sortAsc });
 
       if (filterLabel !== "all") {
         query = query.eq("score_label", filterLabel);
@@ -87,13 +87,14 @@ export const ScoreUsersTab = () => {
             u.profiles?.email?.toLowerCase().includes(s)
         );
       }
-      setUsers(filtered);
+
+      setFilteredUsers(filtered);
     } catch (err) {
       console.error("Load users error:", err);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortAsc, page, filterLabel, filterTrend, filterPurchase, search]);
+  }, [sortBy, sortAsc, filterLabel, filterTrend, filterPurchase, search]);
 
   useEffect(() => {
     loadUsers();
@@ -110,12 +111,12 @@ export const ScoreUsersTab = () => {
   };
 
   const handleExport = () => {
-    if (users.length === 0) {
+    if (filteredUsers.length === 0) {
       toast.error("Nenhum usuário para exportar");
       return;
     }
 
-    const exportData = users.map((u) => ({
+    const exportData = filteredUsers.map((u) => ({
       Nome: u.profiles?.name || "Sem nome",
       Email: u.profiles?.email || "",
       Plano: u.profiles?.plan || "free",
@@ -168,7 +169,7 @@ export const ScoreUsersTab = () => {
               placeholder="Buscar por nome ou email..."
               className="pl-9"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             />
           </div>
           <Select value={filterLabel} onValueChange={(v) => { setFilterLabel(v); setPage(0); }}>
@@ -216,7 +217,7 @@ export const ScoreUsersTab = () => {
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">Nenhum usuário com score encontrado.</p>
         ) : (
           <>
@@ -238,7 +239,7 @@ export const ScoreUsersTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((u) => (
+                  {paginatedUsers.map((u) => (
                     <TableRow
                       key={u.id}
                       className="cursor-pointer hover:bg-muted/30"
@@ -282,13 +283,13 @@ export const ScoreUsersTab = () => {
 
             {/* Pagination */}
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">{users.length} resultado(s)</p>
+              <p className="text-sm text-muted-foreground">{filteredUsers.length} resultado(s)</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm flex items-center px-2">Página {page + 1}</span>
-                <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={users.length < pageSize}>
+                <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={(page + 1) * pageSize >= filteredUsers.length}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
