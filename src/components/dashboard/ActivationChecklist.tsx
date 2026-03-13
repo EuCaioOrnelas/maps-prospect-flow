@@ -17,6 +17,8 @@ import {
   X,
   PartyPopper,
   Crown,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   Dialog,
