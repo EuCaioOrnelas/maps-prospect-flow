@@ -447,9 +447,10 @@ serve(async (req) => {
         // Check response limits based on warming status (only for new leads)
         if (isFirstReplyToLead) {
           const limitCheck = await hasReachedResponseLimit(
-            supabase, 
-            agent.id, 
-            whatsappNumber.id
+            supabase,
+            agent.id,
+            whatsappNumber.id,
+            agent.daily_limit
           );
           
           if (limitCheck.reached) {
