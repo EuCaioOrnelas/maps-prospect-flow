@@ -389,7 +389,10 @@ export function ActivationChecklist() {
 
               {/* Content */}
               <div className="px-4 py-3 space-y-3">
-                <Progress value={progress!.progress_percentage} className="h-1.5" />
+                <div className="flex items-center gap-2">
+                  <Progress value={progress!.progress_percentage} className="h-1.5 flex-1" />
+                  <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">{Math.round(progress!.progress_percentage)}%</span>
+                </div>
                 {isComplete ? (
                   <p className="text-xs text-muted-foreground text-center py-1">Você completou todos os passos iniciais!</p>
                 ) : (
