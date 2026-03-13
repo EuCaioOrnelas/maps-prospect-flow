@@ -349,10 +349,6 @@ const Dashboard = () => {
         });
       }
       
-      // Show history warning popup after successful search
-      if (resultsCount > 0) {
-        setShowHistoryWarning(true);
-      }
     } catch (error: any) {
       console.error('Search error:', error);
       toast({
