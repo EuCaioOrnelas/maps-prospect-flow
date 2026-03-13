@@ -143,7 +143,7 @@ function ComposeTab() {
     // Filter by score level if selected (batched)
     if (scoreLevel !== "all") {
       const userIds = filteredUsers.map(u => u.id);
-      const scores = await batchInQuery<{ user_id: string }>(
+      const scores = await batchInQuery(
         "user_scores", "user_id, score_label", "user_id", userIds,
         (q: any) => q.eq("score_label", scoreLevel)
       );
