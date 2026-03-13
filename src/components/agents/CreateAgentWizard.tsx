@@ -866,6 +866,7 @@ ${endConditions.map(cond => `- ${cond}`).join('\n') || '- Lead não demonstrar i
 
 ${canSendAudio ? '✓ PODE enviar áudios' : '✗ NÃO enviar áudios'}
 ${canSendLinks ? '✓ PODE enviar links' : '✗ NÃO enviar links'}
+${canSendMedia ? '✓ PODE enviar imagens e PDFs (use os marcadores [ENVIAR_IMAGEM:...] e [ENVIAR_PDF:...])' : '✗ NÃO enviar imagens ou PDFs'}
 ${canSendLongMessages ? '✓ PODE enviar mensagens longas' : '✗ NÃO enviar mensagens longas'}
 
 **Limites:**
