@@ -601,14 +601,19 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
       }
 
       // Also update is_warmed and daily_limit on any AI agents linked to this number
-      const { error: agentError } = await supabase
-        .from('ai_agents')
-        .update({ is_warmed: true, daily_limit: 999999 })
-        .eq('whatsapp_number_id', numberId)
-        .eq('user_id', user?.id);
+      if (user?.id) {
+        const { data: updatedAgents, error: agentError } = await supabase
+          .from('ai_agents')
+          .update({ is_warmed: true, daily_limit: 999999 })
+          .eq('whatsapp_number_id', numberId)
+          .eq('user_id', user.id)
+          .select('id, name, daily_limit');
 
-      if (agentError) {
-        console.error('Error updating agent is_warmed:', agentError);
+        if (agentError) {
+          console.error('Error updating agent is_warmed:', agentError);
+        } else {
+          console.log('Agents updated after skip warming:', updatedAgents);
+        }
       }
 
       toast.success('Aquecimento pulado — número marcado como pronto');
