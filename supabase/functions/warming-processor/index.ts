@@ -847,7 +847,6 @@ Deno.serve(async (req) => {
           
           const level = getWarmingLevel(advancedDay)
           const newWarmingStatus = getWarmingStatus(level)
-          const oldWarmingStatus = session.warming_status || 'cold'
           await supabase
             .from('warming_sessions')
             .update({
