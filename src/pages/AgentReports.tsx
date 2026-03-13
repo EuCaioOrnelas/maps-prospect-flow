@@ -681,7 +681,7 @@ export default function AgentReports() {
 
   // Daily metrics for charts
   const dailyMetrics = useMemo((): DailyMetrics[] => {
-    const days = parseInt(dateRange);
+    const days = dateRange === "all" ? 90 : parseInt(dateRange);
     const dailyData: DailyMetrics[] = [];
     
     for (let i = days - 1; i >= 0; i--) {
