@@ -71,7 +71,7 @@ interface SearchHistoryItem {
 }
 
 const RESULTS_PER_PAGE = 10;
-const HISTORY_PER_PAGE = 12;
+const HISTORY_PER_PAGE = 20;
 const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
 const Dashboard = () => {
