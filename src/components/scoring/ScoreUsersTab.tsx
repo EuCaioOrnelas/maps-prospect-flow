@@ -169,7 +169,7 @@ export const ScoreUsersTab = () => {
               placeholder="Buscar por nome ou email..."
               className="pl-9"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             />
           </div>
           <Select value={filterLabel} onValueChange={(v) => { setFilterLabel(v); setPage(0); }}>
