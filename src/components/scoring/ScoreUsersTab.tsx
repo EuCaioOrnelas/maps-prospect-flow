@@ -239,7 +239,7 @@ export const ScoreUsersTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((u) => (
+                  {paginatedUsers.map((u) => (
                     <TableRow
                       key={u.id}
                       className="cursor-pointer hover:bg-muted/30"
