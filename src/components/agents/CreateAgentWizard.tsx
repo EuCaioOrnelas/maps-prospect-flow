@@ -1689,7 +1689,7 @@ Preciso falar com meu marido/esposa"
           <div className="space-y-4">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">
-                💡 Opcional: Configure os links que o agente pode enviar. Deixe em branco os que não usar.
+                💡 Opcional: Configure links, imagens e PDFs que o agente pode enviar. A IA decide automaticamente o momento certo de enviar cada um com base no contexto da conversa.
               </p>
             </div>
 
@@ -1772,6 +1772,78 @@ Preciso falar com meu marido/esposa"
                   />
                 </div>
               ))}
+            </div>
+
+            {/* Media Files Section */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="flex items-center gap-1.5">
+                    📎 Imagens e PDFs
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Adicione URLs de imagens ou PDFs que o agente pode enviar. A IA decide quando enviar com base no treinamento.
+                  </p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={addMediaFile}>
+                  <Plus className="h-3 w-3 mr-1" /> Adicionar
+                </Button>
+              </div>
+
+              {mediaFiles.length === 0 && (
+                <div className="p-3 border border-dashed rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum arquivo configurado. Clique em "Adicionar" para configurar imagens ou PDFs que o agente pode enviar automaticamente.
+                  </p>
+                </div>
+              )}
+
+              {mediaFiles.map((media, index) => (
+                <div key={index} className="space-y-2 p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      {media.type === 'image' ? '🖼️' : '📄'} Arquivo {index + 1}
+                    </span>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeMediaFile(index)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Nome (ex: Catálogo de Produtos)"
+                      value={media.name}
+                      onChange={(e) => updateMediaFile(index, 'name', e.target.value)}
+                    />
+                    <select
+                      value={media.type}
+                      onChange={(e) => updateMediaFile(index, 'type', e.target.value)}
+                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="image">🖼️ Imagem</option>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
+                  </div>
+                  <Input
+                    placeholder="URL do arquivo (ex: https://seusite.com/catalogo.pdf)"
+                    value={media.url}
+                    onChange={(e) => updateMediaFile(index, 'url', e.target.value)}
+                  />
+                  <Input
+                    placeholder="Quando enviar? (ex: Quando o lead pedir catálogo ou tabela de preços)"
+                    value={media.when}
+                    onChange={(e) => updateMediaFile(index, 'when', e.target.value)}
+                  />
+                </div>
+              ))}
+
+              {mediaFiles.length > 0 && (
+                <div className="p-2.5 bg-primary/5 rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    💡 <strong>Como funciona:</strong> A IA analisa a conversa e decide automaticamente quando é o melhor momento para enviar cada arquivo. 
+                    Por exemplo: se o lead pedir um catálogo, a IA envia a imagem/PDF configurado. Se o lead perguntar preço, a IA pode enviar a tabela de preços em PDF.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         );
