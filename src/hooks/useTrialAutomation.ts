@@ -51,6 +51,51 @@ export function useActivationProgress() {
     fetchProgress();
   }, [fetchProgress]);
 
+  // Auto-detect completed steps from actual data
+  useEffect(() => {
+    if (!user || !progress || progress.dismissed) return;
+    
+    const autoDetect = async () => {
+      const updates: string[] = [];
+
+      // Step 1: Check if user has prospected (has leads)
+      if (!progress.step_prospect_clients_completed) {
+        const { count } = await supabase
+          .from("leads")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        if (count && count > 0) updates.push("step_prospect_clients_completed");
+      }
+
+      // Step 2: Check if user has sent a campaign
+      if (!progress.step_first_campaign_completed) {
+        const { count } = await supabase
+          .from("whatsapp_campaigns")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "draft" as any);
+        if (count && count > 0) updates.push("step_first_campaign_completed");
+      }
+
+      // Step 3: Check if user has a scheduled campaign
+      if (!progress.step_scheduled_campaign_completed) {
+        const { count } = await supabase
+          .from("whatsapp_campaigns")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .not("scheduled_at", "is", null);
+        if (count && count > 0) updates.push("step_scheduled_campaign_completed");
+      }
+
+      // Apply all detected updates
+      for (const stepField of updates) {
+        await updateStep(stepField, true);
+      }
+    };
+
+    autoDetect();
+  }, [user, progress?.step_prospect_clients_completed, progress?.step_first_campaign_completed, progress?.step_scheduled_campaign_completed]);
+
   // Listen for realtime updates
   useEffect(() => {
     if (!user) return;
