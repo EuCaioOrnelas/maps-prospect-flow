@@ -21,11 +21,11 @@ const RUN_TIME_BUDGET_MS = getEnvNumber('AGENT_BUFFER_RUN_BUDGET_MS', 100000, 15
 const OPENAI_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_OPENAI_TIMEOUT_MS', 20000, 5000, 60000);
 const EVOLUTION_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_EVOLUTION_TIMEOUT_MS', 15000, 3000, 60000);
 
-// Response limits by warming status
+// Fallback limits by warming status (used only when agent.daily_limit is missing)
 const RESPONSE_LIMITS = {
-  cold: 20,      // Número frio: 20 leads respondidos
-  warm: 100,     // Número morno: 100 leads respondidos
-  hot: null,     // Número aquecido: sem limite
+  cold: 20,
+  warm: 100,
+  hot: null,
 };
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
