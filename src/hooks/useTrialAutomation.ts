@@ -51,12 +51,12 @@ export function useActivationProgress() {
     fetchProgress();
   }, [fetchProgress]);
 
-  // Auto-detect completed steps from actual data
+  // Auto-detect completed steps from actual data (batch update)
   useEffect(() => {
     if (!user || !progress || progress.dismissed) return;
     
     const autoDetect = async () => {
-      const updates: string[] = [];
+      const stepUpdates: Record<string, boolean> = {};
 
       // Step 1: Check if user has prospected (has leads)
       if (!progress.step_prospect_clients_completed) {
@@ -64,7 +64,7 @@ export function useActivationProgress() {
           .from("leads")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id);
-        if (count && count > 0) updates.push("step_prospect_clients_completed");
+        if (count && count > 0) stepUpdates.step_prospect_clients_completed = true;
       }
 
       // Step 2: Check if user has sent a campaign
@@ -74,7 +74,7 @@ export function useActivationProgress() {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .neq("status", "draft" as any);
-        if (count && count > 0) updates.push("step_first_campaign_completed");
+        if (count && count > 0) stepUpdates.step_first_campaign_completed = true;
       }
 
       // Step 3: Check if user has a scheduled campaign
@@ -84,12 +84,40 @@ export function useActivationProgress() {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .not("scheduled_at", "is", null);
-        if (count && count > 0) updates.push("step_scheduled_campaign_completed");
+        if (count && count > 0) stepUpdates.step_scheduled_campaign_completed = true;
       }
 
-      // Apply all detected updates
-      for (const stepField of updates) {
-        await updateStep(stepField, true);
+      // Batch apply all detected updates in a single DB call
+      if (Object.keys(stepUpdates).length > 0) {
+        const currentSteps = {
+          step_prospect_clients_completed: progress.step_prospect_clients_completed,
+          step_first_campaign_completed: progress.step_first_campaign_completed,
+          step_scheduled_campaign_completed: progress.step_scheduled_campaign_completed,
+          step_explore_ai_crm_completed: progress.step_explore_ai_crm_completed,
+          ...stepUpdates,
+        };
+
+        const completedCount = Object.values(currentSteps).filter(Boolean).length;
+        const newPercentage = Math.round((completedCount / 4) * 100);
+
+        const dbUpdates: any = {
+          ...stepUpdates,
+          progress_percentage: newPercentage,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (completedCount >= 2 && !progress.activation_completed) {
+          dbUpdates.activation_completed = true;
+          dbUpdates.first_activation_at = new Date().toISOString();
+        }
+
+        await supabase
+          .from("user_activation_progress")
+          .update(dbUpdates)
+          .eq("user_id", user.id);
+
+        // Refetch to sync local state
+        fetchProgress();
       }
     };
 
