@@ -847,7 +847,6 @@ Deno.serve(async (req) => {
           
           const level = getWarmingLevel(advancedDay)
           const newWarmingStatus = getWarmingStatus(level)
-          const oldWarmingStatus = session.warming_status || 'cold'
           await supabase
             .from('warming_sessions')
             .update({
@@ -860,10 +859,8 @@ Deno.serve(async (req) => {
             })
             .eq('id', session.id)
           
-          // Only sync agent daily_limit when warming status actually changes
-          if (newWarmingStatus !== oldWarmingStatus) {
-            await syncAgentDailyLimit(supabase, session.whatsapp_number_id, newWarmingStatus)
-          }
+          // Keep agent daily_limit always in sync with warming status
+          await syncAgentDailyLimit(supabase, session.whatsapp_number_id, newWarmingStatus)
           
           session.messages_sent_today = 0
         } else if (session.last_reset_date !== today) {

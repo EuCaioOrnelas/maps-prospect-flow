@@ -21,11 +21,11 @@ const RUN_TIME_BUDGET_MS = getEnvNumber('AGENT_BUFFER_RUN_BUDGET_MS', 100000, 15
 const OPENAI_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_OPENAI_TIMEOUT_MS', 20000, 5000, 60000);
 const EVOLUTION_TIMEOUT_MS = getEnvNumber('AGENT_BUFFER_EVOLUTION_TIMEOUT_MS', 15000, 3000, 60000);
 
-// Response limits by warming status
+// Fallback limits by warming status (used only when agent.daily_limit is missing)
 const RESPONSE_LIMITS = {
-  cold: 20,      // Número frio: 20 leads respondidos
-  warm: 100,     // Número morno: 100 leads respondidos
-  hot: null,     // Número aquecido: sem limite
+  cold: 20,
+  warm: 100,
+  hot: null,
 };
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
@@ -194,28 +194,39 @@ async function countUniqueLeadsResponded(supabase: any, agentId: string): Promis
   return count || 0;
 }
 
-// Check if agent has reached response limit based on warming status
+// Check if agent has reached response limit
 async function hasReachedResponseLimit(
-  supabase: any, 
-  agentId: string, 
-  whatsappNumberId: string
-): Promise<{ reached: boolean; currentCount: number; limit: number | null; warmingStatus: string }> {
+  supabase: any,
+  agentId: string,
+  whatsappNumberId: string,
+  agentDailyLimit?: number | null
+): Promise<{ reached: boolean; currentCount: number; limit: number | null; warmingStatus: string; source: 'agent_daily_limit' | 'warming_status' }> {
   const warmingStatus = await getWarmingStatus(supabase, whatsappNumberId);
-  const limit = RESPONSE_LIMITS[warmingStatus];
+  const warmingLimit = RESPONSE_LIMITS[warmingStatus];
+
+  const hasConfiguredLimit = typeof agentDailyLimit === 'number' && Number.isFinite(agentDailyLimit) && agentDailyLimit > 0;
+  const configuredLimit = hasConfiguredLimit ? Math.floor(agentDailyLimit as number) : null;
+
+  // 999999+ is treated as unlimited in UI and processing
+  const limit = configuredLimit !== null
+    ? (configuredLimit >= 999999 ? null : configuredLimit)
+    : warmingLimit;
+
+  const source: 'agent_daily_limit' | 'warming_status' = configuredLimit !== null ? 'agent_daily_limit' : 'warming_status';
   const currentCount = await countUniqueLeadsResponded(supabase, agentId);
-  
-  console.log(`Agent ${agentId} - Warming: ${warmingStatus}, Limit: ${limit ?? 'unlimited'}, Current: ${currentCount}`);
-  
-  // No limit for hot numbers
+
+  console.log(`Agent ${agentId} - Source: ${source}, Warming: ${warmingStatus}, Limit: ${limit ?? 'unlimited'}, Current: ${currentCount}`);
+
   if (limit === null) {
-    return { reached: false, currentCount, limit, warmingStatus };
+    return { reached: false, currentCount, limit, warmingStatus, source };
   }
-  
-  return { 
-    reached: currentCount >= limit, 
-    currentCount, 
-    limit, 
-    warmingStatus 
+
+  return {
+    reached: currentCount >= limit,
+    currentCount,
+    limit,
+    warmingStatus,
+    source
   };
 }
 
@@ -436,9 +447,10 @@ serve(async (req) => {
         // Check response limits based on warming status (only for new leads)
         if (isFirstReplyToLead) {
           const limitCheck = await hasReachedResponseLimit(
-            supabase, 
-            agent.id, 
-            whatsappNumber.id
+            supabase,
+            agent.id,
+            whatsappNumber.id,
+            agent.daily_limit
           );
           
           if (limitCheck.reached) {
