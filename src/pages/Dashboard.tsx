@@ -85,7 +85,7 @@ const Dashboard = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsAppUpgradeModal, setShowWhatsAppUpgradeModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showHistoryWarning, setShowHistoryWarning] = useState(false);
+  
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
   const [bulkExporting, setBulkExporting] = useState(false);
   
