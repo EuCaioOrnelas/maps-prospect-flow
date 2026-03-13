@@ -2083,6 +2083,12 @@ Preciso falar com meu marido/esposa"
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
+                <span className="text-muted-foreground">Imagens/PDFs configurados</span>
+                <span className="font-medium">
+                  {mediaFiles.filter(m => m.url).length}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground flex items-center gap-1">
                   Limite de leads
                   <button
