@@ -600,7 +600,12 @@ EXEMPLOS DE BOM FORMATO:
 
 EXEMPLOS DE MAU FORMATO (NUNCA FAÇA ISSO):
 - "Trabalhamos com diversos serviços como consultoria, marketing, vendas..."
-- "O processo funciona assim: primeiro você..."`;
+- "O processo funciona assim: primeiro você..."
+
+REGRA CRÍTICA SOBRE ARQUIVOS E MÍDIA:
+- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida, INDEPENDENTE da política de preço.
+- A política de preço (ex: "nunca mencionar preço") se aplica apenas ao TEXTO que você escreve, NÃO aos arquivos pré-configurados pelo usuário.
+- Se há um PDF de orçamento configurado para enviar "quando o lead pedir preço/orçamento", envie-o usando o marcador [ENVIAR_PDF:...] junto com uma mensagem neutra como "Segue nosso material!" - sem mencionar valores no texto.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
