@@ -578,6 +578,14 @@ OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
 
+REGRAS DE CONTEXTO E HISTÓRICO:
+1. Você tem acesso ao HISTÓRICO COMPLETO de todas as conversas anteriores com este lead.
+2. USE o histórico para personalizar sua resposta - referencie assuntos, orçamentos, propostas ou informações já discutidas.
+3. Se o lead perguntar sobre algo que já foi discutido (preço, proposta, orçamento, etc.), consulte o histórico e responda com base nele.
+4. Se o lead voltar depois de dias/semanas, reconheça isso naturalmente (ex: "Que bom ter seu retorno!").
+5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
+6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
+
 REGRAS OBRIGATÓRIAS DE FORMATO:
 1. LIMITE ABSOLUTO: Responda com no máximo ${maxChars} caracteres no total
 2. CADA MENSAGEM DEVE SER COMPLETA - nunca termine com "...", frase incompleta ou assunto inacabado
