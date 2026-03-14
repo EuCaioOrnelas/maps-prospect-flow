@@ -346,7 +346,8 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [customLinks, setCustomLinks] = useState<{ name: string; url: string; when: string }[]>([]);
   
   // Media (imagens e PDFs)
-  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string; type: 'image' | 'pdf'; when: string }[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string; type: 'image' | 'pdf'; when: string; uploading?: boolean; fileName?: string }[]>([]);
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
   
   // Rules
   const [canSendAudio, setCanSendAudio] = useState(false);
