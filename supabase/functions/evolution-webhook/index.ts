@@ -1279,6 +1279,63 @@ REGRAS OBRIGATÓRIAS:
                   // Get lead name from contact or pushName
                   const leadName = data.pushName || 'Lead';
                   
+                  // If message is audio, transcribe it before forwarding to agent
+                  let agentMessage = content || `[${messageType}]`;
+                  let agentMessageType: string | undefined = undefined;
+                  
+                  if (messageType === 'audio' && mediaUrl && OPENAI_API_KEY) {
+                    try {
+                      console.log('Transcribing audio for AI agent...');
+                      
+                      // Download the audio file from storage
+                      const audioResponse = await fetch(mediaUrl);
+                      if (audioResponse.ok) {
+                        const audioBlob = await audioResponse.blob();
+                        
+                        // Send to OpenAI Whisper for transcription
+                        const formData = new FormData();
+                        formData.append('file', audioBlob, 'audio.ogg');
+                        formData.append('model', 'whisper-1');
+                        formData.append('language', 'pt');
+                        
+                        const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                          },
+                          body: formData,
+                        });
+                        
+                        if (whisperResponse.ok) {
+                          const whisperResult = await whisperResponse.json();
+                          const transcription = whisperResult.text?.trim();
+                          
+                          if (transcription) {
+                            agentMessage = transcription;
+                            agentMessageType = 'audio';
+                            console.log('Audio transcribed successfully:', transcription.substring(0, 100));
+                          } else {
+                            agentMessage = '[Áudio recebido - não foi possível transcrever]';
+                            agentMessageType = 'audio';
+                            console.log('Whisper returned empty transcription');
+                          }
+                        } else {
+                          console.error('Whisper API error:', whisperResponse.status, await whisperResponse.text());
+                          agentMessage = '[Áudio recebido - erro na transcrição]';
+                          agentMessageType = 'audio';
+                        }
+                      } else {
+                        console.error('Failed to download audio for transcription:', audioResponse.status);
+                        agentMessage = '[Áudio recebido]';
+                        agentMessageType = 'audio';
+                      }
+                    } catch (transcribeError) {
+                      console.error('Error transcribing audio:', transcribeError);
+                      agentMessage = '[Áudio recebido - erro na transcrição]';
+                      agentMessageType = 'audio';
+                    }
+                  }
+                  
                   // Forward to agent-webhook asynchronously (don't wait for response)
                   const agentWebhookUrl = `${SUPABASE_URL}/functions/v1/agent-webhook?agent_id=${activeAgent.id}&action=receive`;
                   
@@ -1290,8 +1347,9 @@ REGRAS OBRIGATÓRIAS:
                     },
                     body: JSON.stringify({
                       phone: normalizedPhone,
-                      message: content || `[${messageType}]`,
+                      message: agentMessage,
                       lead_name: leadName,
+                      message_type: agentMessageType,
                     }),
                   })
                   .then(res => {
