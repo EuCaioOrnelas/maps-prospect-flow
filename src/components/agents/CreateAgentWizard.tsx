@@ -346,7 +346,8 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgent
   const [customLinks, setCustomLinks] = useState<{ name: string; url: string; when: string }[]>([]);
   
   // Media (imagens e PDFs)
-  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string; type: 'image' | 'pdf'; when: string }[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string; type: 'image' | 'pdf'; when: string; uploading?: boolean; fileName?: string }[]>([]);
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
   
   // Rules
   const [canSendAudio, setCanSendAudio] = useState(false);
@@ -1115,8 +1116,70 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setCustomLinks(customLinks.filter((_, i) => i !== index));
   };
 
-  const addMediaFile = () => {
-    setMediaFiles([...mediaFiles, { name: '', url: '', type: 'image', when: '' }]);
+  const uploadMediaFile = async (file: File) => {
+    if (!user) return;
+    
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    
+    if (!isImage && !isPdf) {
+      toast({ title: "Formato inválido", description: "Envie apenas imagens (JPG, PNG, WebP) ou PDFs.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "O tamanho máximo é 10MB.", variant: "destructive" });
+      return;
+    }
+
+    const index = mediaFiles.length;
+    const newMedia = { 
+      name: file.name.replace(/\.[^/.]+$/, ''), 
+      url: '', 
+      type: (isImage ? 'image' : 'pdf') as 'image' | 'pdf', 
+      when: '', 
+      uploading: true, 
+      fileName: file.name 
+    };
+    setMediaFiles(prev => [...prev, newMedia]);
+
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('agent-media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('agent-media')
+        .getPublicUrl(filePath);
+
+      setMediaFiles(prev => prev.map((m, i) => 
+        i === index ? { ...m, url: urlData.publicUrl, uploading: false } : m
+      ));
+      
+      toast({ title: "Arquivo enviado!", description: file.name });
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+      setMediaFiles(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleMediaDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingMedia(false);
+    const files = Array.from(e.dataTransfer.files);
+    files.forEach(file => uploadMediaFile(file));
+  };
+
+  const handleMediaFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => uploadMediaFile(file));
+    e.target.value = '';
   };
 
   const updateMediaFile = (index: number, field: 'name' | 'url' | 'type' | 'when', value: string) => {
@@ -1810,63 +1873,82 @@ Preciso falar com meu marido/esposa"
 
             {/* Media Files Section */}
             <div className="border-t pt-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="flex items-center gap-1.5">
-                    📎 Imagens e PDFs
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Adicione URLs de imagens ou PDFs que o agente pode enviar. A IA decide quando enviar com base no treinamento.
-                  </p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" onClick={addMediaFile}>
-                  <Plus className="h-3 w-3 mr-1" /> Adicionar
-                </Button>
+              <div>
+                <Label className="flex items-center gap-1.5">
+                  📎 Imagens e PDFs
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Arraste e solte ou clique para enviar arquivos que o agente pode enviar. A IA decide quando enviar com base no treinamento.
+                </p>
               </div>
 
-              {mediaFiles.length === 0 && (
-                <div className="p-3 border border-dashed rounded-lg text-center">
+              {/* Drop zone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingMedia(true); }}
+                onDragLeave={() => setIsDraggingMedia(false)}
+                onDrop={handleMediaDrop}
+                onClick={() => document.getElementById('media-file-input')?.click()}
+                className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
+                  isDraggingMedia 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                }`}
+              >
+                <input
+                  id="media-file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                  multiple
+                  onChange={handleMediaFileInput}
+                  className="hidden"
+                />
+                <div className="flex flex-col items-center gap-1.5">
+                  <Plus className="h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm font-medium">
+                    {isDraggingMedia ? 'Solte os arquivos aqui' : 'Arraste arquivos ou clique para selecionar'}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Nenhum arquivo configurado. Clique em "Adicionar" para configurar imagens ou PDFs que o agente pode enviar automaticamente.
+                    JPG, PNG, WebP, GIF ou PDF • Máx. 10MB por arquivo
                   </p>
                 </div>
-              )}
+              </div>
 
+              {/* Uploaded files list */}
               {mediaFiles.map((media, index) => (
                 <div key={index} className="space-y-2 p-3 border rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      {media.type === 'image' ? '🖼️' : '📄'} Arquivo {index + 1}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      {media.uploading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : media.type === 'image' ? '🖼️' : '📄'}
+                      {media.fileName || `Arquivo ${index + 1}`}
                     </span>
                     <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeMediaFile(index)}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Nome (ex: Catálogo de Produtos)"
-                      value={media.name}
-                      onChange={(e) => updateMediaFile(index, 'name', e.target.value)}
-                    />
-                    <select
-                      value={media.type}
-                      onChange={(e) => updateMediaFile(index, 'type', e.target.value)}
-                      className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                    >
-                      <option value="image">🖼️ Imagem</option>
-                      <option value="pdf">📄 PDF</option>
-                    </select>
-                  </div>
-                  <Input
-                    placeholder="URL do arquivo (ex: https://seusite.com/catalogo.pdf)"
-                    value={media.url}
-                    onChange={(e) => updateMediaFile(index, 'url', e.target.value)}
-                  />
-                  <Input
-                    placeholder="Quando enviar? (ex: Quando o lead pedir catálogo ou tabela de preços)"
-                    value={media.when}
-                    onChange={(e) => updateMediaFile(index, 'when', e.target.value)}
-                  />
+                  
+                  {media.uploading ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Enviando...
+                    </div>
+                  ) : (
+                    <>
+                      {media.type === 'image' && media.url && (
+                        <img src={media.url} alt={media.name} className="h-16 w-auto rounded-md object-cover" />
+                      )}
+                      <Input
+                        placeholder="Nome descritivo (ex: Catálogo de Produtos)"
+                        value={media.name}
+                        onChange={(e) => updateMediaFile(index, 'name', e.target.value)}
+                      />
+                      <Input
+                        placeholder="Quando enviar? (ex: Quando o lead pedir catálogo ou tabela de preços)"
+                        value={media.when}
+                        onChange={(e) => updateMediaFile(index, 'when', e.target.value)}
+                      />
+                    </>
+                  )}
                 </div>
               ))}
 
