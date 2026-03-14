@@ -514,8 +514,14 @@ serve(async (req) => {
           : 999;
         
         const REOPEN_COOLDOWN_HOURS = 3;
-        
-        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS) {
+        const reachedMaxReplies = Boolean(agent?.max_replies && (existingConv.reply_count || 0) >= agent.max_replies);
+
+        // If conversation ended only because max_replies was reached, reopen immediately on new inbound message
+        if (reachedMaxReplies) {
+          console.log(`Conversation ${existingConv.id} reached max_replies (${existingConv.reply_count}/${agent.max_replies}), bypassing cooldown and reopening now`);
+        }
+
+        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS && !reachedMaxReplies) {
           // Too soon to reopen - but SAVE the message for context when it reopens
           console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), buffering message without processing`);
           
