@@ -2198,8 +2198,8 @@ Preciso falar com meu marido/esposa"
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
-                <span className="text-muted-foreground">Respostas</span>
-                <span className="font-medium">{maxReplies === null ? "Ilimitado" : maxReplies}</span>
+                <span className="text-muted-foreground">Rodadas por lead</span>
+                <span className="font-medium">{maxReplies === null ? "Ilimitado" : `${maxReplies} (reabre se lead mandar msg)`}</span>
               </div>
               <div className="flex justify-between p-2 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Horário</span>
