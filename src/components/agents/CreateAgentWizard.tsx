@@ -1116,8 +1116,70 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setCustomLinks(customLinks.filter((_, i) => i !== index));
   };
 
-  const addMediaFile = () => {
-    setMediaFiles([...mediaFiles, { name: '', url: '', type: 'image', when: '' }]);
+  const uploadMediaFile = async (file: File) => {
+    if (!user) return;
+    
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    
+    if (!isImage && !isPdf) {
+      toast({ title: "Formato inválido", description: "Envie apenas imagens (JPG, PNG, WebP) ou PDFs.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "O tamanho máximo é 10MB.", variant: "destructive" });
+      return;
+    }
+
+    const index = mediaFiles.length;
+    const newMedia = { 
+      name: file.name.replace(/\.[^/.]+$/, ''), 
+      url: '', 
+      type: (isImage ? 'image' : 'pdf') as 'image' | 'pdf', 
+      when: '', 
+      uploading: true, 
+      fileName: file.name 
+    };
+    setMediaFiles(prev => [...prev, newMedia]);
+
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('agent-media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('agent-media')
+        .getPublicUrl(filePath);
+
+      setMediaFiles(prev => prev.map((m, i) => 
+        i === index ? { ...m, url: urlData.publicUrl, uploading: false } : m
+      ));
+      
+      toast({ title: "Arquivo enviado!", description: file.name });
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+      setMediaFiles(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleMediaDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingMedia(false);
+    const files = Array.from(e.dataTransfer.files);
+    files.forEach(file => uploadMediaFile(file));
+  };
+
+  const handleMediaFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => uploadMediaFile(file));
+    e.target.value = '';
   };
 
   const updateMediaFile = (index: number, field: 'name' | 'url' | 'type' | 'when', value: string) => {
