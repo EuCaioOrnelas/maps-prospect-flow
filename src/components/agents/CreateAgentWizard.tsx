@@ -2009,6 +2009,38 @@ Preciso falar com meu marido/esposa"
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Rodadas de conversa por lead
+                <span className="relative group inline-block">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-popover border rounded-lg shadow-lg text-xs text-muted-foreground opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                    <span className="font-medium text-foreground block mb-1">O que são "rodadas"?</span>
+                    <span className="block">Cada vez que o agente responde a uma mensagem do lead, conta como 1 rodada.</span>
+                    <span className="block mt-1">Ao atingir o limite, o agente pausa. <strong>Se o lead enviar nova mensagem depois, a conversa reabre automaticamente</strong> com mais rodadas.</span>
+                    <span className="block mt-1 text-primary">💡 Evita loops infinitos sem bloquear leads interessados.</span>
+                  </span>
+                </span>
+              </Label>
+              <Select 
+                value={maxReplies === null ? 'unlimited' : String(maxReplies)} 
+                onValueChange={(v) => setMaxReplies(v === 'unlimited' ? null : parseInt(v))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 rodada</SelectItem>
+                  <SelectItem value="2">2 rodadas</SelectItem>
+                  <SelectItem value="3">3 rodadas</SelectItem>
+                  <SelectItem value="5">5 rodadas</SelectItem>
+                  <SelectItem value="10">10 rodadas</SelectItem>
+                  <SelectItem value="unlimited">Ilimitado</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Após atingir o limite, a conversa pausa. Se o lead enviar nova mensagem, a conversa reabre automaticamente.
+              </p>
+            </div>
+
 
             <div className="space-y-2">
               <Label>Horário de operação</Label>
