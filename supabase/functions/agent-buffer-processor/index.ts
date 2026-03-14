@@ -537,6 +537,7 @@ serve(async (req) => {
             conversation_id: conv.id,
             direction: 'received',
             content: msg.message_content,
+            message_type: (msg as any).message_type || null,
           });
         }
 
@@ -547,17 +548,22 @@ serve(async (req) => {
         if (openaiApiKey) {
           const maxChars = agent.max_response_chars || 300;
           
-          // Get conversation history
+          // Get FULL conversation history for complete context
           const { data: messageHistory } = await supabase
             .from('agent_message_logs')
-            .select('direction, content, created_at')
+            .select('direction, content, created_at, message_type')
             .eq('conversation_id', conv.id)
             .order('created_at', { ascending: true })
-            .limit(15);
+            .limit(50);
 
-          const conversationContext = messageHistory?.map((msg: any) => 
-            `${msg.direction === 'sent' ? 'Você' : 'Lead'}: ${msg.content}`
-          ).join('\n') || '';
+          const conversationContext = messageHistory?.map((msg: any) => {
+            const role = msg.direction === 'sent' ? 'Você' : 'Lead';
+            const typeLabel = msg.message_type === 'audio' ? ' [áudio transcrito]' : 
+                             msg.message_type === 'image' ? ' [imagem]' : 
+                             msg.message_type === 'document' ? ' [documento]' : '';
+            const timestamp = new Date(msg.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return `[${timestamp}] ${role}${typeLabel}: ${msg.content}`;
+          }).join('\n') || '';
 
           const stylePrompts: Record<string, string> = {
             formal: 'Responda de forma formal e profissional.',
@@ -577,6 +583,14 @@ serve(async (req) => {
 OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+
+REGRAS DE CONTEXTO E HISTÓRICO:
+1. Você tem acesso ao HISTÓRICO COMPLETO de todas as conversas anteriores com este lead.
+2. USE o histórico para personalizar sua resposta - referencie assuntos, orçamentos, propostas ou informações já discutidas.
+3. Se o lead perguntar sobre algo que já foi discutido (preço, proposta, orçamento, etc.), consulte o histórico e responda com base nele.
+4. Se o lead voltar depois de dias/semanas, reconheça isso naturalmente (ex: "Que bom ter seu retorno!").
+5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
+6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
 1. LIMITE ABSOLUTO: Responda com no máximo ${maxChars} caracteres no total

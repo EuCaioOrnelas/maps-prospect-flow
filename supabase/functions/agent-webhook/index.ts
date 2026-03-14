@@ -462,7 +462,7 @@ serve(async (req) => {
 
     // === ACTION: RECEIVE MESSAGE (buffer for delayed response) ===
     if (action === 'receive') {
-      const { phone, message, lead_name, message_id } = body;
+      const { phone, message, lead_name, message_id, message_type } = body;
 
       if (!phone || !message) {
         return new Response(
@@ -531,6 +531,7 @@ serve(async (req) => {
             conversation_id: existingConv.id,
             direction: 'received',
             content: message,
+            message_type: message_type || null,
           });
           
           // Update CRM with latest response
