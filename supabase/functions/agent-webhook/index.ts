@@ -531,6 +531,7 @@ serve(async (req) => {
             conversation_id: existingConv.id,
             direction: 'received',
             content: message,
+            message_type: message_type || null,
           });
           
           // Update CRM with latest response

@@ -537,6 +537,7 @@ serve(async (req) => {
             conversation_id: conv.id,
             direction: 'received',
             content: msg.message_content,
+            message_type: (msg as any).message_type || null,
           });
         }
 
