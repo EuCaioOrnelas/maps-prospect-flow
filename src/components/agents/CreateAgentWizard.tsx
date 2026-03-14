@@ -760,6 +760,12 @@ ${mediaItems.join('\n')}
 - Envie o texto da mensagem normalmente e adicione o marcador no ponto apropriado.
 - A IA deve decidir INTELIGENTEMENTE quando enviar: NÃO envie todos de uma vez, envie conforme o contexto da conversa.
 - Priorize enviar o arquivo mais relevante para o momento da conversa.
+
+⚠️ **REGRA CRÍTICA SOBRE ARQUIVOS vs POLÍTICA DE PREÇO:**
+- O envio de arquivos configurados é INDEPENDENTE da política de preço.
+- Se um arquivo foi configurado para ser enviado "quando o lead pedir orçamento/preço", você DEVE enviá-lo mesmo que a política de preço diga "NUNCA mencionar preço".
+- A política de preço se aplica a TEXTO escrito por você. Arquivos pré-configurados pelo usuário são materiais aprovados e devem ser enviados conforme a condição definida.
+- Exemplo: Se a política diz "nunca falar preço" mas há um PDF de orçamento configurado para "quando pedir preço", envie o PDF com uma mensagem como "Segue nosso material com mais detalhes!" sem mencionar valores no texto.
 `;
     }
 
