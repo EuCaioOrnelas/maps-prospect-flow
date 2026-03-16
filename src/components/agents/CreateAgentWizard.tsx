@@ -290,11 +290,12 @@ const STEPS = [
   { id: 'review', title: 'Revisão', icon: CheckCircle },
 ];
 
-export function CreateAgentWizard({ open, onOpenChange, onCreated }: CreateAgentWizardProps) {
+export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent }: CreateAgentWizardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { trackScoreEvent } = useUserScoreTracking();
   const navigate = useNavigate();
+  const isEditing = !!editingAgent;
   
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
