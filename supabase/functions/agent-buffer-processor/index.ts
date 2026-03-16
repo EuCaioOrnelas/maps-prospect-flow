@@ -694,21 +694,29 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             // Remove the marker from the actual message
             replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
 
+            // Check if agent is allowed to send media (from wizard_data)
+            const wizardData = agent.wizard_data as Record<string, any> | null;
+            const canSendMedia = wizardData?.canSendMedia === true;
+
             // Extract media markers before cleaning
             const mediaToSend: { type: 'image' | 'pdf'; url: string; caption: string }[] = [];
             
-            // Match [ENVIAR_IMAGEM:url|caption] pattern
-            const imageRegex = /\[ENVIAR_IMAGEM:([^|\]]+)\|?([^\]]*)\]/g;
-            let imageMatch;
-            while ((imageMatch = imageRegex.exec(replyContent)) !== null) {
-              mediaToSend.push({ type: 'image', url: imageMatch[1].trim(), caption: imageMatch[2]?.trim() || '' });
-            }
-            
-            // Match [ENVIAR_PDF:url|filename] pattern
-            const pdfRegex = /\[ENVIAR_PDF:([^|\]]+)\|?([^\]]*)\]/g;
-            let pdfMatch;
-            while ((pdfMatch = pdfRegex.exec(replyContent)) !== null) {
-              mediaToSend.push({ type: 'pdf', url: pdfMatch[1].trim(), caption: pdfMatch[2]?.trim() || 'documento.pdf' });
+            if (canSendMedia) {
+              // Match [ENVIAR_IMAGEM:url|caption] pattern
+              const imageRegex = /\[ENVIAR_IMAGEM:([^|\]]+)\|?([^\]]*)\]/g;
+              let imageMatch;
+              while ((imageMatch = imageRegex.exec(replyContent)) !== null) {
+                mediaToSend.push({ type: 'image', url: imageMatch[1].trim(), caption: imageMatch[2]?.trim() || '' });
+              }
+              
+              // Match [ENVIAR_PDF:url|filename] pattern
+              const pdfRegex = /\[ENVIAR_PDF:([^|\]]+)\|?([^\]]*)\]/g;
+              let pdfMatch;
+              while ((pdfMatch = pdfRegex.exec(replyContent)) !== null) {
+                mediaToSend.push({ type: 'pdf', url: pdfMatch[1].trim(), caption: pdfMatch[2]?.trim() || 'documento.pdf' });
+              }
+            } else {
+              console.log(`Media sending disabled for agent ${agent.id} — stripping any media markers`);
             }
             
             // Remove media markers from text
