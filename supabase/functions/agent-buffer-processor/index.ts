@@ -607,8 +607,14 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Allow more tokens since response will be split into multiple messages
-          const estimatedMaxTokens = Math.ceil((maxChars * 3) / 3);
+          // Read maxConsecutiveMessages from wizard_data (fallback to 3)
+          const wizardMaxConsecutive = parseInt(
+            (agent.wizard_data as Record<string, any>)?.maxConsecutiveMessages || '3', 10
+          );
+          const maxConsecutiveMessages = Math.min(Math.max(wizardMaxConsecutive, 1), 5);
+
+          // Allow enough tokens for multiple messages (maxChars * number of messages)
+          const estimatedMaxTokens = Math.ceil((maxChars * maxConsecutiveMessages) / 2.5);
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
