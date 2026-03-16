@@ -71,6 +71,7 @@ interface CreateAgentWizardProps {
     crm_stage_on_new_lead: string | null;
     crm_stage_on_reply: string | null;
     crm_stage_on_end: string | null;
+    crm_stage_on_unknown: string | null;
   } | null;
 }
 
