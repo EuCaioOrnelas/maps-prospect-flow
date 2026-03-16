@@ -4,19 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  Mail, Send, CheckCircle2, XCircle, Clock, Eye, MousePointerClick,
-  Search, Loader2, ChevronLeft, ChevronRight, RefreshCw,
-  CalendarIcon, User, AlertTriangle, ArrowLeft, Users
+  Mail,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Eye,
+  MousePointerClick,
+  Search,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  CalendarIcon,
+  User,
+  AlertTriangle,
+  ArrowLeft,
+  Users,
 } from "lucide-react";
 
 const PAGE_SIZE = 15;
+const AUTO_REFRESH_MS = 10000;
 
 type EmailLog = {
   id: string;
@@ -34,6 +48,7 @@ type EmailLog = {
   clicked_at: string | null;
   clicked_count: number;
   subject: string | null;
+  idempotency_key?: string | null;
 };
 
 type GroupedEmail = {
@@ -43,6 +58,7 @@ type GroupedEmail = {
   firstSentAt: string;
   latestSentAt: string;
   batchKey: string | null;
+  exactIdempotencyKey: string | null;
   total: number;
   sent: number;
   failed: number;
@@ -51,8 +67,6 @@ type GroupedEmail = {
   clicked: number;
   samplePayload: any;
 };
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function emailTypeLabel(type: string): string {
   const map: Record<string, string> = {
@@ -85,15 +99,75 @@ function emailTypeColor(type: string): string {
 }
 
 function statusBadge(status: string) {
-  if (status === "sent") return <Badge className="bg-primary/20 text-primary border-primary/30 gap-1 text-[10px]"><CheckCircle2 size={10} /> Enviado</Badge>;
-  if (status === "failed") return <Badge variant="destructive" className="gap-1 text-[10px]"><XCircle size={10} /> Falhou</Badge>;
-  return <Badge variant="secondary" className="gap-1 text-[10px]"><Clock size={10} /> Na fila</Badge>;
+  if (status === "sent") {
+    return (
+      <Badge className="bg-primary/20 text-primary border-primary/30 gap-1 text-[10px]">
+        <CheckCircle2 size={10} /> Enviado
+      </Badge>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <Badge variant="destructive" className="gap-1 text-[10px]">
+        <XCircle size={10} /> Falhou
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="secondary" className="gap-1 text-[10px]">
+      <Clock size={10} /> Na fila
+    </Badge>
+  );
 }
 
-// ── KPI Cards ─────────────────────────────────────────────────────────────────
+function resolveGrouping(log: EmailLog) {
+  const subject = log.subject || log.payload?.subject || "Sem assunto";
+  const idempotencyKey = log.idempotency_key || null;
 
-function KPICards({ total, sent, failed, opened, clicked, loading }: {
-  total: number; sent: number; failed: number; opened: number; clicked: number; loading: boolean;
+  if (log.email_type === "ADMIN_BROADCAST") {
+    const batchMatch = idempotencyKey?.match(/^broadcast_(\d+)_/);
+    if (batchMatch) {
+      return {
+        key: `${log.email_type}::batch::${batchMatch[1]}`,
+        subject,
+        batchKey: batchMatch[1],
+        exactIdempotencyKey: null,
+      };
+    }
+  }
+
+  if (idempotencyKey?.startsWith("test_")) {
+    return {
+      key: `${log.email_type}::test::${idempotencyKey}`,
+      subject,
+      batchKey: null,
+      exactIdempotencyKey: idempotencyKey,
+    };
+  }
+
+  return {
+    key: `${log.email_type}::subject::${subject}`,
+    subject,
+    batchKey: null,
+    exactIdempotencyKey: null,
+  };
+}
+
+function KPICards({
+  sent,
+  failed,
+  opened,
+  clicked,
+  loading,
+}: {
+  total: number;
+  sent: number;
+  failed: number;
+  opened: number;
+  clicked: number;
+  loading: boolean;
 }) {
   const openRate = sent > 0 ? (opened / sent) * 100 : 0;
   const clickRate = sent > 0 ? (clicked / sent) * 100 : 0;
@@ -117,7 +191,9 @@ function KPICards({ total, sent, failed, opened, clicked, loading }: {
             {loading ? "–" : c.value.toLocaleString("pt-BR")}
           </p>
           {c.sub && !loading && (
-            <p className="text-xs text-muted-foreground">Taxa: <span className="font-semibold text-foreground">{c.sub}</span></p>
+            <p className="text-xs text-muted-foreground">
+              Taxa: <span className="font-semibold text-foreground">{c.sub}</span>
+            </p>
           )}
         </div>
       ))}
@@ -125,9 +201,15 @@ function KPICards({ total, sent, failed, opened, clicked, loading }: {
   );
 }
 
-// ── Email Detail Dialog (per recipient) ───────────────────────────────────────
-
-function RecipientDetailDialog({ log, open, onClose }: { log: EmailLog | null; open: boolean; onClose: () => void }) {
+function RecipientDetailDialog({
+  log,
+  open,
+  onClose,
+}: {
+  log: EmailLog | null;
+  open: boolean;
+  onClose: () => void;
+}) {
   if (!log) return null;
 
   return (
@@ -147,7 +229,9 @@ function RecipientDetailDialog({ log, open, onClose }: { log: EmailLog | null; o
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground">Enviado em</span>
               <p className="text-xs text-foreground">
-                {log.sent_at ? new Date(log.sent_at).toLocaleString("pt-BR") : new Date(log.created_at).toLocaleString("pt-BR")}
+                {log.sent_at
+                  ? new Date(log.sent_at).toLocaleString("pt-BR")
+                  : new Date(log.created_at).toLocaleString("pt-BR")}
               </p>
             </div>
           </div>
@@ -157,7 +241,7 @@ function RecipientDetailDialog({ log, open, onClose }: { log: EmailLog | null; o
               <p className="text-xs font-medium text-destructive flex items-center gap-1.5 mb-1">
                 <AlertTriangle size={12} /> Erro
               </p>
-              <p className="text-xs text-destructive/80 font-mono">{log.error_message}</p>
+              <p className="text-xs text-destructive/80 font-mono break-all">{log.error_message}</p>
             </div>
           )}
 
@@ -191,8 +275,6 @@ function RecipientDetailDialog({ log, open, onClose }: { log: EmailLog | null; o
   );
 }
 
-// ── Email Detail View (drill-down) ────────────────────────────────────────────
-
 function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () => void }) {
   const [recipients, setRecipients] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,8 +293,10 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         .eq("email_type", group.email_type as any)
         .order("created_at", { ascending: false }) as any;
 
-      if (group.email_type === "ADMIN_BROADCAST" && group.batchKey) {
+      if (group.batchKey) {
         query = query.ilike("idempotency_key", `broadcast_${group.batchKey}_%`);
+      } else if (group.exactIdempotencyKey) {
+        query = query.eq("idempotency_key", group.exactIdempotencyKey);
       } else if (group.subject && group.subject !== "Sem assunto") {
         query = query.eq("subject", group.subject);
       }
@@ -234,47 +318,45 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
     }
   }, [group, searchRecipient, page]);
 
-  useEffect(() => { loadRecipients(); }, [loadRecipients]);
-  useEffect(() => { setPage(0); }, [searchRecipient]);
+  useEffect(() => {
+    loadRecipients();
+  }, [loadRecipients]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchRecipient]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const payload = group.samplePayload as any;
   const emailContent = payload?.content || payload?.title || "";
 
-  // Build a realistic email preview with brand layout
   const renderEmailPreview = () => {
     if (!emailContent) return null;
+
     return (
       <div className="space-y-2 pt-2 border-t border-border">
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
           <Eye size={11} /> Preview do E-mail
         </h4>
-        <div className="rounded-lg border overflow-hidden max-h-[450px] overflow-y-auto bg-[#f4f4f5]">
-          {/* Email mockup */}
+        <div className="rounded-lg border overflow-hidden max-h-[450px] overflow-y-auto bg-muted/30">
           <div className="max-w-[560px] mx-auto my-4">
-            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-              {/* Brand header */}
-              <div className="bg-[#3daa57] px-8 py-5 text-center">
+            <div className="bg-card rounded-xl overflow-hidden shadow-sm border border-border/50">
+              <div className="bg-primary px-8 py-5 text-center">
                 <div className="flex items-center justify-center gap-2">
                   <img src="/assets/logo_wiize_white.png" alt="Wiize" className="w-7 h-7 rounded-lg" />
-                  <span className="text-white text-lg font-bold">Wiize</span>
+                  <span className="text-primary-foreground text-lg font-bold">Wiize</span>
                 </div>
               </div>
-              {/* Email body */}
               <div
-                className="px-8 py-6 text-sm text-[#3f3f46] leading-relaxed prose prose-sm max-w-none
-                  [&_h1]:text-[#18181b] [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:mb-3
-                  [&_h2]:text-[#18181b] [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-3
-                  [&_p]:mb-2 [&_strong]:text-[#18181b]
-                  [&_a]:text-[#3daa57] [&_a]:font-semibold [&_a]:no-underline
-                  [&_code]:bg-[#f4f4f5] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                className="px-8 py-6 text-sm text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: emailContent }}
               />
-              {/* Brand footer */}
-              <div className="px-8 py-4 bg-[#fafafa] border-t border-[#e4e4e7] text-center">
-                <p className="text-[11px] text-[#a1a1aa] m-0">Este é um e-mail automático — por favor, não responda.</p>
-                <p className="text-[11px] text-[#a1a1aa] mt-1 m-0">
-                  Enviado por <strong>Wiize</strong> • <span className="text-[#3daa57]">wiize.com.br</span>
+              <div className="px-8 py-4 bg-muted/30 border-t border-border text-center">
+                <p className="text-[11px] text-muted-foreground m-0">
+                  Este é um e-mail automático — por favor, não responda.
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1 m-0">
+                  Enviado por <strong>Wiize</strong> • <span className="text-primary">wiize.com.br</span>
                 </p>
               </div>
             </div>
@@ -286,14 +368,12 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
 
   return (
     <div className="space-y-5">
-      {/* Header with back */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-muted-foreground hover:text-foreground">
           <ArrowLeft size={14} /> Voltar
         </Button>
       </div>
 
-      {/* Email info card */}
       <div className="rounded-xl border bg-card p-5 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5 flex-1">
@@ -308,7 +388,6 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
           </div>
         </div>
 
-        {/* Stats for this email */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             { label: "Destinatários", value: group.total, icon: Users, color: "text-foreground" },
@@ -327,11 +406,9 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
           ))}
         </div>
 
-        {/* Email preview */}
         {renderEmailPreview()}
       </div>
 
-      {/* Recipients search */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -347,7 +424,6 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         </p>
       </div>
 
-      {/* Recipients table */}
       <div className="rounded-xl border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -382,7 +458,10 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
                   <tr
                     key={r.id}
                     className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                    onClick={() => { setSelectedRecipient(r); setRecipientDetailOpen(true); }}
+                    onClick={() => {
+                      setSelectedRecipient(r);
+                      setRecipientDetailOpen(true);
+                    }}
                   >
                     <td className="p-3">
                       <p className="text-foreground font-medium text-sm truncate max-w-[220px]">{r.to_email}</p>
@@ -408,8 +487,11 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
                     </td>
                     <td className="p-3 text-muted-foreground text-xs whitespace-nowrap">
                       {new Date(r.created_at).toLocaleString("pt-BR", {
-                        day: "2-digit", month: "2-digit", year: "2-digit",
-                        hour: "2-digit", minute: "2-digit"
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </td>
                   </tr>
@@ -420,14 +502,13 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         </div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || loading} className="gap-1">
             <ChevronLeft size={14} /> Anterior
           </Button>
           <span className="text-xs text-muted-foreground">Página {page + 1} de {totalPages}</span>
-          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1 || loading} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1 || loading} className="gap-1">
             Próximo <ChevronRight size={14} />
           </Button>
         </div>
@@ -442,8 +523,6 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
-
 export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   const [allLogs, setAllLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(false);
@@ -452,21 +531,19 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [selectedGroup, setSelectedGroup] = useState<GroupedEmail | null>(null);
 
-  // Load all logs to group client-side
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("email_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("email_logs").select("*").order("created_at", { ascending: false }).limit(1000);
 
       if (typeFilter !== "all") {
         query = query.eq("email_type", typeFilter as any);
       }
+
       if (dateFrom) {
         query = query.gte("created_at", dateFrom.toISOString());
       }
+
       if (dateTo) {
         const endOfDay = new Date(dateTo);
         endOfDay.setHours(23, 59, 59, 999);
@@ -484,36 +561,51 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
     }
   }, [typeFilter, dateFrom, dateTo]);
 
-  useEffect(() => { loadLogs(); }, [loadLogs]);
-
-  // Auto-refresh when refreshKey changes (e.g. after broadcast sent)
   useEffect(() => {
-    if (refreshKey && refreshKey > 0) {
+    loadLogs();
+  }, [loadLogs]);
+
+  useEffect(() => {
+    if (refreshKey !== undefined) {
       loadLogs();
     }
-  }, [refreshKey]);
+  }, [refreshKey, loadLogs]);
 
-  // Group emails by type + subject
+  useEffect(() => {
+    const intervalId = window.setInterval(loadLogs, AUTO_REFRESH_MS);
+
+    const handleFocus = () => loadLogs();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadLogs();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [loadLogs]);
+
   const grouped: GroupedEmail[] = (() => {
     const map = new Map<string, GroupedEmail>();
 
     for (const log of allLogs) {
-      const subject = log.subject || (log.payload as any)?.subject || "Sem assunto";
-      const idempotencyKey = (log as any).idempotency_key as string | null | undefined;
-      const batchMatch = idempotencyKey?.match(/^broadcast_(\d+)_/);
-      const batchKey = log.email_type === "ADMIN_BROADCAST" ? (batchMatch?.[1] || null) : null;
-      const key = batchKey
-        ? `${log.email_type}::${subject}::${batchKey}`
-        : `${log.email_type}::${subject}`;
+      const grouping = resolveGrouping(log);
 
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
+      if (!map.has(grouping.key)) {
+        map.set(grouping.key, {
+          key: grouping.key,
           email_type: log.email_type,
-          subject,
+          subject: grouping.subject,
           firstSentAt: log.created_at,
           latestSentAt: log.created_at,
-          batchKey,
+          batchKey: grouping.batchKey,
+          exactIdempotencyKey: grouping.exactIdempotencyKey,
           total: 0,
           sent: 0,
           failed: 0,
@@ -524,7 +616,7 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
         });
       }
 
-      const g = map.get(key)!;
+      const g = map.get(grouping.key)!;
       g.total++;
       if (log.status === "sent") g.sent++;
       if (log.status === "failed") g.failed++;
@@ -541,13 +633,12 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
     );
   })();
 
-  // Global KPIs
   const globalKpis = {
     total: allLogs.length,
-    sent: allLogs.filter(l => l.status === "sent").length,
-    failed: allLogs.filter(l => l.status === "failed").length,
-    opened: allLogs.filter(l => (l.opened_count || 0) > 0).length,
-    clicked: allLogs.filter(l => (l.clicked_count || 0) > 0).length,
+    sent: allLogs.filter((l) => l.status === "sent").length,
+    failed: allLogs.filter((l) => l.status === "failed").length,
+    opened: allLogs.filter((l) => (l.opened_count || 0) > 0).length,
+    clicked: allLogs.filter((l) => (l.clicked_count || 0) > 0).length,
   };
 
   if (selectedGroup) {
@@ -556,10 +647,8 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
 
   return (
     <div className="space-y-5">
-      {/* Global KPIs */}
       <KPICards {...globalKpis} loading={loading} />
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <Popover>
           <PopoverTrigger asChild>
@@ -617,7 +706,10 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
         </Select>
 
         {(dateFrom || dateTo) && (
-          <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+          <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={() => {
+            setDateFrom(undefined);
+            setDateTo(undefined);
+          }}>
             Limpar datas
           </Button>
         )}
@@ -627,14 +719,12 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
         </Button>
       </div>
 
-      {/* Email count */}
       <p className="text-xs text-muted-foreground">
         {grouped.length > 0
           ? `${grouped.length} email(s) · ${allLogs.length.toLocaleString("pt-BR")} envio(s) no total`
           : "Nenhum email encontrado"}
       </p>
 
-      {/* Grouped email cards */}
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -672,7 +762,6 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
                     </h4>
                   </div>
 
-                  {/* Mini stats */}
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="text-center">
                       <p className="text-xs font-bold text-foreground">{g.total}</p>
