@@ -911,6 +911,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 // CRM Integration: Move lead based on conversation state and update timestamps
                 const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
                 const crmStageEnd = agent.crm_stage_on_end;
+                const crmStageUnknown = agent.crm_stage_on_unknown;
                 const nowISO = new Date().toISOString();
                 
                 // Build extras with message timestamps
@@ -922,7 +923,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   whatsapp_status: isConversationEnded ? 'replied' : 'in_conversation',
                 };
                 
-                if (isConversationEnded && crmStageEnd) {
+                if (agentDoesntKnow && crmStageUnknown) {
+                  // Agent doesn't know the answer — transfer to human
+                  console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
+                  crmExtras.whatsapp_status = 'in_conversation';
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
+                } else if (isConversationEnded && crmStageEnd) {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd, crmExtras);
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
