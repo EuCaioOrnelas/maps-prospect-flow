@@ -424,7 +424,7 @@ export default function AIAgents() {
                       key={agent.id} 
                       className={cn(
                         "border-border hover:border-primary/30 transition-all cursor-pointer group",
-                        isNumberDisconnected && "border-destructive/40 bg-destructive/5"
+                        hasNumberProblem && "border-destructive/40 bg-destructive/5"
                       )}
                       onClick={() => setSummaryAgent(agent)}
                     >
