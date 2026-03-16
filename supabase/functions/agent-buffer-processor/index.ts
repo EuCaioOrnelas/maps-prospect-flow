@@ -719,7 +719,7 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
               .trim();
 
             // Clean up incomplete endings (fallback safety)
-            replyContent = cleanIncompleteResponse(replyContent, maxChars);
+            // Light cleanup per chunk happens inside smartSplitMessage
 
             // Smart split into multiple WhatsApp messages by semantic blocks
             const maxConsecutive = 3; // safety cap
