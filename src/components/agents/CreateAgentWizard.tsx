@@ -1285,6 +1285,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       fileName: file.name 
     };
     setMediaFiles(prev => [...prev, newMedia]);
+    // Auto-enable media sending when files are added
+    setCanSendMedia(true);
 
     try {
       const ext = file.name.split('.').pop();
