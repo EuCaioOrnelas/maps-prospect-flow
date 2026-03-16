@@ -417,7 +417,8 @@ export default function AIAgents() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {agents.map((agent) => {
                     const isNumberDisconnected = agent.whatsapp_number_id ? disconnectedNumberIds.has(agent.whatsapp_number_id) : false;
-                    
+                    const isNumberDeleted = agent.whatsapp_number_id && !agent.whatsapp_number;
+                    const hasNumberProblem = isNumberDisconnected || isNumberDeleted;
                     return (
                     <Card 
                       key={agent.id} 
