@@ -252,6 +252,19 @@ export function AgentSummaryDialog({
             className="flex-1 h-9"
             onClick={() => {
               onOpenChange(false);
+              onEdit(agent);
+            }}
+          >
+            <Pencil className="h-4 w-4 mr-1.5" />
+            Editar
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9"
+            onClick={() => {
+              onOpenChange(false);
               onOpenDetails(agent);
             }}
           >
