@@ -137,6 +137,12 @@ export default function AIAgents() {
     numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
   } = useWhatsAppNumbers();
 
+  // Build a set of disconnected number IDs for quick lookup
+  const disconnectedNumberIds = useMemo(() => 
+    new Set(numbers.filter(n => !n.is_connected).map(n => n.id)),
+    [numbers]
+  );
+
   // Check if user has access to AI Agents (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
