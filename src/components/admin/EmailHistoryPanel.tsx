@@ -41,6 +41,8 @@ type GroupedEmail = {
   email_type: string;
   subject: string;
   firstSentAt: string;
+  latestSentAt: string;
+  batchKey: string | null;
   total: number;
   sent: number;
   failed: number;
