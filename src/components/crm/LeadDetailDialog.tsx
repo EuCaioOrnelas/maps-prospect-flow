@@ -46,7 +46,11 @@ import {
   TrendingUp,
   Settings2,
   X,
+  Pause,
+  Play,
+  Bot,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
