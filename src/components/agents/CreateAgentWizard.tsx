@@ -1185,7 +1185,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       case 'links':
         return true; // Optional step
       case 'rules':
-        return true;
+        return !!crmStageOnUnknown || pipelineStages.length === 0;
       case 'review':
         return true;
       default:
