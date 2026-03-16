@@ -416,7 +416,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       {/* Announcements Dialog */}
       <AnnouncementsDialog 
         open={announcementsOpen} 
-        onOpenChange={setAnnouncementsOpen} 
+        onOpenChange={setAnnouncementsOpen}
+        disconnectedNumbers={disconnectedNumberAlerts}
+        onDismissDisconnection={dismissDisconnectionAlert}
       />
     </div>
   );

@@ -2,28 +2,32 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface DisconnectedNumberAlert {
+  id: string;
+  name: string;
+  phone_number: string | null;
+  instance_name: string | null;
+}
+
 export const useUnreadAnnouncements = () => {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [disconnectedNumbers, setDisconnectedNumbers] = useState<DisconnectedNumberAlert[]>([]);
 
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
+      setDisconnectedNumbers([]);
       return;
     }
 
-    const fetchUnreadCount = async () => {
+    const fetchData = async () => {
       try {
         // Get active announcements
         const { data: announcements } = await supabase
           .from('announcements')
           .select('id')
           .gt('expires_at', new Date().toISOString());
-
-        if (!announcements || announcements.length === 0) {
-          setUnreadCount(0);
-          return;
-        }
 
         // Get user's read announcements
         const { data: reads } = await supabase
@@ -32,14 +36,30 @@ export const useUnreadAnnouncements = () => {
           .eq('user_id', user.id);
 
         const readIds = new Set(reads?.map(r => r.announcement_id) || []);
-        const unread = announcements.filter(a => !readIds.has(a.id)).length;
-        setUnreadCount(unread);
+        const unreadAnnouncements = announcements?.filter(a => !readIds.has(a.id)).length || 0;
+
+        // Get disconnected numbers
+        const { data: numbersData } = await supabase
+          .from('whatsapp_numbers')
+          .select('id, name, phone_number, instance_name, is_connected')
+          .eq('user_id', user.id)
+          .eq('is_connected', false);
+
+        const disconnected = numbersData || [];
+        setDisconnectedNumbers(disconnected);
+
+        // Check which disconnection alerts have been dismissed
+        const dismissedKey = `dismissed_disconnections_${user.id}`;
+        const dismissed = JSON.parse(localStorage.getItem(dismissedKey) || '[]') as string[];
+        const undismissedDisconnections = disconnected.filter(n => !dismissed.includes(n.id)).length;
+
+        setUnreadCount(unreadAnnouncements + undismissedDisconnections);
       } catch (error) {
         console.error('Error fetching unread announcements:', error);
       }
     };
 
-    fetchUnreadCount();
+    fetchData();
 
     // Subscribe to changes
     const channel = supabase
@@ -47,12 +67,17 @@ export const useUnreadAnnouncements = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'announcements' },
-        () => fetchUnreadCount()
+        () => fetchData()
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_announcement_reads', filter: `user_id=eq.${user.id}` },
-        () => fetchUnreadCount()
+        () => fetchData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'whatsapp_numbers', filter: `user_id=eq.${user.id}` },
+        () => fetchData()
       )
       .subscribe();
 
@@ -61,5 +86,36 @@ export const useUnreadAnnouncements = () => {
     };
   }, [user]);
 
-  return { unreadCount };
+  const dismissDisconnectionAlert = (numberId: string) => {
+    if (!user) return;
+    const dismissedKey = `dismissed_disconnections_${user.id}`;
+    const dismissed = JSON.parse(localStorage.getItem(dismissedKey) || '[]') as string[];
+    if (!dismissed.includes(numberId)) {
+      dismissed.push(numberId);
+      localStorage.setItem(dismissedKey, JSON.stringify(dismissed));
+    }
+    // Recalculate unread
+    const undismissedCount = disconnectedNumbers.filter(n => !dismissed.includes(n.id)).length;
+    setUnreadCount(prev => {
+      // Subtract 1 for the just-dismissed alert
+      return Math.max(0, prev - 1);
+    });
+  };
+
+  const clearReconnectedDismissals = () => {
+    if (!user) return;
+    const dismissedKey = `dismissed_disconnections_${user.id}`;
+    const dismissed = JSON.parse(localStorage.getItem(dismissedKey) || '[]') as string[];
+    // Only keep dismissals for numbers that are still disconnected
+    const stillDisconnectedIds = disconnectedNumbers.map(n => n.id);
+    const filtered = dismissed.filter((id: string) => stillDisconnectedIds.includes(id));
+    localStorage.setItem(dismissedKey, JSON.stringify(filtered));
+  };
+
+  // Clean up stale dismissals whenever disconnectedNumbers changes
+  useEffect(() => {
+    clearReconnectedDismissals();
+  }, [disconnectedNumbers]);
+
+  return { unreadCount, disconnectedNumbers, dismissDisconnectionAlert };
 };

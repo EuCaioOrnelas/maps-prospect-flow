@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell, CreditCard } from 'lucide-react';
+import { Check, Bell, CreditCard, WifiOff, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, differenceInDays } from 'date-fns';
@@ -18,16 +19,36 @@ interface Announcement {
   created_at: string;
 }
 
+interface DisconnectedNumberAlert {
+  id: string;
+  name: string;
+  phone_number: string | null;
+  instance_name: string | null;
+}
+
 interface AnnouncementsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  disconnectedNumbers?: DisconnectedNumberAlert[];
+  onDismissDisconnection?: (numberId: string) => void;
 }
 
-export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogProps) => {
+export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = [], onDismissDisconnection }: AnnouncementsDialogProps) => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [dismissedDisconnections, setDismissedDisconnections] = useState<Set<string>>(new Set());
+
+  // Load dismissed disconnections from localStorage
+  useEffect(() => {
+    if (user) {
+      const dismissedKey = `dismissed_disconnections_${user.id}`;
+      const dismissed = JSON.parse(localStorage.getItem(dismissedKey) || '[]') as string[];
+      setDismissedDisconnections(new Set(dismissed));
+    }
+  }, [user, open]);
 
   // Check for subscription renewal reminder
   const subscriptionRenewalInfo = (() => {
@@ -37,12 +58,8 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
     const renewalDate = new Date(profile.subscription_current_period_end);
     const daysUntilRenewal = differenceInDays(renewalDate, new Date());
     
-    // Show reminder if within 7 days of renewal
     if (daysUntilRenewal >= 0 && daysUntilRenewal <= 7) {
-      return {
-        daysRemaining: daysUntilRenewal,
-        renewalDate,
-      };
+      return { daysRemaining: daysUntilRenewal, renewalDate };
     }
     return null;
   })();
@@ -58,14 +75,12 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
     
     setLoading(true);
     try {
-      // Fetch active announcements
       const { data: announcementsData } = await supabase
         .from('announcements')
         .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      // Fetch user's read announcements
       const { data: readsData } = await supabase
         .from('user_announcement_reads')
         .select('announcement_id')
@@ -112,10 +127,22 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
+
+    // Also dismiss all disconnection alerts
+    undismissedDisconnections.forEach(n => {
+      handleDismissDisconnection(n.id);
+    });
   };
 
+  const handleDismissDisconnection = (numberId: string) => {
+    setDismissedDisconnections(prev => new Set([...prev, numberId]));
+    onDismissDisconnection?.(numberId);
+  };
+
+  const undismissedDisconnections = disconnectedNumbers.filter(n => !dismissedDisconnections.has(n.id));
   const unreadCount = announcements.filter(a => !readIds.has(a.id)).length;
   const hasRenewalReminder = subscriptionRenewalInfo !== null;
+  const totalUnread = unreadCount + undismissedDisconnections.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -126,7 +153,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
               <Bell className="w-5 h-5 text-primary" />
               Avisos
             </DialogTitle>
-            {unreadCount > 0 && (
+            {totalUnread > 0 && (
               <Button size="sm" variant="ghost" onClick={markAllAsRead}>
                 <Check className="w-4 h-4 mr-1" />
                 Marcar todas como lidas
@@ -136,6 +163,59 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6 py-4">
+          {/* Disconnected Numbers Alerts */}
+          {undismissedDisconnections.length > 0 && (
+            <div className="space-y-3 mb-4">
+              {undismissedDisconnections.map(num => (
+                <div key={num.id} className="p-4 rounded-lg border bg-destructive/5 border-destructive/20">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <WifiOff className="w-4 h-4 text-destructive" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-sm text-destructive">Número desconectado</h3>
+                        <Badge variant="secondary" className="bg-destructive/20 text-destructive text-[10px] shrink-0">
+                          Urgente
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        <strong className="text-foreground">{num.name}</strong>
+                        {num.phone_number && <span> ({num.phone_number})</span>} perdeu a conexão com a ferramenta.
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Campanhas, agentes e aquecimento não funcionarão até reconectar.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={() => {
+                            onOpenChange(false);
+                            navigate('/whatsapp');
+                          }}
+                        >
+                          <Smartphone className="w-3 h-3" />
+                          Reconectar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => handleDismissDisconnection(num.id)}
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Entendi
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Subscription Renewal Reminder */}
           {subscriptionRenewalInfo && (
             <div className="mb-4 p-4 rounded-lg border bg-amber-500/10 border-amber-500/30">
@@ -163,7 +243,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange }: AnnouncementsDialogP
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : announcements.length === 0 && !hasRenewalReminder ? (
+          ) : announcements.length === 0 && !hasRenewalReminder && undismissedDisconnections.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Nenhum aviso no momento</p>
