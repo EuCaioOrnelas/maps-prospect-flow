@@ -2444,6 +2444,15 @@ Preciso falar com meu marido/esposa"
               <span className="xs:hidden">Avançar</span>
               <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
             </Button>
+          ) : isEditing ? (
+            <Button onClick={() => handleCreate(false)} disabled={loading} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
+              {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : (
+                <>
+                  <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span>Salvar Alterações</span>
+                </>
+              )}
+            </Button>
           ) : (
             <div className="flex gap-1.5 sm:gap-2">
               <Button variant="outline" onClick={() => handleCreate(false)} disabled={loading} size="sm" className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3">
