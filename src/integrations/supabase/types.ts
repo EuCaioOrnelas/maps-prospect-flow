@@ -17,6 +17,8 @@ export type Database = {
       agent_conversations: {
         Row: {
           agent_id: string
+          agent_manually_paused: boolean | null
+          agent_paused_until: string | null
           created_at: string
           id: string
           initial_message_content: string | null
@@ -39,6 +41,8 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          agent_manually_paused?: boolean | null
+          agent_paused_until?: string | null
           created_at?: string
           id?: string
           initial_message_content?: string | null
@@ -61,6 +65,8 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          agent_manually_paused?: boolean | null
+          agent_paused_until?: string | null
           created_at?: string
           id?: string
           initial_message_content?: string | null
