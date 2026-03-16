@@ -211,7 +211,9 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         .eq("email_type", group.email_type as any)
         .order("created_at", { ascending: false }) as any;
 
-      if (group.subject && group.subject !== "Sem assunto") {
+      if (group.email_type === "ADMIN_BROADCAST" && group.batchKey) {
+        query = query.ilike("idempotency_key", `broadcast_${group.batchKey}_%`);
+      } else if (group.subject && group.subject !== "Sem assunto") {
         query = query.eq("subject", group.subject);
       }
 
