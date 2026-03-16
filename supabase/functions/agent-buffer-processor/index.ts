@@ -652,40 +652,42 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
-1. SEMPRE escreva sua resposta em MÚLTIPLOS PARÁGRAFOS separados por LINHA EM BRANCO (duas quebras de linha).
-   - Parágrafo 1: Saudação ou reação breve ao que o lead disse
-   - Parágrafo 2: Resposta principal / informação solicitada
-   - Parágrafo 3 (se necessário): Pergunta de follow-up ou CTA
-2. CADA PARÁGRAFO deve ter no MÁXIMO ${maxChars} caracteres. Cada parágrafo será enviado como mensagem SEPARADA no WhatsApp.
-3. NUNCA escreva tudo em um único bloco de texto. Mesmo respostas curtas DEVEM ter pelo menos 2 parágrafos separados por linha em branco.
-4. NUNCA termine um parágrafo com frase incompleta ou "..."
-5. Seja DIRETO e OBJETIVO - vá direto ao ponto
-6. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-7. Para WhatsApp: use frases curtas e naturais
-8. Finalize sempre com uma frase que faça sentido
+Sua resposta DEVE ser organizada em BLOCOS SEMÂNTICOS separados por LINHA EM BRANCO (duas quebras de linha \\n\\n).
+Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
 
-REGRA DE ENCERRAMENTO DE CONVERSA:
-- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta.
-- NÃO encerre prematuramente - apenas quando realmente fizer sentido.
-- O marcador [CONVERSA_ENCERRADA] NÃO será enviado ao lead, é apenas um sinal interno.
+ESTRUTURA OBRIGATÓRIA:
+- BLOCO 1 (Saudação): Cumprimento curto, reação ao que o lead disse. Máximo 80 caracteres.
+- BLOCO 2 (Resposta): Conteúdo principal, informação solicitada. Máximo ${maxChars} caracteres.
+- BLOCO 3 (CTA/Pergunta): Pergunta de follow-up, convite para próximo passo, ou pergunta para entender melhor o contexto. Máximo 100 caracteres.
 
-EXEMPLO CORRETO (parágrafos separados por linha em branco):
+REGRAS:
+1. SEMPRE separe os blocos com linha em branco. NUNCA escreva tudo junto.
+2. O bloco de resposta (bloco 2) é o único que pode ser mais longo, mas NUNCA ultrapasse ${maxChars} caracteres nele.
+3. Os blocos de saudação e CTA devem ser CURTOS e diretos.
+4. NUNCA termine um bloco com frase incompleta.
+5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
+6. Para WhatsApp: frases curtas e naturais.
+
+REGRA DE ENCERRAMENTO:
+- Quando os critérios de encerramento forem atendidos, adicione [CONVERSA_ENCERRADA] no final.
+- O marcador NÃO será enviado ao lead.
+
+EXEMPLO CORRETO:
 """
-Olá! Que bom falar com você! 😊
+Oi! Tudo bem? 😊
 
-Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal.
+Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês.
 
-Quer que eu envie mais detalhes?
-"""
-
-EXEMPLO INCORRETO (NUNCA faça - tudo junto em 1 bloco):
-"""
-Olá! Que bom falar com você! 😊 Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal. Quer que eu envie mais detalhes?
+Quer que eu te envie mais detalhes?
 """
 
-REGRA CRÍTICA SOBRE ARQUIVOS E MÍDIA:
-- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida.
-- Use os marcadores [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando apropriado.`;
+EXEMPLO INCORRETO (NUNCA faça):
+"""
+Oi! Tudo bem? 😊 Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês. Quer que eu te envie mais detalhes?
+"""
+
+REGRA SOBRE ARQUIVOS E MÍDIA:
+- Se há arquivos configurados com condições de envio, use [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando a condição for atendida.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
