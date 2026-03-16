@@ -20,6 +20,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/assinatura-email", "destination": "/assinatura-email.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
