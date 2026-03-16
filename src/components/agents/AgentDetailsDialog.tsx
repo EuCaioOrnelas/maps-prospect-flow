@@ -37,7 +37,9 @@ import {
   Copy,
   ArrowLeft,
   User,
-  Smartphone
+  Smartphone,
+  PauseCircle,
+  PlayCircle
 } from "lucide-react";
 
 // Templates de prompts prontos
