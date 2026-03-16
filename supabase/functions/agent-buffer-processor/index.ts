@@ -607,8 +607,8 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Calculate tokens based on chars (rough estimate: 1 token ≈ 4 chars in Portuguese)
-          const estimatedMaxTokens = Math.ceil(maxChars / 3);
+          // Allow more tokens since response will be split into multiple messages
+          const estimatedMaxTokens = Math.ceil((maxChars * 3) / 3);
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
