@@ -490,6 +490,19 @@ export default function AIAgents() {
         onOpenChange={(open) => !open && setSummaryAgent(null)}
         onToggleStatus={(agent) => toggleAgentStatus(agent)}
         onOpenDetails={(agent) => setSelectedAgent(agent)}
+        onEdit={async (agent) => {
+          // Fetch full agent data including wizard_data
+          const { data: fullAgent } = await supabase
+            .from('ai_agents')
+            .select('*')
+            .eq('id', agent.id)
+            .single();
+          if (fullAgent) {
+            setEditingAgentData(fullAgent);
+            setSummaryAgent(null);
+            setShowWizard(true);
+          }
+        }}
         onSaveTemplate={(agent) => {
           setSelectedAgent(agent);
           setTimeout(() => {
