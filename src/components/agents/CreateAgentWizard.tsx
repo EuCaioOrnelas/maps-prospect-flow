@@ -627,6 +627,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (editingAgent.crm_stage_on_new_lead) setCrmStageOnNewLead(editingAgent.crm_stage_on_new_lead);
         if (editingAgent.crm_stage_on_reply) setCrmStageOnReply(editingAgent.crm_stage_on_reply);
         if (editingAgent.crm_stage_on_end) setCrmStageOnEnd(editingAgent.crm_stage_on_end);
+        if (editingAgent.crm_stage_on_unknown) setCrmStageOnUnknown(editingAgent.crm_stage_on_unknown);
       }
       
       // Always load these from agent record
