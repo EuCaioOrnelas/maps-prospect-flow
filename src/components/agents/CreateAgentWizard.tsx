@@ -2402,7 +2402,7 @@ Preciso falar com meu marido/esposa"
         <DialogHeader className="p-3 sm:p-4 pb-2 border-b">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            Criar Agente de IA
+            {isEditing ? 'Editar Agente de IA' : 'Criar Agente de IA'}
           </DialogTitle>
           <DialogDescription className="text-[10px] sm:text-xs">
             Etapa {currentStep + 1} de {STEPS.length}: {STEPS[currentStep].title}
