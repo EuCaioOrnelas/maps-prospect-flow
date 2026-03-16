@@ -208,6 +208,8 @@ interface Conversation {
   reply_sent: boolean;
   reply_count: number | null;
   created_at: string;
+  agent_manually_paused: boolean | null;
+  agent_paused_until: string | null;
 }
 
 interface MessageLog {
