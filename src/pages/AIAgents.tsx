@@ -28,7 +28,9 @@ import {
   MessageCircle,
   FileText,
   Copy,
-  Info
+  Info,
+  WifiOff,
+  QrCode
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
