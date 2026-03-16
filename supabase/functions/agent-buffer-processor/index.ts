@@ -662,8 +662,8 @@ serve(async (req) => {
           );
           const maxConsecutiveMessages = Math.min(Math.max(wizardMaxConsecutive, 1), 5);
 
-          // Allow enough tokens for multiple messages (maxChars * number of messages)
-          const estimatedMaxTokens = Math.ceil((maxChars * maxConsecutiveMessages) / 2.5);
+          // Allow enough tokens for multiple messages - generous budget so AI writes full multi-paragraph responses
+          const estimatedMaxTokens = Math.max(400, Math.ceil((maxChars * maxConsecutiveMessages) / 2));
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
