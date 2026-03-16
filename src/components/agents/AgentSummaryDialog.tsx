@@ -20,6 +20,7 @@ import {
   Copy,
   Info,
   Phone,
+  Pencil,
 } from "lucide-react";
 
 interface AgentSummaryDialogProps {
