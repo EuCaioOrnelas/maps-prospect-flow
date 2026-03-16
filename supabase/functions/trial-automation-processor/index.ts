@@ -568,29 +568,50 @@ async function sendEmail(
   resendApiKey: string,
   options: { to: string; subject: string; html: string }
 ): Promise<boolean> {
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Wiize <no-reply@wiize.com.br>",
-        to: [options.to],
-        subject: options.subject,
-        html: options.html,
-      }),
-    });
+  const maxAttempts = 3;
 
-    const text = await response.text();
-    if (!response.ok) {
-      console.error("Resend error:", text);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Wiize <no-reply@wiize.com.br>",
+          to: [options.to],
+          subject: options.subject,
+          html: options.html,
+        }),
+      });
+
+      if (response.ok) {
+        await response.text();
+        return true;
+      }
+
+      const errText = await response.text();
+      const shouldRetry = (response.status === 429 || response.status >= 500) && attempt < maxAttempts;
+
+      if (shouldRetry) {
+        console.warn(`[trial-automation] Resend ${response.status}, retrying (${attempt}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 700 * attempt));
+        continue;
+      }
+
+      console.error(`[trial-automation] Resend error [${response.status}]:`, errText);
+      return false;
+    } catch (error) {
+      if (attempt < maxAttempts) {
+        console.warn(`[trial-automation] Network error, retrying (${attempt}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 700 * attempt));
+        continue;
+      }
+      console.error("[trial-automation] Send email error:", error);
       return false;
     }
-    return true;
-  } catch (error) {
-    console.error("Send email error:", error);
-    return false;
   }
+
+  return false;
 }

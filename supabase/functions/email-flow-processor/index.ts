@@ -567,35 +567,56 @@ ${body}
 }
 
 async function sendEmail(resendApiKey: string, options: { to: string; from: string; replyTo?: string; subject: string; html: string }): Promise<boolean> {
-  try {
-    const payload: any = {
-      from: options.from,
-      to: [options.to],
-      subject: options.subject,
-      html: options.html,
-    };
+  const maxAttempts = 3;
 
-    if (options.replyTo) {
-      payload.reply_to = options.replyTo;
-    }
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const payload: any = {
+        from: options.from,
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+      };
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      if (options.replyTo) {
+        payload.reply_to = options.replyTo;
+      }
 
-    if (!response.ok) {
-      console.error("Resend error:", await response.text());
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        await response.text();
+        return true;
+      }
+
+      const errText = await response.text();
+      const shouldRetry = (response.status === 429 || response.status >= 500) && attempt < maxAttempts;
+
+      if (shouldRetry) {
+        console.warn(`[email-flow] Resend ${response.status}, retrying (${attempt}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 700 * attempt));
+        continue;
+      }
+
+      console.error(`[email-flow] Resend error [${response.status}]:`, errText);
+      return false;
+    } catch (error) {
+      if (attempt < maxAttempts) {
+        console.warn(`[email-flow] Network error, retrying (${attempt}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 700 * attempt));
+        continue;
+      }
+      console.error("[email-flow] Send email error:", error);
       return false;
     }
-    await response.text(); // consume body
-    return true;
-  } catch (error) {
-    console.error("Send email error:", error);
-    return false;
   }
+
+  return false;
 }
