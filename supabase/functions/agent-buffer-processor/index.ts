@@ -668,7 +668,7 @@ ${combinedMessage}
 
 Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
 
-          console.log(`Generating AI response for conv ${conv.id}...`);
+          console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
           const aiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
