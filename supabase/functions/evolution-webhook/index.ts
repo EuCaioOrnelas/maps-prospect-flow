@@ -2205,6 +2205,7 @@ REGRAS OBRIGATÓRIAS:
             const apiCreds = await getApiCredentials(instanceName);
             
             // Attempt restart to recover the session
+            let restartSucceeded = false;
             try {
               const restartResp = await fetch(`${apiCreds.url}/instance/restart/${instanceName}`, {
                 method: 'PUT',
@@ -2212,16 +2213,86 @@ REGRAS OBRIGATÓRIAS:
               });
               console.log(`[auto-restart] Restart response for ${instanceName}: ${restartResp.status}`);
               
-              if (!restartResp.ok) {
+              if (restartResp.ok) {
+                restartSucceeded = true;
+              } else {
                 // If restart fails, try connect endpoint as fallback
                 const connectResp = await fetch(`${apiCreds.url}/instance/connect/${instanceName}`, {
                   method: 'GET',
                   headers: { 'apikey': apiCreds.apiKey },
                 });
                 console.log(`[auto-restart] Connect fallback for ${instanceName}: ${connectResp.status}`);
+                if (connectResp.ok) restartSucceeded = true;
               }
             } catch (restartErr) {
               console.log(`[auto-restart] Failed for ${instanceName}:`, restartErr);
+            }
+
+            // If auto-restart failed, mark as disconnected and notify user via email
+            if (!restartSucceeded) {
+              console.log(`❌ Auto-restart failed for ${instanceName} — marking disconnected and notifying user`);
+              
+              // Update DB
+              await supabase
+                .from('whatsapp_numbers')
+                .update({ is_connected: false, updated_at: new Date().toISOString() })
+                .eq('instance_name', instanceName);
+
+              // Lookup user for email notification
+              const { data: numRow } = await supabase
+                .from('whatsapp_numbers')
+                .select('user_id, name, phone_number')
+                .eq('instance_name', instanceName)
+                .maybeSingle();
+
+              if (numRow?.user_id) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('email, name')
+                  .eq('id', numRow.user_id)
+                  .maybeSingle();
+
+                if (profile?.email) {
+                  const displayNumber = numRow.name || numRow.phone_number || instanceName;
+                  const idempotencyKey = `number_disconnect_${instanceName}_${new Date().toISOString().slice(0, 13)}`;
+
+                  try {
+                    // Send disconnect notification email via send-email edge function
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        to: profile.email,
+                        subject: '⚠️ Número WhatsApp desconectado',
+                        html: `
+                          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #e74c3c;">⚠️ Número desconectado</h2>
+                            <p>Olá${profile.name ? ` ${profile.name}` : ''},</p>
+                            <p>O número <strong>${displayNumber}</strong> foi desconectado do WhatsApp.</p>
+                            <p>Isso pode afetar campanhas ativas e agentes de IA vinculados a este número.</p>
+                            <p><strong>O que fazer:</strong></p>
+                            <ul>
+                              <li>Acesse a plataforma e reconecte o número escaneando o QR Code</li>
+                              <li>Verifique se o celular está com internet ativa</li>
+                              <li>Campanhas pausadas serão retomadas automaticamente após a reconexão</li>
+                            </ul>
+                            <p style="margin-top: 20px;">
+                              <a href="https://maps-prospect-flow.lovable.app/whatsapp" 
+                                 style="background: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
+                                Reconectar agora
+                              </a>
+                            </p>
+                          </div>
+                        `,
+                        email_type: 'NUMBER_DISCONNECTED',
+                        user_id: numRow.user_id,
+                        idempotency_key: idempotencyKey,
+                      },
+                    });
+                    console.log(`📧 Disconnect notification sent to ${profile.email} for ${displayNumber}`);
+                  } catch (emailErr) {
+                    console.error(`[disconnect-email] Failed to send notification:`, emailErr);
+                  }
+                }
+              }
             }
           } else if (state === 'connecting') {
             // 'connecting' means the instance is trying to auto-reconnect
