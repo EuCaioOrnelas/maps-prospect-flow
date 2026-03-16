@@ -337,6 +337,7 @@ export const LeadDetailDialog = ({
       setHeaderNameValue(lead.contact_name || lead.company_name || '');
       loadNotesAndActivities();
       loadDeals();
+      loadAgentPauseStatus();
       setIsEditing(false);
       setIsEditingHeaderName(false);
       setActiveTab('info');
