@@ -607,8 +607,14 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Allow more tokens since response will be split into multiple messages
-          const estimatedMaxTokens = Math.ceil((maxChars * 3) / 3);
+          // Read maxConsecutiveMessages from wizard_data (fallback to 3)
+          const wizardMaxConsecutive = parseInt(
+            (agent.wizard_data as Record<string, any>)?.maxConsecutiveMessages || '3', 10
+          );
+          const maxConsecutiveMessages = Math.min(Math.max(wizardMaxConsecutive, 1), 5);
+
+          // Allow enough tokens for multiple messages (maxChars * number of messages)
+          const estimatedMaxTokens = Math.ceil((maxChars * maxConsecutiveMessages) / 2.5);
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
@@ -662,7 +668,7 @@ ${combinedMessage}
 
 Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
 
-          console.log(`Generating AI response for conv ${conv.id}...`);
+          console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
           const aiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -730,8 +736,7 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             // Light cleanup per chunk happens inside smartSplitMessage
 
             // Smart split into multiple WhatsApp messages by semantic blocks
-            const maxConsecutive = 3; // safety cap
-            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutive);
+            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutiveMessages);
             
             const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
