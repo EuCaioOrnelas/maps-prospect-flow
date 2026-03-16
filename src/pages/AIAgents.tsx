@@ -117,6 +117,7 @@ export default function AIAgents() {
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [editingAgentData, setEditingAgentData] = useState<any>(null);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
@@ -474,8 +475,12 @@ export default function AIAgents() {
       {/* Create Agent Wizard */}
       <CreateAgentWizard 
         open={showWizard} 
-        onOpenChange={setShowWizard}
+        onOpenChange={(open) => {
+          setShowWizard(open);
+          if (!open) setEditingAgentData(null);
+        }}
         onCreated={fetchAgents}
+        editingAgent={editingAgentData}
       />
 
       {/* Agent Summary Dialog */}
@@ -485,6 +490,19 @@ export default function AIAgents() {
         onOpenChange={(open) => !open && setSummaryAgent(null)}
         onToggleStatus={(agent) => toggleAgentStatus(agent)}
         onOpenDetails={(agent) => setSelectedAgent(agent)}
+        onEdit={async (agent) => {
+          // Fetch full agent data including wizard_data
+          const { data: fullAgent } = await supabase
+            .from('ai_agents')
+            .select('*')
+            .eq('id', agent.id)
+            .single();
+          if (fullAgent) {
+            setEditingAgentData(fullAgent);
+            setSummaryAgent(null);
+            setShowWizard(true);
+          }
+        }}
         onSaveTemplate={(agent) => {
           setSelectedAgent(agent);
           setTimeout(() => {

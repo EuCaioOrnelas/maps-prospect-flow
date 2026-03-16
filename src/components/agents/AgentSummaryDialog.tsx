@@ -20,6 +20,7 @@ import {
   Copy,
   Info,
   Phone,
+  Pencil,
 } from "lucide-react";
 
 interface AgentSummaryDialogProps {
@@ -45,6 +46,7 @@ interface AgentSummaryDialogProps {
   onOpenChange: (open: boolean) => void;
   onToggleStatus: (agent: any) => void;
   onOpenDetails: (agent: any) => void;
+  onEdit: (agent: any) => void;
   onSaveTemplate: (agent: any) => void;
   onDelete: (agent: any) => void;
   onShowLeadsLimitInfo: () => void;
@@ -90,6 +92,7 @@ export function AgentSummaryDialog({
   onOpenChange,
   onToggleStatus,
   onOpenDetails,
+  onEdit,
   onSaveTemplate,
   onDelete,
   onShowLeadsLimitInfo,
@@ -241,6 +244,19 @@ export function AgentSummaryDialog({
                 Ativar
               </>
             )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9"
+            onClick={() => {
+              onOpenChange(false);
+              onEdit(agent);
+            }}
+          >
+            <Pencil className="h-4 w-4 mr-1.5" />
+            Editar
           </Button>
 
           <Button

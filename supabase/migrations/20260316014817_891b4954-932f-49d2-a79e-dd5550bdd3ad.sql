@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_agents ADD COLUMN IF NOT EXISTS wizard_data jsonb DEFAULT NULL;
