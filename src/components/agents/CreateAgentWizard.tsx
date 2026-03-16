@@ -1007,6 +1007,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
       if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
       if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) setCrmStageOnUnknown("");
       
       toast({
         title: "⚠️ Colunas CRM inválidas",
