@@ -569,6 +569,7 @@ export default function AIAgents() {
         }}
         onDelete={(agent) => setAgentToDelete(agent)}
         onShowLeadsLimitInfo={() => setShowLeadsLimitInfo(true)}
+        disconnectedNumberIds={disconnectedNumberIds}
       />
 
       {/* Agent Details Dialog */}
