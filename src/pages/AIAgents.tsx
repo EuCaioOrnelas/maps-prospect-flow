@@ -117,6 +117,7 @@ export default function AIAgents() {
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [editingAgentData, setEditingAgentData] = useState<any>(null);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
