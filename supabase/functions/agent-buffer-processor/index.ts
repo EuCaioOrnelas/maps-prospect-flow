@@ -735,9 +735,18 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             if (shouldEndConversation) {
               console.log(`AI signaled conversation end for conv ${conv.id}`);
             }
+
+            // Detect "don't know" marker — agent couldn't answer the question
+            const agentDoesntKnow = replyContent.includes('[NAO_SEI]');
+            if (agentDoesntKnow) {
+              console.log(`AI signaled it doesn't know the answer for conv ${conv.id}`);
+            }
             
-            // Remove the marker from the actual message
-            replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
+            // Remove all markers from the actual message
+            replyContent = replyContent
+              .replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '')
+              .replace(/\s*\[NAO_SEI\]\s*/g, '')
+              .trim();
 
             // Check if agent is allowed to send media (from wizard_data)
             const wizardData = agent.wizard_data as Record<string, any> | null;
