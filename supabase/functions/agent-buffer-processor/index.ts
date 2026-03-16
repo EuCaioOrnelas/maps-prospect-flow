@@ -79,61 +79,52 @@ function calculateTypingDelay(messageLength: number): number {
   return Math.floor(typingTime + thinkingBuffer + readingTime);
 }
 
-// Semantically split a long response into natural WhatsApp messages
-// Splits by: double line breaks (explicit blocks), then by sentence boundaries
+// Split AI response by semantic blocks (paragraphs separated by \n\n).
+// The AI is instructed to write: Block 1 = greeting, Block 2 = response, Block 3 = CTA/question.
+// Each block becomes a separate WhatsApp message. Only the "response" block (longest one)
+// gets further split by sentences if it exceeds maxCharsPerChunk.
 function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
   const trimmed = text.trim();
   
-  // Only return single message if VERY short (less than 50% of chunk size) OR maxChunks is 1
-  if (maxChunks <= 1 || trimmed.length <= maxCharsPerChunk * 0.5) {
+  if (maxChunks <= 1 || trimmed.length <= 80) {
     return [trimmed];
   }
 
-  // Step 1: Split by double line breaks (the AI's own paragraph structure)
-  const rawBlocks = trimmed.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+  // Split by double line breaks — these are the AI's semantic blocks
+  const blocks = trimmed.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
 
-  // If AI gave us multiple paragraphs already, use them directly
-  if (rawBlocks.length >= 2) {
-    const chunks: string[] = [];
-    let current = '';
-
-    for (const block of rawBlocks) {
-      if (block.length > maxCharsPerChunk) {
-        if (current.trim()) {
-          chunks.push(current.trim());
-          current = '';
-        }
-        const sentenceChunks = splitBySentences(block, maxCharsPerChunk);
-        chunks.push(...sentenceChunks);
-      } else if (current.length + block.length + 2 > maxCharsPerChunk && current.length > 0) {
-        chunks.push(current.trim());
-        current = block;
-      } else {
-        current += (current ? '\n\n' : '') + block;
-      }
-    }
-
-    if (current.trim()) {
-      chunks.push(current.trim());
-    }
-
-    return enforceMaxChunks(chunks, maxChunks);
+  // If AI only wrote 1 block, try to split by sentences as fallback
+  if (blocks.length <= 1) {
+    return splitLongBlock(trimmed, maxCharsPerChunk, maxChunks);
   }
 
-  // Step 2: AI wrote one big block - force split by sentences
-  if (trimmed.length > maxCharsPerChunk * 0.6) {
-    const sentenceChunks = splitBySentences(trimmed, maxCharsPerChunk);
-    if (sentenceChunks.length >= 2) {
-      return enforceMaxChunks(sentenceChunks, maxChunks);
+  // Process each block: keep short blocks as-is, split long blocks by sentences
+  const finalMessages: string[] = [];
+  
+  for (const block of blocks) {
+    if (block.length <= maxCharsPerChunk) {
+      // Block fits — send as one message
+      finalMessages.push(block);
+    } else {
+      // Block too long (usually the "response" block) — split by sentences
+      const subChunks = splitLongBlock(block, maxCharsPerChunk, Math.max(2, maxChunks - blocks.length + 1));
+      finalMessages.push(...subChunks);
     }
   }
 
-  return [trimmed];
+  return enforceMaxChunks(finalMessages, maxChunks);
 }
 
-// Split text by sentence boundaries into chunks
-function splitBySentences(text: string, maxCharsPerChunk: number): string[] {
-  const sentences = text.split(/(?<=[.!?;:)])\s+/);
+// Split a long text block by sentence boundaries, respecting maxChars
+function splitLongBlock(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
+  // Try splitting by sentence endings
+  const sentences = text.split(/(?<=[.!?;)])\s+/);
+  
+  if (sentences.length <= 1) {
+    // Can't split by sentences, return as-is
+    return [text];
+  }
+
   const chunks: string[] = [];
   let current = '';
 
@@ -150,26 +141,7 @@ function splitBySentences(text: string, maxCharsPerChunk: number): string[] {
     chunks.push(current.trim());
   }
 
-  // Last resort: split by commas if single chunk is still too long
-  if (chunks.length === 1 && chunks[0].length > maxCharsPerChunk) {
-    const parts = chunks[0].split(/,\s+/);
-    if (parts.length >= 2) {
-      const commaChunks: string[] = [];
-      let cur = '';
-      for (const part of parts) {
-        if (cur.length + part.length + 2 > maxCharsPerChunk && cur.length > 0) {
-          commaChunks.push(cur.trim().replace(/,\s*$/, '.'));
-          cur = part;
-        } else {
-          cur += (cur ? ', ' : '') + part;
-        }
-      }
-      if (cur.trim()) commaChunks.push(cur.trim());
-      return commaChunks;
-    }
-  }
-
-  return chunks;
+  return enforceMaxChunks(chunks, maxChunks);
 }
 
 // Merge smallest adjacent chunks if we exceed maxChunks
@@ -680,40 +652,42 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
-1. SEMPRE escreva sua resposta em MÚLTIPLOS PARÁGRAFOS separados por LINHA EM BRANCO (duas quebras de linha).
-   - Parágrafo 1: Saudação ou reação breve ao que o lead disse
-   - Parágrafo 2: Resposta principal / informação solicitada
-   - Parágrafo 3 (se necessário): Pergunta de follow-up ou CTA
-2. CADA PARÁGRAFO deve ter no MÁXIMO ${maxChars} caracteres. Cada parágrafo será enviado como mensagem SEPARADA no WhatsApp.
-3. NUNCA escreva tudo em um único bloco de texto. Mesmo respostas curtas DEVEM ter pelo menos 2 parágrafos separados por linha em branco.
-4. NUNCA termine um parágrafo com frase incompleta ou "..."
-5. Seja DIRETO e OBJETIVO - vá direto ao ponto
-6. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-7. Para WhatsApp: use frases curtas e naturais
-8. Finalize sempre com uma frase que faça sentido
+Sua resposta DEVE ser organizada em BLOCOS SEMÂNTICOS separados por LINHA EM BRANCO (duas quebras de linha \\n\\n).
+Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
 
-REGRA DE ENCERRAMENTO DE CONVERSA:
-- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta.
-- NÃO encerre prematuramente - apenas quando realmente fizer sentido.
-- O marcador [CONVERSA_ENCERRADA] NÃO será enviado ao lead, é apenas um sinal interno.
+ESTRUTURA OBRIGATÓRIA:
+- BLOCO 1 (Saudação): Cumprimento curto, reação ao que o lead disse. Máximo 80 caracteres.
+- BLOCO 2 (Resposta): Conteúdo principal, informação solicitada. Máximo ${maxChars} caracteres.
+- BLOCO 3 (CTA/Pergunta): Pergunta de follow-up, convite para próximo passo, ou pergunta para entender melhor o contexto. Máximo 100 caracteres.
 
-EXEMPLO CORRETO (parágrafos separados por linha em branco):
+REGRAS:
+1. SEMPRE separe os blocos com linha em branco. NUNCA escreva tudo junto.
+2. O bloco de resposta (bloco 2) é o único que pode ser mais longo, mas NUNCA ultrapasse ${maxChars} caracteres nele.
+3. Os blocos de saudação e CTA devem ser CURTOS e diretos.
+4. NUNCA termine um bloco com frase incompleta.
+5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
+6. Para WhatsApp: frases curtas e naturais.
+
+REGRA DE ENCERRAMENTO:
+- Quando os critérios de encerramento forem atendidos, adicione [CONVERSA_ENCERRADA] no final.
+- O marcador NÃO será enviado ao lead.
+
+EXEMPLO CORRETO:
 """
-Olá! Que bom falar com você! 😊
+Oi! Tudo bem? 😊
 
-Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal.
+Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês.
 
-Quer que eu envie mais detalhes?
-"""
-
-EXEMPLO INCORRETO (NUNCA faça - tudo junto em 1 bloco):
-"""
-Olá! Que bom falar com você! 😊 Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal. Quer que eu envie mais detalhes?
+Quer que eu te envie mais detalhes?
 """
 
-REGRA CRÍTICA SOBRE ARQUIVOS E MÍDIA:
-- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida.
-- Use os marcadores [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando apropriado.`;
+EXEMPLO INCORRETO (NUNCA faça):
+"""
+Oi! Tudo bem? 😊 Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês. Quer que eu te envie mais detalhes?
+"""
+
+REGRA SOBRE ARQUIVOS E MÍDIA:
+- Se há arquivos configurados com condições de envio, use [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando a condição for atendida.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
@@ -721,7 +695,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-IMPORTANTE: Responda em MÚLTIPLOS PARÁGRAFOS separados por linha em branco. Cada parágrafo será enviado como mensagem separada no WhatsApp. NÃO escreva tudo em um único bloco.`;
+IMPORTANTE: Organize sua resposta em 3 blocos separados por linha em branco: 1) Saudação curta, 2) Resposta principal (máx ${maxChars} chars), 3) Pergunta ou CTA curto. Cada bloco será enviado como mensagem separada no WhatsApp.`;
 
           console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
