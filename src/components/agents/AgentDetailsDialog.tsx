@@ -919,7 +919,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          {getStatusIcon(conv.status)}
+                          {getStatusIcon(conv.status, conv)}
                           <div>
                             <p className="font-medium text-sm">
                               {conv.lead_name || conv.lead_phone}
@@ -935,11 +935,24 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            title={conv.agent_manually_paused ? "Retomar agente neste lead" : "Pausar agente neste lead"}
+                            onClick={(e) => toggleManualPause(conv, e)}
+                          >
+                            {conv.agent_manually_paused ? (
+                              <PlayCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <PauseCircle className="h-4 w-4 text-muted-foreground hover:text-orange-500" />
+                            )}
+                          </Button>
                           {(conv.reply_count || 0) > 0 && (
                             <span className="text-xs text-muted-foreground">{conv.reply_count} msgs</span>
                           )}
                           <Badge variant="outline" className="text-xs">
-                            {getStatusLabel(conv.status)}
+                            {getStatusLabel(conv.status, conv)}
                           </Badge>
                         </div>
                       </div>
