@@ -137,9 +137,8 @@ serve(async (req) => {
     // If primary API failed and we haven't tried the other one, try it
     if ((!statusResponse || !statusResponse.ok) && evoCredentials.tier === 'free') {
       // Maybe the instance is on paid API - try paid credentials
-      const paidRawUrl = Deno.env.get('EVOLUTION_API_URL_PAID');
+      const paidUrl = Deno.env.get('EVOLUTION_API_URL_PAID');
       const paidKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-      const paidUrl = paidRawUrl ? normalizeApiUrl(paidRawUrl) : null;
       if (paidUrl && paidKey) {
         console.log('Instance not found on free API, trying paid API as fallback...');
         try {
@@ -159,9 +158,8 @@ serve(async (req) => {
       }
     } else if ((!statusResponse || !statusResponse.ok) && evoCredentials.tier === 'paid') {
       // Maybe the instance is on free API - try free credentials
-      const freeRawUrl = Deno.env.get('EVOLUTION_API_URL');
+      const freeUrl = Deno.env.get('EVOLUTION_API_URL');
       const freeKey = Deno.env.get('EVOLUTION_API_KEY');
-      const freeUrl = freeRawUrl ? normalizeApiUrl(freeRawUrl) : null;
       if (freeUrl && freeKey) {
         console.log('Instance not found on paid API, trying free API as fallback...');
         try {

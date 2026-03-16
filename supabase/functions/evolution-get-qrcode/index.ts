@@ -94,9 +94,8 @@ serve(async (req) => {
         const foundOnPrimary = !!(probeData && (Array.isArray(probeData) ? probeData.length > 0 : probeData.instance));
 
         if (!foundOnPrimary) {
-          const altRawUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
+          const altUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
           const altKey = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_KEY') : Deno.env.get('EVOLUTION_API_KEY_PAID');
-          const altUrl = altRawUrl ? normalizeApiUrl(altRawUrl) : null;
 
           if (altUrl && altKey) {
             const altProbe = await fetch(`${altUrl}/instance/fetchInstances?instanceName=${instanceName}`, {
