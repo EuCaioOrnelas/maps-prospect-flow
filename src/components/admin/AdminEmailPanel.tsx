@@ -58,24 +58,33 @@ function BroadcastTab() {
       }
 
       let sent = 0, skipped = 0, errors = 0;
+      const batchTimestamp = Date.now();
 
-      for (const user of usersToSend) {
+      for (let i = 0; i < usersToSend.length; i++) {
+        const user = usersToSend[i];
         try {
+          // Add delay between sends to avoid Resend rate limiting (max ~2/sec)
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+          }
+
           const { error: sendErr } = await supabase.functions.invoke("send-email", {
             body: {
               user_id: user.id,
               email_type: "ADMIN_BROADCAST",
               payload: { subject, title: title || subject, content },
-              idempotency_key: `broadcast_${user.id}_${Date.now()}`,
+              idempotency_key: `broadcast_${user.id}_${batchTimestamp}`,
             },
           });
 
           if (sendErr) {
+            console.error(`[Broadcast] Error sending to ${user.email}:`, sendErr);
             errors++;
           } else {
             sent++;
           }
-        } catch {
+        } catch (err) {
+          console.error(`[Broadcast] Exception sending to ${user.email}:`, err);
           errors++;
         }
       }
