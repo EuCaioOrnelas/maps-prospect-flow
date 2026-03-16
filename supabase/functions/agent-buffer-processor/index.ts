@@ -736,8 +736,7 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             // Light cleanup per chunk happens inside smartSplitMessage
 
             // Smart split into multiple WhatsApp messages by semantic blocks
-            const maxConsecutive = 3; // safety cap
-            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutive);
+            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutiveMessages);
             
             const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
