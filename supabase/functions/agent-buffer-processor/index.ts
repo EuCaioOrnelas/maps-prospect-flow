@@ -651,39 +651,43 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
-REGRAS OBRIGATÓRIAS DE FORMATO:
-Sua resposta DEVE ser organizada em BLOCOS SEMÂNTICOS separados por LINHA EM BRANCO (duas quebras de linha \\n\\n).
+REGRAS DE FORMATO:
+Separe cada ASSUNTO ou IDEIA em um bloco diferente, usando LINHA EM BRANCO (duas quebras de linha) entre eles.
 Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
 
-ESTRUTURA OBRIGATÓRIA:
-- BLOCO 1 (Saudação): Cumprimento curto, reação ao que o lead disse. Máximo 80 caracteres.
-- BLOCO 2 (Resposta): Conteúdo principal, informação solicitada. Máximo ${maxChars} caracteres.
-- BLOCO 3 (CTA/Pergunta): Pergunta de follow-up, convite para próximo passo, ou pergunta para entender melhor o contexto. Máximo 100 caracteres.
+COMO SEPARAR EM BLOCOS:
+- Separe por mudança de assunto ou intenção: uma reação é um bloco, uma explicação é outro bloco, uma despedida é outro bloco.
+- Nenhum bloco deve ultrapassar ${maxChars} caracteres. Se um assunto for longo, quebre em 2 blocos por frases completas.
+- NÃO force uma estrutura fixa. Use quantos blocos fizerem sentido para a conversa (mínimo 2, máximo ${maxConsecutiveMessages}).
+- NUNCA escreva tudo em um único bloco de texto corrido.
 
-REGRAS:
-1. SEMPRE separe os blocos com linha em branco. NUNCA escreva tudo junto.
-2. O bloco de resposta (bloco 2) é o único que pode ser mais longo, mas NUNCA ultrapasse ${maxChars} caracteres nele.
-3. Os blocos de saudação e CTA devem ser CURTOS e diretos.
+REGRAS DE NATURALIDADE:
+1. Consulte o HISTÓRICO antes de responder. Se você ou o lead já disseram "bom dia" / "olá", NÃO cumprimente de novo. Vá direto ao assunto.
+2. NÃO force perguntas ou CTAs no final se não fizer sentido. Às vezes a resposta certa é "Qualquer coisa estou por aqui!" ou simplesmente a informação pedida.
+3. Seja natural como uma conversa real de WhatsApp. Pessoas não mandam saudação toda hora.
 4. NUNCA termine um bloco com frase incompleta.
 5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-6. Para WhatsApp: frases curtas e naturais.
 
 REGRA DE ENCERRAMENTO:
 - Quando os critérios de encerramento forem atendidos, adicione [CONVERSA_ENCERRADA] no final.
 - O marcador NÃO será enviado ao lead.
 
-EXEMPLO CORRETO:
+EXEMPLOS DE BOA SEPARAÇÃO:
+
+Primeira interação com o lead:
 """
 Oi! Tudo bem? 😊
 
-Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês.
+Nosso plano inclui reuniões semanais e suporte por WhatsApp. O investimento começa em R$99/mês.
 
-Quer que eu te envie mais detalhes?
+Posso te explicar melhor como funciona?
 """
 
-EXEMPLO INCORRETO (NUNCA faça):
+Conversa já em andamento (SEM saudação repetida):
 """
-Oi! Tudo bem? 😊 Nosso plano de consultoria inclui reuniões semanais, relatórios mensais e suporte direto por WhatsApp. O investimento é a partir de R$99/mês. Quer que eu te envie mais detalhes?
+O prazo de entrega costuma ser de 5 a 7 dias úteis após a confirmação do pedido.
+
+Se precisar de algo mais é só me chamar! 😊
 """
 
 REGRA SOBRE ARQUIVOS E MÍDIA:
@@ -695,7 +699,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-IMPORTANTE: Organize sua resposta em 3 blocos separados por linha em branco: 1) Saudação curta, 2) Resposta principal (máx ${maxChars} chars), 3) Pergunta ou CTA curto. Cada bloco será enviado como mensagem separada no WhatsApp.`;
+Responda de forma natural. Separe cada assunto em blocos com linha em branco entre eles. Cada bloco será uma mensagem separada no WhatsApp. Consulte o histórico para não repetir saudações ou informações já ditas.`;
 
           console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
