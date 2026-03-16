@@ -53,7 +53,7 @@ const EMAIL_TYPES = [
 type ScoreLevelFilter = "Frio" | "Baixo engajamento" | "Engajado" | "Alto valor" | "Pronto para upgrade";
 type SegmentFilter = "all" | "free_only" | "paid_only" | "start" | "growth" | "scale";
 
-function ComposeTab() {
+function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
@@ -210,43 +210,26 @@ function ComposeTab() {
         if (error) throw error;
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
       } else {
-        const { eligible: eligibleUsers, skipped } = await getFilteredUserIds();
+        // Send in background via edge function
+        toast({ title: "🚀 Broadcast iniciado em segundo plano", description: "Você pode sair da página. O envio continuará automaticamente." });
 
-        if (eligibleUsers.length === 0) {
-          toast({ title: "Nenhum usuário encontrado para os filtros selecionados" });
-          setSending(false);
-          return;
-        }
+        const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+          body: {
+            subject: subject.trim(),
+            content: htmlContent,
+            segment,
+            score_level: scoreLevel,
+          },
+        });
 
-        let sent = 0;
-        let failed = 0;
-        setProgress({ current: 0, total: eligibleUsers.length });
+        if (error) throw error;
 
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < eligibleUsers.length; i += BATCH_SIZE) {
-          const batch = eligibleUsers.slice(i, i + BATCH_SIZE);
-          const results = await Promise.allSettled(
-            batch.map((u) =>
-              supabase.functions.invoke("send-email", {
-                body: {
-                  user_id: u.id,
-                  email_type: "ADMIN_BROADCAST",
-                  payload: { subject: subject.trim(), content: htmlContent },
-                  idempotency_key: `broadcast_${Date.now()}_${u.id}`,
-                },
-              })
-            )
-          );
+        const res = data as { sent: number; failed: number; skipped: number };
+        setResult({ sent: res.sent, failed: res.failed, skipped: res.skipped });
+        toast({ title: `✅ Envio concluído: ${res.sent} enviados, ${res.skipped} opt-out, ${res.failed} erros` });
 
-          for (const r of results) {
-            if (r.status === "fulfilled" && !r.value.error) sent++;
-            else failed++;
-          }
-          setProgress({ current: Math.min(i + BATCH_SIZE, eligibleUsers.length), total: eligibleUsers.length });
-        }
-
-        setResult({ sent, failed, skipped });
-        toast({ title: `✅ Envio concluído: ${sent} enviados, ${skipped} opt-out, ${failed} erros` });
+        // Trigger history refresh
+        onBroadcastSent?.();
       }
     } catch (err: any) {
       toast({ title: "Erro no envio", description: err.message, variant: "destructive" });
@@ -544,6 +527,8 @@ function LogsTab() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 const AdminEmailTests = () => {
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
@@ -583,10 +568,10 @@ const AdminEmailTests = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="history" className="mt-4">
-                <EmailHistoryPanel />
+                <EmailHistoryPanel refreshKey={historyRefreshKey} />
               </TabsContent>
               <TabsContent value="compose" className="mt-4">
-                <ComposeTab />
+                <ComposeTab onBroadcastSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="test" className="mt-4">
                 <TestTab />

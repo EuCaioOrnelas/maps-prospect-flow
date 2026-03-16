@@ -440,7 +440,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function EmailHistoryPanel() {
+export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   const [allLogs, setAllLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -481,6 +481,13 @@ export function EmailHistoryPanel() {
   }, [typeFilter, dateFrom, dateTo]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
+
+  // Auto-refresh when refreshKey changes (e.g. after broadcast sent)
+  useEffect(() => {
+    if (refreshKey && refreshKey > 0) {
+      loadLogs();
+    }
+  }, [refreshKey]);
 
   // Group emails by type + subject
   const grouped: GroupedEmail[] = (() => {
