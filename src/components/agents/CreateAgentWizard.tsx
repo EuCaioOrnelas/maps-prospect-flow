@@ -564,6 +564,81 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     }
   }, [user, open]);
 
+  // Load editing agent data when opening in edit mode
+  useEffect(() => {
+    if (open && editingAgent) {
+      const wd = editingAgent.wizard_data;
+      if (wd) {
+        // Restore all wizard form fields from saved wizard_data
+        if (wd.name) setName(wd.name);
+        if (wd.selectedNumberId) setSelectedNumberId(wd.selectedNumberId);
+        if (wd.agentRole) setAgentRole(wd.agentRole);
+        if (wd.companyName) setCompanyName(wd.companyName);
+        if (wd.productName) setProductName(wd.productName);
+        if (wd.productDescription) setProductDescription(wd.productDescription);
+        if (wd.salesApproach) setSalesApproach(wd.salesApproach);
+        if (wd.leadAwareness) setLeadAwareness(wd.leadAwareness);
+        if (wd.messageReason) setMessageReason(wd.messageReason);
+        if (wd.consciousnessLevel) setConsciousnessLevel(wd.consciousnessLevel);
+        if (wd.openingStyle) setOpeningStyle(wd.openingStyle);
+        if (wd.firstMission) setFirstMission(wd.firstMission);
+        if (wd.infoToDiscover) setInfoToDiscover(wd.infoToDiscover);
+        if (wd.maxQuestions) setMaxQuestions(wd.maxQuestions);
+        if (wd.presentationStyle) setPresentationStyle(wd.presentationStyle);
+        if (wd.differentials) setDifferentials(wd.differentials);
+        if (wd.pricePolicy) setPricePolicy(wd.pricePolicy);
+        if (wd.howToTalkPrice) setHowToTalkPrice(wd.howToTalkPrice);
+        if (wd.commonObjections) setCommonObjections(wd.commonObjections);
+        if (wd.objectionPosture) setObjectionPosture(wd.objectionPosture);
+        if (wd.conversationGoal) setConversationGoal(wd.conversationGoal);
+        if (wd.endConditions?.length > 0) setEndConditions(wd.endConditions);
+        if (wd.closingStyle) setClosingStyle(wd.closingStyle);
+        if (wd.schedulingLink) setSchedulingLink(wd.schedulingLink);
+        if (wd.demoLink) setDemoLink(wd.demoLink);
+        if (wd.websiteLink) setWebsiteLink(wd.websiteLink);
+        if (wd.checkoutLink) setCheckoutLink(wd.checkoutLink);
+        if (wd.whatsappGroupLink) setWhatsappGroupLink(wd.whatsappGroupLink);
+        if (wd.customLinks) setCustomLinks(wd.customLinks);
+        if (wd.mediaFiles) setMediaFiles(wd.mediaFiles);
+        if (wd.canSendAudio !== undefined) setCanSendAudio(wd.canSendAudio);
+        if (wd.canSendLinks !== undefined) setCanSendLinks(wd.canSendLinks);
+        if (wd.canSendMedia !== undefined) setCanSendMedia(wd.canSendMedia);
+        if (wd.canSendLongMessages !== undefined) setCanSendLongMessages(wd.canSendLongMessages);
+        if (wd.maxChars) setMaxChars(wd.maxChars);
+        if (wd.maxConsecutiveMessages) setMaxConsecutiveMessages(wd.maxConsecutiveMessages);
+        if (wd.alwaysWaitResponse !== undefined) setAlwaysWaitResponse(wd.alwaysWaitResponse);
+        if (wd.wantToTalkPrice !== undefined) setWantToTalkPrice(wd.wantToTalkPrice);
+        if (wd.productPrice) setProductPrice(wd.productPrice);
+        if (wd.priceType) setPriceType(wd.priceType);
+        if (wd.paymentMethods) setPaymentMethods(wd.paymentMethods);
+        if (wd.customDifferentials) setCustomDifferentials(wd.customDifferentials);
+        if (wd.hasFreeTrial !== undefined) setHasFreeTrial(wd.hasFreeTrial);
+        if (wd.trialDetails) setTrialDetails(wd.trialDetails);
+        if (wd.crmStageOnNewLead) setCrmStageOnNewLead(wd.crmStageOnNewLead);
+        if (wd.crmStageOnReply) setCrmStageOnReply(wd.crmStageOnReply);
+        if (wd.crmStageOnEnd) setCrmStageOnEnd(wd.crmStageOnEnd);
+      } else {
+        // Fallback: load basic fields from agent record
+        setName(editingAgent.name || '');
+        if (editingAgent.whatsapp_number_id) setSelectedNumberId(editingAgent.whatsapp_number_id);
+        if (editingAgent.crm_stage_on_new_lead) setCrmStageOnNewLead(editingAgent.crm_stage_on_new_lead);
+        if (editingAgent.crm_stage_on_reply) setCrmStageOnReply(editingAgent.crm_stage_on_reply);
+        if (editingAgent.crm_stage_on_end) setCrmStageOnEnd(editingAgent.crm_stage_on_end);
+      }
+      
+      // Always load these from agent record
+      setOperatingHoursStart(editingAgent.operating_hours_start?.slice(0, 5) || '08:00');
+      setOperatingHoursEnd(editingAgent.operating_hours_end?.slice(0, 5) || '18:00');
+      setIsWarmed(editingAgent.is_warmed);
+      setMaxReplies(editingAgent.max_replies);
+      if (editingAgent.max_response_chars) setMaxChars(String(editingAgent.max_response_chars));
+      
+      // Skip to basics step when editing (skip start-choice and template)
+      setCreationMode('scratch');
+      setCurrentStep(2); // basics step
+    }
+  }, [open, editingAgent]);
+
   useEffect(() => {
     const selectedNumber = numbers.find(n => n.id === selectedNumberId);
     if (selectedNumber) {
