@@ -79,35 +79,67 @@ function calculateTypingDelay(messageLength: number): number {
   return Math.floor(typingTime + thinkingBuffer + readingTime);
 }
 
-// Split long response into readable paragraphs
-function formatResponseAsParagraphs(text: string): string[] {
-  // If text is short, return as single message
-  if (text.length <= 200) {
-    return [text];
+// Semantically split a long response into natural WhatsApp messages
+// Splits by: double line breaks (explicit blocks), then by greeting vs content, then by sentence boundaries
+function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
+  // If text fits in one message, return as-is
+  if (text.length <= maxCharsPerChunk) {
+    return [text.trim()];
   }
 
-  // Split by sentences or logical breaks
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  const paragraphs: string[] = [];
-  let currentParagraph = '';
+  // Step 1: Split by double line breaks (the AI's own paragraph structure)
+  const rawBlocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
 
-  for (const sentence of sentences) {
-    // If adding this sentence would make paragraph too long, start new paragraph
-    if (currentParagraph.length + sentence.length > 250 && currentParagraph.length > 0) {
-      paragraphs.push(currentParagraph.trim());
-      currentParagraph = sentence;
+  // Step 2: Merge small blocks together, split large blocks by sentences
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const block of rawBlocks) {
+    if (block.length > maxCharsPerChunk) {
+      // Block itself is too long, flush current and split block by sentences
+      if (current.trim()) {
+        chunks.push(current.trim());
+        current = '';
+      }
+      // Split by sentences
+      const sentences = block.split(/(?<=[.!?;])\s+/);
+      for (const sentence of sentences) {
+        if (current.length + sentence.length + 1 > maxCharsPerChunk && current.length > 0) {
+          chunks.push(current.trim());
+          current = sentence;
+        } else {
+          current += (current ? ' ' : '') + sentence;
+        }
+      }
+    } else if (current.length + block.length + 2 > maxCharsPerChunk && current.length > 0) {
+      // Adding this block would exceed limit, flush and start new chunk
+      chunks.push(current.trim());
+      current = block;
     } else {
-      currentParagraph += (currentParagraph ? ' ' : '') + sentence;
+      current += (current ? '\n\n' : '') + block;
     }
   }
 
-  // Add remaining text
-  if (currentParagraph.trim()) {
-    paragraphs.push(currentParagraph.trim());
+  if (current.trim()) {
+    chunks.push(current.trim());
   }
 
-  // Limit to max 3 messages to avoid spam
-  return paragraphs.slice(0, 3);
+  // Step 3: If still too many chunks, merge the smallest adjacent pairs
+  while (chunks.length > maxChunks) {
+    let minCombinedLen = Infinity;
+    let mergeIdx = 0;
+    for (let i = 0; i < chunks.length - 1; i++) {
+      const combined = chunks[i].length + chunks[i + 1].length;
+      if (combined < minCombinedLen) {
+        minCombinedLen = combined;
+        mergeIdx = i;
+      }
+    }
+    chunks[mergeIdx] = chunks[mergeIdx] + '\n\n' + chunks[mergeIdx + 1];
+    chunks.splice(mergeIdx + 1, 1);
+  }
+
+  return chunks.filter(c => c.trim().length > 0);
 }
 
 // Clean up incomplete responses - ensures responses don't end abruptly
@@ -575,8 +607,8 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Calculate tokens based on chars (rough estimate: 1 token ≈ 4 chars in Portuguese)
-          const estimatedMaxTokens = Math.ceil(maxChars / 3);
+          // Allow more tokens since response will be split into multiple messages
+          const estimatedMaxTokens = Math.ceil((maxChars * 3) / 3);
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
@@ -593,13 +625,14 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
-1. LIMITE ABSOLUTO: Responda com no máximo ${maxChars} caracteres no total
-2. CADA MENSAGEM DEVE SER COMPLETA - nunca termine com "...", frase incompleta ou assunto inacabado
-3. Se não couber tudo no limite, priorize a informação mais importante e dê uma resposta COMPLETA mais curta
+1. Escreva sua resposta SEPARANDO cada assunto em parágrafos distintos com linha em branco entre eles.
+   Exemplo: Saudação num parágrafo, resposta principal em outro, pergunta/CTA em outro.
+2. CADA PARÁGRAFO deve ter no máximo ${maxChars} caracteres. O sistema vai enviar cada bloco como mensagem separada no WhatsApp.
+3. NUNCA termine um parágrafo com frase incompleta ou "..."
 4. Seja DIRETO e OBJETIVO - vá direto ao ponto
 5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-6. Para WhatsApp: use frases curtas e parágrafos de 1-2 frases
-7. Finalize sempre com uma frase que faça sentido, mesmo que precise resumir
+6. Para WhatsApp: use frases curtas e naturais
+7. Finalize sempre com uma frase que faça sentido
 
 REGRA DE ENCERRAMENTO DE CONVERSA:
 - Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, ou quando o lead claramente não tem mais interesse, ou quando a conversa chegou a uma conclusão natural, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta (após o texto da mensagem).
@@ -627,7 +660,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracteres, resuma mas NUNCA deixe incompleto.`;
+Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
 
           console.log(`Generating AI response for conv ${conv.id}...`);
           
@@ -686,10 +719,11 @@ Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracte
               .trim();
 
             // Clean up incomplete endings (fallback safety)
-            replyContent = cleanIncompleteResponse(replyContent, maxChars);
+            // Light cleanup per chunk happens inside smartSplitMessage
 
-            // Split into multiple messages if needed
-            const messages = formatResponseAsParagraphs(replyContent);
+            // Smart split into multiple WhatsApp messages by semantic blocks
+            const maxConsecutive = 3; // safety cap
+            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutive);
             
             const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
