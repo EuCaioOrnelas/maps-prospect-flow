@@ -224,9 +224,9 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
         if (error) throw error;
 
-        const res = data as { sent: number; failed: number; skipped: number };
-        setResult({ sent: res.sent, failed: res.failed, skipped: res.skipped });
-        toast({ title: `✅ Envio concluído: ${res.sent} enviados, ${res.skipped} opt-out, ${res.failed} erros` });
+        const res = data as { queued: number; skipped: number; batch_id?: string };
+        setResult({ queued: res.queued || 0, skipped: res.skipped || 0, batchId: res.batch_id });
+        toast({ title: `✅ Envio em background iniciado: ${res.queued || 0} na fila, ${res.skipped || 0} opt-out` });
 
         // Trigger history refresh
         onBroadcastSent?.();
