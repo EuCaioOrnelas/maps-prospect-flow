@@ -55,6 +55,22 @@ interface CreateAgentWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  editingAgent?: {
+    id: string;
+    name: string;
+    whatsapp_number_id: string | null;
+    wizard_data?: Record<string, any> | null;
+    system_prompt?: string | null;
+    operating_hours_start: string;
+    operating_hours_end: string;
+    is_warmed: boolean;
+    max_replies: number | null;
+    max_response_chars: number | null;
+    communication_style: string;
+    crm_stage_on_new_lead: string | null;
+    crm_stage_on_reply: string | null;
+    crm_stage_on_end: string | null;
+  } | null;
 }
 
 interface WhatsAppNumber {
