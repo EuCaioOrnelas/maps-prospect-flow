@@ -79,44 +79,61 @@ function calculateTypingDelay(messageLength: number): number {
   return Math.floor(typingTime + thinkingBuffer + readingTime);
 }
 
-// Semantically split a long response into natural WhatsApp messages
-// Splits by: double line breaks (explicit blocks), then by greeting vs content, then by sentence boundaries
+// Split AI response by semantic blocks (paragraphs separated by \n\n).
+// The AI is instructed to write: Block 1 = greeting, Block 2 = response, Block 3 = CTA/question.
+// Each block becomes a separate WhatsApp message. Only the "response" block (longest one)
+// gets further split by sentences if it exceeds maxCharsPerChunk.
 function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
-  // If text fits in one message, return as-is
-  if (text.length <= maxCharsPerChunk) {
-    return [text.trim()];
+  const trimmed = text.trim();
+  
+  if (maxChunks <= 1 || trimmed.length <= 80) {
+    return [trimmed];
   }
 
-  // Step 1: Split by double line breaks (the AI's own paragraph structure)
-  const rawBlocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+  // Split by double line breaks — these are the AI's semantic blocks
+  const blocks = trimmed.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
 
-  // Step 2: Merge small blocks together, split large blocks by sentences
+  // If AI only wrote 1 block, try to split by sentences as fallback
+  if (blocks.length <= 1) {
+    return splitLongBlock(trimmed, maxCharsPerChunk, maxChunks);
+  }
+
+  // Process each block: keep short blocks as-is, split long blocks by sentences
+  const finalMessages: string[] = [];
+  
+  for (const block of blocks) {
+    if (block.length <= maxCharsPerChunk) {
+      // Block fits — send as one message
+      finalMessages.push(block);
+    } else {
+      // Block too long (usually the "response" block) — split by sentences
+      const subChunks = splitLongBlock(block, maxCharsPerChunk, Math.max(2, maxChunks - blocks.length + 1));
+      finalMessages.push(...subChunks);
+    }
+  }
+
+  return enforceMaxChunks(finalMessages, maxChunks);
+}
+
+// Split a long text block by sentence boundaries, respecting maxChars
+function splitLongBlock(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
+  // Try splitting by sentence endings
+  const sentences = text.split(/(?<=[.!?;)])\s+/);
+  
+  if (sentences.length <= 1) {
+    // Can't split by sentences, return as-is
+    return [text];
+  }
+
   const chunks: string[] = [];
   let current = '';
 
-  for (const block of rawBlocks) {
-    if (block.length > maxCharsPerChunk) {
-      // Block itself is too long, flush current and split block by sentences
-      if (current.trim()) {
-        chunks.push(current.trim());
-        current = '';
-      }
-      // Split by sentences
-      const sentences = block.split(/(?<=[.!?;])\s+/);
-      for (const sentence of sentences) {
-        if (current.length + sentence.length + 1 > maxCharsPerChunk && current.length > 0) {
-          chunks.push(current.trim());
-          current = sentence;
-        } else {
-          current += (current ? ' ' : '') + sentence;
-        }
-      }
-    } else if (current.length + block.length + 2 > maxCharsPerChunk && current.length > 0) {
-      // Adding this block would exceed limit, flush and start new chunk
+  for (const sentence of sentences) {
+    if (current.length + sentence.length + 1 > maxCharsPerChunk && current.length > 0) {
       chunks.push(current.trim());
-      current = block;
+      current = sentence;
     } else {
-      current += (current ? '\n\n' : '') + block;
+      current += (current ? ' ' : '') + sentence;
     }
   }
 
@@ -124,7 +141,11 @@ function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: nu
     chunks.push(current.trim());
   }
 
-  // Step 3: If still too many chunks, merge the smallest adjacent pairs
+  return enforceMaxChunks(chunks, maxChunks);
+}
+
+// Merge smallest adjacent chunks if we exceed maxChunks
+function enforceMaxChunks(chunks: string[], maxChunks: number): string[] {
   while (chunks.length > maxChunks) {
     let minCombinedLen = Infinity;
     let mergeIdx = 0;
@@ -607,8 +628,14 @@ serve(async (req) => {
           const agentGoal = agent.agent_objective || 'Responder de forma útil e encerrar a conversa.';
           const endCriteria = agent.end_conversation_criteria || 'Encerre após responder a dúvida principal.';
 
-          // Allow more tokens since response will be split into multiple messages
-          const estimatedMaxTokens = Math.ceil((maxChars * 3) / 3);
+          // Read maxConsecutiveMessages from wizard_data (fallback to 3)
+          const wizardMaxConsecutive = parseInt(
+            (agent.wizard_data as Record<string, any>)?.maxConsecutiveMessages || '3', 10
+          );
+          const maxConsecutiveMessages = Math.min(Math.max(wizardMaxConsecutive, 1), 5);
+
+          // Allow enough tokens for multiple messages - generous budget so AI writes full multi-paragraph responses
+          const estimatedMaxTokens = Math.max(400, Math.ceil((maxChars * maxConsecutiveMessages) / 2));
 
           const fullSystemPrompt = `${baseSystemPrompt}
 
@@ -624,35 +651,53 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
-REGRAS OBRIGATÓRIAS DE FORMATO:
-1. Escreva sua resposta SEPARANDO cada assunto em parágrafos distintos com linha em branco entre eles.
-   Exemplo: Saudação num parágrafo, resposta principal em outro, pergunta/CTA em outro.
-2. CADA PARÁGRAFO deve ter no máximo ${maxChars} caracteres. O sistema vai enviar cada bloco como mensagem separada no WhatsApp.
-3. NUNCA termine um parágrafo com frase incompleta ou "..."
-4. Seja DIRETO e OBJETIVO - vá direto ao ponto
+REGRA CRÍTICA — NUNCA INVENTE INFORMAÇÕES:
+Se você NÃO souber a resposta para algo que o lead perguntou, NÃO invente. Em vez disso:
+1. Diga algo natural como "Deixa eu verificar isso com o time e já te retorno" ou "Um momento, preciso confirmar essa informação" ou "Vou checar isso aqui e já te falo"
+2. Adicione o marcador [NAO_SEI] no final da sua resposta (não será enviado ao lead)
+3. Isso é OBRIGATÓRIO: nunca dê informações falsas, preços inventados, prazos que você não sabe, funcionalidades que não foram descritas, etc.
+
+REGRAS DE FORMATO:
+Separe cada ASSUNTO ou IDEIA em um bloco diferente, usando LINHA EM BRANCO (duas quebras de linha) entre eles.
+Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
+
+COMO SEPARAR EM BLOCOS:
+- Separe por mudança de assunto ou intenção: uma reação é um bloco, uma explicação é outro bloco, uma despedida é outro bloco.
+- Nenhum bloco deve ultrapassar ${maxChars} caracteres. Se um assunto for longo, quebre em 2 blocos por frases completas.
+- NÃO force uma estrutura fixa. Use quantos blocos fizerem sentido para a conversa (mínimo 2, máximo ${maxConsecutiveMessages}).
+- NUNCA escreva tudo em um único bloco de texto corrido.
+
+REGRAS DE NATURALIDADE:
+1. Consulte o HISTÓRICO antes de responder. Se você ou o lead já disseram "bom dia" / "olá", NÃO cumprimente de novo. Vá direto ao assunto.
+2. NÃO force perguntas ou CTAs no final se não fizer sentido. Às vezes a resposta certa é "Qualquer coisa estou por aqui!" ou simplesmente a informação pedida.
+3. Seja natural como uma conversa real de WhatsApp. Pessoas não mandam saudação toda hora.
+4. NUNCA termine um bloco com frase incompleta.
 5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-6. Para WhatsApp: use frases curtas e naturais
-7. Finalize sempre com uma frase que faça sentido
 
-REGRA DE ENCERRAMENTO DE CONVERSA:
-- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, ou quando o lead claramente não tem mais interesse, ou quando a conversa chegou a uma conclusão natural, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta (após o texto da mensagem).
-- Exemplos de quando encerrar: lead agradeceu e se despediu, lead disse que não tem interesse, objetivo foi atingido, lead pediu para parar de enviar mensagens.
-- NÃO encerre prematuramente - apenas quando realmente fizer sentido.
-- O marcador [CONVERSA_ENCERRADA] NÃO será enviado ao lead, é apenas um sinal interno.
+REGRA DE ENCERRAMENTO:
+- Quando os critérios de encerramento forem atendidos, adicione [CONVERSA_ENCERRADA] no final.
+- O marcador NÃO será enviado ao lead.
 
-EXEMPLOS DE BOM FORMATO:
-- "Ótimo! O serviço custa R$99/mês. Quer saber mais detalhes?"
-- "Claro! Trabalhamos com consultoria empresarial. Posso te explicar melhor?"
-- "Perfeito, fico à disposição! Qualquer dúvida é só chamar. 😊 [CONVERSA_ENCERRADA]"
+EXEMPLOS DE BOA SEPARAÇÃO:
 
-EXEMPLOS DE MAU FORMATO (NUNCA FAÇA ISSO):
-- "Trabalhamos com diversos serviços como consultoria, marketing, vendas..."
-- "O processo funciona assim: primeiro você..."
+Primeira interação com o lead:
+"""
+Oi! Tudo bem? 😊
 
-REGRA CRÍTICA SOBRE ARQUIVOS E MÍDIA:
-- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida, INDEPENDENTE da política de preço.
-- A política de preço (ex: "nunca mencionar preço") se aplica apenas ao TEXTO que você escreve, NÃO aos arquivos pré-configurados pelo usuário.
-- Se há um PDF de orçamento configurado para enviar "quando o lead pedir preço/orçamento", envie-o usando o marcador [ENVIAR_PDF:...] junto com uma mensagem neutra como "Segue nosso material!" - sem mencionar valores no texto.`;
+Nosso plano inclui reuniões semanais e suporte por WhatsApp. O investimento começa em R$99/mês.
+
+Posso te explicar melhor como funciona?
+"""
+
+Conversa já em andamento (SEM saudação repetida):
+"""
+O prazo de entrega costuma ser de 5 a 7 dias úteis após a confirmação do pedido.
+
+Se precisar de algo mais é só me chamar! 😊
+"""
+
+REGRA SOBRE ARQUIVOS E MÍDIA:
+- Se há arquivos configurados com condições de envio, use [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando a condição for atendida.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
@@ -660,9 +705,9 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
+Responda de forma natural. Separe cada assunto em blocos com linha em branco entre eles. Cada bloco será uma mensagem separada no WhatsApp. Consulte o histórico para não repetir saudações ou informações já ditas.`;
 
-          console.log(`Generating AI response for conv ${conv.id}...`);
+          console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
           const aiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -690,25 +735,42 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             if (shouldEndConversation) {
               console.log(`AI signaled conversation end for conv ${conv.id}`);
             }
+
+            // Detect "don't know" marker — agent couldn't answer the question
+            const agentDoesntKnow = replyContent.includes('[NAO_SEI]');
+            if (agentDoesntKnow) {
+              console.log(`AI signaled it doesn't know the answer for conv ${conv.id}`);
+            }
             
-            // Remove the marker from the actual message
-            replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
+            // Remove all markers from the actual message
+            replyContent = replyContent
+              .replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '')
+              .replace(/\s*\[NAO_SEI\]\s*/g, '')
+              .trim();
+
+            // Check if agent is allowed to send media (from wizard_data)
+            const wizardData = agent.wizard_data as Record<string, any> | null;
+            const canSendMedia = wizardData?.canSendMedia === true;
 
             // Extract media markers before cleaning
             const mediaToSend: { type: 'image' | 'pdf'; url: string; caption: string }[] = [];
             
-            // Match [ENVIAR_IMAGEM:url|caption] pattern
-            const imageRegex = /\[ENVIAR_IMAGEM:([^|\]]+)\|?([^\]]*)\]/g;
-            let imageMatch;
-            while ((imageMatch = imageRegex.exec(replyContent)) !== null) {
-              mediaToSend.push({ type: 'image', url: imageMatch[1].trim(), caption: imageMatch[2]?.trim() || '' });
-            }
-            
-            // Match [ENVIAR_PDF:url|filename] pattern
-            const pdfRegex = /\[ENVIAR_PDF:([^|\]]+)\|?([^\]]*)\]/g;
-            let pdfMatch;
-            while ((pdfMatch = pdfRegex.exec(replyContent)) !== null) {
-              mediaToSend.push({ type: 'pdf', url: pdfMatch[1].trim(), caption: pdfMatch[2]?.trim() || 'documento.pdf' });
+            if (canSendMedia) {
+              // Match [ENVIAR_IMAGEM:url|caption] pattern
+              const imageRegex = /\[ENVIAR_IMAGEM:([^|\]]+)\|?([^\]]*)\]/g;
+              let imageMatch;
+              while ((imageMatch = imageRegex.exec(replyContent)) !== null) {
+                mediaToSend.push({ type: 'image', url: imageMatch[1].trim(), caption: imageMatch[2]?.trim() || '' });
+              }
+              
+              // Match [ENVIAR_PDF:url|filename] pattern
+              const pdfRegex = /\[ENVIAR_PDF:([^|\]]+)\|?([^\]]*)\]/g;
+              let pdfMatch;
+              while ((pdfMatch = pdfRegex.exec(replyContent)) !== null) {
+                mediaToSend.push({ type: 'pdf', url: pdfMatch[1].trim(), caption: pdfMatch[2]?.trim() || 'documento.pdf' });
+              }
+            } else {
+              console.log(`Media sending disabled for agent ${agent.id} — stripping any media markers`);
             }
             
             // Remove media markers from text
@@ -722,8 +784,7 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             // Light cleanup per chunk happens inside smartSplitMessage
 
             // Smart split into multiple WhatsApp messages by semantic blocks
-            const maxConsecutive = 3; // safety cap
-            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutive);
+            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutiveMessages);
             
             const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
@@ -850,6 +911,7 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
                 // CRM Integration: Move lead based on conversation state and update timestamps
                 const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
                 const crmStageEnd = agent.crm_stage_on_end;
+                const crmStageUnknown = agent.crm_stage_on_unknown;
                 const nowISO = new Date().toISOString();
                 
                 // Build extras with message timestamps
@@ -861,7 +923,12 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
                   whatsapp_status: isConversationEnded ? 'replied' : 'in_conversation',
                 };
                 
-                if (isConversationEnded && crmStageEnd) {
+                if (agentDoesntKnow && crmStageUnknown) {
+                  // Agent doesn't know the answer — transfer to human
+                  console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
+                  crmExtras.whatsapp_status = 'in_conversation';
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
+                } else if (isConversationEnded && crmStageEnd) {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd, crmExtras);
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
