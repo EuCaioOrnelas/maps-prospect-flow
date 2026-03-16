@@ -417,23 +417,27 @@ export default function AIAgents() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {agents.map((agent) => {
                     const isNumberDisconnected = agent.whatsapp_number_id ? disconnectedNumberIds.has(agent.whatsapp_number_id) : false;
-                    
+                    const isNumberDeleted = agent.whatsapp_number_id && !agent.whatsapp_number;
+                    const hasNumberProblem = isNumberDisconnected || isNumberDeleted;
                     return (
                     <Card 
                       key={agent.id} 
                       className={cn(
                         "border-border hover:border-primary/30 transition-all cursor-pointer group",
-                        isNumberDisconnected && "border-destructive/40 bg-destructive/5"
+                        hasNumberProblem && "border-destructive/40 bg-destructive/5"
                       )}
                       onClick={() => setSummaryAgent(agent)}
                     >
                       <div className="p-3 space-y-3">
-                        {/* Disconnection Warning */}
-                        {isNumberDisconnected && (
+                        {/* Disconnection / Deleted Number Warning */}
+                        {hasNumberProblem && (
                           <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
                             <WifiOff className="h-3.5 w-3.5 text-destructive shrink-0" />
                             <p className="text-[11px] text-destructive font-medium leading-tight">
-                              Número desconectado — o agente não funcionará até reconectar
+                              {isNumberDeleted 
+                                ? "Número removido — vincule um novo número ao agente"
+                                : "Número desconectado — o agente não funcionará até reconectar"
+                              }
                             </p>
                           </div>
                         )}
@@ -441,10 +445,10 @@ export default function AIAgents() {
                         {/* Top: Icon + Name + Number */}
                         <div className="flex items-center gap-2.5">
                           <div className="relative shrink-0">
-                            <div className={cn("p-1.5 rounded-lg", isNumberDisconnected ? "bg-destructive/10" : "bg-primary/10")}>
-                              <Bot className={cn("h-4 w-4", isNumberDisconnected ? "text-destructive" : "text-primary")} />
+                            <div className={cn("p-1.5 rounded-lg", hasNumberProblem ? "bg-destructive/10" : "bg-primary/10")}>
+                              <Bot className={cn("h-4 w-4", hasNumberProblem ? "text-destructive" : "text-primary")} />
                             </div>
-                            {agent.status === 'active' && !isNumberDisconnected && (
+                            {agent.status === 'active' && !hasNumberProblem && (
                               <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 ring-2 ring-card"></span>
@@ -453,10 +457,12 @@ export default function AIAgents() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
-                            <p className={cn("text-xs truncate", isNumberDisconnected ? "text-destructive" : "text-muted-foreground")}>
-                              {agent.whatsapp_number 
-                                ? (agent.whatsapp_number.name || agent.whatsapp_number.phone_number)
-                                : 'Sem número vinculado'
+                            <p className={cn("text-xs truncate", hasNumberProblem ? "text-destructive" : "text-muted-foreground")}>
+                              {isNumberDeleted
+                                ? 'Número removido'
+                                : agent.whatsapp_number 
+                                  ? (agent.whatsapp_number.name || agent.whatsapp_number.phone_number)
+                                  : 'Sem número vinculado'
                               }
                             </p>
                           </div>
@@ -468,25 +474,32 @@ export default function AIAgents() {
                             <Clock className="h-3 w-3" />
                             {agent.operating_hours_start?.slice(0, 5)} – {agent.operating_hours_end?.slice(0, 5)}
                           </span>
-                          {isNumberDisconnected 
-                            ? <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">Desconectado</Badge>
+                          {hasNumberProblem 
+                            ? <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">
+                                {isNumberDeleted ? 'Sem número' : 'Desconectado'}
+                              </Badge>
                             : getStatusBadge(agent.status)
                           }
                         </div>
 
                         {/* Connect or Toggle button */}
-                        {isNumberDisconnected ? (
+                        {hasNumberProblem ? (
                           <Button
                             variant="destructive"
                             size="sm"
                             className="w-full h-7 text-xs gap-1.5"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate('/whatsapp');
+                              if (isNumberDeleted) {
+                                // Open edit wizard to reassign number
+                                setSummaryAgent(agent);
+                              } else {
+                                navigate('/whatsapp');
+                              }
                             }}
                           >
                             <QrCode className="h-3 w-3" />
-                            Reconectar Número
+                            {isNumberDeleted ? 'Vincular Número' : 'Reconectar Número'}
                           </Button>
                         ) : (
                           <Button
@@ -556,6 +569,7 @@ export default function AIAgents() {
         }}
         onDelete={(agent) => setAgentToDelete(agent)}
         onShowLeadsLimitInfo={() => setShowLeadsLimitInfo(true)}
+        disconnectedNumberIds={disconnectedNumberIds}
       />
 
       {/* Agent Details Dialog */}
