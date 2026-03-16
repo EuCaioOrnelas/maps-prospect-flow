@@ -45,6 +45,7 @@ interface AgentSummaryDialogProps {
   onOpenChange: (open: boolean) => void;
   onToggleStatus: (agent: any) => void;
   onOpenDetails: (agent: any) => void;
+  onEdit: (agent: any) => void;
   onSaveTemplate: (agent: any) => void;
   onDelete: (agent: any) => void;
   onShowLeadsLimitInfo: () => void;
