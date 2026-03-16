@@ -53,7 +53,7 @@ const EMAIL_TYPES = [
 type ScoreLevelFilter = "Frio" | "Baixo engajamento" | "Engajado" | "Alto valor" | "Pronto para upgrade";
 type SegmentFilter = "all" | "free_only" | "paid_only" | "start" | "growth" | "scale";
 
-function ComposeTab() {
+function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
