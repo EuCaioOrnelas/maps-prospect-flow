@@ -37,7 +37,9 @@ import {
   Copy,
   ArrowLeft,
   User,
-  Smartphone
+  Smartphone,
+  PauseCircle,
+  PlayCircle
 } from "lucide-react";
 
 // Templates de prompts prontos
@@ -206,6 +208,8 @@ interface Conversation {
   reply_sent: boolean;
   reply_count: number | null;
   created_at: string;
+  agent_manually_paused: boolean | null;
+  agent_paused_until: string | null;
 }
 
 interface MessageLog {
@@ -618,7 +622,11 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string, conv?: Conversation) => {
+    if (conv?.agent_manually_paused) return <PauseCircle className="h-4 w-4 text-orange-500" />;
+    if (conv?.agent_paused_until && new Date(conv.agent_paused_until) > new Date()) {
+      return <PauseCircle className="h-4 w-4 text-yellow-500" />;
+    }
     switch (status) {
       case 'completed':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
@@ -628,18 +636,60 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'ignored':
         return <XCircle className="h-4 w-4 text-muted-foreground" />;
+      case 'user_responded':
+        return <PauseCircle className="h-4 w-4 text-yellow-500" />;
       default:
         return <AlertTriangle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, conv?: Conversation) => {
+    if (conv?.agent_manually_paused) return 'Pausado (manual)';
+    if (conv?.agent_paused_until && new Date(conv.agent_paused_until) > new Date()) {
+      const hours = Math.ceil((new Date(conv.agent_paused_until).getTime() - Date.now()) / (1000 * 60 * 60));
+      return `Pausado (${hours}h)`;
+    }
     switch (status) {
       case 'completed': return 'Concluído';
       case 'responded': return 'Respondido';
       case 'awaiting_response': return 'Aguardando';
       case 'ignored': return 'Ignorado';
+      case 'user_responded': return 'Você respondeu';
       default: return 'Pendente';
+    }
+  };
+
+  const toggleManualPause = async (conv: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newPaused = !conv.agent_manually_paused;
+    
+    try {
+      const { error } = await supabase
+        .from('agent_conversations')
+        .update({ 
+          agent_manually_paused: newPaused,
+          // If unpausing, also clear auto-pause
+          ...(newPaused ? {} : { agent_paused_until: null, user_responded_date: null, user_responded_at: null }),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conv.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setConversations(prev => prev.map(c => 
+        c.id === conv.id ? { ...c, agent_manually_paused: newPaused, ...(newPaused ? {} : { agent_paused_until: null }) } : c
+      ));
+      
+      toast({
+        title: newPaused ? "Agente pausado neste lead" : "Agente retomado neste lead",
+        description: newPaused 
+          ? "O agente não responderá mais este lead até você despausar."
+          : "O agente voltará a responder este lead normalmente.",
+      });
+    } catch (error) {
+      console.error('Error toggling pause:', error);
+      toast({ title: "Erro ao alterar pausa", variant: "destructive" });
     }
   };
 
@@ -869,7 +919,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          {getStatusIcon(conv.status)}
+                          {getStatusIcon(conv.status, conv)}
                           <div>
                             <p className="font-medium text-sm">
                               {conv.lead_name || conv.lead_phone}
@@ -885,11 +935,24 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            title={conv.agent_manually_paused ? "Retomar agente neste lead" : "Pausar agente neste lead"}
+                            onClick={(e) => toggleManualPause(conv, e)}
+                          >
+                            {conv.agent_manually_paused ? (
+                              <PlayCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <PauseCircle className="h-4 w-4 text-muted-foreground hover:text-orange-500" />
+                            )}
+                          </Button>
                           {(conv.reply_count || 0) > 0 && (
                             <span className="text-xs text-muted-foreground">{conv.reply_count} msgs</span>
                           )}
                           <Badge variant="outline" className="text-xs">
-                            {getStatusLabel(conv.status)}
+                            {getStatusLabel(conv.status, conv)}
                           </Badge>
                         </div>
                       </div>

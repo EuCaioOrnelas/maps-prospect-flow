@@ -479,6 +479,18 @@ serve(async (req) => {
           continue;
         }
 
+        // Check manual pause
+        if (conv.agent_manually_paused) {
+          console.log(`Skipping conv ${conv.id}: manually paused`);
+          continue;
+        }
+
+        // Check time-based auto-pause
+        if (conv.agent_paused_until && new Date(conv.agent_paused_until) > new Date()) {
+          console.log(`Skipping conv ${conv.id}: auto-paused until ${conv.agent_paused_until}`);
+          continue;
+        }
+
         const whatsappNumber = agent.whatsapp_number;
         if (!whatsappNumber) {
           console.log(`Skipping conv ${conv.id}: no WhatsApp number configured`);
