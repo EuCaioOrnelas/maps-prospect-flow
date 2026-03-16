@@ -359,6 +359,55 @@ export const LeadDetailDialog = ({
     }
   };
 
+  const loadAgentPauseStatus = async () => {
+    if (!lead || !user) { setAgentPauseStatus(null); return; }
+    const phoneDigits = lead.phone.replace(/\D/g, '');
+    const { data: agents } = await supabase
+      .from('ai_agents')
+      .select('id')
+      .eq('user_id', user.id);
+    if (!agents?.length) { setAgentPauseStatus(null); return; }
+    const { data: convs } = await supabase
+      .from('agent_conversations')
+      .select('id, agent_manually_paused, agent_paused_until')
+      .in('agent_id', agents.map(a => a.id))
+      .eq('lead_phone', phoneDigits)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (convs?.length) {
+      const c = convs[0];
+      const isPausedUntil = c.agent_paused_until ? new Date(c.agent_paused_until) > new Date() : false;
+      setAgentPauseStatus({
+        conversationId: c.id,
+        isPaused: !!(c.agent_manually_paused || isPausedUntil),
+        pausedUntil: isPausedUntil ? c.agent_paused_until : null,
+      });
+    } else {
+      setAgentPauseStatus(null);
+    }
+  };
+
+  const toggleAgentPause = async () => {
+    if (!agentPauseStatus) return;
+    setIsTogglingPause(true);
+    try {
+      const newPaused = !agentPauseStatus.isPaused;
+      await supabase
+        .from('agent_conversations')
+        .update({
+          agent_manually_paused: newPaused,
+          agent_paused_until: null,
+        })
+        .eq('id', agentPauseStatus.conversationId);
+      setAgentPauseStatus(prev => prev ? { ...prev, isPaused: newPaused, pausedUntil: null } : null);
+      toast.success(newPaused ? 'Agente IA pausado para este lead' : 'Agente IA retomado para este lead');
+    } catch {
+      toast.error('Erro ao alterar pausa do agente');
+    } finally {
+      setIsTogglingPause(false);
+    }
+  };
+
   const loadNotesAndActivities = async () => {
     if (!lead) return;
     const [notesData, activitiesData] = await Promise.all([
