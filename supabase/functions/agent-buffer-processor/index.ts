@@ -79,35 +79,67 @@ function calculateTypingDelay(messageLength: number): number {
   return Math.floor(typingTime + thinkingBuffer + readingTime);
 }
 
-// Split long response into readable paragraphs
-function formatResponseAsParagraphs(text: string): string[] {
-  // If text is short, return as single message
-  if (text.length <= 200) {
-    return [text];
+// Semantically split a long response into natural WhatsApp messages
+// Splits by: double line breaks (explicit blocks), then by greeting vs content, then by sentence boundaries
+function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
+  // If text fits in one message, return as-is
+  if (text.length <= maxCharsPerChunk) {
+    return [text.trim()];
   }
 
-  // Split by sentences or logical breaks
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  const paragraphs: string[] = [];
-  let currentParagraph = '';
+  // Step 1: Split by double line breaks (the AI's own paragraph structure)
+  const rawBlocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
 
-  for (const sentence of sentences) {
-    // If adding this sentence would make paragraph too long, start new paragraph
-    if (currentParagraph.length + sentence.length > 250 && currentParagraph.length > 0) {
-      paragraphs.push(currentParagraph.trim());
-      currentParagraph = sentence;
+  // Step 2: Merge small blocks together, split large blocks by sentences
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const block of rawBlocks) {
+    if (block.length > maxCharsPerChunk) {
+      // Block itself is too long, flush current and split block by sentences
+      if (current.trim()) {
+        chunks.push(current.trim());
+        current = '';
+      }
+      // Split by sentences
+      const sentences = block.split(/(?<=[.!?;])\s+/);
+      for (const sentence of sentences) {
+        if (current.length + sentence.length + 1 > maxCharsPerChunk && current.length > 0) {
+          chunks.push(current.trim());
+          current = sentence;
+        } else {
+          current += (current ? ' ' : '') + sentence;
+        }
+      }
+    } else if (current.length + block.length + 2 > maxCharsPerChunk && current.length > 0) {
+      // Adding this block would exceed limit, flush and start new chunk
+      chunks.push(current.trim());
+      current = block;
     } else {
-      currentParagraph += (currentParagraph ? ' ' : '') + sentence;
+      current += (current ? '\n\n' : '') + block;
     }
   }
 
-  // Add remaining text
-  if (currentParagraph.trim()) {
-    paragraphs.push(currentParagraph.trim());
+  if (current.trim()) {
+    chunks.push(current.trim());
   }
 
-  // Limit to max 3 messages to avoid spam
-  return paragraphs.slice(0, 3);
+  // Step 3: If still too many chunks, merge the smallest adjacent pairs
+  while (chunks.length > maxChunks) {
+    let minCombinedLen = Infinity;
+    let mergeIdx = 0;
+    for (let i = 0; i < chunks.length - 1; i++) {
+      const combined = chunks[i].length + chunks[i + 1].length;
+      if (combined < minCombinedLen) {
+        minCombinedLen = combined;
+        mergeIdx = i;
+      }
+    }
+    chunks[mergeIdx] = chunks[mergeIdx] + '\n\n' + chunks[mergeIdx + 1];
+    chunks.splice(mergeIdx + 1, 1);
+  }
+
+  return chunks.filter(c => c.trim().length > 0);
 }
 
 // Clean up incomplete responses - ensures responses don't end abruptly
