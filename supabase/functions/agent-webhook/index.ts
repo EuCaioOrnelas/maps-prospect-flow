@@ -726,6 +726,67 @@ serve(async (req) => {
         }
       }
 
+      // Check if lead is in "human support" CRM stage — agent should never respond
+      if (existingConv && agent.crm_stage_on_unknown) {
+        const userId = agent.whatsapp_number?.user_id;
+        if (userId) {
+          const phoneDigitsOnly = phone.replace(/\D/g, '');
+          const last8 = phoneDigitsOnly.slice(-8);
+          let normalizedPhone = phoneDigitsOnly;
+          if (phoneDigitsOnly.length >= 10 && phoneDigitsOnly.length <= 11 && !phoneDigitsOnly.startsWith('55')) {
+            normalizedPhone = '55' + phoneDigitsOnly;
+          }
+
+          // Find the human support stage ID
+          const { data: humanStage } = await supabase
+            .from('pipeline_stages')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('name', agent.crm_stage_on_unknown)
+            .maybeSingle();
+
+          if (humanStage) {
+            // Check if lead is in that stage
+            let { data: leadInHumanStage } = await supabase
+              .from('leads')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('pipeline_stage_id', humanStage.id)
+              .or(`phone.eq.${normalizedPhone},phone.eq.${phone},phone.eq.${phoneDigitsOnly}`)
+              .limit(1);
+
+            // Fallback: match by last 8 digits
+            if (!leadInHumanStage?.length && last8.length === 8) {
+              const { data: allLeads } = await supabase
+                .from('leads')
+                .select('id, phone, pipeline_stage_id')
+                .eq('user_id', userId)
+                .eq('pipeline_stage_id', humanStage.id);
+              leadInHumanStage = allLeads?.filter((l: any) => l.phone?.replace(/\D/g, '').slice(-8) === last8) || [];
+            }
+
+            if (leadInHumanStage?.length) {
+              console.log(`Lead ${phone} is in human support stage "${agent.crm_stage_on_unknown}", skipping agent response`);
+
+              // Log the message for context
+              await supabase.from('agent_message_logs').insert({
+                agent_id: agentId,
+                conversation_id: existingConv.id,
+                direction: 'received',
+                content: message,
+                message_type: 'text',
+                processed_at: new Date().toISOString(),
+              });
+
+              return new Response(
+                JSON.stringify({ success: false, reason: 'human_support_stage', message: 'Lead is in human support CRM stage' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          }
+        }
+      }
+
       // Create new conversation if doesn't exist
       if (!existingConv) {
         // Check response limits BEFORE creating conversation

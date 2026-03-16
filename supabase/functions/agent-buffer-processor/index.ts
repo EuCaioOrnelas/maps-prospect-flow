@@ -491,6 +491,49 @@ serve(async (req) => {
           continue;
         }
 
+        // Check if lead is in human support CRM stage
+        if (agent.crm_stage_on_unknown) {
+          const whatsappNumber = agent.whatsapp_number;
+          if (whatsappNumber) {
+            const { data: humanStage } = await supabase
+              .from('pipeline_stages')
+              .select('id')
+              .eq('user_id', whatsappNumber.user_id)
+              .eq('name', agent.crm_stage_on_unknown)
+              .maybeSingle();
+
+            if (humanStage) {
+              const phoneDigits = conv.lead_phone.replace(/\D/g, '');
+              const last8 = phoneDigits.slice(-8);
+              let normalized = phoneDigits;
+              if (phoneDigits.length >= 10 && phoneDigits.length <= 11 && !phoneDigits.startsWith('55')) {
+                normalized = '55' + phoneDigits;
+              }
+              let { data: leadInHuman } = await supabase
+                .from('leads')
+                .select('id')
+                .eq('user_id', whatsappNumber.user_id)
+                .eq('pipeline_stage_id', humanStage.id)
+                .or(`phone.eq.${normalized},phone.eq.${conv.lead_phone},phone.eq.${phoneDigits}`)
+                .limit(1);
+
+              if (!leadInHuman?.length && last8.length === 8) {
+                const { data: allLeads } = await supabase
+                  .from('leads')
+                  .select('id, phone, pipeline_stage_id')
+                  .eq('user_id', whatsappNumber.user_id)
+                  .eq('pipeline_stage_id', humanStage.id);
+                leadInHuman = allLeads?.filter((l: any) => l.phone?.replace(/\D/g, '').slice(-8) === last8) || [];
+              }
+
+              if (leadInHuman?.length) {
+                console.log(`Skipping conv ${conv.id}: lead in human support stage "${agent.crm_stage_on_unknown}"`);
+                continue;
+              }
+            }
+          }
+        }
+
         const whatsappNumber = agent.whatsapp_number;
         if (!whatsappNumber) {
           console.log(`Skipping conv ${conv.id}: no WhatsApp number configured`);
