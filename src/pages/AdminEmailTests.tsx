@@ -527,6 +527,8 @@ function LogsTab() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 const AdminEmailTests = () => {
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
@@ -566,10 +568,10 @@ const AdminEmailTests = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="history" className="mt-4">
-                <EmailHistoryPanel />
+                <EmailHistoryPanel refreshKey={historyRefreshKey} />
               </TabsContent>
               <TabsContent value="compose" className="mt-4">
-                <ComposeTab />
+                <ComposeTab onBroadcastSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="test" className="mt-4">
                 <TestTab />
