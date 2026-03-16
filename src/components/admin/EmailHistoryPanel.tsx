@@ -496,15 +496,24 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   // Group emails by type + subject
   const grouped: GroupedEmail[] = (() => {
     const map = new Map<string, GroupedEmail>();
+
     for (const log of allLogs) {
       const subject = log.subject || (log.payload as any)?.subject || "Sem assunto";
-      const key = `${log.email_type}::${subject}`;
+      const idempotencyKey = (log as any).idempotency_key as string | null | undefined;
+      const batchMatch = idempotencyKey?.match(/^broadcast_(\d+)_/);
+      const batchKey = log.email_type === "ADMIN_BROADCAST" ? (batchMatch?.[1] || null) : null;
+      const key = batchKey
+        ? `${log.email_type}::${subject}::${batchKey}`
+        : `${log.email_type}::${subject}`;
+
       if (!map.has(key)) {
         map.set(key, {
           key,
           email_type: log.email_type,
           subject,
           firstSentAt: log.created_at,
+          latestSentAt: log.created_at,
+          batchKey,
           total: 0,
           sent: 0,
           failed: 0,
@@ -514,6 +523,7 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
           samplePayload: log.payload,
         });
       }
+
       const g = map.get(key)!;
       g.total++;
       if (log.status === "sent") g.sent++;
@@ -521,10 +531,14 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
       if (log.status === "queued") g.queued++;
       if ((log.opened_count || 0) > 0) g.opened++;
       if ((log.clicked_count || 0) > 0) g.clicked++;
-      // Keep earliest date
+
       if (log.created_at < g.firstSentAt) g.firstSentAt = log.created_at;
+      if (log.created_at > g.latestSentAt) g.latestSentAt = log.created_at;
     }
-    return Array.from(map.values()).sort((a, b) => new Date(b.firstSentAt).getTime() - new Date(a.firstSentAt).getTime());
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.latestSentAt).getTime() - new Date(a.latestSentAt).getTime()
+    );
   })();
 
   // Global KPIs
