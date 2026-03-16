@@ -90,8 +90,9 @@ serve(async (req) => {
 
     // If not found on primary API, try the other one
     if (!instanceExists) {
-      const altUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
+      const altRawUrl = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_URL') : Deno.env.get('EVOLUTION_API_URL_PAID');
       const altKey = evoCredentials.tier === 'paid' ? Deno.env.get('EVOLUTION_API_KEY') : Deno.env.get('EVOLUTION_API_KEY_PAID');
+      const altUrl = altRawUrl ? normalizeApiUrl(altRawUrl) : null;
       if (altUrl && altKey) {
         try {
           const altResponse = await fetch(`${altUrl}/instance/fetchInstances?instanceName=${instanceName}`, {
