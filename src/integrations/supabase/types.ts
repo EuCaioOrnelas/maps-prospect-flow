@@ -228,6 +228,7 @@ export type Database = {
           crm_stage_on_end: string | null
           crm_stage_on_new_lead: string | null
           crm_stage_on_reply: string | null
+          crm_stage_on_unknown: string | null
           daily_limit: number
           end_conversation_criteria: string | null
           id: string
@@ -259,6 +260,7 @@ export type Database = {
           crm_stage_on_end?: string | null
           crm_stage_on_new_lead?: string | null
           crm_stage_on_reply?: string | null
+          crm_stage_on_unknown?: string | null
           daily_limit?: number
           end_conversation_criteria?: string | null
           id?: string
@@ -290,6 +292,7 @@ export type Database = {
           crm_stage_on_end?: string | null
           crm_stage_on_new_lead?: string | null
           crm_stage_on_reply?: string | null
+          crm_stage_on_unknown?: string | null
           daily_limit?: number
           end_conversation_criteria?: string | null
           id?: string
