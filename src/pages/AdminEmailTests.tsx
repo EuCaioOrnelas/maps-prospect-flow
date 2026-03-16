@@ -95,7 +95,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
     }
   };
 
-  // Helper to batch .in() queries in chunks of 500 to avoid Supabase's row limit
   const batchInQuery = async (
     table: string,
     selectCols: string,
@@ -117,8 +116,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
   const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
     const plans = getPlansForSegment();
-
-    // Paginate profiles fetch
     const PAGE = 1000;
     let allUsers: any[] = [];
     let page = 0;
@@ -140,7 +137,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
     let filteredUsers = allUsers;
 
-    // Filter by score level if selected (batched)
     if (scoreLevel !== "all") {
       const userIds = filteredUsers.map(u => u.id);
       const scores = await batchInQuery(
@@ -151,7 +147,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
       filteredUsers = filteredUsers.filter(u => scoredIds.has(u.id));
     }
 
-    // Check email preferences (batched)
     const userIds = filteredUsers.map(u => u.id);
     const prefs = await batchInQuery(
       "email_preferences", "user_id, marketing_enabled", "user_id", userIds
@@ -209,8 +204,8 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         });
         if (error) throw error;
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
+        onBroadcastSent?.();
       } else {
-        // Send in background via edge function
         toast({ title: "🚀 Broadcast iniciado em segundo plano", description: "Você pode sair da página. O envio continuará automaticamente." });
 
         const { data, error } = await supabase.functions.invoke("admin-broadcast", {
@@ -227,8 +222,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         const res = data as { queued: number; skipped: number; batch_id?: string };
         setResult({ queued: res.queued || 0, skipped: res.skipped || 0, batchId: res.batch_id });
         toast({ title: `✅ Envio em background iniciado: ${res.queued || 0} na fila, ${res.skipped || 0} opt-out` });
-
-        // Trigger history refresh
         onBroadcastSent?.();
       }
     } catch (err: any) {
@@ -376,7 +369,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
 // ─── Test Tab ────────────────────────────────────────────────────────────────
 
-function TestTab() {
+function TestTab({ onEmailSent }: { onEmailSent?: () => void }) {
   const { toast } = useToast();
   const [testResults, setTestResults] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
 
@@ -401,6 +394,7 @@ function TestTab() {
 
       setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
       toast({ title: `✅ Email "${emailType}" enviado para ${TARGET_EMAIL}` });
+      onEmailSent?.();
     } catch (err: any) {
       setTestResults((prev) => ({ ...prev, [emailType]: "error" }));
       toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
@@ -574,7 +568,7 @@ const AdminEmailTests = () => {
                 <ComposeTab onBroadcastSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="test" className="mt-4">
-                <TestTab />
+                <TestTab onEmailSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="logs" className="mt-4">
                 <LogsTab />
