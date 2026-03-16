@@ -625,13 +625,14 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
-1. LIMITE ABSOLUTO: Responda com no máximo ${maxChars} caracteres no total
-2. CADA MENSAGEM DEVE SER COMPLETA - nunca termine com "...", frase incompleta ou assunto inacabado
-3. Se não couber tudo no limite, priorize a informação mais importante e dê uma resposta COMPLETA mais curta
+1. Escreva sua resposta SEPARANDO cada assunto em parágrafos distintos com linha em branco entre eles.
+   Exemplo: Saudação num parágrafo, resposta principal em outro, pergunta/CTA em outro.
+2. CADA PARÁGRAFO deve ter no máximo ${maxChars} caracteres. O sistema vai enviar cada bloco como mensagem separada no WhatsApp.
+3. NUNCA termine um parágrafo com frase incompleta ou "..."
 4. Seja DIRETO e OBJETIVO - vá direto ao ponto
 5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-6. Para WhatsApp: use frases curtas e parágrafos de 1-2 frases
-7. Finalize sempre com uma frase que faça sentido, mesmo que precise resumir
+6. Para WhatsApp: use frases curtas e naturais
+7. Finalize sempre com uma frase que faça sentido
 
 REGRA DE ENCERRAMENTO DE CONVERSA:
 - Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, ou quando o lead claramente não tem mais interesse, ou quando a conversa chegou a uma conclusão natural, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta (após o texto da mensagem).
