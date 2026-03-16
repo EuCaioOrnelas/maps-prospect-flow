@@ -680,34 +680,40 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
 REGRAS OBRIGATÓRIAS DE FORMATO:
-1. Escreva sua resposta SEPARANDO cada assunto em parágrafos distintos com linha em branco entre eles.
-   Exemplo: Saudação num parágrafo, resposta principal em outro, pergunta/CTA em outro.
-2. CADA PARÁGRAFO deve ter no máximo ${maxChars} caracteres. O sistema vai enviar cada bloco como mensagem separada no WhatsApp.
-3. NUNCA termine um parágrafo com frase incompleta ou "..."
-4. Seja DIRETO e OBJETIVO - vá direto ao ponto
-5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-6. Para WhatsApp: use frases curtas e naturais
-7. Finalize sempre com uma frase que faça sentido
+1. SEMPRE escreva sua resposta em MÚLTIPLOS PARÁGRAFOS separados por LINHA EM BRANCO (duas quebras de linha).
+   - Parágrafo 1: Saudação ou reação breve ao que o lead disse
+   - Parágrafo 2: Resposta principal / informação solicitada
+   - Parágrafo 3 (se necessário): Pergunta de follow-up ou CTA
+2. CADA PARÁGRAFO deve ter no MÁXIMO ${maxChars} caracteres. Cada parágrafo será enviado como mensagem SEPARADA no WhatsApp.
+3. NUNCA escreva tudo em um único bloco de texto. Mesmo respostas curtas DEVEM ter pelo menos 2 parágrafos separados por linha em branco.
+4. NUNCA termine um parágrafo com frase incompleta ou "..."
+5. Seja DIRETO e OBJETIVO - vá direto ao ponto
+6. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
+7. Para WhatsApp: use frases curtas e naturais
+8. Finalize sempre com uma frase que faça sentido
 
 REGRA DE ENCERRAMENTO DE CONVERSA:
-- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, ou quando o lead claramente não tem mais interesse, ou quando a conversa chegou a uma conclusão natural, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta (após o texto da mensagem).
-- Exemplos de quando encerrar: lead agradeceu e se despediu, lead disse que não tem interesse, objetivo foi atingido, lead pediu para parar de enviar mensagens.
+- Quando os CRITÉRIOS DE ENCERRAMENTO forem atendidos, adicione EXATAMENTE o marcador [CONVERSA_ENCERRADA] no FINAL da sua resposta.
 - NÃO encerre prematuramente - apenas quando realmente fizer sentido.
 - O marcador [CONVERSA_ENCERRADA] NÃO será enviado ao lead, é apenas um sinal interno.
 
-EXEMPLOS DE BOM FORMATO:
-- "Ótimo! O serviço custa R$99/mês. Quer saber mais detalhes?"
-- "Claro! Trabalhamos com consultoria empresarial. Posso te explicar melhor?"
-- "Perfeito, fico à disposição! Qualquer dúvida é só chamar. 😊 [CONVERSA_ENCERRADA]"
+EXEMPLO CORRETO (parágrafos separados por linha em branco):
+"""
+Olá! Que bom falar com você! 😊
 
-EXEMPLOS DE MAU FORMATO (NUNCA FAÇA ISSO):
-- "Trabalhamos com diversos serviços como consultoria, marketing, vendas..."
-- "O processo funciona assim: primeiro você..."
+Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal.
+
+Quer que eu envie mais detalhes?
+"""
+
+EXEMPLO INCORRETO (NUNCA faça - tudo junto em 1 bloco):
+"""
+Olá! Que bom falar com você! 😊 Nosso serviço de consultoria custa R$99/mês e inclui acompanhamento semanal. Quer que eu envie mais detalhes?
+"""
 
 REGRA CRÍTICA SOBRE ARQUIVOS E MÍDIA:
-- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida, INDEPENDENTE da política de preço.
-- A política de preço (ex: "nunca mencionar preço") se aplica apenas ao TEXTO que você escreve, NÃO aos arquivos pré-configurados pelo usuário.
-- Se há um PDF de orçamento configurado para enviar "quando o lead pedir preço/orçamento", envie-o usando o marcador [ENVIAR_PDF:...] junto com uma mensagem neutra como "Segue nosso material!" - sem mencionar valores no texto.`;
+- Se o prompt contém arquivos configurados (PDFs, imagens) com condições de envio, você DEVE enviá-los quando a condição for atendida.
+- Use os marcadores [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando apropriado.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}
@@ -715,7 +721,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
+IMPORTANTE: Responda em MÚLTIPLOS PARÁGRAFOS separados por linha em branco. Cada parágrafo será enviado como mensagem separada no WhatsApp. NÃO escreva tudo em um único bloco.`;
 
           console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
