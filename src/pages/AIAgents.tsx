@@ -475,8 +475,12 @@ export default function AIAgents() {
       {/* Create Agent Wizard */}
       <CreateAgentWizard 
         open={showWizard} 
-        onOpenChange={setShowWizard}
+        onOpenChange={(open) => {
+          setShowWizard(open);
+          if (!open) setEditingAgentData(null);
+        }}
         onCreated={fetchAgents}
+        editingAgent={editingAgentData}
       />
 
       {/* Agent Summary Dialog */}

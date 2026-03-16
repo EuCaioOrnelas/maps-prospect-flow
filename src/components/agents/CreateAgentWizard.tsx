@@ -1213,7 +1213,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     }
   };
 
-  const availableNumbers = numbers.filter(n => !n.has_active_agent);
+  const availableNumbers = numbers.filter(n => !n.has_active_agent || (isEditing && n.id === editingAgent?.whatsapp_number_id));
 
   const RadioOption = ({ value, label, description, selected, onSelect }: { value: string; label: string; description?: string; selected: boolean; onSelect: () => void }) => (
     <Label 
