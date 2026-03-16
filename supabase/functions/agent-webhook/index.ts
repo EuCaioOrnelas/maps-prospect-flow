@@ -607,14 +607,25 @@ serve(async (req) => {
       // Get configurable CRM stage names from agent
       const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
 
-      // Check if user (owner) responded to this lead today - agent should not respond
+      // Check if user (owner) responded to this lead - agent should not respond
+      // Uses time-based cooldown (12h) instead of date-based
+      // Also checks manual pause flag
       // EXCEPTION: "atendimento" objective agents continue responding even if user responded
       if (existingConv && agent.objective !== 'atendimento') {
-        const today = new Date().toISOString().split('T')[0];
-        if (existingConv.user_responded_date === today) {
-          console.log(`User responded to lead ${phone} today, agent ${agentId} paused for this lead`);
+        // Check manual pause first
+        if (existingConv.agent_manually_paused) {
+          console.log(`Agent manually paused for lead ${phone}, skipping`);
           
-          // CRM: Move to configured stage since agent won't respond
+          // Log the incoming message for context even while paused
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: existingConv.id,
+            direction: 'received',
+            content: message,
+            message_type: 'text',
+            processed_at: new Date().toISOString(),
+          });
+          
           const userId = agent.whatsapp_number?.user_id;
           if (userId) {
             await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
@@ -627,24 +638,90 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               success: false, 
-              reason: 'user_responded_today',
-              message: 'User already responded to this lead today, agent paused' 
+              reason: 'manually_paused',
+              message: 'Agent is manually paused for this lead' 
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        
-        // If user responded yesterday or before, reset the flag and allow agent to continue
-        if (existingConv.user_responded_date && existingConv.user_responded_date !== today) {
-          console.log(`User responded on ${existingConv.user_responded_date}, but today is ${today}. Resetting flag.`);
+
+        // Check time-based auto-pause (12h cooldown from user_responded_at)
+        if (existingConv.agent_paused_until) {
+          const pausedUntil = new Date(existingConv.agent_paused_until);
+          const now = new Date();
+          
+          if (now < pausedUntil) {
+            const hoursRemaining = ((pausedUntil.getTime() - now.getTime()) / (1000 * 60 * 60)).toFixed(1);
+            console.log(`Agent auto-paused for lead ${phone}, ${hoursRemaining}h remaining`);
+            
+            // Log the incoming message for context even while paused
+            await supabase.from('agent_message_logs').insert({
+              agent_id: agentId,
+              conversation_id: existingConv.id,
+              direction: 'received',
+              content: message,
+              message_type: 'text',
+              processed_at: new Date().toISOString(),
+            });
+            
+            const userId = agent.whatsapp_number?.user_id;
+            if (userId) {
+              await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+                last_response: message,
+                last_response_at: new Date().toISOString(),
+                whatsapp_status: 'replied',
+              });
+            }
+            
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                reason: 'auto_paused',
+                message: `Agent auto-paused for this lead (${hoursRemaining}h remaining)` 
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          // Cooldown expired - clear the pause and allow agent to continue
+          console.log(`Auto-pause expired for lead ${phone}. Resuming agent with context.`);
           await supabase
             .from('agent_conversations')
             .update({
+              agent_paused_until: null,
               user_responded_date: null,
               user_responded_at: null,
               status: 'buffering',
               updated_at: new Date().toISOString()
             })
+            .eq('id', existingConv.id);
+        }
+        
+        // Legacy fallback: check date-based pause (for conversations that still have it)
+        if (!existingConv.agent_paused_until && existingConv.user_responded_date) {
+          const today = new Date().toISOString().split('T')[0];
+          if (existingConv.user_responded_date === today) {
+            console.log(`Legacy: User responded to lead ${phone} today, agent paused`);
+            
+            const userId = agent.whatsapp_number?.user_id;
+            if (userId) {
+              await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+                last_response: message,
+                last_response_at: new Date().toISOString(),
+                whatsapp_status: 'replied',
+              });
+            }
+            
+            return new Response(
+              JSON.stringify({ success: false, reason: 'user_responded_today' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          // Reset old date-based flag
+          await supabase
+            .from('agent_conversations')
+            .update({ user_responded_date: null, user_responded_at: null, status: 'buffering', updated_at: new Date().toISOString() })
             .eq('id', existingConv.id);
         }
       }

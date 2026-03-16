@@ -1393,13 +1393,15 @@ REGRAS OBRIGATÓRIAS:
                       // Find conversation for this lead with this agent
                       const { data: agentConv } = await supabase
                         .from('agent_conversations')
-                        .select('id, status')
+                        .select('id, status, agent_manually_paused')
                         .eq('agent_id', activeAgent.id)
                         .eq('lead_phone', normalizedPhone)
                         .single();
                       
                       if (agentConv) {
-                        // Pause agent for this lead today (set user_responded_at)
+                        // Don't override manual pause - just log the user's message
+                        // Set 12h auto-pause (agent_paused_until)
+                        const pauseUntil = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
                         const today = new Date().toISOString().split('T')[0];
                         
                         await supabase
@@ -1408,11 +1410,22 @@ REGRAS OBRIGATÓRIAS:
                             status: 'user_responded',
                             user_responded_at: new Date().toISOString(),
                             user_responded_date: today,
+                            agent_paused_until: pauseUntil,
                             process_after: null,
                             is_processing: false,
                             updated_at: new Date().toISOString()
                           })
                           .eq('id', agentConv.id);
+                        
+                        // Log the user's manual message for AI context
+                        await supabase.from('agent_message_logs').insert({
+                          agent_id: activeAgent.id,
+                          conversation_id: agentConv.id,
+                          direction: 'sent',
+                          content: content || `[${messageType}]`,
+                          message_type: 'user_manual',
+                          processed_at: new Date().toISOString(),
+                        });
                         
                         // Clear any buffered messages for this conversation
                         await supabase
@@ -1420,7 +1433,7 @@ REGRAS OBRIGATÓRIAS:
                           .delete()
                           .eq('conversation_id', agentConv.id);
                         
-                        console.log(`AI Agent ${activeAgent.name} paused for lead ${normalizedPhone} - user responded`);
+                        console.log(`AI Agent ${activeAgent.name} paused for 12h for lead ${normalizedPhone} - user responded manually`);
                       }
                     }
                   }
