@@ -568,7 +568,7 @@ const AdminEmailTests = () => {
                 <ComposeTab onBroadcastSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="test" className="mt-4">
-                <TestTab />
+                <TestTab onEmailSent={() => setHistoryRefreshKey(k => k + 1)} />
               </TabsContent>
               <TabsContent value="logs" className="mt-4">
                 <LogsTab />
