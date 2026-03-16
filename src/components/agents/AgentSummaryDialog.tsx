@@ -91,6 +91,7 @@ export function AgentSummaryDialog({
   onOpenChange,
   onToggleStatus,
   onOpenDetails,
+  onEdit,
   onSaveTemplate,
   onDelete,
   onShowLeadsLimitInfo,
