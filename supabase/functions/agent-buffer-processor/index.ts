@@ -79,61 +79,52 @@ function calculateTypingDelay(messageLength: number): number {
   return Math.floor(typingTime + thinkingBuffer + readingTime);
 }
 
-// Semantically split a long response into natural WhatsApp messages
-// Splits by: double line breaks (explicit blocks), then by sentence boundaries
+// Split AI response by semantic blocks (paragraphs separated by \n\n).
+// The AI is instructed to write: Block 1 = greeting, Block 2 = response, Block 3 = CTA/question.
+// Each block becomes a separate WhatsApp message. Only the "response" block (longest one)
+// gets further split by sentences if it exceeds maxCharsPerChunk.
 function smartSplitMessage(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
   const trimmed = text.trim();
   
-  // Only return single message if VERY short (less than 50% of chunk size) OR maxChunks is 1
-  if (maxChunks <= 1 || trimmed.length <= maxCharsPerChunk * 0.5) {
+  if (maxChunks <= 1 || trimmed.length <= 80) {
     return [trimmed];
   }
 
-  // Step 1: Split by double line breaks (the AI's own paragraph structure)
-  const rawBlocks = trimmed.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+  // Split by double line breaks — these are the AI's semantic blocks
+  const blocks = trimmed.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
 
-  // If AI gave us multiple paragraphs already, use them directly
-  if (rawBlocks.length >= 2) {
-    const chunks: string[] = [];
-    let current = '';
-
-    for (const block of rawBlocks) {
-      if (block.length > maxCharsPerChunk) {
-        if (current.trim()) {
-          chunks.push(current.trim());
-          current = '';
-        }
-        const sentenceChunks = splitBySentences(block, maxCharsPerChunk);
-        chunks.push(...sentenceChunks);
-      } else if (current.length + block.length + 2 > maxCharsPerChunk && current.length > 0) {
-        chunks.push(current.trim());
-        current = block;
-      } else {
-        current += (current ? '\n\n' : '') + block;
-      }
-    }
-
-    if (current.trim()) {
-      chunks.push(current.trim());
-    }
-
-    return enforceMaxChunks(chunks, maxChunks);
+  // If AI only wrote 1 block, try to split by sentences as fallback
+  if (blocks.length <= 1) {
+    return splitLongBlock(trimmed, maxCharsPerChunk, maxChunks);
   }
 
-  // Step 2: AI wrote one big block - force split by sentences
-  if (trimmed.length > maxCharsPerChunk * 0.6) {
-    const sentenceChunks = splitBySentences(trimmed, maxCharsPerChunk);
-    if (sentenceChunks.length >= 2) {
-      return enforceMaxChunks(sentenceChunks, maxChunks);
+  // Process each block: keep short blocks as-is, split long blocks by sentences
+  const finalMessages: string[] = [];
+  
+  for (const block of blocks) {
+    if (block.length <= maxCharsPerChunk) {
+      // Block fits — send as one message
+      finalMessages.push(block);
+    } else {
+      // Block too long (usually the "response" block) — split by sentences
+      const subChunks = splitLongBlock(block, maxCharsPerChunk, Math.max(2, maxChunks - blocks.length + 1));
+      finalMessages.push(...subChunks);
     }
   }
 
-  return [trimmed];
+  return enforceMaxChunks(finalMessages, maxChunks);
 }
 
-// Split text by sentence boundaries into chunks
-function splitBySentences(text: string, maxCharsPerChunk: number): string[] {
-  const sentences = text.split(/(?<=[.!?;:)])\s+/);
+// Split a long text block by sentence boundaries, respecting maxChars
+function splitLongBlock(text: string, maxCharsPerChunk: number, maxChunks: number): string[] {
+  // Try splitting by sentence endings
+  const sentences = text.split(/(?<=[.!?;)])\s+/);
+  
+  if (sentences.length <= 1) {
+    // Can't split by sentences, return as-is
+    return [text];
+  }
+
   const chunks: string[] = [];
   let current = '';
 
@@ -150,26 +141,7 @@ function splitBySentences(text: string, maxCharsPerChunk: number): string[] {
     chunks.push(current.trim());
   }
 
-  // Last resort: split by commas if single chunk is still too long
-  if (chunks.length === 1 && chunks[0].length > maxCharsPerChunk) {
-    const parts = chunks[0].split(/,\s+/);
-    if (parts.length >= 2) {
-      const commaChunks: string[] = [];
-      let cur = '';
-      for (const part of parts) {
-        if (cur.length + part.length + 2 > maxCharsPerChunk && cur.length > 0) {
-          commaChunks.push(cur.trim().replace(/,\s*$/, '.'));
-          cur = part;
-        } else {
-          cur += (cur ? ', ' : '') + part;
-        }
-      }
-      if (cur.trim()) commaChunks.push(cur.trim());
-      return commaChunks;
-    }
-  }
-
-  return chunks;
+  return enforceMaxChunks(chunks, maxChunks);
 }
 
 // Merge smallest adjacent chunks if we exceed maxChunks
