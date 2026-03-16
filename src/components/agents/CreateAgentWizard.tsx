@@ -71,6 +71,7 @@ interface CreateAgentWizardProps {
     crm_stage_on_new_lead: string | null;
     crm_stage_on_reply: string | null;
     crm_stage_on_end: string | null;
+    crm_stage_on_unknown: string | null;
   } | null;
 }
 
@@ -387,6 +388,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState("Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState("Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState("");
+  const [crmStageOnUnknown, setCrmStageOnUnknown] = useState("");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
   // Apply template data to form fields (works for both default and user templates)
@@ -625,6 +627,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (editingAgent.crm_stage_on_new_lead) setCrmStageOnNewLead(editingAgent.crm_stage_on_new_lead);
         if (editingAgent.crm_stage_on_reply) setCrmStageOnReply(editingAgent.crm_stage_on_reply);
         if (editingAgent.crm_stage_on_end) setCrmStageOnEnd(editingAgent.crm_stage_on_end);
+        if (editingAgent.crm_stage_on_unknown) setCrmStageOnUnknown(editingAgent.crm_stage_on_unknown);
       }
       
       // Always load these from agent record
@@ -998,11 +1001,13 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
     if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
     if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) invalidStages.push(`"${crmStageOnUnknown}" (quando agente não sabe)`);
     
     if (invalidStages.length > 0) {
       if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
       if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
       if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) setCrmStageOnUnknown("");
       
       toast({
         title: "⚠️ Colunas CRM inválidas",
@@ -1043,7 +1048,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
-        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd,
+        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnUnknown,
       };
 
       const agentPayload = {
@@ -1064,6 +1069,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         crm_stage_on_new_lead: crmStageOnNewLead || null,
         crm_stage_on_reply: crmStageOnReply || null,
         crm_stage_on_end: crmStageOnEnd || null,
+        crm_stage_on_unknown: crmStageOnUnknown || null,
         wizard_data: wizardData,
         updated_at: new Date().toISOString(),
       };
@@ -1181,7 +1187,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       case 'links':
         return true; // Optional step
       case 'rules':
-        return true;
+        return !!crmStageOnUnknown || pipelineStages.length === 0;
       case 'review':
         return true;
       default:
@@ -2265,6 +2271,24 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Quando agente não sabe responder <span className="text-destructive">*</span>
+                    </Label>
+                    <select
+                      value={crmStageOnUnknown}
+                      onChange={(e) => setCrmStageOnUnknown(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Selecione uma coluna</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o agente não souber a resposta, ele dirá "vou verificar" e moverá o lead para esta coluna para atendimento humano.
+                    </p>
                   </div>
                 </div>
               )}

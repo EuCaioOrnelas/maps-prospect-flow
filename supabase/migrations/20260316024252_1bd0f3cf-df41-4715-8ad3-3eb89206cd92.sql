@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_agents ADD COLUMN IF NOT EXISTS crm_stage_on_unknown text DEFAULT NULL;

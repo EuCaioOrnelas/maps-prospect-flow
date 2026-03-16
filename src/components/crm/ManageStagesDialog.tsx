@@ -198,7 +198,7 @@ export const ManageStagesDialog = ({
         .from('ai_agents')
         .select('name')
         .eq('user_id', user.id)
-        .or(`crm_stage_on_new_lead.eq.${stage.name},crm_stage_on_reply.eq.${stage.name},crm_stage_on_end.eq.${stage.name}`);
+        .or(`crm_stage_on_new_lead.eq.${stage.name},crm_stage_on_reply.eq.${stage.name},crm_stage_on_end.eq.${stage.name},crm_stage_on_unknown.eq.${stage.name}`);
       
       setAgentsUsingStage(agents?.map(a => a.name) || []);
     }

@@ -651,6 +651,12 @@ REGRAS DE CONTEXTO E HISTÓRICO:
 5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
 6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
 
+REGRA CRÍTICA — NUNCA INVENTE INFORMAÇÕES:
+Se você NÃO souber a resposta para algo que o lead perguntou, NÃO invente. Em vez disso:
+1. Diga algo natural como "Deixa eu verificar isso com o time e já te retorno" ou "Um momento, preciso confirmar essa informação" ou "Vou checar isso aqui e já te falo"
+2. Adicione o marcador [NAO_SEI] no final da sua resposta (não será enviado ao lead)
+3. Isso é OBRIGATÓRIO: nunca dê informações falsas, preços inventados, prazos que você não sabe, funcionalidades que não foram descritas, etc.
+
 REGRAS DE FORMATO:
 Separe cada ASSUNTO ou IDEIA em um bloco diferente, usando LINHA EM BRANCO (duas quebras de linha) entre eles.
 Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
@@ -729,9 +735,18 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             if (shouldEndConversation) {
               console.log(`AI signaled conversation end for conv ${conv.id}`);
             }
+
+            // Detect "don't know" marker — agent couldn't answer the question
+            const agentDoesntKnow = replyContent.includes('[NAO_SEI]');
+            if (agentDoesntKnow) {
+              console.log(`AI signaled it doesn't know the answer for conv ${conv.id}`);
+            }
             
-            // Remove the marker from the actual message
-            replyContent = replyContent.replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '').trim();
+            // Remove all markers from the actual message
+            replyContent = replyContent
+              .replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '')
+              .replace(/\s*\[NAO_SEI\]\s*/g, '')
+              .trim();
 
             // Check if agent is allowed to send media (from wizard_data)
             const wizardData = agent.wizard_data as Record<string, any> | null;
@@ -896,6 +911,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 // CRM Integration: Move lead based on conversation state and update timestamps
                 const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
                 const crmStageEnd = agent.crm_stage_on_end;
+                const crmStageUnknown = agent.crm_stage_on_unknown;
                 const nowISO = new Date().toISOString();
                 
                 // Build extras with message timestamps
@@ -907,7 +923,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   whatsapp_status: isConversationEnded ? 'replied' : 'in_conversation',
                 };
                 
-                if (isConversationEnded && crmStageEnd) {
+                if (agentDoesntKnow && crmStageUnknown) {
+                  // Agent doesn't know the answer — transfer to human
+                  console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
+                  crmExtras.whatsapp_status = 'in_conversation';
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
+                } else if (isConversationEnded && crmStageEnd) {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd, crmExtras);
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
