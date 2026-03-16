@@ -6,6 +6,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type BroadcastUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: string;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,6 +23,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify the caller is an admin
@@ -26,11 +37,14 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
-    const { data: { user } } = await anonClient.auth.getUser();
+    const {
+      data: { user },
+    } = await anonClient.auth.getUser();
+
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -38,7 +52,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role
     const { data: isAdmin } = await supabase.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
@@ -67,29 +80,38 @@ Deno.serve(async (req) => {
     if (!subject || !content) {
       return new Response(
         JSON.stringify({ error: "subject and content are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
-    // ── Determine target plans ────────────────────────────────────────────────
     const getPlans = (): string[] => {
       switch (segment) {
-        case "free_only": return ["free"];
-        case "paid_only": return ["start", "growth", "scale"];
-        case "start": return ["start"];
-        case "growth": return ["growth"];
-        case "scale": return ["scale"];
-        default: return ["free", "start", "growth", "scale"];
+        case "free_only":
+          return ["free"];
+        case "paid_only":
+          return ["start", "growth", "scale"];
+        case "start":
+          return ["start"];
+        case "growth":
+          return ["growth"];
+        case "scale":
+          return ["scale"];
+        default:
+          return ["free", "start", "growth", "scale"];
       }
     };
 
     const plans = getPlans();
 
-    // ── Fetch eligible users (paginated) ──────────────────────────────────────
+    // Fetch all candidate users
     const PAGE = 1000;
-    let allUsers: any[] = [];
+    let allUsers: BroadcastUser[] = [];
     let page = 0;
     let hasMore = true;
+
     while (hasMore) {
       const { data, error } = await supabase
         .from("profiles")
@@ -97,104 +119,184 @@ Deno.serve(async (req) => {
         .in("plan", plans)
         .eq("is_blocked", false)
         .range(page * PAGE, (page + 1) * PAGE - 1);
+
       if (error) throw error;
-      if (data) allUsers.push(...data);
+
+      if (data?.length) {
+        allUsers.push(...(data as BroadcastUser[]));
+      }
+
       hasMore = (data?.length || 0) === PAGE;
       page++;
     }
 
-    // ── Filter by score level ─────────────────────────────────────────────────
+    // Score-level filtering
     if (score_level !== "all" && allUsers.length > 0) {
       const CHUNK = 500;
       const scoredIds = new Set<string>();
+
       for (let i = 0; i < allUsers.length; i += CHUNK) {
-        const chunk = allUsers.slice(i, i + CHUNK).map((u: any) => u.id);
+        const chunk = allUsers.slice(i, i + CHUNK).map((u) => u.id);
         const { data } = await supabase
           .from("user_scores" as any)
           .select("user_id")
           .in("user_id", chunk)
           .eq("score_label", score_level);
+
         (data || []).forEach((s: any) => scoredIds.add(s.user_id));
       }
-      allUsers = allUsers.filter((u: any) => scoredIds.has(u.id));
+
+      allUsers = allUsers.filter((u) => scoredIds.has(u.id));
     }
 
-    // ── Filter opt-outs ───────────────────────────────────────────────────────
+    // Marketing opt-out filtering
     const optedOutIds = new Set<string>();
     if (allUsers.length > 0) {
       const CHUNK = 500;
       for (let i = 0; i < allUsers.length; i += CHUNK) {
-        const chunk = allUsers.slice(i, i + CHUNK).map((u: any) => u.id);
+        const chunk = allUsers.slice(i, i + CHUNK).map((u) => u.id);
         const { data } = await supabase
           .from("email_preferences")
           .select("user_id")
           .in("user_id", chunk)
           .eq("marketing_enabled", false);
+
         (data || []).forEach((p: any) => optedOutIds.add(p.user_id));
       }
     }
 
-    const eligibleUsers = allUsers.filter((u: any) => !optedOutIds.has(u.id));
+    const eligibleUsers = allUsers.filter((u) => !optedOutIds.has(u.id));
     const skipped = allUsers.length - eligibleUsers.length;
 
-    console.log(`[admin-broadcast] Starting: ${eligibleUsers.length} eligible, ${skipped} opted-out`);
-
-    // ── Send emails with rate limiting ────────────────────────────────────────
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
-
-    let sent = 0;
-    let failed = 0;
     const batchTimestamp = Date.now();
+    const batchId = `broadcast_${batchTimestamp}`;
 
-    for (let i = 0; i < eligibleUsers.length; i++) {
-      const u = eligibleUsers[i];
+    const sendWithRetry = async (targetUser: BroadcastUser) => {
+      const maxAttempts = 3;
 
-      // Rate limit: 600ms delay between sends
-      if (i > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              user_id: targetUser.id,
+              email_type: "ADMIN_BROADCAST",
+              payload: { subject, content },
+              idempotency_key: `${batchId}_${targetUser.id}`,
+            }),
+          });
+
+          if (sendResponse.ok) {
+            return { ok: true as const, status: sendResponse.status };
+          }
+
+          const errText = await sendResponse.text();
+          const shouldRetry = (sendResponse.status === 429 || sendResponse.status >= 500) && attempt < maxAttempts;
+
+          if (shouldRetry) {
+            await sleep(700 * attempt);
+            continue;
+          }
+
+          return {
+            ok: false as const,
+            status: sendResponse.status,
+            error: errText || "unknown_error",
+          };
+        } catch (err) {
+          const shouldRetry = attempt < maxAttempts;
+          if (shouldRetry) {
+            await sleep(700 * attempt);
+            continue;
+          }
+
+          return {
+            ok: false as const,
+            status: 0,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
       }
 
-      try {
-        // Call send-email function internally via HTTP for tracking/logging
-        const sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify({
-            user_id: u.id,
-            email_type: "ADMIN_BROADCAST",
-            payload: { subject, content },
-            idempotency_key: `broadcast_${batchTimestamp}_${u.id}`,
-          }),
-        });
+      return { ok: false as const, status: 0, error: "retry_exhausted" };
+    };
 
-        if (sendResponse.ok) {
+    const processBroadcast = async () => {
+      let sent = 0;
+      let failed = 0;
+      const reasonCounter: Record<string, number> = {};
+
+      console.log(`[admin-broadcast] Batch ${batchId} started: ${eligibleUsers.length} eligible, ${skipped} opted-out`);
+
+      for (let i = 0; i < eligibleUsers.length; i++) {
+        const targetUser = eligibleUsers[i];
+
+        if (i > 0) {
+          await sleep(650);
+        }
+
+        const result = await sendWithRetry(targetUser);
+
+        if (result.ok) {
           sent++;
         } else {
-          const errText = await sendResponse.text();
-          console.error(`[admin-broadcast] Failed for ${u.email}: ${errText}`);
           failed++;
+          const reasonKey = `${result.status}:${(result.error || "unknown").slice(0, 160)}`;
+          reasonCounter[reasonKey] = (reasonCounter[reasonKey] || 0) + 1;
+          console.error(`[admin-broadcast] Failed ${targetUser.email} [${result.status}] ${result.error}`);
         }
-      } catch (err) {
-        console.error(`[admin-broadcast] Exception for ${u.email}:`, err);
-        failed++;
+
+        if ((i + 1) % 25 === 0 || i + 1 === eligibleUsers.length) {
+          console.log(`[admin-broadcast] Batch ${batchId} progress: ${i + 1}/${eligibleUsers.length} (sent=${sent}, failed=${failed})`);
+        }
       }
+
+      console.log(`[admin-broadcast] Batch ${batchId} done: sent=${sent}, failed=${failed}, skipped=${skipped}`);
+
+      if (failed > 0) {
+        console.log(`[admin-broadcast] Batch ${batchId} failure summary:`, reasonCounter);
+      }
+    };
+
+    const edgeRuntime = (globalThis as unknown as {
+      EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void };
+    }).EdgeRuntime;
+
+    const backgroundTask = processBroadcast();
+
+    if (edgeRuntime?.waitUntil) {
+      edgeRuntime.waitUntil(backgroundTask);
+    } else {
+      backgroundTask.catch((err) => {
+        console.error("[admin-broadcast] Background task error:", err);
+      });
     }
 
-    console.log(`[admin-broadcast] Done: ${sent} sent, ${failed} failed, ${skipped} opt-out`);
-
     return new Response(
-      JSON.stringify({ success: true, sent, failed, skipped, total: eligibleUsers.length }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+        started: true,
+        batch_id: batchId,
+        queued: eligibleUsers.length,
+        skipped,
+      }),
+      {
+        status: 202,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error) {
     console.error("[admin-broadcast] Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
