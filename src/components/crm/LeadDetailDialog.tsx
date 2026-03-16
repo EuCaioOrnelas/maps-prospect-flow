@@ -302,11 +302,19 @@ export const LeadDetailDialog = ({
   
   // Deal closing state
   const [dealValue, setDealValue] = useState<number>(0);
-  const [savedValue, setSavedValue] = useState<number>(0); // Track saved value to detect changes
+  const [savedValue, setSavedValue] = useState<number>(0);
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
   const [showDealConfirm, setShowDealConfirm] = useState(false);
   const [isSavingValue, setIsSavingValue] = useState(false);
+
+  // Agent pause state
+  const [agentPauseStatus, setAgentPauseStatus] = useState<{
+    conversationId: string;
+    isPaused: boolean;
+    pausedUntil: string | null;
+  } | null>(null);
+  const [isTogglingPause, setIsTogglingPause] = useState(false);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
