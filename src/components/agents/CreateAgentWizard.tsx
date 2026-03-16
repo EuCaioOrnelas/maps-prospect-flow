@@ -1986,24 +1986,38 @@ Preciso falar com meu marido/esposa"
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Máx. caracteres</Label>
+                <Label className="flex items-center gap-1">
+                  Tamanho por mensagem
+                  <span className="relative group inline-block">
+                    <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-popover border rounded-lg shadow-lg text-xs text-muted-foreground opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                      <span className="font-medium text-foreground block mb-1">Quebra inteligente</span>
+                      <span className="block">O agente gera a resposta completa e o sistema quebra automaticamente em mensagens separadas no WhatsApp.</span>
+                      <span className="block mt-1">Ex: "Bom dia!" em uma mensagem, a resposta em outra e a pergunta em outra.</span>
+                      <span className="block mt-1 text-primary">💡 Simula digitação humana com pausas entre as mensagens.</span>
+                    </span>
+                  </span>
+                </Label>
                 <Select value={maxChars} onValueChange={setMaxChars}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="150">150</SelectItem>
-                    <SelectItem value="300">300</SelectItem>
-                    <SelectItem value="500">500</SelectItem>
+                    <SelectItem value="150">Curta (150 chars)</SelectItem>
+                    <SelectItem value="300">Média (300 chars)</SelectItem>
+                    <SelectItem value="500">Longa (500 chars)</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Limite por mensagem individual. Respostas longas são divididas automaticamente.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Máx. msgs seguidas</Label>
                 <Select value={maxConsecutiveMessages} onValueChange={setMaxConsecutiveMessages}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="2">2 mensagens</SelectItem>
+                    <SelectItem value="3">3 mensagens</SelectItem>
+                    <SelectItem value="4">4 mensagens</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
