@@ -879,8 +879,9 @@ ${canSendMedia ? '✓ PODE enviar imagens e PDFs (use os marcadores [ENVIAR_IMAG
 ${canSendLongMessages ? '✓ PODE enviar mensagens longas' : '✗ NÃO enviar mensagens longas'}
 
 **Limites:**
-- Máximo de ${maxChars} caracteres por mensagem
-- Máximo de ${maxConsecutiveMessages} mensagens seguidas
+- Cada bloco/parágrafo será enviado como mensagem separada no WhatsApp (máximo ${maxChars} caracteres por mensagem)
+- Máximo de ${maxConsecutiveMessages} mensagens seguidas por resposta
+- Separe saudação, resposta e pergunta em parágrafos distintos
 ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : ''}
 
 ---

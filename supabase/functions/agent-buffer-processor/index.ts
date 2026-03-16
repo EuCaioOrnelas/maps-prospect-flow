@@ -721,8 +721,9 @@ Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distint
             // Clean up incomplete endings (fallback safety)
             replyContent = cleanIncompleteResponse(replyContent, maxChars);
 
-            // Split into multiple messages if needed
-            const messages = formatResponseAsParagraphs(replyContent);
+            // Smart split into multiple WhatsApp messages by semantic blocks
+            const maxConsecutive = 3; // safety cap
+            const messages = smartSplitMessage(replyContent, maxChars, maxConsecutive);
             
             const instanceName = whatsappNumber.instance_name;
             if (instanceName) {
