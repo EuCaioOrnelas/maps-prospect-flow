@@ -202,6 +202,19 @@ Deno.serve(async (req) => {
       if (isAdminEmail(customerEmail)) continue;
       if (invoice.amount_paid === 0) continue;
 
+      // Skip invoices that aren't truly paid (e.g. boletos still pending)
+      // Stripe may mark boleto invoices as "paid" before actual payment clears
+      if (invoice.paid !== true || (invoice.amount_remaining && invoice.amount_remaining > 0)) {
+        console.log(`[GET-STRIPE-MRR] Skipping invoice ${invoice.id}: paid=${invoice.paid}, amount_remaining=${invoice.amount_remaining}, status=${invoice.status}`);
+        continue;
+      }
+
+      // Skip if no actual charge was made (boleto generated but never paid)
+      if (!invoice.charge) {
+        console.log(`[GET-STRIPE-MRR] Skipping invoice ${invoice.id}: no charge associated`);
+        continue;
+      }
+
       // Check if refunded
       const chargeId = invoice.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
