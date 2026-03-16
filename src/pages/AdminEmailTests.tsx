@@ -61,7 +61,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const [scoreLevel, setScoreLevel] = useState<string>("all");
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-  const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{ queued: number; skipped: number; batchId?: string } | null>(null);
   const [matchCount, setMatchCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
 
@@ -224,9 +224,9 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
         if (error) throw error;
 
-        const res = data as { sent: number; failed: number; skipped: number };
-        setResult({ sent: res.sent, failed: res.failed, skipped: res.skipped });
-        toast({ title: `✅ Envio concluído: ${res.sent} enviados, ${res.skipped} opt-out, ${res.failed} erros` });
+        const res = data as { queued: number; skipped: number; batch_id?: string };
+        setResult({ queued: res.queued || 0, skipped: res.skipped || 0, batchId: res.batch_id });
+        toast({ title: `✅ Envio em background iniciado: ${res.queued || 0} na fila, ${res.skipped || 0} opt-out` });
 
         // Trigger history refresh
         onBroadcastSent?.();
@@ -353,9 +353,9 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
           <p className="text-sm font-medium text-foreground">Resultado do envio:</p>
           <div className="flex gap-4 text-sm">
-            <span className="text-primary">✅ {result.sent} enviados</span>
+            <span className="text-primary">📨 {result.queued} na fila</span>
             <span className="text-muted-foreground">⏭️ {result.skipped} opt-out</span>
-            {result.failed > 0 && <span className="text-destructive">❌ {result.failed} erros</span>}
+            {result.batchId && <span className="text-muted-foreground">🆔 {result.batchId}</span>}
           </div>
         </div>
       )}

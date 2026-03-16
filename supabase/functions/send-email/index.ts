@@ -379,20 +379,25 @@ Deno.serve(async (req) => {
     if (!resendResponse.ok) {
       console.error("[send-email] Resend error:", resendData);
 
+      const serializedError = JSON.stringify({
+        status: resendResponse.status,
+        ...(typeof resendData === "object" && resendData !== null ? resendData : { message: String(resendData) }),
+      });
+
       // Update log as failed
       if (logEntry?.id) {
         await supabase
           .from("email_logs")
           .update({
             status: "failed",
-            error_message: JSON.stringify(resendData),
+            error_message: serializedError,
           })
           .eq("id", logEntry.id);
       }
 
       return new Response(
         JSON.stringify({ error: "Failed to send email", details: resendData }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: resendResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

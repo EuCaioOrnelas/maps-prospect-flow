@@ -41,6 +41,8 @@ type GroupedEmail = {
   email_type: string;
   subject: string;
   firstSentAt: string;
+  latestSentAt: string;
+  batchKey: string | null;
   total: number;
   sent: number;
   failed: number;
@@ -71,13 +73,13 @@ function emailTypeColor(type: string): string {
   const map: Record<string, string> = {
     ADMIN_BROADCAST: "bg-primary/15 text-primary border-primary/25",
     WEEKLY_SUMMARY: "bg-accent/15 text-accent border-accent/25",
-    CAMPAIGN_COMPLETED: "bg-emerald-500/15 text-emerald-600 border-emerald-500/25",
-    CAMPAIGN_SCHEDULED_STARTED: "bg-blue-500/15 text-blue-600 border-blue-500/25",
+    CAMPAIGN_COMPLETED: "bg-primary/15 text-primary border-primary/25",
+    CAMPAIGN_SCHEDULED_STARTED: "bg-accent/15 text-accent border-accent/25",
     NUMBER_DISCONNECTED: "bg-destructive/15 text-destructive border-destructive/25",
     CAMPAIGN_FAILED_TO_START: "bg-destructive/15 text-destructive border-destructive/25",
-    TRIAL_WELCOME: "bg-violet-500/15 text-violet-600 border-violet-500/25",
-    TRIAL_REMINDER: "bg-amber-500/15 text-amber-600 border-amber-500/25",
-    TRIAL_EXPIRING: "bg-orange-500/15 text-orange-600 border-orange-500/25",
+    TRIAL_WELCOME: "bg-secondary/30 text-foreground border-border",
+    TRIAL_REMINDER: "bg-secondary/30 text-foreground border-border",
+    TRIAL_EXPIRING: "bg-secondary/30 text-foreground border-border",
   };
   return map[type] || "bg-muted text-muted-foreground border-border";
 }
@@ -209,7 +211,9 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
         .eq("email_type", group.email_type as any)
         .order("created_at", { ascending: false }) as any;
 
-      if (group.subject && group.subject !== "Sem assunto") {
+      if (group.email_type === "ADMIN_BROADCAST" && group.batchKey) {
+        query = query.ilike("idempotency_key", `broadcast_${group.batchKey}_%`);
+      } else if (group.subject && group.subject !== "Sem assunto") {
         query = query.eq("subject", group.subject);
       }
 
@@ -299,7 +303,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
             <h3 className="text-lg font-semibold text-foreground">{group.subject}</h3>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <CalendarIcon size={11} />
-              {new Date(group.firstSentAt).toLocaleString("pt-BR")}
+              {new Date(group.latestSentAt).toLocaleString("pt-BR")}
             </p>
           </div>
         </div>
@@ -492,15 +496,24 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   // Group emails by type + subject
   const grouped: GroupedEmail[] = (() => {
     const map = new Map<string, GroupedEmail>();
+
     for (const log of allLogs) {
       const subject = log.subject || (log.payload as any)?.subject || "Sem assunto";
-      const key = `${log.email_type}::${subject}`;
+      const idempotencyKey = (log as any).idempotency_key as string | null | undefined;
+      const batchMatch = idempotencyKey?.match(/^broadcast_(\d+)_/);
+      const batchKey = log.email_type === "ADMIN_BROADCAST" ? (batchMatch?.[1] || null) : null;
+      const key = batchKey
+        ? `${log.email_type}::${subject}::${batchKey}`
+        : `${log.email_type}::${subject}`;
+
       if (!map.has(key)) {
         map.set(key, {
           key,
           email_type: log.email_type,
           subject,
           firstSentAt: log.created_at,
+          latestSentAt: log.created_at,
+          batchKey,
           total: 0,
           sent: 0,
           failed: 0,
@@ -510,6 +523,7 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
           samplePayload: log.payload,
         });
       }
+
       const g = map.get(key)!;
       g.total++;
       if (log.status === "sent") g.sent++;
@@ -517,10 +531,14 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
       if (log.status === "queued") g.queued++;
       if ((log.opened_count || 0) > 0) g.opened++;
       if ((log.clicked_count || 0) > 0) g.clicked++;
-      // Keep earliest date
+
       if (log.created_at < g.firstSentAt) g.firstSentAt = log.created_at;
+      if (log.created_at > g.latestSentAt) g.latestSentAt = log.created_at;
     }
-    return Array.from(map.values()).sort((a, b) => new Date(b.firstSentAt).getTime() - new Date(a.firstSentAt).getTime());
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.latestSentAt).getTime() - new Date(a.latestSentAt).getTime()
+    );
   })();
 
   // Global KPIs
@@ -646,7 +664,7 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
                       </Badge>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                         <CalendarIcon size={10} />
-                        {new Date(g.firstSentAt).toLocaleDateString("pt-BR")}
+                        {new Date(g.latestSentAt).toLocaleDateString("pt-BR")}
                       </span>
                     </div>
                     <h4 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
