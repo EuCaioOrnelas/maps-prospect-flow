@@ -664,7 +664,7 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
                       </Badge>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                         <CalendarIcon size={10} />
-                        {new Date(g.firstSentAt).toLocaleDateString("pt-BR")}
+                        {new Date(g.latestSentAt).toLocaleDateString("pt-BR")}
                       </span>
                     </div>
                     <h4 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
