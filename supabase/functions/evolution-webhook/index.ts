@@ -2204,6 +2204,37 @@ REGRAS OBRIGATÓRIAS:
             
             const apiCreds = await getApiCredentials(instanceName);
             
+            // Fetch proxy config for this number so we can re-apply after restart
+            let proxyConfig: { host: string; port: string; protocol: string; username?: string; password?: string } | null = null;
+            try {
+              const { data: numWithProxy } = await supabase
+                .from('whatsapp_numbers')
+                .select('proxy_id')
+                .eq('instance_name', instanceName)
+                .maybeSingle();
+
+              if (numWithProxy?.proxy_id) {
+                const { data: proxy } = await supabase
+                  .from('whatsapp_proxies')
+                  .select('host, port, protocol, username, password')
+                  .eq('id', numWithProxy.proxy_id)
+                  .maybeSingle();
+
+                if (proxy) {
+                  proxyConfig = {
+                    host: proxy.host,
+                    port: proxy.port,
+                    protocol: proxy.protocol,
+                    username: proxy.username || undefined,
+                    password: proxy.password || undefined,
+                  };
+                  console.log(`[auto-restart] Found proxy for ${instanceName}: ${proxy.host}:${proxy.port}`);
+                }
+              }
+            } catch (proxyErr) {
+              console.log(`[auto-restart] Error fetching proxy config:`, proxyErr);
+            }
+
             // Attempt restart to recover the session
             let restartSucceeded = false;
             try {
@@ -2223,6 +2254,33 @@ REGRAS OBRIGATÓRIAS:
                 });
                 console.log(`[auto-restart] Connect fallback for ${instanceName}: ${connectResp.status}`);
                 if (connectResp.ok) restartSucceeded = true;
+              }
+
+              // Re-apply proxy after restart/connect
+              if (restartSucceeded && proxyConfig) {
+                try {
+                  const proxyPayload = {
+                    enabled: true,
+                    host: proxyConfig.host,
+                    port: proxyConfig.port,
+                    protocol: proxyConfig.protocol,
+                    ...(proxyConfig.username && { username: proxyConfig.username }),
+                    ...(proxyConfig.password && { password: proxyConfig.password }),
+                  };
+                  console.log(`[auto-restart] Re-applying proxy for ${instanceName}: ${proxyConfig.host}:${proxyConfig.port}`);
+                  
+                  const proxyResp = await fetch(`${apiCreds.url}/proxy/set/${instanceName}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'apikey': apiCreds.apiKey,
+                    },
+                    body: JSON.stringify(proxyPayload),
+                  });
+                  console.log(`[auto-restart] Proxy set response: ${proxyResp.status}`);
+                } catch (proxySetErr) {
+                  console.error(`[auto-restart] Failed to re-apply proxy:`, proxySetErr);
+                }
               }
             } catch (restartErr) {
               console.log(`[auto-restart] Failed for ${instanceName}:`, restartErr);
