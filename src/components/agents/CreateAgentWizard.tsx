@@ -387,6 +387,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState("Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState("Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState("");
+  const [crmStageOnUnknown, setCrmStageOnUnknown] = useState("");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
   // Apply template data to form fields (works for both default and user templates)
