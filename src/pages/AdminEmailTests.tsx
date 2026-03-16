@@ -369,7 +369,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
 // ─── Test Tab ────────────────────────────────────────────────────────────────
 
-function TestTab() {
+function TestTab({ onEmailSent }: { onEmailSent?: () => void }) {
   const { toast } = useToast();
   const [testResults, setTestResults] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
 
@@ -394,6 +394,7 @@ function TestTab() {
 
       setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
       toast({ title: `✅ Email "${emailType}" enviado para ${TARGET_EMAIL}` });
+      onEmailSent?.();
     } catch (err: any) {
       setTestResults((prev) => ({ ...prev, [emailType]: "error" }));
       toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
