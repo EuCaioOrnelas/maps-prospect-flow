@@ -695,7 +695,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-IMPORTANTE: Responda em MÚLTIPLOS PARÁGRAFOS separados por linha em branco. Cada parágrafo será enviado como mensagem separada no WhatsApp. NÃO escreva tudo em um único bloco.`;
+IMPORTANTE: Organize sua resposta em 3 blocos separados por linha em branco: 1) Saudação curta, 2) Resposta principal (máx ${maxChars} chars), 3) Pergunta ou CTA curto. Cada bloco será enviado como mensagem separada no WhatsApp.`;
 
           console.log(`Generating AI response for conv ${conv.id} (maxChars=${maxChars}, maxConsecutive=${maxConsecutiveMessages}, maxTokens=${estimatedMaxTokens + 50}, historyMessages=${messageHistory?.length || 0})...`);
           
