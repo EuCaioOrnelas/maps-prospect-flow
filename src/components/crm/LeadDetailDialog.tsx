@@ -748,6 +748,28 @@ export const LeadDetailDialog = ({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Agent Pause Button */}
+          {agentPauseStatus && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant={agentPauseStatus.isPaused ? "destructive" : "outline"}
+                  className="h-9 w-9 shrink-0"
+                  onClick={toggleAgentPause}
+                  disabled={isTogglingPause}
+                >
+                  {agentPauseStatus.isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {agentPauseStatus.isPaused
+                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` (auto-pausa até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')})` : ' (manual)'} — clique para retomar`
+                  : 'Pausar agente IA neste lead'}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         {/* Tab Navigation */}
