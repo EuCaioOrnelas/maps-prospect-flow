@@ -46,7 +46,11 @@ import {
   TrendingUp,
   Settings2,
   X,
+  Pause,
+  Play,
+  Bot,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -298,11 +302,19 @@ export const LeadDetailDialog = ({
   
   // Deal closing state
   const [dealValue, setDealValue] = useState<number>(0);
-  const [savedValue, setSavedValue] = useState<number>(0); // Track saved value to detect changes
+  const [savedValue, setSavedValue] = useState<number>(0);
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
   const [showDealConfirm, setShowDealConfirm] = useState(false);
   const [isSavingValue, setIsSavingValue] = useState(false);
+
+  // Agent pause state
+  const [agentPauseStatus, setAgentPauseStatus] = useState<{
+    conversationId: string;
+    isPaused: boolean;
+    pausedUntil: string | null;
+  } | null>(null);
+  const [isTogglingPause, setIsTogglingPause] = useState(false);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
@@ -325,6 +337,7 @@ export const LeadDetailDialog = ({
       setHeaderNameValue(lead.contact_name || lead.company_name || '');
       loadNotesAndActivities();
       loadDeals();
+      loadAgentPauseStatus();
       setIsEditing(false);
       setIsEditingHeaderName(false);
       setActiveTab('info');
@@ -343,6 +356,55 @@ export const LeadDetailDialog = ({
       .order('closed_at', { ascending: false });
     if (!error && data) {
       setDeals(data as LeadDeal[]);
+    }
+  };
+
+  const loadAgentPauseStatus = async () => {
+    if (!lead || !user) { setAgentPauseStatus(null); return; }
+    const phoneDigits = lead.phone.replace(/\D/g, '');
+    const { data: agents } = await supabase
+      .from('ai_agents')
+      .select('id')
+      .eq('user_id', user.id);
+    if (!agents?.length) { setAgentPauseStatus(null); return; }
+    const { data: convs } = await supabase
+      .from('agent_conversations')
+      .select('id, agent_manually_paused, agent_paused_until')
+      .in('agent_id', agents.map(a => a.id))
+      .eq('lead_phone', phoneDigits)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (convs?.length) {
+      const c = convs[0];
+      const isPausedUntil = c.agent_paused_until ? new Date(c.agent_paused_until) > new Date() : false;
+      setAgentPauseStatus({
+        conversationId: c.id,
+        isPaused: !!(c.agent_manually_paused || isPausedUntil),
+        pausedUntil: isPausedUntil ? c.agent_paused_until : null,
+      });
+    } else {
+      setAgentPauseStatus(null);
+    }
+  };
+
+  const toggleAgentPause = async () => {
+    if (!agentPauseStatus) return;
+    setIsTogglingPause(true);
+    try {
+      const newPaused = !agentPauseStatus.isPaused;
+      await supabase
+        .from('agent_conversations')
+        .update({
+          agent_manually_paused: newPaused,
+          agent_paused_until: null,
+        })
+        .eq('id', agentPauseStatus.conversationId);
+      setAgentPauseStatus(prev => prev ? { ...prev, isPaused: newPaused, pausedUntil: null } : null);
+      toast.success(newPaused ? 'Agente IA pausado para este lead' : 'Agente IA retomado para este lead');
+    } catch {
+      toast.error('Erro ao alterar pausa do agente');
+    } finally {
+      setIsTogglingPause(false);
     }
   };
 
@@ -686,6 +748,28 @@ export const LeadDetailDialog = ({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Agent Pause Button */}
+          {agentPauseStatus && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant={agentPauseStatus.isPaused ? "destructive" : "outline"}
+                  className="h-9 w-9 shrink-0"
+                  onClick={toggleAgentPause}
+                  disabled={isTogglingPause}
+                >
+                  {agentPauseStatus.isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {agentPauseStatus.isPaused
+                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` (auto-pausa até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')})` : ' (manual)'} — clique para retomar`
+                  : 'Pausar agente IA neste lead'}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         {/* Tab Navigation */}
