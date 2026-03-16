@@ -279,6 +279,11 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
           const replyTo = config.reply_to || undefined;
           const previewText = config.preview_text || "";
 
+          // Rate limit: 600ms delay between sends to avoid Resend throttling
+          if (results.emails_sent > 0) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+          }
+
           const sent = await sendEmail(resendApiKey, {
             to: user.email,
             from: `${fromName} <no-reply@wiize.com.br>`,

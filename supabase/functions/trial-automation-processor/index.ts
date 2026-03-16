@@ -450,6 +450,11 @@ async function processPendingSteps(
         // Add tracking pixel for open tracking
         const trackPixel = `<img src="${trackerBase}?action=open&uid=${user.id}&tid=${template.id}&aid=${state.automation_id}" width="1" height="1" alt="" style="display:none;" />`;
 
+        // Rate limit: 600ms delay between sends to avoid Resend throttling
+        if (results.emails_sent > 0) {
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+
         // Send email via Resend
         const sent = await sendEmail(resendApiKey, {
           to: user.email,
