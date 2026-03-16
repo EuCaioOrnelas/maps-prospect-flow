@@ -32,8 +32,14 @@ Deno.serve(async (req) => {
     let sentCount = 0;
     let skippedCount = 0;
 
-    for (const user of users || []) {
-      // Check email preferences
+    for (let i = 0; i < (users || []).length; i++) {
+      const user = (users || [])[i];
+
+      // Rate limit: 600ms delay between sends to avoid Resend throttling
+      if (i > 0 && sentCount > 0) {
+        await new Promise(resolve => setTimeout(resolve, 600));
+      }
+
       const { data: prefs } = await supabase
         .from("email_preferences")
         .select("transactional_enabled")
