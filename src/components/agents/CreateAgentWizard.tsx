@@ -602,10 +602,17 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.checkoutLink) setCheckoutLink(wd.checkoutLink);
         if (wd.whatsappGroupLink) setWhatsappGroupLink(wd.whatsappGroupLink);
         if (wd.customLinks) setCustomLinks(wd.customLinks);
-        if (wd.mediaFiles) setMediaFiles(wd.mediaFiles);
+        if (wd.mediaFiles) {
+          setMediaFiles(wd.mediaFiles);
+          // Auto-enable canSendMedia if there are configured media files
+          const hasConfiguredMedia = wd.mediaFiles.some((m: any) => m.url && m.name);
+          if (hasConfiguredMedia) setCanSendMedia(true);
+          else if (wd.canSendMedia !== undefined) setCanSendMedia(wd.canSendMedia);
+        } else if (wd.canSendMedia !== undefined) {
+          setCanSendMedia(wd.canSendMedia);
+        }
         if (wd.canSendAudio !== undefined) setCanSendAudio(wd.canSendAudio);
         if (wd.canSendLinks !== undefined) setCanSendLinks(wd.canSendLinks);
-        if (wd.canSendMedia !== undefined) setCanSendMedia(wd.canSendMedia);
         if (wd.canSendLongMessages !== undefined) setCanSendLongMessages(wd.canSendLongMessages);
         if (wd.maxChars) setMaxChars(wd.maxChars);
         if (wd.maxConsecutiveMessages) setMaxConsecutiveMessages(wd.maxConsecutiveMessages);
@@ -1285,6 +1292,8 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       fileName: file.name 
     };
     setMediaFiles(prev => [...prev, newMedia]);
+    // Auto-enable media sending when files are added
+    setCanSendMedia(true);
 
     try {
       const ext = file.name.split('.').pop();
