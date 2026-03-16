@@ -1044,7 +1044,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
-        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd,
+        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnUnknown,
       };
 
       const agentPayload = {
