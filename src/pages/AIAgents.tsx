@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -28,7 +29,9 @@ import {
   MessageCircle,
   FileText,
   Copy,
-  Info
+  Info,
+  WifiOff,
+  QrCode
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
@@ -134,6 +137,12 @@ export default function AIAgents() {
   const { 
     numbers, setNumbers, maxNumbers, fetchNumbers: fetchWhatsAppNumbers,
   } = useWhatsAppNumbers();
+
+  // Build a set of disconnected number IDs for quick lookup
+  const disconnectedNumberIds = useMemo(() => 
+    new Set(numbers.filter(n => !n.is_connected).map(n => n.id)),
+    [numbers]
+  );
 
   // Check if user has access to AI Agents (paid plans only)
   const userPlan = profile?.plan?.toLowerCase() || 'free';
@@ -406,20 +415,36 @@ export default function AIAgents() {
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {agents.map((agent) => (
+                  {agents.map((agent) => {
+                    const isNumberDisconnected = agent.whatsapp_number_id ? disconnectedNumberIds.has(agent.whatsapp_number_id) : false;
+                    
+                    return (
                     <Card 
                       key={agent.id} 
-                      className="border-border hover:border-primary/30 transition-all cursor-pointer group"
+                      className={cn(
+                        "border-border hover:border-primary/30 transition-all cursor-pointer group",
+                        isNumberDisconnected && "border-destructive/40 bg-destructive/5"
+                      )}
                       onClick={() => setSummaryAgent(agent)}
                     >
                       <div className="p-3 space-y-3">
+                        {/* Disconnection Warning */}
+                        {isNumberDisconnected && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                            <WifiOff className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            <p className="text-[11px] text-destructive font-medium leading-tight">
+                              Número desconectado — o agente não funcionará até reconectar
+                            </p>
+                          </div>
+                        )}
+
                         {/* Top: Icon + Name + Number */}
                         <div className="flex items-center gap-2.5">
                           <div className="relative shrink-0">
-                            <div className="p-1.5 rounded-lg bg-primary/10">
-                              <Bot className="h-4 w-4 text-primary" />
+                            <div className={cn("p-1.5 rounded-lg", isNumberDisconnected ? "bg-destructive/10" : "bg-primary/10")}>
+                              <Bot className={cn("h-4 w-4", isNumberDisconnected ? "text-destructive" : "text-primary")} />
                             </div>
-                            {agent.status === 'active' && (
+                            {agent.status === 'active' && !isNumberDisconnected && (
                               <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 ring-2 ring-card"></span>
@@ -428,7 +453,7 @@ export default function AIAgents() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className={cn("text-xs truncate", isNumberDisconnected ? "text-destructive" : "text-muted-foreground")}>
                               {agent.whatsapp_number 
                                 ? (agent.whatsapp_number.name || agent.whatsapp_number.phone_number)
                                 : 'Sem número vinculado'
@@ -443,28 +468,47 @@ export default function AIAgents() {
                             <Clock className="h-3 w-3" />
                             {agent.operating_hours_start?.slice(0, 5)} – {agent.operating_hours_end?.slice(0, 5)}
                           </span>
-                          {getStatusBadge(agent.status)}
+                          {isNumberDisconnected 
+                            ? <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">Desconectado</Badge>
+                            : getStatusBadge(agent.status)
+                          }
                         </div>
 
-                        {/* Toggle button */}
-                        <Button
-                          variant={agent.status === 'active' ? 'outline' : 'default'}
-                          size="sm"
-                          className="w-full h-7 text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleAgentStatus(agent);
-                          }}
-                        >
-                          {agent.status === 'active' ? (
-                            <><Pause className="h-3 w-3 mr-1" />Pausar</>
-                          ) : (
-                            <><Play className="h-3 w-3 mr-1" />Ativar</>
-                          )}
-                        </Button>
+                        {/* Connect or Toggle button */}
+                        {isNumberDisconnected ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full h-7 text-xs gap-1.5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/whatsapp');
+                            }}
+                          >
+                            <QrCode className="h-3 w-3" />
+                            Reconectar Número
+                          </Button>
+                        ) : (
+                          <Button
+                            variant={agent.status === 'active' ? 'outline' : 'default'}
+                            size="sm"
+                            className="w-full h-7 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleAgentStatus(agent);
+                            }}
+                          >
+                            {agent.status === 'active' ? (
+                              <><Pause className="h-3 w-3 mr-1" />Pausar</>
+                            ) : (
+                              <><Play className="h-3 w-3 mr-1" />Ativar</>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </Card>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
             </div>

@@ -50,7 +50,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { isAdmin } = useAdminCheck();
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
-  const { unreadCount: unreadAnnouncements } = useUnreadAnnouncements();
+  const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
@@ -416,7 +416,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       {/* Announcements Dialog */}
       <AnnouncementsDialog 
         open={announcementsOpen} 
-        onOpenChange={setAnnouncementsOpen} 
+        onOpenChange={setAnnouncementsOpen}
+        disconnectedNumbers={disconnectedNumberAlerts}
+        onDismissDisconnection={dismissDisconnectionAlert}
       />
     </div>
   );
