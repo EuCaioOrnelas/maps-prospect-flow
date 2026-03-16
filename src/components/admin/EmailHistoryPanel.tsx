@@ -303,7 +303,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
             <h3 className="text-lg font-semibold text-foreground">{group.subject}</h3>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <CalendarIcon size={11} />
-              {new Date(group.firstSentAt).toLocaleString("pt-BR")}
+              {new Date(group.latestSentAt).toLocaleString("pt-BR")}
             </p>
           </div>
         </div>
