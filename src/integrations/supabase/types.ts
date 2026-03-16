@@ -250,6 +250,7 @@ export type Database = {
           updated_at: string
           user_id: string
           whatsapp_number_id: string | null
+          wizard_data: Json | null
         }
         Insert: {
           agent_objective?: string | null
@@ -280,6 +281,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           whatsapp_number_id?: string | null
+          wizard_data?: Json | null
         }
         Update: {
           agent_objective?: string | null
@@ -310,6 +312,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp_number_id?: string | null
+          wizard_data?: Json | null
         }
         Relationships: [
           {
