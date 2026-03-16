@@ -2268,6 +2268,24 @@ Preciso falar com meu marido/esposa"
                       ))}
                     </select>
                   </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Quando agente não sabe responder <span className="text-destructive">*</span>
+                    </Label>
+                    <select
+                      value={crmStageOnUnknown}
+                      onChange={(e) => setCrmStageOnUnknown(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Selecione uma coluna</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o agente não souber a resposta, ele dirá "vou verificar" e moverá o lead para esta coluna para atendimento humano.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
