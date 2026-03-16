@@ -660,7 +660,7 @@ ${conversationContext}
 NOVAS MENSAGENS DO LEAD (${bufferedMessages.length} mensagens):
 ${combinedMessage}
 
-Responda de forma COMPLETA e CONCISA. Se não couber tudo em ${maxChars} caracteres, resuma mas NUNCA deixe incompleto.`;
+Responda de forma COMPLETA e CONCISA. Separe cada assunto em parágrafos distintos (saudação, resposta, pergunta). Cada parágrafo será enviado como mensagem separada.`;
 
           console.log(`Generating AI response for conv ${conv.id}...`);
           
