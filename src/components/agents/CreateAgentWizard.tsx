@@ -1028,36 +1028,75 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       };
       const mappedObjective = objectiveMap[salesApproach] || 'prospecting';
       
-      const { error } = await supabase
-        .from('ai_agents')
-        .insert({
-          user_id: user.id,
-          name,
-          whatsapp_number_id: selectedNumberId,
-          objective: mappedObjective,
-          target_audience: leadAwareness || '',
-          system_prompt: systemPrompt,
-          agent_objective: conversationGoal || '',
-          end_conversation_criteria: endConditions.join(', ') || '',
-          post_response_behavior: openingStyle || '',
-          communication_style: 'neutral',
-          operating_hours_start: operatingHoursStart,
-          operating_hours_end: operatingHoursEnd,
-          is_warmed: isWarmed,
-          max_replies: maxReplies,
-          status: activate ? 'active' : 'draft',
-          message_templates: MESSAGE_TEMPLATES.prospecting,
-          max_response_chars: parseInt(maxChars),
-          crm_stage_on_new_lead: crmStageOnNewLead || null,
-          crm_stage_on_reply: crmStageOnReply || null,
-          crm_stage_on_end: crmStageOnEnd || null,
+      // Build wizard_data to save all form fields for future editing
+      const wizardData = {
+        name, selectedNumberId, agentRole, companyName, productName, productDescription,
+        salesApproach, leadAwareness, messageReason, consciousnessLevel,
+        openingStyle, firstMission, infoToDiscover, maxQuestions,
+        presentationStyle, differentials, pricePolicy, howToTalkPrice,
+        commonObjections, objectionPosture, conversationGoal, endConditions, closingStyle,
+        schedulingLink, demoLink, websiteLink, checkoutLink, whatsappGroupLink,
+        customLinks, mediaFiles: mediaFiles.map(m => ({ name: m.name, url: m.url, type: m.type, when: m.when, fileName: m.fileName })),
+        canSendAudio, canSendLinks, canSendMedia, canSendLongMessages,
+        maxChars, maxConsecutiveMessages, alwaysWaitResponse,
+        wantToTalkPrice, productPrice, priceType, paymentMethods,
+        customDifferentials, hasFreeTrial, trialDetails,
+        operatingHoursStart, operatingHoursEnd,
+        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd,
+      };
+
+      const agentPayload = {
+        name,
+        whatsapp_number_id: selectedNumberId,
+        objective: mappedObjective,
+        target_audience: leadAwareness || '',
+        system_prompt: systemPrompt,
+        agent_objective: conversationGoal || '',
+        end_conversation_criteria: endConditions.join(', ') || '',
+        post_response_behavior: openingStyle || '',
+        communication_style: 'neutral' as const,
+        operating_hours_start: operatingHoursStart,
+        operating_hours_end: operatingHoursEnd,
+        is_warmed: isWarmed,
+        max_replies: maxReplies,
+        max_response_chars: parseInt(maxChars),
+        crm_stage_on_new_lead: crmStageOnNewLead || null,
+        crm_stage_on_reply: crmStageOnReply || null,
+        crm_stage_on_end: crmStageOnEnd || null,
+        wizard_data: wizardData,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (isEditing && editingAgent) {
+        // UPDATE existing agent
+        const { error } = await supabase
+          .from('ai_agents')
+          .update(agentPayload)
+          .eq('id', editingAgent.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Agente atualizado!",
+          description: `${name} foi atualizado com sucesso.`,
         });
+      } else {
+        // CREATE new agent
+        const { error } = await supabase
+          .from('ai_agents')
+          .insert({
+            user_id: user.id,
+            ...agentPayload,
+            status: activate ? 'active' : 'draft',
+            message_templates: MESSAGE_TEMPLATES.prospecting,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Track score event
-      trackScoreEvent("first_ai_agent_created", { agent_name: name });
-      trackScoreEvent("ai_agent_feature_used");
+        // Track score event
+        trackScoreEvent("first_ai_agent_created", { agent_name: name });
+        trackScoreEvent("ai_agent_feature_used");
+      }
 
       // Reconfigure webhook for the selected number to ensure agent receives messages
       try {
@@ -1070,14 +1109,12 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         if (numberData?.instance_name) {
           console.log('Reconfiguring webhook for instance:', numberData.instance_name);
           
-          // First attempt
           const { data: result, error: webhookError } = await supabase.functions.invoke('evolution-reconfigure-webhook', {
             body: { instanceName: numberData.instance_name },
           });
           
           if (webhookError || !result?.success) {
             console.warn('First webhook config attempt failed, retrying in 3s...', webhookError || result);
-            // Retry after 3 seconds - instance might not be fully ready
             await new Promise(resolve => setTimeout(resolve, 3000));
             const { data: retryResult } = await supabase.functions.invoke('evolution-reconfigure-webhook', {
               body: { instanceName: numberData.instance_name },
@@ -1086,8 +1123,6 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
           } else {
             console.log('Webhook configured successfully:', result);
           }
-        } else {
-          console.warn('No instance_name found for number', selectedNumberId, '- webhook not configured');
         }
       } catch (webhookErr) {
         console.error('Failed to reconfigure webhook (non-blocking):', webhookErr);
@@ -1096,18 +1131,20 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
       // Clean up template prompt
       delete (window as any).__agentTemplateSystemPrompt;
 
-      toast({
-        title: activate ? "Agente ativado!" : "Agente salvo como rascunho",
-        description: `${name} foi criado com sucesso.`,
-      });
+      if (!isEditing) {
+        toast({
+          title: activate ? "Agente ativado!" : "Agente salvo como rascunho",
+          description: `${name} foi criado com sucesso.`,
+        });
+      }
 
       resetForm();
       onOpenChange(false);
       onCreated();
     } catch (error) {
-      console.error('Error creating agent:', error);
+      console.error('Error saving agent:', error);
       toast({
-        title: "Erro ao criar agente",
+        title: isEditing ? "Erro ao atualizar agente" : "Erro ao criar agente",
         description: "Tente novamente mais tarde.",
         variant: "destructive",
       });
