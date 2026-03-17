@@ -2,7 +2,6 @@ import { memo, useMemo, useCallback } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export type ColumnWidth = 'compact' | 'medium' | 'large';
@@ -137,7 +136,7 @@ const KanbanColumnComponent = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1 overflow-hidden" viewportClassName="pr-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
         <div className="p-2 space-y-2 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
@@ -173,7 +172,7 @@ const KanbanColumnComponent = ({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
