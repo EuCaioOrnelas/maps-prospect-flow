@@ -88,13 +88,14 @@ const KanbanColumnComponent = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full overflow-hidden",
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full overflow-hidden will-change-transform",
         getColumnWidthClass(columnWidth, isExpanded),
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",
         isDragging && !isDragOver && "opacity-70"
       )}
+      style={{ transform: 'translateZ(0)' }}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDrop={handleDrop}
@@ -136,7 +137,7 @@ const KanbanColumnComponent = ({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1" style={{ transform: 'translateZ(0)', willChange: 'scroll-position' }}>
         <div className="p-2 space-y-2 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
