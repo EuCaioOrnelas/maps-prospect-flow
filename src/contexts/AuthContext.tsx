@@ -161,6 +161,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 syncAccountState(session.user.id, event);
               }, 500);
             }
+
+            // Track signup completion for landing page analytics on first SIGNED_IN
+            // This fires after email verification when the user actually becomes authenticated
+            if (event === 'SIGNED_IN') {
+              const landingSlug = getLandingPageSlug();
+              if (landingSlug && landingSlug !== 'index' || sessionStorage.getItem('landing_page_id')) {
+                // Only track once per session
+                const trackingKey = `signup_tracked_${session.user.id}`;
+                if (!sessionStorage.getItem(trackingKey)) {
+                  sessionStorage.setItem(trackingKey, 'true');
+                  trackSignupCompleted(session.user.id).catch(console.error);
+                }
+              } else {
+                // Even for index page, track if there's a stored slug
+                const trackingKey = `signup_tracked_${session.user.id}`;
+                if (!sessionStorage.getItem(trackingKey)) {
+                  sessionStorage.setItem(trackingKey, 'true');
+                  trackSignupCompleted(session.user.id).catch(console.error);
+                }
+              }
+            }
           }, 0);
         } else {
           setProfile(null);
