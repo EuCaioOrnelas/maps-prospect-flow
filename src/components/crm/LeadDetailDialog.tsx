@@ -674,6 +674,47 @@ export const LeadDetailDialog = ({
           </div>
         </div>
 
+        {/* Agent Pause Banner - prominent at top */}
+        {agentPauseStatus && (
+          <div className={cn(
+            "flex items-center justify-between gap-3 px-6 py-2.5 border-b shrink-0 transition-colors",
+            agentPauseStatus.isPaused 
+              ? "bg-destructive/10 border-destructive/20" 
+              : "bg-primary/10 border-primary/20"
+          )}>
+            <div className="flex items-center gap-2 min-w-0">
+              <Bot className={cn(
+                "w-4 h-4 shrink-0",
+                agentPauseStatus.isPaused ? "text-destructive" : "text-primary"
+              )} />
+              <span className="text-xs font-medium truncate">
+                {agentPauseStatus.isPaused
+                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
+                  : 'Agente IA ativo neste lead'}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant={agentPauseStatus.isPaused ? "default" : "destructive"}
+              className="h-7 text-xs shrink-0 gap-1.5"
+              onClick={toggleAgentPause}
+              disabled={isTogglingPause}
+            >
+              {agentPauseStatus.isPaused ? (
+                <>
+                  <Play className="w-3.5 h-3.5" />
+                  Retomar
+                </>
+              ) : (
+                <>
+                  <Pause className="w-3.5 h-3.5" />
+                  Pausar
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30 shrink-0">
           <div className="relative flex-1">
@@ -748,28 +789,6 @@ export const LeadDetailDialog = ({
               ))}
             </SelectContent>
           </Select>
-
-          {/* Agent Pause Button */}
-          {agentPauseStatus && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant={agentPauseStatus.isPaused ? "destructive" : "outline"}
-                  className="h-9 w-9 shrink-0"
-                  onClick={toggleAgentPause}
-                  disabled={isTogglingPause}
-                >
-                  {agentPauseStatus.isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {agentPauseStatus.isPaused
-                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` (auto-pausa até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')})` : ' (manual)'} — clique para retomar`
-                  : 'Pausar agente IA neste lead'}
-              </TooltipContent>
-            </Tooltip>
-          )}
         </div>
 
         {/* Tab Navigation */}
