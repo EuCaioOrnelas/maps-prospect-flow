@@ -1,8 +1,9 @@
 // Auth context - provides authentication state and methods
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
+import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
 
 interface Profile {
   id: string;
