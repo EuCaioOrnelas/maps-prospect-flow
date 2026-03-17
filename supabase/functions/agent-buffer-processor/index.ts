@@ -336,8 +336,46 @@ async function moveLeadToCRMStage(
     });
     
     if (matchingLeads.length === 0) {
-      console.log(`No lead found for phone ${phone} (last 8: ${last8Digits})`);
-      return;
+      console.log(`No lead found for phone ${phone} (last 8: ${last8Digits}) — auto-creating lead in CRM`);
+      
+      // Auto-create lead in CRM
+      // Find the default pipeline stage for this user
+      const { data: defaultStage } = await supabase
+        .from('pipeline_stages')
+        .select('id')
+        .eq('user_id', userId)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      
+      // Normalize phone for storage (E.164 BR format)
+      let phoneForStorage = phoneDigitsOnly;
+      if (phoneForStorage.length >= 10 && phoneForStorage.length <= 11 && !phoneForStorage.startsWith('55')) {
+        phoneForStorage = '55' + phoneForStorage;
+      }
+      
+      const { data: newLead, error: createError } = await supabase
+        .from('leads')
+        .insert({
+          user_id: userId,
+          phone: phoneForStorage,
+          contact_name: extras?.leadName || null,
+          origin: 'Agente IA',
+          pipeline_stage_id: defaultStage?.id || null,
+          whatsapp_status: 'in_conversation',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select('id, phone, pipeline_stage_id')
+        .single();
+      
+      if (createError) {
+        console.error('Error auto-creating lead:', createError);
+        return;
+      }
+      
+      console.log(`Auto-created lead ${newLead.id} for phone ${phoneForStorage}`);
+      matchingLeads.push(newLead);
     }
     
     console.log(`Found ${matchingLeads.length} matching lead(s):`, matchingLeads.map((l: any) => `${l.id} (${l.phone})`).join(', '));
