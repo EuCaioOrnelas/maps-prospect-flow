@@ -336,12 +336,6 @@ async function moveLeadToCRMStage(
       matchingLeads.push(...matches);
     }
     
-    // Find ALL leads matching by last 8 digits
-    const matchingLeads = allUserLeads.filter((l: any) => {
-      const leadPhone = l.phone?.replace(/\D/g, '') || '';
-      return leadPhone.slice(-8) === last8Digits;
-    });
-    
     if (matchingLeads.length === 0) {
       console.log(`No lead found for phone ${phone} (last 8: ${last8Digits}) — auto-creating lead in CRM`);
       
