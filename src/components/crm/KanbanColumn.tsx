@@ -2,7 +2,6 @@ import { memo, useMemo, useCallback } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export type ColumnWidth = 'compact' | 'medium' | 'large';
