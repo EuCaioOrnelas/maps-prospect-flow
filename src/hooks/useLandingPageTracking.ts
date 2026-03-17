@@ -114,9 +114,9 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
 };
 
 // Helper to track signup completion (called from Signup page after successful signup)
-export const trackSignupCompleted = async (userId: string) => {
+export const trackSignupCompleted = async (userId: string, metaSlug?: string) => {
   const sessionId = getSessionId();
-  const pageSlug = getLandingPageSlug();
+  const pageSlug = metaSlug || getLandingPageSlug();
   let pageId = getLandingPageId();
 
   try {
