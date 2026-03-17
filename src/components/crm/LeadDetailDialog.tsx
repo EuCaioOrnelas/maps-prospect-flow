@@ -789,8 +789,6 @@ export const LeadDetailDialog = ({
               ))}
             </SelectContent>
           </Select>
-            </Tooltip>
-          )}
         </div>
 
         {/* Tab Navigation */}
