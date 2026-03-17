@@ -15,6 +15,7 @@ import { useUserEvents } from "@/hooks/useUserEvents";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Star, ChevronRight, ChevronLeft } from "lucide-react";
+import { trackTrialNoUpgrade } from "@/hooks/useLandingPageTracking";
 
 interface TrialFeedbackModalProps {
   isOpen: boolean;
@@ -89,6 +90,10 @@ export function TrialFeedbackModal({ isOpen, onClose }: TrialFeedbackModalProps)
         await trackEvent('trial_not_converted', {
           reason: notContinueReason
         });
+        // Track for landing page analytics
+        if (user) {
+          await trackTrialNoUpgrade(user.id);
+        }
         toast.success("Obrigado pelo feedback! Seu teste gratuito encerrou.");
         onClose();
         navigate('/upgrade?expired=true');

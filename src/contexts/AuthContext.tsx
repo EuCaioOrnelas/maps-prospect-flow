@@ -1,8 +1,9 @@
 // Auth context - provides authentication state and methods
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
+import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
 
 interface Profile {
   id: string;
@@ -159,6 +160,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setTimeout(() => {
                 syncAccountState(session.user.id, event);
               }, 500);
+            }
+
+            // Track signup completion for landing page analytics on first SIGNED_IN
+            // This fires after email verification when the user actually becomes authenticated
+            if (event === 'SIGNED_IN') {
+              const trackingKey = `signup_tracked_${session.user.id}`;
+              if (!sessionStorage.getItem(trackingKey)) {
+                sessionStorage.setItem(trackingKey, 'true');
+                trackSignupCompleted(session.user.id).catch(console.error);
+              }
             }
           }, 0);
         } else {
