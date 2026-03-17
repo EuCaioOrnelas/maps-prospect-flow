@@ -2296,7 +2296,7 @@ Preciso falar com meu marido/esposa"
                       ))}
                     </select>
                     <p className="text-xs text-muted-foreground">
-                      Quando o agente não souber a resposta, ele dirá "vou verificar" e moverá o lead para esta coluna para atendimento humano.
+                      Quando o agente não souber a resposta, ele dirá "vou verificar" e moverá o lead para esta coluna para atendimento humano. <span className="text-amber-400 font-medium">O agente não responderá leads que já estão nesta coluna.</span>
                     </p>
                   </div>
                 </div>
