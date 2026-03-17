@@ -88,13 +88,14 @@ const KanbanColumnComponent = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full overflow-hidden",
+        "flex flex-col bg-muted/30 rounded-xl border-2 transition-all duration-200 h-full overflow-hidden will-change-transform",
         getColumnWidthClass(columnWidth, isExpanded),
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
           : "border-border/50",
         isDragging && !isDragOver && "opacity-70"
       )}
+      style={{ transform: 'translateZ(0)' }}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDrop={handleDrop}
