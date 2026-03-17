@@ -306,6 +306,7 @@ async function moveLeadToCRMStage(
     last_response?: string;
     last_response_at?: string;
     whatsapp_status?: string;
+    leadName?: string;
   }
 ): Promise<void> {
   try {
