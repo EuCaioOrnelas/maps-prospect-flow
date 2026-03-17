@@ -325,9 +325,15 @@ async function moveLeadToCRMStage(
       .select('id, pipeline_stage_id, user_id, phone')
       .eq('user_id', userId);
     
-    if (!allUserLeads || allUserLeads.length === 0) {
-      console.log(`No leads found for user ${userId}`);
-      return;
+    // Find ALL leads matching by last 8 digits
+    const matchingLeads: any[] = [];
+    
+    if (allUserLeads && allUserLeads.length > 0) {
+      const matches = allUserLeads.filter((l: any) => {
+        const leadPhone = l.phone?.replace(/\D/g, '') || '';
+        return leadPhone.slice(-8) === last8Digits;
+      });
+      matchingLeads.push(...matches);
     }
     
     // Find ALL leads matching by last 8 digits
