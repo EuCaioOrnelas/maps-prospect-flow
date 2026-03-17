@@ -1015,6 +1015,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   last_response: combinedMessage,
                   last_response_at: conv.response_received_at || nowISO,
                   whatsapp_status: isConversationEnded ? 'replied' : 'in_conversation',
+                  leadName: conv.lead_name || undefined,
                 };
                 
                 if (agentDoesntKnow && crmStageUnknown) {
