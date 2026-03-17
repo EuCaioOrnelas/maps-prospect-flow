@@ -136,7 +136,7 @@ const KanbanColumnComponent = ({
       </div>
 
       {/* Cards */}
-      <ScrollArea className="flex-1 overflow-hidden" viewportClassName="pr-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
         <div className="p-2 space-y-2 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
@@ -172,7 +172,7 @@ const KanbanColumnComponent = ({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
