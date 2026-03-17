@@ -2283,7 +2283,7 @@ Preciso falar com meu marido/esposa"
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      Quando agente não sabe responder <span className="text-destructive">*</span>
+                      Coluna de atendimento humano <span className="text-destructive">*</span>
                     </Label>
                     <select
                       value={crmStageOnUnknown}
@@ -2296,7 +2296,7 @@ Preciso falar com meu marido/esposa"
                       ))}
                     </select>
                     <p className="text-xs text-muted-foreground">
-                      Quando o agente não souber a resposta, ele dirá "vou verificar" e moverá o lead para esta coluna para atendimento humano. <span className="text-amber-400 font-medium">O agente não responderá leads que já estão nesta coluna.</span>
+                      O agente moverá leads para esta coluna quando não souber responder, e <span className="text-amber-400 font-medium">não responderá leads que já estão nela</span>. Você também pode mover leads manualmente para cá para pausar o agente.
                     </p>
                   </div>
                 </div>
