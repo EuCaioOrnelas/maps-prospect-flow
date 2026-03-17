@@ -15,6 +15,7 @@ import { useUserEvents } from "@/hooks/useUserEvents";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Star, ChevronRight, ChevronLeft } from "lucide-react";
+import { trackTrialNoUpgrade } from "@/hooks/useLandingPageTracking";
 
 interface TrialFeedbackModalProps {
   isOpen: boolean;
