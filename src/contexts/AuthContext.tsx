@@ -168,7 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const trackingKey = `signup_tracked_${session.user.id}`;
               if (!sessionStorage.getItem(trackingKey)) {
                 sessionStorage.setItem(trackingKey, 'true');
-                trackSignupCompleted(session.user.id).catch(console.error);
+                // Use slug from user metadata (works across devices) with localStorage fallback
+                const metaSlug = session.user.user_metadata?.landing_page_slug;
+                trackSignupCompleted(session.user.id, metaSlug).catch(console.error);
               }
             }
           }, 0);
@@ -322,16 +324,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: { 
-          name,
-          signup_ip: clientIP || 'unknown',
-          device_fingerprint: fingerprint || 'unknown',
-          fraud_check_skipped: fraudCheckSkipped,
-          stripe_whitelisted: isWhitelisted,
-          terms_accepted: 'true'
-        }
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { 
+            name,
+            signup_ip: clientIP || 'unknown',
+            device_fingerprint: fingerprint || 'unknown',
+            fraud_check_skipped: fraudCheckSkipped,
+            stripe_whitelisted: isWhitelisted,
+            terms_accepted: 'true',
+            landing_page_slug: getLandingPageSlug()
+          }
       }
     });
 
