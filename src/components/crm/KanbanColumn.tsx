@@ -137,7 +137,7 @@ const KanbanColumnComponent = ({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1" style={{ transform: 'translateZ(0)', willChange: 'scroll-position' }}>
         <div className="p-2 space-y-2 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
