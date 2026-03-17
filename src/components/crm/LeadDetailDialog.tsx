@@ -680,12 +680,12 @@ export const LeadDetailDialog = ({
             "flex items-center justify-between gap-3 px-6 py-2.5 border-b shrink-0 transition-colors",
             agentPauseStatus.isPaused 
               ? "bg-destructive/10 border-destructive/20" 
-              : "bg-emerald-500/10 border-emerald-500/20"
+              : "bg-primary/10 border-primary/20"
           )}>
             <div className="flex items-center gap-2 min-w-0">
               <Bot className={cn(
                 "w-4 h-4 shrink-0",
-                agentPauseStatus.isPaused ? "text-destructive" : "text-emerald-500"
+                agentPauseStatus.isPaused ? "text-destructive" : "text-primary"
               )} />
               <span className="text-xs font-medium truncate">
                 {agentPauseStatus.isPaused
