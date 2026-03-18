@@ -84,6 +84,69 @@ export default function CRM() {
     dismissBetaWarning();
   };
 
+  // Fetch custom origins (moved before useCallbacks that depend on refetchOrigins)
+  const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
+    queryKey: ['lead-origins', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('lead_origins')
+        .select('name')
+        .eq('user_id', user.id)
+        .order('name');
+      return data?.map(o => o.name) || [];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch WhatsApp numbers for filter
+  const { data: whatsappNumbers = [] } = useQuery({
+    queryKey: ['whatsapp-numbers', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('whatsapp_numbers')
+        .select('id, name, phone_number')
+        .eq('user_id', user.id)
+        .order('name');
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user profile for sidebar
+  const { data: sidebarProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Get all unique tags and origins from leads
+  const availableTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    leads.forEach(lead => {
+      lead.tags?.forEach(tag => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet);
+  }, [leads]);
+
+  const availableOrigins = useMemo(() => {
+    const originsSet = new Set<string>(['Manual', 'Google Maps', 'Importação', 'Campanha', 'Indicação', 'Site', 'Rede Social']);
+    leads.forEach(lead => {
+      if (lead.origin) originsSet.add(lead.origin);
+    });
+    customOrigins.forEach(origin => originsSet.add(origin));
+    return Array.from(originsSet).sort();
+  }, [leads, customOrigins]);
+
   const handleAddOrigin = useCallback(async (originName: string) => {
     if (!user) return;
     try {
@@ -167,6 +230,11 @@ export default function CRM() {
     setSelectedLeadIds(new Set());
     setBulkSelectMode(false);
   }, []);
+
+  const handleBulkDelete = useCallback(async () => {
+    await deleteLeads(Array.from(selectedLeadIds));
+    clearSelection();
+  }, [deleteLeads, selectedLeadIds, clearSelection]);
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
