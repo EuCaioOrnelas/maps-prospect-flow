@@ -84,6 +84,90 @@ export default function CRM() {
     dismissBetaWarning();
   };
 
+  const handleAddOrigin = useCallback(async (originName: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .insert({ user_id: user.id, name: originName });
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error adding origin:', error);
+    }
+  }, [user, refetchOrigins]);
+
+  const handleUpdateOrigin = useCallback(async (oldName: string, newName: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .update({ name: newName })
+        .eq('user_id', user.id)
+        .eq('name', oldName);
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error updating origin:', error);
+      throw error;
+    }
+  }, [user, refetchOrigins]);
+
+  const handleDeleteOrigin = useCallback(async (name: string) => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('lead_origins')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('name', name);
+      refetchOrigins();
+    } catch (error) {
+      console.error('Error deleting origin:', error);
+      throw error;
+    }
+  }, [user, refetchOrigins]);
+
+  const checkLeadExists = useCallback(async (phone: string): Promise<boolean> => {
+    if (!user) return false;
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const { data } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('phone', normalizedPhone)
+      .limit(1);
+    return (data?.length || 0) > 0;
+  }, [user]);
+
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeadIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const toggleColumnSelection = useCallback((stageId: string, leadIds: string[]) => {
+    setSelectedLeadIds(prev => {
+      const newSet = new Set(prev);
+      const allSelected = leadIds.every(id => newSet.has(id));
+      if (allSelected) {
+        leadIds.forEach(id => newSet.delete(id));
+      } else {
+        leadIds.forEach(id => newSet.add(id));
+      }
+      return newSet;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedLeadIds(new Set());
+    setBulkSelectMode(false);
+  }, []);
+
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
     queryKey: ['lead-origins', user?.id],
