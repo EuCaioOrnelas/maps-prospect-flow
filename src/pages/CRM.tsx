@@ -41,7 +41,6 @@ export default function CRM() {
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const {
     stages, 
     leads, 
@@ -79,10 +78,6 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
-
-  const handleCloseBetaWarning = () => {
-    dismissBetaWarning();
-  };
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
@@ -147,93 +142,6 @@ export default function CRM() {
     return Array.from(originsSet).sort();
   }, [leads, customOrigins]);
 
-  // EARLY RETURNS AFTER ALL HOOKS
-  if (isMobile) {
-    return <MobileBlockOverlay />;
-  }
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Filter leads
-  const filteredLeads = leads.filter(lead => {
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const matchesSearch = 
-        lead.company_name?.toLowerCase().includes(searchLower) ||
-        lead.contact_name?.toLowerCase().includes(searchLower) ||
-        lead.phone.includes(filters.search) ||
-        lead.category?.toLowerCase().includes(searchLower) ||
-        lead.city?.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
-
-    // Stage filter
-    if (filters.stage && lead.pipeline_stage_id !== filters.stage) {
-      return false;
-    }
-
-    // WhatsApp status filter
-    if (filters.whatsappStatus && lead.whatsapp_status !== filters.whatsappStatus) {
-      return false;
-    }
-
-    // Origin filter
-    if (filters.origin && lead.origin !== filters.origin) {
-      return false;
-    }
-
-    // Tags filter
-    if (filters.tags.length > 0) {
-      const hasMatchingTag = filters.tags.some(tag => lead.tags?.includes(tag));
-      if (!hasMatchingTag) return false;
-    }
-
-    // WhatsApp number filter
-    if (filters.whatsappNumberId && lead.whatsapp_number_id !== filters.whatsappNumberId) {
-      return false;
-    }
-
-    // Date range filter
-    if (filters.dateFrom) {
-      const leadDate = new Date(lead.created_at);
-      const fromDate = new Date(filters.dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      if (leadDate < fromDate) return false;
-    }
-
-    if (filters.dateTo) {
-      const leadDate = new Date(lead.created_at);
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      if (leadDate > toDate) return false;
-    }
-
-    return true;
-  });
-
-  const handleLeadClick = (lead: Lead) => {
-    setSelectedLead(lead);
-    setDialogOpen(true);
-  };
-
-  const handleLeadMove = async (leadId: string, stageId: string) => {
-    await moveLeadToStage(leadId, stageId);
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      setSelectedLead(null);
-    }
-  };
-
   const handleAddOrigin = useCallback(async (originName: string) => {
     if (!user) return;
     try {
@@ -288,7 +196,6 @@ export default function CRM() {
     return (data?.length || 0) > 0;
   }, [user]);
 
-  // Bulk selection handlers
   const toggleLeadSelection = useCallback((leadId: string) => {
     setSelectedLeadIds(prev => {
       const newSet = new Set(prev);
@@ -301,19 +208,13 @@ export default function CRM() {
     });
   }, []);
 
-  const selectAllLeads = useCallback(() => {
-    setSelectedLeadIds(new Set(filteredLeads.map(l => l.id)));
-  }, [filteredLeads]);
-
   const toggleColumnSelection = useCallback((stageId: string, leadIds: string[]) => {
     setSelectedLeadIds(prev => {
       const newSet = new Set(prev);
       const allSelected = leadIds.every(id => newSet.has(id));
       if (allSelected) {
-        // Deselect all in column
         leadIds.forEach(id => newSet.delete(id));
       } else {
-        // Select all in column
         leadIds.forEach(id => newSet.add(id));
       }
       return newSet;
@@ -330,9 +231,79 @@ export default function CRM() {
     clearSelection();
   }, [deleteLeads, selectedLeadIds, clearSelection]);
 
+  // ═══════════════════════════════════════════════════════
+  // EARLY RETURNS AFTER ALL HOOKS
+  // ═══════════════════════════════════════════════════════
+
+  if (isMobile) {
+    return <MobileBlockOverlay />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Filter leads
+  const filteredLeads = leads.filter(lead => {
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = 
+        lead.company_name?.toLowerCase().includes(searchLower) ||
+        lead.contact_name?.toLowerCase().includes(searchLower) ||
+        lead.phone.includes(filters.search) ||
+        lead.category?.toLowerCase().includes(searchLower) ||
+        lead.city?.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+    if (filters.stage && lead.pipeline_stage_id !== filters.stage) return false;
+    if (filters.whatsappStatus && lead.whatsapp_status !== filters.whatsappStatus) return false;
+    if (filters.origin && lead.origin !== filters.origin) return false;
+    if (filters.tags.length > 0) {
+      const hasMatchingTag = filters.tags.some(tag => lead.tags?.includes(tag));
+      if (!hasMatchingTag) return false;
+    }
+    if (filters.whatsappNumberId && lead.whatsapp_number_id !== filters.whatsappNumberId) return false;
+    if (filters.dateFrom) {
+      const leadDate = new Date(lead.created_at);
+      const fromDate = new Date(filters.dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      if (leadDate < fromDate) return false;
+    }
+    if (filters.dateTo) {
+      const leadDate = new Date(lead.created_at);
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      if (leadDate > toDate) return false;
+    }
+    return true;
+  });
+
+  const handleLeadClick = (lead: Lead) => {
+    setSelectedLead(lead);
+    setDialogOpen(true);
+  };
+
+  const handleLeadMove = async (leadId: string, stageId: string) => {
+    await moveLeadToStage(leadId, stageId);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setSelectedLead(null);
+    }
+  };
+
+  const selectAllLeads = () => {
+    setSelectedLeadIds(new Set(filteredLeads.map(l => l.id)));
+  };
+
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Background Glows */}
       <BackgroundGlow />
       
       <SEO 
@@ -368,10 +339,8 @@ export default function CRM() {
                 </div>
               </div>
 
-              {/* Metrics */}
               <CRMMetrics stages={stages} leads={filteredLeads} />
 
-              {/* Filters */}
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <CRMFilters 
@@ -469,7 +438,6 @@ export default function CRM() {
         </div>
       </main>
 
-      {/* Lead Detail Dialog */}
       <LeadDetailDialog
         lead={selectedLead}
         stages={stages}
@@ -496,7 +464,6 @@ export default function CRM() {
         onDeleteOrigin={handleDeleteOrigin}
       />
 
-      {/* Add Lead Dialog */}
       <AddLeadDialog
         open={addLeadOpen}
         onOpenChange={setAddLeadOpen}
@@ -507,7 +474,6 @@ export default function CRM() {
         checkLeadExists={checkLeadExists}
       />
 
-      {/* Bulk Actions Bar */}
       <BulkActionsBar
         selectedCount={selectedLeadIds.size}
         totalCount={filteredLeads.length}
@@ -517,7 +483,6 @@ export default function CRM() {
         isAllSelected={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0}
       />
 
-      {/* Manage Stages Dialog */}
       <ManageStagesDialog
         open={manageStagesOpen}
         onOpenChange={setManageStagesOpen}
