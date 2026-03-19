@@ -358,9 +358,9 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY not configured');
       return new Response(
         JSON.stringify({
           classification: 'INCERTO',
@@ -370,7 +370,7 @@ serve(async (req) => {
           should_trigger_antiloop: false,
           should_maintain_block: false,
           suggested_next_state: 'normal',
-          _meta: { error: 'LOVABLE_API_KEY not configured' }
+          _meta: { error: 'OPENAI_API_KEY not configured' }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
