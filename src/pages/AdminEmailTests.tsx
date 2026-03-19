@@ -218,22 +218,55 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
         onBroadcastSent?.();
       } else {
-        toast({ title: "🚀 Broadcast iniciado em segundo plano", description: "Você pode sair da página. O envio continuará automaticamente." });
+        // Client-side sending with progress
+        const { eligible, skipped } = await getFilteredUserIds();
 
-        const { data, error } = await supabase.functions.invoke("admin-broadcast", {
-          body: {
-            subject: subject.trim(),
-            content: htmlContent,
-            segment,
-            score_level: scoreLevel,
-          },
-        });
+        if (eligible.length === 0) {
+          toast({ title: "Nenhum destinatário encontrado", variant: "destructive" });
+          setSending(false);
+          return;
+        }
 
-        if (error) throw error;
+        // For churned segment, delegate to admin-broadcast since we don't have user details
+        if (segment === "churned") {
+          const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+            body: { subject: subject.trim(), content: htmlContent, segment, score_level: scoreLevel },
+          });
+          if (error) throw error;
+          const res = data as { sent?: number; failed?: number; skipped?: number };
+          setResult({ sent: res.sent || 0, failed: res.failed || 0, skipped: res.skipped || 0 });
+          toast({ title: `✅ Broadcast concluído: ${res.sent || 0} enviados` });
+          onBroadcastSent?.();
+          setSending(false);
+          setProgress(null);
+          return;
+        }
 
-        const res = data as { queued: number; skipped: number; batch_id?: string };
-        setResult({ queued: res.queued || 0, skipped: res.skipped || 0, batchId: res.batch_id });
-        toast({ title: `✅ Envio em background iniciado: ${res.queued || 0} na fila, ${res.skipped || 0} opt-out` });
+        const batchTimestamp = Date.now();
+        let sent = 0, failed = 0;
+        setProgress({ current: 0, total: eligible.length });
+
+        for (let i = 0; i < eligible.length; i++) {
+          const u = eligible[i];
+          if (i > 0) await new Promise(r => setTimeout(r, 650));
+
+          try {
+            const { error: sendErr } = await supabase.functions.invoke("send-email", {
+              body: {
+                user_id: u.id,
+                email_type: "ADMIN_BROADCAST",
+                payload: { subject: subject.trim(), content: htmlContent },
+                idempotency_key: `broadcast_${u.id}_${batchTimestamp}`,
+              },
+            });
+            if (sendErr) { failed++; } else { sent++; }
+          } catch { failed++; }
+
+          setProgress({ current: i + 1, total: eligible.length });
+        }
+
+        setResult({ sent, failed, skipped });
+        toast({ title: `✅ Broadcast concluído: ${sent} enviados, ${failed} erros` });
         onBroadcastSent?.();
       }
     } catch (err: any) {
