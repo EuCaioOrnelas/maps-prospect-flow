@@ -716,7 +716,7 @@ export const LeadDetailDialog = ({
         )}
 
         {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30 shrink-0">
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-border bg-muted/30 shrink-0">
           <div className="relative flex-1">
             <Button 
               size="sm" 
