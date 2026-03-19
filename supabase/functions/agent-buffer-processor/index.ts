@@ -1239,10 +1239,11 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 // Determine if conversation should be marked as completed
                 const maxReplies = agent.max_replies;
                 const reachedMaxReplies = maxReplies && newReplyCount >= maxReplies;
-                const isConversationEnded = shouldEndConversation || reachedMaxReplies;
+                const isConversationEnded = shouldEndConversation || isLeadLost || reachedMaxReplies;
                 
                 if (isConversationEnded) {
-                  console.log(`Conversation ${conv.id} ended. Reason: ${shouldEndConversation ? 'AI signal' : 'max_replies reached'} (${newReplyCount}/${maxReplies ?? '∞'})`);
+                  const reason = isLeadLost ? 'lead_lost' : shouldEndConversation ? 'AI signal (success)' : 'max_replies reached';
+                  console.log(`Conversation ${conv.id} ended. Reason: ${reason} (${newReplyCount}/${maxReplies ?? '∞'})`);
                 }
 
                 // Update conversation
@@ -1253,7 +1254,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
                     reply_count: newReplyCount,
-                    status: isConversationEnded ? 'completed' : 'awaiting_response',
+                    status: isConversationEnded ? (isLeadLost ? 'lost' : 'completed') : 'awaiting_response',
                     is_processing: false,
                     process_after: null,
                   })
@@ -1268,9 +1269,10 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   })
                   .eq('id', agent.id);
 
-                // CRM Integration: Move lead based on conversation state and update timestamps
+                // CRM Integration: Move lead based on conversation outcome and update timestamps
                 const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
-                const crmStageEnd = agent.crm_stage_on_end;
+                const crmStageEndSuccess = agent.crm_stage_on_end;
+                const crmStageLost = (agent as any).crm_stage_on_lost;
                 const crmStageUnknown = agent.crm_stage_on_unknown;
                 const nowISO = new Date().toISOString();
                 
@@ -1289,8 +1291,14 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
                   crmExtras.whatsapp_status = 'in_conversation';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
-                } else if (isConversationEnded && crmStageEnd) {
-                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd, crmExtras);
+                } else if (isLeadLost && crmStageLost) {
+                  // Lead explicitly not interested — move to lost stage
+                  console.log(`Lead lost, moving to "${crmStageLost}"`);
+                  crmExtras.whatsapp_status = 'lost';
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageLost, crmExtras);
+                } else if (isConversationEnded && crmStageEndSuccess) {
+                  // Conversation ended successfully
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEndSuccess, crmExtras);
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
                 }
