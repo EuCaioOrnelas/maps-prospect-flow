@@ -40,13 +40,32 @@ function BroadcastTab() {
           .select('user_id, email')
           .eq('checkout_completed', false);
         if (clError) throw clError;
-        // Deduplicate by user_id
         const seen = new Set<string>();
         usersToSend = (checkoutLeads || []).filter((c: any) => {
           if (seen.has(c.user_id)) return false;
           seen.add(c.user_id);
           return true;
         }).map((c: any) => ({ id: c.user_id, email: c.email }));
+      } else if (targetPlan === 'churned') {
+        // Get users who canceled/downgraded (have cancellation events)
+        const { data: cancelEvents, error: ceError } = await supabase
+          .from('subscription_events' as any)
+          .select('user_id, email')
+          .in('event_type', ['subscription_canceled', 'subscription_deleted']);
+        if (ceError) throw ceError;
+        // Only include users currently on free plan (actually churned)
+        const canceledUserIds = [...new Set((cancelEvents || []).map((e: any) => e.user_id).filter(Boolean))];
+        if (canceledUserIds.length > 0) {
+          // Fetch profiles to confirm they're on free plan now
+          const { data: profiles, error: pError } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .in('id', canceledUserIds)
+            .eq('plan', 'free')
+            .eq('is_blocked', false);
+          if (pError) throw pError;
+          usersToSend = (profiles || []).map(u => ({ id: u.id, email: u.email }));
+        }
       } else {
         let query = supabase.from("profiles").select("id, email, plan").eq("is_blocked", false);
         if (targetPlan !== "all") {
@@ -146,6 +165,7 @@ function BroadcastTab() {
               <SelectItem value="growth">Apenas Growth</SelectItem>
               <SelectItem value="scale">Apenas Scale</SelectItem>
               <SelectItem value="checkout_abandoned">Checkout Abandonado</SelectItem>
+              <SelectItem value="churned">Cancelados / Downgrade</SelectItem>
             </SelectContent>
           </Select>
         </div>
