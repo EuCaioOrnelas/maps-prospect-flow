@@ -47,20 +47,18 @@ function BroadcastTab() {
           return true;
         }).map((c: any) => ({ id: c.user_id, email: c.email }));
       } else if (targetPlan === 'churned') {
-        // Get users who canceled/downgraded (have cancellation events)
-        const { data: cancelEvents, error: ceError } = await supabase
-          .from('subscription_events' as any)
+        // Get users who completed checkout (were paying) but are now on free plan (churned)
+        const { data: completedCheckouts, error: ceError } = await supabase
+          .from('checkout_leads' as any)
           .select('user_id, email')
-          .in('event_type', ['subscription_canceled', 'subscription_deleted']);
+          .eq('checkout_completed', true);
         if (ceError) throw ceError;
-        // Only include users currently on free plan (actually churned)
-        const canceledUserIds = [...new Set((cancelEvents || []).map((e: any) => e.user_id).filter(Boolean))];
-        if (canceledUserIds.length > 0) {
-          // Fetch profiles to confirm they're on free plan now
+        const uniqueUserIds = [...new Set((completedCheckouts || []).map((e: any) => e.user_id).filter(Boolean))];
+        if (uniqueUserIds.length > 0) {
           const { data: profiles, error: pError } = await supabase
             .from('profiles')
             .select('id, email')
-            .in('id', canceledUserIds)
+            .in('id', uniqueUserIds)
             .eq('plan', 'free')
             .eq('is_blocked', false);
           if (pError) throw pError;
