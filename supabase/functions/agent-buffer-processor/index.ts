@@ -1083,10 +1083,16 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             const aiData = await aiResponse.json();
             let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
 
-            // Detect conversation end marker
+            // Detect conversation outcome markers
             const shouldEndConversation = replyContent.includes('[CONVERSA_ENCERRADA]');
             if (shouldEndConversation) {
-              console.log(`AI signaled conversation end for conv ${conv.id}`);
+              console.log(`AI signaled conversation end (SUCCESS) for conv ${conv.id}`);
+            }
+
+            // Detect "lead lost" marker — lead is not interested
+            const isLeadLost = replyContent.includes('[LEAD_PERDIDO]');
+            if (isLeadLost) {
+              console.log(`AI signaled lead LOST for conv ${conv.id}`);
             }
 
             // Detect "don't know" marker — agent couldn't answer the question
@@ -1098,6 +1104,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             // Remove all markers from the actual message
             replyContent = replyContent
               .replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '')
+              .replace(/\s*\[LEAD_PERDIDO\]\s*/g, '')
               .replace(/\s*\[NAO_SEI\]\s*/g, '')
               .trim();
 
