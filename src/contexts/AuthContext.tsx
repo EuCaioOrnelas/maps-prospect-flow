@@ -168,9 +168,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const trackingKey = `signup_tracked_${session.user.id}`;
               if (!sessionStorage.getItem(trackingKey)) {
                 sessionStorage.setItem(trackingKey, 'true');
-                // Use slug from user metadata (works across devices) with localStorage fallback
-                const metaSlug = session.user.user_metadata?.landing_page_slug;
-                trackSignupCompleted(session.user.id, metaSlug).catch(console.error);
+                
+                // Check database to avoid cross-session duplicates
+                const { data: existingSource } = await supabase
+                  .from('user_landing_source')
+                  .select('id')
+                  .eq('user_id', session.user.id)
+                  .maybeSingle();
+                
+                if (!existingSource) {
+                  // Use slug from user metadata (works across devices) with localStorage fallback
+                  const metaSlug = session.user.user_metadata?.landing_page_slug;
+                  await trackSignupCompleted(session.user.id, metaSlug).catch(console.error);
+                  
+                  // Track for trial automation system
+                  await supabase.from('trial_product_events').insert({
+                    user_id: session.user.id,
+                    event_name: 'user_signed_up',
+                    event_source: 'frontend',
+                    metadata: { method: 'email' },
+                  }).then(({ error }) => {
+                    if (error) console.error('[AuthContext] Error tracking trial event:', error);
+                  });
+                  
+                  console.log('[AuthContext] Signup tracked for landing page:', metaSlug || 'index');
+                } else {
+                  console.log('[AuthContext] Signup already tracked (db check) - skipping');
+                }
               }
             }
           }, 0);
