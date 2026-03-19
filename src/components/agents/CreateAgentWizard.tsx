@@ -711,7 +711,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
     setMaxReplies(1);
-    delete (window as any).__agentTemplateSystemPrompt;
+    setMaxReplies(1);
   };
 
   const toggleArrayItem = (arr: string[], item: string, setter: (arr: string[]) => void) => {
