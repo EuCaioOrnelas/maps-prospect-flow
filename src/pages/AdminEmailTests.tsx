@@ -51,7 +51,7 @@ const EMAIL_TYPES = [
 // ─── Compose Tab ────────────────────────────────────────────────────────────
 
 type ScoreLevelFilter = "Frio" | "Baixo engajamento" | "Engajado" | "Alto valor" | "Pronto para upgrade";
-type SegmentFilter = "all" | "free_only" | "paid_only" | "start" | "growth" | "scale";
+type SegmentFilter = "all" | "free_only" | "paid_only" | "start" | "growth" | "scale" | "churned";
 
 function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const { toast } = useToast();
@@ -115,27 +115,51 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   };
 
   const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
-    const plans = getPlansForSegment();
-    const PAGE = 1000;
-    let allUsers: any[] = [];
-    let page = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase
+    let filteredUsers: any[] = [];
+
+    if (segment === "churned") {
+      const { data: checkoutUsers, error: checkoutError } = await supabase
+        .from("checkout_leads" as any)
+        .select("user_id")
+        .eq("checkout_completed", true);
+      if (checkoutError) throw checkoutError;
+
+      const churnedIds = [...new Set((checkoutUsers || []).map((u: any) => u.user_id).filter(Boolean))];
+      if (churnedIds.length === 0) return { eligible: [], skipped: 0 };
+
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, name, plan")
-        .in("plan", plans)
-        .eq("is_blocked", false)
-        .range(page * PAGE, (page + 1) * PAGE - 1);
-      if (error) throw error;
-      if (data) allUsers.push(...data);
-      hasMore = (data?.length || 0) === PAGE;
-      page++;
+        .in("id", churnedIds)
+        .eq("plan", "free")
+        .eq("is_blocked", false);
+      if (profilesError) throw profilesError;
+
+      filteredUsers = profiles || [];
+    } else {
+      const plans = getPlansForSegment();
+      const PAGE = 1000;
+      let allUsers: any[] = [];
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan")
+          .in("plan", plans)
+          .eq("is_blocked", false)
+          .range(page * PAGE, (page + 1) * PAGE - 1);
+        if (error) throw error;
+        if (data) allUsers.push(...data);
+        hasMore = (data?.length || 0) === PAGE;
+        page++;
+      }
+
+      if (allUsers.length === 0) return { eligible: [], skipped: 0 };
+      filteredUsers = allUsers;
     }
 
-    if (allUsers.length === 0) return { eligible: [], skipped: 0 };
-
-    let filteredUsers = allUsers;
+    if (filteredUsers.length === 0) return { eligible: [], skipped: 0 };
 
     if (scoreLevel !== "all") {
       const userIds = filteredUsers.map(u => u.id);
@@ -297,6 +321,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
                 <SelectItem value="all">Todos os usuários</SelectItem>
                 <SelectItem value="free_only">Apenas Free (não compraram)</SelectItem>
                 <SelectItem value="paid_only">Apenas pagantes (compraram)</SelectItem>
+                <SelectItem value="churned">Cancelados / Downgrade</SelectItem>
                 <SelectItem value="start">Plano Start</SelectItem>
                 <SelectItem value="growth">Plano Growth</SelectItem>
                 <SelectItem value="scale">Plano Scale</SelectItem>
