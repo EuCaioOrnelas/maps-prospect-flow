@@ -434,55 +434,43 @@ Deno.serve(async (req) => {
       return { ok: false as const, status: 0, error: "retry_exhausted" };
     };
 
-    const processBroadcast = async () => {
-      let sent = 0;
-      let failed = 0;
-      const reasonCounter: Record<string, number> = {};
+    // Process broadcast SYNCHRONOUSLY (more reliable than waitUntil)
+    let sent = 0;
+    let failed = 0;
+    const reasonCounter: Record<string, number> = {};
 
-      console.log(`[admin-broadcast] Batch ${batchId} started: ${eligibleUsers.length} eligible, ${skipped} opted-out`);
+    console.log(`[admin-broadcast] Batch ${batchId} started: ${eligibleUsers.length} eligible, ${skipped} opted-out`);
 
-      for (let i = 0; i < eligibleUsers.length; i++) {
-        if (i > 0) await sleep(650);
-        const result = await sendWithRetry(eligibleUsers[i]);
+    for (let i = 0; i < eligibleUsers.length; i++) {
+      if (i > 0) await sleep(650);
+      const result = await sendWithRetry(eligibleUsers[i]);
 
-        if (result.ok) {
-          sent++;
-        } else {
-          failed++;
-          const reasonKey = `${result.status}:${(result.error || "unknown").slice(0, 160)}`;
-          reasonCounter[reasonKey] = (reasonCounter[reasonKey] || 0) + 1;
-          console.error(`[admin-broadcast] Failed ${eligibleUsers[i].email} [${result.status}] ${result.error}`);
-        }
-
-        if ((i + 1) % 25 === 0 || i + 1 === eligibleUsers.length) {
-          console.log(`[admin-broadcast] Batch ${batchId} progress: ${i + 1}/${eligibleUsers.length} (sent=${sent}, failed=${failed})`);
-        }
+      if (result.ok) {
+        sent++;
+      } else {
+        failed++;
+        const reasonKey = `${result.status}:${(result.error || "unknown").slice(0, 160)}`;
+        reasonCounter[reasonKey] = (reasonCounter[reasonKey] || 0) + 1;
+        console.error(`[admin-broadcast] Failed ${eligibleUsers[i].email} [${result.status}] ${result.error}`);
       }
 
-      console.log(`[admin-broadcast] Batch ${batchId} done: sent=${sent}, failed=${failed}, skipped=${skipped}`);
-      if (failed > 0) console.log(`[admin-broadcast] Batch ${batchId} failure summary:`, reasonCounter);
-    };
-
-    const edgeRuntime = (globalThis as unknown as {
-      EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void };
-    }).EdgeRuntime;
-
-    const backgroundTask = processBroadcast();
-    if (edgeRuntime?.waitUntil) {
-      edgeRuntime.waitUntil(backgroundTask);
-    } else {
-      backgroundTask.catch((err) => console.error("[admin-broadcast] Background task error:", err));
+      if ((i + 1) % 10 === 0 || i + 1 === eligibleUsers.length) {
+        console.log(`[admin-broadcast] Batch ${batchId} progress: ${i + 1}/${eligibleUsers.length} (sent=${sent}, failed=${failed})`);
+      }
     }
+
+    console.log(`[admin-broadcast] Batch ${batchId} done: sent=${sent}, failed=${failed}, skipped=${skipped}`);
+    if (failed > 0) console.log(`[admin-broadcast] Batch ${batchId} failure summary:`, reasonCounter);
 
     return new Response(
       JSON.stringify({
         success: true,
-        started: true,
         batch_id: batchId,
-        queued: eligibleUsers.length,
+        sent,
+        failed,
         skipped,
       }),
-      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("[admin-broadcast] Error:", error);
