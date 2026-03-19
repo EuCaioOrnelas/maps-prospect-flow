@@ -130,19 +130,8 @@ const Signup = () => {
       return;
     }
 
-    // Track signup completion for landing page analytics
-    // Get the user that was just created
-    const { data: { user: newUser } } = await supabase.auth.getUser();
-    if (newUser) {
-      await trackSignupCompleted(newUser.id);
-      // Track for trial automation system
-      await supabase.from('trial_product_events').insert({
-        user_id: newUser.id,
-        event_name: 'user_signed_up',
-        event_source: 'frontend',
-        metadata: { method: 'email' },
-      });
-    }
+    // Tracking is handled by AuthContext on SIGNED_IN event (after email verification)
+    // This ensures it works even if verification happens on a different device
 
     // Show email verification dialog
     setShowEmailVerification(true);
