@@ -235,7 +235,9 @@ async function applyFilters(
   users: BroadcastUser[],
   scoreLevel: string
 ): Promise<{ eligible: BroadcastUser[]; skipped: number }> {
-  let filteredUsers = [...users];
+  // Separate stripe-only users (no profile) from real users
+  const stripeOnlyUsers = users.filter((u) => u.id.startsWith("stripe_"));
+  let filteredUsers = users.filter((u) => !u.id.startsWith("stripe_"));
 
   // Score-level filtering
   if (scoreLevel !== "all" && filteredUsers.length > 0) {
