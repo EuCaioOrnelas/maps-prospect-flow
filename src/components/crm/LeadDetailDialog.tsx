@@ -583,7 +583,7 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border">
+      <DialogContent className="max-w-xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5 shrink-0">
           <div className="flex items-start gap-4">
