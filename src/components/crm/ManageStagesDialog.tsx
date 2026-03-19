@@ -247,7 +247,7 @@ export const ManageStagesDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full rounded-lg max-h-[90vh] sm:max-h-auto overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Gerenciar Colunas do Funil</DialogTitle>
           <DialogDescription>

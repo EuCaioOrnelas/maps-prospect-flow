@@ -220,7 +220,7 @@ export const AddLeadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full rounded-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
@@ -328,7 +328,7 @@ export const AddLeadDialog = ({
           </div>
 
           {/* Secondary Fields */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="company_name" className="flex items-center gap-2 mb-2">
                 <Building2 className="w-3.5 h-3.5 text-muted-foreground" />

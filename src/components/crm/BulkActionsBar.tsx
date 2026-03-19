@@ -51,7 +51,7 @@ export const BulkActionsBar = ({
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-card border border-border shadow-lg rounded-lg px-4 py-3">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 sm:gap-3 bg-card border border-border shadow-lg rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 max-w-[95vw]">
         <div className="flex items-center gap-2">
           <Checkbox 
             checked={isAllSelected}

@@ -583,9 +583,9 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border">
+      <DialogContent className="max-w-xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5 shrink-0">
+        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-4 sm:px-6 py-4 sm:py-5 shrink-0">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
@@ -677,7 +677,7 @@ export const LeadDetailDialog = ({
         {/* Agent Pause Banner - prominent at top */}
         {agentPauseStatus && (
           <div className={cn(
-            "flex items-center justify-between gap-3 px-6 py-2.5 border-b shrink-0 transition-colors",
+            "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
             agentPauseStatus.isPaused 
               ? "bg-destructive/10 border-destructive/20" 
               : "bg-primary/10 border-primary/20"
@@ -716,7 +716,7 @@ export const LeadDetailDialog = ({
         )}
 
         {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/30 shrink-0">
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-border bg-muted/30 shrink-0">
           <div className="relative flex-1">
             <Button 
               size="sm" 

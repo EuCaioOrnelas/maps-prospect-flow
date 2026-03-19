@@ -160,7 +160,7 @@ const KanbanBoardWithScrollComponent = ({
     <div 
       ref={containerRef}
       className={cn(
-        "flex gap-4 overflow-x-auto pb-4 h-full",
+        "flex gap-3 sm:gap-4 overflow-x-auto pb-4 h-full snap-x snap-mandatory sm:snap-none",
         draggedLead && "cursor-grabbing select-none",
         filteredStageId && "justify-center"
       )}

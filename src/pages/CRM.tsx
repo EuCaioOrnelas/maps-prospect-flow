@@ -9,7 +9,7 @@ import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
-import { MobileBlockOverlay } from '@/components/crm/MobileBlockOverlay';
+// MobileBlockOverlay removed - CRM now works on mobile
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
@@ -235,9 +235,7 @@ export default function CRM() {
   // EARLY RETURNS AFTER ALL HOOKS
   // ═══════════════════════════════════════════════════════
 
-  if (isMobile) {
-    return <MobileBlockOverlay />;
-  }
+  // Mobile is now supported - no block overlay
 
   if (loading) {
     return (
@@ -496,7 +494,7 @@ export default function CRM() {
 
       {/* Beta Warning Dialog */}
       <Dialog open={showBetaWarning} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
