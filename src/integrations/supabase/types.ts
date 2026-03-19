@@ -19,6 +19,10 @@ export type Database = {
           agent_id: string
           agent_manually_paused: boolean | null
           agent_paused_until: string | null
+          antiloop_sent_at: string | null
+          bot_confidence_score: number | null
+          bot_detection_reason: string | null
+          bot_detection_state: string
           created_at: string
           id: string
           initial_message_content: string | null
@@ -43,6 +47,10 @@ export type Database = {
           agent_id: string
           agent_manually_paused?: boolean | null
           agent_paused_until?: string | null
+          antiloop_sent_at?: string | null
+          bot_confidence_score?: number | null
+          bot_detection_reason?: string | null
+          bot_detection_state?: string
           created_at?: string
           id?: string
           initial_message_content?: string | null
@@ -67,6 +75,10 @@ export type Database = {
           agent_id?: string
           agent_manually_paused?: boolean | null
           agent_paused_until?: string | null
+          antiloop_sent_at?: string | null
+          bot_confidence_score?: number | null
+          bot_detection_reason?: string | null
+          bot_detection_state?: string
           created_at?: string
           id?: string
           initial_message_content?: string | null
