@@ -688,6 +688,209 @@ serve(async (req) => {
           });
         }
 
+        // ============================================================
+        // ANTI-LOOP MODULE: Detect bot/menu/automation patterns
+        // This runs BEFORE the AI response to prevent loops
+        // ============================================================
+        const currentBotState = (conv as any).bot_detection_state || 'normal';
+        const antiloopAlreadySent = currentBotState === 'antiloop_sent' || currentBotState === 'blocked_by_loop';
+
+        // Get recent message history for the classifier
+        const { data: recentHistory } = await supabase
+          .from('agent_message_logs')
+          .select('direction, content, created_at')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        const leadMsgs = (recentHistory || [])
+          .filter((m: any) => m.direction === 'received')
+          .slice(0, 5)
+          .map((m: any) => m.content || '');
+        const agentMsgs = (recentHistory || [])
+          .filter((m: any) => m.direction === 'sent')
+          .slice(0, 3)
+          .map((m: any) => m.content || '');
+
+        const contextForClassifier = (recentHistory || [])
+          .reverse()
+          .map((m: any) => {
+            const role = m.direction === 'sent' ? 'Agente' : 'Lead';
+            return `${role}: ${m.content}`;
+          })
+          .join('\n');
+
+        let antiloopDecision: {
+          classification: string;
+          should_trigger_antiloop: boolean;
+          should_maintain_block: boolean;
+          suggested_next_state: string;
+          confidence: number;
+          reasons: string[];
+          has_real_progress: boolean;
+        } = {
+          classification: 'NORMAL',
+          should_trigger_antiloop: false,
+          should_maintain_block: false,
+          suggested_next_state: 'normal',
+          confidence: 0,
+          reasons: [],
+          has_real_progress: true,
+        };
+
+        try {
+          const classifierPayload = {
+            lead_messages: leadMsgs,
+            agent_messages: agentMsgs,
+            current_state: currentBotState,
+            antiloop_already_sent: antiloopAlreadySent,
+            conversation_context: contextForClassifier,
+          };
+
+          console.log(`[anti-loop] Classifying conv ${conv.id} (state: ${currentBotState})...`);
+
+          const classifierResponse = await supabase.functions.invoke('anti-loop-classifier', {
+            body: classifierPayload,
+          });
+
+          if (classifierResponse.data && !classifierResponse.error) {
+            antiloopDecision = classifierResponse.data;
+            console.log(`[anti-loop] Conv ${conv.id}: classification=${antiloopDecision.classification}, confidence=${antiloopDecision.confidence}, trigger=${antiloopDecision.should_trigger_antiloop}, block=${antiloopDecision.should_maintain_block}, next_state=${antiloopDecision.suggested_next_state}`);
+
+            // Log the classification for auditing
+            await supabase.from('agent_message_logs').insert({
+              agent_id: agent.id,
+              conversation_id: conv.id,
+              direction: 'sent',
+              content: `[ANTI-LOOP] classification=${antiloopDecision.classification} confidence=${antiloopDecision.confidence} reasons=${(antiloopDecision.reasons || []).join(', ')} next_state=${antiloopDecision.suggested_next_state}`,
+              message_type: 'system',
+            });
+          } else {
+            console.error(`[anti-loop] Classifier error for conv ${conv.id}:`, classifierResponse.error);
+          }
+        } catch (classifierErr) {
+          console.error(`[anti-loop] Classifier invocation failed for conv ${conv.id}:`, classifierErr);
+          // On error, continue with normal flow (fail-open)
+        }
+
+        // === ANTI-LOOP ACTION: Send anti-loop message ===
+        if (antiloopDecision.should_trigger_antiloop && currentBotState === 'normal') {
+          const antiloopMessage = 'Percebi que esse contato pode estar em atendimento automático. Pode me encaminhar para o responsável comercial ou informar um contato direto?';
+
+          console.log(`[anti-loop] TRIGGERING anti-loop message for conv ${conv.id}`);
+
+          const instanceName = whatsappNumber.instance_name;
+          if (instanceName) {
+            // Send anti-loop message via Evolution API
+            const sendResponse = await fetchWithTimeout(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+              method: 'POST',
+              headers: {
+                'apikey': evolutionApiKey,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                number: conv.lead_phone,
+                text: antiloopMessage,
+              }),
+            }, EVOLUTION_TIMEOUT_MS);
+
+            if (sendResponse.ok) {
+              console.log(`[anti-loop] Anti-loop message sent successfully for conv ${conv.id}`);
+
+              // Log the sent message
+              await supabase.from('agent_message_logs').insert({
+                agent_id: agent.id,
+                conversation_id: conv.id,
+                direction: 'sent',
+                content: antiloopMessage,
+                message_type: 'antiloop',
+              });
+            } else {
+              console.error(`[anti-loop] Failed to send anti-loop message:`, await sendResponse.text());
+            }
+          }
+
+          // Update conversation state
+          await supabase
+            .from('agent_conversations')
+            .update({
+              bot_detection_state: 'antiloop_sent',
+              antiloop_sent_at: new Date().toISOString(),
+              bot_detection_reason: (antiloopDecision.reasons || []).join(', '),
+              bot_confidence_score: antiloopDecision.confidence,
+              is_processing: false,
+              process_after: null,
+              status: 'awaiting_response',
+            })
+            .eq('id', conv.id);
+
+          // Clear buffer
+          await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
+
+          processedCount++;
+          console.log(`[anti-loop] Conv ${conv.id} moved to antiloop_sent state, skipping AI response`);
+          continue; // Skip normal AI response generation
+        }
+
+        // === ANTI-LOOP ACTION: Maintain block (post-antiloop, still detecting bot) ===
+        if (antiloopDecision.should_maintain_block && (currentBotState === 'antiloop_sent' || currentBotState === 'blocked_by_loop')) {
+          console.log(`[anti-loop] MAINTAINING BLOCK for conv ${conv.id} (still detecting automation)`);
+
+          // Update to blocked state
+          await supabase
+            .from('agent_conversations')
+            .update({
+              bot_detection_state: 'blocked_by_loop',
+              bot_detection_reason: (antiloopDecision.reasons || []).join(', '),
+              bot_confidence_score: antiloopDecision.confidence,
+              is_processing: false,
+              process_after: null,
+            })
+            .eq('id', conv.id);
+
+          // Log the block decision
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agent.id,
+            conversation_id: conv.id,
+            direction: 'sent',
+            content: `[ANTI-LOOP] Conversa bloqueada: padrão de automação continua após anti-loop. Reasons: ${(antiloopDecision.reasons || []).join(', ')}`,
+            message_type: 'system',
+          });
+
+          // Clear buffer
+          await supabase.from('agent_message_buffer').delete().eq('conversation_id', conv.id);
+
+          processedCount++;
+          continue; // Skip normal AI response generation
+        }
+
+        // === ANTI-LOOP ACTION: Unblock (conversation returned to normal) ===
+        if (currentBotState !== 'normal' && antiloopDecision.suggested_next_state === 'normal') {
+          console.log(`[anti-loop] UNBLOCKING conv ${conv.id} — conversation appears normal again`);
+
+          await supabase
+            .from('agent_conversations')
+            .update({
+              bot_detection_state: 'normal',
+              bot_detection_reason: null,
+              bot_confidence_score: null,
+            })
+            .eq('id', conv.id);
+
+          // Log the unblock
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agent.id,
+            conversation_id: conv.id,
+            direction: 'sent',
+            content: `[ANTI-LOOP] Conversa desbloqueada: padrão voltou ao normal. Reasons: ${(antiloopDecision.reasons || []).join(', ')}`,
+            message_type: 'system',
+          });
+        }
+
+        // ============================================================
+        // END ANTI-LOOP MODULE — Continue with normal AI response
+        // ============================================================
+
         // Reply count tracking
         const currentReplyCount = conv.reply_count || 0;
 
