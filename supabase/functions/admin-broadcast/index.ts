@@ -110,46 +110,28 @@ Deno.serve(async (req) => {
     let allUsers: BroadcastUser[] = [];
 
     if (segment === "churned") {
+      // Users who were once paying (have subscription_current_period_end) but are now free
       const PAGE = 1000;
-      let completedCheckoutUserIds: string[] = [];
       let page = 0;
       let hasMore = true;
 
       while (hasMore) {
         const { data, error } = await supabase
-          .from("checkout_leads" as any)
-          .select("user_id")
-          .eq("checkout_completed", true)
+          .from("profiles")
+          .select("id, email, name, plan")
+          .eq("plan", "free")
+          .eq("is_blocked", false)
+          .not("subscription_current_period_end", "is", null)
           .range(page * PAGE, (page + 1) * PAGE - 1);
 
         if (error) throw error;
 
         if (data?.length) {
-          completedCheckoutUserIds.push(...data.map((row: any) => row.user_id).filter(Boolean));
+          allUsers.push(...(data as BroadcastUser[]));
         }
 
         hasMore = (data?.length || 0) === PAGE;
         page++;
-      }
-
-      const uniqueUserIds = [...new Set(completedCheckoutUserIds)];
-
-      if (uniqueUserIds.length > 0) {
-        const CHUNK = 500;
-        for (let i = 0; i < uniqueUserIds.length; i += CHUNK) {
-          const chunk = uniqueUserIds.slice(i, i + CHUNK);
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("id, email, name, plan")
-            .in("id", chunk)
-            .eq("plan", "free")
-            .eq("is_blocked", false);
-
-          if (error) throw error;
-          if (data?.length) {
-            allUsers.push(...(data as BroadcastUser[]));
-          }
-        }
       }
     } else {
       const PAGE = 1000;
