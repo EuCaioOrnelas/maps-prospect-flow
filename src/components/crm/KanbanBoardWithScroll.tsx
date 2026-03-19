@@ -185,8 +185,6 @@ const KanbanBoardWithScrollComponent = ({
           onSelectAllInColumn={onSelectAllInColumn}
           onUpdateLeadName={onUpdateLeadName}
           columnWidth={columnWidth}
-          onLeadMove={onLeadMove}
-          stages={stages}
         />
       ))}
     </div>
