@@ -1403,21 +1403,6 @@ REGRAS OBRIGATÓRIAS:
                         .single();
                       
                       if (agentConv) {
-                        // Set permanent pause (no expiry) - agent only resumes when lead is moved out of human column
-                        await supabase
-                          .from('agent_conversations')
-                          .update({
-                            status: 'user_responded',
-                            user_responded_at: new Date().toISOString(),
-                            user_responded_date: new Date().toISOString().split('T')[0],
-                            agent_manually_paused: true,
-                            agent_paused_until: null,
-                            process_after: null,
-                            is_processing: false,
-                            updated_at: new Date().toISOString()
-                          })
-                          .eq('id', agentConv.id);
-                        
                         // Log the user's manual message for AI context
                         await supabase.from('agent_message_logs').insert({
                           agent_id: activeAgent.id,
@@ -1434,10 +1419,19 @@ REGRAS OBRIGATÓRIAS:
                           .delete()
                           .eq('conversation_id', agentConv.id);
                         
-                        // Move lead to human support CRM stage if configured
+                        // Clear processing flags so buffer doesn't pick it up
+                        await supabase
+                          .from('agent_conversations')
+                          .update({
+                            process_after: null,
+                            is_processing: false,
+                            updated_at: new Date().toISOString()
+                          })
+                          .eq('id', agentConv.id);
+                        
+                        // Move lead to human support CRM stage — agent naturally stops responding there
                         if (activeAgent.crm_stage_on_unknown) {
                           try {
-                            // Find the pipeline stage by name
                             const { data: humanStage } = await supabase
                               .from('pipeline_stages')
                               .select('id')
@@ -1446,7 +1440,6 @@ REGRAS OBRIGATÓRIAS:
                               .maybeSingle();
                             
                             if (humanStage) {
-                              // Find the lead by phone
                               const canonicalForCRM = normalizeBrazilianMobileE164(normalizedPhone);
                               if (canonicalForCRM) {
                                 const { data: leadToMove } = await supabase
@@ -1465,7 +1458,6 @@ REGRAS OBRIGATÓRIAS:
                                     })
                                     .eq('id', leadToMove.id);
                                   
-                                  // Log CRM move activity
                                   await supabase.from('lead_activities').insert({
                                     lead_id: leadToMove.id,
                                     user_id: whatsappNumber.user_id,
@@ -1482,7 +1474,7 @@ REGRAS OBRIGATÓRIAS:
                           }
                         }
                         
-                        console.log(`AI Agent ${activeAgent.name} permanently paused for lead ${normalizedPhone} - user responded manually, moved to human support`);
+                        console.log(`AI Agent ${activeAgent.name}: human took over lead ${normalizedPhone}, moved to human support column`);
                       }
                     }
                   }
