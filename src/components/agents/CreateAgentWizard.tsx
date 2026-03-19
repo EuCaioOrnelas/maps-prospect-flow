@@ -1034,9 +1034,9 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setLoading(true);
     
     try {
-      // Use pre-built systemPrompt from template if available, otherwise generate
-      const templateSystemPrompt = (window as any).__agentTemplateSystemPrompt;
-      const systemPrompt = templateSystemPrompt || generatePrompt();
+      // Always generate prompt from the user's wizard inputs — never use a cached template prompt
+      // Templates only pre-fill the form fields; the final prompt must reflect the user's actual edits
+      const systemPrompt = generatePrompt();
       
       // Map salesApproach to valid objective values (constraint: prospecting, warming, first_contact)
       const objectiveMap: Record<string, string> = {
