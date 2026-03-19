@@ -61,7 +61,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const [scoreLevel, setScoreLevel] = useState<string>("all");
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-  const [result, setResult] = useState<{ queued: number; skipped: number; batchId?: string } | null>(null);
+  const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
   const [matchCount, setMatchCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
 
