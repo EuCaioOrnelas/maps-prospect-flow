@@ -628,6 +628,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.crmStageOnNewLead) setCrmStageOnNewLead(wd.crmStageOnNewLead);
         if (wd.crmStageOnReply) setCrmStageOnReply(wd.crmStageOnReply);
         if (wd.crmStageOnEnd) setCrmStageOnEnd(wd.crmStageOnEnd);
+        if (wd.crmStageOnLost) setCrmStageOnLost(wd.crmStageOnLost);
       } else {
         // Fallback: load basic fields from agent record
         setName(editingAgent.name || '');
