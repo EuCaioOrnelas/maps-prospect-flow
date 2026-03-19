@@ -244,7 +244,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
         const batchTimestamp = Date.now();
         let sent = 0, failed = 0;
-        setProgress({ current: 0, total: eligible.length });
+        setProgress({ current: 0, total: eligible.length, startedAt: Date.now() });
 
         for (let i = 0; i < eligible.length; i++) {
           const u = eligible[i];
