@@ -388,6 +388,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState("Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState("Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState("");
+  const [crmStageOnLost, setCrmStageOnLost] = useState("");
   const [crmStageOnUnknown, setCrmStageOnUnknown] = useState("");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
