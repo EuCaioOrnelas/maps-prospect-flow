@@ -235,9 +235,7 @@ export default function CRM() {
   // EARLY RETURNS AFTER ALL HOOKS
   // ═══════════════════════════════════════════════════════
 
-  if (isMobile) {
-    return <MobileBlockOverlay />;
-  }
+  // Mobile is now supported - no block overlay
 
   if (loading) {
     return (
