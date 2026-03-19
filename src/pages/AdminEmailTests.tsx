@@ -115,47 +115,36 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   };
 
   const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
-    let filteredUsers: any[] = [];
-
+    // For churned segment, use admin-broadcast dry_run (queries Stripe API)
     if (segment === "churned") {
-      // Users who were once paying (have subscription_current_period_end) but are now free
-      const PAGE = 1000;
-      let page = 0;
-      let hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, email, name, plan")
-          .eq("plan", "free")
-          .eq("is_blocked", false)
-          .not("subscription_current_period_end", "is", null)
-          .range(page * PAGE, (page + 1) * PAGE - 1);
-        if (error) throw error;
-        if (data) filteredUsers.push(...data);
-        hasMore = (data?.length || 0) === PAGE;
-        page++;
-      }
-    } else {
-      const plans = getPlansForSegment();
-      const PAGE = 1000;
-      let allUsers: any[] = [];
-      let page = 0;
-      let hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, email, name, plan")
-          .in("plan", plans)
-          .eq("is_blocked", false)
-          .range(page * PAGE, (page + 1) * PAGE - 1);
-        if (error) throw error;
-        if (data) allUsers.push(...data);
-        hasMore = (data?.length || 0) === PAGE;
-        page++;
-      }
+      const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+        body: { segment: "churned", score_level: scoreLevel, dry_run: true },
+      });
+      if (error) throw error;
+      const res = data as { queued: number; skipped: number };
+      // Return fake eligible array with correct length for count display
+      return {
+        eligible: Array.from({ length: res.queued || 0 }, (_, i) => ({ id: `churned-${i}` })),
+        skipped: res.skipped || 0,
+      };
+    }
 
-      if (allUsers.length === 0) return { eligible: [], skipped: 0 };
-      filteredUsers = allUsers;
+    let filteredUsers: any[] = [];
+    const plans = getPlansForSegment();
+    const PAGE = 1000;
+    let page = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, name, plan")
+        .in("plan", plans)
+        .eq("is_blocked", false)
+        .range(page * PAGE, (page + 1) * PAGE - 1);
+      if (error) throw error;
+      if (data) filteredUsers.push(...data);
+      hasMore = (data?.length || 0) === PAGE;
+      page++;
     }
 
     if (filteredUsers.length === 0) return { eligible: [], skipped: 0 };
