@@ -71,6 +71,7 @@ interface CreateAgentWizardProps {
     crm_stage_on_new_lead: string | null;
     crm_stage_on_reply: string | null;
     crm_stage_on_end: string | null;
+    crm_stage_on_lost: string | null;
     crm_stage_on_unknown: string | null;
   } | null;
 }
@@ -388,6 +389,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState("Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState("Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState("");
+  const [crmStageOnLost, setCrmStageOnLost] = useState("");
   const [crmStageOnUnknown, setCrmStageOnUnknown] = useState("");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
 
@@ -627,6 +629,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.crmStageOnNewLead) setCrmStageOnNewLead(wd.crmStageOnNewLead);
         if (wd.crmStageOnReply) setCrmStageOnReply(wd.crmStageOnReply);
         if (wd.crmStageOnEnd) setCrmStageOnEnd(wd.crmStageOnEnd);
+        if (wd.crmStageOnLost) setCrmStageOnLost(wd.crmStageOnLost);
       } else {
         // Fallback: load basic fields from agent record
         setName(editingAgent.name || '');
@@ -1008,12 +1011,14 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
     if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
     if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    if (crmStageOnLost && !stageNames.includes(crmStageOnLost)) invalidStages.push(`"${crmStageOnLost}" (quando lead é perdido)`);
     if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) invalidStages.push(`"${crmStageOnUnknown}" (quando agente não sabe)`);
     
     if (invalidStages.length > 0) {
       if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
       if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
       if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      if (crmStageOnLost && !stageNames.includes(crmStageOnLost)) setCrmStageOnLost("");
       if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) setCrmStageOnUnknown("");
       
       toast({
@@ -1055,7 +1060,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
-        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnUnknown,
+        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnLost, crmStageOnUnknown,
       };
 
       const agentPayload = {
@@ -1076,6 +1081,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         crm_stage_on_new_lead: crmStageOnNewLead || null,
         crm_stage_on_reply: crmStageOnReply || null,
         crm_stage_on_end: crmStageOnEnd || null,
+        crm_stage_on_lost: crmStageOnLost || null,
         crm_stage_on_unknown: crmStageOnUnknown || null,
         wizard_data: wizardData,
         updated_at: new Date().toISOString(),
@@ -2280,6 +2286,24 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Quando lead é perdido <span className="text-red-400">✕</span>
+                    </Label>
+                    <select
+                      value={crmStageOnLost}
+                      onChange={(e) => setCrmStageOnLost(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhuma (manter na coluna atual)</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o lead disser que não tem interesse, o agente moverá para esta coluna automaticamente.
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">

@@ -934,11 +934,66 @@ serve(async (req) => {
           // Allow enough tokens for multiple messages - generous budget so AI writes full multi-paragraph responses
           const estimatedMaxTokens = Math.max(400, Math.ceil((maxChars * maxConsecutiveMessages) / 2));
 
+          // Build CRM context for the prompt so the AI knows how to classify outcomes
+          const crmStageEnd = agent.crm_stage_on_end;
+          const crmStageLost = (agent as any).crm_stage_on_lost;
+          const crmStageUnknownName = agent.crm_stage_on_unknown;
+
+          let crmClassificationRules = '';
+          if (crmStageEnd || crmStageLost || crmStageUnknownName) {
+            crmClassificationRules = `
+REGRA CRÍTICA — CLASSIFICAÇÃO DO DESFECHO DA CONVERSA:
+Você DEVE classificar o desfecho de cada conversa usando os marcadores abaixo. Isso é ESSENCIAL para que os leads sejam movidos para as colunas corretas no CRM.
+
+MARCADORES DE CLASSIFICAÇÃO (adicione no FINAL da sua resposta, não será enviado ao lead):
+`;
+            if (crmStageEnd) {
+              crmClassificationRules += `
+- [CONVERSA_ENCERRADA] → Use quando a conversa terminou com SUCESSO ou desfecho positivo:
+  • Lead agendou reunião, ligação ou demonstração
+  • Lead forneceu contato do decisor
+  • Lead mostrou interesse real e pediu proposta
+  • Lead aceitou próximo passo concreto
+  • Objetivo da conversa foi atingido
+  → O lead será movido para a coluna "${crmStageEnd}"
+`;
+            }
+            if (crmStageLost) {
+              crmClassificationRules += `
+- [LEAD_PERDIDO] → Use quando o lead CLARAMENTE não tem interesse:
+  • Lead disse explicitamente "não tenho interesse", "não quero", "não preciso"
+  • Lead pediu para não ser mais contactado
+  • Lead disse que já tem fornecedor e não quer mudar
+  • Lead recusou todas as tentativas de contato
+  • Lead encerrou a conversa de forma negativa
+  → O lead será movido para a coluna "${crmStageLost}"
+`;
+            }
+            if (crmStageUnknownName) {
+              crmClassificationRules += `
+- [NAO_SEI] → Use quando você NÃO consegue responder algo que o lead perguntou:
+  • Lead fez pergunta técnica que você não sabe responder
+  • Lead pediu informação específica que não está no seu treinamento
+  • A conversa precisa de intervenção humana
+  → O lead será movido para a coluna "${crmStageUnknownName}" para atendimento humano
+`;
+            }
+            crmClassificationRules += `
+⚠️ IMPORTANTE: 
+- Use APENAS UM marcador por resposta
+- Só use [LEAD_PERDIDO] quando o lead for CLARAMENTE negativo (não use para incerteza)
+- Só use [CONVERSA_ENCERRADA] quando o objetivo foi alcançado ou o desfecho foi positivo
+- Se estiver em dúvida entre perdido e encerrado, prefira NÃO marcar e continue a conversa
+- Os marcadores são INVISÍVEIS para o lead — eles só servem para classificação interna
+`;
+          }
+
           const fullSystemPrompt = `${baseSystemPrompt}
 
 OBJETIVO: ${agentGoal}
 
 CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+${crmClassificationRules}
 
 REGRAS DE CONTEXTO E HISTÓRICO:
 1. Você tem acesso ao HISTÓRICO COMPLETO de todas as conversas anteriores com este lead.
@@ -972,8 +1027,9 @@ REGRAS DE NATURALIDADE:
 5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
 
 REGRA DE ENCERRAMENTO:
-- Quando os critérios de encerramento forem atendidos, adicione [CONVERSA_ENCERRADA] no final.
-- O marcador NÃO será enviado ao lead.
+- Quando os critérios de encerramento forem atendidos com desfecho POSITIVO, adicione [CONVERSA_ENCERRADA] no final.
+- Quando o lead CLARAMENTE não tem interesse, adicione [LEAD_PERDIDO] no final.
+- Os marcadores NÃO serão enviados ao lead.
 
 EXEMPLOS DE BOA SEPARAÇÃO:
 
@@ -1027,10 +1083,16 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             const aiData = await aiResponse.json();
             let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
 
-            // Detect conversation end marker
+            // Detect conversation outcome markers
             const shouldEndConversation = replyContent.includes('[CONVERSA_ENCERRADA]');
             if (shouldEndConversation) {
-              console.log(`AI signaled conversation end for conv ${conv.id}`);
+              console.log(`AI signaled conversation end (SUCCESS) for conv ${conv.id}`);
+            }
+
+            // Detect "lead lost" marker — lead is not interested
+            const isLeadLost = replyContent.includes('[LEAD_PERDIDO]');
+            if (isLeadLost) {
+              console.log(`AI signaled lead LOST for conv ${conv.id}`);
             }
 
             // Detect "don't know" marker — agent couldn't answer the question
@@ -1042,6 +1104,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
             // Remove all markers from the actual message
             replyContent = replyContent
               .replace(/\s*\[CONVERSA_ENCERRADA\]\s*/g, '')
+              .replace(/\s*\[LEAD_PERDIDO\]\s*/g, '')
               .replace(/\s*\[NAO_SEI\]\s*/g, '')
               .trim();
 
@@ -1176,10 +1239,11 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 // Determine if conversation should be marked as completed
                 const maxReplies = agent.max_replies;
                 const reachedMaxReplies = maxReplies && newReplyCount >= maxReplies;
-                const isConversationEnded = shouldEndConversation || reachedMaxReplies;
+                const isConversationEnded = shouldEndConversation || isLeadLost || reachedMaxReplies;
                 
                 if (isConversationEnded) {
-                  console.log(`Conversation ${conv.id} ended. Reason: ${shouldEndConversation ? 'AI signal' : 'max_replies reached'} (${newReplyCount}/${maxReplies ?? '∞'})`);
+                  const reason = isLeadLost ? 'lead_lost' : shouldEndConversation ? 'AI signal (success)' : 'max_replies reached';
+                  console.log(`Conversation ${conv.id} ended. Reason: ${reason} (${newReplyCount}/${maxReplies ?? '∞'})`);
                 }
 
                 // Update conversation
@@ -1190,7 +1254,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                     reply_sent_at: new Date().toISOString(),
                     reply_content: replyContent,
                     reply_count: newReplyCount,
-                    status: isConversationEnded ? 'completed' : 'awaiting_response',
+                    status: isConversationEnded ? (isLeadLost ? 'lost' : 'completed') : 'awaiting_response',
                     is_processing: false,
                     process_after: null,
                   })
@@ -1205,9 +1269,10 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   })
                   .eq('id', agent.id);
 
-                // CRM Integration: Move lead based on conversation state and update timestamps
+                // CRM Integration: Move lead based on conversation outcome and update timestamps
                 const crmStageReply = agent.crm_stage_on_reply || 'Mensagem Enviada';
-                const crmStageEnd = agent.crm_stage_on_end;
+                const crmStageEndSuccess = agent.crm_stage_on_end;
+                const crmStageLost = (agent as any).crm_stage_on_lost;
                 const crmStageUnknown = agent.crm_stage_on_unknown;
                 const nowISO = new Date().toISOString();
                 
@@ -1226,8 +1291,14 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
                   crmExtras.whatsapp_status = 'in_conversation';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
-                } else if (isConversationEnded && crmStageEnd) {
-                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEnd, crmExtras);
+                } else if (isLeadLost && crmStageLost) {
+                  // Lead explicitly not interested — move to lost stage
+                  console.log(`Lead lost, moving to "${crmStageLost}"`);
+                  crmExtras.whatsapp_status = 'lost';
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageLost, crmExtras);
+                } else if (isConversationEnded && crmStageEndSuccess) {
+                  // Conversation ended successfully
+                  await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEndSuccess, crmExtras);
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
                 }

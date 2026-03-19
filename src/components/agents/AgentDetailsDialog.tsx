@@ -250,6 +250,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
   const [crmStageOnNewLead, setCrmStageOnNewLead] = useState(agent?.crm_stage_on_new_lead || "Respondeu Mensagem");
   const [crmStageOnReply, setCrmStageOnReply] = useState(agent?.crm_stage_on_reply || "Mensagem Enviada");
   const [crmStageOnEnd, setCrmStageOnEnd] = useState(agent?.crm_stage_on_end || "");
+  const [crmStageOnLost, setCrmStageOnLost] = useState((agent as any)?.crm_stage_on_lost || "");
   const [crmStageOnUnknown, setCrmStageOnUnknown] = useState((agent as any)?.crm_stage_on_unknown || "");
   const [selectedWhatsAppNumberId, setSelectedWhatsAppNumberId] = useState(agent?.whatsapp_number_id || "");
   const [pipelineStages, setPipelineStages] = useState<{id: string; name: string}[]>([]);
@@ -301,6 +302,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
       setCrmStageOnNewLead(agent.crm_stage_on_new_lead || "Respondeu Mensagem");
       setCrmStageOnReply(agent.crm_stage_on_reply || "Mensagem Enviada");
       setCrmStageOnEnd(agent.crm_stage_on_end || "");
+      setCrmStageOnLost((agent as any).crm_stage_on_lost || "");
       setCrmStageOnUnknown((agent as any).crm_stage_on_unknown || "");
       setSelectedWhatsAppNumberId(agent.whatsapp_number_id || "");
     }
@@ -370,6 +372,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
           crm_stage_on_new_lead: crmStageOnNewLead || null,
           crm_stage_on_reply: crmStageOnReply || null,
           crm_stage_on_end: crmStageOnEnd || null,
+          crm_stage_on_lost: crmStageOnLost || null,
           crm_stage_on_unknown: crmStageOnUnknown || null,
           whatsapp_number_id: selectedWhatsAppNumberId || null,
         })
