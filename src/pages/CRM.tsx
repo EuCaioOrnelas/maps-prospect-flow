@@ -312,11 +312,11 @@ export default function CRM() {
       <AppSidebar profile={profile || sidebarProfile} />
       <MobileNav profile={profile || sidebarProfile} />
 
-      <main className="lg:pl-[72px] pt-14 lg:pt-0 min-h-screen">
+      <main className="lg:pl-[72px] pt-[52px] lg:pt-0 min-h-screen">
         <div className="h-screen flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 border-b border-border/50 relative z-10">
-            <div className="p-3 sm:p-4 lg:p-6">
+            <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
