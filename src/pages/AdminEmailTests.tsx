@@ -379,14 +379,42 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         </div>
       </div>
 
-      {progress && (
-        <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
-          <p className="text-sm font-medium text-foreground">Enviando... {progress.current}/{progress.total}</p>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
+      {progress && (() => {
+        const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+        const elapsed = (Date.now() - progress.startedAt) / 1000;
+        const avgPerItem = progress.current > 0 ? elapsed / progress.current : 0.65;
+        const remaining = Math.max(0, (progress.total - progress.current) * avgPerItem);
+        const formatTime = (s: number) => {
+          if (s < 60) return `${Math.ceil(s)}s`;
+          const m = Math.floor(s / 60);
+          const sec = Math.ceil(s % 60);
+          return `${m}m ${sec}s`;
+        };
+        return (
+          <div className="p-4 rounded-lg border bg-card space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-primary" />
+                <p className="text-sm font-semibold text-foreground">Enviando broadcast...</p>
+              </div>
+              <Badge variant="outline" className="text-xs">{pct}%</Badge>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{progress.current} de {progress.total} enviados</span>
+              <span>
+                {progress.current > 0 && progress.current < progress.total
+                  ? `⏱ ~${formatTime(remaining)} restantes`
+                  : progress.current === progress.total
+                    ? "✅ Concluído!"
+                    : "Iniciando..."}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {result && (
         <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
