@@ -115,7 +115,7 @@ export const CRMFilters = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3">
       {/* Search with debounce */}
-      <div className="relative flex-1 max-w-sm">
+      <div className="relative flex-1 max-w-full sm:max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           value={localSearch}
