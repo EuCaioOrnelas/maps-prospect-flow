@@ -244,6 +244,7 @@ export type Database = {
           communication_style: string
           created_at: string
           crm_stage_on_end: string | null
+          crm_stage_on_lost: string | null
           crm_stage_on_new_lead: string | null
           crm_stage_on_reply: string | null
           crm_stage_on_unknown: string | null
@@ -276,6 +277,7 @@ export type Database = {
           communication_style?: string
           created_at?: string
           crm_stage_on_end?: string | null
+          crm_stage_on_lost?: string | null
           crm_stage_on_new_lead?: string | null
           crm_stage_on_reply?: string | null
           crm_stage_on_unknown?: string | null
@@ -308,6 +310,7 @@ export type Database = {
           communication_style?: string
           created_at?: string
           crm_stage_on_end?: string | null
+          crm_stage_on_lost?: string | null
           crm_stage_on_new_lead?: string | null
           crm_stage_on_reply?: string | null
           crm_stage_on_unknown?: string | null
