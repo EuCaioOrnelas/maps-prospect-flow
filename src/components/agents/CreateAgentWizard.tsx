@@ -1056,7 +1056,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
-        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnUnknown,
+        crmStageOnNewLead, crmStageOnReply, crmStageOnEnd, crmStageOnLost, crmStageOnUnknown,
       };
 
       const agentPayload = {
@@ -1077,6 +1077,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         crm_stage_on_new_lead: crmStageOnNewLead || null,
         crm_stage_on_reply: crmStageOnReply || null,
         crm_stage_on_end: crmStageOnEnd || null,
+        crm_stage_on_lost: crmStageOnLost || null,
         crm_stage_on_unknown: crmStageOnUnknown || null,
         wizard_data: wizardData,
         updated_at: new Date().toISOString(),
