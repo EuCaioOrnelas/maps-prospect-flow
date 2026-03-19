@@ -278,14 +278,14 @@ ${input.agent_messages.map((m, i) => `[Agent msg ${i + 1}]: ${m}`).join('\n')}
 
 Classifique esta conversa agora.`;
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: CLASSIFIER_PROMPT },
         { role: 'user', content: userPrompt },
