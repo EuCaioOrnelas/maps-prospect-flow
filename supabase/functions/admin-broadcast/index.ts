@@ -374,23 +374,47 @@ Deno.serve(async (req) => {
     const batchTimestamp = Date.now();
     const batchId = `broadcast_${batchTimestamp}`;
 
+    const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+
     const sendWithRetry = async (targetUser: BroadcastUser) => {
+      const isStripeOnly = targetUser.id.startsWith("stripe_");
       const maxAttempts = 3;
+
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({
-              user_id: targetUser.id,
-              email_type: "ADMIN_BROADCAST",
-              payload: { subject, content },
-              idempotency_key: `${batchId}_${targetUser.id}`,
-            }),
-          });
+          let sendResponse: Response;
+
+          if (isStripeOnly) {
+            // Send directly via Resend for users without profiles
+            sendResponse = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${resendKey}`,
+              },
+              body: JSON.stringify({
+                from: "Wiize <no-reply@wiize.com.br>",
+                to: [targetUser.email],
+                subject,
+                html: content,
+              }),
+            });
+          } else {
+            // Send via send-email edge function for users with profiles
+            sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({
+                user_id: targetUser.id,
+                email_type: "ADMIN_BROADCAST",
+                payload: { subject, content },
+                idempotency_key: `${batchId}_${targetUser.id}`,
+              }),
+            });
+          }
 
           if (sendResponse.ok) return { ok: true as const, status: sendResponse.status };
 
