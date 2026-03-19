@@ -1146,8 +1146,6 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         console.error('Failed to reconfigure webhook (non-blocking):', webhookErr);
       }
 
-      // Clean up template prompt
-      delete (window as any).__agentTemplateSystemPrompt;
 
       if (!isEditing) {
         toast({
