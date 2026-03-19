@@ -1011,12 +1011,14 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
     if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
     if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    if (crmStageOnLost && !stageNames.includes(crmStageOnLost)) invalidStages.push(`"${crmStageOnLost}" (quando lead é perdido)`);
     if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) invalidStages.push(`"${crmStageOnUnknown}" (quando agente não sabe)`);
     
     if (invalidStages.length > 0) {
       if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) setCrmStageOnNewLead("");
       if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) setCrmStageOnReply("");
       if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) setCrmStageOnEnd("");
+      if (crmStageOnLost && !stageNames.includes(crmStageOnLost)) setCrmStageOnLost("");
       if (crmStageOnUnknown && !stageNames.includes(crmStageOnUnknown)) setCrmStageOnUnknown("");
       
       toast({
