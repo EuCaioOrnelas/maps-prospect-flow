@@ -321,6 +321,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
                 <SelectItem value="all">Todos os usuários</SelectItem>
                 <SelectItem value="free_only">Apenas Free (não compraram)</SelectItem>
                 <SelectItem value="paid_only">Apenas pagantes (compraram)</SelectItem>
+                <SelectItem value="churned">Cancelados / Downgrade</SelectItem>
                 <SelectItem value="start">Plano Start</SelectItem>
                 <SelectItem value="growth">Plano Growth</SelectItem>
                 <SelectItem value="scale">Plano Scale</SelectItem>

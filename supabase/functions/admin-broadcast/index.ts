@@ -107,27 +107,72 @@ Deno.serve(async (req) => {
     const plans = getPlans();
 
     // Fetch all candidate users
-    const PAGE = 1000;
     let allUsers: BroadcastUser[] = [];
-    let page = 0;
-    let hasMore = true;
 
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, name, plan")
-        .in("plan", plans)
-        .eq("is_blocked", false)
-        .range(page * PAGE, (page + 1) * PAGE - 1);
+    if (segment === "churned") {
+      const PAGE = 1000;
+      let completedCheckoutUserIds: string[] = [];
+      let page = 0;
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("checkout_leads" as any)
+          .select("user_id")
+          .eq("checkout_completed", true)
+          .range(page * PAGE, (page + 1) * PAGE - 1);
 
-      if (data?.length) {
-        allUsers.push(...(data as BroadcastUser[]));
+        if (error) throw error;
+
+        if (data?.length) {
+          completedCheckoutUserIds.push(...data.map((row: any) => row.user_id).filter(Boolean));
+        }
+
+        hasMore = (data?.length || 0) === PAGE;
+        page++;
       }
 
-      hasMore = (data?.length || 0) === PAGE;
-      page++;
+      const uniqueUserIds = [...new Set(completedCheckoutUserIds)];
+
+      if (uniqueUserIds.length > 0) {
+        const CHUNK = 500;
+        for (let i = 0; i < uniqueUserIds.length; i += CHUNK) {
+          const chunk = uniqueUserIds.slice(i, i + CHUNK);
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("id, email, name, plan")
+            .in("id", chunk)
+            .eq("plan", "free")
+            .eq("is_blocked", false);
+
+          if (error) throw error;
+          if (data?.length) {
+            allUsers.push(...(data as BroadcastUser[]));
+          }
+        }
+      }
+    } else {
+      const PAGE = 1000;
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan")
+          .in("plan", plans)
+          .eq("is_blocked", false)
+          .range(page * PAGE, (page + 1) * PAGE - 1);
+
+        if (error) throw error;
+
+        if (data?.length) {
+          allUsers.push(...(data as BroadcastUser[]));
+        }
+
+        hasMore = (data?.length || 0) === PAGE;
+        page++;
+      }
     }
 
     // Score-level filtering
