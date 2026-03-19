@@ -429,7 +429,7 @@ serve(async (req) => {
 
     // Step 3: For weak signals or post-antiloop states, call LLM for nuanced analysis
     console.log('[anti-loop] Calling LLM classifier for nuanced analysis...');
-    const llmResult = await classifyWithLLM(body, LOVABLE_API_KEY);
+    const llmResult = await classifyWithLLM(body, OPENAI_API_KEY);
 
     const result = {
       ...llmResult,
