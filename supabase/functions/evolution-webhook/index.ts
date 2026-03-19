@@ -1259,6 +1259,10 @@ REGRAS OBRIGATÓRIAS:
               // Check if there's an active AI agent configured for this WhatsApp number
               // and forward the message for automatic processing
               // This runs for ALL received messages (not from me), regardless of lead existence
+              // SKIP group messages — agents should only respond to individual chats
+              if (isGroup) {
+                console.log('Skipping AI agent processing for group message:', remoteJid);
+              } else
               try {
                 const { data: activeAgents } = await supabase
                   .from('ai_agents')
