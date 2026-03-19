@@ -19,39 +19,116 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function getChurnedEmailsFromStripe(stripeKey: string): Promise<Set<string>> {
   const emails = new Set<string>();
-  let hasMore = true;
-  let startingAfter: string | undefined;
 
-  while (hasMore) {
-    const params = new URLSearchParams({ status: "canceled", limit: "100" });
-    if (startingAfter) params.set("starting_after", startingAfter);
+  // Step 1: Collect customer IDs from ALL non-active subscriptions
+  const churnedCustomerIds = new Set<string>();
+  const nonActiveStatuses = ["canceled", "incomplete_expired", "unpaid", "past_due"];
+
+  for (const status of nonActiveStatuses) {
+    let hasMore = true;
+    let startingAfter: string | undefined;
+
+    while (hasMore) {
+      const params = new URLSearchParams({ status, limit: "100" });
+      if (startingAfter) params.set("starting_after", startingAfter);
+
+      const res = await fetch(`https://api.stripe.com/v1/subscriptions?${params}`, {
+        headers: { Authorization: `Bearer ${stripeKey}` },
+      });
+
+      if (!res.ok) {
+        console.error(`[admin-broadcast] Stripe API error (status=${status}):`, res.status, await res.text());
+        break;
+      }
+
+      const data = await res.json();
+      for (const sub of data.data || []) {
+        if (sub.customer) churnedCustomerIds.add(sub.customer as string);
+      }
+
+      hasMore = data.has_more === true;
+      if (hasMore && data.data?.length) {
+        startingAfter = data.data[data.data.length - 1].id;
+      }
+    }
+  }
+
+  // Step 2: Also check for refunded payments (customers who got refunds)
+  let hasMoreRefunds = true;
+  let refundAfter: string | undefined;
+  while (hasMoreRefunds) {
+    const params = new URLSearchParams({ limit: "100" });
+    if (refundAfter) params.set("starting_after", refundAfter);
+
+    const res = await fetch(`https://api.stripe.com/v1/refunds?${params}`, {
+      headers: { Authorization: `Bearer ${stripeKey}` },
+    });
+
+    if (!res.ok) {
+      console.error("[admin-broadcast] Stripe refunds API error:", res.status);
+      break;
+    }
+
+    const data = await res.json();
+    for (const refund of data.data || []) {
+      if (refund.charge) {
+        // Get the charge to find the customer
+        const chargeRes = await fetch(`https://api.stripe.com/v1/charges/${refund.charge}`, {
+          headers: { Authorization: `Bearer ${stripeKey}` },
+        });
+        if (chargeRes.ok) {
+          const charge = await chargeRes.json();
+          if (charge.customer) churnedCustomerIds.add(charge.customer as string);
+        }
+      }
+    }
+
+    hasMoreRefunds = data.has_more === true;
+    if (hasMoreRefunds && data.data?.length) {
+      refundAfter = data.data[data.data.length - 1].id;
+    }
+  }
+
+  console.log(`[admin-broadcast] Found ${churnedCustomerIds.size} unique churned customer IDs from Stripe`);
+
+  // Step 3: Filter out customers who currently HAVE an active subscription
+  const activeCustomerIds = new Set<string>();
+  let hasMoreActive = true;
+  let activeAfter: string | undefined;
+  while (hasMoreActive) {
+    const params = new URLSearchParams({ status: "active", limit: "100" });
+    if (activeAfter) params.set("starting_after", activeAfter);
 
     const res = await fetch(`https://api.stripe.com/v1/subscriptions?${params}`, {
       headers: { Authorization: `Bearer ${stripeKey}` },
     });
 
-    if (!res.ok) {
-      console.error("[admin-broadcast] Stripe API error:", res.status, await res.text());
-      break;
-    }
-
+    if (!res.ok) break;
     const data = await res.json();
     for (const sub of data.data || []) {
-      // Expand customer email
-      if (sub.customer) {
-        const custRes = await fetch(`https://api.stripe.com/v1/customers/${sub.customer}`, {
-          headers: { Authorization: `Bearer ${stripeKey}` },
-        });
-        if (custRes.ok) {
-          const cust = await custRes.json();
-          if (cust.email) emails.add(cust.email.toLowerCase());
-        }
-      }
+      if (sub.customer) activeCustomerIds.add(sub.customer as string);
     }
+    hasMoreActive = data.has_more === true;
+    if (hasMoreActive && data.data?.length) {
+      activeAfter = data.data[data.data.length - 1].id;
+    }
+  }
 
-    hasMore = data.has_more === true;
-    if (hasMore && data.data?.length) {
-      startingAfter = data.data[data.data.length - 1].id;
+  // Remove customers who re-subscribed
+  for (const activeId of activeCustomerIds) {
+    churnedCustomerIds.delete(activeId);
+  }
+
+  console.log(`[admin-broadcast] After removing active: ${churnedCustomerIds.size} churned customers`);
+
+  // Step 4: Get emails for churned customers
+  for (const custId of churnedCustomerIds) {
+    const custRes = await fetch(`https://api.stripe.com/v1/customers/${custId}`, {
+      headers: { Authorization: `Bearer ${stripeKey}` },
+    });
+    if (custRes.ok) {
+      const cust = await custRes.json();
+      if (cust.email) emails.add(cust.email.toLowerCase());
     }
   }
 
