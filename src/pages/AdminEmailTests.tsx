@@ -392,9 +392,9 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
           <p className="text-sm font-medium text-foreground">Resultado do envio:</p>
           <div className="flex gap-4 text-sm">
-            <span className="text-primary">📨 {result.queued} na fila</span>
+            <span className="text-primary">✅ {result.sent} enviados</span>
+            {result.failed > 0 && <span className="text-destructive">❌ {result.failed} erros</span>}
             <span className="text-muted-foreground">⏭️ {result.skipped} opt-out</span>
-            {result.batchId && <span className="text-muted-foreground">🆔 {result.batchId}</span>}
           </div>
         </div>
       )}
