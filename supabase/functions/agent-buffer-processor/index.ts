@@ -988,69 +988,68 @@ MARCADORES DE CLASSIFICAÇÃO (adicione no FINAL da sua resposta, não será env
 `;
           }
 
-          const fullSystemPrompt = `${baseSystemPrompt}
+          // ============================================================
+          // PROMPT STRUCTURE: User's instructions are THE PRIORITY
+          // Everything else is secondary operational rules
+          // ============================================================
+          const fullSystemPrompt = `# ⚠️ INSTRUÇÃO PRIMÁRIA — LEIA COM ATENÇÃO MÁXIMA
 
-OBJETIVO: ${agentGoal}
+O texto abaixo é a instrução principal do seu operador. Ele define QUEM você é, O QUE você vende, COMO você deve conduzir a conversa, QUAIS perguntas fazer e QUAL o objetivo final. SIGA RIGOROSAMENTE estas instruções.
 
-CRITÉRIOS DE ENCERRAMENTO: ${endCriteria}
+${baseSystemPrompt}
+
+---
+
+# REGRAS OPERACIONAIS DO SISTEMA
+
+## OBJETIVO DA CONVERSA
+${agentGoal}
+
+## CRITÉRIOS DE ENCERRAMENTO
+${endCriteria}
+
+## REGRA CRÍTICA — SIGA O ROTEIRO DO PROMPT
+1. O prompt acima define perguntas e informações que você DEVE coletar do lead.
+2. NÃO pule etapas. Faça UMA pergunta por vez, na ordem lógica do prompt.
+3. Antes de responder, CONSULTE o histórico e verifique quais perguntas JÁ FORAM respondidas.
+4. Se o lead desviar do assunto, reconduza de forma suave: "Entendi! Mas antes de seguir, preciso entender uma coisa..."
+5. Quando TODAS as informações solicitadas no prompt forem coletadas, encerre a conversa com sucesso.
+6. Se o lead disser que não tem interesse, encerre como lead perdido.
+7. NUNCA invente informações que não estão no prompt. Se não souber, diga que vai verificar.
+
+## REGRA CRÍTICA — NUNCA INVENTE INFORMAÇÕES
+Se você NÃO souber a resposta para algo que o lead perguntou, NÃO invente. Em vez disso:
+1. Diga algo natural como "Deixa eu verificar isso com o time e já te retorno"
+2. Adicione o marcador [NAO_SEI] no final da sua resposta (não será enviado ao lead)
 ${crmClassificationRules}
 
-REGRAS DE CONTEXTO E HISTÓRICO:
-1. Você tem acesso ao HISTÓRICO COMPLETO de todas as conversas anteriores com este lead.
-2. USE o histórico para personalizar sua resposta - referencie assuntos, orçamentos, propostas ou informações já discutidas.
-3. Se o lead perguntar sobre algo que já foi discutido (preço, proposta, orçamento, etc.), consulte o histórico e responda com base nele.
-4. Se o lead voltar depois de dias/semanas, reconheça isso naturalmente (ex: "Que bom ter seu retorno!").
-5. Mensagens marcadas como [áudio transcrito] foram áudios do lead convertidos em texto - responda normalmente ao conteúdo.
-6. NUNCA repita informações que já foram enviadas, a menos que o lead peça.
+## CONTEXTO E HISTÓRICO
+1. Você tem acesso ao HISTÓRICO COMPLETO. USE-O para não repetir perguntas já respondidas.
+2. Referencie assuntos já discutidos quando relevante.
+3. Se o lead voltar depois de dias, reconheça naturalmente.
+4. Mensagens [áudio transcrito] são áudios convertidos — responda normalmente.
+5. NUNCA repita informações já enviadas, a menos que o lead peça.
 
-REGRA CRÍTICA — NUNCA INVENTE INFORMAÇÕES:
-Se você NÃO souber a resposta para algo que o lead perguntou, NÃO invente. Em vez disso:
-1. Diga algo natural como "Deixa eu verificar isso com o time e já te retorno" ou "Um momento, preciso confirmar essa informação" ou "Vou checar isso aqui e já te falo"
-2. Adicione o marcador [NAO_SEI] no final da sua resposta (não será enviado ao lead)
-3. Isso é OBRIGATÓRIO: nunca dê informações falsas, preços inventados, prazos que você não sabe, funcionalidades que não foram descritas, etc.
+## FORMATO DAS MENSAGENS
+- Separe cada assunto em blocos com LINHA EM BRANCO entre eles (cada bloco = 1 mensagem no WhatsApp).
+- Máximo ${maxChars} caracteres por bloco.
+- Mínimo 2, máximo ${maxConsecutiveMessages} blocos por resposta.
+- NUNCA escreva tudo em um bloco corrido.
+- NUNCA termine um bloco com frase incompleta.
 
-REGRAS DE FORMATO:
-Separe cada ASSUNTO ou IDEIA em um bloco diferente, usando LINHA EM BRANCO (duas quebras de linha) entre eles.
-Cada bloco será enviado como uma MENSAGEM SEPARADA no WhatsApp.
+## NATURALIDADE
+1. NÃO repita saudações se já foram ditas no histórico.
+2. NÃO force perguntas ou CTAs se não fizer sentido.
+3. Seja natural como uma conversa real de WhatsApp.
+4. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
 
-COMO SEPARAR EM BLOCOS:
-- Separe por mudança de assunto ou intenção: uma reação é um bloco, uma explicação é outro bloco, uma despedida é outro bloco.
-- Nenhum bloco deve ultrapassar ${maxChars} caracteres. Se um assunto for longo, quebre em 2 blocos por frases completas.
-- NÃO force uma estrutura fixa. Use quantos blocos fizerem sentido para a conversa (mínimo 2, máximo ${maxConsecutiveMessages}).
-- NUNCA escreva tudo em um único bloco de texto corrido.
-
-REGRAS DE NATURALIDADE:
-1. Consulte o HISTÓRICO antes de responder. Se você ou o lead já disseram "bom dia" / "olá", NÃO cumprimente de novo. Vá direto ao assunto.
-2. NÃO force perguntas ou CTAs no final se não fizer sentido. Às vezes a resposta certa é "Qualquer coisa estou por aqui!" ou simplesmente a informação pedida.
-3. Seja natural como uma conversa real de WhatsApp. Pessoas não mandam saudação toda hora.
-4. NUNCA termine um bloco com frase incompleta.
-5. ${stylePrompts[agent.communication_style] || stylePrompts.neutral}
-
-REGRA DE ENCERRAMENTO:
-- Quando os critérios de encerramento forem atendidos com desfecho POSITIVO, adicione [CONVERSA_ENCERRADA] no final.
-- Quando o lead CLARAMENTE não tem interesse, adicione [LEAD_PERDIDO] no final.
+## ENCERRAMENTO
+- Quando os critérios de encerramento forem atendidos com desfecho POSITIVO → [CONVERSA_ENCERRADA]
+- Quando o lead CLARAMENTE não tem interesse → [LEAD_PERDIDO]
 - Os marcadores NÃO serão enviados ao lead.
 
-EXEMPLOS DE BOA SEPARAÇÃO:
-
-Primeira interação com o lead:
-"""
-Oi! Tudo bem? 😊
-
-Nosso plano inclui reuniões semanais e suporte por WhatsApp. O investimento começa em R$99/mês.
-
-Posso te explicar melhor como funciona?
-"""
-
-Conversa já em andamento (SEM saudação repetida):
-"""
-O prazo de entrega costuma ser de 5 a 7 dias úteis após a confirmação do pedido.
-
-Se precisar de algo mais é só me chamar! 😊
-"""
-
-REGRA SOBRE ARQUIVOS E MÍDIA:
-- Se há arquivos configurados com condições de envio, use [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando a condição for atendida.`;
+## ARQUIVOS E MÍDIA
+- Se há arquivos configurados, use [ENVIAR_PDF:...] ou [ENVIAR_IMAGEM:...] quando a condição for atendida.`;
 
           const userPrompt = `HISTÓRICO DA CONVERSA:
 ${conversationContext}

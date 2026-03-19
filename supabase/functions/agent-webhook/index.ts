@@ -506,26 +506,78 @@ serve(async (req) => {
         .eq('lead_phone', phone)
         .single();
 
-      // If conversation is completed or limit_reached, handle smartly
-      if (existingConv && (existingConv.status === 'completed' || existingConv.status === 'limit_reached')) {
-        const completedAt = existingConv.reply_sent_at || existingConv.updated_at;
-        const hoursSinceCompletion = completedAt 
-          ? (Date.now() - new Date(completedAt).getTime()) / (1000 * 60 * 60) 
-          : 999;
+      // If conversation is lost, do NOT reopen — agent should stay silent
+      if (existingConv && existingConv.status === 'lost') {
+        console.log(`Conversation ${existingConv.id} is marked LOST — agent will NOT reopen. Message logged for context only.`);
         
-        const REOPEN_COOLDOWN_HOURS = 3;
-        const reachedMaxReplies = Boolean(agent?.max_replies && (existingConv.reply_count || 0) >= agent.max_replies);
+        // Save message for context (human might need it)
+        await supabase.from('agent_message_logs').insert({
+          agent_id: agentId,
+          conversation_id: existingConv.id,
+          direction: 'received',
+          content: message,
+          message_type: message_type || null,
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            reason: 'conversation_lost',
+            message: 'Lead marked as lost. Message logged but agent will not respond.' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-        // If conversation ended only because max_replies was reached, reopen immediately on new inbound message
-        if (reachedMaxReplies) {
-          console.log(`Conversation ${existingConv.id} reached max_replies (${existingConv.reply_count}/${agent.max_replies}), bypassing cooldown and reopening now`);
-        }
-
-        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS && !reachedMaxReplies) {
-          // Too soon to reopen - but SAVE the message for context when it reopens
-          console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), buffering message without processing`);
+      // If conversation is completed, check if lead is still in success CRM stage
+      // If so, do NOT reopen — wait for human to move lead to another stage
+      if (existingConv && existingConv.status === 'completed') {
+        const userId = agent.whatsapp_number?.user_id;
+        const crmStageEndSuccess = agent.crm_stage_on_end;
+        
+        // Check if lead is in the success/completed CRM stage
+        let leadInSuccessStage = false;
+        if (userId && crmStageEndSuccess) {
+          const { data: successStage } = await supabase
+            .from('pipeline_stages')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('name', crmStageEndSuccess)
+            .maybeSingle();
           
-          // Save to message logs so the AI has full context when conversation reopens
+          if (successStage) {
+            const phoneDigitsOnly = phone.replace(/\D/g, '');
+            const last8 = phoneDigitsOnly.slice(-8);
+            let normalizedPhoneCheck = phoneDigitsOnly;
+            if (phoneDigitsOnly.length >= 10 && phoneDigitsOnly.length <= 11 && !phoneDigitsOnly.startsWith('55')) {
+              normalizedPhoneCheck = '55' + phoneDigitsOnly;
+            }
+            
+            let { data: leadInStage } = await supabase
+              .from('leads')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('pipeline_stage_id', successStage.id)
+              .or(`phone.eq.${normalizedPhoneCheck},phone.eq.${phone},phone.eq.${phoneDigitsOnly}`)
+              .limit(1);
+            
+            if (!leadInStage?.length && last8.length === 8) {
+              const { data: allLeads } = await supabase
+                .from('leads')
+                .select('id, phone, pipeline_stage_id')
+                .eq('user_id', userId)
+                .eq('pipeline_stage_id', successStage.id);
+              leadInStage = allLeads?.filter((l: any) => l.phone?.replace(/\D/g, '').slice(-8) === last8) || [];
+            }
+            
+            leadInSuccessStage = (leadInStage?.length || 0) > 0;
+          }
+        }
+        
+        if (leadInSuccessStage) {
+          console.log(`Conversation ${existingConv.id} completed and lead still in success stage "${crmStageEndSuccess}" — NOT reopening. Waiting for human action.`);
+          
+          // Save message for context
           await supabase.from('agent_message_logs').insert({
             agent_id: agentId,
             conversation_id: existingConv.id,
@@ -534,7 +586,125 @@ serve(async (req) => {
             message_type: message_type || null,
           });
           
-          // Update CRM with latest response
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              reason: 'completed_in_success_stage',
+              message: 'Conversation completed and lead in success stage. Waiting for human to move lead.' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Lead was moved out of success stage by human — allow normal cooldown/reopen logic
+        const completedAt = existingConv.reply_sent_at || existingConv.updated_at;
+        const hoursSinceCompletion = completedAt 
+          ? (Date.now() - new Date(completedAt).getTime()) / (1000 * 60 * 60) 
+          : 999;
+        
+        const REOPEN_COOLDOWN_HOURS = 3;
+
+        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS) {
+          console.log(`Conversation ${existingConv.id} completed ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), buffering message without processing`);
+          
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: existingConv.id,
+            direction: 'received',
+            content: message,
+            message_type: message_type || null,
+          });
+          
+          if (userId) {
+            const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+            await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+              last_response: message,
+              last_response_at: new Date().toISOString(),
+              whatsapp_status: 'replied',
+            });
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              reason: 'cooldown_active_message_logged',
+              message: `Message saved to history. Conversation will reopen after cooldown (${(REOPEN_COOLDOWN_HOURS - hoursSinceCompletion).toFixed(1)}h remaining)` 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Cooldown passed and lead not in success stage — REOPEN
+        console.log(`Reopening conversation ${existingConv.id} for ${phone} (completed ${hoursSinceCompletion.toFixed(1)}h ago, history preserved)`);
+        
+        const processAfterReopen = new Date(Date.now() + BUFFER_DELAY_MS).toISOString();
+        await supabase
+          .from('agent_conversations')
+          .update({
+            status: 'buffering',
+            process_after: processAfterReopen,
+            is_processing: false,
+            response_received: true,
+            response_received_at: new Date().toISOString(),
+            response_content: message,
+          })
+          .eq('id', existingConv.id);
+        
+        await supabase.from('agent_message_buffer').insert({
+          agent_id: agentId,
+          conversation_id: existingConv.id,
+          lead_phone: phone,
+          lead_name: lead_name,
+          message_content: message,
+          received_at: new Date().toISOString(),
+        });
+        
+        if (userId) {
+          const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
+          await moveLeadToCRMStage(supabase, phone, userId, crmStageOnNewLead, {
+            last_response: message,
+            last_response_at: new Date().toISOString(),
+            whatsapp_status: 'in_conversation',
+          });
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            action: 'conversation_reopened',
+            conversation_id: existingConv.id,
+            process_after: processAfterReopen,
+            message: 'Conversation reopened with full history'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // If conversation reached limit, handle reopening
+      if (existingConv && existingConv.status === 'limit_reached') {
+        const completedAt = existingConv.reply_sent_at || existingConv.updated_at;
+        const hoursSinceCompletion = completedAt 
+          ? (Date.now() - new Date(completedAt).getTime()) / (1000 * 60 * 60) 
+          : 999;
+        
+        const REOPEN_COOLDOWN_HOURS = 3;
+        const reachedMaxReplies = Boolean(agent?.max_replies && (existingConv.reply_count || 0) >= agent.max_replies);
+
+        if (reachedMaxReplies) {
+          console.log(`Conversation ${existingConv.id} reached max_replies (${existingConv.reply_count}/${agent.max_replies}), bypassing cooldown and reopening now`);
+        }
+
+        if (hoursSinceCompletion < REOPEN_COOLDOWN_HOURS && !reachedMaxReplies) {
+          console.log(`Conversation ${existingConv.id} limit_reached ${hoursSinceCompletion.toFixed(1)}h ago (< ${REOPEN_COOLDOWN_HOURS}h cooldown), buffering message without processing`);
+          
+          await supabase.from('agent_message_logs').insert({
+            agent_id: agentId,
+            conversation_id: existingConv.id,
+            direction: 'received',
+            content: message,
+            message_type: message_type || null,
+          });
+          
           const userId = agent.whatsapp_number?.user_id;
           if (userId) {
             const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
@@ -555,8 +725,8 @@ serve(async (req) => {
           );
         }
         
-        // Cooldown passed - REOPEN the conversation with full history (don't delete!)
-        console.log(`Reopening conversation ${existingConv.id} for ${phone} (completed ${hoursSinceCompletion.toFixed(1)}h ago, history preserved)`);
+        // Cooldown passed or max_replies bypass — REOPEN
+        console.log(`Reopening conversation ${existingConv.id} for ${phone} (limit_reached ${hoursSinceCompletion.toFixed(1)}h ago, history preserved)`);
         
         const processAfterReopen = new Date(Date.now() + BUFFER_DELAY_MS).toISOString();
         await supabase
@@ -571,7 +741,6 @@ serve(async (req) => {
           })
           .eq('id', existingConv.id);
         
-        // Buffer the new message (history in agent_message_logs is preserved!)
         await supabase.from('agent_message_buffer').insert({
           agent_id: agentId,
           conversation_id: existingConv.id,
@@ -581,7 +750,6 @@ serve(async (req) => {
           received_at: new Date().toISOString(),
         });
         
-        // Update CRM
         const userId = agent.whatsapp_number?.user_id;
         if (userId) {
           const crmStageOnNewLead = agent.crm_stage_on_new_lead || 'Respondeu Mensagem';
