@@ -143,23 +143,25 @@ async function fetchUsersBySegment(
   stripeKey: string
 ): Promise<BroadcastUser[]> {
   if (segment === "churned") {
-    // Get canceled emails from Stripe, match to free profiles
+    // Get churned emails directly from Stripe (these users may NOT have profiles)
     const canceledEmails = await getChurnedEmailsFromStripe(stripeKey);
     if (canceledEmails.size === 0) return [];
 
     console.log(`[admin-broadcast] Stripe returned ${canceledEmails.size} canceled subscription emails`);
 
-    // Fetch all free, non-blocked profiles and filter by canceled emails
+    // Try to match with profiles for name/id, but include unmatched emails too
+    const matched: BroadcastUser[] = [];
+    const matchedEmails = new Set<string>();
+
+    // Check profiles for any plan (not just free — they might still show as paid in DB)
     const PAGE = 1000;
     let page = 0;
     let hasMore = true;
-    const matched: BroadcastUser[] = [];
 
     while (hasMore) {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, email, name, plan")
-        .eq("plan", "free")
         .eq("is_blocked", false)
         .range(page * PAGE, (page + 1) * PAGE - 1);
 
@@ -168,11 +170,24 @@ async function fetchUsersBySegment(
       for (const u of data || []) {
         if (canceledEmails.has(u.email.toLowerCase())) {
           matched.push(u as BroadcastUser);
+          matchedEmails.add(u.email.toLowerCase());
         }
       }
 
       hasMore = (data?.length || 0) === PAGE;
       page++;
+    }
+
+    // Add Stripe-only emails (no profile) as synthetic users
+    for (const email of canceledEmails) {
+      if (!matchedEmails.has(email)) {
+        matched.push({
+          id: `stripe_${email}`,
+          email,
+          name: null,
+          plan: "churned",
+        });
+      }
     }
 
     return matched;
@@ -220,7 +235,9 @@ async function applyFilters(
   users: BroadcastUser[],
   scoreLevel: string
 ): Promise<{ eligible: BroadcastUser[]; skipped: number }> {
-  let filteredUsers = [...users];
+  // Separate stripe-only users (no profile) from real users
+  const stripeOnlyUsers = users.filter((u) => u.id.startsWith("stripe_"));
+  let filteredUsers = users.filter((u) => !u.id.startsWith("stripe_"));
 
   // Score-level filtering
   if (scoreLevel !== "all" && filteredUsers.length > 0) {
@@ -257,8 +274,8 @@ async function applyFilters(
     }
   }
 
-  const eligible = filteredUsers.filter((u) => !optedOutIds.has(u.id));
-  const skipped = filteredUsers.length - eligible.length;
+  const eligible = [...filteredUsers.filter((u) => !optedOutIds.has(u.id)), ...stripeOnlyUsers];
+  const skipped = filteredUsers.length - filteredUsers.filter((u) => !optedOutIds.has(u.id)).length;
   return { eligible, skipped };
 }
 
@@ -359,23 +376,47 @@ Deno.serve(async (req) => {
     const batchTimestamp = Date.now();
     const batchId = `broadcast_${batchTimestamp}`;
 
+    const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+
     const sendWithRetry = async (targetUser: BroadcastUser) => {
+      const isStripeOnly = targetUser.id.startsWith("stripe_");
       const maxAttempts = 3;
+
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({
-              user_id: targetUser.id,
-              email_type: "ADMIN_BROADCAST",
-              payload: { subject, content },
-              idempotency_key: `${batchId}_${targetUser.id}`,
-            }),
-          });
+          let sendResponse: Response;
+
+          if (isStripeOnly) {
+            // Send directly via Resend for users without profiles
+            sendResponse = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${resendKey}`,
+              },
+              body: JSON.stringify({
+                from: "Wiize <no-reply@wiize.com.br>",
+                to: [targetUser.email],
+                subject,
+                html: content,
+              }),
+            });
+          } else {
+            // Send via send-email edge function for users with profiles
+            sendResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({
+                user_id: targetUser.id,
+                email_type: "ADMIN_BROADCAST",
+                payload: { subject, content },
+                idempotency_key: `${batchId}_${targetUser.id}`,
+              }),
+            });
+          }
 
           if (sendResponse.ok) return { ok: true as const, status: sendResponse.status };
 
