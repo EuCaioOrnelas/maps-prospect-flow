@@ -165,6 +165,7 @@ function BroadcastTab() {
               <SelectItem value="growth">Apenas Growth</SelectItem>
               <SelectItem value="scale">Apenas Scale</SelectItem>
               <SelectItem value="checkout_abandoned">Checkout Abandonado</SelectItem>
+              <SelectItem value="churned">Cancelados / Downgrade</SelectItem>
             </SelectContent>
           </Select>
         </div>
