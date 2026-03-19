@@ -444,12 +444,9 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     if (data.operatingHoursStart) setOperatingHoursStart(data.operatingHoursStart);
     if (data.operatingHoursEnd) setOperatingHoursEnd(data.operatingHoursEnd);
 
-    // If template has a pre-built systemPrompt, store it for use during creation
-    if (data.systemPrompt) {
-      (window as any).__agentTemplateSystemPrompt = data.systemPrompt;
-    } else {
-      delete (window as any).__agentTemplateSystemPrompt;
-    }
+    // Templates only pre-fill wizard form fields — the system prompt is always
+    // generated fresh from generatePrompt() using the user's actual inputs.
+    // No need to cache template system prompts anymore.
   };
 
   const deleteUserTemplate = async (templateId: string) => {
