@@ -2285,6 +2285,24 @@ Preciso falar com meu marido/esposa"
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Quando lead é perdido <span className="text-red-400">✕</span>
+                    </Label>
+                    <select
+                      value={crmStageOnLost}
+                      onChange={(e) => setCrmStageOnLost(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="">Nenhuma (manter na coluna atual)</option>
+                      {pipelineStages.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o lead disser que não tem interesse, o agente moverá para esta coluna automaticamente.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
                       Coluna de atendimento humano <span className="text-destructive">*</span>
                     </Label>
                     <select
