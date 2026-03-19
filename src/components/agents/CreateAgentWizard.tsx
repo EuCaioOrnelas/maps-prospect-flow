@@ -444,12 +444,9 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     if (data.operatingHoursStart) setOperatingHoursStart(data.operatingHoursStart);
     if (data.operatingHoursEnd) setOperatingHoursEnd(data.operatingHoursEnd);
 
-    // If template has a pre-built systemPrompt, store it for use during creation
-    if (data.systemPrompt) {
-      (window as any).__agentTemplateSystemPrompt = data.systemPrompt;
-    } else {
-      delete (window as any).__agentTemplateSystemPrompt;
-    }
+    // Templates only pre-fill wizard form fields — the system prompt is always
+    // generated fresh from generatePrompt() using the user's actual inputs.
+    // No need to cache template system prompts anymore.
   };
 
   const deleteUserTemplate = async (templateId: string) => {
@@ -630,6 +627,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.crmStageOnReply) setCrmStageOnReply(wd.crmStageOnReply);
         if (wd.crmStageOnEnd) setCrmStageOnEnd(wd.crmStageOnEnd);
         if (wd.crmStageOnLost) setCrmStageOnLost(wd.crmStageOnLost);
+        if (wd.crmStageOnUnknown) setCrmStageOnUnknown(wd.crmStageOnUnknown);
       } else {
         // Fallback: load basic fields from agent record
         setName(editingAgent.name || '');
@@ -713,7 +711,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
     setMaxReplies(1);
-    delete (window as any).__agentTemplateSystemPrompt;
+    setMaxReplies(1);
   };
 
   const toggleArrayItem = (arr: string[], item: string, setter: (arr: string[]) => void) => {
@@ -1034,9 +1032,9 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
     setLoading(true);
     
     try {
-      // Use pre-built systemPrompt from template if available, otherwise generate
-      const templateSystemPrompt = (window as any).__agentTemplateSystemPrompt;
-      const systemPrompt = templateSystemPrompt || generatePrompt();
+      // Always generate prompt from the user's wizard inputs — never use a cached template prompt
+      // Templates only pre-fill the form fields; the final prompt must reflect the user's actual edits
+      const systemPrompt = generatePrompt();
       
       // Map salesApproach to valid objective values (constraint: prospecting, warming, first_contact)
       const objectiveMap: Record<string, string> = {
@@ -1148,8 +1146,6 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         console.error('Failed to reconfigure webhook (non-blocking):', webhookErr);
       }
 
-      // Clean up template prompt
-      delete (window as any).__agentTemplateSystemPrompt;
 
       if (!isEditing) {
         toast({
