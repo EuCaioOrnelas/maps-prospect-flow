@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { SEO } from "@/components/SEO";
-import { trackSignupCompleted } from "@/hooks/useLandingPageTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 
