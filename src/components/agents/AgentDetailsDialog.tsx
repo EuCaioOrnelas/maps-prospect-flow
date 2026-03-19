@@ -372,6 +372,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
           crm_stage_on_new_lead: crmStageOnNewLead || null,
           crm_stage_on_reply: crmStageOnReply || null,
           crm_stage_on_end: crmStageOnEnd || null,
+          crm_stage_on_lost: crmStageOnLost || null,
           crm_stage_on_unknown: crmStageOnUnknown || null,
           whatsapp_number_id: selectedWhatsAppNumberId || null,
         })
