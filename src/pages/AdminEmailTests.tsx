@@ -262,7 +262,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
             if (sendErr) { failed++; } else { sent++; }
           } catch { failed++; }
 
-          setProgress({ current: i + 1, total: eligible.length });
+          setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
         }
 
         setResult({ sent, failed, skipped });
