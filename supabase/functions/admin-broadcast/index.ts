@@ -274,8 +274,8 @@ async function applyFilters(
     }
   }
 
-  const eligible = filteredUsers.filter((u) => !optedOutIds.has(u.id));
-  const skipped = filteredUsers.length - eligible.length;
+  const eligible = [...filteredUsers.filter((u) => !optedOutIds.has(u.id)), ...stripeOnlyUsers];
+  const skipped = filteredUsers.length - filteredUsers.filter((u) => !optedOutIds.has(u.id)).length;
   return { eligible, skipped };
 }
 
