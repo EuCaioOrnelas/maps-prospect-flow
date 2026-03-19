@@ -1382,7 +1382,7 @@ REGRAS OBRIGATÓRIAS:
                 try {
                   const { data: activeAgents } = await supabase
                     .from('ai_agents')
-                    .select('id, name, objective, status')
+                    .select('id, name, objective, status, crm_stage_on_unknown')
                     .eq('whatsapp_number_id', whatsappNumber.id)
                     .eq('status', 'active');
                   
@@ -1403,18 +1403,15 @@ REGRAS OBRIGATÓRIAS:
                         .single();
                       
                       if (agentConv) {
-                        // Don't override manual pause - just log the user's message
-                        // Set 12h auto-pause (agent_paused_until)
-                        const pauseUntil = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
-                        const today = new Date().toISOString().split('T')[0];
-                        
+                        // Set permanent pause (no expiry) - agent only resumes when lead is moved out of human column
                         await supabase
                           .from('agent_conversations')
                           .update({
                             status: 'user_responded',
                             user_responded_at: new Date().toISOString(),
-                            user_responded_date: today,
-                            agent_paused_until: pauseUntil,
+                            user_responded_date: new Date().toISOString().split('T')[0],
+                            agent_manually_paused: true,
+                            agent_paused_until: null,
                             process_after: null,
                             is_processing: false,
                             updated_at: new Date().toISOString()
@@ -1437,7 +1434,55 @@ REGRAS OBRIGATÓRIAS:
                           .delete()
                           .eq('conversation_id', agentConv.id);
                         
-                        console.log(`AI Agent ${activeAgent.name} paused for 12h for lead ${normalizedPhone} - user responded manually`);
+                        // Move lead to human support CRM stage if configured
+                        if (activeAgent.crm_stage_on_unknown) {
+                          try {
+                            // Find the pipeline stage by name
+                            const { data: humanStage } = await supabase
+                              .from('pipeline_stages')
+                              .select('id')
+                              .eq('user_id', whatsappNumber.user_id)
+                              .eq('name', activeAgent.crm_stage_on_unknown)
+                              .maybeSingle();
+                            
+                            if (humanStage) {
+                              // Find the lead by phone
+                              const canonicalForCRM = normalizeBrazilianMobileE164(normalizedPhone);
+                              if (canonicalForCRM) {
+                                const { data: leadToMove } = await supabase
+                                  .from('leads')
+                                  .select('id, pipeline_stage_id')
+                                  .eq('user_id', whatsappNumber.user_id)
+                                  .eq('phone', canonicalForCRM)
+                                  .maybeSingle();
+                                
+                                if (leadToMove && leadToMove.pipeline_stage_id !== humanStage.id) {
+                                  await supabase
+                                    .from('leads')
+                                    .update({ 
+                                      pipeline_stage_id: humanStage.id,
+                                      updated_at: new Date().toISOString()
+                                    })
+                                    .eq('id', leadToMove.id);
+                                  
+                                  // Log CRM move activity
+                                  await supabase.from('lead_activities').insert({
+                                    lead_id: leadToMove.id,
+                                    user_id: whatsappNumber.user_id,
+                                    activity_type: 'stage_change',
+                                    description: `Movido automaticamente para "${activeAgent.crm_stage_on_unknown}" — humano assumiu o atendimento`,
+                                  });
+                                  
+                                  console.log(`Lead ${normalizedPhone} moved to human support stage "${activeAgent.crm_stage_on_unknown}"`);
+                                }
+                              }
+                            }
+                          } catch (crmMoveError) {
+                            console.error('Error moving lead to human support stage:', crmMoveError);
+                          }
+                        }
+                        
+                        console.log(`AI Agent ${activeAgent.name} permanently paused for lead ${normalizedPhone} - user responded manually, moved to human support`);
                       }
                     }
                   }
