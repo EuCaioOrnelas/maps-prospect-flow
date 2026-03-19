@@ -302,6 +302,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
       setCrmStageOnNewLead(agent.crm_stage_on_new_lead || "Respondeu Mensagem");
       setCrmStageOnReply(agent.crm_stage_on_reply || "Mensagem Enviada");
       setCrmStageOnEnd(agent.crm_stage_on_end || "");
+      setCrmStageOnLost((agent as any).crm_stage_on_lost || "");
       setCrmStageOnUnknown((agent as any).crm_stage_on_unknown || "");
       setSelectedWhatsAppNumberId(agent.whatsapp_number_id || "");
     }
