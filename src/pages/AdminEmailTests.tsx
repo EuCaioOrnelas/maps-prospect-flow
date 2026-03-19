@@ -118,24 +118,23 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
     let filteredUsers: any[] = [];
 
     if (segment === "churned") {
-      const { data: checkoutUsers, error: checkoutError } = await supabase
-        .from("checkout_leads" as any)
-        .select("user_id")
-        .eq("checkout_completed", true);
-      if (checkoutError) throw checkoutError;
-
-      const churnedIds = [...new Set((checkoutUsers || []).map((u: any) => u.user_id).filter(Boolean))];
-      if (churnedIds.length === 0) return { eligible: [], skipped: 0 };
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, email, name, plan")
-        .in("id", churnedIds)
-        .eq("plan", "free")
-        .eq("is_blocked", false);
-      if (profilesError) throw profilesError;
-
-      filteredUsers = profiles || [];
+      // Users who were once paying (have subscription_current_period_end) but are now free
+      const PAGE = 1000;
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan")
+          .eq("plan", "free")
+          .eq("is_blocked", false)
+          .not("subscription_current_period_end", "is", null)
+          .range(page * PAGE, (page + 1) * PAGE - 1);
+        if (error) throw error;
+        if (data) filteredUsers.push(...data);
+        hasMore = (data?.length || 0) === PAGE;
+        page++;
+      }
     } else {
       const plans = getPlansForSegment();
       const PAGE = 1000;

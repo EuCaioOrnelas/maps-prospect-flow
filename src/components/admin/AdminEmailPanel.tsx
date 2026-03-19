@@ -47,23 +47,15 @@ function BroadcastTab() {
           return true;
         }).map((c: any) => ({ id: c.user_id, email: c.email }));
       } else if (targetPlan === 'churned') {
-        // Get users who completed checkout (were paying) but are now on free plan (churned)
-        const { data: completedCheckouts, error: ceError } = await supabase
-          .from('checkout_leads' as any)
-          .select('user_id, email')
-          .eq('checkout_completed', true);
-        if (ceError) throw ceError;
-        const uniqueUserIds = [...new Set((completedCheckouts || []).map((e: any) => e.user_id).filter(Boolean))];
-        if (uniqueUserIds.length > 0) {
-          const { data: profiles, error: pError } = await supabase
-            .from('profiles')
-            .select('id, email')
-            .in('id', uniqueUserIds)
-            .eq('plan', 'free')
-            .eq('is_blocked', false);
-          if (pError) throw pError;
-          usersToSend = (profiles || []).map(u => ({ id: u.id, email: u.email }));
-        }
+        // Users who were once paying but are now free
+        const { data: profiles, error: pError } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .eq('plan', 'free')
+          .eq('is_blocked', false)
+          .not('subscription_current_period_end', 'is', null);
+        if (pError) throw pError;
+        usersToSend = (profiles || []).map(u => ({ id: u.id, email: u.email }));
       } else {
         let query = supabase.from("profiles").select("id, email, plan").eq("is_blocked", false);
         if (targetPlan !== "all") {
