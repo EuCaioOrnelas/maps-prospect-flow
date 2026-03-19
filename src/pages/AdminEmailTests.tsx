@@ -60,7 +60,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   const [segment, setSegment] = useState<SegmentFilter>("all");
   const [scoreLevel, setScoreLevel] = useState<string>("all");
   const [sending, setSending] = useState(false);
-  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [progress, setProgress] = useState<{ current: number; total: number; startedAt: number } | null>(null);
   const [result, setResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
   const [matchCount, setMatchCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
@@ -244,7 +244,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
 
         const batchTimestamp = Date.now();
         let sent = 0, failed = 0;
-        setProgress({ current: 0, total: eligible.length });
+        setProgress({ current: 0, total: eligible.length, startedAt: Date.now() });
 
         for (let i = 0; i < eligible.length; i++) {
           const u = eligible[i];
@@ -262,7 +262,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
             if (sendErr) { failed++; } else { sent++; }
           } catch { failed++; }
 
-          setProgress({ current: i + 1, total: eligible.length });
+          setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
         }
 
         setResult({ sent, failed, skipped });
@@ -379,14 +379,42 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         </div>
       </div>
 
-      {progress && (
-        <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
-          <p className="text-sm font-medium text-foreground">Enviando... {progress.current}/{progress.total}</p>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
+      {progress && (() => {
+        const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+        const elapsed = (Date.now() - progress.startedAt) / 1000;
+        const avgPerItem = progress.current > 0 ? elapsed / progress.current : 0.65;
+        const remaining = Math.max(0, (progress.total - progress.current) * avgPerItem);
+        const formatTime = (s: number) => {
+          if (s < 60) return `${Math.ceil(s)}s`;
+          const m = Math.floor(s / 60);
+          const sec = Math.ceil(s % 60);
+          return `${m}m ${sec}s`;
+        };
+        return (
+          <div className="p-4 rounded-lg border bg-card space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-primary" />
+                <p className="text-sm font-semibold text-foreground">Enviando broadcast...</p>
+              </div>
+              <Badge variant="outline" className="text-xs">{pct}%</Badge>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{progress.current} de {progress.total} enviados</span>
+              <span>
+                {progress.current > 0 && progress.current < progress.total
+                  ? `⏱ ~${formatTime(remaining)} restantes`
+                  : progress.current === progress.total
+                    ? "✅ Concluído!"
+                    : "Iniciando..."}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {result && (
         <div className="p-3 rounded-lg border bg-muted/30 space-y-1">
