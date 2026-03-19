@@ -31,12 +31,12 @@ const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string =>
   
   switch (width) {
     case 'compact':
-      return 'w-56 min-w-[224px]';
+      return 'w-[75vw] min-w-[224px] sm:w-56 snap-center';
     case 'large':
-      return 'w-80 min-w-[320px]';
+      return 'w-[80vw] min-w-[280px] sm:w-80 snap-center';
     case 'medium':
     default:
-      return 'w-72 min-w-[288px]';
+      return 'w-[78vw] min-w-[260px] sm:w-72 snap-center';
   }
 };
 

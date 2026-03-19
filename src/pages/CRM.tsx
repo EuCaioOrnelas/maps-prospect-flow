@@ -9,7 +9,7 @@ import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
-import { MobileBlockOverlay } from '@/components/crm/MobileBlockOverlay';
+// MobileBlockOverlay removed - CRM now works on mobile
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';

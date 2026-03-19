@@ -328,7 +328,7 @@ export const AddLeadDialog = ({
           </div>
 
           {/* Secondary Fields */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="company_name" className="flex items-center gap-2 mb-2">
                 <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
