@@ -257,27 +257,9 @@ const Upgrade = () => {
     }
   };
 
-  const handlePixCheckout = async (customerData: CustomerData) => {
-    if (!selectedPlanKey) return;
-    setLoadingPlan(selectedPlanKey);
-    trackCheckoutEvents(selectedPlanKey);
-    try {
-      const response = await supabase.functions.invoke("create-abacate-checkout", {
-        body: { planKey: selectedPlanKey, customerData, couponCode: couponFromUrl || undefined },
-      });
-      if (response.error) throw new Error(response.error.message);
-      if (response.data?.url) {
-        window.location.href = response.data.url;
-      } else {
-        throw new Error("URL de pagamento PIX não recebida");
-      }
-    } catch (error: any) {
-      console.error("PIX Checkout error:", error);
-      toast({ title: "Erro ao iniciar pagamento PIX", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
-    } finally {
-      setLoadingPlan(null);
-      setPaymentModalOpen(false);
-    }
+  const handlePixCheckout = async (_customerData: CustomerData) => {
+    // PIX is now handled inline in the modal via QR Code
+    if (selectedPlanKey) trackCheckoutEvents(selectedPlanKey);
   };
 
   const handleUpgrade = (planKey: string) => {
