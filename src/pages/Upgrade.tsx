@@ -563,12 +563,17 @@ const Upgrade = () => {
         </p>
       </main>
 
-      <EmailCaptureModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        onSubmit={handleEmailSubmit}
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        planName={selectedPlan?.name || ""}
+        planPrice={selectedPlan?.price || ""}
+        planKey={selectedPlanKey || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}
-        planName={plans.find(p => p.key === selectedPlanKey)?.name || ""}
+        defaultEmail={user?.email || ""}
+        defaultName={profile?.name || ""}
       />
     </div>
   );
