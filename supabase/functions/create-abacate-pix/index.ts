@@ -109,7 +109,9 @@ serve(async (req) => {
 
           if (hasRedeems) {
             if (coupon.discountKind === "PERCENTAGE") {
-              finalPrice = Math.round(finalPrice * (1 - coupon.discount / 100));
+              // AbacatePay discount for PERCENTAGE is in basis: 50% = 5000
+              const pct = coupon.discount / 100;
+              finalPrice = Math.round(finalPrice * (1 - pct / 100));
             } else if (coupon.discountKind === "FIXED") {
               finalPrice = Math.max(100, finalPrice - coupon.discount); // min R$1.00
             }
