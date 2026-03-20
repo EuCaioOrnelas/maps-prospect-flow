@@ -251,16 +251,32 @@ Deno.serve(async (req) => {
       const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
       
-      // Stripe MRR = base price - active coupon discount (only for forever/repeating coupons)
-      // "once" coupons only apply to the first invoice and don't affect recurring MRR
+      // Stripe MRR = base price - active coupon discount
+      // For "repeating" coupons, check if the discount period has ended
+      // For "once" coupons, MRR = base price (discount was one-time only)
       let mrrAmount = baseAmount;
       const discount = (sub as any).discount;
       if (discount?.coupon) {
         const coupon = discount.coupon;
         const duration = coupon.duration; // "once", "repeating", or "forever"
         
-        // Only apply discount to MRR if it's ongoing (not one-time)
-        if (duration === "forever" || duration === "repeating") {
+        let discountStillActive = false;
+        
+        if (duration === "forever") {
+          discountStillActive = true;
+        } else if (duration === "repeating") {
+          // Check if the discount end date has passed
+          const discountEnd = discount.end; // Unix timestamp when discount ends
+          if (discountEnd && discountEnd > Math.floor(Date.now() / 1000)) {
+            discountStillActive = true;
+          } else if (!discountEnd) {
+            // No end date means still active
+            discountStillActive = true;
+          }
+        }
+        // "once" = never affects MRR
+        
+        if (discountStillActive) {
           if (coupon.percent_off) {
             mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
           } else if (coupon.amount_off) {
@@ -268,7 +284,6 @@ Deno.serve(async (req) => {
           }
           mrrAmount = Math.round(mrrAmount * 100) / 100;
         }
-        // "once" coupons: MRR stays at base price (discount was one-time)
       }
       
       const priceId = sub.items.data[0]?.price.id;
