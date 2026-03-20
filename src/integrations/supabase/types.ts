@@ -1472,6 +1472,116 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_invoices: {
+        Row: {
+          abacate_checkout_id: string | null
+          amount_cents: number
+          automation_paused: boolean | null
+          checkout_url: string | null
+          company_name: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          last_email_sent_at: string | null
+          last_email_status: string | null
+          paid_at: string | null
+          pix_code: string | null
+          plan: string
+          renewal_stage: string | null
+          status: string
+          subscription_period_end: string | null
+          updated_at: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          abacate_checkout_id?: string | null
+          amount_cents: number
+          automation_paused?: boolean | null
+          checkout_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          last_email_sent_at?: string | null
+          last_email_status?: string | null
+          paid_at?: string | null
+          pix_code?: string | null
+          plan: string
+          renewal_stage?: string | null
+          status?: string
+          subscription_period_end?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          abacate_checkout_id?: string | null
+          amount_cents?: number
+          automation_paused?: boolean | null
+          checkout_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          last_email_sent_at?: string | null
+          last_email_status?: string | null
+          paid_at?: string | null
+          pix_code?: string | null
+          plan?: string
+          renewal_stage?: string | null
+          status?: string
+          subscription_period_end?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      pix_tracking_events: {
+        Row: {
+          created_at: string | null
+          email_log_id: string | null
+          event_type: string
+          id: string
+          invoice_id: string | null
+          metadata: Json | null
+          renewal_stage: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_log_id?: string | null
+          event_type: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          renewal_stage?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_log_id?: string | null
+          event_type?: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          renewal_stage?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pix_tracking_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "pix_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           admin_assigned_plan: boolean
@@ -1562,6 +1672,63 @@ export type Database = {
           identifier?: string
           request_count?: number
           window_start?: string
+        }
+        Relationships: []
+      }
+      renewal_email_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          cta_text: string | null
+          cta_url_template: string | null
+          draft_content: string | null
+          draft_subject: string | null
+          id: string
+          is_published: boolean | null
+          last_edited_at: string | null
+          last_edited_by: string | null
+          preview_text: string | null
+          stage: string
+          subject: string
+          title: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url_template?: string | null
+          draft_content?: string | null
+          draft_subject?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_edited_at?: string | null
+          last_edited_by?: string | null
+          preview_text?: string | null
+          stage: string
+          subject: string
+          title: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url_template?: string | null
+          draft_content?: string | null
+          draft_subject?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_edited_at?: string | null
+          last_edited_by?: string | null
+          preview_text?: string | null
+          stage?: string
+          subject?: string
+          title?: string
+          updated_at?: string | null
+          version?: number | null
         }
         Relationships: []
       }
