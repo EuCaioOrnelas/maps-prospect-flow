@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/Logo";
 import {
   QrCode,
   Copy,
@@ -16,8 +16,13 @@ import {
   Loader2,
   Zap,
   PartyPopper,
+  Lock,
+  BadgeCheck,
+  Timer,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 
 interface PixData {
@@ -35,6 +40,14 @@ function formatCurrency(cents: number) {
   });
 }
 
+function getTimeRemaining(expiresAt: string) {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return "Expirado";
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 export default function CheckoutPix() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -50,35 +63,22 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load customer data from sessionStorage & check auth
+  // Load customer data from sessionStorage (no auth required)
   useEffect(() => {
-    const init = async () => {
-      // Check if user is logged in
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Faça login primeiro",
-          description: "Você precisa estar logado para concluir a compra.",
-          variant: "destructive",
-        });
-        navigate("/login?redirect=/upgrade");
-        return;
-      }
-
-      const stored = sessionStorage.getItem("pixCustomerData");
-      if (stored) {
-        try {
-          setCustomerData(JSON.parse(stored));
-        } catch {
-          navigate("/upgrade");
-        }
-      } else {
+    const stored = sessionStorage.getItem("pixCustomerData");
+    if (stored) {
+      try {
+        setCustomerData(JSON.parse(stored));
+      } catch {
         navigate("/upgrade");
       }
-    };
-    init();
+    } else {
+      navigate("/upgrade");
+    }
   }, [navigate]);
 
   // Generate PIX QR Code
@@ -112,6 +112,15 @@ export default function CheckoutPix() {
     generatePix();
   }, [customerData, planKey]);
 
+  // Countdown timer
+  useEffect(() => {
+    if (!pixData?.expiresAt || pixStatus === "PAID") return;
+    const update = () => setTimeRemaining(getTimeRemaining(pixData.expiresAt));
+    update();
+    timerRef.current = setInterval(update, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [pixData, pixStatus]);
+
   // Poll for payment status
   useEffect(() => {
     if (!pixData || pixStatus === "PAID") return;
@@ -133,7 +142,7 @@ export default function CheckoutPix() {
             setTimeout(() => {
               sessionStorage.removeItem("pixCustomerData");
               navigate("/checkout-success?provider=abacate");
-            }, 2000);
+            }, 2500);
           }
         }
       } catch {
@@ -162,9 +171,7 @@ export default function CheckoutPix() {
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
-    // For now just mark as applied — the coupon will be validated when generating a new PIX
     setCouponApplied(true);
-    // Regenerate PIX with coupon
     setPixData(null);
     toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
   };
@@ -186,7 +193,7 @@ export default function CheckoutPix() {
         setTimeout(() => {
           sessionStorage.removeItem("pixCustomerData");
           navigate("/checkout-success?provider=abacate");
-        }, 2000);
+        }, 2500);
       }
     } catch (err: any) {
       toast({
@@ -201,97 +208,153 @@ export default function CheckoutPix() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar */}
-      <div className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted transition-colors active:scale-95"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex-1">
-            <p className="font-semibold text-sm text-foreground">Pagamento via PIX</p>
-            <p className="text-xs text-muted-foreground">
-              {planName} — R$ {planPrice}/mês
-            </p>
+      {/* Header */}
+      <header className="border-b border-border/40 bg-card/90 backdrop-blur-md sticky top-0 z-20">
+        <div className="container max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted transition-colors active:scale-95"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <Logo size="sm" asLink={false} />
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Pagamento seguro</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Lock className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="hidden sm:inline font-medium">Checkout Seguro</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Progress steps */}
+      <div className="border-b border-border/20 bg-muted/30">
+        <div className="container max-w-5xl mx-auto px-4 py-2.5">
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <Check className="h-3.5 w-3.5" /> Dados
+            </span>
+            <div className="w-8 h-px bg-emerald-500" />
+            <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <Check className="h-3.5 w-3.5" /> Método
+            </span>
+            <div className="w-8 h-px bg-emerald-500" />
+            <span className={cn(
+              "flex items-center gap-1.5 font-medium",
+              pixStatus === "PAID" ? "text-emerald-600" : "text-primary"
+            )}>
+              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
+              Pagamento
+            </span>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 container max-w-2xl mx-auto px-4 py-8">
-        <div className="grid gap-8 md:grid-cols-[1fr_320px]">
-          {/* Left — QR Code */}
-          <div className="flex flex-col items-center gap-6">
+      <main className="flex-1 container max-w-5xl mx-auto px-4 py-8">
+        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+          {/* Left — QR Code area */}
+          <motion.div
+            className="flex flex-col items-center gap-6"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="text-center space-y-1">
+              <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+              <p className="text-sm text-muted-foreground">
+                Escaneie o QR Code com o app do seu banco
+              </p>
+            </div>
+
             {pixLoading ? (
-              <div className="flex flex-col items-center gap-4 py-12">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground">Gerando QR Code...</p>
+              <div className="flex flex-col items-center gap-4 py-16">
+                <div className="relative">
+                  <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  </div>
+                </div>
+                <p className="text-muted-foreground text-sm">Gerando QR Code...</p>
               </div>
             ) : pixData ? (
               <>
                 {/* QR Code card */}
-                <div className="relative rounded-2xl bg-white p-6 shadow-lg border border-border/20">
+                <motion.div
+                  className="relative rounded-2xl bg-white p-8 shadow-xl shadow-black/5 border border-border/10"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                >
                   {pixData.brCodeBase64 ? (
                     <img
                       src={pixData.brCodeBase64}
                       alt="QR Code PIX"
-                      className="w-56 h-56 sm:w-64 sm:h-64"
+                      className="w-60 h-60 sm:w-72 sm:h-72"
                     />
                   ) : (
-                    <div className="w-56 h-56 flex items-center justify-center text-muted-foreground">
+                    <div className="w-60 h-60 flex items-center justify-center text-muted-foreground">
                       <QrCode className="h-16 w-16 opacity-30" />
                     </div>
                   )}
                   {pixStatus === "PAID" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl animate-scale-in">
+                    <motion.div
+                      className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    >
                       <div className="flex flex-col items-center gap-3">
-                        <div className="h-16 w-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                          <PartyPopper className="h-8 w-8 text-white" />
+                        <div className="h-20 w-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                          <PartyPopper className="h-10 w-10 text-white" />
                         </div>
-                        <p className="font-bold text-lg text-emerald-600">
+                        <p className="font-bold text-xl text-emerald-600">
                           Pago com sucesso!
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Redirecionando...
                         </p>
                       </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                {/* Amount */}
+                <div className="text-center">
+                  <p className="text-4xl font-bold text-foreground tracking-tight tabular-nums">
+                    {formatCurrency(pixData.amount)}
+                  </p>
+                  {timeRemaining && pixStatus !== "PAID" && (
+                    <div className="flex items-center justify-center gap-1.5 mt-2 text-sm text-muted-foreground">
+                      <Timer className="h-3.5 w-3.5" />
+                      <span>Expira em <span className="font-mono font-medium text-foreground">{timeRemaining}</span></span>
                     </div>
                   )}
                 </div>
 
-                {/* Amount */}
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-foreground">
-                    {formatCurrency(pixData.amount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Escaneie o QR Code ou copie o código abaixo
-                  </p>
-                </div>
-
                 {/* Copy code */}
-                <div className="w-full max-w-md space-y-2">
+                <div className="w-full max-w-md space-y-3">
+                  <p className="text-xs text-center text-muted-foreground font-medium uppercase tracking-wider">
+                    Ou copie o código PIX
+                  </p>
                   <div className="flex gap-2">
                     <Input
                       readOnly
                       value={pixData.brCode}
-                      className="text-xs font-mono truncate bg-muted/50"
+                      className="text-xs font-mono truncate bg-muted/40 border-border/30"
                     />
                     <Button
-                      variant="outline"
                       onClick={handleCopyCode}
-                      className="shrink-0 gap-2"
+                      className={cn(
+                        "shrink-0 gap-2 transition-all",
+                        copied
+                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                          : "bg-primary hover:bg-primary/90"
+                      )}
                     >
                       {copied ? (
                         <>
-                          <Check className="h-4 w-4 text-emerald-500" />
-                          Copiado
+                          <Check className="h-4 w-4" />
+                          Copiado!
                         </>
                       ) : (
                         <>
@@ -303,25 +366,66 @@ export default function CheckoutPix() {
                   </div>
                 </div>
 
-                {/* Status */}
+                {/* Waiting status */}
                 {pixStatus !== "PAID" && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="relative">
-                      <Clock className="h-4 w-4" />
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                    </div>
-                    <span>Aguardando pagamento...</span>
-                  </div>
+                  <motion.div
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500/10 border border-amber-500/20"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  >
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700">
+                      Aguardando pagamento...
+                    </span>
+                  </motion.div>
                 )}
               </>
             ) : null}
-          </div>
+          </motion.div>
 
           {/* Right sidebar */}
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-5 lg:sticky lg:top-28 lg:self-start"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            {/* Plan summary */}
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-primary" />
+                Resumo do pedido
+              </p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Plano</span>
+                  <span className="font-semibold text-foreground">{planName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Valor mensal</span>
+                  <span className="font-semibold text-foreground">R$ {planPrice}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Método</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                    <QrCode className="h-3.5 w-3.5" /> PIX
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Email</span>
+                  <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
+                </div>
+                <div className="h-px bg-border/50" />
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="font-bold text-lg text-foreground">R$ {planPrice}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Coupon */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Tag className="h-4 w-4 text-primary" />
                 Cupom de desconto
               </div>
@@ -351,59 +455,101 @@ export default function CheckoutPix() {
                 </Button>
               </div>
               {couponApplied && (
-                <p className="text-xs text-emerald-600">
+                <p className="text-xs text-emerald-600 font-medium">
                   ✓ Cupom aplicado com sucesso
                 </p>
               )}
             </div>
 
-            {/* Plan summary */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
-              <p className="text-sm font-medium text-foreground">Resumo</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Plano</span>
-                  <span className="font-medium">{planName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor</span>
-                  <span className="font-medium">R$ {planPrice}/mês</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Método</span>
-                  <span className="font-medium text-emerald-600">PIX</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Security */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
+            {/* Security badges */}
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium text-foreground">
-                  Pagamento seguro
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <p className="text-sm font-semibold text-foreground">
+                  Compra segura
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Transação processada com criptografia de ponta a ponta via
-                AbacatePay. Seus dados estão protegidos.
-              </p>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Lock className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Criptografia de ponta a ponta</p>
+                    <p className="text-xs text-muted-foreground">Seus dados são protegidos com criptografia SSL 256-bit</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Shield className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Processamento via Banco Central</p>
+                    <p className="text-xs text-muted-foreground">PIX regulamentado e fiscalizado pelo BACEN</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Ativação instantânea</p>
+                    <p className="text-xs text-muted-foreground">Seu plano é ativado imediatamente após o pagamento</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Simulate payment button (dev mode) */}
+            {/* Dev simulate button */}
             <Button
               variant="outline"
               size="sm"
               onClick={handleSimulatePayment}
               disabled={!pixData || pixStatus === "PAID"}
-              className="w-full gap-2 border-dashed border-amber-500/50 text-amber-600 hover:bg-amber-500/5"
+              className="w-full gap-2 border-dashed border-amber-500/40 text-amber-600 hover:bg-amber-500/5 text-xs"
             >
-              <Zap className="h-4 w-4" />
+              <Zap className="h-3.5 w-3.5" />
               Simular pagamento (teste)
             </Button>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/30 bg-muted/20 mt-auto">
+        <div className="container max-w-5xl mx-auto px-4 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Logo size="sm" asLink={false} showText={false} />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium text-foreground/80">Wiize Tecnologia</p>
+                <p>CNPJ: 00.000.000/0001-00</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Shield className="h-3 w-3 text-emerald-500" />
+                <span>SSL Seguro</span>
+              </div>
+              <div className="h-3 w-px bg-border" />
+              <div className="flex items-center gap-1.5">
+                <Lock className="h-3 w-3 text-emerald-500" />
+                <span>Dados protegidos</span>
+              </div>
+              <div className="h-3 w-px bg-border" />
+              <button
+                onClick={() => navigate("/termos")}
+                className="hover:text-foreground transition-colors"
+              >
+                Termos de uso
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground/60 mt-4">
+            © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
