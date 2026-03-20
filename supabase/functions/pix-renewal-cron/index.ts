@@ -39,18 +39,18 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find users whose subscription expires in the next 3 days
-    // Generate a new PIX checkout for renewal
+    // Find users whose subscription expires in the next 7 days
+    // Generate a new PIX checkout for renewal with enough time to pay
     const now = new Date();
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
     const { data: expiringUsers, error } = await supabaseClient
       .from("profiles")
       .select("id, email, name, plan, subscription_current_period_end")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
-      .lt("subscription_current_period_end", threeDaysFromNow.toISOString())
+      .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
       .gt("subscription_current_period_end", now.toISOString())
       .eq("admin_assigned_plan", false);
 
@@ -71,7 +71,7 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .eq("checkout_completed", false)
         .like("stripe_session_id", "abacate_renewal_%")
-        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .limit(1);
 
       if (existingRenewal && existingRenewal.length > 0) {
