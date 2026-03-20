@@ -304,7 +304,7 @@ Deno.serve(async (req) => {
         }
         // "once" = never affects MRR (one-time discount already applied)
         
-        console.log(`[GET-STRIPE-MRR] Coupon detail: sub=${sub.id} | email=${customerEmail} | coupon=${coupon.name} | duration=${duration} | percent_off=${coupon.percent_off} | amount_off=${coupon.amount_off} | end=${discount.end} | active=${discountStillActive}`);
+        
         
         if (discountStillActive) {
           if (coupon.percent_off) {
