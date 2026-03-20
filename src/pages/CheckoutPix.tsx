@@ -169,11 +169,34 @@ export default function CheckoutPix() {
     }
   };
 
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
-    setCouponApplied(true);
-    setPixData(null);
-    toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
+    setCouponValidating(true);
+    setCouponError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-abacate-coupon", {
+        body: { couponCode: couponCode.trim() },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.valid) {
+        setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
+        setCouponApplied(true);
+        setPixData(null); // Regenerate QR with discount
+        toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
+      } else {
+        setCouponError(data?.error || "Cupom inválido");
+        toast({ title: "Cupom inválido", description: data?.error || "Código não encontrado", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setCouponError("Erro ao validar cupom");
+      toast({ title: "Erro ao validar cupom", description: err.message, variant: "destructive" });
+    } finally {
+      setCouponValidating(false);
+    }
   };
 
   const handleSimulatePayment = async () => {
