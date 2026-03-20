@@ -136,7 +136,7 @@ export const PricingSection = () => {
       });
       if (response.error) throw new Error(response.error.message);
       if (response.data?.url) {
-        window.open(response.data.url, "_blank");
+        window.location.href = response.data.url;
       } else {
         throw new Error("URL de pagamento PIX não recebida");
       }
