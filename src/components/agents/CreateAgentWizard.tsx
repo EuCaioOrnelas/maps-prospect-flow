@@ -617,6 +617,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.maxChars) setMaxChars(wd.maxChars);
         if (wd.maxConsecutiveMessages) setMaxConsecutiveMessages(wd.maxConsecutiveMessages);
         if (wd.alwaysWaitResponse !== undefined) setAlwaysWaitResponse(wd.alwaysWaitResponse);
+        if (wd.respondToGroups !== undefined) setRespondToGroups(wd.respondToGroups);
         if (wd.wantToTalkPrice !== undefined) setWantToTalkPrice(wd.wantToTalkPrice);
         if (wd.productPrice) setProductPrice(wd.productPrice);
         if (wd.priceType) setPriceType(wd.priceType);
