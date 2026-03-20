@@ -186,9 +186,7 @@ export default function CheckoutPix() {
       if (data?.valid) {
         setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
         setCouponApplied(true);
-        setPixData(null);
-        setPixGenTrigger((t) => t + 1); // Trigger regeneration with coupon
-        toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
+        toast({ title: "Cupom aplicado!", description: `${data.discountKind === "PERCENTAGE" ? data.discount + "%" : "R$ " + (data.discount / 100).toFixed(2)} de desconto` });
       } else {
         setCouponError(data?.error || "Cupom inválido");
         toast({ title: "Cupom inválido", description: data?.error || "Código não encontrado", variant: "destructive" });
