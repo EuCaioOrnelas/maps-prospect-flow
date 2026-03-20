@@ -263,20 +263,9 @@ Deno.serve(async (req) => {
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
-      let unitAmountCents = priceObj?.unit_amount || 0;
+      const unitAmountCents = priceObj?.unit_amount || 0;
       const interval = priceObj?.recurring?.interval || "month";
       const intervalCount = priceObj?.recurring?.interval_count || 1;
-      
-      // Apply active discount/coupon to get real MRR
-      const discount = (sub as any).discount;
-      if (discount?.coupon) {
-        const coupon = discount.coupon;
-        if (coupon.percent_off) {
-          unitAmountCents = Math.round(unitAmountCents * (1 - coupon.percent_off / 100));
-        } else if (coupon.amount_off) {
-          unitAmountCents = Math.max(0, unitAmountCents - coupon.amount_off);
-        }
-      }
       
       // Normalize to monthly: Stripe MRR always represents monthly revenue
       let monthlyAmountCents = unitAmountCents;
