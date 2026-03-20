@@ -173,9 +173,6 @@ export default function CheckoutPix() {
     }
   };
 
-  const [couponValidating, setCouponValidating] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
-  const [couponError, setCouponError] = useState("");
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
