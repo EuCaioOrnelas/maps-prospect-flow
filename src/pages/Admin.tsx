@@ -1036,6 +1036,11 @@ const Admin = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuItem asChild>
+                    <Link to="/admin/pix-billing" className="flex items-center gap-2 cursor-pointer">
+                      <Receipt size={14} /> Billing PIX
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/admin/email-tests" className="flex items-center gap-2 cursor-pointer">
                       <Mail size={14} /> Emails
                     </Link>
