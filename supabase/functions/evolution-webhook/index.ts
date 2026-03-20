@@ -131,18 +131,38 @@ serve(async (req) => {
       // Ignore obvious non-person IDs (groups / special IDs)
       if (digits.startsWith('120363')) return null;
 
-      // Accept 13-digit E.164 BR mobile directly
+      // Helper to validate and block placeholder numbers
+      function isPlaceholder(subscriber: string): boolean {
+        if (/^(\d)\1{7}$/.test(subscriber)) return true;
+        if (subscriber.startsWith('9999')) return true;
+        if (/(0000|1234|4321)/.test(subscriber)) return true;
+        if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return true;
+        return false;
+      }
+
+      // Accept 13-digit E.164 BR mobile directly: 55 + DD + 9XXXXXXXX
       if (digits.length === 13 && digits.startsWith('55')) {
         const ddd = Number(digits.slice(2, 4));
         const firstLocal = digits[4];
         if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
-          const subscriber = digits.slice(-8);
-          // Block placeholders
-          if (/^(\d)\1{7}$/.test(subscriber)) return null;
-          if (subscriber.startsWith('9999')) return null;
-          if (/(0000|1234|4321)/.test(subscriber)) return null;
-          if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return null;
+          if (isPlaceholder(digits.slice(-8))) return null;
           return digits;
+        }
+        return null;
+      }
+
+      // 12-digit BR number missing the 9th digit: 55 + DD + 8-digit number
+      // Add the leading 9 to make it 13-digit E.164
+      if (digits.length === 12 && digits.startsWith('55')) {
+        const ddd = Number(digits.slice(2, 4));
+        const localNumber = digits.slice(4); // 8 digits
+        const firstDigit = localNumber[0];
+        // Mobile numbers in old format start with 6,7,8,9
+        if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+          const candidate = `55${digits.slice(2, 4)}9${localNumber}`;
+          if (isPlaceholder(candidate.slice(-8))) return null;
+          console.log(`Normalized 12-digit BR phone ${digits} -> ${candidate} (added 9th digit)`);
+          return candidate;
         }
         return null;
       }
@@ -153,13 +173,27 @@ serve(async (req) => {
         const firstLocal = digits[2];
         if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
           const candidate = `55${digits}`;
-          const subscriber = candidate.slice(-8);
-          if (/^(\d)\1{7}$/.test(subscriber)) return null;
-          if (subscriber.startsWith('9999')) return null;
-          if (/(0000|1234|4321)/.test(subscriber)) return null;
-          if (subscriber.endsWith('0000') || subscriber.endsWith('0001') || subscriber.endsWith('0002')) return null;
+          if (isPlaceholder(candidate.slice(-8))) return null;
           return candidate;
         }
+      }
+
+      // 10-digit local BR number missing the 9th digit: DD + 8-digit number
+      if (digits.length === 10) {
+        const ddd = Number(digits.slice(0, 2));
+        const localNumber = digits.slice(2); // 8 digits
+        const firstDigit = localNumber[0];
+        if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+          const candidate = `55${ddd}9${localNumber}`;
+          if (isPlaceholder(candidate.slice(-8))) return null;
+          console.log(`Normalized 10-digit BR phone ${digits} -> ${candidate} (added 9th digit)`);
+          return candidate;
+        }
+      }
+
+      // Accept international numbers (non-BR) with 10+ digits as-is
+      if (digits.length >= 10 && !digits.startsWith('55')) {
+        return digits;
       }
 
       return null;
