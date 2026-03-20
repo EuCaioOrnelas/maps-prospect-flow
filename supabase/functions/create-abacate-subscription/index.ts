@@ -6,7 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_URL = "https://api.abacatepay.com/v1";
+// AbacatePay v2 API
+const ABACATE_API_V1 = "https://api.abacatepay.com/v1";
+const ABACATE_API_V2 = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -72,8 +74,8 @@ serve(async (req) => {
       }
     }
 
-    // 1. Create customer on AbacatePay
-    const customerRes = await fetch(`${ABACATE_API_URL}/customer/create`, {
+    // 1. Create customer on AbacatePay (v1 endpoint — customer API hasn't changed)
+    const customerRes = await fetch(`${ABACATE_API_V1}/customer/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -99,49 +101,51 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
 
-    // 2. Create subscription billing with the product
-    const billingBody: Record<string, any> = {
-      frequency: "MULTIPLE_PAYMENTS",
+    // 2. Create subscription via v2 API
+    const subscriptionBody: Record<string, any> = {
+      items: [
+        {
+          id: productId,
+          quantity: 1,
+        },
+      ],
       methods: ["PIX"],
-      products: [productId],
+      customerId: customerId,
       returnUrl: `${origin}/upgrade?checkout=canceled`,
       completionUrl: `${origin}/checkout-success?provider=abacate`,
-      customerId: customerId,
+      metadata: {
+        userId: userId || "anonymous",
+        planKey,
+        email: customerData.email,
+      },
     };
 
     // Add coupon if provided
     if (couponCode) {
-      billingBody.couponCode = couponCode;
-      logStep("Coupon attached to billing", { couponCode });
+      subscriptionBody.couponCode = couponCode;
+      logStep("Coupon attached", { couponCode });
     }
 
-    // Add metadata for user tracking
-    billingBody.metadata = {
-      userId: userId || "anonymous",
-      planKey,
-      email: customerData.email,
-    };
+    logStep("Creating subscription (v2)", subscriptionBody);
 
-    logStep("Creating billing", billingBody);
-
-    const billingRes = await fetch(`${ABACATE_API_URL}/billing/create`, {
+    const subRes = await fetch(`${ABACATE_API_V2}/subscriptions/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify(billingBody),
+      body: JSON.stringify(subscriptionBody),
     });
 
-    const billingJson = await billingRes.json();
-    if (billingJson.error) {
-      logStep("Billing creation failed", billingJson.error);
-      throw new Error(`AbacatePay billing error: ${JSON.stringify(billingJson.error)}`);
+    const subJson = await subRes.json();
+    if (subJson.error || !subRes.ok) {
+      logStep("Subscription creation failed", { status: subRes.status, body: subJson });
+      throw new Error(`AbacatePay subscription error: ${JSON.stringify(subJson.error || subJson)}`);
     }
 
-    const billingData = billingJson.data;
-    logStep("Subscription billing created", { billingId: billingData.id, url: billingData.url });
+    const subData = subJson.data;
+    logStep("Subscription created", { id: subData.id, url: subData.url });
 
     // 3. Track checkout lead
     try {
@@ -150,7 +154,7 @@ serve(async (req) => {
         email: customerData.email,
         name: customerData.name,
         plan_attempted: PLAN_NAMES[planKey] || planKey,
-        stripe_session_id: `abacate_sub_${billingData.id}`,
+        stripe_session_id: `abacate_sub_${subData.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
@@ -160,7 +164,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ url: billingData.url, billingId: billingData.id }),
+      JSON.stringify({ url: subData.url, billingId: subData.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
