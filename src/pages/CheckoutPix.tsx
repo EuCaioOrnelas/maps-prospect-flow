@@ -38,6 +38,8 @@ function formatCurrency(cents: number) {
 export default function CheckoutPix() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
