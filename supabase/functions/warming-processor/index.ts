@@ -494,7 +494,93 @@ async function validateWhatsAppNumber(
   }
 }
 
-// Send message via Evolution API
+// Generate contextual opening message using Lovable AI for levels 3-4
+async function generateContextualOpeningMessage(
+  companyName: string,
+  contactName: string | null,
+  category: string | null,
+  city: string | null,
+  level: number
+): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  
+  if (!LOVABLE_API_KEY) {
+    console.log('LOVABLE_API_KEY not available, falling back to template');
+    const fallbacks = [
+      `Oi, tudo bem? Vi seu trabalho e achei interessante!`,
+      `Olá! Vi que vocês trabalham na região, posso mandar uma info rápida?`,
+      `Oi, tudo bem? Trabalho com empresas da região e queria trocar uma ideia`,
+    ];
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
+  
+  try {
+    const contextParts = [];
+    if (companyName) contextParts.push(`Empresa: ${companyName}`);
+    if (contactName) contextParts.push(`Nome do contato: ${contactName}`);
+    if (category) contextParts.push(`Segmento: ${category}`);
+    if (city) contextParts.push(`Cidade: ${city}`);
+    
+    const systemPrompt = `Você é uma pessoa REAL mandando mensagem pelo WhatsApp para iniciar uma conversa comercial casual com um lead.
+
+CONTEXTO DO LEAD:
+${contextParts.join('\n')}
+
+REGRAS OBRIGATÓRIAS:
+- Gere APENAS a mensagem, sem aspas, sem explicação
+- Máximo 2 frases curtas (total ~50 palavras)
+- Tom casual brasileiro, como se estivesse mandando no WhatsApp
+- Mencione algo ESPECÍFICO sobre o negócio/segmento do lead de forma natural
+- NÃO use saudações genéricas como apenas "Oi" ou "Olá"
+- NÃO mencione preços ou vendas diretamente
+- O objetivo é gerar curiosidade e uma resposta
+- Use no máximo 1 emoji (ou nenhum)
+- Varie entre estilos: pergunta, elogio ao trabalho, referência à região, etc.
+- Pareça uma pessoa real, NÃO um bot
+
+EXEMPLOS DE BOAS MENSAGENS:
+- "Oi, vi que vocês trabalham com [segmento] aqui em [cidade], muito bacana o trabalho de vocês!"
+- "Olá! Achei o perfil de vocês buscando [segmento] na região, posso trocar uma ideia rápida?"
+- "Oi [nome], tudo bem? Vi que a [empresa] atua com [segmento], queria conhecer melhor o trabalho de vocês"`;
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-lite',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Gere uma mensagem de abertura natural para este lead.' }
+        ],
+        temperature: 1.0,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('AI contextual message error:', response.status);
+      return `Oi, tudo bem? Vi o trabalho de vocês com ${category || 'empresas da região'} e achei interessante!`;
+    }
+
+    const result = await response.json();
+    let aiMessage = result.choices?.[0]?.message?.content?.trim();
+    
+    if (aiMessage) {
+      aiMessage = aiMessage.replace(/^["']|["']$/g, '').trim();
+      console.log('AI generated contextual opening:', aiMessage);
+      return aiMessage;
+    }
+  } catch (error) {
+    console.error('Error generating contextual message:', error);
+  }
+  
+  // Fallback
+  return `Oi, tudo bem? Vi que vocês trabalham com ${category || 'empresas da região'} e queria trocar uma ideia!`;
+}
+
+
 async function sendMessage(
   instanceName: string,
   phoneNumber: string,
@@ -1089,8 +1175,23 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Get unique message avoiding recent ones in database
-        const message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages)
+        // Get message - use AI for levels 3-4 with lead context, templates for levels 1-2
+        let message: string;
+        const currentLevel = getWarmingLevel(advancedDay);
+        
+        if (currentLevel >= 3 && validLead.company_name) {
+          // Use AI to generate contextual prospecting message
+          message = await generateContextualOpeningMessage(
+            validLead.company_name,
+            validLead.contact_name || null,
+            (validLead as any).category || null,
+            (validLead as any).city || null,
+            currentLevel
+          );
+        } else {
+          // Use template messages for levels 1-2 or leads without company data
+          message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+        }
         console.log(`Sending to validated lead ${validatedPhone}: "${message}"`)
 
         // Send message
