@@ -689,7 +689,7 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData(), loadPeriodStats()]);
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadPixMRR(), loadSalesChartData(), loadPeriodStats()]);
   };
 
   // Load period-filtered stats
