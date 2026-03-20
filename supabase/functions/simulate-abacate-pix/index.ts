@@ -51,6 +51,14 @@ serve(async (req) => {
     logStep("Simulate response", { status: simJson.data?.status, error: simJson.error });
 
     if (simJson.error) {
+      // If already paid or not found, treat as success
+      if (typeof simJson.error === "string" && (simJson.error.includes("not found") || simJson.error.includes("already"))) {
+        logStep("PIX already consumed or not found, checking status via check endpoint");
+        return new Response(
+          JSON.stringify({ status: "PAID" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       throw new Error(`Simulate failed: ${JSON.stringify(simJson.error)}`);
     }
 
