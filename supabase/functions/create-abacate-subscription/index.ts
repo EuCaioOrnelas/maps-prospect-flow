@@ -6,14 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_V2 = "https://api.abacatepay.com/v2";
+const ABACATE_API = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[ABACATE-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// AbacatePay v2 product IDs (created in the AbacatePay dashboard with subscription frequency)
+// AbacatePay v2 product IDs
 const PRODUCT_IDS: Record<string, string> = {
   start: "prod_YuGfZ0UukSSPPjbjn3DZJkMK",
   growth: "prod_fNftUU0Pd5bEgdpnKTADKUgT",
@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     // 1. Create customer on AbacatePay v2
-    const customerRes = await fetch(`${ABACATE_API_V2}/customers/create`, {
+    const customerRes = await fetch(`${ABACATE_API}/customers/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -99,9 +99,10 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
 
-    // 2. Create subscription on AbacatePay v2
-    // Uses /v2/subscriptions/create with product items
-    const subscriptionBody: Record<string, any> = {
+    // 2. Create ONE-TIME checkout via PIX (v2 checkouts/create)
+    // AbacatePay v2 subscriptions only support CARD, so we use
+    // one-time PIX checkout + cron-based renewal management
+    const checkoutBody: Record<string, any> = {
       items: [
         {
           id: productId,
@@ -116,35 +117,36 @@ serve(async (req) => {
         userId: userId || "anonymous",
         planKey,
         email: customerData.email,
+        type: "subscription_pix", // Mark as subscription for webhook handling
       },
     };
 
     // Add coupons if provided
     if (couponCode) {
-      subscriptionBody.coupons = [couponCode];
+      checkoutBody.coupons = [couponCode];
       logStep("Coupon attached", { couponCode });
     }
 
-    logStep("Creating subscription (v2)", subscriptionBody);
+    logStep("Creating PIX checkout (v2)", checkoutBody);
 
-    const subscriptionRes = await fetch(`${ABACATE_API_V2}/subscriptions/create`, {
+    const checkoutRes = await fetch(`${ABACATE_API}/checkouts/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify(subscriptionBody),
+      body: JSON.stringify(checkoutBody),
     });
 
-    const subscriptionJson = await subscriptionRes.json();
-    if (subscriptionJson.error || !subscriptionRes.ok) {
-      logStep("Subscription creation failed", { status: subscriptionRes.status, body: subscriptionJson });
-      throw new Error(`AbacatePay subscription error: ${JSON.stringify(subscriptionJson.error || subscriptionJson)}`);
+    const checkoutJson = await checkoutRes.json();
+    if (checkoutJson.error || !checkoutRes.ok) {
+      logStep("Checkout creation failed", { status: checkoutRes.status, body: checkoutJson });
+      throw new Error(`AbacatePay checkout error: ${JSON.stringify(checkoutJson.error || checkoutJson)}`);
     }
 
-    const subscriptionData = subscriptionJson.data;
-    logStep("Subscription created", { id: subscriptionData.id, url: subscriptionData.url });
+    const checkoutData = checkoutJson.data;
+    logStep("Checkout created", { id: checkoutData.id, url: checkoutData.url });
 
     // 3. Track checkout lead
     try {
@@ -153,7 +155,7 @@ serve(async (req) => {
         email: customerData.email,
         name: customerData.name,
         plan_attempted: PLAN_NAMES[planKey] || planKey,
-        stripe_session_id: `abacate_sub_${subscriptionData.id}`,
+        stripe_session_id: `abacate_sub_${checkoutData.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
@@ -163,7 +165,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ url: subscriptionData.url, billingId: subscriptionData.id }),
+      JSON.stringify({ url: checkoutData.url, billingId: checkoutData.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
