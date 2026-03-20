@@ -39,6 +39,7 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const SecurityFAQ = lazy(() => import("./pages/SecurityFAQ"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutFailed = lazy(() => import("./pages/CheckoutFailed"));
+const CheckoutPix = lazy(() => import("./pages/CheckoutPix"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CRM = lazy(() => import("./pages/CRM"));
@@ -114,6 +115,7 @@ const App = () => (
                 <Route path="/upgrade-promo" element={<UpgradePromo />} />
                 <Route path="/checkout-success" element={<CheckoutSuccess />} />
                 <Route path="/checkout-failed" element={<CheckoutFailed />} />
+                <Route path="/checkout-pix" element={<CheckoutPix />} />
                 <Route path="/contato" element={<Contact />} />
                 <Route
                   path="/dashboard" 
