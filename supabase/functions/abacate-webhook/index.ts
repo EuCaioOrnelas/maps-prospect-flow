@@ -103,7 +103,7 @@ serve(async (req) => {
       // Find user by email
       const { data: profiles } = await supabaseClient
         .from("profiles")
-        .select("id, plan, email, searches_used")
+        .select("id, plan, email, searches_used, subscription_current_period_end")
         .eq("email", customerEmail)
         .limit(1);
 
@@ -133,16 +133,35 @@ serve(async (req) => {
       }
 
       // Update profile: activate/renew plan + reset searches
+      // IMPORTANT: For renewals, extend from current period end (not from today)
+      // This ensures early payments don't shorten the subscription cycle
       const searchesLimit = getPlanSearchesLimit(planKey);
-      const periodEnd = new Date();
-      periodEnd.setDate(periodEnd.getDate() + 30);
+      const isRenewal = billing.metadata?.type === "renewal" || billing.metadata?.type === "subscription_pix";
+      const currentPeriodEnd = profile.plan !== "free" 
+        ? new Date(billing.metadata?.currentPeriodEnd || profile.subscription_current_period_end || new Date())
+        : new Date();
+      
+      let periodEnd: Date;
+      if (isRenewal && currentPeriodEnd > new Date()) {
+        // Early payment: extend from current expiry date
+        periodEnd = new Date(currentPeriodEnd);
+        periodEnd.setDate(periodEnd.getDate() + 30);
+        logStep("Early renewal detected, extending from current period end", { 
+          currentEnd: currentPeriodEnd.toISOString(), 
+          newEnd: periodEnd.toISOString() 
+        });
+      } else {
+        // First payment or expired: start from today
+        periodEnd = new Date();
+        periodEnd.setDate(periodEnd.getDate() + 30);
+      }
 
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
           plan: planKey,
           searches_limit: searchesLimit,
-          searches_used: 0, // Reset on every payment (initial + renewal)
+          searches_used: 0,
           subscription_current_period_end: periodEnd.toISOString(),
           last_searches_reset: new Date().toISOString(),
           updated_at: new Date().toISOString(),

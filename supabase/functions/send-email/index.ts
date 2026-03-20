@@ -219,6 +219,62 @@ function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult
     `),
   };
 }
+function templateSubscriptionRenewal(payload: Record<string, unknown>): TemplateResult {
+  const userName = payload.user_name as string || "Cliente";
+  const planName = payload.plan_name as string || "Seu plano";
+  const planPrice = payload.plan_price as string || "";
+  const expiryDate = payload.expiry_date as string || "";
+  const remainingDays = payload.remaining_days as number || 0;
+  const checkoutUrl = payload.checkout_url as string || "";
+
+  const urgencyColor = remainingDays <= 2 ? "#ef4444" : remainingDays <= 4 ? "#f59e0b" : "#3daa57";
+  const urgencyText = remainingDays <= 1 
+    ? "⚠️ Sua assinatura vence amanhã!" 
+    : remainingDays <= 3 
+      ? `⚠️ Faltam apenas ${remainingDays} dias para o vencimento` 
+      : `Faltam ${remainingDays} dias para o vencimento`;
+
+  return {
+    subject: remainingDays <= 2 
+      ? `⚠️ Último aviso: seu plano ${planName} vence em ${remainingDays} dia${remainingDays > 1 ? 's' : ''}!`
+      : `🔔 Seu plano ${planName} vence em ${remainingDays} dias — renove agora`,
+    html: baseLayout(`Renovação de Assinatura`, `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Olá, ${userName}!</h1>
+      
+      <div style="margin:16px 0;padding:16px;background:#fafafa;border-radius:8px;border-left:4px solid ${urgencyColor};">
+        <p style="margin:0;font-size:16px;font-weight:600;color:${urgencyColor};">${urgencyText}</p>
+        <p style="margin:8px 0 0;font-size:14px;color:#71717a;">Data de vencimento: <strong style="color:#18181b;">${expiryDate}</strong></p>
+      </div>
+
+      <p style="margin:16px 0 8px;color:#3f3f46;font-size:15px;">
+        Para manter seu acesso ao <strong>${planName}</strong> sem interrupções, renove sua assinatura via PIX.
+      </p>
+
+      <div style="margin:16px 0;padding:16px;background:#f0fdf4;border-radius:8px;text-align:center;">
+        <p style="margin:0;font-size:13px;color:#71717a;">Valor da renovação</p>
+        <p style="margin:4px 0 0;font-size:28px;font-weight:700;color:#166534;">${planPrice}<span style="font-size:14px;font-weight:400;color:#71717a;">/mês</span></p>
+      </div>
+
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">Renovar Assinatura via PIX</a>
+      </div>
+
+      <div style="margin:16px 0;padding:12px 16px;background:#fffbeb;border-radius:8px;">
+        <p style="margin:0;font-size:13px;color:#92400e;">
+          💡 <strong>Pode pagar com antecedência!</strong> Se você pagar antes do vencimento, a renovação será contabilizada a partir da data de vencimento atual, sem perder nenhum dia.
+        </p>
+      </div>
+
+      <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
+        <p style="margin:0;font-size:13px;color:#991b1b;">
+          ⚠️ Caso o pagamento não seja realizado, o acesso ao sistema será suspenso <strong>1 dia após o vencimento</strong>.
+        </p>
+      </div>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#a1a1aa;">Se tiver dúvidas, entre em contato com nosso suporte.</p>
+    `),
+  };
+}
 
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
@@ -227,6 +283,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
+  SUBSCRIPTION_RENEWAL: templateSubscriptionRenewal,
 };
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
