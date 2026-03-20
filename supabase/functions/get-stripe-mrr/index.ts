@@ -310,11 +310,14 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      if (sub.status === "active" && mrrAmount > 0 && !wasRefunded) {
+      // Stripe counts active, trialing, and past_due subscriptions in MRR
+      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
+      
+      if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] Active sub: base=R$${baseAmount}, mrr=R$${mrrAmount}, paid=R$${amountPaid}, duration=${discount?.coupon?.duration || 'none'}, end=${discount?.end || 'none'}, pct=${discount?.coupon?.percent_off || 'none'}`);
+        console.log(`[GET-STRIPE-MRR] MRR sub (${sub.status}): base=R$${baseAmount}, mrr=R$${mrrAmount}, paid=R$${amountPaid}`);
       }
     }
 
