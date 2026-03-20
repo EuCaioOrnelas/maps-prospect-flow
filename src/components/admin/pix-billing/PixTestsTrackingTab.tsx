@@ -53,6 +53,9 @@ function TestsSection() {
       const daysMap: Record<string, number> = { "D-5": 5, "D-3": 3, "D-1": 1, "D0": 0, "D+1": -1 };
       const remainingDays = daysMap[stage] ?? 0;
 
+      const origin = "https://maps-prospect-flow.lovable.app";
+      const checkoutUrl = `${origin}/checkout-pix?plan=growth&planName=${encodeURIComponent("Wiize Growth (Teste)")}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent("Admin (Teste)")}&renewal=true`;
+
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
           user_id: user.id,
@@ -62,7 +65,7 @@ function TestsSection() {
             plan_price: "R$ 497",
             expiry_date: new Date(Date.now() + remainingDays * 86400000).toLocaleDateString("pt-BR"),
             remaining_days: remainingDays,
-            checkout_url: "https://maps-prospect-flow.lovable.app/upgrade",
+            checkout_url: checkoutUrl,
             user_name: "Admin (Teste)",
             stage,
           },
