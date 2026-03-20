@@ -1,0 +1,1 @@
+ALTER TABLE public.checkout_leads ALTER COLUMN user_id DROP NOT NULL;
