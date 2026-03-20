@@ -1084,6 +1084,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         crm_stage_on_end: crmStageOnEnd || null,
         crm_stage_on_lost: crmStageOnLost || null,
         crm_stage_on_unknown: crmStageOnUnknown || null,
+        respond_to_groups: respondToGroups,
         wizard_data: wizardData,
         updated_at: new Date().toISOString(),
       };
