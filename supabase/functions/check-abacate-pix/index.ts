@@ -6,16 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_URL = "https://api.abacatepay.com/v1";
+const ABACATE_API = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   console.log(`[ABACATE-PIX-CHECK] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-// Map plan key to searches_limit
 function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 100, growth: 500, scale: 1200 };
-  return limits[planKey] || 100;
+  const limits: Record<string, number> = { start: 200, growth: 600, scale: 1200 };
+  return limits[planKey] || 200;
 }
 
 serve(async (req) => {
@@ -37,7 +36,8 @@ serve(async (req) => {
 
     logStep("Checking PIX status", { pixId });
 
-    const checkRes = await fetch(`${ABACATE_API_URL}/pixQrCode/check?id=${pixId}`, {
+    // v2: /transparents/check?id=
+    const checkRes = await fetch(`${ABACATE_API}/transparents/check?id=${pixId}`, {
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Accept": "application/json",
@@ -54,7 +54,6 @@ serve(async (req) => {
 
     // If paid, activate the plan
     if (status === "PAID") {
-      // Find the checkout lead by pixId
       const { data: leads } = await supabaseClient
         .from("checkout_leads")
         .select("user_id, email, plan_attempted")
@@ -74,7 +73,6 @@ serve(async (req) => {
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
 
-        // Only update profile if user_id exists (user was logged in)
         if (lead.user_id) {
           const { error: updateError } = await supabaseClient
             .from("profiles")
@@ -93,7 +91,6 @@ serve(async (req) => {
             logStep("Profile updated to plan", { userId: lead.user_id, planKey });
           }
         } else {
-          // No user_id - try to find profile by email
           const { data: profileByEmail } = await supabaseClient
             .from("profiles")
             .select("id")
@@ -112,7 +109,6 @@ serve(async (req) => {
               })
               .eq("id", profileByEmail.id);
 
-            // Also update the checkout_leads with the found user_id
             await supabaseClient
               .from("checkout_leads")
               .update({ user_id: profileByEmail.id })
@@ -124,7 +120,6 @@ serve(async (req) => {
           }
         }
 
-        // Mark checkout as completed
         await supabaseClient
           .from("checkout_leads")
           .update({

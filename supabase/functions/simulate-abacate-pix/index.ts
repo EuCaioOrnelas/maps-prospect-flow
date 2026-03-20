@@ -6,15 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_URL = "https://api.abacatepay.com/v1";
+const ABACATE_API = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   console.log(`[ABACATE-PIX-SIMULATE] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
 function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 100, growth: 500, scale: 1200 };
-  return limits[planKey] || 100;
+  const limits: Record<string, number> = { start: 200, growth: 600, scale: 1200 };
+  return limits[planKey] || 200;
 }
 
 serve(async (req) => {
@@ -36,8 +36,8 @@ serve(async (req) => {
 
     logStep("Simulating payment", { pixId });
 
-    // Call AbacatePay simulate endpoint
-    const simRes = await fetch(`${ABACATE_API_URL}/pixQrCode/simulate-payment?id=${pixId}`, {
+    // v2: /transparents/simulate-payment?id=
+    const simRes = await fetch(`${ABACATE_API}/transparents/simulate-payment?id=${pixId}`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -51,7 +51,6 @@ serve(async (req) => {
     logStep("Simulate response", { status: simJson.data?.status, error: simJson.error });
 
     if (simJson.error) {
-      // If already paid or not found, treat as success
       if (typeof simJson.error === "string" && (simJson.error.includes("not found") || simJson.error.includes("already"))) {
         logStep("PIX already consumed or not found, checking status via check endpoint");
         return new Response(
