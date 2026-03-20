@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, QrCode, Users, AlertTriangle, TrendingUp, Clock, RefreshCw } from "lucide-react";
+import {
+  Loader2, CreditCard, QrCode, Users, AlertTriangle,
+  TrendingUp, Clock, RefreshCw, ArrowUpRight, Percent
+} from "lucide-react";
 
 interface DashboardMetrics {
   stripeMrr: number;
@@ -43,7 +46,6 @@ export function PixDashboardTab() {
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      // Fetch Stripe MRR from real edge function
       let stripeMrr = 0;
       try {
         const { data: stripeData, error: stripeError } = await supabase.functions.invoke("get-stripe-mrr");
@@ -54,24 +56,20 @@ export function PixDashboardTab() {
         console.debug("Could not fetch Stripe MRR");
       }
 
-      // Get PIX-paying profiles (users with pix_invoices OR abacate checkout_leads)
       const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
 
-      // Get all non-free profiles
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, plan, subscription_current_period_end, admin_assigned_plan")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      // Get all pix invoice user IDs
       const { data: pixInvoiceUsers } = await supabase
         .from("pix_invoices")
         .select("user_id");
 
       const pixUserIds = new Set((pixInvoiceUsers || []).map((p: any) => p.user_id));
 
-      // Get all abacate checkout user IDs
       const { data: abacateCheckouts } = await supabase
         .from("checkout_leads")
         .select("user_id")
@@ -106,7 +104,6 @@ export function PixDashboardTab() {
         }
       }
 
-      // PIX revenue this month from pix_invoices
       const { data: paidInvoices } = await supabase
         .from("pix_invoices")
         .select("amount_cents")
@@ -115,7 +112,6 @@ export function PixDashboardTab() {
 
       const pixInvoiceRevenue = (paidInvoices || []).reduce((sum: number, inv: any) => sum + (inv.amount_cents / 100), 0);
 
-      // Also count checkout_leads paid this month via abacate
       const { data: paidCheckouts } = await supabase
         .from("checkout_leads")
         .select("plan_attempted")
@@ -141,13 +137,12 @@ export function PixDashboardTab() {
         overdueRenewals,
       });
 
-      // Stage metrics from tracking events
+      // Stage metrics
       const { data: trackingData } = await supabase
         .from("pix_tracking_events")
         .select("renewal_stage, event_type")
         .not("renewal_stage", "is", null);
 
-      // Also get email logs for open/click data
       const { data: emailLogs } = await supabase
         .from("email_logs")
         .select("subject, opened_count, clicked_count, status")
@@ -159,7 +154,6 @@ export function PixDashboardTab() {
         const sent = stageEvents.filter((e: any) => e.event_type === "email_sent").length;
         const paid = stageEvents.filter((e: any) => e.event_type === "payment_confirmed").length;
 
-        // Get open/click from email_logs that match this stage
         const stageEmails = (emailLogs || []).filter((l: any) =>
           l.subject?.includes(stage) || (stage === "D-5" && l.subject?.includes("chegando"))
         );
@@ -200,125 +194,186 @@ export function PixDashboardTab() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
+  const totalMrr = metrics.stripeMrr + metrics.pixMrr;
+  const stripePercent = totalMrr > 0 ? ((metrics.stripeMrr / totalMrr) * 100).toFixed(1) : "0";
+  const pixPercent = totalMrr > 0 ? ((metrics.pixMrr / totalMrr) * 100).toFixed(1) : "0";
+
+  const stageColors: Record<string, string> = {
+    "D-5": "text-emerald-400",
+    "D-3": "text-emerald-400",
+    "D-1": "text-yellow-400",
+    "D0": "text-orange-400",
+    "D+1": "text-red-400",
+  };
+
   return (
     <div className="space-y-6">
       {/* Refresh */}
       <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={loadMetrics} className="gap-1.5">
-          <RefreshCw size={14} /> Atualizar
+        <Button variant="outline" size="sm" onClick={loadMetrics} className="gap-1.5 text-xs">
+          <RefreshCw size={14} /> Atualizar dados
         </Button>
       </div>
 
       {/* MRR Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-blue-500/20 bg-blue-500/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <CreditCard size={16} className="text-blue-500" /> MRR Cartão (Stripe)
+        <Card className="relative overflow-hidden border-border/50">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-lg" />
+          <CardHeader className="pb-2 pl-5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
+              <CreditCard size={14} className="text-blue-400" /> MRR Cartão · Stripe
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.stripeMrr)}</p>
+          <CardContent className="pl-5">
+            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">
+              {formatCurrency(metrics.stripeMrr)}
+            </p>
+            <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">
+                <Percent size={10} />
+                {stripePercent}% do total
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <QrCode size={16} className="text-primary" /> MRR PIX (AbacatePay)
+        <Card className="relative overflow-hidden border-border/50">
+          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-lg" />
+          <CardHeader className="pb-2 pl-5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
+              <QrCode size={14} className="text-emerald-400" /> MRR PIX · AbacatePay
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.pixMrr)}</p>
+          <CardContent className="pl-5">
+            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">
+              {formatCurrency(metrics.pixMrr)}
+            </p>
+            <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+                <Percent size={10} />
+                {pixPercent}% do total
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Total MRR */}
+      <Card className="border-border/50">
+        <CardContent className="py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp size={18} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">MRR Total Combinado</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(totalMrr)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <span className="text-muted-foreground">Cartão {stripePercent}%</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-muted-foreground">PIX {pixPercent}%</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Users size={14} /> Assinaturas PIX Ativas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{metrics.activePixSubscriptions}</p>
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users size={15} className="text-primary" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{metrics.activePixSubscriptions}</p>
+            <p className="text-xs text-muted-foreground mt-1">Assinaturas PIX ativas</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <AlertTriangle size={14} className="text-destructive" /> Inadimplentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-destructive tabular-nums">{metrics.overduePixClients}</p>
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle size={15} className="text-destructive" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-destructive tabular-nums font-sans">{metrics.overduePixClients}</p>
+            <p className="text-xs text-muted-foreground mt-1">Inadimplentes PIX</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-primary" /> Receita Mês (PIX)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.pixRevenueThisMonth)}</p>
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <ArrowUpRight size={15} className="text-emerald-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.pixRevenueThisMonth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Receita PIX no mês</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Clock size={14} /> Renovações 7 dias
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{metrics.renewalsNext7Days}</p>
-            {metrics.overdueRenewals > 0 && (
-              <p className="text-xs text-destructive mt-1">{metrics.overdueRenewals} atrasadas</p>
-            )}
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                <Clock size={15} className="text-yellow-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{metrics.renewalsNext7Days}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Renovações em 7 dias
+              {metrics.overdueRenewals > 0 && (
+                <span className="text-destructive ml-1">· {metrics.overdueRenewals} atrasadas</span>
+              )}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Stage Funnel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-foreground">Funil de Renovação por Etapa</CardTitle>
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground font-sans">Funil de Renovação por Etapa</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-3 font-medium text-foreground">Etapa</th>
-                  <th className="text-center p-3 font-medium text-foreground">Enviados</th>
-                  <th className="text-center p-3 font-medium text-foreground">Abertos</th>
-                  <th className="text-center p-3 font-medium text-foreground">Clicados</th>
-                  <th className="text-center p-3 font-medium text-foreground">Pagos</th>
-                  <th className="text-center p-3 font-medium text-foreground">Taxa Abertura</th>
-                  <th className="text-center p-3 font-medium text-foreground">Taxa Clique</th>
-                  <th className="text-center p-3 font-medium text-foreground">Taxa Pagamento</th>
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Etapa</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Enviados</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Abertos</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Clicados</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Pagos</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Abertura</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Clique</th>
+                  <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Conversão</th>
                 </tr>
               </thead>
               <tbody>
                 {stageMetrics.map((s) => (
-                  <tr key={s.stage} className="border-t border-border">
-                    <td className="p-3">
-                      <Badge variant={s.stage === "D+1" ? "destructive" : s.stage === "D0" || s.stage === "D-1" ? "secondary" : "default"}>
+                  <tr key={s.stage} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="py-3 px-3">
+                      <span className={`font-semibold text-sm ${stageColors[s.stage] || "text-foreground"}`}>
                         {s.stage}
-                      </Badge>
+                      </span>
                     </td>
-                    <td className="p-3 text-center tabular-nums">{s.sent}</td>
-                    <td className="p-3 text-center tabular-nums">{s.opened}</td>
-                    <td className="p-3 text-center tabular-nums">{s.clicked}</td>
-                    <td className="p-3 text-center tabular-nums font-semibold text-primary">{s.paid}</td>
-                    <td className="p-3 text-center tabular-nums">{s.openRate}%</td>
-                    <td className="p-3 text-center tabular-nums">{s.clickRate}%</td>
-                    <td className="p-3 text-center tabular-nums font-semibold">{s.payRate}%</td>
+                    <td className="py-3 px-3 text-center tabular-nums text-foreground">{s.sent}</td>
+                    <td className="py-3 px-3 text-center tabular-nums text-foreground">{s.opened}</td>
+                    <td className="py-3 px-3 text-center tabular-nums text-foreground">{s.clicked}</td>
+                    <td className="py-3 px-3 text-center tabular-nums font-semibold text-primary">{s.paid}</td>
+                    <td className="py-3 px-3 text-center tabular-nums text-muted-foreground">{s.openRate}%</td>
+                    <td className="py-3 px-3 text-center tabular-nums text-muted-foreground">{s.clickRate}%</td>
+                    <td className="py-3 px-3 text-center tabular-nums font-semibold text-primary">{s.payRate}%</td>
                   </tr>
                 ))}
               </tbody>

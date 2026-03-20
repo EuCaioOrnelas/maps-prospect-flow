@@ -36,15 +36,6 @@ const PLAN_PRICES_CENTS: Record<string, number> = {
   scale: 89700,
 };
 
-// Stage definitions: days before expiry -> stage name
-const STAGES = [
-  { daysBeforeExpiry: 5, stage: "D-5" },
-  { daysBeforeExpiry: 3, stage: "D-3" },
-  { daysBeforeExpiry: 1, stage: "D-1" },
-  { daysBeforeExpiry: 0, stage: "D0" },
-  { daysBeforeExpiry: -1, stage: "D+1" },
-];
-
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -62,7 +53,7 @@ function getCurrentStage(daysRemaining: number): string | null {
   if (daysRemaining === 1) return "D-1";
   if (daysRemaining <= 3) return "D-3";
   if (daysRemaining <= 5) return "D-5";
-  return null; // Too early, no stage yet
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -86,7 +77,6 @@ Deno.serve(async (req) => {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    // Find users with subscriptions expiring within 7 days OR expired up to 1 day ago
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
       .select("id, email, name, plan, subscription_current_period_end, is_blocked")
@@ -106,6 +96,7 @@ Deno.serve(async (req) => {
     let processed = 0;
     let emailsSent = 0;
     let invoicesCreated = 0;
+    let skippedPaid = 0;
 
     for (const user of targetUsers || []) {
       const daysRemaining = daysUntil(user.subscription_current_period_end);
@@ -116,7 +107,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Check if automation is paused for this user
+      // Check if there's already a PAID invoice for this period — skip all emails
       const { data: existingInvoice } = await supabaseClient
         .from("pix_invoices")
         .select("id, checkout_url, status, renewal_stage, automation_paused, abacate_checkout_id")
@@ -127,12 +118,18 @@ Deno.serve(async (req) => {
 
       const invoice = existingInvoice?.[0];
 
+      // ✅ CRITICAL: If invoice is already paid, skip entirely — no more emails
+      if (invoice?.status === "paid") {
+        logStep("Invoice already paid, skipping all emails", { userId: user.id });
+        skippedPaid++;
+        continue;
+      }
+
       if (invoice?.automation_paused) {
         logStep("Automation paused for user, skipping", { userId: user.id });
         continue;
       }
 
-      // Check if we already sent email for this stage
       if (invoice?.renewal_stage === currentStage) {
         logStep("Already processed this stage", { userId: user.id, stage: currentStage });
         continue;
@@ -148,7 +145,6 @@ Deno.serve(async (req) => {
         let checkoutUrl = invoice?.checkout_url;
         let invoiceId = invoice?.id;
 
-        // Create new checkout if no valid one exists
         if (!checkoutUrl || invoice?.status === "expired") {
           const origin = "https://maps-prospect-flow.lovable.app";
 
@@ -184,7 +180,6 @@ Deno.serve(async (req) => {
           const checkoutData = checkoutJson.data;
           checkoutUrl = checkoutData.url;
 
-          // Create or update pix_invoice
           if (invoiceId) {
             await supabaseClient
               .from("pix_invoices")
@@ -218,7 +213,6 @@ Deno.serve(async (req) => {
             invoicesCreated++;
           }
 
-          // Also track in checkout_leads
           await supabaseClient.from("checkout_leads").insert({
             user_id: user.id,
             email: user.email,
@@ -229,7 +223,6 @@ Deno.serve(async (req) => {
             checkout_completed: false,
           });
         } else {
-          // Update stage on existing invoice
           await supabaseClient
             .from("pix_invoices")
             .update({
@@ -261,7 +254,6 @@ Deno.serve(async (req) => {
           },
         });
 
-        // Update invoice with email status
         if (invoiceId) {
           await supabaseClient
             .from("pix_invoices")
@@ -272,7 +264,6 @@ Deno.serve(async (req) => {
             .eq("id", invoiceId);
         }
 
-        // Track event
         await supabaseClient.from("pix_tracking_events").insert({
           invoice_id: invoiceId,
           user_id: user.id,
@@ -281,7 +272,7 @@ Deno.serve(async (req) => {
           metadata: { plan: user.plan, daysRemaining },
         });
 
-        // D+1: Block access if not already blocked
+        // D+1: Downgrade to free if not paid
         if (currentStage === "D+1" && !user.is_blocked) {
           await supabaseClient
             .from("profiles")
@@ -311,7 +302,6 @@ Deno.serve(async (req) => {
       } catch (e) {
         logStep("Error processing user", { userId: user.id, error: String(e) });
 
-        // Track error
         await supabaseClient.from("pix_tracking_events").insert({
           user_id: user.id,
           event_type: "processing_error",
@@ -327,6 +317,7 @@ Deno.serve(async (req) => {
         processed,
         emailsSent,
         invoicesCreated,
+        skippedPaid,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
