@@ -25,6 +25,23 @@ const PLAN_NAMES: Record<string, string> = {
   scale: "Wiize Scale",
 };
 
+const PLAN_PRICES: Record<string, string> = {
+  start: "R$ 197",
+  growth: "R$ 497",
+  scale: "R$ 897",
+};
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function daysUntil(dateStr: string): number {
+  const now = new Date();
+  const target = new Date(dateStr);
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,13 +51,13 @@ serve(async (req) => {
     const apiKey = Deno.env.get("ABACATE_PAY_API_KEY");
     if (!apiKey) throw new Error("ABACATE_PAY_API_KEY not configured");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
+      supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     // Find users whose subscription expires in the next 7 days
-    // Generate a new PIX checkout for renewal with enough time to pay
     const now = new Date();
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
@@ -86,7 +103,6 @@ serve(async (req) => {
       }
 
       try {
-        // Create a new checkout for renewal
         const origin = "https://maps-prospect-flow.lovable.app";
 
         const checkoutRes = await fetch(`${ABACATE_API}/checkouts/create`, {
@@ -106,6 +122,7 @@ serve(async (req) => {
               planKey: user.plan,
               email: user.email,
               type: "renewal",
+              currentPeriodEnd: user.subscription_current_period_end,
             },
           }),
         });
@@ -117,6 +134,7 @@ serve(async (req) => {
         }
 
         const checkoutData = checkoutJson.data;
+        const checkoutUrl = checkoutData.url;
 
         // Track the renewal checkout
         await supabaseClient.from("checkout_leads").insert({
@@ -129,13 +147,33 @@ serve(async (req) => {
           checkout_completed: false,
         });
 
-        // TODO: Send renewal email/WhatsApp with checkout URL
-        // For now, log the URL so it can be sent manually or via email automation
-        logStep("Renewal checkout created", {
+        // Send renewal email
+        const remainingDays = daysUntil(user.subscription_current_period_end);
+        const expiryDate = formatDate(user.subscription_current_period_end);
+        const planName = PLAN_NAMES[user.plan] || user.plan;
+        const planPrice = PLAN_PRICES[user.plan] || "";
+
+        await supabaseClient.functions.invoke("send-email", {
+          body: {
+            user_id: user.id,
+            email_type: "SUBSCRIPTION_RENEWAL",
+            payload: {
+              plan_name: planName,
+              plan_price: planPrice,
+              expiry_date: expiryDate,
+              remaining_days: remainingDays,
+              checkout_url: checkoutUrl,
+              user_name: user.name || "Cliente",
+            },
+            idempotency_key: `renewal_${user.id}_${user.subscription_current_period_end}`,
+          },
+        });
+
+        logStep("Renewal checkout + email sent", {
           userId: user.id,
           email: user.email,
           plan: user.plan,
-          checkoutUrl: checkoutData.url,
+          checkoutUrl,
           expiresAt: user.subscription_current_period_end,
         });
 
