@@ -217,43 +217,39 @@ export function PixDashboardTab() {
 
       {/* MRR Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="relative overflow-hidden border-border/50">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-lg" />
-          <CardHeader className="pb-2 pl-5">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
-              <CreditCard size={14} className="text-blue-400" /> MRR Cartão · Stripe
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pl-5">
-            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">
-              {formatCurrency(metrics.stripeMrr)}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2">
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <CreditCard size={15} className="text-blue-400" />
+              </div>
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">
                 <Percent size={10} />
-                {stripePercent}% do total
+                {stripePercent}%
               </div>
             </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {formatCurrency(metrics.stripeMrr)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">MRR Cartão · Stripe</p>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-border/50">
-          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-lg" />
-          <CardHeader className="pb-2 pl-5">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
-              <QrCode size={14} className="text-emerald-400" /> MRR PIX · AbacatePay
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pl-5">
-            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">
-              {formatCurrency(metrics.pixMrr)}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2">
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <QrCode size={15} className="text-emerald-400" />
+              </div>
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
                 <Percent size={10} />
-                {pixPercent}% do total
+                {pixPercent}%
               </div>
             </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {formatCurrency(metrics.pixMrr)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">MRR PIX · AbacatePay</p>
           </CardContent>
         </Card>
       </div>
