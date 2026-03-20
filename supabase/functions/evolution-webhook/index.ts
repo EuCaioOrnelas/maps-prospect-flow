@@ -1116,20 +1116,52 @@ REGRAS OBRIGATÓRIAS:
                 if (existingLead) {
                   console.log('Found lead to update on response:', existingLead.id, 'phone:', existingLead.phone);
 
-                  // Only move to "Respondeu Mensagem" if current stage is earlier
-                  let shouldMoveToRespondeu = false;
-                  if (existingLead.pipeline_stage_id && respondeuStage) {
-                    const { data: currentStage } = await supabase
+                  // Check if lead is in a human support stage — NEVER auto-move if so
+                  let isInHumanSupportStage = false;
+                  if (existingLead.pipeline_stage_id) {
+                    // Get current stage name
+                    const { data: currentStageInfo } = await supabase
                       .from('pipeline_stages')
-                      .select('position')
+                      .select('id, name, position')
                       .eq('id', existingLead.pipeline_stage_id)
-                      .single();
+                      .maybeSingle();
 
-                    if (currentStage && currentStage.position < respondeuStage.position) {
+                    if (currentStageInfo) {
+                      // Check if any agent has this stage configured as human support
+                      const { data: agentsWithHumanStage } = await supabase
+                        .from('ai_agents')
+                        .select('id, crm_stage_on_unknown')
+                        .eq('user_id', whatsappNumber.user_id)
+                        .not('crm_stage_on_unknown', 'is', null);
+
+                      if (agentsWithHumanStage && agentsWithHumanStage.length > 0) {
+                        isInHumanSupportStage = agentsWithHumanStage.some(
+                          (a: any) => a.crm_stage_on_unknown === currentStageInfo.name
+                        );
+                      }
+
+                      if (isInHumanSupportStage) {
+                        console.log(`Lead ${existingLead.id} is in human support stage "${currentStageInfo.name}" — will NOT auto-move`);
+                      }
+                    }
+                  }
+
+                  // Only move to "Respondeu Mensagem" if current stage is earlier AND not in human support
+                  let shouldMoveToRespondeu = false;
+                  if (!isInHumanSupportStage) {
+                    if (existingLead.pipeline_stage_id && respondeuStage) {
+                      const { data: currentStage } = await supabase
+                        .from('pipeline_stages')
+                        .select('position')
+                        .eq('id', existingLead.pipeline_stage_id)
+                        .single();
+
+                      if (currentStage && currentStage.position < respondeuStage.position) {
+                        shouldMoveToRespondeu = true;
+                      }
+                    } else if (respondeuStage) {
                       shouldMoveToRespondeu = true;
                     }
-                  } else if (respondeuStage) {
-                    shouldMoveToRespondeu = true;
                   }
 
                   const leadUpdate: Record<string, unknown> = {
