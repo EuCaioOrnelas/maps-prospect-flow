@@ -73,6 +73,7 @@ interface CreateAgentWizardProps {
     crm_stage_on_end: string | null;
     crm_stage_on_lost: string | null;
     crm_stage_on_unknown: string | null;
+    respond_to_groups?: boolean;
   } | null;
 }
 
@@ -374,6 +375,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [canSendLinks, setCanSendLinks] = useState(true);
   const [canSendMedia, setCanSendMedia] = useState(false);
   const [canSendLongMessages, setCanSendLongMessages] = useState(false);
+  const [respondToGroups, setRespondToGroups] = useState(false);
   const [maxChars, setMaxChars] = useState("300");
   const [maxConsecutiveMessages, setMaxConsecutiveMessages] = useState("2");
   const [alwaysWaitResponse, setAlwaysWaitResponse] = useState(true);
@@ -616,6 +618,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         if (wd.maxChars) setMaxChars(wd.maxChars);
         if (wd.maxConsecutiveMessages) setMaxConsecutiveMessages(wd.maxConsecutiveMessages);
         if (wd.alwaysWaitResponse !== undefined) setAlwaysWaitResponse(wd.alwaysWaitResponse);
+        if (wd.respondToGroups !== undefined) setRespondToGroups(wd.respondToGroups);
         if (wd.wantToTalkPrice !== undefined) setWantToTalkPrice(wd.wantToTalkPrice);
         if (wd.productPrice) setProductPrice(wd.productPrice);
         if (wd.priceType) setPriceType(wd.priceType);
@@ -644,6 +647,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
       setIsWarmed(editingAgent.is_warmed);
       setMaxReplies(editingAgent.max_replies);
       if (editingAgent.max_response_chars) setMaxChars(String(editingAgent.max_response_chars));
+      if (editingAgent.respond_to_groups !== undefined) setRespondToGroups(editingAgent.respond_to_groups ?? false);
       
       // Skip to basics step when editing (skip start-choice and template)
       setCreationMode('scratch');
@@ -707,6 +711,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     setMaxChars("300");
     setMaxConsecutiveMessages("2");
     setAlwaysWaitResponse(true);
+    setRespondToGroups(false);
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
@@ -1054,7 +1059,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         schedulingLink, demoLink, websiteLink, checkoutLink, whatsappGroupLink,
         customLinks, mediaFiles: mediaFiles.map(m => ({ name: m.name, url: m.url, type: m.type, when: m.when, fileName: m.fileName })),
         canSendAudio, canSendLinks, canSendMedia, canSendLongMessages,
-        maxChars, maxConsecutiveMessages, alwaysWaitResponse,
+        maxChars, maxConsecutiveMessages, alwaysWaitResponse, respondToGroups,
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
@@ -1081,6 +1086,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         crm_stage_on_end: crmStageOnEnd || null,
         crm_stage_on_lost: crmStageOnLost || null,
         crm_stage_on_unknown: crmStageOnUnknown || null,
+        respond_to_groups: respondToGroups,
         wizard_data: wizardData,
         updated_at: new Date().toISOString(),
       };
@@ -2129,6 +2135,7 @@ Preciso falar com meu marido/esposa"
                 <CheckboxOption label="Enviar imagens e PDFs" checked={canSendMedia} onCheckedChange={(c) => setCanSendMedia(!!c)} />
                 <CheckboxOption label="Enviar mensagens longas" checked={canSendLongMessages} onCheckedChange={(c) => setCanSendLongMessages(!!c)} />
                 <CheckboxOption label="Sempre esperar resposta" checked={alwaysWaitResponse} onCheckedChange={(c) => setAlwaysWaitResponse(!!c)} />
+                <CheckboxOption label="Responder em grupos" checked={respondToGroups} onCheckedChange={(c) => setRespondToGroups(!!c)} />
               </div>
             </div>
 

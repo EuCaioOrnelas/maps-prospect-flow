@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_agents ADD COLUMN respond_to_groups boolean NOT NULL DEFAULT false;
