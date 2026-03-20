@@ -522,58 +522,21 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
+                {couponApplied && couponDiscount && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-emerald-600 text-xs font-medium">Cupom {couponDiscount.code}</span>
+                    <span className="text-emerald-600 text-xs font-medium">
+                      -{couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount}%` : `R$ ${(couponDiscount.discount / 100).toFixed(2)}`}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
-                  <span className="font-bold text-lg text-foreground">R$ {planPrice}</span>
+                  <span className="font-bold text-lg text-foreground">
+                    {pixData ? formatCurrency(pixData.amount) : `R$ ${planPrice}`}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            {/* Coupon */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Tag className="h-4 w-4 text-primary" />
-                Cupom de desconto
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Código do cupom"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    setCouponApplied(false);
-                    setCouponError("");
-                    setCouponDiscount(null);
-                  }}
-                  disabled={couponApplied || couponValidating}
-                  className="text-sm"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim() || couponApplied || couponValidating}
-                  className="shrink-0"
-                >
-                  {couponValidating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : couponApplied ? (
-                    <Check className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    "Aplicar"
-                  )}
-                </Button>
-              </div>
-              {couponApplied && couponDiscount && (
-                <p className="text-xs text-emerald-600 font-medium">
-                  ✓ Cupom {couponDiscount.code} aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}
-                </p>
-              )}
-              {couponError && (
-                <p className="text-xs text-destructive font-medium">
-                  ✗ {couponError}
-                </p>
-              )}
             </div>
 
             {/* Security badges */}
