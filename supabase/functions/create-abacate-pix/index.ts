@@ -27,10 +27,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData } = await req.json();
+    const { planKey, customerData, couponCode } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
-    logStep("Request received", { planKey, email: customerData.email });
+    logStep("Request received", { planKey, email: customerData.email, couponCode: couponCode || "none" });
 
     // Plan config (prices in cents)
     const planConfig: Record<string, { name: string; priceInCents: number }> = {
