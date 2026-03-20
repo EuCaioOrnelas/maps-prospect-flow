@@ -26,7 +26,7 @@ serve(async (req) => {
     logStep("Validating coupon", { couponCode });
 
     // Fetch all coupons from AbacatePay
-    const res = await fetch(`${ABACATE_API_URL}/coupon/list`, {
+    const res = await fetch(`${ABACATE_API_URL}/coupons/list`, {
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Accept": "application/json",
