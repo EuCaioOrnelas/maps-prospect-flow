@@ -310,8 +310,8 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      // Stripe counts active and trialing in MRR; past_due subs with $0 paid are excluded
-      const countsForMrr = sub.status === "active" || sub.status === "trialing";
+      // Stripe includes active, trialing, and past_due in MRR calculation
+      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
       
       if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
         activeMRR += mrrAmount;
