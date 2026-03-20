@@ -267,18 +267,18 @@ Deno.serve(async (req) => {
       const interval = priceObj?.recurring?.interval || "month";
       const intervalCount = priceObj?.recurring?.interval_count || 1;
       
-      // Apply active discount if coupon is still valid on the subscription
-      // Stripe automatically removes expired coupons (e.g. 1-month-only),
-      // so if discount exists here, it's currently active
+      // Apply discount only when it affects the recurring renewal amount
+      // Temporary coupons (once / repeating) should not reduce MRR,
+      // because Stripe MRR reflects the ongoing renewal value.
       const discount = (sub as any).discount;
-      if (discount?.coupon) {
+      if (discount?.coupon?.duration === "forever") {
         const coupon = discount.coupon;
         if (coupon.percent_off) {
           effectiveAmountCents = Math.round(effectiveAmountCents * (1 - coupon.percent_off / 100));
-          console.log(`[GET-STRIPE-MRR] Coupon ${coupon.id}: ${coupon.percent_off}% off applied`);
+          console.log(`[GET-STRIPE-MRR] Recurring coupon ${coupon.id}: ${coupon.percent_off}% off applied`);
         } else if (coupon.amount_off) {
           effectiveAmountCents = Math.max(0, effectiveAmountCents - coupon.amount_off);
-          console.log(`[GET-STRIPE-MRR] Coupon ${coupon.id}: R$${coupon.amount_off/100} off applied`);
+          console.log(`[GET-STRIPE-MRR] Recurring coupon ${coupon.id}: R$${coupon.amount_off/100} off applied`);
         }
       }
       
