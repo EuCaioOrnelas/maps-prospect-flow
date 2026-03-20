@@ -281,12 +281,23 @@ Deno.serve(async (req) => {
       }
       
       const baseAmount = monthlyAmountCents / 100;
-      const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
       
-      // Stripe MRR = current recurring price on the subscription.
-      // Do not reapply historical/expired discounts here; Stripe's dashboard
-      // already reflects the current subscription amount.
-      const mrrAmount = Math.round(baseAmount * 100) / 100;
+      // Apply active discount (coupon) to match Stripe's MRR calculation
+      let mrrAmount = baseAmount;
+      const discount = (sub as any).discount;
+      if (discount && discount.coupon) {
+        const coupon = discount.coupon;
+        // Check if coupon is still active (not expired)
+        const isActive = !coupon.redeem_by || (coupon.redeem_by * 1000) > Date.now();
+        if (isActive) {
+          if (coupon.percent_off) {
+            mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
+          } else if (coupon.amount_off) {
+            mrrAmount = Math.max(0, baseAmount - (coupon.amount_off / 100));
+          }
+        }
+      }
+      mrrAmount = Math.round(mrrAmount * 100) / 100;
       
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
