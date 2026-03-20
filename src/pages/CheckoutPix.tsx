@@ -531,6 +531,13 @@ export default function CheckoutPix() {
                     <p className="text-xs text-muted-foreground">Seu plano é ativado imediatamente após o pagamento</p>
                   </div>
                 </div>
+                <div className="h-px bg-border/30 my-1" />
+                <div className="flex items-center gap-2 pt-1">
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
+                  </p>
+                </div>
+                </div>
               </div>
             </div>
 
