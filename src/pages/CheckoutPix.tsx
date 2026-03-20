@@ -361,7 +361,7 @@ export default function CheckoutPix() {
                   </p>
                   {couponApplied && couponDiscount && (
                     <p className="text-xs text-emerald-600 font-medium mt-1">
-                      Cupom {couponDiscount.code} aplicado
+                      Cupom {couponDiscount.code} • {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}% off` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} off`}
                     </p>
                   )}
                   {timeRemaining && pixStatus !== "PAID" && (
