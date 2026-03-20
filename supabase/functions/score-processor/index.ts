@@ -49,14 +49,17 @@ function json(data: any, status = 200) {
 // ========== TRACK EVENT ==========
 async function trackEvent(supabase: any, userId: string, eventName: string, metadata: any = {}, source = "system") {
   // 1. Get rule
-  const { data: rule } = await supabase
+  const { data: rule, error: ruleError } = await supabase
     .from("score_rules")
     .select("*")
     .eq("event_name", eventName)
     .eq("is_active", true)
     .single();
 
-  if (!rule) return json({ error: "No active rule for event", event: eventName }, 400);
+  if (ruleError || !rule) {
+    console.log(`[score-processor] Skipping event "${eventName}": ${ruleError?.message || "no active rule"}`);
+    return json({ skipped: true, reason: "No active rule", event: eventName });
+  }
 
   // 2. Check rate limit
   if (rule.max_applications_per_period && rule.period_type) {
