@@ -60,11 +60,6 @@ function formatPhone(value: string) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-const AnimatedIcon = ({ icon: Icon }: { icon: typeof User }) => (
-  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border/50 bg-muted/50 text-muted-foreground shrink-0">
-    <Icon className="h-4 w-4" />
-  </div>
-);
 
 export function PaymentMethodModal({
   open,
