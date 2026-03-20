@@ -115,6 +115,7 @@ const App = () => (
                 <Route path="/upgrade-promo" element={<UpgradePromo />} />
                 <Route path="/checkout-success" element={<CheckoutSuccess />} />
                 <Route path="/checkout-failed" element={<CheckoutFailed />} />
+                <Route path="/checkout-pix" element={<CheckoutPix />} />
                 <Route path="/contato" element={<Contact />} />
                 <Route
                   path="/dashboard" 
