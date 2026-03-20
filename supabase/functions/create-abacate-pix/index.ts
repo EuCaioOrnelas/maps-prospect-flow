@@ -88,24 +88,42 @@ serve(async (req) => {
       }
     }
 
-    // Apply coupon discount (only if no trial discount already applied)
+    // Apply coupon discount via AbacatePay API (only if no trial discount)
     if (couponCode && !discountApplied) {
-      // Configurable coupons - add more as needed
-      const validCoupons: Record<string, { discountPercent: number; description: string }> = {
-        "WIIZE50": { discountPercent: 50, description: "50% off" },
-        "WIIZE30": { discountPercent: 30, description: "30% off" },
-        "WIIZE20": { discountPercent: 20, description: "20% off" },
-        "LANCAMENTO": { discountPercent: 40, description: "40% off lançamento" },
-      };
+      try {
+        const couponRes = await fetch(`${ABACATE_API_URL}/coupon/list`, {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Accept": "application/json",
+          },
+        });
+        const couponJson = await couponRes.json();
+        const coupons = couponJson.data || [];
+        const coupon = coupons.find(
+          (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
+        );
 
-      const coupon = validCoupons[couponCode.toUpperCase()];
-      if (coupon) {
-        finalPrice = Math.round(finalPrice * (1 - coupon.discountPercent / 100));
-        discountApplied = true;
-        discountSource = `coupon:${couponCode}`;
-        logStep("Coupon discount applied", { couponCode, discountPercent: coupon.discountPercent, finalPrice });
-      } else {
-        logStep("Invalid coupon code", { couponCode });
+        if (coupon) {
+          const isUnlimited = coupon.maxRedeems === -1;
+          const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
+
+          if (hasRedeems) {
+            if (coupon.discountKind === "PERCENTAGE") {
+              finalPrice = Math.round(finalPrice * (1 - coupon.discount / 100));
+            } else if (coupon.discountKind === "FIXED") {
+              finalPrice = Math.max(100, finalPrice - coupon.discount); // min R$1.00
+            }
+            discountApplied = true;
+            discountSource = `coupon:${couponCode}`;
+            logStep("AbacatePay coupon applied", { couponCode, discountKind: coupon.discountKind, discount: coupon.discount, finalPrice });
+          } else {
+            logStep("Coupon max redeems reached", { couponCode });
+          }
+        } else {
+          logStep("Coupon not found or inactive", { couponCode });
+        }
+      } catch (e) {
+        logStep("Failed to validate coupon", { error: String(e) });
       }
     }
 

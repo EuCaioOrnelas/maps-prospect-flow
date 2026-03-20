@@ -169,11 +169,34 @@ export default function CheckoutPix() {
     }
   };
 
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
-    setCouponApplied(true);
-    setPixData(null);
-    toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
+    setCouponValidating(true);
+    setCouponError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-abacate-coupon", {
+        body: { couponCode: couponCode.trim() },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.valid) {
+        setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
+        setCouponApplied(true);
+        setPixData(null); // Regenerate QR with discount
+        toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
+      } else {
+        setCouponError(data?.error || "Cupom inválido");
+        toast({ title: "Cupom inválido", description: data?.error || "Código não encontrado", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setCouponError("Erro ao validar cupom");
+      toast({ title: "Erro ao validar cupom", description: err.message, variant: "destructive" });
+    } finally {
+      setCouponValidating(false);
+    }
   };
 
   const handleSimulatePayment = async () => {
@@ -436,27 +459,36 @@ export default function CheckoutPix() {
                   onChange={(e) => {
                     setCouponCode(e.target.value.toUpperCase());
                     setCouponApplied(false);
+                    setCouponError("");
+                    setCouponDiscount(null);
                   }}
-                  disabled={couponApplied}
+                  disabled={couponApplied || couponValidating}
                   className="text-sm"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim() || couponApplied}
+                  disabled={!couponCode.trim() || couponApplied || couponValidating}
                   className="shrink-0"
                 >
-                  {couponApplied ? (
+                  {couponValidating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : couponApplied ? (
                     <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     "Aplicar"
                   )}
                 </Button>
               </div>
-              {couponApplied && (
+              {couponApplied && couponDiscount && (
                 <p className="text-xs text-emerald-600 font-medium">
-                  ✓ Cupom aplicado com sucesso
+                  ✓ Cupom {couponDiscount.code} aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}
+                </p>
+              )}
+              {couponError && (
+                <p className="text-xs text-destructive font-medium">
+                  ✗ {couponError}
                 </p>
               )}
             </div>
