@@ -67,8 +67,12 @@ serve(async (req) => {
       }
     }
 
-    // Determine final price (trial discount)
+    // Determine final price
     let finalPrice = plan.priceInCents;
+    let discountApplied = false;
+    let discountSource = "";
+
+    // Apply trial discount if applicable
     if (userId) {
       const { data: profile } = await supabaseClient
         .from("profiles")
@@ -78,7 +82,30 @@ serve(async (req) => {
 
       if (profile?.plan === "free" && profile?.trial_start_at) {
         finalPrice = Math.round(finalPrice / 2);
+        discountApplied = true;
+        discountSource = "trial";
         logStep("Trial user discount applied", { originalPrice: plan.priceInCents, finalPrice });
+      }
+    }
+
+    // Apply coupon discount (only if no trial discount already applied)
+    if (couponCode && !discountApplied) {
+      // Configurable coupons - add more as needed
+      const validCoupons: Record<string, { discountPercent: number; description: string }> = {
+        "WIIZE50": { discountPercent: 50, description: "50% off" },
+        "WIIZE30": { discountPercent: 30, description: "30% off" },
+        "WIIZE20": { discountPercent: 20, description: "20% off" },
+        "LANCAMENTO": { discountPercent: 40, description: "40% off lançamento" },
+      };
+
+      const coupon = validCoupons[couponCode.toUpperCase()];
+      if (coupon) {
+        finalPrice = Math.round(finalPrice * (1 - coupon.discountPercent / 100));
+        discountApplied = true;
+        discountSource = `coupon:${couponCode}`;
+        logStep("Coupon discount applied", { couponCode, discountPercent: coupon.discountPercent, finalPrice });
+      } else {
+        logStep("Invalid coupon code", { couponCode });
       }
     }
 
