@@ -50,13 +50,6 @@ function TestsSection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      // Get template for this stage
-      const { data: template } = await supabase
-        .from("renewal_email_templates" as any)
-        .select("subject, content, cta_text, title")
-        .eq("stage", stage)
-        .maybeSingle();
-
       const daysMap: Record<string, number> = { "D-5": 5, "D-3": 3, "D-1": 1, "D0": 0, "D+1": -1 };
       const remainingDays = daysMap[stage] ?? 0;
 
@@ -138,14 +131,18 @@ function TestsSection() {
 function TrackingSection() {
   const [events, setEvents] = useState<any[]>([]);
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const [eventsRes, logsRes] = await Promise.all([
         supabase
-          .from("pix_tracking_events" as any)
+          .from("pix_tracking_events")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(100),
@@ -172,6 +169,8 @@ function TrackingSection() {
     email_clicked: <MousePointerClick size={14} className="text-primary" />,
     email_failed: <AlertTriangle size={14} className="text-destructive" />,
     payment_confirmed: <DollarSign size={14} className="text-primary" />,
+    access_suspended: <XCircle size={14} className="text-destructive" />,
+    processing_error: <AlertTriangle size={14} className="text-destructive" />,
   };
 
   return (
@@ -180,7 +179,7 @@ function TrackingSection() {
         <p className="text-sm text-muted-foreground">Eventos de tracking de renovação PIX</p>
         <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="gap-1.5">
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          Carregar
+          Atualizar
         </Button>
       </div>
 
@@ -190,7 +189,11 @@ function TrackingSection() {
           <CardTitle className="text-sm font-medium">Emails de Renovação Enviados</CardTitle>
         </CardHeader>
         <CardContent>
-          {emailLogs.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : emailLogs.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
@@ -215,12 +218,12 @@ function TrackingSection() {
                       </td>
                       <td className="p-2 text-xs">
                         {log.opened_count > 0 ? (
-                          <span className="text-primary">{log.opened_count}x</span>
+                          <span className="text-primary font-medium">{log.opened_count}x</span>
                         ) : "—"}
                       </td>
                       <td className="p-2 text-xs">
                         {log.clicked_count > 0 ? (
-                          <span className="text-primary">{log.clicked_count}x</span>
+                          <span className="text-primary font-medium">{log.clicked_count}x</span>
                         ) : "—"}
                       </td>
                       <td className="p-2 text-xs text-muted-foreground tabular-nums">
@@ -233,7 +236,7 @@ function TrackingSection() {
             </div>
           ) : (
             <p className="text-center text-muted-foreground text-sm py-8">
-              {loading ? "Carregando..." : "Clique em 'Carregar' para ver os logs de email"}
+              Nenhum email de renovação enviado ainda.
             </p>
           )}
         </CardContent>
@@ -245,16 +248,20 @@ function TrackingSection() {
           <CardTitle className="text-sm font-medium">Eventos de Tracking</CardTitle>
         </CardHeader>
         <CardContent>
-          {events.length > 0 ? (
-            <div className="space-y-2">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : events.length > 0 ? (
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {events.map((ev) => (
                 <div key={ev.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors">
                   {eventIcons[ev.event_type] || <Activity size={14} />}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{ev.event_type}</p>
+                    <p className="text-sm text-foreground">{ev.event_type.replace(/_/g, " ")}</p>
                     <p className="text-xs text-muted-foreground">
                       {ev.renewal_stage && <Badge variant="outline" className="text-xs mr-2">{ev.renewal_stage}</Badge>}
-                      {new Date(ev.created_at).toLocaleString("pt-BR")}
+                      {ev.user_id?.slice(0, 8)}… · {new Date(ev.created_at).toLocaleString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -262,7 +269,7 @@ function TrackingSection() {
             </div>
           ) : (
             <p className="text-center text-muted-foreground text-sm py-8">
-              {loading ? "Carregando..." : "Nenhum evento de tracking registrado ainda."}
+              Nenhum evento de tracking registrado ainda.
             </p>
           )}
         </CardContent>

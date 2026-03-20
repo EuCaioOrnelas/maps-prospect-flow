@@ -56,13 +56,11 @@ export function PixInvoicesTab() {
     setLoading(true);
     try {
       // Load from pix_invoices table
-      let query = supabase
-        .from("pix_invoices" as any)
+      const { data, error } = await supabase
+        .from("pix_invoices")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(200);
-
-      const { data, error } = await query as any;
       if (error) throw error;
 
       // Also load from checkout_leads for older data
