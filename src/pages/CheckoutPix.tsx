@@ -261,12 +261,20 @@ export default function CheckoutPix() {
             <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
               <Check className="h-3.5 w-3.5" /> Método
             </span>
-            <div className="w-8 h-px bg-emerald-500" />
+            <div className={cn("w-8 h-px", checkoutStep === "pix" ? "bg-emerald-500" : "bg-border")} />
             <span className={cn(
               "flex items-center gap-1.5 font-medium",
-              pixStatus === "PAID" ? "text-emerald-600" : "text-primary"
+              checkoutStep === "coupon" ? "text-primary" : "text-emerald-600"
             )}>
-              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
+              {checkoutStep === "pix" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
+              Cupom
+            </span>
+            <div className={cn("w-8 h-px", pixStatus === "PAID" ? "bg-emerald-500" : "bg-border")} />
+            <span className={cn(
+              "flex items-center gap-1.5 font-medium",
+              pixStatus === "PAID" ? "text-emerald-600" : checkoutStep === "pix" ? "text-primary" : "text-muted-foreground"
+            )}>
+              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center text-[10px] font-bold", checkoutStep === "pix" ? "border-primary" : "border-muted-foreground/30")}>{4}</span>}
               Pagamento
             </span>
           </div>
