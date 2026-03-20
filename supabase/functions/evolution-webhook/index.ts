@@ -1432,6 +1432,8 @@ REGRAS OBRIGATÓRIAS:
                       }
                       
                       if (agentConv) {
+                        console.log(`Found agent conversation ${agentConv.id} for phone ${normalizedPhone} with agent ${activeAgent.name} (status: ${activeAgent.status})`);
+                        
                         // Log the user's manual message for AI context
                         await supabase.from('agent_message_logs').insert({
                           agent_id: activeAgent.id,
@@ -1469,41 +1471,64 @@ REGRAS OBRIGATÓRIAS:
                               .maybeSingle();
                             
                             if (humanStage) {
+                              // Try multiple phone formats to find the lead
                               const canonicalForCRM = normalizeBrazilianMobileE164(normalizedPhone);
-                              if (canonicalForCRM) {
-                                const { data: leadToMove } = await supabase
+                              const phonesToTry = [canonicalForCRM, normalizedPhone];
+                              if (normalizedPhone.startsWith('55') && normalizedPhone.length >= 12) {
+                                phonesToTry.push(normalizedPhone.slice(2));
+                              }
+                              
+                              let leadToMove = null;
+                              for (const phoneAttempt of phonesToTry) {
+                                if (!phoneAttempt) continue;
+                                const { data: foundLead } = await supabase
                                   .from('leads')
                                   .select('id, pipeline_stage_id')
                                   .eq('user_id', whatsappNumber.user_id)
-                                  .eq('phone', canonicalForCRM)
+                                  .eq('phone', phoneAttempt)
                                   .maybeSingle();
-                                
-                                if (leadToMove && leadToMove.pipeline_stage_id !== humanStage.id) {
-                                  await supabase
-                                    .from('leads')
-                                    .update({ 
-                                      pipeline_stage_id: humanStage.id,
-                                      updated_at: new Date().toISOString()
-                                    })
-                                    .eq('id', leadToMove.id);
-                                  
-                                  await supabase.from('lead_activities').insert({
-                                    lead_id: leadToMove.id,
-                                    user_id: whatsappNumber.user_id,
-                                    activity_type: 'stage_change',
-                                    description: `Movido automaticamente para "${activeAgent.crm_stage_on_unknown}" — humano assumiu o atendimento`,
-                                  });
-                                  
-                                  console.log(`Lead ${normalizedPhone} moved to human support stage "${activeAgent.crm_stage_on_unknown}"`);
+                                if (foundLead) {
+                                  leadToMove = foundLead;
+                                  console.log(`Found lead ${foundLead.id} with phone format: ${phoneAttempt}`);
+                                  break;
                                 }
                               }
+                              
+                              if (leadToMove && leadToMove.pipeline_stage_id !== humanStage.id) {
+                                await supabase
+                                  .from('leads')
+                                  .update({ 
+                                    pipeline_stage_id: humanStage.id,
+                                    updated_at: new Date().toISOString()
+                                  })
+                                  .eq('id', leadToMove.id);
+                                
+                                await supabase.from('lead_activities').insert({
+                                  lead_id: leadToMove.id,
+                                  user_id: whatsappNumber.user_id,
+                                  activity_type: 'stage_change',
+                                  description: `Movido automaticamente para "${activeAgent.crm_stage_on_unknown}" — humano assumiu o atendimento`,
+                                });
+                                
+                                console.log(`Lead ${normalizedPhone} moved to human support stage "${activeAgent.crm_stage_on_unknown}"`);
+                              } else if (!leadToMove) {
+                                console.log(`No lead found for phone ${normalizedPhone} (tried: ${phonesToTry.filter(Boolean).join(', ')})`);
+                              } else {
+                                console.log(`Lead already in human support stage, skipping move`);
+                              }
+                            } else {
+                              console.log(`Human support stage "${activeAgent.crm_stage_on_unknown}" not found for user ${whatsappNumber.user_id}`);
                             }
                           } catch (crmMoveError) {
                             console.error('Error moving lead to human support stage:', crmMoveError);
                           }
+                        } else {
+                          console.log(`Agent ${activeAgent.name} has no crm_stage_on_unknown configured`);
                         }
                         
                         console.log(`AI Agent ${activeAgent.name}: human took over lead ${normalizedPhone}, moved to human support column`);
+                      } else {
+                        console.log(`No agent conversation found for phone ${normalizedPhone} with agent ${activeAgent.name} (tried canonical: ${canonicalPhoneForAgent})`);
                       }
                     }
                   }
