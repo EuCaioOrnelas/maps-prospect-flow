@@ -199,12 +199,7 @@ export default function CheckoutPix() {
     }
   };
 
-  // Re-generate after coupon applied
-  useEffect(() => {
-    if (couponApplied && !pixGenerated && !pixLoading && customerData) {
-      generatePix();
-    }
-  }, [couponApplied, pixGenerated, pixLoading, customerData]);
+  // After coupon applied, user clicks to generate — no auto-regen
 
   const handleSimulatePayment = async () => {
     if (!pixData) return;
