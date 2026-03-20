@@ -54,6 +54,19 @@ serve(async (req) => {
       }
     }
 
+    // If no auth, try to find user by email
+    if (!userId && customerData.email) {
+      const { data: profileByEmail } = await supabaseClient
+        .from("profiles")
+        .select("id")
+        .eq("email", customerData.email)
+        .maybeSingle();
+      if (profileByEmail) {
+        userId = profileByEmail.id;
+        logStep("User found by email", { userId });
+      }
+    }
+
     // Determine final price (trial discount)
     let finalPrice = plan.priceInCents;
     if (userId) {
