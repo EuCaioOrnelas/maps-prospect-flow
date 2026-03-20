@@ -60,11 +60,8 @@ function formatPhone(value: string) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-const AnimatedIcon = ({ icon: Icon, delay }: { icon: typeof User; delay: string }) => (
-  <div
-    className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 transition-transform duration-300 hover:scale-110"
-    style={{ animationDelay: delay }}
-  >
+const AnimatedIcon = ({ icon: Icon }: { icon: typeof User }) => (
+  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border/50 bg-muted/50 text-muted-foreground shrink-0">
     <Icon className="h-4 w-4" />
   </div>
 );
