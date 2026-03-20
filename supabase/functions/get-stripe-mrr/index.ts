@@ -341,8 +341,8 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      // Stripe MRR: includes active, trialing, past_due (including cancel_at_period_end)
-      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
+      // Stripe MRR: includes active, trialing, past_due BUT excludes cancel_at_period_end
+      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status) && !sub.cancel_at_period_end;
       
       if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
         activeMRR += mrrAmount;
