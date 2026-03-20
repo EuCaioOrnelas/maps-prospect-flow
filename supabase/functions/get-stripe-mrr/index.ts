@@ -136,13 +136,28 @@ Deno.serve(async (req) => {
       ),
     ]);
 
-    // Filter only WiizeProspect subscriptions
+    // Build product IDs from known prices, then filter by product (catches old price IDs too)
+    const wiizeProductIds = new Set<string>();
+    for (const sub of allSubsData) {
+      const price = sub.items.data[0]?.price;
+      if (price && WIIZE_PRICE_IDS.includes(price.id)) {
+        const productId = typeof price.product === 'string' ? price.product : (price.product as any)?.id;
+        if (productId) wiizeProductIds.add(productId);
+      }
+    }
+
+    // Filter by product (not just current price IDs) to catch legacy prices
     const wiizeSubs = allSubsData.filter((sub: Stripe.Subscription) => {
-      const priceId = sub.items.data[0]?.price.id;
-      return WIIZE_PRICE_IDS.includes(priceId);
+      const price = sub.items.data[0]?.price;
+      if (!price) return false;
+      // Match by current price ID OR by product
+      if (WIIZE_PRICE_IDS.includes(price.id)) return true;
+      const productId = typeof price.product === 'string' ? price.product : (price.product as any)?.id;
+      return productId && wiizeProductIds.has(productId);
     });
 
-    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subs, ${allRefunds.length} refunds, ${allPaidInvoices.length} paid invoices`);
+    console.log(`[GET-STRIPE-MRR] Products: ${JSON.stringify([...wiizeProductIds])}`);
+    console.log(`[GET-STRIPE-MRR] Found ${wiizeSubs.length} WiizeProspect subs (from ${allSubsData.length} total), ${allRefunds.length} refunds, ${allPaidInvoices.length} paid invoices`);
 
     // Build set of WiizeProspect subscription IDs for quick lookup
     const wiizeSubIds = new Set(wiizeSubs.map((s: Stripe.Subscription) => s.id));
