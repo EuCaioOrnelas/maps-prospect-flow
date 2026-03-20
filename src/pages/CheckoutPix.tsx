@@ -87,6 +87,10 @@ export default function CheckoutPix() {
     if (!customerData || !planKey) return;
     setLoading(true);
     setRedirecting(false);
+    
+    // Track checkout initiation for scoring
+    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
+    
     try {
       const { data, error } = await supabase.functions.invoke(
         "create-abacate-subscription",
