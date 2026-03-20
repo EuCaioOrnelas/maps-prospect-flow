@@ -74,7 +74,7 @@ export function PixEmailTemplatesTab() {
         .select("*")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      setTemplates((data || []) as EmailTemplate[]);
+      setTemplates((data || []) as unknown as EmailTemplate[]);
     } catch (err) {
       console.error("Error loading templates:", err);
     } finally {

@@ -98,7 +98,7 @@ export function PixInvoicesTab() {
           created_at: c.created_at,
         }));
 
-      setInvoices([...(data || []) as InvoiceRow[], ...legacyInvoices]);
+      setInvoices([...(data || []) as unknown as InvoiceRow[], ...legacyInvoices]);
     } catch (err) {
       console.error("Error loading invoices:", err);
     } finally {

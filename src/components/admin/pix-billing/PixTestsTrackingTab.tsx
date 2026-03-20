@@ -152,7 +152,7 @@ function TrackingSection() {
         supabase
           .from("email_logs")
           .select("*")
-          .eq("email_type", "SUBSCRIPTION_RENEWAL")
+          .eq("email_type", "SUBSCRIPTION_RENEWAL" as any)
           .order("created_at", { ascending: false })
           .limit(100),
       ]);
