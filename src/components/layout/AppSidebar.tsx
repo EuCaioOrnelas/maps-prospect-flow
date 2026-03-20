@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   DollarSign,
   Mail,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -328,6 +329,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   isExpanded={isExpanded}
                   highlight
                   tooltip="Wiize Revenue (Beta)"
+                />
+              </li>
+            )}
+
+            {/* PIX Billing (admin only) */}
+            {isAdmin && (
+              <li>
+                <SidebarNavItem
+                  title="Billing PIX"
+                  icon={Receipt}
+                  url="/admin/pix-billing"
+                  isActive={currentPath === "/admin/pix-billing"}
+                  isExpanded={isExpanded}
+                  tooltip="Billing PIX / Renovação"
                 />
               </li>
             )}
