@@ -128,8 +128,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No customer found in Stripe");
       
-      // If user has a paid plan but no Stripe customer, downgrade them
-      // UNLESS the plan was admin-assigned
+      // If user has a paid plan but no Stripe customer, check if they're on AbacatePay
       if (currentProfile.plan && currentProfile.plan !== "free") {
         if (currentProfile.admin_assigned_plan) {
           logStep("Skipping downgrade - admin assigned plan", { 
@@ -144,21 +143,44 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,
           });
-        } else {
-          logStep("Downgrading user with no Stripe customer", { 
-            previousPlan: currentProfile.plan 
+        }
+        
+        // Check if subscription is still valid (AbacatePay or other provider)
+        const subEnd = currentProfile.subscription_current_period_end 
+          ? new Date(currentProfile.subscription_current_period_end) 
+          : null;
+        
+        if (subEnd && subEnd > new Date()) {
+          logStep("Subscription still valid (non-Stripe provider, likely AbacatePay)", { 
+            plan: currentProfile.plan,
+            expiresAt: subEnd.toISOString()
           });
           
-          await supabaseClient
-            .from('profiles')
-            .update({
-              plan: "free",
-              searches_limit: PLAN_LIMITS["free"],
-              searches_used: 0,
-              subscription_current_period_end: null,
-            })
-            .eq('id', userId);
+          return new Response(JSON.stringify({ 
+            subscribed: true, 
+            plan: currentProfile.plan,
+            searches_limit: currentProfile.searches_limit,
+            subscription_end: subEnd.toISOString()
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
         }
+        
+        // Subscription expired and no Stripe — downgrade
+        logStep("Downgrading user with no Stripe customer and expired subscription", { 
+          previousPlan: currentProfile.plan 
+        });
+        
+        await supabaseClient
+          .from('profiles')
+          .update({
+            plan: "free",
+            searches_limit: PLAN_LIMITS["free"],
+            searches_used: 0,
+            subscription_current_period_end: null,
+          })
+          .eq('id', userId);
       }
       
       return new Response(JSON.stringify({ 

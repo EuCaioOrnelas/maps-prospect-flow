@@ -20,32 +20,17 @@ import {
   BadgeCheck,
   Timer,
   ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
-
-interface PixData {
-  pixId: string;
-  brCode: string;
-  brCodeBase64: string;
-  amount: number;
-  expiresAt: string;
-}
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
-}
-
-function getTimeRemaining(expiresAt: string) {
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  if (diff <= 0) return "Expirado";
-  const minutes = Math.floor(diff / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export default function CheckoutPix() {
@@ -57,19 +42,13 @@ export default function CheckoutPix() {
   const planPrice = searchParams.get("planPrice") || "";
 
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
-  const [pixData, setPixData] = useState<PixData | null>(null);
-  const [pixLoading, setPixLoading] = useState(false);
-  const [pixStatus, setPixStatus] = useState<string>("PENDING");
-  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
   const [couponError, setCouponError] = useState("");
-  const [pixGenerated, setPixGenerated] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState("");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   // Load customer data from sessionStorage
   useEffect(() => {
@@ -85,89 +64,31 @@ export default function CheckoutPix() {
     }
   }, [navigate]);
 
-  // Generate PIX QR Code
-  const generatePix = async () => {
+  // Create subscription and redirect to AbacatePay checkout
+  const handleSubscribe = async () => {
     if (!customerData || !planKey) return;
-    setPixLoading(true);
+    setLoading(true);
+    setRedirecting(false);
     try {
       const { data, error } = await supabase.functions.invoke(
-        "create-abacate-pix",
+        "create-abacate-subscription",
         {
           body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
         }
       );
       if (error) throw new Error(error.message);
-      if (!data?.brCode) throw new Error("QR Code não gerado");
-      setPixData(data);
-      setPixStatus("PENDING");
-      setPixGenerated(true);
+      if (!data?.url) throw new Error("URL de checkout não gerada");
+
+      setRedirecting(true);
+      // Redirect to AbacatePay hosted checkout
+      window.location.href = data.url;
     } catch (err: any) {
       toast({
-        title: "Erro ao gerar PIX",
+        title: "Erro ao criar assinatura",
         description: err.message,
         variant: "destructive",
       });
-    } finally {
-      setPixLoading(false);
-    }
-  };
-
-  // No auto-generate — user clicks to generate
-
-  // Countdown timer
-  useEffect(() => {
-    if (!pixData?.expiresAt || pixStatus === "PAID") return;
-    const update = () => setTimeRemaining(getTimeRemaining(pixData.expiresAt));
-    update();
-    timerRef.current = setInterval(update, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [pixData, pixStatus]);
-
-  // Poll for payment status
-  useEffect(() => {
-    if (!pixData || pixStatus === "PAID") return;
-
-    const checkStatus = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke(
-          "check-abacate-pix",
-          { body: { pixId: pixData.pixId } }
-        );
-        if (!error && data?.status) {
-          setPixStatus(data.status);
-          if (data.status === "PAID") {
-            if (pollRef.current) clearInterval(pollRef.current);
-            toast({
-              title: "Pagamento confirmado! 🎉",
-              description: "Seu plano foi ativado com sucesso.",
-            });
-            setTimeout(() => {
-              sessionStorage.removeItem("pixCustomerData");
-              navigate("/checkout-success?provider=abacate");
-            }, 2500);
-          }
-        }
-      } catch {
-        // silent
-      }
-    };
-
-    checkStatus();
-    pollRef.current = setInterval(checkStatus, 5000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [pixData, pixStatus, navigate]);
-
-  const handleCopyCode = async () => {
-    if (!pixData?.brCode) return;
-    try {
-      await navigator.clipboard.writeText(pixData.brCode);
-      setCopied(true);
-      toast({ title: "Código PIX copiado!" });
-      setTimeout(() => setCopied(false), 3000);
-    } catch {
-      toast({ title: "Erro ao copiar", variant: "destructive" });
+      setLoading(false);
     }
   };
 
@@ -183,51 +104,30 @@ export default function CheckoutPix() {
       if (data?.valid) {
         setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
         setCouponApplied(true);
-        // Regenerate PIX with coupon
-        setPixData(null);
-        setPixGenerated(false);
-        // No toast for success — inline feedback is enough
       } else {
         setCouponError(data?.error || "Cupom inválido");
       }
-    } catch (err: any) {
+    } catch {
       setCouponError("Erro ao validar cupom");
     } finally {
       setCouponValidating(false);
     }
   };
 
-  // After coupon applied, user clicks to generate — no auto-regen
-
-  const handleSimulatePayment = async () => {
-    if (!pixData) return;
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "simulate-abacate-pix",
-        { body: { pixId: pixData.pixId } }
-      );
-      if (error) throw new Error(error.message);
-      if (data?.status === "PAID") {
-        setPixStatus("PAID");
-        toast({
-          title: "Pagamento simulado! 🎉",
-          description: "Plano ativado com sucesso.",
-        });
-        setTimeout(() => {
-          sessionStorage.removeItem("pixCustomerData");
-          navigate("/checkout-success?provider=abacate");
-        }, 2500);
-      }
-    } catch (err: any) {
-      toast({
-        title: "Erro na simulação",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   if (!customerData) return null;
+
+  // Compute display prices
+  const originalCents = parseFloat(planPrice) * 100;
+  let discountAmount = 0;
+  if (couponApplied && couponDiscount) {
+    if (couponDiscount.discountKind === "PERCENTAGE") {
+      const pct = couponDiscount.discount / 100;
+      discountAmount = Math.round(originalCents * pct / 100);
+    } else {
+      discountAmount = couponDiscount.discount;
+    }
+  }
+  const finalCents = Math.max(100, originalCents - discountAmount);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -261,12 +161,9 @@ export default function CheckoutPix() {
             <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
               <Check className="h-3.5 w-3.5" /> Método
             </span>
-            <div className={cn("w-8 h-px", pixData ? "bg-emerald-500" : "bg-border")} />
-            <span className={cn(
-              "flex items-center gap-1.5 font-medium",
-              pixStatus === "PAID" ? "text-emerald-600" : "text-primary"
-            )}>
-              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
+            <div className="w-8 h-px bg-primary" />
+            <span className="flex items-center gap-1.5 font-medium text-primary">
+              <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>
               Pagamento
             </span>
           </div>
@@ -276,7 +173,7 @@ export default function CheckoutPix() {
       {/* Main content */}
       <main className="flex-1 container max-w-5xl mx-auto px-4 py-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          {/* Left — QR Code */}
+          {/* Left — Subscribe action */}
           <motion.div
             className="flex flex-col items-center gap-6"
             initial={{ opacity: 0, y: 16 }}
@@ -284,144 +181,92 @@ export default function CheckoutPix() {
             transition={{ duration: 0.5 }}
           >
             <div className="text-center space-y-1">
-              <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+              <h1 className="text-2xl font-bold text-foreground">Assinatura via PIX</h1>
               <p className="text-sm text-muted-foreground">
-                Escaneie o QR Code com o app do seu banco
+                PIX recorrente — débito automático mensal regulamentado pelo Banco Central
               </p>
             </div>
 
-            {!pixData && !pixLoading ? (
-              <div className="flex flex-col items-center gap-5 py-12">
-                <div className="h-24 w-24 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <QrCode className="h-12 w-12 text-primary/60" />
-                </div>
-                <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  {couponApplied ? "Cupom aplicado! Clique abaixo para gerar o QR Code com desconto." : "Tem cupom? Aplique na lateral antes de gerar. Ou clique abaixo para pagar."}
-                </p>
-                <Button onClick={generatePix} size="lg" className="gap-2">
-                  <QrCode className="h-4 w-4" />
-                  {couponApplied ? "Gerar PIX com desconto" : "Gerar QR Code PIX"}
-                </Button>
-              </div>
-            ) : pixLoading ? (
+            {redirecting ? (
               <div className="flex flex-col items-center gap-4 py-16">
-                <div className="relative">
-                  <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                  </div>
+                <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 </div>
-                <p className="text-muted-foreground text-sm">Gerando QR Code...</p>
+                <p className="text-muted-foreground text-sm">Redirecionando para o checkout seguro...</p>
               </div>
-            ) : pixData ? (
-              <>
-                {/* QR Code card */}
+            ) : (
+              <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
+                {/* Plan card */}
                 <motion.div
-                  className="relative rounded-2xl bg-white p-8 shadow-xl shadow-black/5 border border-border/10"
+                  className="w-full rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-6 space-y-4"
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, duration: 0.4 }}
                 >
-                  {pixData.brCodeBase64 ? (
-                    <img
-                      src={pixData.brCodeBase64}
-                      alt="QR Code PIX"
-                      className="w-60 h-60 sm:w-72 sm:h-72"
-                    />
-                  ) : (
-                    <div className="w-60 h-60 flex items-center justify-center text-muted-foreground">
-                      <QrCode className="h-16 w-16 opacity-30" />
-                    </div>
-                  )}
-                  {pixStatus === "PAID" && (
-                    <motion.div
-                      className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="h-20 w-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                          <PartyPopper className="h-10 w-10 text-white" />
-                        </div>
-                        <p className="font-bold text-xl text-emerald-600">
-                          Pago com sucesso!
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Redirecionando...
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
-
-                {/* Amount */}
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-foreground tracking-tight tabular-nums">
-                    {formatCurrency(pixData.amount)}
-                  </p>
-                  {couponApplied && couponDiscount && (
-                    <p className="text-xs text-emerald-600 font-medium mt-1">
-                      Cupom {couponDiscount.code} • {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}% off` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} off`}
-                    </p>
-                  )}
-                  {timeRemaining && pixStatus !== "PAID" && (
-                    <div className="flex items-center justify-center gap-1.5 mt-2 text-sm text-muted-foreground">
-                      <Timer className="h-3.5 w-3.5" />
-                      <span>Expira em <span className="font-mono font-medium text-foreground">{timeRemaining}</span></span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Copy code */}
-                <div className="w-full max-w-md space-y-3">
-                  <p className="text-xs text-center text-muted-foreground font-medium uppercase tracking-wider">
-                    Ou copie o código PIX
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      readOnly
-                      value={pixData.brCode}
-                      className="text-xs font-mono truncate bg-muted/40 border-border/30"
-                    />
-                    <Button
-                      onClick={handleCopyCode}
-                      className={cn(
-                        "shrink-0 gap-2 transition-all",
-                        copied
-                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                          : "bg-primary hover:bg-primary/90"
-                      )}
-                    >
-                      {copied ? (
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-muted-foreground font-medium">Plano selecionado</p>
+                    <p className="text-2xl font-bold text-foreground">{planName}</p>
+                    <div className="flex flex-col items-center gap-1">
+                      {couponApplied && discountAmount > 0 ? (
                         <>
-                          <Check className="h-4 w-4" />
-                          Copiado!
+                          <p className="text-sm text-muted-foreground line-through">
+                            R$ {planPrice}/mês
+                          </p>
+                          <p className="text-3xl font-bold text-foreground tabular-nums">
+                            {formatCurrency(finalCents)}
+                            <span className="text-base font-normal text-muted-foreground">/mês</span>
+                          </p>
                         </>
                       ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          Copiar
-                        </>
+                        <p className="text-3xl font-bold text-foreground tabular-nums">
+                          R$ {planPrice}
+                          <span className="text-base font-normal text-muted-foreground">/mês</span>
+                        </p>
                       )}
-                    </Button>
+                    </div>
                   </div>
-                </div>
+                  <div className="h-px bg-primary/10" />
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Cobrança automática mensal via PIX</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Cancele quando quiser, sem multa</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Ativação instantânea após primeiro pagamento</span>
+                    </div>
+                  </div>
+                </motion.div>
 
-                {/* Waiting status */}
-                {pixStatus !== "PAID" && (
-                  <motion.div
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500/10 border border-amber-500/20"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <Clock className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm font-medium text-amber-700">
-                      Aguardando pagamento...
-                    </span>
-                  </motion.div>
-                )}
-              </>
-            ) : null}
+                {/* Subscribe button */}
+                <Button
+                  onClick={handleSubscribe}
+                  size="lg"
+                  disabled={loading}
+                  className="w-full gap-2 h-12 text-base"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="h-5 w-5" />
+                      Assinar agora — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-[11px] text-muted-foreground text-center max-w-sm">
+                  Você será redirecionado para a página segura da AbacatePay para confirmar o pagamento via PIX.
+                </p>
+              </div>
+            )}
           </motion.div>
 
           {/* Right sidebar */}
@@ -449,7 +294,7 @@ export default function CheckoutPix() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
                   <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                    <QrCode className="h-3.5 w-3.5" /> PIX
+                    <QrCode className="h-3.5 w-3.5" /> PIX Recorrente
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -457,105 +302,81 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
-                {couponApplied && couponDiscount && (() => {
-                  const originalCents = parseFloat(planPrice) * 100;
-                  // AbacatePay PERCENTAGE discount is in basis: 50% = 5000
-                  const pct = couponDiscount.discountKind === "PERCENTAGE" ? couponDiscount.discount / 100 : 0;
-                  const discountAmount = couponDiscount.discountKind === "PERCENTAGE"
-                    ? Math.round(originalCents * pct / 100)
-                    : couponDiscount.discount;
-                  const finalAmount = Math.max(100, originalCents - discountAmount);
-                  return (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-emerald-600 text-xs font-medium">Cupom {couponDiscount.code}</span>
-                        <span className="text-emerald-600 text-xs font-medium">
-                          {couponDiscount.discountKind === "PERCENTAGE" ? `${pct}%` : `R$ ${(couponDiscount.discount / 100).toFixed(2)}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground text-xs">Desconto</span>
-                        <span className="text-emerald-600 text-xs font-medium">
-                          -R$ {(discountAmount / 100).toFixed(2)}
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
+                {couponApplied && couponDiscount && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-emerald-600 text-xs font-medium">Cupom {couponDiscount.code}</span>
+                      <span className="text-emerald-600 text-xs font-medium">
+                        {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}%` : `R$ ${(couponDiscount.discount / 100).toFixed(2)}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground text-xs">Desconto</span>
+                      <span className="text-emerald-600 text-xs font-medium">
+                        -R$ {(discountAmount / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="font-bold text-lg text-foreground">
-                    {pixData ? formatCurrency(pixData.amount) : (() => {
-                      if (couponApplied && couponDiscount) {
-                        const originalCents = parseFloat(planPrice) * 100;
-                        const pct = couponDiscount.discountKind === "PERCENTAGE" ? couponDiscount.discount / 100 : 0;
-                        const discountAmount = couponDiscount.discountKind === "PERCENTAGE"
-                          ? Math.round(originalCents * pct / 100)
-                          : couponDiscount.discount;
-                        return formatCurrency(Math.max(100, originalCents - discountAmount));
-                      }
-                      return `R$ ${planPrice}`;
-                    })()}
+                    {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Coupon — in sidebar */}
-            {pixStatus !== "PAID" && (
-              <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Tag className="h-4 w-4 text-primary" />
-                  Cupom de desconto
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Código do cupom"
-                    value={couponCode}
-                    onChange={(e) => {
-                      setCouponCode(e.target.value.toUpperCase());
-                      if (couponApplied) return; // don't reset if already applied
-                      setCouponError("");
-                    }}
-                    disabled={couponApplied || couponValidating}
-                    className="text-sm h-9"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleApplyCoupon}
-                    disabled={!couponCode.trim() || couponApplied || couponValidating}
-                    className="shrink-0 h-9"
-                  >
-                    {couponValidating ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : couponApplied ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    ) : (
-                      "Aplicar"
-                    )}
-                  </Button>
-                </div>
-                {couponApplied && couponDiscount && (
-                  <p className="text-xs text-emerald-600 font-medium">
-                    ✓ Cupom aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}. Clique em "Gerar QR Code" para aplicar.
-                  </p>
-                )}
-                {couponError && (
-                  <p className="text-xs text-destructive font-medium">
-                    ✗ {couponError}
-                  </p>
-                )}
+            {/* Coupon */}
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Tag className="h-4 w-4 text-primary" />
+                Cupom de desconto
               </div>
-            )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Código do cupom"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    if (!couponApplied) setCouponError("");
+                  }}
+                  disabled={couponApplied || couponValidating}
+                  className="text-sm h-9"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplyCoupon}
+                  disabled={!couponCode.trim() || couponApplied || couponValidating}
+                  className="shrink-0 h-9"
+                >
+                  {couponValidating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : couponApplied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    "Aplicar"
+                  )}
+                </Button>
+              </div>
+              {couponApplied && couponDiscount && (
+                <p className="text-xs text-emerald-600 font-medium">
+                  ✓ Cupom aplicado com sucesso!
+                </p>
+              )}
+              {couponError && (
+                <p className="text-xs text-destructive font-medium">
+                  ✗ {couponError}
+                </p>
+              )}
+            </div>
 
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <p className="text-sm font-semibold text-foreground">
-                  Compra segura
-                </p>
+                <p className="text-sm font-semibold text-foreground">Compra segura</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
@@ -564,7 +385,7 @@ export default function CheckoutPix() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Criptografia de ponta a ponta</p>
-                    <p className="text-xs text-muted-foreground">Seus dados são protegidos com criptografia SSL 256-bit</p>
+                    <p className="text-xs text-muted-foreground">Dados protegidos com SSL 256-bit</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -572,8 +393,8 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">Processamento via Banco Central</p>
-                    <p className="text-xs text-muted-foreground">PIX regulamentado e fiscalizado pelo BACEN</p>
+                    <p className="text-xs font-semibold text-foreground">PIX Recorrente regulamentado</p>
+                    <p className="text-xs text-muted-foreground">Débito automático aprovado pelo Banco Central</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -582,29 +403,15 @@ export default function CheckoutPix() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Ativação instantânea</p>
-                    <p className="text-xs text-muted-foreground">Seu plano é ativado imediatamente após o pagamento</p>
+                    <p className="text-xs text-muted-foreground">Plano ativo imediatamente após pagamento</p>
                   </div>
                 </div>
                 <div className="h-px bg-border/30 my-1" />
-                <div className="flex items-center gap-2 pt-1">
-                  <p className="text-[10px] text-muted-foreground/70">
-                    Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
-                  </p>
-                </div>
+                <p className="text-[10px] text-muted-foreground/70">
+                  Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
+                </p>
               </div>
             </div>
-
-            {/* Dev simulate button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSimulatePayment}
-              disabled={!pixData || pixStatus === "PAID"}
-              className="w-full gap-2 border-dashed border-amber-500/40 text-amber-600 hover:bg-amber-500/5 text-xs"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Simular pagamento (teste)
-            </Button>
           </motion.div>
         </div>
       </main>
@@ -631,10 +438,7 @@ export default function CheckoutPix() {
                 <span>Dados protegidos</span>
               </div>
               <div className="h-3 w-px bg-border" />
-              <button
-                onClick={() => navigate("/termos")}
-                className="hover:text-foreground transition-colors"
-              >
+              <button onClick={() => navigate("/termos")} className="hover:text-foreground transition-colors">
                 Termos de uso
               </button>
             </div>
