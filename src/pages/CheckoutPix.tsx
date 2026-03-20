@@ -41,6 +41,10 @@ export default function CheckoutPix() {
   const planName = searchParams.get("planName") || "";
   const planPrice = searchParams.get("planPrice") || "";
 
+  const isRenewal = searchParams.get("renewal") === "true";
+  const renewalEmail = searchParams.get("email") || "";
+  const renewalName = searchParams.get("name") || "";
+
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -50,19 +54,29 @@ export default function CheckoutPix() {
   const [couponError, setCouponError] = useState("");
   const [redirecting, setRedirecting] = useState(false);
 
-  // Load customer data from sessionStorage
+  // Load customer data from sessionStorage or query params (renewal)
   useEffect(() => {
-    const stored = sessionStorage.getItem("pixCustomerData");
-    if (stored) {
-      try {
-        setCustomerData(JSON.parse(stored));
-      } catch {
+    if (isRenewal && renewalEmail && planKey) {
+      // Renewal flow: data comes from URL params, no login needed
+      setCustomerData({
+        name: renewalName || "Cliente",
+        email: renewalEmail,
+        phone: "",
+        taxId: "",
+      } as CustomerData);
+    } else {
+      const stored = sessionStorage.getItem("pixCustomerData");
+      if (stored) {
+        try {
+          setCustomerData(JSON.parse(stored));
+        } catch {
+          navigate("/upgrade");
+        }
+      } else {
         navigate("/upgrade");
       }
-    } else {
-      navigate("/upgrade");
     }
-  }, [navigate]);
+  }, [navigate, isRenewal, renewalEmail, renewalName, planKey]);
 
   // Create subscription and redirect to AbacatePay checkout
   const handleSubscribe = async () => {

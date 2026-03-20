@@ -145,47 +145,22 @@ Deno.serve(async (req) => {
         let checkoutUrl = invoice?.checkout_url;
         let invoiceId = invoice?.id;
 
+        const origin = "https://maps-prospect-flow.lovable.app";
+        const planName = PLAN_NAMES[user.plan] || user.plan;
+        const planPrice = PLAN_PRICES[user.plan] || "";
+        const priceNumber = planPrice.replace("R$ ", "").replace(".", "");
+
+        // Build checkout URL pointing to our own /checkout-pix page
+        const ownCheckoutUrl = `${origin}/checkout-pix?plan=${user.plan}&planName=${encodeURIComponent(planName)}&planPrice=${priceNumber}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent(user.name || "")}&renewal=true`;
+
         if (!checkoutUrl || invoice?.status === "expired") {
-          const origin = "https://maps-prospect-flow.lovable.app";
-
-          const checkoutRes = await fetch(`${ABACATE_API}/checkouts/create`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-            body: JSON.stringify({
-              items: [{ id: productId, quantity: 1 }],
-              methods: ["PIX"],
-              returnUrl: `${origin}/upgrade`,
-              completionUrl: `${origin}/checkout-success?provider=abacate&renewal=true`,
-              metadata: {
-                userId: user.id,
-                planKey: user.plan,
-                email: user.email,
-                type: "renewal",
-                stage: currentStage,
-                currentPeriodEnd: user.subscription_current_period_end,
-              },
-            }),
-          });
-
-          const checkoutJson = await checkoutRes.json();
-          if (checkoutJson.error || !checkoutRes.ok) {
-            logStep("Failed to create checkout", { userId: user.id, error: checkoutJson });
-            continue;
-          }
-
-          const checkoutData = checkoutJson.data;
-          checkoutUrl = checkoutData.url;
+          checkoutUrl = ownCheckoutUrl;
 
           if (invoiceId) {
             await supabaseClient
               .from("pix_invoices")
               .update({
                 checkout_url: checkoutUrl,
-                abacate_checkout_id: checkoutData.id,
                 status: "pending",
                 renewal_stage: currentStage,
                 updated_at: new Date().toISOString(),
@@ -202,7 +177,6 @@ Deno.serve(async (req) => {
                 amount_cents: PLAN_PRICES_CENTS[user.plan] || 0,
                 status: "pending",
                 checkout_url: checkoutUrl,
-                abacate_checkout_id: checkoutData.id,
                 renewal_stage: currentStage,
                 subscription_period_end: user.subscription_current_period_end,
               })
@@ -212,20 +186,16 @@ Deno.serve(async (req) => {
             invoiceId = newInvoice?.id;
             invoicesCreated++;
           }
-
-          await supabaseClient.from("checkout_leads").insert({
-            user_id: user.id,
-            email: user.email,
-            name: user.name,
-            plan_attempted: PLAN_NAMES[user.plan] || user.plan,
-            stripe_session_id: `abacate_renewal_${checkoutData.id}`,
-            checkout_started_at: new Date().toISOString(),
-            checkout_completed: false,
-          });
         } else {
+          // Update to own checkout URL if it was pointing to AbacatePay
+          if (!checkoutUrl.includes("/checkout-pix")) {
+            checkoutUrl = ownCheckoutUrl;
+          }
+
           await supabaseClient
             .from("pix_invoices")
             .update({
+              checkout_url: checkoutUrl,
               renewal_stage: currentStage,
               updated_at: new Date().toISOString(),
             })
