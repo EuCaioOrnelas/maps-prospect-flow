@@ -50,6 +50,7 @@ import {
   ChevronRight,
   Filter,
   Menu,
+  Receipt,
 } from "lucide-react";
 import {
   DropdownMenu,
