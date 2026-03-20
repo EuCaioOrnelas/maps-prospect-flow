@@ -251,10 +251,26 @@ Deno.serve(async (req) => {
       const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
       
-      // For MRR, use the amount the customer actually pays (latest invoice with discounts applied)
-      // This matches how Stripe calculates MRR in their dashboard
-      // Fall back to base price only if no invoice exists yet
-      const mrrAmount = amountPaid > 0 ? amountPaid : baseAmount;
+      // Stripe MRR = base price - active coupon discount
+      // The discount object is directly on the subscription
+      let mrrAmount = baseAmount;
+      const discount = (sub as any).discount;
+      if (discount?.coupon) {
+        const coupon = discount.coupon;
+        if (coupon.percent_off) {
+          mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
+        } else if (coupon.amount_off) {
+          // amount_off is in cents
+          mrrAmount = Math.max(0, baseAmount - coupon.amount_off / 100);
+        }
+        mrrAmount = Math.round(mrrAmount * 100) / 100;
+      }
+      
+      // If no discount info and we have a paid invoice, use invoice amount as truth
+      // (handles cases where discount was applied at checkout level)
+      if (!discount && amountPaid > 0 && amountPaid < baseAmount) {
+        mrrAmount = amountPaid;
+      }
       
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
