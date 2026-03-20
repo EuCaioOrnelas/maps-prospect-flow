@@ -137,7 +137,7 @@ export function PaymentMethodModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg border-border/50 bg-card overflow-hidden p-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg border-border/50 bg-card overflow-hidden p-0 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 pb-0">
           <DialogHeader className="space-y-2">
@@ -201,7 +201,7 @@ export function PaymentMethodModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="checkout-phone" className="text-sm font-medium flex items-center gap-2">
                     <Phone className="h-3.5 w-3.5 text-muted-foreground" />
