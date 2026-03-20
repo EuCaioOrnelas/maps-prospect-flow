@@ -50,6 +50,7 @@ import {
   ChevronRight,
   Filter,
   Menu,
+  Receipt,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -1067,6 +1068,11 @@ const Admin = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/admin/email-flows" className="flex items-center gap-2 cursor-pointer">
                       <Zap size={14} /> Fluxos de Email
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/pix-billing" className="flex items-center gap-2 cursor-pointer">
+                      <Receipt size={14} /> Billing PIX
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
