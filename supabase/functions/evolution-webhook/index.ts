@@ -1365,16 +1365,22 @@ REGRAS OBRIGATÓRIAS:
               // Check if there's an active AI agent configured for this WhatsApp number
               // and forward the message for automatic processing
               // This runs for ALL received messages (not from me), regardless of lead existence
-              // SKIP group messages — agents should only respond to individual chats
-              if (isGroup) {
-                console.log('Skipping AI agent processing for group message:', remoteJid);
-              } else
+              // Check if agents support group messages
               try {
                 const { data: activeAgents } = await supabase
                   .from('ai_agents')
-                  .select('id, name, status, objective')
+                  .select('id, name, status, objective, respond_to_groups')
                   .eq('whatsapp_number_id', whatsappNumber.id)
                   .eq('status', 'active');
+                
+                // If it's a group message, filter to only agents that respond to groups
+                const eligibleAgents = isGroup 
+                  ? (activeAgents || []).filter((a: any) => a.respond_to_groups === true)
+                  : (activeAgents || []);
+                
+                if (isGroup && eligibleAgents.length === 0) {
+                  console.log('Skipping AI agent processing for group message (no agent configured for groups):', remoteJid);
+                }
                 
                 // Prioritize non-warming agents over warming agents
                 const activeAgent = activeAgents?.find((a: any) => a.objective !== 'warming') 

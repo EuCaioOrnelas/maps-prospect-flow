@@ -2133,6 +2133,7 @@ Preciso falar com meu marido/esposa"
                 <CheckboxOption label="Enviar imagens e PDFs" checked={canSendMedia} onCheckedChange={(c) => setCanSendMedia(!!c)} />
                 <CheckboxOption label="Enviar mensagens longas" checked={canSendLongMessages} onCheckedChange={(c) => setCanSendLongMessages(!!c)} />
                 <CheckboxOption label="Sempre esperar resposta" checked={alwaysWaitResponse} onCheckedChange={(c) => setAlwaysWaitResponse(!!c)} />
+                <CheckboxOption label="Responder em grupos" checked={respondToGroups} onCheckedChange={(c) => setRespondToGroups(!!c)} />
               </div>
             </div>
 
