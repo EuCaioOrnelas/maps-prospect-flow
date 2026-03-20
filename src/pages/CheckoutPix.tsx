@@ -85,9 +85,9 @@ export default function CheckoutPix() {
     }
   }, [navigate]);
 
-  // Generate PIX QR Code
+  // Generate PIX QR Code — only when on pix step
   useEffect(() => {
-    if (!customerData || !planKey || pixData) return;
+    if (!customerData || !planKey || pixData || checkoutStep !== "pix") return;
 
     const generatePix = async () => {
       setPixLoading(true);
@@ -95,7 +95,7 @@ export default function CheckoutPix() {
         const { data, error } = await supabase.functions.invoke(
           "create-abacate-pix",
           {
-            body: { planKey, customerData, couponCode: couponCode || undefined },
+            body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
           }
         );
         if (error) throw new Error(error.message);
@@ -114,7 +114,7 @@ export default function CheckoutPix() {
     };
 
     generatePix();
-  }, [customerData, planKey, pixGenTrigger]);
+  }, [customerData, planKey, checkoutStep]);
 
   // Countdown timer
   useEffect(() => {
