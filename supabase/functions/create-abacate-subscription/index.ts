@@ -101,7 +101,7 @@ serve(async (req) => {
 
     // 2. Create subscription billing with the product
     const billingBody: Record<string, any> = {
-      frequency: "MONTHLY",
+      frequency: "MULTIPLE_PAYMENTS",
       methods: ["PIX"],
       products: [productId],
       returnUrl: `${origin}/upgrade?checkout=canceled`,
