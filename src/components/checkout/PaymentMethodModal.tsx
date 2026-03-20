@@ -60,14 +60,6 @@ function formatPhone(value: string) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-const AnimatedIcon = ({ icon: Icon, delay }: { icon: typeof User; delay: string }) => (
-  <div
-    className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 transition-transform duration-300 hover:scale-110"
-    style={{ animationDelay: delay }}
-  >
-    <Icon className="h-4 w-4" />
-  </div>
-);
 
 export function PaymentMethodModal({
   open,
@@ -162,43 +154,43 @@ export function PaymentMethodModal({
 
         <div className="p-6">
           {step === "data" ? (
-            <form onSubmit={handleDataSubmit} className="space-y-4">
-              <div className="flex items-end gap-3">
-                <AnimatedIcon icon={User} delay="0ms" />
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="checkout-name" className="text-xs font-medium text-muted-foreground">Nome completo</Label>
-                  <Input
-                    id="checkout-name"
-                    placeholder="Seu nome completo"
-                    value={customerData.name}
-                    onChange={(e) => setCustomerData((d) => ({ ...d, name: e.target.value }))}
-                    required
-                    autoFocus
-                    className="h-10"
-                  />
-                </div>
+            <form onSubmit={handleDataSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="checkout-name" className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  Nome completo
+                </Label>
+                <Input
+                  id="checkout-name"
+                  placeholder="Seu nome completo"
+                  value={customerData.name}
+                  onChange={(e) => setCustomerData((d) => ({ ...d, name: e.target.value }))}
+                  required
+                  autoFocus
+                />
               </div>
 
-              <div className="flex items-end gap-3">
-                <AnimatedIcon icon={Mail} delay="50ms" />
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="checkout-email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
-                  <Input
-                    id="checkout-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={customerData.email}
-                    onChange={(e) => setCustomerData((d) => ({ ...d, email: e.target.value }))}
-                    required
-                    className="h-10"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="checkout-email" className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  E-mail
+                </Label>
+                <Input
+                  id="checkout-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={customerData.email}
+                  onChange={(e) => setCustomerData((d) => ({ ...d, email: e.target.value }))}
+                  required
+                />
               </div>
 
-              <div className="flex items-end gap-3">
-                <AnimatedIcon icon={Phone} delay="100ms" />
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="checkout-phone" className="text-xs font-medium text-muted-foreground">Telefone</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="checkout-phone" className="text-sm font-medium flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                    Telefone
+                  </Label>
                   <Input
                     id="checkout-phone"
                     placeholder="(00) 00000-0000"
@@ -207,15 +199,13 @@ export function PaymentMethodModal({
                       setCustomerData((d) => ({ ...d, phone: formatPhone(e.target.value) }))
                     }
                     required
-                    className="h-10"
                   />
                 </div>
-              </div>
-
-              <div className="flex items-end gap-3">
-                <AnimatedIcon icon={FileText} delay="150ms" />
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="checkout-taxid" className="text-xs font-medium text-muted-foreground">CPF / CNPJ</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="checkout-taxid" className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    CPF / CNPJ
+                  </Label>
                   <Input
                     id="checkout-taxid"
                     placeholder="000.000.000-00"
@@ -224,12 +214,11 @@ export function PaymentMethodModal({
                       setCustomerData((d) => ({ ...d, taxId: formatCPF(e.target.value) }))
                     }
                     required
-                    className="h-10"
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full mt-2" size="lg" disabled={!isDataValid}>
+              <Button type="submit" className="w-full mt-4" size="lg" disabled={!isDataValid}>
                 Continuar
               </Button>
             </form>
