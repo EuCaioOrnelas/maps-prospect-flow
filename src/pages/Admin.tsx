@@ -136,6 +136,13 @@ interface StripeMRRData {
   monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
 
+interface PixMRRData {
+  pixMrr: number;
+  pixActiveSubscriptions: number;
+  pixSalesThisMonth: number;
+  pixSalesValueThisMonth: number;
+}
+
 interface SalesChartData {
   month: string;
   newSales: number;
