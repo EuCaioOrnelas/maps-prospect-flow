@@ -402,12 +402,16 @@ export const PricingSection = () => {
         </div>
       </section>
 
-      <EmailCaptureModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        onSubmit={handleEmailSubmit}
-        loading={loadingPlan !== null}
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
         planName={selectedPlan?.name || ""}
+        planPrice={selectedPlan?.price || ""}
+        planKey={selectedPlan?.key || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
+        loading={loadingPlan !== null}
+        defaultEmail={user?.email || ""}
       />
     </>
   );
