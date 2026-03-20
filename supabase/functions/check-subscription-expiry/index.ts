@@ -22,10 +22,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find paid users whose subscription expired more than 3 days ago
-    // Grace period: 3 days after expiry before downgrade
+    // Find paid users whose subscription expired more than 1 day ago
+    // Grace period: 1 day after expiry before downgrade
     const gracePeriodDate = new Date();
-    gracePeriodDate.setDate(gracePeriodDate.getDate() - 3);
+    gracePeriodDate.setDate(gracePeriodDate.getDate() - 1);
 
     const { data: expiredUsers, error } = await supabaseClient
       .from("profiles")
