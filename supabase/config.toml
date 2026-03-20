@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.create-abacate-subscription]
 verify_jwt = false
+
+[functions.check-subscription-expiry]
+verify_jwt = false
