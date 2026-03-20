@@ -62,7 +62,7 @@ export function PixInvoicesTab() {
         .order("created_at", { ascending: false })
         .limit(200);
 
-      const { data, error } = await query;
+      const { data, error } = await query as any;
       if (error) throw error;
 
       // Also load from checkout_leads for older data
