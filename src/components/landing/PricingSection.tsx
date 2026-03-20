@@ -7,7 +7,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EmailCaptureModal } from "./EmailCaptureModal";
+import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import type { LucideIcon } from "lucide-react";
 
 const PRICE_IDS = {
@@ -102,56 +102,55 @@ export const PricingSection = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
 
-  const handleCheckout = async (planKey: string, guestEmail?: string) => {
-    setLoadingPlan(planKey);
-
+  const handleCardCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlan) return;
+    setLoadingPlan(selectedPlan.key);
     try {
-      const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
-
+      const priceId = PRICE_IDS[selectedPlan.key as keyof typeof PRICE_IDS];
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail },
+        body: { priceId, guestEmail: user ? undefined : customerData.email },
       });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
+      if (response.error) throw new Error(response.error.message);
       if (response.data?.url) {
         window.open(response.data.url, "_blank");
       } else {
         throw new Error("URL de checkout não recebida");
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);
-      toast({
-        title: "Erro ao iniciar checkout",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao iniciar checkout", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
     } finally {
       setLoadingPlan(null);
-      setEmailModalOpen(false);
+      setPaymentModalOpen(false);
+    }
+  };
+
+  const handlePixCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlan) return;
+    setLoadingPlan(selectedPlan.key);
+    try {
+      const response = await supabase.functions.invoke("create-abacate-checkout", {
+        body: { planKey: selectedPlan.key, customerData },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.url) {
+        window.open(response.data.url, "_blank");
+      } else {
+        throw new Error("URL de pagamento PIX não recebida");
+      }
+    } catch (error: any) {
+      toast({ title: "Erro ao iniciar pagamento PIX", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
+    } finally {
+      setLoadingPlan(null);
+      setPaymentModalOpen(false);
     }
   };
 
   const handlePlanClick = (plan: typeof plans[0]) => {
-    if (user) {
-      // User is logged in, go directly to checkout
-      handleCheckout(plan.key);
-    } else {
-      // User is not logged in, show email modal
-      setSelectedPlan(plan);
-      setEmailModalOpen(true);
-    }
-  };
-
-  const handleEmailSubmit = (email: string) => {
-    if (selectedPlan) {
-      handleCheckout(selectedPlan.key, email);
-    }
+    setSelectedPlan(plan);
+    setPaymentModalOpen(true);
   };
 
   return (
@@ -403,12 +402,16 @@ export const PricingSection = () => {
         </div>
       </section>
 
-      <EmailCaptureModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        onSubmit={handleEmailSubmit}
-        loading={loadingPlan !== null}
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
         planName={selectedPlan?.name || ""}
+        planPrice={selectedPlan?.price || ""}
+        planKey={selectedPlan?.key || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
+        loading={loadingPlan !== null}
+        defaultEmail={user?.email || ""}
       />
     </>
   );

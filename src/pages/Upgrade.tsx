@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
+import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import type { LucideIcon } from "lucide-react";
@@ -108,7 +108,7 @@ const Upgrade = () => {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
 
   const currentPlan = profile?.plan || "free";
@@ -207,43 +207,42 @@ const Upgrade = () => {
     return getPlanOrder(planName) < getPlanOrder(currentPlan);
   };
 
-  const handleCheckout = async (planKey: string, guestEmail?: string) => {
-    setLoadingPlan(planKey);
+  const trackCheckoutEvents = (planKey: string) => {
     trackScoreEvent("checkout_started", { plan: planKey });
     trackScoreEvent("plan_selected", { plan: planKey });
-    try {
+    
+    if (user?.id && currentPlan === 'free') {
       const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
+      supabase.from('trial_product_events').insert({
+        user_id: user.id,
+        event_name: 'checkout_started',
+        event_source: 'frontend',
+        metadata: { plan: planKey, price_id: priceId },
+      }).then(() => {});
 
-      // Track checkout_started event for trial users
-      if (user?.id && currentPlan === 'free') {
-        supabase.from('trial_product_events').insert({
-          user_id: user.id,
-          event_name: 'checkout_started',
-          event_source: 'frontend',
-          metadata: { plan: planKey, price_id: priceId },
-        }).then(() => {});
+      try {
+        const attrStr = sessionStorage.getItem('trial_email_attribution');
+        if (attrStr) {
+          const attr = JSON.parse(attrStr);
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          fetch(`${supabaseUrl}/functions/v1/trial-email-tracker?action=conversion&uid=${attr.user_id}&tid=${attr.template_id}&aid=${attr.automation_id}&plan=${planKey}&amount=0`, {
+            method: 'GET',
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+  };
 
-        // Send conversion attribution if came from email CTA
-        try {
-          const attrStr = sessionStorage.getItem('trial_email_attribution');
-          if (attrStr) {
-            const attr = JSON.parse(attrStr);
-            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-            fetch(`${supabaseUrl}/functions/v1/trial-email-tracker?action=conversion&uid=${attr.user_id}&tid=${attr.template_id}&aid=${attr.automation_id}&plan=${planKey}&amount=0`, {
-              method: 'GET',
-            }).catch(() => {});
-          }
-        } catch (_) {}
-      }
-      
+  const handleCardCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlanKey) return;
+    setLoadingPlan(selectedPlanKey);
+    trackCheckoutEvents(selectedPlanKey);
+    try {
+      const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail, couponCode: couponFromUrl || undefined },
+        body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: couponFromUrl || undefined },
       });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
+      if (response.error) throw new Error(response.error.message);
       if (response.data?.url) {
         window.location.href = response.data.url;
       } else {
@@ -251,33 +250,40 @@ const Upgrade = () => {
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
-      toast({
-        title: "Erro ao iniciar checkout",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao iniciar checkout", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
     } finally {
       setLoadingPlan(null);
-      setEmailModalOpen(false);
+      setPaymentModalOpen(false);
+    }
+  };
+
+  const handlePixCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlanKey) return;
+    setLoadingPlan(selectedPlanKey);
+    trackCheckoutEvents(selectedPlanKey);
+    try {
+      const response = await supabase.functions.invoke("create-abacate-checkout", {
+        body: { planKey: selectedPlanKey, customerData, couponCode: couponFromUrl || undefined },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error("URL de pagamento PIX não recebida");
+      }
+    } catch (error: any) {
+      console.error("PIX Checkout error:", error);
+      toast({ title: "Erro ao iniciar pagamento PIX", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
+    } finally {
+      setLoadingPlan(null);
+      setPaymentModalOpen(false);
     }
   };
 
   const handleUpgrade = (planKey: string) => {
     trackScoreEvent("clicked_upgrade_button", { plan: planKey });
-    if (user) {
-      // User is logged in, go directly to checkout
-      handleCheckout(planKey);
-    } else {
-      // User is not logged in, show email modal
-      setSelectedPlanKey(planKey);
-      setEmailModalOpen(true);
-    }
-  };
-
-  const handleEmailSubmit = (email: string) => {
-    if (selectedPlanKey) {
-      handleCheckout(selectedPlanKey, email);
-    }
+    setSelectedPlanKey(planKey);
+    setPaymentModalOpen(true);
   };
 
   const handleManageSubscription = async () => {
@@ -557,12 +563,17 @@ const Upgrade = () => {
         </p>
       </main>
 
-      <EmailCaptureModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        onSubmit={handleEmailSubmit}
-        loading={loadingPlan !== null}
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
         planName={plans.find(p => p.key === selectedPlanKey)?.name || ""}
+        planPrice={plans.find(p => p.key === selectedPlanKey)?.price || ""}
+        planKey={selectedPlanKey || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
+        loading={loadingPlan !== null}
+        defaultEmail={user?.email || ""}
+        defaultName={profile?.name || ""}
       />
     </div>
   );
