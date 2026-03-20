@@ -1834,14 +1834,20 @@ REGRAS:
                         console.log('Stop request detected, ending conversation');
                       }
                       
-                      // Safety pattern 2: "Who are you" questions
+                      // Safety pattern 2: "Who are you" questions - handle differently by level
                       if (!responseMessage) {
                         const whoPatterns = [/quem\s*(é|e)\s*(voce|você|vc)/i, /quem\s*fala/i, /de\s*onde/i, /te\s*conheço/i, /como\s*(conseguiu|pegou)\s*(meu|o)\s*número/i];
                         if (whoPatterns.some(p => p.test(messageText))) {
-                          const whoResponses = ['Desculpa, acho que errei o número!', 'Opa, desculpa! Número errado', 'Ih, desculpa! Número errado'];
-                          responseMessage = whoResponses[Math.floor(Math.random() * whoResponses.length)];
-                          shouldEndConversation = true;
-                          console.log('Who-are-you detected, ending conversation');
+                          if (warmingLevel <= 2) {
+                            // Levels 1-2: wrong number excuse
+                            const whoResponses = ['Desculpa, acho que errei o número!', 'Opa, desculpa! Número errado', 'Ih, desculpa! Número errado'];
+                            responseMessage = whoResponses[Math.floor(Math.random() * whoResponses.length)];
+                          }
+                          // Levels 3-4: let AI handle contextually (will fall through to AI block below)
+                          if (responseMessage) {
+                            shouldEndConversation = true;
+                            console.log('Who-are-you detected (level 1-2), ending conversation');
+                          }
                         }
                       }
                       
@@ -1849,38 +1855,45 @@ REGRAS:
                       if (!responseMessage) {
                         const botPatterns = [/mensagem automática/i, /resposta automática/i, /fora do horário/i, /digite.*opção/i, /selecione.*opção/i, /menu.*opções/i, /assistente virtual/i, /bem-vindo.*atendimento/i, /retornaremos.*breve/i];
                         if (botPatterns.some(p => p.test(messageText))) {
-                          // For bots, just end silently - no point engaging
                           shouldEndConversation = true;
                           console.log('Bot response detected, ending conversation silently');
                         }
                       }
                       
-                      // For ALL other responses: always say it was wrong number and end
+                      // Generate contextual AI response
                       if (!responseMessage && !shouldEndConversation) {
-                        console.log('Generating "wrong number" response for warming');
+                        console.log(`Generating contextual response for warming level ${warmingLevel}`);
                         
-                        // Try AI first for natural variation
+                        // Try AI with lead context
                         const aiResponse = await generateWarmingAIResponse(
                           messageText,
                           warmingLevel,
-                          messagesReceived
+                          messagesReceived,
+                          matchingInteraction.lead_name,
+                          null // company_name not stored in interaction yet
                         );
                         
                         if (aiResponse) {
                           responseMessage = aiResponse;
                         } else {
-                          // Fallback templates - all say it was wrong number
-                          const wrongNumberResponses = [
-                            'opa desculpa, errei o número!',
-                            'ih foi mal, número errado',
-                            'desculpa, confundi o contato!',
-                            'eita errei o número, desculpa!',
-                            'opa desculpa, não era pra vc!',
-                            'foi mal, mandei pro número errado!',
-                          ];
-                          responseMessage = wrongNumberResponses[Math.floor(Math.random() * wrongNumberResponses.length)];
+                          // Fallback templates
+                          if (warmingLevel <= 2) {
+                            const wrongNumberResponses = [
+                              'opa desculpa, errei o número!',
+                              'ih foi mal, número errado',
+                              'desculpa, confundi o contato!',
+                            ];
+                            responseMessage = wrongNumberResponses[Math.floor(Math.random() * wrongNumberResponses.length)];
+                          } else {
+                            const contextResponses = [
+                              'Que bom! Vou te mandar mais informações depois então',
+                              'Obrigado pela atenção! Qualquer coisa estou por aqui',
+                              'Valeu! Se precisar de algo, é só chamar',
+                            ];
+                            responseMessage = contextResponses[Math.floor(Math.random() * contextResponses.length)];
+                          }
                         }
-                        shouldEndConversation = true; // ALWAYS end after responding
+                        shouldEndConversation = true; // End after responding
                         console.log(`Response: "${responseMessage}" - ending conversation`);
                       }
                     } else if (messagesReceived > 1 && !matchingInteraction.conversation_ended) {
