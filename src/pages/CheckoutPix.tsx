@@ -66,12 +66,12 @@ export default function CheckoutPix() {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
   const [couponError, setCouponError] = useState("");
-  const [checkoutStep, setCheckoutStep] = useState<"coupon" | "pix">("coupon");
+  const [pixGenerated, setPixGenerated] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load customer data from sessionStorage (no auth required)
+  // Load customer data from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("pixCustomerData");
     if (stored) {
@@ -85,36 +85,39 @@ export default function CheckoutPix() {
     }
   }, [navigate]);
 
-  // Generate PIX QR Code — only when on pix step
+  // Generate PIX QR Code
+  const generatePix = async () => {
+    if (!customerData || !planKey) return;
+    setPixLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "create-abacate-pix",
+        {
+          body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
+        }
+      );
+      if (error) throw new Error(error.message);
+      if (!data?.brCode) throw new Error("QR Code não gerado");
+      setPixData(data);
+      setPixStatus("PENDING");
+      setPixGenerated(true);
+    } catch (err: any) {
+      toast({
+        title: "Erro ao gerar PIX",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPixLoading(false);
+    }
+  };
+
+  // Auto-generate on mount (without coupon)
   useEffect(() => {
-    if (!customerData || !planKey || pixData || checkoutStep !== "pix") return;
-
-    const generatePix = async () => {
-      setPixLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke(
-          "create-abacate-pix",
-          {
-            body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
-          }
-        );
-        if (error) throw new Error(error.message);
-        if (!data?.brCode) throw new Error("QR Code não gerado");
-        setPixData(data);
-        setPixStatus("PENDING");
-      } catch (err: any) {
-        toast({
-          title: "Erro ao gerar PIX",
-          description: err.message,
-          variant: "destructive",
-        });
-      } finally {
-        setPixLoading(false);
-      }
-    };
-
-    generatePix();
-  }, [customerData, planKey, checkoutStep]);
+    if (customerData && planKey && !pixGenerated && !pixLoading) {
+      generatePix();
+    }
+  }, [customerData, planKey]);
 
   // Countdown timer
   useEffect(() => {
@@ -173,7 +176,6 @@ export default function CheckoutPix() {
     }
   };
 
-
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setCouponValidating(true);
@@ -186,7 +188,10 @@ export default function CheckoutPix() {
       if (data?.valid) {
         setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
         setCouponApplied(true);
-        toast({ title: "Cupom aplicado!", description: `${data.discountKind === "PERCENTAGE" ? data.discount + "%" : "R$ " + (data.discount / 100).toFixed(2)} de desconto` });
+        // Regenerate PIX with coupon
+        setPixData(null);
+        setPixGenerated(false);
+        toast({ title: "Cupom aplicado!", description: `${data.discountKind === "PERCENTAGE" ? data.discount + "%" : "R$ " + (data.discount / 100).toFixed(2)} de desconto. Gerando novo QR Code...` });
       } else {
         setCouponError(data?.error || "Cupom inválido");
         toast({ title: "Cupom inválido", description: data?.error || "Código não encontrado", variant: "destructive" });
@@ -198,6 +203,13 @@ export default function CheckoutPix() {
       setCouponValidating(false);
     }
   };
+
+  // Re-generate after coupon applied
+  useEffect(() => {
+    if (couponApplied && !pixGenerated && !pixLoading && customerData) {
+      generatePix();
+    }
+  }, [couponApplied, pixGenerated, pixLoading, customerData]);
 
   const handleSimulatePayment = async () => {
     if (!pixData) return;
@@ -261,20 +273,12 @@ export default function CheckoutPix() {
             <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
               <Check className="h-3.5 w-3.5" /> Método
             </span>
-            <div className={cn("w-8 h-px", checkoutStep === "pix" ? "bg-emerald-500" : "bg-border")} />
+            <div className={cn("w-8 h-px", pixData ? "bg-emerald-500" : "bg-border")} />
             <span className={cn(
               "flex items-center gap-1.5 font-medium",
-              checkoutStep === "coupon" ? "text-primary" : "text-emerald-600"
+              pixStatus === "PAID" ? "text-emerald-600" : "text-primary"
             )}>
-              {checkoutStep === "pix" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
-              Cupom
-            </span>
-            <div className={cn("w-8 h-px", pixStatus === "PAID" ? "bg-emerald-500" : "bg-border")} />
-            <span className={cn(
-              "flex items-center gap-1.5 font-medium",
-              pixStatus === "PAID" ? "text-emerald-600" : checkoutStep === "pix" ? "text-primary" : "text-muted-foreground"
-            )}>
-              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center text-[10px] font-bold", checkoutStep === "pix" ? "border-primary" : "border-muted-foreground/30")}>{4}</span>}
+              {pixStatus === "PAID" ? <Check className="h-3.5 w-3.5" /> : <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>}
               Pagamento
             </span>
           </div>
@@ -284,217 +288,139 @@ export default function CheckoutPix() {
       {/* Main content */}
       <main className="flex-1 container max-w-5xl mx-auto px-4 py-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          {/* Left — Coupon step or QR Code */}
+          {/* Left — QR Code */}
           <motion.div
             className="flex flex-col items-center gap-6"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            key={checkoutStep}
           >
-            {checkoutStep === "coupon" ? (
-              <>
-                <div className="text-center space-y-1">
-                  <h1 className="text-2xl font-bold text-foreground">Finalizar pagamento</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Tem cupom de desconto? Aplique antes de gerar o PIX
-                  </p>
-                </div>
+            <div className="text-center space-y-1">
+              <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+              <p className="text-sm text-muted-foreground">
+                Escaneie o QR Code com o app do seu banco
+              </p>
+            </div>
 
-                <div className="w-full max-w-md space-y-5">
-                  {/* Coupon field */}
-                  <div className="rounded-2xl border border-border/40 bg-card p-6 space-y-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <Tag className="h-4 w-4 text-primary" />
-                      Cupom de desconto
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Código do cupom"
-                        value={couponCode}
-                        onChange={(e) => {
-                          setCouponCode(e.target.value.toUpperCase());
-                          setCouponApplied(false);
-                          setCouponError("");
-                          setCouponDiscount(null);
-                        }}
-                        disabled={couponApplied || couponValidating}
-                        className="text-sm"
-                        autoFocus
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleApplyCoupon}
-                        disabled={!couponCode.trim() || couponApplied || couponValidating}
-                        className="shrink-0"
-                      >
-                        {couponValidating ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : couponApplied ? (
-                          <Check className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          "Aplicar"
-                        )}
-                      </Button>
-                    </div>
-                    {couponApplied && couponDiscount && (
-                      <p className="text-xs text-emerald-600 font-medium">
-                        ✓ Cupom {couponDiscount.code} aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}
-                      </p>
-                    )}
-                    {couponError && (
-                      <p className="text-xs text-destructive font-medium">
-                        ✗ {couponError}
-                      </p>
-                    )}
+            {pixLoading ? (
+              <div className="flex flex-col items-center gap-4 py-16">
+                <div className="relative">
+                  <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
                   </div>
-
-                  {/* Generate PIX button */}
-                  <Button
-                    onClick={() => setCheckoutStep("pix")}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <QrCode className="h-4 w-4 mr-2" />
-                    {couponApplied ? "Gerar PIX com desconto" : "Gerar QR Code PIX"}
-                  </Button>
-
-                  <p className="text-center text-xs text-muted-foreground">
-                    Sem cupom? Clique acima para gerar o PIX normalmente
-                  </p>
                 </div>
-              </>
-            ) : (
+                <p className="text-muted-foreground text-sm">Gerando QR Code...</p>
+              </div>
+            ) : pixData ? (
               <>
-                <div className="text-center space-y-1">
-                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Escaneie o QR Code com o app do seu banco
-                  </p>
-                </div>
-
-                {pixLoading ? (
-                  <div className="flex flex-col items-center gap-4 py-16">
-                    <div className="relative">
-                      <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                      </div>
+                {/* QR Code card */}
+                <motion.div
+                  className="relative rounded-2xl bg-white p-8 shadow-xl shadow-black/5 border border-border/10"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                >
+                  {pixData.brCodeBase64 ? (
+                    <img
+                      src={pixData.brCodeBase64}
+                      alt="QR Code PIX"
+                      className="w-60 h-60 sm:w-72 sm:h-72"
+                    />
+                  ) : (
+                    <div className="w-60 h-60 flex items-center justify-center text-muted-foreground">
+                      <QrCode className="h-16 w-16 opacity-30" />
                     </div>
-                    <p className="text-muted-foreground text-sm">Gerando QR Code...</p>
-                  </div>
-                ) : pixData ? (
-                  <>
-                    {/* QR Code card */}
+                  )}
+                  {pixStatus === "PAID" && (
                     <motion.div
-                      className="relative rounded-2xl bg-white p-8 shadow-xl shadow-black/5 border border-border/10"
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.2, duration: 0.4 }}
+                      className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
                     >
-                      {pixData.brCodeBase64 ? (
-                        <img
-                          src={pixData.brCodeBase64}
-                          alt="QR Code PIX"
-                          className="w-60 h-60 sm:w-72 sm:h-72"
-                        />
-                      ) : (
-                        <div className="w-60 h-60 flex items-center justify-center text-muted-foreground">
-                          <QrCode className="h-16 w-16 opacity-30" />
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="h-20 w-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                          <PartyPopper className="h-10 w-10 text-white" />
                         </div>
-                      )}
-                      {pixStatus === "PAID" && (
-                        <motion.div
-                          className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                        >
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="h-20 w-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                              <PartyPopper className="h-10 w-10 text-white" />
-                            </div>
-                            <p className="font-bold text-xl text-emerald-600">
-                              Pago com sucesso!
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Redirecionando...
-                            </p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </motion.div>
-
-                    {/* Amount */}
-                    <div className="text-center">
-                      <p className="text-4xl font-bold text-foreground tracking-tight tabular-nums">
-                        {formatCurrency(pixData.amount)}
-                      </p>
-                      {couponApplied && couponDiscount && (
-                        <p className="text-xs text-emerald-600 font-medium mt-1">
-                          Cupom {couponDiscount.code} aplicado
+                        <p className="font-bold text-xl text-emerald-600">
+                          Pago com sucesso!
                         </p>
-                      )}
-                      {timeRemaining && pixStatus !== "PAID" && (
-                        <div className="flex items-center justify-center gap-1.5 mt-2 text-sm text-muted-foreground">
-                          <Timer className="h-3.5 w-3.5" />
-                          <span>Expira em <span className="font-mono font-medium text-foreground">{timeRemaining}</span></span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Copy code */}
-                    <div className="w-full max-w-md space-y-3">
-                      <p className="text-xs text-center text-muted-foreground font-medium uppercase tracking-wider">
-                        Ou copie o código PIX
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          readOnly
-                          value={pixData.brCode}
-                          className="text-xs font-mono truncate bg-muted/40 border-border/30"
-                        />
-                        <Button
-                          onClick={handleCopyCode}
-                          className={cn(
-                            "shrink-0 gap-2 transition-all",
-                            copied
-                              ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                              : "bg-primary hover:bg-primary/90"
-                          )}
-                        >
-                          {copied ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              Copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4" />
-                              Copiar
-                            </>
-                          )}
-                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          Redirecionando...
+                        </p>
                       </div>
-                    </div>
+                    </motion.div>
+                  )}
+                </motion.div>
 
-                    {/* Waiting status */}
-                    {pixStatus !== "PAID" && (
-                      <motion.div
-                        className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500/10 border border-amber-500/20"
-                        animate={{ opacity: [0.7, 1, 0.7] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                      >
-                        <Clock className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-amber-700">
-                          Aguardando pagamento...
-                        </span>
-                      </motion.div>
-                    )}
-                  </>
-                ) : null}
+                {/* Amount */}
+                <div className="text-center">
+                  <p className="text-4xl font-bold text-foreground tracking-tight tabular-nums">
+                    {formatCurrency(pixData.amount)}
+                  </p>
+                  {couponApplied && couponDiscount && (
+                    <p className="text-xs text-emerald-600 font-medium mt-1">
+                      Cupom {couponDiscount.code} aplicado
+                    </p>
+                  )}
+                  {timeRemaining && pixStatus !== "PAID" && (
+                    <div className="flex items-center justify-center gap-1.5 mt-2 text-sm text-muted-foreground">
+                      <Timer className="h-3.5 w-3.5" />
+                      <span>Expira em <span className="font-mono font-medium text-foreground">{timeRemaining}</span></span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Copy code */}
+                <div className="w-full max-w-md space-y-3">
+                  <p className="text-xs text-center text-muted-foreground font-medium uppercase tracking-wider">
+                    Ou copie o código PIX
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      readOnly
+                      value={pixData.brCode}
+                      className="text-xs font-mono truncate bg-muted/40 border-border/30"
+                    />
+                    <Button
+                      onClick={handleCopyCode}
+                      className={cn(
+                        "shrink-0 gap-2 transition-all",
+                        copied
+                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                          : "bg-primary hover:bg-primary/90"
+                      )}
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          Copiar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Waiting status */}
+                {pixStatus !== "PAID" && (
+                  <motion.div
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500/10 border border-amber-500/20"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  >
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700">
+                      Aguardando pagamento...
+                    </span>
+                  </motion.div>
+                )}
               </>
-            )}
+            ) : null}
           </motion.div>
 
           {/* Right sidebar */}
@@ -546,6 +472,54 @@ export default function CheckoutPix() {
                 </div>
               </div>
             </div>
+
+            {/* Coupon — in sidebar */}
+            {pixStatus !== "PAID" && (
+              <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Tag className="h-4 w-4 text-primary" />
+                  Cupom de desconto
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Código do cupom"
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      if (couponApplied) return; // don't reset if already applied
+                      setCouponError("");
+                    }}
+                    disabled={couponApplied || couponValidating}
+                    className="text-sm h-9"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplyCoupon}
+                    disabled={!couponCode.trim() || couponApplied || couponValidating}
+                    className="shrink-0 h-9"
+                  >
+                    {couponValidating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : couponApplied ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      "Aplicar"
+                    )}
+                  </Button>
+                </div>
+                {couponApplied && couponDiscount && (
+                  <p className="text-xs text-emerald-600 font-medium">
+                    ✓ Cupom aplicado — novo QR Code gerado com desconto
+                  </p>
+                )}
+                {couponError && (
+                  <p className="text-xs text-destructive font-medium">
+                    ✗ {couponError}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
