@@ -277,10 +277,68 @@ const Admin = () => {
     } catch (error) {
       console.error('Error loading Stripe MRR:', error);
       setStripeMRRError(error instanceof Error ? error.message : 'Erro ao carregar MRR');
-      // Set empty data when Stripe fails - don't use database fallback
       setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, totalRefunded: 0, refundCount: 0, canceledSubscriptions: 0, churnRate: 0, monthlyMRR: [] });
     } finally {
       setLoadingMRR(false);
+    }
+  }, []);
+
+  // Fetch PIX MRR from database
+  const loadPixMRR = useCallback(async () => {
+    try {
+      const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
+      
+      // Get PIX user IDs
+      const { data: pixInvoiceUsers } = await supabase
+        .from("pix_invoices")
+        .select("user_id");
+      const { data: abacateCheckouts } = await supabase
+        .from("checkout_leads")
+        .select("user_id")
+        .eq("checkout_completed", true)
+        .like("stripe_session_id", "abacate_%");
+      
+      const pixUserIds = new Set<string>();
+      for (const p of pixInvoiceUsers || []) if (p.user_id) pixUserIds.add(p.user_id);
+      for (const c of abacateCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
+      
+      // Get active PIX profiles
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, plan, subscription_current_period_end")
+        .neq("plan", "free")
+        .eq("is_blocked", false);
+      
+      let pixMrrTotal = 0;
+      let pixActiveSubs = 0;
+      const now = new Date();
+      
+      for (const p of profiles || []) {
+        if (!pixUserIds.has(p.id)) continue;
+        if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
+        pixMrrTotal += planPrices[p.plan] || 0;
+        pixActiveSubs++;
+      }
+      
+      // PIX sales this month
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { data: monthInvoices } = await supabase
+        .from("pix_invoices")
+        .select("amount_cents")
+        .eq("status", "paid")
+        .gte("paid_at", monthStart);
+      
+      let pixSalesValue = 0;
+      for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
+      
+      setPixMRR({
+        pixMrr: pixMrrTotal,
+        pixActiveSubscriptions: pixActiveSubs,
+        pixSalesThisMonth: (monthInvoices || []).length,
+        pixSalesValueThisMonth: pixSalesValue,
+      });
+    } catch (error) {
+      console.error('Error loading PIX MRR:', error);
     }
   }, []);
 
