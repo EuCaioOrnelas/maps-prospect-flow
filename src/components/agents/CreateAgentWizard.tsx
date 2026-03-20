@@ -1057,7 +1057,7 @@ ${alwaysWaitResponse ? '- SEMPRE esperar resposta do lead antes de continuar' : 
         schedulingLink, demoLink, websiteLink, checkoutLink, whatsappGroupLink,
         customLinks, mediaFiles: mediaFiles.map(m => ({ name: m.name, url: m.url, type: m.type, when: m.when, fileName: m.fileName })),
         canSendAudio, canSendLinks, canSendMedia, canSendLongMessages,
-        maxChars, maxConsecutiveMessages, alwaysWaitResponse,
+        maxChars, maxConsecutiveMessages, alwaysWaitResponse, respondToGroups,
         wantToTalkPrice, productPrice, priceType, paymentMethods,
         customDifferentials, hasFreeTrial, trialDetails,
         operatingHoursStart, operatingHoursEnd,
