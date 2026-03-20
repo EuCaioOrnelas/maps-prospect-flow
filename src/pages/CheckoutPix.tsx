@@ -112,12 +112,7 @@ export default function CheckoutPix() {
     }
   };
 
-  // Auto-generate on mount (without coupon)
-  useEffect(() => {
-    if (customerData && planKey && !pixGenerated && !pixLoading) {
-      generatePix();
-    }
-  }, [customerData, planKey]);
+  // No auto-generate — user clicks to generate
 
   // Countdown timer
   useEffect(() => {
