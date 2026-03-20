@@ -459,29 +459,39 @@ export default function CheckoutPix() {
                   onChange={(e) => {
                     setCouponCode(e.target.value.toUpperCase());
                     setCouponApplied(false);
+                    setCouponError("");
+                    setCouponDiscount(null);
                   }}
-                  disabled={couponApplied}
+                  disabled={couponApplied || couponValidating}
                   className="text-sm"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim() || couponApplied}
+                  disabled={!couponCode.trim() || couponApplied || couponValidating}
                   className="shrink-0"
                 >
-                  {couponApplied ? (
+                  {couponValidating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : couponApplied ? (
                     <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     "Aplicar"
                   )}
                 </Button>
               </div>
-              {couponApplied && (
+              {couponApplied && couponDiscount && (
                 <p className="text-xs text-emerald-600 font-medium">
-                  ✓ Cupom aplicado com sucesso
+                  ✓ Cupom {couponDiscount.code} aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}
                 </p>
               )}
+              {couponError && (
+                <p className="text-xs text-destructive font-medium">
+                  ✗ {couponError}
+                </p>
+              )}
+            </div>
             </div>
 
             {/* Security badges */}
