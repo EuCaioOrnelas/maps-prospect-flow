@@ -118,21 +118,20 @@ serve(async (req) => {
     const pixData = pixJson.data;
     logStep("PIX QR Code created", { pixId: pixData.id, amount: pixData.amount });
 
-    // Track checkout lead
-    if (userId) {
-      try {
-        await supabaseClient.from("checkout_leads").insert({
-          user_id: userId,
-          email: customerData.email,
-          name: customerData.name,
-          plan_attempted: plan.name,
-          stripe_session_id: `abacate_pix_${pixData.id}`,
-          checkout_started_at: new Date().toISOString(),
-          checkout_completed: false,
-        });
-      } catch (e) {
-        logStep("Failed to track checkout lead", { error: String(e) });
-      }
+    // Track checkout lead (works with or without auth)
+    try {
+      await supabaseClient.from("checkout_leads").insert({
+        user_id: userId || null,
+        email: customerData.email,
+        name: customerData.name,
+        plan_attempted: plan.name,
+        stripe_session_id: `abacate_pix_${pixData.id}`,
+        checkout_started_at: new Date().toISOString(),
+        checkout_completed: false,
+      });
+      logStep("Checkout lead tracked", { userId: userId || "anonymous", email: customerData.email });
+    } catch (e) {
+      logStep("Failed to track checkout lead", { error: String(e) });
     }
 
     return new Response(
