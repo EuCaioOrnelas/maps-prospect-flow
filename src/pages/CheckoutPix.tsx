@@ -579,9 +579,18 @@ export default function CheckoutPix() {
               </button>
             </div>
           </div>
-          <p className="text-center text-[10px] text-muted-foreground/60 mt-4">
-            © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
-          </p>
+          <div className="flex flex-col items-center gap-2 mt-4">
+            <p className="text-[10px] text-muted-foreground/60">
+              Pagamentos processados com segurança por{" "}
+              <a href="https://abacatepay.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
+                AbacatePay
+              </a>
+              {" "}• Intermediadora de pagamentos regulamentada
+            </p>
+            <p className="text-[10px] text-muted-foreground/60">
+              © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
