@@ -52,18 +52,33 @@ export default function CheckoutPix() {
   const [couponApplied, setCouponApplied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load customer data from sessionStorage
+  // Load customer data from sessionStorage & check auth
   useEffect(() => {
-    const stored = sessionStorage.getItem("pixCustomerData");
-    if (stored) {
-      try {
-        setCustomerData(JSON.parse(stored));
-      } catch {
+    const init = async () => {
+      // Check if user is logged in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Faça login primeiro",
+          description: "Você precisa estar logado para concluir a compra.",
+          variant: "destructive",
+        });
+        navigate("/login?redirect=/upgrade");
+        return;
+      }
+
+      const stored = sessionStorage.getItem("pixCustomerData");
+      if (stored) {
+        try {
+          setCustomerData(JSON.parse(stored));
+        } catch {
+          navigate("/upgrade");
+        }
+      } else {
         navigate("/upgrade");
       }
-    } else {
-      navigate("/upgrade");
-    }
+    };
+    init();
   }, [navigate]);
 
   // Generate PIX QR Code
