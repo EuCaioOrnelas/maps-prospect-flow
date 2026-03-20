@@ -1377,30 +1377,59 @@ REGRAS OBRIGATÓRIAS:
                 // ===== MESSAGE SENT (fromMe=true) - MOVE TO "MENSAGEM ENVIADA" =====
                 
                 // ===== PAUSE AI AGENT WHEN USER RESPONDS TO LEAD =====
-                // Check if there's an active AI agent for this number and pause it for this lead
+                // Check if there's an AI agent for this number (active OR paused) and handle handoff
                 // EXCEPTION: "atendimento" objective agents don't follow this rule
                 try {
-                  const { data: activeAgents } = await supabase
+                  const { data: relevantAgents } = await supabase
                     .from('ai_agents')
                     .select('id, name, objective, status, crm_stage_on_unknown')
                     .eq('whatsapp_number_id', whatsappNumber.id)
-                    .eq('status', 'active');
+                    .in('status', ['active', 'paused']);
                   
-                  if (activeAgents && activeAgents.length > 0) {
-                    for (const activeAgent of activeAgents) {
+                  if (relevantAgents && relevantAgents.length > 0) {
+                    // Also try canonical phone format for matching
+                    const canonicalPhoneForAgent = normalizeBrazilianMobileE164(normalizedPhone);
+                    
+                    for (const activeAgent of relevantAgents) {
                       // Skip atendimento agents - they continue even when user responds
                       if (activeAgent.objective === 'atendimento') {
                         console.log(`Skipping pause for atendimento agent: ${activeAgent.name}`);
                         continue;
                       }
                       
-                      // Find conversation for this lead with this agent
-                      const { data: agentConv } = await supabase
+                      // Find conversation for this lead with this agent (try both phone formats)
+                      let agentConv = null;
+                      const { data: conv1 } = await supabase
                         .from('agent_conversations')
                         .select('id, status, agent_manually_paused')
                         .eq('agent_id', activeAgent.id)
                         .eq('lead_phone', normalizedPhone)
-                        .single();
+                        .maybeSingle();
+                      
+                      agentConv = conv1;
+                      
+                      // If not found, try canonical E164 format
+                      if (!agentConv && canonicalPhoneForAgent && canonicalPhoneForAgent !== normalizedPhone) {
+                        const { data: conv2 } = await supabase
+                          .from('agent_conversations')
+                          .select('id, status, agent_manually_paused')
+                          .eq('agent_id', activeAgent.id)
+                          .eq('lead_phone', canonicalPhoneForAgent)
+                          .maybeSingle();
+                        agentConv = conv2;
+                      }
+                      
+                      // Also try without country code prefix
+                      if (!agentConv && normalizedPhone.startsWith('55') && normalizedPhone.length >= 12) {
+                        const withoutCountry = normalizedPhone.slice(2);
+                        const { data: conv3 } = await supabase
+                          .from('agent_conversations')
+                          .select('id, status, agent_manually_paused')
+                          .eq('agent_id', activeAgent.id)
+                          .eq('lead_phone', withoutCountry)
+                          .maybeSingle();
+                        agentConv = conv3;
+                      }
                       
                       if (agentConv) {
                         // Log the user's manual message for AI context
