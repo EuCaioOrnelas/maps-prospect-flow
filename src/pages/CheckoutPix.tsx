@@ -538,7 +538,7 @@ export default function CheckoutPix() {
                 </div>
                 {couponApplied && couponDiscount && (
                   <p className="text-xs text-emerald-600 font-medium">
-                    ✓ Cupom aplicado — novo QR Code gerado com desconto
+                    ✓ Cupom aplicado — {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}% de desconto` : `R$ ${(couponDiscount.discount / 100).toFixed(2)} de desconto`}. Clique em "Gerar QR Code" para aplicar.
                   </p>
                 )}
                 {couponError && (
