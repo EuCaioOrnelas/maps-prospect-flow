@@ -276,8 +276,9 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      if (sub.status === "active" && amountPaid > 0 && !wasRefunded) {
-        activeMRR += amountPaid;
+      if (sub.status === "active" && (recurringAmount > 0 || amountPaid > 0) && !wasRefunded) {
+        // Use recurring price for MRR accuracy; fall back to last invoice amount
+        activeMRR += recurringAmount > 0 ? recurringAmount : amountPaid;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
       }
