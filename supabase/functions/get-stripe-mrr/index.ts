@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         (params) => stripe.subscriptions.list({
           ...params,
           status: "all",
-          expand: ["data.customer", "data.latest_invoice"],
+          expand: ["data.customer", "data.latest_invoice", "data.discount"],
         }),
         10
       ),
