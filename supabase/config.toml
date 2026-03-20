@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.check-subscription-expiry]
 verify_jwt = false
+
+[functions.pix-renewal-cron]
+verify_jwt = false
