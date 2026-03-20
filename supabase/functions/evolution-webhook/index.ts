@@ -1020,17 +1020,57 @@ REGRAS OBRIGATÓRIAS:
                   lead_name: data.pushName || undefined,
                 });
 
-                console.log('=== LEAD LOOKUP ===');
+                console.log('=== LEAD LOOKUP (inbound) ===');
                 console.log('Raw phone:', rawPhone);
                 console.log('Canonical phone:', effectiveLeadPhone);
 
-                let { data: existingLead } = await supabase
-                  .from('leads')
-                  .select('id, phone, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id)
-                  .eq('phone', effectiveLeadPhone)
-                  .limit(1)
-                  .maybeSingle();
+                // Multi-format phone lookup to handle different stored formats
+                const phonesToTryInbound = [effectiveLeadPhone];
+                const rawNormalized = String(rawPhone).replace(/\D/g, '');
+                if (rawNormalized && rawNormalized !== effectiveLeadPhone) {
+                  phonesToTryInbound.push(rawNormalized);
+                }
+                if (rawNormalized.startsWith('55') && rawNormalized.length >= 12) {
+                  phonesToTryInbound.push(rawNormalized.slice(2));
+                }
+                // Also try last 8 digits fallback
+                const last8 = rawNormalized.slice(-8);
+
+                console.log('Phones to try (inbound):', phonesToTryInbound);
+
+                let existingLead: any = null;
+                for (const phoneAttempt of phonesToTryInbound) {
+                  const { data: foundLead } = await supabase
+                    .from('leads')
+                    .select('id, phone, pipeline_stage_id, whatsapp_status')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .eq('phone', phoneAttempt)
+                    .limit(1)
+                    .maybeSingle();
+                  if (foundLead) {
+                    existingLead = foundLead;
+                    console.log(`Lead found with phone format: ${phoneAttempt}`);
+                    break;
+                  }
+                }
+
+                // Last resort: match by last 8 digits using DB function
+                if (!existingLead && last8.length === 8) {
+                  const { data: fallbackLeads } = await supabase
+                    .from('leads')
+                    .select('id, phone, pipeline_stage_id, whatsapp_status')
+                    .eq('user_id', whatsappNumber.user_id)
+                    .limit(5);
+                  
+                  if (fallbackLeads) {
+                    existingLead = fallbackLeads.find((l: any) => 
+                      String(l.phone).replace(/\D/g, '').endsWith(last8)
+                    ) || null;
+                    if (existingLead) {
+                      console.log(`Lead found via last-8-digits fallback: ${existingLead.phone}`);
+                    }
+                  }
+                }
 
                 const { data: respondeuStage } = await supabase
                   .from('pipeline_stages')
