@@ -348,7 +348,7 @@ Deno.serve(async (req) => {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | cancel_end=${(sub as any).cancel_at_period_end} | email=${customerEmail} | plan=${planName} | base=R$${baseAmount} | mrr=R$${mrrAmount}`);
+        console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | email=${customerEmail} | plan=${planName} | mrr=R$${mrrAmount}`);
       }
     }
 
