@@ -699,7 +699,7 @@ const Admin = () => {
       const endISO = statsEndDate.toISOString();
 
       const [
-        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes
+        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes, pixPurchasesRes
       ] = await Promise.all([
         // Users created in period
         supabase.from('profiles').select('id, searches_used, plan, created_at').gte('created_at', startISO).lte('created_at', endISO),
@@ -709,12 +709,16 @@ const Admin = () => {
         supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
         // Agents created in period
         supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
-        // Checkout leads in period
+        // Checkout leads in period (includes both Stripe and AbacatePay)
         supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
-        // Purchases (subscription events) in period
+        // Purchases (subscription events) in period - Stripe
         supabase.from('subscription_events').select('id, user_id, event_type, created_at')
           .in('event_type', ['subscription_created', 'subscription_renewed'])
           .gte('created_at', startISO).lte('created_at', endISO),
+        // PIX purchases in period
+        supabase.from('pix_invoices').select('id, user_id, amount_cents, paid_at')
+          .eq('status', 'paid')
+          .gte('paid_at', startISO).lte('paid_at', endISO),
       ]);
 
       const usersInPeriod = usersRes.data?.length || 0;
@@ -742,8 +746,10 @@ const Admin = () => {
       const checkoutStarted = checkoutData.length;
       const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
       
-      // Purchases
-      const purchasesCount = purchasesRes.data?.length || 0;
+      // Purchases: Stripe + PIX combined
+      const stripePurchasesCount = purchasesRes.data?.length || 0;
+      const pixPurchasesCount = pixPurchasesRes.data?.length || 0;
+      const purchasesCount = stripePurchasesCount + pixPurchasesCount;
       
       // Conversion rate: paying users created in period / total users in period
       const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;
