@@ -248,38 +248,52 @@ Deno.serve(async (req) => {
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
-      const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
+      const unitAmountCents = priceObj?.unit_amount || 0;
+      const interval = priceObj?.recurring?.interval || "month";
+      const intervalCount = priceObj?.recurring?.interval_count || 1;
+      
+      // Normalize to monthly: Stripe MRR always represents monthly revenue
+      let monthlyAmountCents = unitAmountCents;
+      if (interval === "year") {
+        monthlyAmountCents = Math.round(unitAmountCents / (12 * intervalCount));
+      } else if (interval === "week") {
+        monthlyAmountCents = Math.round((unitAmountCents * 52) / (12 * intervalCount));
+      } else if (interval === "day") {
+        monthlyAmountCents = Math.round((unitAmountCents * 365) / (12 * intervalCount));
+      } else {
+        // month
+        monthlyAmountCents = Math.round(unitAmountCents / intervalCount);
+      }
+      
+      const baseAmount = monthlyAmountCents / 100;
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
       
-      // Stripe MRR = base price - active coupon discount
-      // For "repeating" coupons, check if the discount period has ended
-      // For "once" coupons, MRR = base price (discount was one-time only)
+      // Stripe MRR = base monthly price - active coupon discount
       let mrrAmount = baseAmount;
       const discount = (sub as any).discount;
       if (discount?.coupon) {
         const coupon = discount.coupon;
-        const duration = coupon.duration; // "once", "repeating", or "forever"
+        const duration = coupon.duration;
         
         let discountStillActive = false;
         
         if (duration === "forever") {
           discountStillActive = true;
         } else if (duration === "repeating") {
-          // Check if the discount end date has passed
-          const discountEnd = discount.end; // Unix timestamp when discount ends
+          const discountEnd = discount.end;
           if (discountEnd && discountEnd > Math.floor(Date.now() / 1000)) {
             discountStillActive = true;
           } else if (!discountEnd) {
-            // No end date means still active
             discountStillActive = true;
           }
         }
-        // "once" = never affects MRR
+        // "once" = never affects MRR (one-time discount already applied)
         
         if (discountStillActive) {
           if (coupon.percent_off) {
             mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
           } else if (coupon.amount_off) {
+            // amount_off is in centavos (smallest currency unit)
             mrrAmount = Math.max(0, baseAmount - coupon.amount_off / 100);
           }
           mrrAmount = Math.round(mrrAmount * 100) / 100;
