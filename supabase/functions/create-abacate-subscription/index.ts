@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     // 1. Create customer on AbacatePay v2
-    const customerRes = await fetch(`${ABACATE_API_V2}/customer/create`, {
+    const customerRes = await fetch(`${ABACATE_API_V2}/customers/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -81,10 +81,12 @@ serve(async (req) => {
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        name: customerData.name,
-        cellphone: customerData.phone,
-        email: customerData.email,
-        taxId: customerData.taxId,
+        data: {
+          name: customerData.name,
+          cellphone: customerData.phone,
+          email: customerData.email,
+          taxId: customerData.taxId,
+        },
       }),
     });
 

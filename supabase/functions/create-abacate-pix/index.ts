@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_URL = "https://api.abacatepay.com/v1";
+const ABACATE_API = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -88,10 +88,10 @@ serve(async (req) => {
       }
     }
 
-    // Apply coupon discount via AbacatePay API (only if no trial discount)
+    // Apply coupon discount via AbacatePay v2 API (only if no trial discount)
     if (couponCode && !discountApplied) {
       try {
-        const couponRes = await fetch(`${ABACATE_API_URL}/coupon/list`, {
+        const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
           headers: {
             "Authorization": `Bearer ${apiKey}`,
             "Accept": "application/json",
@@ -109,11 +109,10 @@ serve(async (req) => {
 
           if (hasRedeems) {
             if (coupon.discountKind === "PERCENTAGE") {
-              // AbacatePay discount for PERCENTAGE is in basis: 50% = 5000
               const pct = coupon.discount / 100;
               finalPrice = Math.round(finalPrice * (1 - pct / 100));
             } else if (coupon.discountKind === "FIXED") {
-              finalPrice = Math.max(100, finalPrice - coupon.discount); // min R$1.00
+              finalPrice = Math.max(100, finalPrice - coupon.discount);
             }
             discountApplied = true;
             discountSource = `coupon:${couponCode}`;
@@ -129,8 +128,8 @@ serve(async (req) => {
       }
     }
 
-    // Create PIX QR Code
-    const pixRes = await fetch(`${ABACATE_API_URL}/pixQrCode/create`, {
+    // Create PIX QR Code via v2 transparents/create
+    const pixRes = await fetch(`${ABACATE_API}/transparents/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -138,20 +137,23 @@ serve(async (req) => {
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        amount: finalPrice,
-        expiresIn: 1800, // 30 minutes
-        description: `${plan.name} - Assinatura mensal`,
-        customer: {
-          name: customerData.name,
-          cellphone: customerData.phone,
-          email: customerData.email,
-          taxId: customerData.taxId,
-        },
-        metadata: {
-          planKey,
-          planName: plan.name,
-          userId: userId || "anonymous",
-          email: customerData.email,
+        method: "PIX",
+        data: {
+          amount: finalPrice,
+          description: `${plan.name} - Assinatura mensal`,
+          expiresIn: 1800,
+          customer: {
+            name: customerData.name,
+            cellphone: customerData.phone,
+            email: customerData.email,
+            taxId: customerData.taxId,
+          },
+          metadata: {
+            planKey,
+            planName: plan.name,
+            userId: userId || "anonymous",
+            email: customerData.email,
+          },
         },
       }),
     });
@@ -165,7 +167,7 @@ serve(async (req) => {
     const pixData = pixJson.data;
     logStep("PIX QR Code created", { pixId: pixData.id, amount: pixData.amount });
 
-    // Track checkout lead (works with or without auth)
+    // Track checkout lead
     try {
       await supabaseClient.from("checkout_leads").insert({
         user_id: userId || null,

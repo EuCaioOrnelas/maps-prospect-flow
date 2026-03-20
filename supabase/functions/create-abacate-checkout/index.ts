@@ -6,11 +6,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ABACATE_API_URL = "https://api.abacatepay.com/v1";
+const ABACATE_API = "https://api.abacatepay.com/v2";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[ABACATE-CHECKOUT] ${step}${detailsStr}`);
+};
+
+// Product IDs for v2 checkout
+const PRODUCT_IDS: Record<string, string> = {
+  start: "prod_YuGfZ0UukSSPPjbjn3DZJkMK",
+  growth: "prod_fNftUU0Pd5bEgdpnKTADKUgT",
+  scale: "prod_2KNLMQM5QHe0bb1TZxWenx2N",
+};
+
+const PLAN_NAMES: Record<string, string> = {
+  start: "Wiize Start",
+  growth: "Wiize Growth",
+  scale: "Wiize Scale",
 };
 
 serve(async (req) => {
@@ -22,6 +35,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get("ABACATE_PAY_API_KEY");
     if (!apiKey) throw new Error("ABACATE_PAY_API_KEY not configured");
     logStep("API Key loaded", { keyPrefix: apiKey.substring(0, 8) + "...", keyLength: apiKey.length });
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -30,17 +44,10 @@ serve(async (req) => {
     const { planKey, customerData, couponCode } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
+    const productId = PRODUCT_IDS[planKey];
+    if (!productId) throw new Error(`Invalid plan: ${planKey}`);
+
     logStep("Request received", { planKey, email: customerData.email });
-
-    // Plan config (prices in cents)
-    const planConfig: Record<string, { name: string; priceInCents: number }> = {
-      start: { name: "Wiize Start", priceInCents: 19700 },
-      growth: { name: "Wiize Growth", priceInCents: 49700 },
-      scale: { name: "Wiize Scale", priceInCents: 89700 },
-    };
-
-    const plan = planConfig[planKey];
-    if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
     // Authenticate user if possible
     let userId: string | null = null;
@@ -54,8 +61,8 @@ serve(async (req) => {
       }
     }
 
-    // 1. Create customer on AbacatePay
-    const customerRes = await fetch(`${ABACATE_API_URL}/customer/create`, {
+    // 1. Create customer on AbacatePay v2
+    const customerRes = await fetch(`${ABACATE_API}/customers/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -63,10 +70,12 @@ serve(async (req) => {
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        name: customerData.name,
-        cellphone: customerData.phone,
-        email: customerData.email,
-        taxId: customerData.taxId,
+        data: {
+          name: customerData.name,
+          cellphone: customerData.phone,
+          email: customerData.email,
+          taxId: customerData.taxId,
+        },
       }),
     });
 
@@ -79,73 +88,63 @@ serve(async (req) => {
     const customerId = customerJson.data?.id;
     logStep("Customer created", { customerId });
 
-    // 2. Determine price (apply coupon if applicable)
-    let finalPrice = plan.priceInCents;
+    const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
+
+    // 2. Create checkout on AbacatePay v2
+    const checkoutBody: Record<string, any> = {
+      items: [
+        {
+          id: productId,
+          quantity: 1,
+        },
+      ],
+      methods: ["PIX"],
+      customerId: customerId,
+      returnUrl: `${origin}/upgrade?checkout=canceled`,
+      completionUrl: `${origin}/checkout-success?provider=abacate`,
+      metadata: {
+        userId: userId || "anonymous",
+        planKey,
+        email: customerData.email,
+      },
+    };
+
+    // Add coupons if provided
     if (couponCode) {
-      logStep("Coupon provided, will be handled by AbacatePay billing", { couponCode });
+      checkoutBody.coupons = [couponCode];
+      logStep("Coupon attached", { couponCode });
     }
 
-    // Check if user is on free trial and has first campaign promo
-    if (userId) {
-      const { data: profile } = await supabaseClient
-        .from("profiles")
-        .select("plan, trial_start_at")
-        .eq("id", userId)
-        .maybeSingle();
+    logStep("Creating checkout (v2)", checkoutBody);
 
-      if (profile?.plan === "free" && profile?.trial_start_at) {
-        // 50% off first month for trial users
-        finalPrice = Math.round(finalPrice / 2);
-        logStep("Trial user discount applied", { originalPrice: plan.priceInCents, finalPrice });
-      }
-    }
-
-    const origin = req.headers.get("origin") || "https://leadspro.lovable.app";
-
-    // 3. Create billing on AbacatePay
-    const billingRes = await fetch(`${ABACATE_API_URL}/billing/create`, {
+    const checkoutRes = await fetch(`${ABACATE_API}/checkouts/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({
-        frequency: "MULTIPLE_PAYMENTS",
-        methods: ["PIX"],
-        products: [
-          {
-            externalId: `wiize-${planKey}`,
-            name: plan.name,
-            description: `Assinatura mensal do plano ${plan.name}`,
-            quantity: 1,
-            price: finalPrice,
-          },
-        ],
-        returnUrl: `${origin}/upgrade?checkout=canceled`,
-        completionUrl: `${origin}/checkout-success?provider=abacate`,
-        customerId: customerId,
-      }),
+      body: JSON.stringify(checkoutBody),
     });
 
-    const billingJson = await billingRes.json();
-    if (billingJson.error) {
-      logStep("Billing creation failed", billingJson.error);
-      throw new Error(`AbacatePay billing error: ${JSON.stringify(billingJson.error)}`);
+    const checkoutJson = await checkoutRes.json();
+    if (checkoutJson.error || !checkoutRes.ok) {
+      logStep("Checkout creation failed", { status: checkoutRes.status, body: checkoutJson });
+      throw new Error(`AbacatePay checkout error: ${JSON.stringify(checkoutJson.error || checkoutJson)}`);
     }
 
-    const billingData = billingJson.data;
-    logStep("Billing created", { billingId: billingData.id, url: billingData.url });
+    const checkoutData = checkoutJson.data;
+    logStep("Checkout created", { id: checkoutData.id, url: checkoutData.url });
 
-    // 4. Track checkout lead
+    // 3. Track checkout lead
     if (userId) {
       try {
         await supabaseClient.from("checkout_leads").insert({
           user_id: userId,
           email: customerData.email,
           name: customerData.name,
-          plan_attempted: plan.name,
-          stripe_session_id: `abacate_${billingData.id}`,
+          plan_attempted: PLAN_NAMES[planKey] || planKey,
+          stripe_session_id: `abacate_${checkoutData.id}`,
           checkout_started_at: new Date().toISOString(),
           checkout_completed: false,
         });
@@ -156,7 +155,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ url: billingData.url, billingId: billingData.id }),
+      JSON.stringify({ url: checkoutData.url, billingId: checkoutData.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
