@@ -775,7 +775,17 @@ serve(async (req) => {
 
         // === ANTI-LOOP ACTION: Send anti-loop message ===
         if (antiloopDecision.should_trigger_antiloop && currentBotState === 'normal') {
-          const antiloopMessage = 'Percebi que esse contato pode estar em atendimento automático. Pode me encaminhar para o responsável comercial ou informar um contato direto?';
+          const antiloopVariations = [
+            'Percebi que esse contato pode estar em atendimento automático. Pode me encaminhar para o responsável comercial ou informar um contato direto?',
+            'Opa, acho que caí no atendimento automático de vocês 😅 Tem como me passar o contato direto do comercial?',
+            'Parece que estou falando com um sistema automático. Consegue me direcionar pra alguém da equipe comercial?',
+            'Ei, acho que não estou conseguindo falar com uma pessoa diretamente. Tem algum contato direto que posso usar?',
+            'Notei que as respostas parecem automáticas. Teria um contato direto do responsável pra eu falar?',
+            'Opa, parece que estou no atendimento automático. Pode me indicar o WhatsApp ou e-mail de alguém da área comercial?',
+            'Acho que estou conversando com um robô rs. Tem como me passar pra alguém da equipe?',
+            'Desculpa insistir, mas acho que não estou conseguindo falar com uma pessoa. Tem outro contato que eu possa usar?',
+          ];
+          const antiloopMessage = antiloopVariations[Math.floor(Math.random() * antiloopVariations.length)];
 
           console.log(`[anti-loop] TRIGGERING anti-loop message for conv ${conv.id}`);
 
