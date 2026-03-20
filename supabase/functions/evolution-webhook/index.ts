@@ -1383,9 +1383,9 @@ REGRAS OBRIGATÓRIAS:
                 }
                 
                 // Prioritize non-warming agents over warming agents
-                const activeAgent = activeAgents?.find((a: any) => a.objective !== 'warming') 
-                  || activeAgents?.[0] 
-                  || null;
+                const activeAgent = eligibleAgents.length > 0
+                  ? (eligibleAgents.find((a: any) => a.objective !== 'warming') || eligibleAgents[0])
+                  : null;
                 
                 if (activeAgent) {
                   console.log('=== AI AGENT DETECTED ===');
