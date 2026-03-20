@@ -298,6 +298,14 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/admin/pix-billing" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminPixBilling />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Wiize Revenue (admin only, separate layout) */}
                 <Route
                   path="/revenue"
