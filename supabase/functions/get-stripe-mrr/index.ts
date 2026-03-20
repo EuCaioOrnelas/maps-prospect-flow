@@ -300,6 +300,7 @@ Deno.serve(async (req) => {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
+        console.log(`[GET-STRIPE-MRR] Active sub: base=R$${baseAmount}, mrr=R$${mrrAmount}, paid=R$${amountPaid}, discount=${discount?.coupon?.percent_off || discount?.coupon?.amount_off || 'none'}, email=${getCustomerEmail(sub.customer as any)}`);
       }
     }
 
