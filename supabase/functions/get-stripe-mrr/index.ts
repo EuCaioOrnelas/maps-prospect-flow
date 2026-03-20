@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         (params) => stripe.subscriptions.list({
           ...params,
           status: "all",
-          expand: ["data.customer", "data.latest_invoice"],
+          expand: ["data.customer", "data.latest_invoice", "data.discount"],
         }),
         10
       ),
@@ -247,15 +247,49 @@ Deno.serve(async (req) => {
       if (isAdminEmail(customerEmail)) continue;
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
-      // Use the recurring price unit_amount for MRR (not the invoice amount which can have discounts/prorations)
       const priceObj = sub.items.data[0]?.price;
-      const recurringAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
+      const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
+      
+      // Stripe MRR = base price - active coupon discount
+      // For "repeating" coupons, check if the discount period has ended
+      // For "once" coupons, MRR = base price (discount was one-time only)
+      let mrrAmount = baseAmount;
+      const discount = (sub as any).discount;
+      if (discount?.coupon) {
+        const coupon = discount.coupon;
+        const duration = coupon.duration; // "once", "repeating", or "forever"
+        
+        let discountStillActive = false;
+        
+        if (duration === "forever") {
+          discountStillActive = true;
+        } else if (duration === "repeating") {
+          // Check if the discount end date has passed
+          const discountEnd = discount.end; // Unix timestamp when discount ends
+          if (discountEnd && discountEnd > Math.floor(Date.now() / 1000)) {
+            discountStillActive = true;
+          } else if (!discountEnd) {
+            // No end date means still active
+            discountStillActive = true;
+          }
+        }
+        // "once" = never affects MRR
+        
+        if (discountStillActive) {
+          if (coupon.percent_off) {
+            mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
+          } else if (coupon.amount_off) {
+            mrrAmount = Math.max(0, baseAmount - coupon.amount_off / 100);
+          }
+          mrrAmount = Math.round(mrrAmount * 100) / 100;
+        }
+      }
+      
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
 
       // Count cancellations only for subs that had at least one real payment
-      // This includes refunded subs (they DID have a payment, even if refunded)
       const hadAnyPayment = subsWithPayment.has(sub.id) || 
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
@@ -276,9 +310,11 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      if (sub.status === "active" && (recurringAmount > 0 || amountPaid > 0) && !wasRefunded) {
-        // Use recurring price for MRR accuracy; fall back to last invoice amount
-        activeMRR += recurringAmount > 0 ? recurringAmount : amountPaid;
+      // Stripe includes active, trialing, and past_due in MRR calculation
+      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
+      
+      if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
+        activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
       }
