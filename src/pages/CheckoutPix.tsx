@@ -192,7 +192,6 @@ export default function CheckoutPix() {
       }
     } catch (err: any) {
       setCouponError("Erro ao validar cupom");
-      toast({ title: "Erro ao validar cupom", description: err.message, variant: "destructive" });
     } finally {
       setCouponValidating(false);
     }
