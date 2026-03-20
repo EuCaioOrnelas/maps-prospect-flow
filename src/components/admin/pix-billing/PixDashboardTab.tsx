@@ -258,31 +258,6 @@ export function PixDashboardTab() {
         </Card>
       </div>
 
-      {/* Total MRR */}
-      <Card className="border-border/50">
-        <CardContent className="py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrendingUp size={18} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">MRR Total Combinado</p>
-              <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(totalMrr)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span className="text-muted-foreground">Cartão {stripePercent}%</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="text-muted-foreground">PIX {pixPercent}%</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="border-border/50">
