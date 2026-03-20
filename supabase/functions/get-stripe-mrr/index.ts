@@ -247,9 +247,21 @@ Deno.serve(async (req) => {
       if (isAdminEmail(customerEmail)) continue;
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
-      // Use the recurring price unit_amount for MRR (not the invoice amount which can have discounts/prorations)
       const priceObj = sub.items.data[0]?.price;
-      const recurringAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
+      const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
+      
+      // Calculate MRR considering active discounts/coupons (like Stripe does)
+      let mrrAmount = baseAmount;
+      const discount = (sub as any).discount;
+      if (discount?.coupon) {
+        if (discount.coupon.percent_off) {
+          mrrAmount = baseAmount * (1 - discount.coupon.percent_off / 100);
+        } else if (discount.coupon.amount_off) {
+          mrrAmount = Math.max(0, baseAmount - discount.coupon.amount_off / 100);
+        }
+      }
+      mrrAmount = Math.round(mrrAmount * 100) / 100;
+      
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
