@@ -249,25 +249,17 @@ Deno.serve(async (req) => {
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
       const baseAmount = priceObj?.unit_amount ? priceObj.unit_amount / 100 : 0;
-      
-      // Calculate MRR considering active discounts/coupons (like Stripe does)
-      let mrrAmount = baseAmount;
-      const discount = (sub as any).discount;
-      if (discount?.coupon) {
-        if (discount.coupon.percent_off) {
-          mrrAmount = baseAmount * (1 - discount.coupon.percent_off / 100);
-        } else if (discount.coupon.amount_off) {
-          mrrAmount = Math.max(0, baseAmount - discount.coupon.amount_off / 100);
-        }
-      }
-      mrrAmount = Math.round(mrrAmount * 100) / 100;
-      
       const amountPaid = latestInvoice?.amount_paid ? latestInvoice.amount_paid / 100 : 0;
+      
+      // For MRR, use the amount the customer actually pays (latest invoice with discounts applied)
+      // This matches how Stripe calculates MRR in their dashboard
+      // Fall back to base price only if no invoice exists yet
+      const mrrAmount = amountPaid > 0 ? amountPaid : baseAmount;
+      
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
 
       // Count cancellations only for subs that had at least one real payment
-      // This includes refunded subs (they DID have a payment, even if refunded)
       const hadAnyPayment = subsWithPayment.has(sub.id) || 
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
@@ -288,12 +280,10 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      if (sub.status === "active" && (mrrAmount > 0 || amountPaid > 0) && !wasRefunded) {
-        // Use discount-adjusted recurring price; fall back to last invoice if no price info
-        activeMRR += mrrAmount > 0 ? mrrAmount : amountPaid;
+      if (sub.status === "active" && mrrAmount > 0 && !wasRefunded) {
+        activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] Sub ${sub.id}: plan=${planName}, base=${baseAmount}, mrr=${mrrAmount}, discount=${discount?.coupon?.percent_off || discount?.coupon?.amount_off || 'none'}`);
       }
     }
 
