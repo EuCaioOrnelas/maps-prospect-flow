@@ -566,8 +566,8 @@ const Upgrade = () => {
       <PaymentMethodModal
         open={paymentModalOpen}
         onOpenChange={setPaymentModalOpen}
-        planName={selectedPlan?.name || ""}
-        planPrice={selectedPlan?.price || ""}
+        planName={plans.find(p => p.key === selectedPlanKey)?.name || ""}
+        planPrice={plans.find(p => p.key === selectedPlanKey)?.price || ""}
         planKey={selectedPlanKey || ""}
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
