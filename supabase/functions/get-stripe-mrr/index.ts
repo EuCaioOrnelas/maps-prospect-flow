@@ -324,14 +324,18 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      // Stripe includes active, trialing, and past_due in MRR calculation
+      // Stripe MRR: includes active, trialing, past_due
+      // BUT excludes subscriptions scheduled to cancel (cancel_at_period_end = true)
       const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
+      const scheduledToCancel = (sub as any).cancel_at_period_end === true;
       
-      if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
+      if (countsForMrr && mrrAmount > 0 && !wasRefunded && !scheduledToCancel) {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
         console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | email=${customerEmail} | plan=${planName} | base=R$${baseAmount} | mrr=R$${mrrAmount} | discount=${discount?.coupon?.name || 'none'}`);
+      } else if (countsForMrr && mrrAmount > 0 && !wasRefunded && scheduledToCancel) {
+        console.log(`[GET-STRIPE-MRR] EXCLUDED (cancel_at_period_end): ${sub.id} | email=${customerEmail} | mrr=R$${mrrAmount}`);
       }
     }
 
