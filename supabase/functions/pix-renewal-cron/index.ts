@@ -98,7 +98,8 @@ Deno.serve(async (req) => {
     let invoicesCreated = 0;
     let skippedPaid = 0;
 
-    for (const user of targetUsers || []) {
+    for (let i = 0; i < (targetUsers || []).length; i++) {
+      const user = targetUsers![i];
       const daysRemaining = daysUntil(user.subscription_current_period_end);
       const currentStage = getCurrentStage(daysRemaining);
 
@@ -204,8 +205,6 @@ Deno.serve(async (req) => {
 
         // Send stage-specific email
         const expiryDate = formatDate(user.subscription_current_period_end);
-        const planName = PLAN_NAMES[user.plan] || user.plan;
-        const planPrice = PLAN_PRICES[user.plan] || "";
 
         const { error: emailError } = await supabaseClient.functions.invoke("send-email", {
           body: {
@@ -269,6 +268,11 @@ Deno.serve(async (req) => {
 
         processed++;
         if (!emailError) emailsSent++;
+
+        // Add delay between users to avoid rate limits (650ms)
+        if (i < (targetUsers!.length - 1)) {
+          await new Promise(resolve => setTimeout(resolve, 650));
+        }
       } catch (e) {
         logStep("Error processing user", { userId: user.id, error: String(e) });
 
