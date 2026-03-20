@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
+import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import type { LucideIcon } from "lucide-react";
