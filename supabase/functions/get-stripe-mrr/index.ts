@@ -288,11 +288,12 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      if (sub.status === "active" && (recurringAmount > 0 || amountPaid > 0) && !wasRefunded) {
-        // Use recurring price for MRR accuracy; fall back to last invoice amount
-        activeMRR += recurringAmount > 0 ? recurringAmount : amountPaid;
+      if (sub.status === "active" && (mrrAmount > 0 || amountPaid > 0) && !wasRefunded) {
+        // Use discount-adjusted recurring price; fall back to last invoice if no price info
+        activeMRR += mrrAmount > 0 ? mrrAmount : amountPaid;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
+        console.log(`[GET-STRIPE-MRR] Sub ${sub.id}: plan=${planName}, base=${baseAmount}, mrr=${mrrAmount}, discount=${discount?.coupon?.percent_off || discount?.coupon?.amount_off || 'none'}`);
       }
     }
 
