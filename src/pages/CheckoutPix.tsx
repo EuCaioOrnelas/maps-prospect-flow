@@ -112,12 +112,7 @@ export default function CheckoutPix() {
     }
   };
 
-  // Auto-generate on mount (without coupon)
-  useEffect(() => {
-    if (customerData && planKey && !pixGenerated && !pixLoading) {
-      generatePix();
-    }
-  }, [customerData, planKey]);
+  // No auto-generate — user clicks to generate
 
   // Countdown timer
   useEffect(() => {
@@ -204,12 +199,7 @@ export default function CheckoutPix() {
     }
   };
 
-  // Re-generate after coupon applied
-  useEffect(() => {
-    if (couponApplied && !pixGenerated && !pixLoading && customerData) {
-      generatePix();
-    }
-  }, [couponApplied, pixGenerated, pixLoading, customerData]);
+  // After coupon applied, user clicks to generate — no auto-regen
 
   const handleSimulatePayment = async () => {
     if (!pixData) return;
@@ -302,7 +292,20 @@ export default function CheckoutPix() {
               </p>
             </div>
 
-            {pixLoading ? (
+            {!pixData && !pixLoading ? (
+              <div className="flex flex-col items-center gap-5 py-12">
+                <div className="h-24 w-24 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <QrCode className="h-12 w-12 text-primary/60" />
+                </div>
+                <p className="text-sm text-muted-foreground text-center max-w-xs">
+                  {couponApplied ? "Cupom aplicado! Clique abaixo para gerar o QR Code com desconto." : "Tem cupom? Aplique na lateral antes de gerar. Ou clique abaixo para pagar."}
+                </p>
+                <Button onClick={generatePix} size="lg" className="gap-2">
+                  <QrCode className="h-4 w-4" />
+                  {couponApplied ? "Gerar PIX com desconto" : "Gerar QR Code PIX"}
+                </Button>
+              </div>
+            ) : pixLoading ? (
               <div className="flex flex-col items-center gap-4 py-16">
                 <div className="relative">
                   <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
