@@ -186,7 +186,8 @@ export default function CheckoutPix() {
       if (data?.valid) {
         setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
         setCouponApplied(true);
-        setPixData(null); // Regenerate QR with discount
+        setPixData(null);
+        setPixGenTrigger((t) => t + 1); // Trigger regeneration with coupon
         toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
       } else {
         setCouponError(data?.error || "Cupom inválido");
