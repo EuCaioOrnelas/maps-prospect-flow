@@ -1280,16 +1280,16 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Financial Stats - Using Real Stripe MRR */}
+            {/* Financial Stats - Combined MRR */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold flex items-center gap-2">
                 <DollarSign size={20} className="text-success" />
-                Métricas Financeiras (Stripe)
+                Métricas Financeiras
               </h2>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={loadStripeMRR}
+                onClick={() => { loadStripeMRR(); loadPixMRR(); }}
                 disabled={loadingMRR}
                 className="gap-2"
               >
@@ -1301,7 +1301,8 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {/* MRR Total Combinado */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -1310,16 +1311,18 @@ const Admin = () => {
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-success">
-                  R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}
+                  R$ {((stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0)).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  MRR Líquido
-                  {stripeMRR && !stripeMRRError && (
-                    <span className="ml-1 text-xs text-success">✓</span>
-                  )}
+                  MRR Total (Stripe + PIX)
                 </p>
+                <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                  <span>Stripe: R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}</span>
+                  <span>PIX: R$ {(pixMRR?.pixMrr ?? 0).toLocaleString('pt-BR')}</span>
+                </div>
               </div>
 
+              {/* Assinantes Total */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -1327,13 +1330,37 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stripeMRR?.activeSubscriptions ?? 0}
+                  {(stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Assinantes Ativos
+                  Assinantes Ativos (Total)
                 </p>
+                <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                  <span>Stripe: {stripeMRR?.activeSubscriptions ?? 0}</span>
+                  <span>PIX: {pixMRR?.pixActiveSubscriptions ?? 0}</span>
+                </div>
               </div>
 
+              {/* PIX Vendas do Mês */}
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.18s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Receipt size={20} className="text-emerald-500" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">
+                  R$ {(pixMRR?.pixSalesValueThisMonth ?? 0).toLocaleString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Vendas PIX (Mês Atual)
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  {pixMRR?.pixSalesThisMonth ?? 0} pagamento(s)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -1378,7 +1405,6 @@ const Admin = () => {
                   Cancelamentos (Total)
                 </p>
               </div>
-
             </div>
 
             {/* Period Filter */}
