@@ -9,7 +9,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CreditCard, QrCode, ArrowLeft, Shield, User, Mail, Phone, FileText } from "lucide-react";
+import {
+  Loader2,
+  CreditCard,
+  QrCode,
+  ArrowLeft,
+  Shield,
+  User,
+  Mail,
+  Phone,
+  FileText,
+  Check,
+  RefreshCw,
+  BadgeCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -60,7 +73,6 @@ function formatPhone(value: string) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-
 export function PaymentMethodModal({
   open,
   onOpenChange,
@@ -75,6 +87,7 @@ export function PaymentMethodModal({
 }: PaymentMethodModalProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState<"data" | "method">("data");
+  const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: defaultName || "",
     email: defaultEmail || "",
@@ -87,22 +100,22 @@ export function PaymentMethodModal({
     setStep("method");
   };
 
-  const handlePixSelect = () => {
-    // Navigate to dedicated PIX page with data in state
-    const params = new URLSearchParams({
-      plan: planKey,
-      planName,
-      planPrice,
-    });
-    // Store customer data in sessionStorage for the PIX page
-    sessionStorage.setItem("pixCustomerData", JSON.stringify(customerData));
-    onOpenChange(false);
-    navigate(`/checkout-pix?${params.toString()}`);
+  const handleConfirm = () => {
+    if (!selectedMethod) return;
+    if (selectedMethod === "card") {
+      onSelectCard(customerData);
+    } else {
+      const params = new URLSearchParams({ plan: planKey, planName, planPrice });
+      sessionStorage.setItem("pixCustomerData", JSON.stringify(customerData));
+      onOpenChange(false);
+      navigate(`/checkout-pix?${params.toString()}`);
+    }
   };
 
   const handleBack = () => {
     if (step === "method") {
       setStep("data");
+      setSelectedMethod(null);
     } else {
       onOpenChange(false);
     }
@@ -110,7 +123,10 @@ export function PaymentMethodModal({
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(() => setStep("data"), 300);
+    setTimeout(() => {
+      setStep("data");
+      setSelectedMethod(null);
+    }, 300);
   };
 
   const isDataValid =
@@ -226,54 +242,101 @@ export function PaymentMethodModal({
             <div className="space-y-4">
               {/* Card option */}
               <button
-                onClick={() => onSelectCard(customerData)}
+                onClick={() => setSelectedMethod("card")}
                 disabled={loading}
                 className={cn(
-                  "w-full flex items-center gap-4 p-5 rounded-xl border-2 border-border/50",
-                  "hover:border-primary/50 hover:bg-primary/5 transition-all duration-200",
-                  "text-left group active:scale-[0.98]",
+                  "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
+                  selectedMethod === "card"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
                   loading && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                  <CreditCard className="h-6 w-6 text-blue-500" />
+                <div className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-xl transition-colors shrink-0",
+                  selectedMethod === "card" ? "bg-primary/15" : "bg-primary/8 group-hover:bg-primary/12"
+                )}>
+                  <CreditCard className="h-5 w-5 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground">Cartão de Crédito</p>
-                  <p className="text-sm text-muted-foreground">Parcelamento e recorrência automática</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm">Cartão de Crédito</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Recorrência automática • Stripe</p>
                 </div>
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                ) : (
-                  <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary transition-colors" />
-                )}
+                <div className={cn(
+                  "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                  selectedMethod === "card"
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30 group-hover:border-primary/50"
+                )}>
+                  {selectedMethod === "card" && <Check className="h-3 w-3 text-primary-foreground" />}
+                </div>
               </button>
 
               {/* PIX option */}
               <button
-                onClick={handlePixSelect}
+                onClick={() => setSelectedMethod("pix")}
                 disabled={loading}
                 className={cn(
-                  "w-full flex items-center gap-4 p-5 rounded-xl border-2 border-border/50",
-                  "hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-200",
-                  "text-left group active:scale-[0.98]",
+                  "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
+                  selectedMethod === "pix"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
                   loading && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
-                  <QrCode className="h-6 w-6 text-emerald-500" />
+                <div className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-xl transition-colors shrink-0",
+                  selectedMethod === "pix" ? "bg-primary/15" : "bg-primary/8 group-hover:bg-primary/12"
+                )}>
+                  <QrCode className="h-5 w-5 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground">PIX</p>
-                  <p className="text-sm text-muted-foreground">Pagamento instantâneo via QR Code</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pagamento mensal via QR Code</p>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <RefreshCw className="h-3 w-3 text-muted-foreground/70" />
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">
+                      Cobrança recorrente • Regulamentado BACEN
+                    </span>
+                  </div>
                 </div>
-                <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 group-hover:border-emerald-500 transition-colors" />
+                <div className={cn(
+                  "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                  selectedMethod === "pix"
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30 group-hover:border-primary/50"
+                )}>
+                  {selectedMethod === "pix" && <Check className="h-3 w-3 text-primary-foreground" />}
+                </div>
               </button>
 
-              {/* Security badge */}
-              <div className="flex items-center justify-center gap-2 pt-2 text-xs text-muted-foreground">
-                <Shield className="h-3.5 w-3.5" />
-                <span>Pagamento 100% seguro e criptografado</span>
+              {/* Confirm button */}
+              <Button
+                onClick={handleConfirm}
+                disabled={!selectedMethod || loading}
+                className="w-full mt-2"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Processando...
+                  </>
+                ) : (
+                  "Continuar para pagamento"
+                )}
+              </Button>
+
+              {/* Trust badges */}
+              <div className="flex items-center justify-center gap-4 pt-1 text-[10px] text-muted-foreground/60">
+                <span className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Pagamento seguro
+                </span>
+                <span className="flex items-center gap-1">
+                  <BadgeCheck className="h-3 w-3" />
+                  Dados criptografados
+                </span>
               </div>
             </div>
           )}

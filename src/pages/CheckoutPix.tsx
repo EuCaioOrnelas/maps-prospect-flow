@@ -63,6 +63,10 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [pixGenTrigger, setPixGenTrigger] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -110,7 +114,7 @@ export default function CheckoutPix() {
     };
 
     generatePix();
-  }, [customerData, planKey]);
+  }, [customerData, planKey, pixGenTrigger]);
 
   // Countdown timer
   useEffect(() => {
@@ -169,9 +173,6 @@ export default function CheckoutPix() {
     }
   };
 
-  const [couponValidating, setCouponValidating] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
-  const [couponError, setCouponError] = useState("");
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -185,7 +186,8 @@ export default function CheckoutPix() {
       if (data?.valid) {
         setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
         setCouponApplied(true);
-        setPixData(null); // Regenerate QR with discount
+        setPixData(null);
+        setPixGenTrigger((t) => t + 1); // Trigger regeneration with coupon
         toast({ title: "Cupom aplicado!", description: "Gerando novo QR Code com desconto..." });
       } else {
         setCouponError(data?.error || "Cupom inválido");
@@ -529,6 +531,12 @@ export default function CheckoutPix() {
                     <p className="text-xs text-muted-foreground">Seu plano é ativado imediatamente após o pagamento</p>
                   </div>
                 </div>
+                <div className="h-px bg-border/30 my-1" />
+                <div className="flex items-center gap-2 pt-1">
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -577,9 +585,18 @@ export default function CheckoutPix() {
               </button>
             </div>
           </div>
-          <p className="text-center text-[10px] text-muted-foreground/60 mt-4">
-            © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
-          </p>
+          <div className="flex flex-col items-center gap-2 mt-4">
+            <p className="text-[10px] text-muted-foreground/60">
+              Pagamentos processados com segurança por{" "}
+              <a href="https://abacatepay.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
+                AbacatePay
+              </a>
+              {" "}• Intermediadora de pagamentos regulamentada
+            </p>
+            <p className="text-[10px] text-muted-foreground/60">
+              © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
