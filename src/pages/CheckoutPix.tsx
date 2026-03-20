@@ -114,7 +114,7 @@ export default function CheckoutPix() {
     };
 
     generatePix();
-  }, [customerData, planKey]);
+  }, [customerData, planKey, pixGenTrigger]);
 
   // Countdown timer
   useEffect(() => {
