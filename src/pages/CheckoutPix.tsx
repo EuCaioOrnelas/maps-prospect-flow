@@ -66,7 +66,7 @@ export default function CheckoutPix() {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
   const [couponError, setCouponError] = useState("");
-  const [pixGenTrigger, setPixGenTrigger] = useState(0);
+  const [checkoutStep, setCheckoutStep] = useState<"coupon" | "pix">("coupon");
   const [timeRemaining, setTimeRemaining] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
