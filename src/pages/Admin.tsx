@@ -214,6 +214,7 @@ const Admin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
+  const [pixMRR, setPixMRR] = useState<PixMRRData | null>(null);
   const [loadingMRR, setLoadingMRR] = useState(false);
   const [stripeMRRError, setStripeMRRError] = useState<string | null>(null);
   const [salesChartData, setSalesChartData] = useState<SalesChartData[]>([]);
