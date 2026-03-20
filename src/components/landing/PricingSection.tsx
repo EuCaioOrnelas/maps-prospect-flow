@@ -127,25 +127,9 @@ export const PricingSection = () => {
     }
   };
 
-  const handlePixCheckout = async (customerData: CustomerData) => {
-    if (!selectedPlan) return;
-    setLoadingPlan(selectedPlan.key);
-    try {
-      const response = await supabase.functions.invoke("create-abacate-checkout", {
-        body: { planKey: selectedPlan.key, customerData },
-      });
-      if (response.error) throw new Error(response.error.message);
-      if (response.data?.url) {
-        window.location.href = response.data.url;
-      } else {
-        throw new Error("URL de pagamento PIX não recebida");
-      }
-    } catch (error: any) {
-      toast({ title: "Erro ao iniciar pagamento PIX", description: error.message || "Tente novamente mais tarde", variant: "destructive" });
-    } finally {
-      setLoadingPlan(null);
-      setPaymentModalOpen(false);
-    }
+  const handlePixCheckout = async (_customerData: CustomerData) => {
+    // PIX is now handled inline in the modal via QR Code
+    // This callback is kept for interface compatibility but no longer redirects
   };
 
   const handlePlanClick = (plan: typeof plans[0]) => {
