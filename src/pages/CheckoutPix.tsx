@@ -537,7 +537,6 @@ export default function CheckoutPix() {
                     Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
                   </p>
                 </div>
-                </div>
               </div>
             </div>
 
