@@ -647,6 +647,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
       setIsWarmed(editingAgent.is_warmed);
       setMaxReplies(editingAgent.max_replies);
       if (editingAgent.max_response_chars) setMaxChars(String(editingAgent.max_response_chars));
+      if (editingAgent.respond_to_groups !== undefined) setRespondToGroups(editingAgent.respond_to_groups ?? false);
       
       // Skip to basics step when editing (skip start-choice and template)
       setCreationMode('scratch');
