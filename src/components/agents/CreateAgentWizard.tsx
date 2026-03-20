@@ -709,6 +709,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
     setMaxChars("300");
     setMaxConsecutiveMessages("2");
     setAlwaysWaitResponse(true);
+    setRespondToGroups(false);
     setOperatingHoursStart("08:00");
     setOperatingHoursEnd("18:00");
     setIsWarmed(false);
