@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.anti-loop-classifier]
 verify_jwt = false
+
+[functions.create-abacate-subscription]
+verify_jwt = false
