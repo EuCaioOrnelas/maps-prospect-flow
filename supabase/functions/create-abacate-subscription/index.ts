@@ -81,12 +81,10 @@ serve(async (req) => {
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        data: {
-          name: customerData.name,
-          cellphone: customerData.phone,
-          email: customerData.email,
-          taxId: customerData.taxId,
-        },
+        name: customerData.name,
+        cellphone: customerData.phone,
+        email: customerData.email,
+        taxId: customerData.taxId,
       }),
     });
 
