@@ -1089,8 +1089,23 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Get unique message avoiding recent ones in database
-        const message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages)
+        // Get message - use AI for levels 3-4 with lead context, templates for levels 1-2
+        let message: string;
+        const currentLevel = getWarmingLevel(advancedDay);
+        
+        if (currentLevel >= 3 && validLead.company_name) {
+          // Use AI to generate contextual prospecting message
+          message = await generateContextualOpeningMessage(
+            validLead.company_name,
+            validLead.contact_name || null,
+            (validLead as any).category || null,
+            (validLead as any).city || null,
+            currentLevel
+          );
+        } else {
+          // Use template messages for levels 1-2 or leads without company data
+          message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+        }
         console.log(`Sending to validated lead ${validatedPhone}: "${message}"`)
 
         // Send message
