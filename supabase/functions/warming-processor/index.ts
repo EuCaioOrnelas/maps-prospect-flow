@@ -494,7 +494,7 @@ async function validateWhatsAppNumber(
   }
 }
 
-// Generate contextual opening message using Lovable AI for levels 3-4
+// Generate contextual opening message using OpenAI for levels 3-4
 async function generateContextualOpeningMessage(
   companyName: string,
   contactName: string | null,
@@ -502,10 +502,10 @@ async function generateContextualOpeningMessage(
   city: string | null,
   level: number
 ): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
   
-  if (!LOVABLE_API_KEY) {
-    console.log('LOVABLE_API_KEY not available, falling back to template');
+  if (!OPENAI_API_KEY) {
+    console.log('OPENAI_API_KEY not available, falling back to template');
     const fallbacks = [
       `Oi, tudo bem? Vi seu trabalho e achei interessante!`,
       `Olá! Vi que vocês trabalham na região, posso mandar uma info rápida?`,
@@ -543,24 +543,25 @@ EXEMPLOS DE BOAS MENSAGENS:
 - "Olá! Achei o perfil de vocês buscando [segmento] na região, posso trocar uma ideia rápida?"
 - "Oi [nome], tudo bem? Vi que a [empresa] atua com [segmento], queria conhecer melhor o trabalho de vocês"`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-lite',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: 'Gere uma mensagem de abertura natural para este lead.' }
         ],
         temperature: 1.0,
+        max_tokens: 150,
       }),
     });
 
     if (!response.ok) {
-      console.error('AI contextual message error:', response.status);
+      console.error('OpenAI contextual message error:', response.status);
       return `Oi, tudo bem? Vi o trabalho de vocês com ${category || 'empresas da região'} e achei interessante!`;
     }
 
@@ -569,13 +570,10 @@ EXEMPLOS DE BOAS MENSAGENS:
     
     if (aiMessage) {
       aiMessage = aiMessage.replace(/^["']|["']$/g, '').trim();
-      console.log('AI generated contextual opening:', aiMessage);
+      console.log('OpenAI generated contextual opening:', aiMessage);
       return aiMessage;
     }
-  } catch (error) {
-    console.error('Error generating contextual message:', error);
-  }
-  
+
   // Fallback
   return `Oi, tudo bem? Vi que vocês trabalham com ${category || 'empresas da região'} e queria trocar uma ideia!`;
 }
