@@ -573,7 +573,10 @@ EXEMPLOS DE BOAS MENSAGENS:
       console.log('OpenAI generated contextual opening:', aiMessage);
       return aiMessage;
     }
-
+  } catch (error) {
+    console.error('Error generating contextual message:', error);
+  }
+  
   // Fallback
   return `Oi, tudo bem? Vi que vocês trabalham com ${category || 'empresas da região'} e queria trocar uma ideia!`;
 }
