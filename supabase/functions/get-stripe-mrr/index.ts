@@ -289,6 +289,8 @@ Deno.serve(async (req) => {
         }
         // "once" = never affects MRR (one-time discount already applied)
         
+        console.log(`[GET-STRIPE-MRR] Coupon detail: sub=${sub.id} | email=${customerEmail} | coupon=${coupon.name} | duration=${duration} | percent_off=${coupon.percent_off} | amount_off=${coupon.amount_off} | end=${discount.end} | active=${discountStillActive}`);
+        
         if (discountStillActive) {
           if (coupon.percent_off) {
             mrrAmount = baseAmount * (1 - coupon.percent_off / 100);
@@ -324,18 +326,14 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      // Stripe MRR: includes active, trialing, past_due
-      // BUT excludes subscriptions scheduled to cancel (cancel_at_period_end = true)
+      // Stripe MRR: includes active, trialing, past_due (including cancel_at_period_end)
       const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status);
-      const scheduledToCancel = (sub as any).cancel_at_period_end === true;
       
-      if (countsForMrr && mrrAmount > 0 && !wasRefunded && !scheduledToCancel) {
+      if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | email=${customerEmail} | plan=${planName} | base=R$${baseAmount} | mrr=R$${mrrAmount} | discount=${discount?.coupon?.name || 'none'}`);
-      } else if (countsForMrr && mrrAmount > 0 && !wasRefunded && scheduledToCancel) {
-        console.log(`[GET-STRIPE-MRR] EXCLUDED (cancel_at_period_end): ${sub.id} | email=${customerEmail} | mrr=R$${mrrAmount}`);
+        console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | cancel_end=${(sub as any).cancel_at_period_end} | email=${customerEmail} | plan=${planName} | base=R$${baseAmount} | mrr=R$${mrrAmount}`);
       }
     }
 
