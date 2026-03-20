@@ -27,10 +27,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData } = await req.json();
+    const { planKey, customerData, couponCode } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
-    logStep("Request received", { planKey, email: customerData.email });
+    logStep("Request received", { planKey, email: customerData.email, couponCode: couponCode || "none" });
 
     // Plan config (prices in cents)
     const planConfig: Record<string, { name: string; priceInCents: number }> = {
@@ -67,8 +67,12 @@ serve(async (req) => {
       }
     }
 
-    // Determine final price (trial discount)
+    // Determine final price
     let finalPrice = plan.priceInCents;
+    let discountApplied = false;
+    let discountSource = "";
+
+    // Apply trial discount if applicable
     if (userId) {
       const { data: profile } = await supabaseClient
         .from("profiles")
@@ -78,7 +82,30 @@ serve(async (req) => {
 
       if (profile?.plan === "free" && profile?.trial_start_at) {
         finalPrice = Math.round(finalPrice / 2);
+        discountApplied = true;
+        discountSource = "trial";
         logStep("Trial user discount applied", { originalPrice: plan.priceInCents, finalPrice });
+      }
+    }
+
+    // Apply coupon discount (only if no trial discount already applied)
+    if (couponCode && !discountApplied) {
+      // Configurable coupons - add more as needed
+      const validCoupons: Record<string, { discountPercent: number; description: string }> = {
+        "WIIZE50": { discountPercent: 50, description: "50% off" },
+        "WIIZE30": { discountPercent: 30, description: "30% off" },
+        "WIIZE20": { discountPercent: 20, description: "20% off" },
+        "LANCAMENTO": { discountPercent: 40, description: "40% off lançamento" },
+      };
+
+      const coupon = validCoupons[couponCode.toUpperCase()];
+      if (coupon) {
+        finalPrice = Math.round(finalPrice * (1 - coupon.discountPercent / 100));
+        discountApplied = true;
+        discountSource = `coupon:${couponCode}`;
+        logStep("Coupon discount applied", { couponCode, discountPercent: coupon.discountPercent, finalPrice });
+      } else {
+        logStep("Invalid coupon code", { couponCode });
       }
     }
 
@@ -118,21 +145,20 @@ serve(async (req) => {
     const pixData = pixJson.data;
     logStep("PIX QR Code created", { pixId: pixData.id, amount: pixData.amount });
 
-    // Track checkout lead
-    if (userId) {
-      try {
-        await supabaseClient.from("checkout_leads").insert({
-          user_id: userId,
-          email: customerData.email,
-          name: customerData.name,
-          plan_attempted: plan.name,
-          stripe_session_id: `abacate_pix_${pixData.id}`,
-          checkout_started_at: new Date().toISOString(),
-          checkout_completed: false,
-        });
-      } catch (e) {
-        logStep("Failed to track checkout lead", { error: String(e) });
-      }
+    // Track checkout lead (works with or without auth)
+    try {
+      await supabaseClient.from("checkout_leads").insert({
+        user_id: userId || null,
+        email: customerData.email,
+        name: customerData.name,
+        plan_attempted: plan.name,
+        stripe_session_id: `abacate_pix_${pixData.id}`,
+        checkout_started_at: new Date().toISOString(),
+        checkout_completed: false,
+      });
+      logStep("Checkout lead tracked", { userId: userId || "anonymous", email: customerData.email });
+    } catch (e) {
+      logStep("Failed to track checkout lead", { error: String(e) });
     }
 
     return new Response(

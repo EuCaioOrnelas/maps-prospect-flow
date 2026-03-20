@@ -54,8 +54,7 @@ serve(async (req) => {
 
     // If paid, activate the plan
     if (status === "PAID") {
-      // Get the full PIX data to find metadata
-      // We need to find the user by the checkout_leads record
+      // Find the checkout lead by pixId
       const { data: leads } = await supabaseClient
         .from("checkout_leads")
         .select("user_id, email, plan_attempted")
@@ -65,7 +64,6 @@ serve(async (req) => {
 
       if (leads && leads.length > 0) {
         const lead = leads[0];
-        // Determine plan key from plan_attempted
         const planNameToKey: Record<string, string> = {
           "Wiize Start": "start",
           "Wiize Growth": "growth",
@@ -76,21 +74,54 @@ serve(async (req) => {
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
 
-        const { error: updateError } = await supabaseClient
-          .from("profiles")
-          .update({
-            plan: planKey,
-            searches_limit: searchesLimit,
-            searches_used: 0,
-            subscription_current_period_end: periodEnd.toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", lead.user_id);
+        // Only update profile if user_id exists (user was logged in)
+        if (lead.user_id) {
+          const { error: updateError } = await supabaseClient
+            .from("profiles")
+            .update({
+              plan: planKey,
+              searches_limit: searchesLimit,
+              searches_used: 0,
+              subscription_current_period_end: periodEnd.toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", lead.user_id);
 
-        if (updateError) {
-          logStep("Failed to update profile", { error: updateError.message });
+          if (updateError) {
+            logStep("Failed to update profile", { error: updateError.message });
+          } else {
+            logStep("Profile updated to plan", { userId: lead.user_id, planKey });
+          }
         } else {
-          logStep("Profile updated to plan", { userId: lead.user_id, planKey });
+          // No user_id - try to find profile by email
+          const { data: profileByEmail } = await supabaseClient
+            .from("profiles")
+            .select("id")
+            .eq("email", lead.email)
+            .maybeSingle();
+
+          if (profileByEmail) {
+            await supabaseClient
+              .from("profiles")
+              .update({
+                plan: planKey,
+                searches_limit: searchesLimit,
+                searches_used: 0,
+                subscription_current_period_end: periodEnd.toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", profileByEmail.id);
+
+            // Also update the checkout_leads with the found user_id
+            await supabaseClient
+              .from("checkout_leads")
+              .update({ user_id: profileByEmail.id })
+              .eq("stripe_session_id", `abacate_pix_${pixId}`);
+
+            logStep("Profile found by email and updated", { userId: profileByEmail.id, planKey });
+          } else {
+            logStep("No profile found - plan will be activated on account creation", { email: lead.email });
+          }
         }
 
         // Mark checkout as completed
