@@ -136,6 +136,13 @@ interface StripeMRRData {
   monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
 
+interface PixMRRData {
+  pixMrr: number;
+  pixActiveSubscriptions: number;
+  pixSalesThisMonth: number;
+  pixSalesValueThisMonth: number;
+}
+
 interface SalesChartData {
   month: string;
   newSales: number;
@@ -207,6 +214,7 @@ const Admin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
+  const [pixMRR, setPixMRR] = useState<PixMRRData | null>(null);
   const [loadingMRR, setLoadingMRR] = useState(false);
   const [stripeMRRError, setStripeMRRError] = useState<string | null>(null);
   const [salesChartData, setSalesChartData] = useState<SalesChartData[]>([]);
@@ -269,10 +277,68 @@ const Admin = () => {
     } catch (error) {
       console.error('Error loading Stripe MRR:', error);
       setStripeMRRError(error instanceof Error ? error.message : 'Erro ao carregar MRR');
-      // Set empty data when Stripe fails - don't use database fallback
       setStripeMRR({ totalMRR: 0, activeSubscriptions: 0, totalRefunded: 0, refundCount: 0, canceledSubscriptions: 0, churnRate: 0, monthlyMRR: [] });
     } finally {
       setLoadingMRR(false);
+    }
+  }, []);
+
+  // Fetch PIX MRR from database
+  const loadPixMRR = useCallback(async () => {
+    try {
+      const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
+      
+      // Get PIX user IDs
+      const { data: pixInvoiceUsers } = await supabase
+        .from("pix_invoices")
+        .select("user_id");
+      const { data: abacateCheckouts } = await supabase
+        .from("checkout_leads")
+        .select("user_id")
+        .eq("checkout_completed", true)
+        .like("stripe_session_id", "abacate_%");
+      
+      const pixUserIds = new Set<string>();
+      for (const p of pixInvoiceUsers || []) if (p.user_id) pixUserIds.add(p.user_id);
+      for (const c of abacateCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
+      
+      // Get active PIX profiles
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, plan, subscription_current_period_end")
+        .neq("plan", "free")
+        .eq("is_blocked", false);
+      
+      let pixMrrTotal = 0;
+      let pixActiveSubs = 0;
+      const now = new Date();
+      
+      for (const p of profiles || []) {
+        if (!pixUserIds.has(p.id)) continue;
+        if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
+        pixMrrTotal += planPrices[p.plan] || 0;
+        pixActiveSubs++;
+      }
+      
+      // PIX sales this month
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { data: monthInvoices } = await supabase
+        .from("pix_invoices")
+        .select("amount_cents")
+        .eq("status", "paid")
+        .gte("paid_at", monthStart);
+      
+      let pixSalesValue = 0;
+      for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
+      
+      setPixMRR({
+        pixMrr: pixMrrTotal,
+        pixActiveSubscriptions: pixActiveSubs,
+        pixSalesThisMonth: (monthInvoices || []).length,
+        pixSalesValueThisMonth: pixSalesValue,
+      });
+    } catch (error) {
+      console.error('Error loading PIX MRR:', error);
     }
   }, []);
 
@@ -623,7 +689,7 @@ const Admin = () => {
     }
 
     setIsAdmin(true);
-    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadSalesChartData(), loadPeriodStats()]);
+    await Promise.all([loadData(), loadApiKeyStatus(), loadStripeMRR(), loadPixMRR(), loadSalesChartData(), loadPeriodStats()]);
   };
 
   // Load period-filtered stats
@@ -633,7 +699,7 @@ const Admin = () => {
       const endISO = statsEndDate.toISOString();
 
       const [
-        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes
+        usersRes, searchesRes, campaignsRes, agentsRes, checkoutRes, purchasesRes, pixPurchasesRes
       ] = await Promise.all([
         // Users created in period
         supabase.from('profiles').select('id, searches_used, plan, created_at').gte('created_at', startISO).lte('created_at', endISO),
@@ -643,12 +709,16 @@ const Admin = () => {
         supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
         // Agents created in period
         supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
-        // Checkout leads in period
+        // Checkout leads in period (includes both Stripe and AbacatePay)
         supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
-        // Purchases (subscription events) in period
+        // Purchases (subscription events) in period - Stripe
         supabase.from('subscription_events').select('id, user_id, event_type, created_at')
           .in('event_type', ['subscription_created', 'subscription_renewed'])
           .gte('created_at', startISO).lte('created_at', endISO),
+        // PIX purchases in period
+        supabase.from('pix_invoices').select('id, user_id, amount_cents, paid_at')
+          .eq('status', 'paid')
+          .gte('paid_at', startISO).lte('paid_at', endISO),
       ]);
 
       const usersInPeriod = usersRes.data?.length || 0;
@@ -676,8 +746,10 @@ const Admin = () => {
       const checkoutStarted = checkoutData.length;
       const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
       
-      // Purchases
-      const purchasesCount = purchasesRes.data?.length || 0;
+      // Purchases: Stripe + PIX combined
+      const stripePurchasesCount = purchasesRes.data?.length || 0;
+      const pixPurchasesCount = pixPurchasesRes.data?.length || 0;
+      const purchasesCount = stripePurchasesCount + pixPurchasesCount;
       
       // Conversion rate: paying users created in period / total users in period
       const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;
@@ -1208,16 +1280,16 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Financial Stats - Using Real Stripe MRR */}
+            {/* Financial Stats - Combined MRR */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold flex items-center gap-2">
                 <DollarSign size={20} className="text-success" />
-                Métricas Financeiras (Stripe)
+                Métricas Financeiras
               </h2>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={loadStripeMRR}
+                onClick={() => { loadStripeMRR(); loadPixMRR(); }}
                 disabled={loadingMRR}
                 className="gap-2"
               >
@@ -1229,7 +1301,8 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {/* MRR Total Combinado */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -1238,16 +1311,18 @@ const Admin = () => {
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-success">
-                  R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}
+                  R$ {((stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0)).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  MRR Líquido
-                  {stripeMRR && !stripeMRRError && (
-                    <span className="ml-1 text-xs text-success">✓</span>
-                  )}
+                  MRR Total (Stripe + PIX)
                 </p>
+                <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                  <span>Stripe: R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}</span>
+                  <span>PIX: R$ {(pixMRR?.pixMrr ?? 0).toLocaleString('pt-BR')}</span>
+                </div>
               </div>
 
+              {/* Assinantes Total */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -1255,13 +1330,37 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold">
-                  {stripeMRR?.activeSubscriptions ?? 0}
+                  {(stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Assinantes Ativos
+                  Assinantes Ativos (Total)
                 </p>
+                <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                  <span>Stripe: {stripeMRR?.activeSubscriptions ?? 0}</span>
+                  <span>PIX: {pixMRR?.pixActiveSubscriptions ?? 0}</span>
+                </div>
               </div>
 
+              {/* PIX Vendas do Mês */}
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.18s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Receipt size={20} className="text-emerald-500" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">
+                  R$ {(pixMRR?.pixSalesValueThisMonth ?? 0).toLocaleString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Vendas PIX (Mês Atual)
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  {pixMRR?.pixSalesThisMonth ?? 0} pagamento(s)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -1306,7 +1405,6 @@ const Admin = () => {
                   Cancelamentos (Total)
                 </p>
               </div>
-
             </div>
 
             {/* Period Filter */}

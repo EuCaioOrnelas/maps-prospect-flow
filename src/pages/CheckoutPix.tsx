@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { Logo } from "@/components/Logo";
 import {
   QrCode,
@@ -36,6 +38,8 @@ function formatCurrency(cents: number) {
 export default function CheckoutPix() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { trackScoreEvent } = useUserScoreTracking();
 
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
@@ -83,6 +87,10 @@ export default function CheckoutPix() {
     if (!customerData || !planKey) return;
     setLoading(true);
     setRedirecting(false);
+    
+    // Track checkout initiation for scoring
+    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
+    
     try {
       const { data, error } = await supabase.functions.invoke(
         "create-abacate-subscription",
