@@ -492,7 +492,6 @@ export default function CheckoutPix() {
                 </p>
               )}
             </div>
-            </div>
 
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
