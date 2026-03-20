@@ -63,7 +63,10 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState("");
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [pixGenTrigger, setPixGenTrigger] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
