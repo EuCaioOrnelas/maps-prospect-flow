@@ -159,13 +159,13 @@ export function PixEmailTemplatesTab() {
       .replace(/\{\{pix_copy_paste\}\}/g, "00020126580014br.gov.bcb...");
 
     return `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <div style="background:#3daa57;padding:24px 32px;text-align:center;">
           <span style="color:#fff;font-size:20px;font-weight:700;">Wiize</span>
         </div>
-        <div style="padding:32px;">
-          <h1 style="font-size:22px;color:#18181b;margin:0 0 16px;">${t.title}</h1>
-          ${content}
+        <div style="padding:32px;color:#1a1a2e;">
+          <h1 style="font-size:22px;color:#1a1a2e;margin:0 0 16px;">${t.title}</h1>
+          <div style="color:#333;font-size:14px;line-height:1.6;">${content}</div>
           <div style="text-align:center;margin:24px 0;">
             <a href="#" style="display:inline-block;padding:14px 32px;background:#3daa57;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">${t.cta_text}</a>
           </div>
