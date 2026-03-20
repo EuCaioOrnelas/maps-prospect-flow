@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
         activeMRR += mrrAmount;
         activeCount++;
         planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] Active sub: base=R$${baseAmount}, mrr=R$${mrrAmount}, paid=R$${amountPaid}, coupon_duration=${discount?.coupon?.duration || 'none'}, discount=${discount?.coupon?.percent_off || discount?.coupon?.amount_off || 'none'}`);
+        console.log(`[GET-STRIPE-MRR] Active sub: base=R$${baseAmount}, mrr=R$${mrrAmount}, paid=R$${amountPaid}, duration=${discount?.coupon?.duration || 'none'}, end=${discount?.end || 'none'}, pct=${discount?.coupon?.percent_off || 'none'}`);
       }
     }
 
