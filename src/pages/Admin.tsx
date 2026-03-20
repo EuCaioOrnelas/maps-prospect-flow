@@ -1070,6 +1070,11 @@ const Admin = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/admin/pix-billing" className="flex items-center gap-2 cursor-pointer">
+                      <Receipt size={14} /> Billing PIX
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/admin/insights" className="flex items-center gap-2 cursor-pointer">
                       <BarChart3 size={14} /> Insights
                     </Link>
