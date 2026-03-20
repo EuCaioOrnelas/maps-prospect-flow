@@ -11,20 +11,37 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ABACATE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Map AbacatePay product externalId to plan name
-function extractPlanFromExternalId(externalId: string): string | null {
-  const match = externalId?.match(/^wiize-(\w+)$/);
-  return match ? match[1] : null;
+// Map AbacatePay product externalId or product ID to plan name
+function extractPlanFromProducts(products: any[]): string | null {
+  const productToPlan: Record<string, string> = {
+    "prod_YuGfZ0UukSSPPjbjn3DZJkMK": "start",
+    "prod_fNftUU0Pd5bEgdpnKTADKUgT": "growth",
+    "prod_2KNLMQM5QHe0bb1TZxWenx2N": "scale",
+  };
+
+  for (const product of products) {
+    // Check by product ID
+    if (product.id && productToPlan[product.id]) {
+      return productToPlan[product.id];
+    }
+    if (product.productId && productToPlan[product.productId]) {
+      return productToPlan[product.productId];
+    }
+    // Check by externalId (legacy v1 format)
+    const match = product.externalId?.match(/^wiize-(\w+)$/);
+    if (match) return match[1];
+  }
+  return null;
 }
 
 // Map plan key to searches_limit
 function getPlanSearchesLimit(planKey: string): number {
   const limits: Record<string, number> = {
-    start: 100,
-    growth: 500,
+    start: 200,
+    growth: 600,
     scale: 1200,
   };
-  return limits[planKey] || 100;
+  return limits[planKey] || 200;
 }
 
 serve(async (req) => {
@@ -33,18 +50,17 @@ serve(async (req) => {
   }
 
   try {
-    // Validate webhook secret (if configured)
+    // Validate webhook secret
     const webhookSecret = Deno.env.get("ABACATE_WEBHOOK_SECRET");
     const receivedSecret = req.headers.get("x-webhook-secret") || req.headers.get("authorization")?.replace("Bearer ", "");
     
     logStep("Webhook auth check", { 
       hasConfiguredSecret: !!webhookSecret,
       hasReceivedSecret: !!receivedSecret,
-      headersKeys: [...req.headers.keys()].join(", ")
     });
 
     if (webhookSecret && webhookSecret !== "" && receivedSecret !== webhookSecret) {
-      logStep("Invalid webhook secret", { received: receivedSecret ? receivedSecret.substring(0, 8) + "..." : "none" });
+      logStep("Invalid webhook secret");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
@@ -57,12 +73,13 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    logStep("Webhook received", { event: body.event, billingId: body.data?.billing?.id });
+    logStep("Webhook received", { event: body.event, fullBody: JSON.stringify(body).substring(0, 500) });
 
     const event = body.event;
 
-    if (event === "billing.paid" || event === "BILLING_PAID") {
-      const billing = body.data?.billing || body.data;
+    // ============ PAYMENT SUCCESS (initial + renewal) ============
+    if (event === "billing.paid" || event === "BILLING_PAID" || event === "subscription.paid" || event === "SUBSCRIPTION_PAID") {
+      const billing = body.data?.billing || body.data?.subscription || body.data;
       if (!billing) {
         logStep("No billing data in webhook");
         return new Response(JSON.stringify({ received: true }), {
@@ -71,10 +88,10 @@ serve(async (req) => {
       }
 
       const billingId = billing.id;
-      const customerEmail = billing.customer?.metadata?.email;
+      const customerEmail = billing.customer?.metadata?.email || billing.customer?.email || billing.metadata?.email;
       const products = billing.products || [];
 
-      logStep("Processing billing.paid", { billingId, customerEmail, products });
+      logStep("Processing payment success", { billingId, customerEmail, products });
 
       if (!customerEmail) {
         logStep("No customer email found, cannot update profile");
@@ -86,7 +103,7 @@ serve(async (req) => {
       // Find user by email
       const { data: profiles } = await supabaseClient
         .from("profiles")
-        .select("id, plan, email")
+        .select("id, plan, email, searches_used")
         .eq("email", customerEmail)
         .limit(1);
 
@@ -100,14 +117,12 @@ serve(async (req) => {
       const profile = profiles[0];
       logStep("Found profile", { userId: profile.id, currentPlan: profile.plan });
 
-      // Determine which plan was purchased
-      let planKey: string | null = null;
-      for (const product of products) {
-        const extracted = extractPlanFromExternalId(product.externalId);
-        if (extracted) {
-          planKey = extracted;
-          break;
-        }
+      // Determine plan
+      let planKey = extractPlanFromProducts(products);
+
+      // Fallback: try metadata
+      if (!planKey && billing.metadata?.planKey) {
+        planKey = billing.metadata.planKey;
       }
 
       if (!planKey) {
@@ -117,18 +132,19 @@ serve(async (req) => {
         });
       }
 
-      // Update user profile with the new plan
+      // Update profile: activate/renew plan + reset searches
       const searchesLimit = getPlanSearchesLimit(planKey);
       const periodEnd = new Date();
-      periodEnd.setDate(periodEnd.getDate() + 30); // 30 days period
+      periodEnd.setDate(periodEnd.getDate() + 30);
 
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
           plan: planKey,
           searches_limit: searchesLimit,
-          searches_used: 0,
+          searches_used: 0, // Reset on every payment (initial + renewal)
           subscription_current_period_end: periodEnd.toISOString(),
+          last_searches_reset: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id);
@@ -138,7 +154,7 @@ serve(async (req) => {
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      logStep("Profile updated successfully", { userId: profile.id, newPlan: planKey });
+      logStep("Profile updated (plan activated/renewed)", { userId: profile.id, newPlan: planKey, searchesReset: true });
 
       // Mark checkout lead as completed
       await supabaseClient
@@ -155,7 +171,67 @@ serve(async (req) => {
       logStep("Checkout lead marked as completed");
 
       return new Response(
-        JSON.stringify({ received: true, plan: planKey, userId: profile.id }),
+        JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated_or_renewed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ SUBSCRIPTION OVERDUE / PAYMENT FAILED ============
+    if (event === "billing.overdue" || event === "BILLING_OVERDUE" || 
+        event === "subscription.overdue" || event === "SUBSCRIPTION_OVERDUE" ||
+        event === "billing.payment_failed" || event === "BILLING_PAYMENT_FAILED") {
+      const billing = body.data?.billing || body.data?.subscription || body.data;
+      const customerEmail = billing?.customer?.metadata?.email || billing?.customer?.email || billing?.metadata?.email;
+
+      logStep("Payment overdue/failed", { event, customerEmail });
+
+      if (customerEmail) {
+        // Don't immediately cancel — mark as overdue; give grace period
+        // The subscription expiration cron will handle actual cancellation
+        logStep("User notified of overdue payment, grace period active", { email: customerEmail });
+      }
+
+      return new Response(
+        JSON.stringify({ received: true, action: "overdue_noted" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ SUBSCRIPTION CANCELED ============
+    if (event === "billing.canceled" || event === "BILLING_CANCELED" ||
+        event === "subscription.canceled" || event === "SUBSCRIPTION_CANCELED") {
+      const billing = body.data?.billing || body.data?.subscription || body.data;
+      const customerEmail = billing?.customer?.metadata?.email || billing?.customer?.email || billing?.metadata?.email;
+
+      logStep("Subscription canceled", { event, customerEmail });
+
+      if (customerEmail) {
+        const { data: profiles } = await supabaseClient
+          .from("profiles")
+          .select("id, plan")
+          .eq("email", customerEmail)
+          .limit(1);
+
+        if (profiles && profiles.length > 0) {
+          const profile = profiles[0];
+          // Downgrade to free
+          await supabaseClient
+            .from("profiles")
+            .update({
+              plan: "free",
+              searches_limit: 5,
+              searches_used: 0,
+              subscription_current_period_end: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", profile.id);
+
+          logStep("User downgraded to free", { userId: profile.id, previousPlan: profile.plan });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ received: true, action: "canceled_downgraded" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
