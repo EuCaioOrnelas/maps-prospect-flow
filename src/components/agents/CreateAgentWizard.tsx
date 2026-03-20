@@ -374,6 +374,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
   const [canSendLinks, setCanSendLinks] = useState(true);
   const [canSendMedia, setCanSendMedia] = useState(false);
   const [canSendLongMessages, setCanSendLongMessages] = useState(false);
+  const [respondToGroups, setRespondToGroups] = useState(false);
   const [maxChars, setMaxChars] = useState("300");
   const [maxConsecutiveMessages, setMaxConsecutiveMessages] = useState("2");
   const [alwaysWaitResponse, setAlwaysWaitResponse] = useState(true);
