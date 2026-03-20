@@ -263,21 +263,35 @@ Deno.serve(async (req) => {
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
-      const unitAmountCents = priceObj?.unit_amount || 0;
+      let effectiveAmountCents = priceObj?.unit_amount || 0;
       const interval = priceObj?.recurring?.interval || "month";
       const intervalCount = priceObj?.recurring?.interval_count || 1;
       
-      // Normalize to monthly: Stripe MRR always represents monthly revenue
-      let monthlyAmountCents = unitAmountCents;
+      // Apply active discount if coupon is still valid on the subscription
+      // Stripe automatically removes expired coupons (e.g. 1-month-only),
+      // so if discount exists here, it's currently active
+      const discount = (sub as any).discount;
+      if (discount?.coupon) {
+        const coupon = discount.coupon;
+        if (coupon.percent_off) {
+          effectiveAmountCents = Math.round(effectiveAmountCents * (1 - coupon.percent_off / 100));
+          console.log(`[GET-STRIPE-MRR] Coupon ${coupon.id}: ${coupon.percent_off}% off applied`);
+        } else if (coupon.amount_off) {
+          effectiveAmountCents = Math.max(0, effectiveAmountCents - coupon.amount_off);
+          console.log(`[GET-STRIPE-MRR] Coupon ${coupon.id}: R$${coupon.amount_off/100} off applied`);
+        }
+      }
+      
+      // Normalize to monthly
+      let monthlyAmountCents = effectiveAmountCents;
       if (interval === "year") {
-        monthlyAmountCents = Math.round(unitAmountCents / (12 * intervalCount));
+        monthlyAmountCents = Math.round(effectiveAmountCents / (12 * intervalCount));
       } else if (interval === "week") {
-        monthlyAmountCents = Math.round((unitAmountCents * 52) / (12 * intervalCount));
+        monthlyAmountCents = Math.round((effectiveAmountCents * 52) / (12 * intervalCount));
       } else if (interval === "day") {
-        monthlyAmountCents = Math.round((unitAmountCents * 365) / (12 * intervalCount));
+        monthlyAmountCents = Math.round((effectiveAmountCents * 365) / (12 * intervalCount));
       } else {
-        // month
-        monthlyAmountCents = Math.round(unitAmountCents / intervalCount);
+        monthlyAmountCents = Math.round(effectiveAmountCents / intervalCount);
       }
       
       const baseAmount = monthlyAmountCents / 100;
