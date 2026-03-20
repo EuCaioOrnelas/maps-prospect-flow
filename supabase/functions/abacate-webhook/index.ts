@@ -33,12 +33,18 @@ serve(async (req) => {
   }
 
   try {
-    // Validate webhook secret
+    // Validate webhook secret (if configured)
     const webhookSecret = Deno.env.get("ABACATE_WEBHOOK_SECRET");
     const receivedSecret = req.headers.get("x-webhook-secret") || req.headers.get("authorization")?.replace("Bearer ", "");
     
-    if (webhookSecret && receivedSecret !== webhookSecret) {
-      logStep("Invalid webhook secret", { received: receivedSecret ? "***" : "none" });
+    logStep("Webhook auth check", { 
+      hasConfiguredSecret: !!webhookSecret,
+      hasReceivedSecret: !!receivedSecret,
+      headersKeys: [...req.headers.keys()].join(", ")
+    });
+
+    if (webhookSecret && webhookSecret !== "" && receivedSecret !== webhookSecret) {
+      logStep("Invalid webhook secret", { received: receivedSecret ? receivedSecret.substring(0, 8) + "..." : "none" });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
