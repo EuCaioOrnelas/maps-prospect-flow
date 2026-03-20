@@ -218,7 +218,7 @@ export function PixDashboardTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.stripeMrr)}</p>
+            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.stripeMrr)}</p>
           </CardContent>
         </Card>
 
@@ -229,7 +229,7 @@ export function PixDashboardTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.pixMrr)}</p>
+            <p className="text-3xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.pixMrr)}</p>
           </CardContent>
         </Card>
       </div>

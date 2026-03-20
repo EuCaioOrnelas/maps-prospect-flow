@@ -19,7 +19,7 @@ const AdminPixBilling = () => {
   const { signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-sans">
       {/* Header - same pattern as Admin page */}
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container mx-auto px-4 py-4">
@@ -100,7 +100,7 @@ const AdminPixBilling = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Billing PIX / Renovação</h1>
+          <h1 className="text-2xl font-bold text-foreground font-sans">Billing PIX / Renovação</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Gestão completa de cobranças PIX, renovações e emails
           </p>
