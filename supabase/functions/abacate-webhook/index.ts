@@ -103,7 +103,7 @@ serve(async (req) => {
       // Find user by email
       const { data: profiles } = await supabaseClient
         .from("profiles")
-        .select("id, plan, email, searches_used")
+        .select("id, plan, email, searches_used, subscription_current_period_end")
         .eq("email", customerEmail)
         .limit(1);
 
