@@ -71,7 +71,7 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .eq("checkout_completed", false)
         .like("stripe_session_id", "abacate_renewal_%")
-        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .limit(1);
 
       if (existingRenewal && existingRenewal.length > 0) {
