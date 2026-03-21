@@ -56,7 +56,10 @@ export default function CheckoutPix() {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
   const [couponError, setCouponError] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
+  const [pixData, setPixData] = useState<{ brCode: string; brCodeBase64: string; amount: number; expiresAt: string; pixId: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [paid, setPaid] = useState(false);
 
   // Load customer data from sessionStorage or query params (renewal)
   useEffect(() => {
