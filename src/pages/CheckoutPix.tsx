@@ -370,8 +370,6 @@ export default function CheckoutPix() {
                 </p>
               </div>
             )}
-            </div>
-            )
           </motion.div>
 
           {/* Right sidebar */}
