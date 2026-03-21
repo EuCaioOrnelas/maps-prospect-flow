@@ -202,12 +202,13 @@ const UpgradePromo = () => {
   const isUrgent = timeLeft <= 120 && timeLeft > 0;
   const progressPct = Math.max(0, (timeLeft / TIMER_SECONDS) * 100);
 
-  const handleCheckout = async (planKey: string, guestEmail?: string) => {
-    setLoadingPlan(planKey);
+  const handleCardCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlanKey) return;
+    setLoadingPlan(selectedPlanKey);
     try {
-      const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
+      const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail, couponCode: COUPON_CODE },
+        body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: COUPON_CODE },
       });
 
       if (response.error) throw new Error(response.error.message);
@@ -225,21 +226,41 @@ const UpgradePromo = () => {
       });
     } finally {
       setLoadingPlan(null);
-      setEmailModalOpen(false);
+      setPaymentModalOpen(false);
+    }
+  };
+
+  const handlePixCheckout = async (_customerData: CustomerData) => {
+    if (selectedPlanKey) {
+      trackScoreEvent("checkout_started", { plan: selectedPlanKey, method: "pix" });
     }
   };
 
   const handleUpgrade = (planKey: string) => {
+    setSelectedPlanKey(planKey);
     if (user) {
-      handleCheckout(planKey);
+      setPaymentModalOpen(true);
     } else {
-      setSelectedPlanKey(planKey);
       setEmailModalOpen(true);
     }
   };
 
   const handleEmailSubmit = (email: string) => {
-    if (selectedPlanKey) handleCheckout(selectedPlanKey, email);
+    if (!selectedPlanKey) return;
+    // For non-logged users from email capture, go directly to Stripe with coupon
+    setLoadingPlan(selectedPlanKey);
+    const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
+    supabase.functions.invoke("create-checkout", {
+      body: { priceId, guestEmail: email, couponCode: COUPON_CODE },
+    }).then(({ data, error }) => {
+      if (error) throw new Error(error.message);
+      if (data?.url) window.location.href = data.url;
+    }).catch((err: any) => {
+      toast({ title: "Erro ao iniciar checkout", description: err.message, variant: "destructive" });
+    }).finally(() => {
+      setLoadingPlan(null);
+      setEmailModalOpen(false);
+    });
   };
 
   if (coupon !== COUPON_CODE) return null;
