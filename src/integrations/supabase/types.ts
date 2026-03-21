@@ -656,8 +656,10 @@ export type Database = {
           email: string
           id: string
           name: string | null
+          phone: string | null
           plan_attempted: string
           stripe_session_id: string | null
+          tax_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -669,8 +671,10 @@ export type Database = {
           email: string
           id?: string
           name?: string | null
+          phone?: string | null
           plan_attempted: string
           stripe_session_id?: string | null
+          tax_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -682,8 +686,10 @@ export type Database = {
           email?: string
           id?: string
           name?: string | null
+          phone?: string | null
           plan_attempted?: string
           stripe_session_id?: string | null
+          tax_id?: string | null
           updated_at?: string
           user_id?: string | null
         }

@@ -246,13 +246,6 @@ export default function CheckoutPix() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-center space-y-1">
-              <h1 className="text-2xl font-bold text-foreground">Assinatura via PIX</h1>
-              <p className="text-sm text-muted-foreground">
-                PIX recorrente — débito automático mensal regulamentado pelo Banco Central
-              </p>
-            </div>
-
             {pixData ? (
               paid ? (
                 <div className="flex flex-col items-center gap-4 py-16">
@@ -299,53 +292,14 @@ export default function CheckoutPix() {
               )
             ) : (
               <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
-                {/* Plan card */}
-                <motion.div
-                  className="w-full rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-6 space-y-4"
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                >
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-muted-foreground font-medium">Plano selecionado</p>
-                    <p className="text-2xl font-bold text-foreground">{planName}</p>
-                    <div className="flex flex-col items-center gap-1">
-                      {couponApplied && discountAmount > 0 ? (
-                        <>
-                          <p className="text-sm text-muted-foreground line-through">
-                            R$ {planPrice}/mês
-                          </p>
-                          <p className="text-3xl font-bold text-foreground tabular-nums">
-                            {formatCurrency(finalCents)}
-                            <span className="text-base font-normal text-muted-foreground">/mês</span>
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-3xl font-bold text-foreground tabular-nums">
-                          R$ {planPrice}
-                          <span className="text-base font-normal text-muted-foreground">/mês</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="h-px bg-primary/10" />
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Cobrança automática mensal via PIX</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Cancele quando quiser, sem multa</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Ativação instantânea após primeiro pagamento</span>
-                    </div>
-                  </div>
-                </motion.div>
+                <div className="text-center space-y-1">
+                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Gere o QR Code para pagar. Renovação mensal via novo PIX.
+                  </p>
+                </div>
 
-                {/* Subscribe button */}
+                {/* Generate PIX button */}
                 <Button
                   onClick={handleSubscribe}
                   size="lg"
@@ -360,13 +314,13 @@ export default function CheckoutPix() {
                   ) : (
                     <>
                       <QrCode className="h-5 w-5" />
-                      Gerar QR Code — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
+                      Gerar QR Code PIX
                     </>
                   )}
                 </Button>
 
                 <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                  O QR Code PIX será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
+                  O QR Code será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
                 </p>
               </div>
             )}
@@ -496,8 +450,8 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">PIX Recorrente regulamentado</p>
-                    <p className="text-xs text-muted-foreground">Débito automático aprovado pelo Banco Central</p>
+                    <p className="text-xs font-semibold text-foreground">PIX Recorrente</p>
+                    <p className="text-xs text-muted-foreground">Renovação mensal com envio de novo PIX</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

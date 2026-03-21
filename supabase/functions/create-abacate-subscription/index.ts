@@ -156,6 +156,8 @@ serve(async (req) => {
         user_id: userId || null,
         email: customerData.email,
         name: customerData.name,
+        phone: customerData.phone || null,
+        tax_id: customerData.taxId || null,
         plan_attempted: plan.name,
         stripe_session_id: `abacate_sub_${pixData.id}`,
         checkout_started_at: new Date().toISOString(),

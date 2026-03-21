@@ -107,8 +107,9 @@ export function PaymentMethodModal({
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
       sessionStorage.setItem("pixCustomerData", JSON.stringify(customerData));
-      onOpenChange(false);
+      // Navigate first, then close modal to avoid delay
       navigate(`/checkout-pix?${params.toString()}`);
+      setTimeout(() => onOpenChange(false), 50);
     }
   };
 
@@ -292,11 +293,11 @@ export function PaymentMethodModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Pague via QR Code • Débito automático mensal</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pague via QR Code • Renovação mensal</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <RefreshCw className="h-3 w-3 text-muted-foreground/70" />
                     <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">
-                      Regulamentado pelo Banco Central
+                      Pagamento mensal via PIX
                     </span>
                   </div>
                 </div>
