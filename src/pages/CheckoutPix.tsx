@@ -369,6 +369,8 @@ export default function CheckoutPix() {
                   O QR Code PIX será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
                 </p>
               </div>
+            )}
+            </div>
             )
           </motion.div>
 
