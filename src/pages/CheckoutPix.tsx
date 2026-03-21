@@ -253,13 +253,50 @@ export default function CheckoutPix() {
               </p>
             </div>
 
-            {redirecting ? (
-              <div className="flex flex-col items-center gap-4 py-16">
-                <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            {pixData ? (
+              paid ? (
+                <div className="flex flex-col items-center gap-4 py-16">
+                  <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                    <PartyPopper className="h-10 w-10 text-emerald-500" />
+                  </div>
+                  <p className="text-lg font-bold text-foreground">Pagamento confirmado!</p>
+                  <p className="text-muted-foreground text-sm">Redirecionando...</p>
                 </div>
-                <p className="text-muted-foreground text-sm">Redirecionando para o checkout seguro...</p>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center gap-5 py-4 w-full max-w-md">
+                  {/* QR Code */}
+                  <div className="rounded-2xl bg-white p-4 shadow-sm border border-border/30">
+                    {pixData.brCodeBase64 ? (
+                      <img src={`data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-56 h-56" />
+                    ) : (
+                      <div className="w-56 h-56 flex items-center justify-center">
+                        <QrCode className="h-24 w-24 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-3xl font-bold text-foreground tabular-nums">
+                    {formatCurrency(pixData.amount)}
+                    <span className="text-base font-normal text-muted-foreground">/mês</span>
+                  </p>
+
+                  {/* Copy code */}
+                  <Button variant="outline" onClick={handleCopyCode} className="w-full max-w-xs gap-2">
+                    {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Código copiado!" : "Copiar código PIX"}
+                  </Button>
+
+                  {/* Status */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span>Aguardando pagamento...</span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground text-center max-w-sm">
+                    Escaneie o QR Code ou cole o código no app do seu banco. O pagamento será confirmado automaticamente.
+                  </p>
+                </div>
+              )
             ) : (
               <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
                 {/* Plan card */}
@@ -318,21 +355,21 @@ export default function CheckoutPix() {
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      Processando...
+                      Gerando QR Code...
                     </>
                   ) : (
                     <>
-                      <ExternalLink className="h-5 w-5" />
-                      Assinar agora — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
+                      <QrCode className="h-5 w-5" />
+                      Gerar QR Code — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
                     </>
                   )}
                 </Button>
 
                 <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                  Você será redirecionado para a página segura da AbacatePay para confirmar o pagamento via PIX.
+                  O QR Code PIX será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
                 </p>
               </div>
-            )}
+            )
           </motion.div>
 
           {/* Right sidebar */}
