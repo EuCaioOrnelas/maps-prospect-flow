@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -142,6 +143,7 @@ const UpgradePromo = () => {
   const { trackScoreEvent } = useAutoScoreTracking("upgrade_promo");
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
@@ -200,12 +202,13 @@ const UpgradePromo = () => {
   const isUrgent = timeLeft <= 120 && timeLeft > 0;
   const progressPct = Math.max(0, (timeLeft / TIMER_SECONDS) * 100);
 
-  const handleCheckout = async (planKey: string, guestEmail?: string) => {
-    setLoadingPlan(planKey);
+  const handleCardCheckout = async (customerData: CustomerData) => {
+    if (!selectedPlanKey) return;
+    setLoadingPlan(selectedPlanKey);
     try {
-      const priceId = PRICE_IDS[planKey as keyof typeof PRICE_IDS];
+      const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
       const response = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, guestEmail, couponCode: COUPON_CODE },
+        body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: COUPON_CODE },
       });
 
       if (response.error) throw new Error(response.error.message);
@@ -223,21 +226,41 @@ const UpgradePromo = () => {
       });
     } finally {
       setLoadingPlan(null);
-      setEmailModalOpen(false);
+      setPaymentModalOpen(false);
+    }
+  };
+
+  const handlePixCheckout = async (_customerData: CustomerData) => {
+    if (selectedPlanKey) {
+      trackScoreEvent("checkout_started", { plan: selectedPlanKey, method: "pix" });
     }
   };
 
   const handleUpgrade = (planKey: string) => {
+    setSelectedPlanKey(planKey);
     if (user) {
-      handleCheckout(planKey);
+      setPaymentModalOpen(true);
     } else {
-      setSelectedPlanKey(planKey);
       setEmailModalOpen(true);
     }
   };
 
   const handleEmailSubmit = (email: string) => {
-    if (selectedPlanKey) handleCheckout(selectedPlanKey, email);
+    if (!selectedPlanKey) return;
+    // For non-logged users from email capture, go directly to Stripe with coupon
+    setLoadingPlan(selectedPlanKey);
+    const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
+    supabase.functions.invoke("create-checkout", {
+      body: { priceId, guestEmail: email, couponCode: COUPON_CODE },
+    }).then(({ data, error }) => {
+      if (error) throw new Error(error.message);
+      if (data?.url) window.location.href = data.url;
+    }).catch((err: any) => {
+      toast({ title: "Erro ao iniciar checkout", description: err.message, variant: "destructive" });
+    }).finally(() => {
+      setLoadingPlan(null);
+      setEmailModalOpen(false);
+    });
   };
 
   if (coupon !== COUPON_CODE) return null;
@@ -529,6 +552,19 @@ const UpgradePromo = () => {
           </button>.
         </p>
       </div>
+
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        planName={plans.find((p) => p.key === selectedPlanKey)?.name || ""}
+        planPrice={selectedPlanKey ? String(plans.find((p) => p.key === selectedPlanKey)?.price || "") : ""}
+        planKey={selectedPlanKey || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
+        loading={loadingPlan !== null}
+        defaultEmail={user?.email || ""}
+        defaultName={profile?.name || ""}
+      />
 
       <EmailCaptureModal
         open={emailModalOpen}
