@@ -143,6 +143,7 @@ const UpgradePromo = () => {
   const { trackScoreEvent } = useAutoScoreTracking("upgrade_promo");
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
