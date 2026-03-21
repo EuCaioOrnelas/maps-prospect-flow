@@ -89,9 +89,7 @@ export default function CheckoutPix() {
   const handleSubscribe = async () => {
     if (!customerData || !planKey) return;
     setLoading(true);
-    setRedirecting(false);
     
-    // Track checkout initiation for scoring
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
     
     try {
@@ -102,18 +100,61 @@ export default function CheckoutPix() {
         }
       );
       if (error) throw new Error(error.message);
-      if (!data?.url) throw new Error("URL de checkout não gerada");
+      if (!data?.brCode) throw new Error("QR Code não gerado");
 
-      setRedirecting(true);
-      // Redirect to AbacatePay hosted checkout
-      window.location.href = data.url;
+      setPixData({
+        brCode: data.brCode,
+        brCodeBase64: data.brCodeBase64,
+        amount: data.amount,
+        expiresAt: data.expiresAt,
+        pixId: data.pixId,
+      });
+
+      // Start polling for payment
+      startPaymentPolling(data.pixId);
     } catch (err: any) {
       toast({
         title: "Erro ao criar assinatura",
         description: err.message,
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const startPaymentPolling = (pixId: string) => {
+    setCheckingPayment(true);
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-abacate-pix", {
+          body: { pixId },
+        });
+        if (data?.status === "PAID" || data?.status === "COMPLETED") {
+          clearInterval(interval);
+          setPaid(true);
+          setCheckingPayment(false);
+          toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
+          setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+        }
+      } catch {
+        // Silent fail on polling
+      }
+    }, 5000);
+
+    // Stop polling after 30 minutes
+    setTimeout(() => {
+      clearInterval(interval);
+      setCheckingPayment(false);
+    }, 30 * 60 * 1000);
+  };
+
+  const handleCopyCode = () => {
+    if (pixData?.brCode) {
+      navigator.clipboard.writeText(pixData.brCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: "Código copiado!", description: "Cole no app do seu banco para pagar." });
     }
   };
 
