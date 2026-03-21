@@ -260,7 +260,7 @@ export default function CheckoutPix() {
                   {/* QR Code */}
                   <div className="rounded-2xl bg-white p-4 shadow-sm border border-border/30">
                     {pixData.brCodeBase64 ? (
-                      <img src={`data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-56 h-56" />
+                      <img src={pixData.brCodeBase64.startsWith("data:") ? pixData.brCodeBase64 : `data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-56 h-56" />
                     ) : (
                       <div className="w-56 h-56 flex items-center justify-center">
                         <QrCode className="h-24 w-24 text-muted-foreground/30" />
