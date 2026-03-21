@@ -553,6 +553,19 @@ const UpgradePromo = () => {
         </p>
       </div>
 
+      <PaymentMethodModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        planName={plans.find((p) => p.key === selectedPlanKey)?.name || ""}
+        planPrice={selectedPlanKey ? String(plans.find((p) => p.key === selectedPlanKey)?.price || "") : ""}
+        planKey={selectedPlanKey || ""}
+        onSelectCard={handleCardCheckout}
+        onSelectPix={handlePixCheckout}
+        loading={loadingPlan !== null}
+        defaultEmail={user?.email || ""}
+        defaultName={profile?.name || ""}
+      />
+
       <EmailCaptureModal
         open={emailModalOpen}
         onOpenChange={setEmailModalOpen}
