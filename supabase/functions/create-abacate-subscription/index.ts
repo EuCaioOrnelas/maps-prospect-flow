@@ -13,17 +13,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ABACATE-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// AbacatePay v2 product IDs
-const PRODUCT_IDS: Record<string, string> = {
-  start: "prod_YuGfZ0UukSSPPjbjn3DZJkMK",
-  growth: "prod_fNftUU0Pd5bEgdpnKTADKUgT",
-  scale: "prod_2KNLMQM5QHe0bb1TZxWenx2N",
-};
-
-const PLAN_NAMES: Record<string, string> = {
-  start: "Wiize Start",
-  growth: "Wiize Growth",
-  scale: "Wiize Scale",
+// Plan config (prices in cents)
+const PLAN_CONFIG: Record<string, { name: string; priceInCents: number }> = {
+  start: { name: "Wiize Start", priceInCents: 19700 },
+  growth: { name: "Wiize Growth", priceInCents: 49700 },
+  scale: { name: "Wiize Scale", priceInCents: 89700 },
 };
 
 serve(async (req) => {
@@ -43,10 +37,10 @@ serve(async (req) => {
     const { planKey, customerData, couponCode } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
-    const productId = PRODUCT_IDS[planKey];
-    if (!productId) throw new Error(`Invalid plan: ${planKey}`);
+    const plan = PLAN_CONFIG[planKey];
+    if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    logStep("Request received", { planKey, email: customerData.email, productId });
+    logStep("Request received", { planKey, email: customerData.email });
 
     // Authenticate user
     let userId: string | null = null;
@@ -72,8 +66,48 @@ serve(async (req) => {
       }
     }
 
-    // 1. Create customer on AbacatePay v2
-    const customerRes = await fetch(`${ABACATE_API}/customers/create`, {
+    // Determine final price
+    let finalPrice = plan.priceInCents;
+    let discountApplied = false;
+
+    // Apply coupon discount via AbacatePay v2 API
+    if (couponCode) {
+      try {
+        const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Accept": "application/json",
+          },
+        });
+        const couponJson = await couponRes.json();
+        const coupons = couponJson.data || [];
+        const coupon = coupons.find(
+          (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
+        );
+
+        if (coupon) {
+          const isUnlimited = coupon.maxRedeems === -1;
+          const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
+
+          if (hasRedeems) {
+            if (coupon.discountKind === "PERCENTAGE") {
+              const pct = coupon.discount / 100;
+              finalPrice = Math.round(finalPrice * (1 - pct / 100));
+            } else if (coupon.discountKind === "FIXED") {
+              finalPrice = Math.max(100, finalPrice - coupon.discount);
+            }
+            discountApplied = true;
+            logStep("Coupon applied", { couponCode, finalPrice });
+          }
+        }
+      } catch (e) {
+        logStep("Failed to validate coupon", { error: String(e) });
+      }
+    }
+
+    // Create one-time PIX checkout via transparents/create
+    // (AbacatePay v2 subscriptions only support CARD, so PIX uses one-time + cron renewal)
+    const pixRes = await fetch(`${ABACATE_API}/transparents/create`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -81,81 +115,49 @@ serve(async (req) => {
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        name: customerData.name,
-        cellphone: customerData.phone,
-        email: customerData.email,
-        taxId: customerData.taxId,
+        method: "PIX",
+        data: {
+          amount: finalPrice,
+          description: `${plan.name} - Assinatura mensal via PIX`,
+          expiresIn: 1800,
+          customer: {
+            name: customerData.name,
+            cellphone: customerData.phone,
+            email: customerData.email,
+            taxId: customerData.taxId,
+          },
+          metadata: {
+            planKey,
+            planName: plan.name,
+            userId: userId || "anonymous",
+            email: customerData.email,
+            type: "subscription_pix",
+          },
+        },
       }),
     });
 
-    const customerJson = await customerRes.json();
-    if (customerJson.error) {
-      logStep("Customer creation failed", customerJson.error);
-      throw new Error(`AbacatePay customer error: ${JSON.stringify(customerJson.error)}`);
+    const pixJson = await pixRes.json();
+    if (pixJson.error || !pixRes.ok) {
+      logStep("PIX creation failed", { status: pixRes.status, body: pixJson });
+      throw new Error(`AbacatePay PIX error: ${JSON.stringify(pixJson.error || pixJson)}`);
     }
 
-    const customerId = customerJson.data?.id;
-    logStep("Customer created", { customerId });
+    const pixData = pixJson.data;
+    logStep("PIX checkout created", { pixId: pixData.id, amount: finalPrice });
 
+    // Build the hosted checkout URL for redirect
     const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
+    const checkoutUrl = pixData.url || `${origin}/checkout-pix?pixId=${pixData.id}`;
 
-    // 2. Create ONE-TIME checkout via PIX (v2 checkouts/create)
-    // AbacatePay v2 subscriptions only support CARD, so we use
-    // one-time PIX checkout + cron-based renewal management
-    const checkoutBody: Record<string, any> = {
-      items: [
-        {
-          id: productId,
-          quantity: 1,
-        },
-      ],
-      methods: ["PIX"],
-      customerId: customerId,
-      returnUrl: `${origin}/upgrade?checkout=canceled`,
-      completionUrl: `${origin}/checkout-success?provider=abacate`,
-      metadata: {
-        userId: userId || "anonymous",
-        planKey,
-        email: customerData.email,
-        type: "subscription_pix", // Mark as subscription for webhook handling
-      },
-    };
-
-    // Add coupons if provided
-    if (couponCode) {
-      checkoutBody.coupons = [couponCode];
-      logStep("Coupon attached", { couponCode });
-    }
-
-    logStep("Creating PIX checkout (v2)", checkoutBody);
-
-    const checkoutRes = await fetch(`${ABACATE_API}/checkouts/create`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify(checkoutBody),
-    });
-
-    const checkoutJson = await checkoutRes.json();
-    if (checkoutJson.error || !checkoutRes.ok) {
-      logStep("Checkout creation failed", { status: checkoutRes.status, body: checkoutJson });
-      throw new Error(`AbacatePay checkout error: ${JSON.stringify(checkoutJson.error || checkoutJson)}`);
-    }
-
-    const checkoutData = checkoutJson.data;
-    logStep("Checkout created", { id: checkoutData.id, url: checkoutData.url });
-
-    // 3. Track checkout lead
+    // Track checkout lead
     try {
       await supabaseClient.from("checkout_leads").insert({
         user_id: userId || null,
         email: customerData.email,
         name: customerData.name,
-        plan_attempted: PLAN_NAMES[planKey] || planKey,
-        stripe_session_id: `abacate_sub_${checkoutData.id}`,
+        plan_attempted: plan.name,
+        stripe_session_id: `abacate_sub_${pixData.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
@@ -165,7 +167,14 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ url: checkoutData.url, billingId: checkoutData.id }),
+      JSON.stringify({
+        url: checkoutUrl,
+        pixId: pixData.id,
+        brCode: pixData.brCode,
+        brCodeBase64: pixData.brCodeBase64,
+        amount: pixData.amount,
+        expiresAt: pixData.expiresAt,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

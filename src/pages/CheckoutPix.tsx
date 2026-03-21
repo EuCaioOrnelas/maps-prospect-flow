@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -56,7 +56,10 @@ export default function CheckoutPix() {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
   const [couponError, setCouponError] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
+  const [pixData, setPixData] = useState<{ brCode: string; brCodeBase64: string; amount: number; expiresAt: string; pixId: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [paid, setPaid] = useState(false);
 
   // Load customer data from sessionStorage or query params (renewal)
   useEffect(() => {
@@ -86,9 +89,7 @@ export default function CheckoutPix() {
   const handleSubscribe = async () => {
     if (!customerData || !planKey) return;
     setLoading(true);
-    setRedirecting(false);
     
-    // Track checkout initiation for scoring
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
     
     try {
@@ -99,18 +100,61 @@ export default function CheckoutPix() {
         }
       );
       if (error) throw new Error(error.message);
-      if (!data?.url) throw new Error("URL de checkout não gerada");
+      if (!data?.brCode) throw new Error("QR Code não gerado");
 
-      setRedirecting(true);
-      // Redirect to AbacatePay hosted checkout
-      window.location.href = data.url;
+      setPixData({
+        brCode: data.brCode,
+        brCodeBase64: data.brCodeBase64,
+        amount: data.amount,
+        expiresAt: data.expiresAt,
+        pixId: data.pixId,
+      });
+
+      // Start polling for payment
+      startPaymentPolling(data.pixId);
     } catch (err: any) {
       toast({
         title: "Erro ao criar assinatura",
         description: err.message,
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const startPaymentPolling = (pixId: string) => {
+    setCheckingPayment(true);
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-abacate-pix", {
+          body: { pixId },
+        });
+        if (data?.status === "PAID" || data?.status === "COMPLETED") {
+          clearInterval(interval);
+          setPaid(true);
+          setCheckingPayment(false);
+          toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
+          setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+        }
+      } catch {
+        // Silent fail on polling
+      }
+    }, 5000);
+
+    // Stop polling after 30 minutes
+    setTimeout(() => {
+      clearInterval(interval);
+      setCheckingPayment(false);
+    }, 30 * 60 * 1000);
+  };
+
+  const handleCopyCode = () => {
+    if (pixData?.brCode) {
+      navigator.clipboard.writeText(pixData.brCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: "Código copiado!", description: "Cole no app do seu banco para pagar." });
     }
   };
 
@@ -209,13 +253,50 @@ export default function CheckoutPix() {
               </p>
             </div>
 
-            {redirecting ? (
-              <div className="flex flex-col items-center gap-4 py-16">
-                <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            {pixData ? (
+              paid ? (
+                <div className="flex flex-col items-center gap-4 py-16">
+                  <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                    <PartyPopper className="h-10 w-10 text-emerald-500" />
+                  </div>
+                  <p className="text-lg font-bold text-foreground">Pagamento confirmado!</p>
+                  <p className="text-muted-foreground text-sm">Redirecionando...</p>
                 </div>
-                <p className="text-muted-foreground text-sm">Redirecionando para o checkout seguro...</p>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center gap-5 py-4 w-full max-w-md">
+                  {/* QR Code */}
+                  <div className="rounded-2xl bg-white p-4 shadow-sm border border-border/30">
+                    {pixData.brCodeBase64 ? (
+                      <img src={`data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-56 h-56" />
+                    ) : (
+                      <div className="w-56 h-56 flex items-center justify-center">
+                        <QrCode className="h-24 w-24 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-3xl font-bold text-foreground tabular-nums">
+                    {formatCurrency(pixData.amount)}
+                    <span className="text-base font-normal text-muted-foreground">/mês</span>
+                  </p>
+
+                  {/* Copy code */}
+                  <Button variant="outline" onClick={handleCopyCode} className="w-full max-w-xs gap-2">
+                    {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Código copiado!" : "Copiar código PIX"}
+                  </Button>
+
+                  {/* Status */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span>Aguardando pagamento...</span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground text-center max-w-sm">
+                    Escaneie o QR Code ou cole o código no app do seu banco. O pagamento será confirmado automaticamente.
+                  </p>
+                </div>
+              )
             ) : (
               <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
                 {/* Plan card */}
@@ -274,18 +355,18 @@ export default function CheckoutPix() {
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      Processando...
+                      Gerando QR Code...
                     </>
                   ) : (
                     <>
-                      <ExternalLink className="h-5 w-5" />
-                      Assinar agora — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
+                      <QrCode className="h-5 w-5" />
+                      Gerar QR Code — {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}/mês
                     </>
                   )}
                 </Button>
 
                 <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                  Você será redirecionado para a página segura da AbacatePay para confirmar o pagamento via PIX.
+                  O QR Code PIX será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
                 </p>
               </div>
             )}
