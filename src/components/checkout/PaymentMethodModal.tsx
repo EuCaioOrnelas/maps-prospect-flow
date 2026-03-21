@@ -107,8 +107,9 @@ export function PaymentMethodModal({
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
       sessionStorage.setItem("pixCustomerData", JSON.stringify(customerData));
-      onOpenChange(false);
+      // Navigate first, then close modal to avoid delay
       navigate(`/checkout-pix?${params.toString()}`);
+      setTimeout(() => onOpenChange(false), 50);
     }
   };
 
