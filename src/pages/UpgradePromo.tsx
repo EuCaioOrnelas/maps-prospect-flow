@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { EmailCaptureModal } from "@/components/landing/EmailCaptureModal";
 import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
