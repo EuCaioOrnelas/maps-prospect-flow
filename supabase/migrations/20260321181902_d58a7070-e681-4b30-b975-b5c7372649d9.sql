@@ -1,0 +1,1 @@
+ALTER TABLE public.checkout_leads ADD COLUMN IF NOT EXISTS phone text, ADD COLUMN IF NOT EXISTS tax_id text;
