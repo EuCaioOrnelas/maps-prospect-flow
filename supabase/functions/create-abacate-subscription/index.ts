@@ -73,31 +73,61 @@ serve(async (req) => {
     // Apply coupon discount via AbacatePay v2 API
     if (couponCode) {
       try {
-        const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Accept": "application/json",
-          },
-        });
-        const couponJson = await couponRes.json();
-        const coupons = couponJson.data || [];
-        const coupon = coupons.find(
-          (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
-        );
+        // Check if user already redeemed this coupon
+        const userEmail = customerData.email?.toLowerCase();
+        if (userEmail) {
+          const { data: existingRedemption } = await supabaseClient
+            .from("coupon_redemptions")
+            .select("id")
+            .eq("email", userEmail)
+            .eq("coupon_code", couponCode.toUpperCase())
+            .maybeSingle();
 
-        if (coupon) {
-          const isUnlimited = coupon.maxRedeems === -1;
-          const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
+          if (existingRedemption) {
+            logStep("Coupon already redeemed by user", { couponCode, email: userEmail });
+            // Skip coupon - proceed with full price
+          } else {
+            const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Accept": "application/json",
+              },
+            });
+            const couponJson = await couponRes.json();
+            const coupons = couponJson.data || [];
+            const coupon = coupons.find(
+              (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
+            );
 
-          if (hasRedeems) {
-            if (coupon.discountKind === "PERCENTAGE") {
-              const pct = coupon.discount / 100;
-              finalPrice = Math.round(finalPrice * (1 - pct / 100));
-            } else if (coupon.discountKind === "FIXED") {
-              finalPrice = Math.max(100, finalPrice - coupon.discount);
+            if (coupon) {
+              const isUnlimited = coupon.maxRedeems === -1;
+              const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
+
+              if (hasRedeems) {
+                if (coupon.discountKind === "PERCENTAGE") {
+                  const pct = coupon.discount / 100;
+                  finalPrice = Math.round(finalPrice * (1 - pct / 100));
+                } else if (coupon.discountKind === "FIXED") {
+                  finalPrice = Math.max(100, finalPrice - coupon.discount);
+                }
+                discountApplied = true;
+                logStep("Coupon applied", { couponCode, finalPrice });
+
+                // Record coupon redemption
+                try {
+                  await supabaseClient.from("coupon_redemptions").insert({
+                    user_id: userId || "00000000-0000-0000-0000-000000000000",
+                    email: userEmail,
+                    coupon_code: couponCode.toUpperCase(),
+                    plan_key: planKey,
+                    discount_amount_cents: plan.priceInCents - finalPrice,
+                  });
+                  logStep("Coupon redemption recorded");
+                } catch (e) {
+                  logStep("Failed to record coupon redemption", { error: String(e) });
+                }
+              }
             }
-            discountApplied = true;
-            logStep("Coupon applied", { couponCode, finalPrice });
           }
         }
       } catch (e) {
