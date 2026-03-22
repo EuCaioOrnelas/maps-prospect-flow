@@ -206,7 +206,6 @@ Deno.serve(async (req) => {
 
     // --- Process paid invoices FIRST to know which subs had real payments ---
     const invoicesBySubId: { [subId: string]: Stripe.Invoice[] } = {};
-    const monthlyMRR: { [month: string]: number } = {};
 
     for (const invoice of allPaidInvoices) {
       if (!invoice.subscription) continue;
@@ -218,13 +217,12 @@ Deno.serve(async (req) => {
       if (invoice.amount_paid === 0) continue;
 
       // Skip invoices that aren't truly paid (e.g. boletos still pending)
-      // Stripe may mark boleto invoices as "paid" before actual payment clears
       if (invoice.paid !== true || (invoice.amount_remaining && invoice.amount_remaining > 0)) {
         console.log(`[GET-STRIPE-MRR] Skipping invoice ${invoice.id}: paid=${invoice.paid}, amount_remaining=${invoice.amount_remaining}, status=${invoice.status}`);
         continue;
       }
 
-      // Skip if no actual charge was made (boleto generated but never paid)
+      // Skip if no actual charge was made
       if (!invoice.charge) {
         console.log(`[GET-STRIPE-MRR] Skipping invoice ${invoice.id}: no charge associated`);
         continue;
@@ -234,12 +232,6 @@ Deno.serve(async (req) => {
       const chargeId = invoice.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       if (wasRefunded) continue;
-
-      // Track for monthly MRR
-      const paymentTimestamp = invoice.status_transitions?.paid_at || invoice.created;
-      const paymentDate = new Date(paymentTimestamp * 1000);
-      const monthKey = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}`;
-      monthlyMRR[monthKey] = (monthlyMRR[monthKey] || 0) + (invoice.amount_paid / 100);
 
       if (!invoicesBySubId[subId]) {
         invoicesBySubId[subId] = [];
