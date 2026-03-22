@@ -1317,7 +1317,7 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {/* MRR Total Combinado */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
