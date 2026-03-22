@@ -1301,9 +1301,9 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               {/* MRR Total Combinado */}
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in col-span-2 lg:col-span-1" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                     <DollarSign size={20} className="text-success" />
@@ -1314,7 +1314,7 @@ const Admin = () => {
                   R$ {((stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0)).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  MRR Total (Stripe + PIX)
+                  MRR Total
                 </p>
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span>Stripe: R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}</span>
@@ -1333,7 +1333,7 @@ const Admin = () => {
                   {(stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Assinantes Ativos (Total)
+                  Assinantes Ativos
                 </p>
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span>Stripe: {stripeMRR?.activeSubscriptions ?? 0}</span>
@@ -1341,9 +1341,7 @@ const Admin = () => {
                 </div>
               </div>
 
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {/* Reembolsos */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -1354,10 +1352,11 @@ const Admin = () => {
                   R$ {(stripeMRR?.totalRefunded ?? 0).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Total Reembolsado ({stripeMRR?.refundCount ?? 0})
+                  Reembolsado ({stripeMRR?.refundCount ?? 0})
                 </p>
               </div>
 
+              {/* Churn */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -1370,11 +1369,9 @@ const Admin = () => {
                 <p className="text-sm text-muted-foreground">
                   Taxa de Cancelamento
                 </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  Cancelados / (Ativos + Cancelados)
-                </p>
               </div>
 
+              {/* Cancelamentos */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -1385,7 +1382,7 @@ const Admin = () => {
                   {stripeMRR?.canceledSubscriptions ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Cancelamentos (Total)
+                  Cancelamentos
                 </p>
               </div>
             </div>
@@ -1658,10 +1655,13 @@ const Admin = () => {
                 <div className="h-64">
                   {filteredMRRData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={filteredMRRData.map(item => ({
-                        date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-                        mrr: item.mrr + (pixMRR?.pixMrr ?? 0)
-                      }))}>
+                      <AreaChart data={filteredMRRData.map((item, idx) => {
+                        const isCurrentMonth = idx === filteredMRRData.length - 1;
+                        return {
+                          date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                          mrr: isCurrentMonth ? item.mrr + (pixMRR?.pixMrr ?? 0) : item.mrr,
+                        };
+                      })}>
                         <defs>
                           <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
