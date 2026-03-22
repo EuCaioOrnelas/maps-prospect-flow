@@ -256,14 +256,14 @@ export default function CheckoutPix() {
                   <p className="text-muted-foreground text-sm">Redirecionando...</p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-5 py-4 w-full max-w-md">
+                <div className="flex flex-col items-center gap-4 sm:gap-5 py-2 sm:py-4 w-full max-w-md">
                   {/* QR Code */}
-                  <div className="rounded-2xl bg-white p-4 shadow-sm border border-border/30">
+                  <div className="rounded-2xl bg-white p-3 sm:p-4 shadow-sm border border-border/30">
                     {pixData.brCodeBase64 ? (
-                      <img src={pixData.brCodeBase64.startsWith("data:") ? pixData.brCodeBase64 : `data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-56 h-56" />
+                      <img src={pixData.brCodeBase64.startsWith("data:") ? pixData.brCodeBase64 : `data:image/png;base64,${pixData.brCodeBase64}`} alt="QR Code PIX" className="w-44 h-44 sm:w-56 sm:h-56" />
                     ) : (
-                      <div className="w-56 h-56 flex items-center justify-center">
-                        <QrCode className="h-24 w-24 text-muted-foreground/30" />
+                      <div className="w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center">
+                        <QrCode className="h-20 w-20 sm:h-24 sm:w-24 text-muted-foreground/30" />
                       </div>
                     )}
                   </div>
