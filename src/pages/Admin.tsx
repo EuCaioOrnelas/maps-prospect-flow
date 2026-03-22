@@ -1685,7 +1685,16 @@ const Admin = () => {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR Total']}
+                          formatter={(value: number, name: string, props: any) => {
+                            const activeCount = props?.payload?.activeCount ?? 0;
+                            return [
+                              <div key="mrr-tooltip" className="flex flex-col gap-0.5">
+                                <span className="font-semibold">R$ {value.toLocaleString('pt-BR')}</span>
+                                <span className="text-[10px] text-muted-foreground">{activeCount} assinantes ativos</span>
+                              </div>,
+                              'MRR Total'
+                            ];
+                          }}
                         />
                         <Area 
                           type="monotone" 
