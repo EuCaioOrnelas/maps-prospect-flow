@@ -1652,7 +1652,7 @@ const Admin = () => {
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp size={20} className="text-primary" />
-                  <h2 className="font-display font-semibold">Evolução do MRR (Stripe)</h2>
+                  <h2 className="font-display font-semibold">Evolução do MRR (Total)</h2>
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-64">
@@ -1660,7 +1660,7 @@ const Admin = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={filteredMRRData.map(item => ({
                         date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-                        mrr: item.mrr
+                        mrr: item.mrr + (pixMRR?.pixMrr ?? 0)
                       }))}>
                         <defs>
                           <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
@@ -1677,7 +1677,7 @@ const Admin = () => {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
+                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR Total']}
                         />
                         <Area 
                           type="monotone" 
