@@ -37,14 +37,14 @@ serve(async (req) => {
     logStep("Simulating payment", { pixId });
 
     // v2: /transparents/simulate-payment?id=
-    const simRes = await fetch(`${ABACATE_API}/transparents/simulate-payment?id=${pixId}`, {
+    const simRes = await fetch(`${ABACATE_API}/transparents/simulate-payment`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({ metadata: {} }),
+      body: JSON.stringify({ id: pixId }),
     });
 
     const simJson = await simRes.json();
