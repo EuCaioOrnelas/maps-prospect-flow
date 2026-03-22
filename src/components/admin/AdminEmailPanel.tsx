@@ -242,36 +242,41 @@ function TestTab() {
   const { toast } = useToast();
   const [testResults, setTestResults] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
 
-  const sendTest = async (emailType: string, payload: Record<string, unknown>) => {
-    setTestResults((prev) => ({ ...prev, [emailType]: "sending" }));
+  const getItemKey = (et: typeof EMAIL_TYPES[number]) => {
+    const stage = (et.payload as any)?.stage;
+    return stage ? `${et.type}_${stage}` : et.type;
+  };
+
+  const sendTest = async (et: typeof EMAIL_TYPES[number]) => {
+    const key = getItemKey(et);
+    setTestResults((prev) => ({ ...prev, [key]: "sending" }));
 
     try {
-      // Get current admin user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
           user_id: user.id,
-          email_type: emailType,
-          payload,
-          idempotency_key: `test_${emailType}_${Date.now()}`,
+          email_type: et.type,
+          payload: et.payload,
+          idempotency_key: `test_${key}_${Date.now()}`,
         },
       });
 
       if (error) throw error;
 
-      setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
-      toast({ title: `✅ Email "${emailType}" enviado para seu email` });
+      setTestResults((prev) => ({ ...prev, [key]: "success" }));
+      toast({ title: `✅ Email "${et.label}" enviado para seu email` });
     } catch (err: any) {
-      setTestResults((prev) => ({ ...prev, [emailType]: "error" }));
+      setTestResults((prev) => ({ ...prev, [key]: "error" }));
       toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
     }
   };
 
   const sendAll = async () => {
     for (const et of EMAIL_TYPES) {
-      await sendTest(et.type, et.payload);
+      await sendTest(et);
     }
   };
 
@@ -288,11 +293,12 @@ function TestTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {EMAIL_TYPES.map((et) => {
-          const status = testResults[et.type] || "idle";
+        {EMAIL_TYPES.map((et, idx) => {
+          const key = getItemKey(et);
+          const status = testResults[key] || "idle";
           return (
             <div
-              key={et.type}
+              key={`${et.type}_${idx}`}
               className="flex items-center justify-between p-3 rounded-lg border bg-card"
             >
               <div>
@@ -305,7 +311,7 @@ function TestTab() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => sendTest(et.type, et.payload)}
+                  onClick={() => sendTest(et)}
                   disabled={status === "sending"}
                 >
                   {status === "sending" ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -318,7 +324,6 @@ function TestTab() {
     </div>
   );
 }
-
 // ── Logs Tab ───────────────────────────────────────────────────────────────────
 
 function LogsTab() {
