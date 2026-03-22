@@ -1,0 +1,1 @@
+UPDATE renewal_email_templates SET content = REPLACE(content, '💡 Pode pagar com antecedência — a renovação será contabilizada a partir da data de vencimento atual.', '💡 Pode pagar com antecedência! A renovação será contabilizada a partir da data de vencimento atual.') WHERE content LIKE '%—%'
