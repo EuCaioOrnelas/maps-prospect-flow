@@ -359,7 +359,7 @@ Deno.serve(async (req) => {
       "price_1SlylcK8CM0R6xMMyHRWAd8G": 897,
     };
 
-    const monthlyMRR: { [month: string]: number } = {};
+    const monthlyMRR: { [month: string]: { mrr: number; activeCount: number } } = {};
 
     // Generate list of months from earliest sub start to now
     const now = new Date();
