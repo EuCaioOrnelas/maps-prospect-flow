@@ -131,7 +131,7 @@ interface StripeMRRData {
   totalSalesValue?: number;
   totalSalesCount?: number;
   totalNewSales?: number;
-  monthlyMRR: Array<{ month: string; mrr: number }>;
+  monthlyMRR: Array<{ month: string; mrr: number; activeCount?: number }>;
   monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
   monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
@@ -506,6 +506,7 @@ const Admin = () => {
     return filteredMRRData.map((item) => ({
       date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
       mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
+      activeCount: item.activeCount ?? 0,
     }));
   }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
 
@@ -1684,7 +1685,16 @@ const Admin = () => {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR Total']}
+                          formatter={(value: number, name: string, props: any) => {
+                            const activeCount = props?.payload?.activeCount ?? 0;
+                            return [
+                              <div key="mrr-tooltip" className="flex flex-col gap-0.5">
+                                <span className="font-semibold">R$ {value.toLocaleString('pt-BR')}</span>
+                                <span className="text-[10px] text-muted-foreground">{activeCount} assinantes ativos</span>
+                              </div>,
+                              'MRR Total'
+                            ];
+                          }}
                         />
                         <Area 
                           type="monotone" 
