@@ -248,13 +248,62 @@ export default function CheckoutPix() {
           >
             {pixData ? (
               paid ? (
-                <div className="flex flex-col items-center gap-4 py-16">
-                  <div className="h-20 w-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                    <PartyPopper className="h-10 w-10 text-emerald-500" />
+                <motion.div
+                  className="flex flex-col items-center gap-5 py-12"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {/* Animated success rings */}
+                  <div className="relative">
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-emerald-500/20"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 2.5, opacity: 0 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-emerald-500/15"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
+                    />
+                    <motion.div
+                      className="relative h-24 w-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                    >
+                      <motion.div
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                      >
+                        <Check className="h-12 w-12 text-white stroke-[3]" />
+                      </motion.div>
+                    </motion.div>
                   </div>
-                  <p className="text-lg font-bold text-foreground">Pagamento confirmado!</p>
-                  <p className="text-muted-foreground text-sm">Redirecionando...</p>
-                </div>
+
+                  <motion.div
+                    className="text-center space-y-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <h2 className="text-2xl font-bold text-foreground">Pagamento confirmado!</h2>
+                    <p className="text-muted-foreground text-sm">Seu plano <span className="font-semibold text-emerald-600">{planName}</span> está sendo ativado</p>
+                  </motion.div>
+
+                  <motion.div
+                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+                    <span>Redirecionando...</span>
+                  </motion.div>
+                </motion.div>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:gap-5 py-2 sm:py-4 w-full max-w-md">
                   {/* QR Code */}

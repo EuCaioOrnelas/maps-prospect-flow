@@ -84,26 +84,41 @@ serve(async (req) => {
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
 
-        await supabaseClient
-          .from("profiles")
-          .update({
-            plan: planKey,
-            searches_limit: searchesLimit,
-            searches_used: 0,
-            subscription_current_period_end: periodEnd.toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", lead.user_id);
+        if (lead.user_id) {
+          // User already exists — activate plan directly
+          await supabaseClient
+            .from("profiles")
+            .update({
+              plan: planKey,
+              searches_limit: searchesLimit,
+              searches_used: 0,
+              subscription_current_period_end: periodEnd.toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", lead.user_id);
 
-        await supabaseClient
-          .from("checkout_leads")
-          .update({
-            checkout_completed: true,
-            checkout_completed_at: new Date().toISOString(),
-          })
-          .eq("stripe_session_id", `abacate_pix_${pixId}`);
+          // Mark checkout as completed
+          await supabaseClient
+            .from("checkout_leads")
+            .update({
+              checkout_completed: true,
+              checkout_completed_at: new Date().toISOString(),
+            })
+            .eq("stripe_session_id", `abacate_pix_${pixId}`);
 
-        logStep("Plan activated", { userId: lead.user_id, planKey });
+          logStep("Plan activated", { userId: lead.user_id, planKey });
+        } else {
+          // No user yet — mark as completed so activate_pending_checkout trigger picks it up on signup
+          await supabaseClient
+            .from("checkout_leads")
+            .update({
+              checkout_completed: true,
+              checkout_completed_at: new Date().toISOString(),
+            })
+            .eq("stripe_session_id", `abacate_pix_${pixId}`);
+
+          logStep("Payment confirmed, pending account creation", { email: lead.email, planKey });
+        }
       }
     }
 
