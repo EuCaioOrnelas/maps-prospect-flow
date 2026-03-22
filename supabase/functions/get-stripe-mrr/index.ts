@@ -446,7 +446,7 @@ Deno.serve(async (req) => {
         totalNewSales,
         planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
-          .map(([month, mrr]) => ({ month, mrr }))
+          .map(([month, data]) => ({ month, mrr: data.mrr, activeCount: data.activeCount }))
           .sort((a, b) => a.month.localeCompare(b.month)),
         monthlyRefunds: Object.entries(monthlyRefunds)
           .map(([month, data]) => ({ month, amount: data.amount, count: data.count }))
