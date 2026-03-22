@@ -219,87 +219,8 @@ function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult
     `),
   };
 }
-function templateSubscriptionRenewal(payload: Record<string, unknown>): TemplateResult {
-  const userName = payload.user_name as string || "Cliente";
-  const planName = payload.plan_name as string || "Seu plano";
-  const planPrice = payload.plan_price as string || "";
-  const expiryDate = payload.expiry_date as string || "";
-  const remainingDays = payload.remaining_days as number || 0;
-  const checkoutUrl = payload.checkout_url as string || "";
-  const stage = payload.stage as string || "";
-
-  const STAGE_SUBJECTS: Record<string, string> = {
-    "D-5": "Sua renovação da Wiize está chegando",
-    "D-3": "Evite qualquer interrupção na sua Wiize",
-    "D-1": "Evite perder acesso à Wiize amanhã",
-    "D0": "Sua assinatura Wiize vence hoje",
-    "D+1": "Seu acesso à Wiize foi suspenso",
-  };
-
-  const subject = STAGE_SUBJECTS[stage] || `Renovação do plano ${planName}`;
-
-  const urgencyColor = remainingDays <= 0 ? "#ef4444" : remainingDays <= 2 ? "#f59e0b" : "#3daa57";
-  const urgencyText = remainingDays <= 0
-    ? "⚠️ Sua assinatura venceu!"
-    : remainingDays <= 1 
-      ? "⚠️ Sua assinatura vence amanhã!" 
-      : remainingDays <= 3 
-        ? `⚠️ Faltam apenas ${remainingDays} dias para o vencimento` 
-        : `Faltam ${remainingDays} dias para o vencimento`;
-
-  const isSuspended = stage === "D+1";
-
-  return {
-    subject,
-    html: baseLayout(subject, `
-      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Olá, ${userName}!</h1>
-      
-      <div style="margin:16px 0;padding:16px;background:#fafafa;border-radius:8px;border-left:4px solid ${urgencyColor};">
-        <p style="margin:0;font-size:16px;font-weight:600;color:${urgencyColor};">${urgencyText}</p>
-        <p style="margin:8px 0 0;font-size:14px;color:#71717a;">Data de vencimento: <strong style="color:#18181b;">${expiryDate}</strong></p>
-      </div>
-
-      ${isSuspended ? `
-      <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
-        <p style="margin:0;font-size:14px;color:#991b1b;">
-          ⛔ Seu acesso foi suspenso por falta de pagamento. Renove agora para reativar sua conta.
-        </p>
-      </div>
-      ` : `
-      <p style="margin:16px 0 8px;color:#3f3f46;font-size:15px;">
-        Para manter seu acesso ao <strong>${planName}</strong> sem interrupções, renove sua assinatura via PIX.
-      </p>
-      `}
-
-      <div style="margin:16px 0;padding:16px;background:#f0fdf4;border-radius:8px;text-align:center;">
-        <p style="margin:0;font-size:13px;color:#71717a;">Valor da renovação</p>
-        <p style="margin:4px 0 0;font-size:28px;font-weight:700;color:#166534;">${planPrice}<span style="font-size:14px;font-weight:400;color:#71717a;">/mês</span></p>
-      </div>
-
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${isSuspended ? "Reativar Minha Conta" : "Renovar Assinatura via PIX"}</a>
-      </div>
-
-      <br/>
-      <div style="margin:16px 0;padding:12px 16px;background:#fffbeb;border-radius:8px;">
-        <p style="margin:0;font-size:13px;color:#92400e;">
-          💡 Pode pagar com antecedência — a renovação será contabilizada a partir da data de vencimento atual.
-        </p>
-      </div>
-
-      ${!isSuspended ? `
-      <br/>
-      <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
-        <p style="margin:0;font-size:13px;color:#991b1b;">
-          ⚠️ Após o vencimento, o acesso será suspenso em até 24 horas.
-        </p>
-      </div>
-      ` : ""}
-
-      <p style="margin:16px 0 0;font-size:13px;color:#a1a1aa;">Se tiver dúvidas, entre em contato com nosso suporte.</p>
-    `),
-  };
-}
+// SUBSCRIPTION_RENEWAL is handled as async — fetches from renewal_email_templates DB table
+// so the actual email matches what's configured in the admin panel.
 
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
@@ -308,7 +229,6 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
-  SUBSCRIPTION_RENEWAL: templateSubscriptionRenewal,
 };
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
@@ -391,15 +311,65 @@ Deno.serve(async (req) => {
     }
 
     // Generate email content
-    const templateFn = TEMPLATES[email_type];
-    if (!templateFn) {
-      return new Response(
-        JSON.stringify({ error: `Unknown email_type: ${email_type}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    let subject: string;
+    let html: string;
 
-    const { subject, html } = templateFn(payload);
+    if (email_type === "SUBSCRIPTION_RENEWAL") {
+      // Fetch template from DB based on stage
+      const stage = payload.stage as string || "D-5";
+      const { data: dbTemplate } = await supabase
+        .from("renewal_email_templates")
+        .select("subject, title, content, cta_text")
+        .eq("stage", stage)
+        .maybeSingle();
+
+      if (!dbTemplate) {
+        return new Response(
+          JSON.stringify({ error: `No renewal template found for stage: ${stage}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const userName = payload.user_name as string || "Cliente";
+      const planName = payload.plan_name as string || "Seu plano";
+      const planPrice = payload.plan_price as string || "";
+      const expiryDate = payload.expiry_date as string || "";
+      const checkoutUrl = payload.checkout_url as string || "";
+
+      // Replace variables in template content
+      let compiledContent = dbTemplate.content
+        .replace(/\{\{user_name\}\}/g, userName)
+        .replace(/\{\{plan_name\}\}/g, planName)
+        .replace(/\{\{amount\}\}/g, planPrice)
+        .replace(/\{\{due_date\}\}/g, expiryDate)
+        .replace(/\{\{payment_link\}\}/g, checkoutUrl)
+        .replace(/\{\{pix_copy_paste\}\}/g, "");
+
+      subject = dbTemplate.subject
+        .replace(/\{\{user_name\}\}/g, userName)
+        .replace(/\{\{plan_name\}\}/g, planName);
+
+      html = baseLayout(dbTemplate.title, `
+        <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
+          ${compiledContent}
+        </div>
+
+        <div style="text-align:center;margin:24px 0;">
+          <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${dbTemplate.cta_text}</a>
+        </div>
+      `);
+    } else {
+      const templateFn = TEMPLATES[email_type];
+      if (!templateFn) {
+        return new Response(
+          JSON.stringify({ error: `Unknown email_type: ${email_type}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const result = templateFn(payload);
+      subject = result.subject;
+      html = result.html;
+    }
 
     // Insert log as queued (with subject)
     const { data: logEntry, error: logError } = await supabase
