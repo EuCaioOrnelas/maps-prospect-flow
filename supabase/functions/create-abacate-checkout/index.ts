@@ -107,10 +107,29 @@ serve(async (req) => {
       },
     };
 
-    // Add coupons if provided
+    // Add coupons if provided (check if already redeemed)
     if (couponCode) {
-      checkoutBody.coupons = [couponCode];
-      logStep("Coupon attached", { couponCode });
+      const userEmail = customerData.email?.toLowerCase();
+      let canUseCoupon = true;
+      
+      if (userEmail) {
+        const { data: existingRedemption } = await supabaseClient
+          .from("coupon_redemptions")
+          .select("id")
+          .eq("email", userEmail)
+          .eq("coupon_code", couponCode.toUpperCase())
+          .maybeSingle();
+        
+        if (existingRedemption) {
+          logStep("Coupon already redeemed, skipping", { couponCode, email: userEmail });
+          canUseCoupon = false;
+        }
+      }
+      
+      if (canUseCoupon) {
+        checkoutBody.coupons = [couponCode];
+        logStep("Coupon attached", { couponCode });
+      }
     }
 
     logStep("Creating checkout (v2)", checkoutBody);

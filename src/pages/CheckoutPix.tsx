@@ -164,7 +164,7 @@ export default function CheckoutPix() {
     setCouponError("");
     try {
       const { data, error } = await supabase.functions.invoke("validate-abacate-coupon", {
-        body: { couponCode: couponCode.trim() },
+        body: { couponCode: couponCode.trim(), email: customerData?.email },
       });
       if (error) throw new Error(error.message);
       if (data?.valid) {

@@ -91,37 +91,67 @@ serve(async (req) => {
     // Apply coupon discount via AbacatePay v2 API (only if no trial discount)
     if (couponCode && !discountApplied) {
       try {
-        const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Accept": "application/json",
-          },
-        });
-        const couponJson = await couponRes.json();
-        const coupons = couponJson.data || [];
-        const coupon = coupons.find(
-          (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
-        );
+        // Check if user already redeemed this coupon
+        const userEmail = customerData.email?.toLowerCase();
+        if (userEmail) {
+          const { data: existingRedemption } = await supabaseClient
+            .from("coupon_redemptions")
+            .select("id")
+            .eq("email", userEmail)
+            .eq("coupon_code", couponCode.toUpperCase())
+            .maybeSingle();
 
-        if (coupon) {
-          const isUnlimited = coupon.maxRedeems === -1;
-          const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
-
-          if (hasRedeems) {
-            if (coupon.discountKind === "PERCENTAGE") {
-              const pct = coupon.discount / 100;
-              finalPrice = Math.round(finalPrice * (1 - pct / 100));
-            } else if (coupon.discountKind === "FIXED") {
-              finalPrice = Math.max(100, finalPrice - coupon.discount);
-            }
-            discountApplied = true;
-            discountSource = `coupon:${couponCode}`;
-            logStep("AbacatePay coupon applied", { couponCode, discountKind: coupon.discountKind, discount: coupon.discount, finalPrice });
+          if (existingRedemption) {
+            logStep("Coupon already redeemed by user", { couponCode, email: userEmail });
+            // Skip coupon - don't apply discount, proceed with full price
           } else {
-            logStep("Coupon max redeems reached", { couponCode });
+            const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Accept": "application/json",
+              },
+            });
+            const couponJson = await couponRes.json();
+            const coupons = couponJson.data || [];
+            const coupon = coupons.find(
+              (c: any) => c.id?.toUpperCase() === couponCode.toUpperCase() && c.status === "ACTIVE"
+            );
+
+            if (coupon) {
+              const isUnlimited = coupon.maxRedeems === -1;
+              const hasRedeems = isUnlimited || coupon.redeemsCount < coupon.maxRedeems;
+
+              if (hasRedeems) {
+                if (coupon.discountKind === "PERCENTAGE") {
+                  const pct = coupon.discount / 100;
+                  finalPrice = Math.round(finalPrice * (1 - pct / 100));
+                } else if (coupon.discountKind === "FIXED") {
+                  finalPrice = Math.max(100, finalPrice - coupon.discount);
+                }
+                discountApplied = true;
+                discountSource = `coupon:${couponCode}`;
+                logStep("AbacatePay coupon applied", { couponCode, discountKind: coupon.discountKind, discount: coupon.discount, finalPrice });
+
+                // Record coupon redemption
+                try {
+                  await supabaseClient.from("coupon_redemptions").insert({
+                    user_id: userId || "00000000-0000-0000-0000-000000000000",
+                    email: userEmail,
+                    coupon_code: couponCode.toUpperCase(),
+                    plan_key: planKey,
+                    discount_amount_cents: plan.priceInCents - finalPrice,
+                  });
+                  logStep("Coupon redemption recorded");
+                } catch (e) {
+                  logStep("Failed to record coupon redemption", { error: String(e) });
+                }
+              } else {
+                logStep("Coupon max redeems reached", { couponCode });
+              }
+            } else {
+              logStep("Coupon not found or inactive", { couponCode });
+            }
           }
-        } else {
-          logStep("Coupon not found or inactive", { couponCode });
         }
       } catch (e) {
         logStep("Failed to validate coupon", { error: String(e) });

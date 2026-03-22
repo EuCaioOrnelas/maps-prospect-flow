@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,10 +21,33 @@ serve(async (req) => {
     const apiKey = Deno.env.get("ABACATE_PAY_API_KEY");
     if (!apiKey) throw new Error("ABACATE_PAY_API_KEY not configured");
 
-    const { couponCode } = await req.json();
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { couponCode, email } = await req.json();
     if (!couponCode) throw new Error("couponCode is required");
 
-    logStep("Validating coupon", { couponCode });
+    logStep("Validating coupon", { couponCode, email });
+
+    // Check if user already redeemed this coupon
+    if (email) {
+      const { data: existing } = await supabaseClient
+        .from("coupon_redemptions")
+        .select("id")
+        .eq("email", email.toLowerCase())
+        .eq("coupon_code", couponCode.toUpperCase())
+        .maybeSingle();
+
+      if (existing) {
+        logStep("Coupon already used by this user", { couponCode, email });
+        return new Response(
+          JSON.stringify({ valid: false, error: "Você já utilizou este cupom. Ele é válido apenas para a primeira assinatura." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Fetch all coupons from AbacatePay
     const res = await fetch(`${ABACATE_API_URL}/coupons/list`, {
@@ -71,7 +95,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         valid: true,
-        discountKind: coupon.discountKind, // "PERCENTAGE" or "FIXED"
+        discountKind: coupon.discountKind,
         discount: coupon.discount,
         code: coupon.id,
       }),
