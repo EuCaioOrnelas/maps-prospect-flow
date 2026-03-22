@@ -259,15 +259,17 @@ function templateSubscriptionRenewal(payload: Record<string, unknown>): Template
         <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">Renovar Assinatura via PIX</a>
       </div>
 
+      <br/>
       <div style="margin:16px 0;padding:12px 16px;background:#fffbeb;border-radius:8px;">
         <p style="margin:0;font-size:13px;color:#92400e;">
-          💡 <strong>Pode pagar com antecedência!</strong> Se você pagar antes do vencimento, a renovação será contabilizada a partir da data de vencimento atual, sem perder nenhum dia.
+          💡 Pode pagar com antecedência — a renovação será contabilizada a partir da data de vencimento atual.
         </p>
       </div>
 
+      <br/>
       <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
         <p style="margin:0;font-size:13px;color:#991b1b;">
-          ⚠️ Caso o pagamento não seja realizado, o acesso ao sistema será suspenso <strong>1 dia após o vencimento</strong>.
+          ⚠️ Após o vencimento, o acesso será suspenso em até 24 horas.
         </p>
       </div>
 
