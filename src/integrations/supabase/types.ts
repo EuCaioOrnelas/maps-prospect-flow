@@ -695,6 +695,39 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_redemptions: {
+        Row: {
+          coupon_code: string
+          created_at: string
+          discount_amount_cents: number
+          email: string
+          id: string
+          plan_key: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_code: string
+          created_at?: string
+          discount_amount_cents?: number
+          email: string
+          id?: string
+          plan_key: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_code?: string
+          created_at?: string
+          discount_amount_cents?: number
+          email?: string
+          id?: string
+          plan_key?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_flow_edges: {
         Row: {
           condition_label: string | null
