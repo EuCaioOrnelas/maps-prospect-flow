@@ -86,7 +86,7 @@ serve(async (req) => {
     const customerId = customerJson.data?.id;
     logStep("Customer created", { customerId });
 
-    const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
+    const origin = req.headers.get("origin") || "https://wiize.com.br";
 
     // 2. Create checkout on AbacatePay v2
     const checkoutBody: Record<string, any> = {
