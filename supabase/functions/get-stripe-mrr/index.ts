@@ -386,6 +386,7 @@ Deno.serve(async (req) => {
       const monthStart = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
       const monthEnd = new Date(parseInt(yearStr), parseInt(monthStr), 0, 23, 59, 59);
       let mrrForMonth = 0;
+      let activeForMonth = 0;
 
       for (const sub of wiizeSubs) {
         const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -395,27 +396,22 @@ Deno.serve(async (req) => {
         const subMrr = PLAN_MRR[priceId] || 0;
         if (subMrr === 0) continue;
 
-        // Sub must have started before or during this month
         const subStart = new Date(sub.start_date * 1000);
         if (subStart > monthEnd) continue;
 
-        // Sub must not have been canceled before this month started
         if (sub.status === "canceled" && sub.canceled_at) {
           const cancelDate = new Date(sub.canceled_at * 1000);
           if (cancelDate < monthStart) continue;
         }
 
-        // Check if sub had a real payment (skip trial-only subs that never paid)
         const hadPayment = invoicesBySubId[sub.id] && invoicesBySubId[sub.id].length > 0;
         if (!hadPayment) continue;
 
-        // Check refund status
         const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
         const chargeId = latestInvoice?.charge;
         const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
         if (wasRefunded) continue;
 
-        // Apply discount for forever coupons
         let effectiveAmount = subMrr;
         const discount = (sub as any).discount;
         if (discount?.coupon?.duration === "forever") {
@@ -428,9 +424,10 @@ Deno.serve(async (req) => {
         }
 
         mrrForMonth += effectiveAmount;
+        activeForMonth++;
       }
 
-      monthlyMRR[monthKey] = mrrForMonth;
+      monthlyMRR[monthKey] = { mrr: mrrForMonth, activeCount: activeForMonth };
     }
 
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
