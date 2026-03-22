@@ -97,7 +97,6 @@ const plans: Plan[] = [
       "Até 10 Números WhatsApp",
       "CRM integrado",
       "Até 50 leads por busca",
-      "Download dos Relatórios em Excel",
       "Suporte VIP",
     ],
     popular: false,
