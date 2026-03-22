@@ -131,7 +131,7 @@ interface StripeMRRData {
   totalSalesValue?: number;
   totalSalesCount?: number;
   totalNewSales?: number;
-  monthlyMRR: Array<{ month: string; mrr: number }>;
+  monthlyMRR: Array<{ month: string; mrr: number; activeCount?: number }>;
   monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
   monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
 }
