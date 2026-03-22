@@ -350,13 +350,13 @@ export default function CheckoutPix() {
 
           {/* Right sidebar */}
           <motion.div
-            className="space-y-5 lg:sticky lg:top-28 lg:self-start"
+            className="space-y-4 sm:space-y-5 lg:sticky lg:top-28 lg:self-start order-first lg:order-last"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             {/* Plan summary */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
+            <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-5 space-y-3 sm:space-y-4">
               <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-primary" />
                 Resumo do pedido
