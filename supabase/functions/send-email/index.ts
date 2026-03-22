@@ -311,15 +311,65 @@ Deno.serve(async (req) => {
     }
 
     // Generate email content
-    const templateFn = TEMPLATES[email_type];
-    if (!templateFn) {
-      return new Response(
-        JSON.stringify({ error: `Unknown email_type: ${email_type}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    let subject: string;
+    let html: string;
 
-    const { subject, html } = templateFn(payload);
+    if (email_type === "SUBSCRIPTION_RENEWAL") {
+      // Fetch template from DB based on stage
+      const stage = payload.stage as string || "D-5";
+      const { data: dbTemplate } = await supabase
+        .from("renewal_email_templates")
+        .select("subject, title, content, cta_text")
+        .eq("stage", stage)
+        .maybeSingle();
+
+      if (!dbTemplate) {
+        return new Response(
+          JSON.stringify({ error: `No renewal template found for stage: ${stage}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const userName = payload.user_name as string || "Cliente";
+      const planName = payload.plan_name as string || "Seu plano";
+      const planPrice = payload.plan_price as string || "";
+      const expiryDate = payload.expiry_date as string || "";
+      const checkoutUrl = payload.checkout_url as string || "";
+
+      // Replace variables in template content
+      let compiledContent = dbTemplate.content
+        .replace(/\{\{user_name\}\}/g, userName)
+        .replace(/\{\{plan_name\}\}/g, planName)
+        .replace(/\{\{amount\}\}/g, planPrice)
+        .replace(/\{\{due_date\}\}/g, expiryDate)
+        .replace(/\{\{payment_link\}\}/g, checkoutUrl)
+        .replace(/\{\{pix_copy_paste\}\}/g, "");
+
+      subject = dbTemplate.subject
+        .replace(/\{\{user_name\}\}/g, userName)
+        .replace(/\{\{plan_name\}\}/g, planName);
+
+      html = baseLayout(dbTemplate.title, `
+        <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
+          ${compiledContent}
+        </div>
+
+        <div style="text-align:center;margin:24px 0;">
+          <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${dbTemplate.cta_text}</a>
+        </div>
+      `);
+    } else {
+      const templateFn = TEMPLATES[email_type];
+      if (!templateFn) {
+        return new Response(
+          JSON.stringify({ error: `Unknown email_type: ${email_type}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const result = templateFn(payload);
+      subject = result.subject;
+      html = result.html;
+    }
 
     // Insert log as queued (with subject)
     const { data: logEntry, error: logError } = await supabase
