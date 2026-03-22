@@ -1655,10 +1655,13 @@ const Admin = () => {
                 <div className="h-64">
                   {filteredMRRData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={filteredMRRData.map(item => ({
-                        date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-                        mrr: item.mrr + (pixMRR?.pixMrr ?? 0)
-                      }))}>
+                      <AreaChart data={filteredMRRData.map((item, idx) => {
+                        const isCurrentMonth = idx === filteredMRRData.length - 1;
+                        return {
+                          date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                          mrr: isCurrentMonth ? item.mrr + (pixMRR?.pixMrr ?? 0) : item.mrr,
+                        };
+                      })}>
                         <defs>
                           <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
