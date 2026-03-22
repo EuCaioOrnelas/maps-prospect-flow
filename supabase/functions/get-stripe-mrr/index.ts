@@ -351,25 +351,91 @@ Deno.serve(async (req) => {
     const totalBase = activeCount + canceledCount;
     const churnRate = totalBase > 0 ? ((canceledCount / totalBase) * 100) : 0;
 
+    // --- Compute real monthly MRR by tracking subscription lifecycles ---
+    // For each month, calculate which subs were active and sum their monthly value
+    const PLAN_MRR: { [priceId: string]: number } = {
+      "price_1SlykAK8CM0R6xMMOCM684rz": 197,
+      "price_1SlykkK8CM0R6xMMZu7WJesV": 497,
+      "price_1SlylcK8CM0R6xMMyHRWAd8G": 897,
+    };
+
+    const monthlyMRR: { [month: string]: number } = {};
+
+    // Generate list of months from earliest sub start to now
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    
+    // Find earliest subscription start
+    let earliestStart = now;
+    for (const sub of wiizeSubs) {
+      const startDate = new Date(sub.start_date * 1000);
+      if (startDate < earliestStart) earliestStart = startDate;
+    }
+
+    // Generate month keys
+    const monthKeys: string[] = [];
+    const cursor = new Date(earliestStart.getFullYear(), earliestStart.getMonth(), 1);
+    while (cursor <= now) {
+      monthKeys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    // For each month, check which subs were active
+    for (const monthKey of monthKeys) {
+      const [yearStr, monthStr] = monthKey.split("-");
+      const monthStart = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+      const monthEnd = new Date(parseInt(yearStr), parseInt(monthStr), 0, 23, 59, 59);
+      let mrrForMonth = 0;
+
+      for (const sub of wiizeSubs) {
+        const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
+        if (isAdminEmail(customerEmail)) continue;
+
+        const priceId = sub.items.data[0]?.price.id;
+        const subMrr = PLAN_MRR[priceId] || 0;
+        if (subMrr === 0) continue;
+
+        // Sub must have started before or during this month
+        const subStart = new Date(sub.start_date * 1000);
+        if (subStart > monthEnd) continue;
+
+        // Sub must not have been canceled before this month started
+        if (sub.status === "canceled" && sub.canceled_at) {
+          const cancelDate = new Date(sub.canceled_at * 1000);
+          if (cancelDate < monthStart) continue;
+        }
+
+        // Check if sub had a real payment (skip trial-only subs that never paid)
+        const hadPayment = invoicesBySubId[sub.id] && invoicesBySubId[sub.id].length > 0;
+        if (!hadPayment) continue;
+
+        // Check refund status
+        const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
+        const chargeId = latestInvoice?.charge;
+        const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
+        if (wasRefunded) continue;
+
+        // Apply discount for forever coupons
+        let effectiveAmount = subMrr;
+        const discount = (sub as any).discount;
+        if (discount?.coupon?.duration === "forever") {
+          const coupon = discount.coupon;
+          if (coupon.percent_off) {
+            effectiveAmount = Math.round(effectiveAmount * (1 - coupon.percent_off / 100));
+          } else if (coupon.amount_off) {
+            effectiveAmount = Math.max(0, effectiveAmount - coupon.amount_off / 100);
+          }
+        }
+
+        mrrForMonth += effectiveAmount;
+      }
+
+      monthlyMRR[monthKey] = mrrForMonth;
+    }
+
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
     console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${totalSalesValue} (${totalSalesCount} transactions)`);
     console.log(`[GET-STRIPE-MRR] Refunds: ${wiizeRefundCount} (R$ ${wiizeRefundedAmount})`);
-
-    return new Response(
-      JSON.stringify({
-        totalMRR: activeMRR,
-        activeSubscriptions: activeCount,
-        totalRefunded: wiizeRefundedAmount,
-        refundCount: wiizeRefundCount,
-        canceledSubscriptions: canceledCount,
-        churnRate: parseFloat(churnRate.toFixed(1)),
-        totalSalesValue,
-        totalSalesCount,
-        totalNewSales,
-        planDistribution,
-        monthlyMRR: Object.entries(monthlyMRR)
-          .map(([month, mrr]) => ({ month, mrr }))
-          .sort((a, b) => a.month.localeCompare(b.month)),
         monthlyRefunds: Object.entries(monthlyRefunds)
           .map(([month, data]) => ({ month, amount: data.amount, count: data.count }))
           .sort((a, b) => a.month.localeCompare(b.month)),
