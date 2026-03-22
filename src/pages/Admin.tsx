@@ -1341,23 +1341,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* PIX Vendas do Mês */}
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.18s' }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <Receipt size={20} className="text-emerald-500" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">
-                  R$ {(pixMRR?.pixSalesValueThisMonth ?? 0).toLocaleString('pt-BR')}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Vendas PIX (Mês Atual)
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  {pixMRR?.pixSalesThisMonth ?? 0} pagamento(s)
-                </p>
-              </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
