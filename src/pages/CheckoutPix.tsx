@@ -237,8 +237,8 @@ export default function CheckoutPix() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 container max-w-5xl mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <main className="flex-1 container max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1fr_380px]">
           {/* Left — Subscribe action */}
           <motion.div
             className="flex flex-col items-center gap-6"
