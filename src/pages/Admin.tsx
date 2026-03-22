@@ -1301,9 +1301,9 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               {/* MRR Total Combinado */}
-              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in col-span-2 lg:col-span-1" style={{ animationDelay: '0.1s' }}>
+              <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                     <DollarSign size={20} className="text-success" />
@@ -1314,7 +1314,7 @@ const Admin = () => {
                   R$ {((stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0)).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  MRR Total
+                  MRR Total (Stripe + PIX)
                 </p>
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span>Stripe: R$ {(stripeMRR?.totalMRR ?? 0).toLocaleString('pt-BR')}</span>
@@ -1333,7 +1333,7 @@ const Admin = () => {
                   {(stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Assinantes Ativos
+                  Assinantes Ativos (Total)
                 </p>
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span>Stripe: {stripeMRR?.activeSubscriptions ?? 0}</span>
@@ -1352,10 +1352,12 @@ const Admin = () => {
                   R$ {(stripeMRR?.totalRefunded ?? 0).toLocaleString('pt-BR')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Reembolsado ({stripeMRR?.refundCount ?? 0})
+                  Total Reembolsado ({stripeMRR?.refundCount ?? 0})
                 </p>
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
               {/* Churn */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
                 <div className="flex items-center gap-3 mb-2">
@@ -1368,6 +1370,9 @@ const Admin = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Taxa de Cancelamento
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  Cancelados / (Ativos + Cancelados)
                 </p>
               </div>
 
@@ -1382,7 +1387,7 @@ const Admin = () => {
                   {stripeMRR?.canceledSubscriptions ?? 0}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Cancelamentos
+                  Cancelamentos (Total)
                 </p>
               </div>
             </div>
