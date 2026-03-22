@@ -158,10 +158,13 @@ export function PixEmailTemplatesTab() {
       .replace(/\{\{payment_link\}\}/g, "#")
       .replace(/\{\{pix_copy_paste\}\}/g, "00020126580014br.gov.bcb...");
 
+    const logoUrl = "https://lqfqnqfeuneorxocybru.supabase.co/storage/v1/object/public/avatars/email/logo_wiize.png";
+
     return `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <div style="background:#3daa57;padding:24px 32px;text-align:center;">
-          <span style="color:#fff;font-size:20px;font-weight:700;">Wiize</span>
+          <img src="${logoUrl}" alt="Wiize" width="32" height="32" style="display:inline-block;vertical-align:middle;border-radius:8px;">
+          <span style="color:#fff;font-size:20px;font-weight:700;margin-left:8px;vertical-align:middle;">Wiize</span>
         </div>
         <div style="padding:32px;color:#1a1a2e;">
           <h1 style="font-size:22px;color:#1a1a2e;margin:0 0 16px;">${t.title}</h1>
@@ -169,6 +172,10 @@ export function PixEmailTemplatesTab() {
           <div style="text-align:center;margin:24px 0;">
             <a href="#" style="display:inline-block;padding:14px 32px;background:#3daa57;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">${t.cta_text}</a>
           </div>
+        </div>
+        <div style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">Você recebeu este e-mail porque tem uma conta na Wiize.</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#a1a1aa;"><a href="#" style="color:#3daa57;">Gerenciar preferências de e-mail</a></p>
         </div>
       </div>
     `;

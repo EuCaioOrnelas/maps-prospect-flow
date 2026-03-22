@@ -211,42 +211,72 @@ const EMAIL_TYPES = [
     label: "Broadcast Admin",
     payload: { subject: "Teste de Broadcast", title: "Novidades da Wiize", content: "<p>Este é um <strong>teste</strong> do sistema de broadcast.</p><p>Tudo funcionando corretamente! 🎉</p>" },
   },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-5 (Início)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-5" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-3 (Reforço)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "28/03/2026", remaining_days: 3, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-3" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-1 (Urgência)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "26/03/2026", remaining_days: 1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-1" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D0 (Vence hoje)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "25/03/2026", remaining_days: 0, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D0" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Acesso Suspenso D+1",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "24/03/2026", remaining_days: -1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D+1" },
+  },
 ];
 
 function TestTab() {
   const { toast } = useToast();
   const [testResults, setTestResults] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
 
-  const sendTest = async (emailType: string, payload: Record<string, unknown>) => {
-    setTestResults((prev) => ({ ...prev, [emailType]: "sending" }));
+  const getItemKey = (et: typeof EMAIL_TYPES[number]) => {
+    const stage = (et.payload as any)?.stage;
+    return stage ? `${et.type}_${stage}` : et.type;
+  };
+
+  const sendTest = async (et: typeof EMAIL_TYPES[number]) => {
+    const key = getItemKey(et);
+    setTestResults((prev) => ({ ...prev, [key]: "sending" }));
 
     try {
-      // Get current admin user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
           user_id: user.id,
-          email_type: emailType,
-          payload,
-          idempotency_key: `test_${emailType}_${Date.now()}`,
+          email_type: et.type,
+          payload: et.payload,
+          idempotency_key: `test_${key}_${Date.now()}`,
         },
       });
 
       if (error) throw error;
 
-      setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
-      toast({ title: `✅ Email "${emailType}" enviado para seu email` });
+      setTestResults((prev) => ({ ...prev, [key]: "success" }));
+      toast({ title: `✅ Email "${et.label}" enviado para seu email` });
     } catch (err: any) {
-      setTestResults((prev) => ({ ...prev, [emailType]: "error" }));
+      setTestResults((prev) => ({ ...prev, [key]: "error" }));
       toast({ title: "Erro ao enviar teste", description: err.message, variant: "destructive" });
     }
   };
 
   const sendAll = async () => {
     for (const et of EMAIL_TYPES) {
-      await sendTest(et.type, et.payload);
+      await sendTest(et);
     }
   };
 
@@ -263,11 +293,12 @@ function TestTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {EMAIL_TYPES.map((et) => {
-          const status = testResults[et.type] || "idle";
+        {EMAIL_TYPES.map((et, idx) => {
+          const key = getItemKey(et);
+          const status = testResults[key] || "idle";
           return (
             <div
-              key={et.type}
+              key={`${et.type}_${idx}`}
               className="flex items-center justify-between p-3 rounded-lg border bg-card"
             >
               <div>
@@ -280,7 +311,7 @@ function TestTab() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => sendTest(et.type, et.payload)}
+                  onClick={() => sendTest(et)}
                   disabled={status === "sending"}
                 >
                   {status === "sending" ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -293,7 +324,6 @@ function TestTab() {
     </div>
   );
 }
-
 // ── Logs Tab ───────────────────────────────────────────────────────────────────
 
 function LogsTab() {

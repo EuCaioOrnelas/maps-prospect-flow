@@ -226,19 +226,32 @@ function templateSubscriptionRenewal(payload: Record<string, unknown>): Template
   const expiryDate = payload.expiry_date as string || "";
   const remainingDays = payload.remaining_days as number || 0;
   const checkoutUrl = payload.checkout_url as string || "";
+  const stage = payload.stage as string || "";
 
-  const urgencyColor = remainingDays <= 2 ? "#ef4444" : remainingDays <= 4 ? "#f59e0b" : "#3daa57";
-  const urgencyText = remainingDays <= 1 
-    ? "⚠️ Sua assinatura vence amanhã!" 
-    : remainingDays <= 3 
-      ? `⚠️ Faltam apenas ${remainingDays} dias para o vencimento` 
-      : `Faltam ${remainingDays} dias para o vencimento`;
+  const STAGE_SUBJECTS: Record<string, string> = {
+    "D-5": "Sua renovação da Wiize está chegando",
+    "D-3": "Evite qualquer interrupção na sua Wiize",
+    "D-1": "Evite perder acesso à Wiize amanhã",
+    "D0": "Sua assinatura Wiize vence hoje",
+    "D+1": "Seu acesso à Wiize foi suspenso",
+  };
+
+  const subject = STAGE_SUBJECTS[stage] || `Renovação do plano ${planName}`;
+
+  const urgencyColor = remainingDays <= 0 ? "#ef4444" : remainingDays <= 2 ? "#f59e0b" : "#3daa57";
+  const urgencyText = remainingDays <= 0
+    ? "⚠️ Sua assinatura venceu!"
+    : remainingDays <= 1 
+      ? "⚠️ Sua assinatura vence amanhã!" 
+      : remainingDays <= 3 
+        ? `⚠️ Faltam apenas ${remainingDays} dias para o vencimento` 
+        : `Faltam ${remainingDays} dias para o vencimento`;
+
+  const isSuspended = stage === "D+1";
 
   return {
-    subject: remainingDays <= 2 
-      ? `⚠️ Último aviso: seu plano ${planName} vence em ${remainingDays} dia${remainingDays > 1 ? 's' : ''}!`
-      : `🔔 Seu plano ${planName} vence em ${remainingDays} dias — renove agora`,
-    html: baseLayout(`Renovação de Assinatura`, `
+    subject,
+    html: baseLayout(subject, `
       <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Olá, ${userName}!</h1>
       
       <div style="margin:16px 0;padding:16px;background:#fafafa;border-radius:8px;border-left:4px solid ${urgencyColor};">
@@ -246,9 +259,17 @@ function templateSubscriptionRenewal(payload: Record<string, unknown>): Template
         <p style="margin:8px 0 0;font-size:14px;color:#71717a;">Data de vencimento: <strong style="color:#18181b;">${expiryDate}</strong></p>
       </div>
 
+      ${isSuspended ? `
+      <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
+        <p style="margin:0;font-size:14px;color:#991b1b;">
+          ⛔ Seu acesso foi suspenso por falta de pagamento. Renove agora para reativar sua conta.
+        </p>
+      </div>
+      ` : `
       <p style="margin:16px 0 8px;color:#3f3f46;font-size:15px;">
         Para manter seu acesso ao <strong>${planName}</strong> sem interrupções, renove sua assinatura via PIX.
       </p>
+      `}
 
       <div style="margin:16px 0;padding:16px;background:#f0fdf4;border-radius:8px;text-align:center;">
         <p style="margin:0;font-size:13px;color:#71717a;">Valor da renovação</p>
@@ -256,7 +277,7 @@ function templateSubscriptionRenewal(payload: Record<string, unknown>): Template
       </div>
 
       <div style="text-align:center;margin:24px 0;">
-        <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">Renovar Assinatura via PIX</a>
+        <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${isSuspended ? "Reativar Minha Conta" : "Renovar Assinatura via PIX"}</a>
       </div>
 
       <br/>
@@ -266,12 +287,14 @@ function templateSubscriptionRenewal(payload: Record<string, unknown>): Template
         </p>
       </div>
 
+      ${!isSuspended ? `
       <br/>
       <div style="margin:16px 0;padding:12px 16px;background:#fef2f2;border-radius:8px;">
         <p style="margin:0;font-size:13px;color:#991b1b;">
           ⚠️ Após o vencimento, o acesso será suspenso em até 24 horas.
         </p>
       </div>
+      ` : ""}
 
       <p style="margin:16px 0 0;font-size:13px;color:#a1a1aa;">Se tiver dúvidas, entre em contato com nosso suporte.</p>
     `),
