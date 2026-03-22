@@ -500,16 +500,12 @@ const Admin = () => {
   const mrrChartData = useMemo(() => {
     if (!filteredMRRData.length) return [];
 
-    const currentMonthKey = (() => {
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    })();
-
     const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
+    const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
 
     return filteredMRRData.map((item) => ({
       date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-      mrr: item.month === currentMonthKey ? currentTotalMrr : item.mrr,
+      mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
     }));
   }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
 
