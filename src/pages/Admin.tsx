@@ -506,6 +506,7 @@ const Admin = () => {
     return filteredMRRData.map((item) => ({
       date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
       mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
+      activeCount: item.activeCount ?? 0,
     }));
   }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
 
