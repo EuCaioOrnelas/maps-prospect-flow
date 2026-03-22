@@ -43,8 +43,6 @@ const plans: {
       "Até 2 Números WhatsApp",
       "CRM integrado",
       "Até 50 leads por busca",
-      "Dados completos dos leads",
-      "Download dos Relatórios em Excel",
       "Suporte por email",
     ],
     popular: false,
