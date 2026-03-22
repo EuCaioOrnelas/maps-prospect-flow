@@ -385,6 +385,11 @@ Deno.serve(async (req) => {
       const [yearStr, monthStr] = monthKey.split("-");
       const monthStart = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
       const monthEnd = new Date(parseInt(yearStr), parseInt(monthStr), 0, 23, 59, 59);
+      
+      // For current month, snapshot = now. For past months, snapshot = end of month.
+      const isCurrentMonth = monthKey === currentMonthKey;
+      const snapshotDate = isCurrentMonth ? now : monthEnd;
+      
       let mrrForMonth = 0;
       let activeForMonth = 0;
 
@@ -396,13 +401,19 @@ Deno.serve(async (req) => {
         const subMrr = PLAN_MRR[priceId] || 0;
         if (subMrr === 0) continue;
 
+        // Sub must have started before or on the snapshot date
         const subStart = new Date(sub.start_date * 1000);
-        if (subStart > monthEnd) continue;
+        if (subStart > snapshotDate) continue;
 
+        // Sub must still be active at the snapshot date (end-of-month or now)
         if (sub.status === "canceled" && sub.canceled_at) {
           const cancelDate = new Date(sub.canceled_at * 1000);
-          if (cancelDate < monthStart) continue;
+          // If canceled before the snapshot, it doesn't count
+          if (cancelDate <= snapshotDate) continue;
         }
+
+        // For current month active subs, also exclude cancel_at_period_end
+        if (isCurrentMonth && sub.cancel_at_period_end) continue;
 
         const hadPayment = invoicesBySubId[sub.id] && invoicesBySubId[sub.id].length > 0;
         if (!hadPayment) continue;
