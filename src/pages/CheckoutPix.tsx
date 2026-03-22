@@ -285,6 +285,28 @@ export default function CheckoutPix() {
                     <span>Aguardando pagamento...</span>
                   </div>
 
+                  {/* DEV: Simulate payment button */}
+                  {pixData && !paid && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs border-dashed border-amber-500/50 text-amber-600 hover:bg-amber-50"
+                      onClick={async () => {
+                        try {
+                          const { data, error } = await supabase.functions.invoke("simulate-abacate-pix", {
+                            body: { pixId: pixData.pixId },
+                          });
+                          if (error) throw error;
+                          toast({ title: "Pagamento simulado!", description: "Aguarde a confirmação..." });
+                        } catch (err: any) {
+                          toast({ title: "Erro ao simular", description: err.message, variant: "destructive" });
+                        }
+                      }}
+                    >
+                      ⚡ Simular Pagamento (DEV)
+                    </Button>
+                  )}
+
                   <p className="text-[11px] text-muted-foreground text-center max-w-sm">
                     Escaneie o QR Code ou cole o código no app do seu banco. O pagamento será confirmado automaticamente.
                   </p>
