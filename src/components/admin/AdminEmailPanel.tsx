@@ -211,6 +211,31 @@ const EMAIL_TYPES = [
     label: "Broadcast Admin",
     payload: { subject: "Teste de Broadcast", title: "Novidades da Wiize", content: "<p>Este é um <strong>teste</strong> do sistema de broadcast.</p><p>Tudo funcionando corretamente! 🎉</p>" },
   },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-5 (Início)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-5" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-3 (Reforço)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "28/03/2026", remaining_days: 3, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-3" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D-1 (Urgência)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "26/03/2026", remaining_days: 1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-1" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Renovação D0 (Vence hoje)",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "25/03/2026", remaining_days: 0, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D0" },
+  },
+  {
+    type: "SUBSCRIPTION_RENEWAL",
+    label: "Acesso Suspenso D+1",
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "24/03/2026", remaining_days: -1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D+1" },
+  },
 ];
 
 function TestTab() {
