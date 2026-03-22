@@ -436,6 +436,21 @@ Deno.serve(async (req) => {
     console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
     console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${totalSalesValue} (${totalSalesCount} transactions)`);
     console.log(`[GET-STRIPE-MRR] Refunds: ${wiizeRefundCount} (R$ ${wiizeRefundedAmount})`);
+    return new Response(
+      JSON.stringify({
+        totalMRR: activeMRR,
+        activeSubscriptions: activeCount,
+        totalRefunded: wiizeRefundedAmount,
+        refundCount: wiizeRefundCount,
+        canceledSubscriptions: canceledCount,
+        churnRate: parseFloat(churnRate.toFixed(1)),
+        totalSalesValue,
+        totalSalesCount,
+        totalNewSales,
+        planDistribution,
+        monthlyMRR: Object.entries(monthlyMRR)
+          .map(([month, mrr]) => ({ month, mrr }))
+          .sort((a, b) => a.month.localeCompare(b.month)),
         monthlyRefunds: Object.entries(monthlyRefunds)
           .map(([month, data]) => ({ month, amount: data.amount, count: data.count }))
           .sort((a, b) => a.month.localeCompare(b.month)),
