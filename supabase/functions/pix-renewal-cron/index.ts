@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
         let checkoutUrl = invoice?.checkout_url;
         let invoiceId = invoice?.id;
 
-        const origin = "https://maps-prospect-flow.lovable.app";
+        const origin = "https://wiize.com.br";
         const planName = PLAN_NAMES[user.plan] || user.plan;
         const planPrice = PLAN_PRICES[user.plan] || "";
         const priceNumber = planPrice.replace("R$ ", "").replace(".", "");

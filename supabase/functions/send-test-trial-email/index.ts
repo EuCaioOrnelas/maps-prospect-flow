@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const sampleVars: Record<string, string> = {
       user_name: "Usuário Teste",
       product_name: "Wiize",
-      cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
+      cta_link: "https://wiize.com.br/dashboard",
       trial_days_left: "7",
       projects_created: "12",
       feature_usage: "5",

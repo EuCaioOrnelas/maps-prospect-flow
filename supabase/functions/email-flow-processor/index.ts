@@ -247,7 +247,7 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
             user_email: user.email,
             product_name: "Wiize",
             plan: user.plan,
-            cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
+            cta_link: "https://wiize.com.br/dashboard",
           };
 
           const compiledBody = compileTemplate(config.body, templateVars);

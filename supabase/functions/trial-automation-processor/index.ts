@@ -430,7 +430,7 @@ async function processPendingSteps(
         let compiledBody = compileTemplate(template.body, {
           user_name: user.name || user.email?.split("@")[0] || "usuário",
           product_name: "Wiize",
-          cta_link: "https://maps-prospect-flow.lovable.app/dashboard",
+          cta_link: "https://wiize.com.br/dashboard",
           trial_days_left: String(trialDaysLeft),
           projects_created: "0",
           feature_usage: String(featureCount || 0),

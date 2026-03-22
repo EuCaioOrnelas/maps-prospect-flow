@@ -214,27 +214,27 @@ const EMAIL_TYPES = [
   {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D-5 (Início)",
-    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-5" },
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D-5" },
   },
   {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D-3 (Reforço)",
-    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "28/03/2026", remaining_days: 3, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-3" },
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "28/03/2026", remaining_days: 3, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D-3" },
   },
   {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D-1 (Urgência)",
-    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "26/03/2026", remaining_days: 1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D-1" },
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "26/03/2026", remaining_days: 1, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D-1" },
   },
   {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D0 (Vence hoje)",
-    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "25/03/2026", remaining_days: 0, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D0" },
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "25/03/2026", remaining_days: 0, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D0" },
   },
   {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Acesso Suspenso D+1",
-    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "24/03/2026", remaining_days: -1, checkout_url: "https://maps-prospect-flow.lovable.app/checkout-pix?plan=growth", stage: "D+1" },
+    payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "24/03/2026", remaining_days: -1, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D+1" },
   },
 ];
 

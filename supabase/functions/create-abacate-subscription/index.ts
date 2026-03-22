@@ -177,7 +177,7 @@ serve(async (req) => {
     logStep("PIX checkout created", { pixId: pixData.id, amount: finalPrice });
 
     // Build the hosted checkout URL for redirect
-    const origin = req.headers.get("origin") || "https://maps-prospect-flow.lovable.app";
+    const origin = req.headers.get("origin") || "https://wiize.com.br";
     const checkoutUrl = pixData.url || `${origin}/checkout-pix?pixId=${pixData.id}`;
 
     // Track checkout lead
