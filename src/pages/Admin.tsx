@@ -497,6 +497,18 @@ const Admin = () => {
     });
   }, [stripeMRR?.monthlyMRR, getFilterDateRange]);
 
+  const mrrChartData = useMemo(() => {
+    if (!filteredMRRData.length) return [];
+
+    const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
+    const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
+
+    return filteredMRRData.map((item) => ({
+      date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
+    }));
+  }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
+
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
     try {
@@ -1301,7 +1313,7 @@ const Admin = () => {
                 Atualizar MRR
               </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {/* MRR Total Combinado */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-3 mb-2">
@@ -1322,7 +1334,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Assinantes Total */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -1340,8 +1351,9 @@ const Admin = () => {
                   <span>PIX: {pixMRR?.pixActiveSubscriptions ?? 0}</span>
                 </div>
               </div>
+            </div>
 
-              {/* Reembolsos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -1355,10 +1367,7 @@ const Admin = () => {
                   Total Reembolsado ({stripeMRR?.refundCount ?? 0})
                 </p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-              {/* Churn */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -1376,7 +1385,6 @@ const Admin = () => {
                 </p>
               </div>
 
-              {/* Cancelamentos */}
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -1658,15 +1666,9 @@ const Admin = () => {
                   {loadingMRR && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-64">
-                  {filteredMRRData.length > 0 ? (
+                  {mrrChartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={filteredMRRData.map((item, idx) => {
-                        const isCurrentMonth = idx === filteredMRRData.length - 1;
-                        return {
-                          date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-                          mrr: isCurrentMonth ? item.mrr + (pixMRR?.pixMrr ?? 0) : item.mrr,
-                        };
-                      })}>
+                      <AreaChart data={mrrChartData}>
                         <defs>
                           <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
