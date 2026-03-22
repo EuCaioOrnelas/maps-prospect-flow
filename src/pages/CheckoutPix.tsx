@@ -268,9 +268,9 @@ export default function CheckoutPix() {
                     )}
                   </div>
 
-                  <p className="text-3xl font-bold text-foreground tabular-nums">
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">
                     {formatCurrency(pixData.amount)}
-                    <span className="text-base font-normal text-muted-foreground">/mês</span>
+                    <span className="text-sm sm:text-base font-normal text-muted-foreground">/mês</span>
                   </p>
 
                   {/* Copy code */}
