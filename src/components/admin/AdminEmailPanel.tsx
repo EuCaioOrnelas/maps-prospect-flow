@@ -212,6 +212,11 @@ const EMAIL_TYPES = [
     payload: { subject: "Teste de Broadcast", title: "Novidades da Wiize", content: "<p>Este é um <strong>teste</strong> do sistema de broadcast.</p><p>Tudo funcionando corretamente! 🎉</p>" },
   },
   {
+    type: "AGENT_HUMAN_HANDOFF",
+    label: "Transferência p/ Humano",
+    payload: { agent_name: "Agente Vendas", lead_phone: "+55 11 99999-9999", lead_name: "João Silva", stage_name: "Atendimento Humano", reason: "O agente não soube responder a pergunta do lead e transferiu para atendimento humano." },
+  },
+  {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D-5 (Início)",
     payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D-5" },

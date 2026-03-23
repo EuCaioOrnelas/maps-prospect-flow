@@ -1312,6 +1312,27 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
                   crmExtras.whatsapp_status = 'in_conversation';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
+
+                  // Send email notification to user about human handoff
+                  try {
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        user_id: whatsappNumber.user_id,
+                        email_type: 'AGENT_HUMAN_HANDOFF',
+                        payload: {
+                          agent_name: agent.name,
+                          lead_phone: conv.lead_phone,
+                          lead_name: conv.lead_name || null,
+                          stage_name: crmStageUnknown,
+                          reason: 'O agente não soube responder a pergunta do lead e transferiu para atendimento humano.',
+                        },
+                        idempotency_key: `handoff_${conv.id}_${Date.now()}`,
+                      },
+                    });
+                    console.log(`Human handoff email sent for conv ${conv.id}`);
+                  } catch (emailErr) {
+                    console.error(`Failed to send human handoff email for conv ${conv.id}:`, emailErr);
+                  }
                 } else if (isLeadLost && crmStageLost) {
                   // Lead explicitly not interested — move to lost stage
                   console.log(`Lead lost, moving to "${crmStageLost}"`);
