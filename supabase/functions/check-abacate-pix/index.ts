@@ -17,6 +17,10 @@ function getPlanSearchesLimit(planKey: string): number {
   return limits[planKey] || 200;
 }
 
+function getCheckoutIdentifiers(pixId: string): string[] {
+  return [`abacate_pix_${pixId}`, `abacate_sub_${pixId}`];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,10 +58,12 @@ serve(async (req) => {
 
     // If paid, activate the plan
     if (status === "PAID") {
+      const checkoutIdentifiers = getCheckoutIdentifiers(pixId);
+
       const { data: leads } = await supabaseClient
         .from("checkout_leads")
         .select("user_id, email, plan_attempted")
-        .eq("stripe_session_id", `abacate_pix_${pixId}`)
+        .in("stripe_session_id", checkoutIdentifiers)
         .eq("checkout_completed", false)
         .limit(1);
 
@@ -112,7 +118,7 @@ serve(async (req) => {
             await supabaseClient
               .from("checkout_leads")
               .update({ user_id: profileByEmail.id })
-              .eq("stripe_session_id", `abacate_pix_${pixId}`);
+              .in("stripe_session_id", checkoutIdentifiers);
 
             logStep("Profile found by email and updated", { userId: profileByEmail.id, planKey });
           } else {
@@ -126,9 +132,11 @@ serve(async (req) => {
             checkout_completed: true,
             checkout_completed_at: new Date().toISOString(),
           })
-          .eq("stripe_session_id", `abacate_pix_${pixId}`);
+          .in("stripe_session_id", checkoutIdentifiers);
 
         logStep("Checkout completed", { pixId });
+      } else {
+        logStep("No pending checkout lead found for paid PIX", { pixId, checkoutIdentifiers });
       }
     }
 

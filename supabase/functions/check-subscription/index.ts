@@ -36,6 +36,102 @@ const PLAN_LIMITS: Record<string, number> = {
   "scale": 1200,
 };
 
+const PLAN_NAME_TO_KEY: Record<string, string> = {
+  "Wiize Start": "start",
+  "Wiize Growth": "growth",
+  "Wiize Scale": "scale",
+};
+
+async function ensureProfileAndApplyPendingCheckout(
+  supabaseClient: ReturnType<typeof createClient>,
+  userId: string,
+  userEmail: string,
+) {
+  const { data: existingProfile } = await supabaseClient
+    .from("profiles")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (existingProfile) {
+    return existingProfile;
+  }
+
+  logStep("Profile missing, recreating from auth user", { userId, email: userEmail });
+
+  const { data: authUserData, error: authUserError } = await supabaseClient.auth.admin.getUserById(userId);
+  if (authUserError) {
+    throw new Error(`Failed to load auth user: ${authUserError.message}`);
+  }
+
+  const metadata = authUserData.user?.user_metadata ?? {};
+  const nowIso = new Date().toISOString();
+
+  const { error: insertError } = await supabaseClient.from("profiles").insert({
+    id: userId,
+    email: userEmail,
+    name: typeof metadata.name === "string" && metadata.name.trim() ? metadata.name.trim() : userEmail,
+    signup_ip: typeof metadata.signup_ip === "string" ? metadata.signup_ip : null,
+    device_fingerprint: typeof metadata.device_fingerprint === "string" ? metadata.device_fingerprint : null,
+    terms_accepted_at: metadata.terms_accepted === "true" ? nowIso : null,
+  });
+
+  if (insertError && !insertError.message.toLowerCase().includes("duplicate")) {
+    throw new Error(`Failed to recreate profile: ${insertError.message}`);
+  }
+
+  const { data: checkoutLeads } = await supabaseClient
+    .from("checkout_leads")
+    .select("id, user_id, plan_attempted, checkout_completed, checkout_completed_at")
+    .eq("email", userEmail)
+    .order("checkout_completed_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  const completedLead = (checkoutLeads || []).find(
+    (lead) => lead.checkout_completed && (!lead.user_id || lead.user_id === userId),
+  );
+
+  if (completedLead) {
+    const planKey = PLAN_NAME_TO_KEY[completedLead.plan_attempted] || "start";
+    const subscriptionEnd = new Date();
+    subscriptionEnd.setDate(subscriptionEnd.getDate() + 30);
+
+    logStep("Applying pending completed checkout to recreated profile", {
+      userId,
+      planKey,
+      checkoutLeadId: completedLead.id,
+    });
+
+    const { error: profileUpdateError } = await supabaseClient
+      .from("profiles")
+      .update({
+        plan: planKey,
+        searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
+        searches_used: 0,
+        subscription_current_period_end: subscriptionEnd.toISOString(),
+        updated_at: nowIso,
+      })
+      .eq("id", userId);
+
+    if (profileUpdateError) {
+      throw new Error(`Failed to apply pending checkout: ${profileUpdateError.message}`);
+    }
+
+    await supabaseClient
+      .from("checkout_leads")
+      .update({ user_id: userId, updated_at: nowIso })
+      .eq("id", completedLead.id);
+  }
+
+  const { data: profileAfterRecovery } = await supabaseClient
+    .from("profiles")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return profileAfterRecovery;
+}
+
 // Calculate new searches limit considering remaining searches from previous plan
 const calculateNewSearchesLimit = (
   currentSearchesUsed: number,
@@ -104,14 +200,24 @@ serve(async (req) => {
     }
 
     // Get current profile to check existing searches
-    const { data: currentProfile, error: profileError } = await supabaseClient
+    const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('searches_used, searches_limit, plan, admin_assigned_plan')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
+
+    let currentProfile = existingProfile;
 
     if (profileError) {
-      logStep("Profile not found, creating minimal response");
+      logStep("Error loading profile, attempting recovery", { error: profileError.message });
+    }
+
+    if (!currentProfile) {
+      currentProfile = await ensureProfileAndApplyPendingCheckout(supabaseClient, userId, userEmail);
+    }
+
+    if (!currentProfile) {
+      logStep("Profile recovery failed, creating minimal response");
       return new Response(JSON.stringify({ 
         subscribed: false, 
         plan: "free",
