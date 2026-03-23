@@ -154,7 +154,7 @@ async function reconcileCompletedPixCheckout(
 
   const completedPixLead = (checkoutLeads || []).find((lead) => {
     const checkoutId = lead.stripe_session_id || "";
-    const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_");
+    const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_") || checkoutId.startsWith("asaas_sub_");
     // Only reconcile if user_id is NOT yet set — means this checkout hasn't been applied yet
     // Once applied, user_id is set and it should never be re-applied
     return isPixCheckout && !lead.user_id;
