@@ -254,22 +254,28 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
           )}
 
           {messages.map((msg) => {
-            // Event messages (CRM transfers, media)
+            // Event messages
             if (msg.type === "event") {
+              const eventStyles: Record<string, { bg: string; icon: React.ReactNode }> = {
+                objective_completed: { bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+                lead_lost: { bg: "bg-red-500/10 text-red-400 border-red-500/20", icon: <XCircle className="h-3.5 w-3.5" /> },
+                human_handoff: { bg: "bg-amber-500/10 text-amber-400 border-amber-500/20", icon: <Headphones className="h-3.5 w-3.5" /> },
+                media: { bg: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: <FileText className="h-3.5 w-3.5" /> },
+                bot_detected: { bg: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: <ShieldAlert className="h-3.5 w-3.5" /> },
+                antiloop_sent: { bg: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: <Zap className="h-3.5 w-3.5" /> },
+                blocked_by_loop: { bg: "bg-red-500/10 text-red-400 border-red-500/20", icon: <Ban className="h-3.5 w-3.5" /> },
+                limit_reached: { bg: "bg-orange-500/10 text-orange-400 border-orange-500/20", icon: <PauseCircle className="h-3.5 w-3.5" /> },
+                agent_paused: { bg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", icon: <PauseCircle className="h-3.5 w-3.5" /> },
+                outside_hours: { bg: "bg-slate-500/10 text-slate-400 border-slate-500/20", icon: <Clock className="h-3.5 w-3.5" /> },
+                crm_move: { bg: "bg-sky-500/10 text-sky-400 border-sky-500/20", icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
+              };
+              const style = eventStyles[msg.eventType || ""] || { bg: "bg-muted text-muted-foreground border-border", icon: null };
+
               return (
                 <div key={msg.id} className="flex justify-center">
-                  <div className={cn(
-                    "px-3 py-2 rounded-lg text-xs font-medium max-w-[90%] text-center border",
-                    msg.eventType === "objective_completed" && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-                    msg.eventType === "lead_lost" && "bg-red-500/10 text-red-400 border-red-500/20",
-                    msg.eventType === "human_handoff" && "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                    msg.eventType === "media" && "bg-blue-500/10 text-blue-400 border-blue-500/20",
-                  )}>
+                  <div className={cn("px-3 py-2 rounded-lg text-xs font-medium max-w-[90%] text-center border", style.bg)}>
                     <div className="flex items-center justify-center gap-1.5">
-                      {msg.eventType === "objective_completed" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                      {msg.eventType === "lead_lost" && <XCircle className="h-3.5 w-3.5" />}
-                      {msg.eventType === "human_handoff" && <Headphones className="h-3.5 w-3.5" />}
-                      {msg.eventType === "media" && <FileText className="h-3.5 w-3.5" />}
+                      {style.icon}
                       {msg.content}
                     </div>
                   </div>
