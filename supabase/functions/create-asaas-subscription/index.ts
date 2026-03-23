@@ -159,12 +159,12 @@ serve(async (req) => {
       throw new Error(`Asaas PIX Automático error: ${JSON.stringify(authJson.errors || authJson)}`);
     }
 
+    logStep("Full Asaas response", authJson);
     logStep("Authorization created", { 
       authorizationId: authJson.id, 
       status: authJson.status,
       hasQrCode: !!authJson.immediateQrCode,
-      qrCodeKeys: authJson.immediateQrCode ? Object.keys(authJson.immediateQrCode) : [],
-      fullQrCode: authJson.immediateQrCode,
+      topLevelKeys: Object.keys(authJson),
     });
 
     const qrCodePayload = authJson.payload || authJson.immediateQrCode?.payload || "";
