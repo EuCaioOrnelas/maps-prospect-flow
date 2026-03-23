@@ -648,7 +648,7 @@ const Admin = () => {
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
       } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        if (source === 'abacate_pay' || source === 'pix') {
+        if (source === 'abacate_pay' || source === 'asaas' || source === 'pix') {
           churnReasons.pix_not_renewed++;
         } else {
           churnReasons.downgraded_to_free++;
