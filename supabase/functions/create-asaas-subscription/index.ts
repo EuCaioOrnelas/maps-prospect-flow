@@ -32,7 +32,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, couponCode } = await req.json();
+    const { planKey, customerData, couponCode, testOverridePrice } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
     const plan = PLAN_CONFIG[planKey];
@@ -116,8 +116,15 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Determine final price (handle coupons internally)
+    // 2. Determine final price
     let finalPrice = plan.priceDecimal;
+    
+    // TEMP: Allow test override price
+    if (testOverridePrice && typeof testOverridePrice === "number" && testOverridePrice > 0) {
+      logStep("TEST OVERRIDE PRICE", { original: finalPrice, override: testOverridePrice });
+      finalPrice = testOverridePrice;
+    }
+    
     const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
     if (couponCode) {
