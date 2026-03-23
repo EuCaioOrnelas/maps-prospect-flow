@@ -30,6 +30,29 @@ function extractPlanFromValue(value: number): string | null {
   return null;
 }
 
+function planNameToKey(planName: string): string | null {
+  const lower = planName?.toLowerCase() || "";
+  if (lower.includes("start")) return "start";
+  if (lower.includes("growth")) return "growth";
+  if (lower.includes("scale")) return "scale";
+  return null;
+}
+
+async function getPlanFromCheckoutLead(supabaseClient: any, checkoutIdPrefix: string): Promise<string | null> {
+  const { data } = await supabaseClient
+    .from("checkout_leads")
+    .select("plan_attempted")
+    .eq("stripe_session_id", checkoutIdPrefix)
+    .limit(1);
+  
+  if (data && data.length > 0) {
+    const key = planNameToKey(data[0].plan_attempted);
+    logStep("Plan found via checkout_leads", { plan_attempted: data[0].plan_attempted, planKey: key });
+    return key;
+  }
+  return null;
+}
+
 async function findProfile(supabaseClient: any, externalReference: string | null, checkoutIdPrefix: string | null) {
   let profile: any = null;
 
