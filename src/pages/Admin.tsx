@@ -2066,6 +2066,20 @@ const Admin = () => {
                             </Select>
                           </TableCell>
                           <TableCell>
+                            {u.plan !== 'free' && u.payment_provider ? (
+                              <Badge variant="outline" className={cn(
+                                "text-[10px] font-medium",
+                                u.payment_provider === 'abacate_pay' 
+                                  ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' 
+                                  : 'border-blue-500/30 text-blue-400 bg-blue-500/10'
+                              )}>
+                                {u.payment_provider === 'abacate_pay' ? 'PIX' : 'Stripe'}
+                              </Badge>
+                            ) : u.plan !== 'free' ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : null}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{u.searches_used}</span>
                               <span className="text-muted-foreground">/ {u.searches_limit}</span>
