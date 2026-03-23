@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { Logo } from "@/components/Logo";
+import { Input } from "@/components/ui/input";
 import {
   QrCode,
   Copy,
