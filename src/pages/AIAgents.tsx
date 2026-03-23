@@ -131,6 +131,7 @@ export default function AIAgents() {
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
   const [testChatAgent, setTestChatAgent] = useState<AIAgent | null>(null);
+  const [showTestAgentSelector, setShowTestAgentSelector] = useState(false);
 
   // DB-backed beta warning popup
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
@@ -345,6 +346,16 @@ export default function AIAgents() {
                     >
                       <FileText className="h-4 w-4" />
                       <span className="hidden sm:inline">Templates</span>
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowTestAgentSelector(true)}
+                      className="gap-2 flex-1 sm:flex-none"
+                      size="sm"
+                      disabled={agents.length === 0}
+                    >
+                      <FlaskConical className="h-4 w-4" />
+                      <span className="hidden sm:inline">Testar Agente</span>
                     </Button>
                     <Button 
                       onClick={() => {
@@ -576,6 +587,49 @@ export default function AIAgents() {
         onTestChat={(agent) => setTestChatAgent(agent)}
         disconnectedNumberIds={disconnectedNumberIds}
       />
+
+      {/* Agent Test Selector Dialog */}
+      <Dialog open={showTestAgentSelector} onOpenChange={setShowTestAgentSelector}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-primary" />
+              Selecionar Agente para Teste
+            </DialogTitle>
+            <DialogDescription>
+              Escolha qual agente você deseja testar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {agents.map((agent) => (
+              <button
+                key={agent.id}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors text-left"
+                onClick={() => {
+                  setShowTestAgentSelector(false);
+                  setTestChatAgent(agent);
+                }}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                  agent.status === 'active' ? "bg-emerald-500/20" : "bg-muted"
+                )}>
+                  <Bot className={cn("h-4 w-4", agent.status === 'active' ? "text-emerald-500" : "text-muted-foreground")} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{agent.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {agent.objective === 'prospecting' ? 'Prospecção' : agent.objective === 'nurturing' ? 'Nutrição' : agent.objective === 'closing' ? 'Fechamento' : agent.objective}
+                  </p>
+                </div>
+                <Badge variant="outline" className={cn("text-[10px] shrink-0", agent.status === 'active' ? "text-emerald-500 border-emerald-500/30" : "text-muted-foreground")}>
+                  {agent.status === 'active' ? 'Ativo' : 'Pausado'}
+                </Badge>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Agent Test Chat Dialog */}
       <AgentTestChatDialog
