@@ -689,19 +689,22 @@ const Admin = () => {
     const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
     const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
 
-    // Build a map of PIX monthly MRR for merging
+    // Build maps of PIX monthly MRR and active counts for merging
     const pixMrrMap: Record<string, number> = {};
+    const pixActiveMap: Record<string, number> = {};
     for (const pm of pixMRR?.pixMonthlyMRR || []) {
       pixMrrMap[pm.month] = pm.mrr;
+      pixActiveMap[pm.month] = pm.activeCount;
     }
 
     return filteredMRRData.map((item) => {
       const pixMrrForMonth = pixMrrMap[item.month] || 0;
+      const pixActiveForMonth = pixActiveMap[item.month] || 0;
       const combinedMrr = item.month === latestMonthKey ? currentTotalMrr : (item.mrr + pixMrrForMonth);
       return {
         date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
         mrr: combinedMrr,
-        activeCount: item.activeCount ?? 0,
+        activeCount: (item.activeCount ?? 0) + pixActiveForMonth,
       };
     });
   }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr, pixMRR?.pixMonthlyMRR]);
