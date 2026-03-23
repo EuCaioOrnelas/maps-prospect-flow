@@ -319,7 +319,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No customer found in Stripe");
       
-      // If user has a paid plan but no Stripe customer, check if they're on AbacatePay
+      // If user has a paid plan but no Stripe customer, check if they're on Asaas/PIX
       if (currentProfile.plan && currentProfile.plan !== "free") {
         if (currentProfile.admin_assigned_plan) {
           logStep("Skipping downgrade - admin assigned plan", { 
