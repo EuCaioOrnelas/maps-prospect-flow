@@ -70,13 +70,13 @@ export function PixDashboardTab() {
 
       const pixUserIds = new Set((pixInvoiceUsers || []).map((p: any) => p.user_id));
 
-      const { data: abacateCheckouts } = await supabase
+      const { data: pixCheckouts } = await supabase
         .from("checkout_leads")
         .select("user_id")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%");
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%");
 
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (c.user_id) pixUserIds.add(c.user_id);
       }
 
@@ -116,7 +116,7 @@ export function PixDashboardTab() {
         .from("checkout_leads")
         .select("plan_attempted")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%")
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%")
         .gte("checkout_completed_at", monthStart);
 
       const checkoutRevenue = (paidCheckouts || []).reduce((sum: number, c: any) => {
@@ -249,7 +249,7 @@ export function PixDashboardTab() {
             <p className="text-2xl font-bold text-foreground tabular-nums">
               {formatCurrency(metrics.pixMrr)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">MRR PIX · AbacatePay</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR PIX · Asaas</p>
           </CardContent>
         </Card>
       </div>

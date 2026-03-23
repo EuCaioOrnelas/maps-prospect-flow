@@ -298,15 +298,15 @@ const Admin = () => {
       const { data: pixInvoiceUsers } = await supabase
         .from("pix_invoices")
         .select("user_id");
-      const { data: abacateCheckouts } = await supabase
+      const { data: pixCheckouts } = await supabase
         .from("checkout_leads")
         .select("user_id, plan_attempted, checkout_completed_at, stripe_session_id, checkout_completed")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%");
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%");
       
       const pixUserIds = new Set<string>();
       for (const p of pixInvoiceUsers || []) if (p.user_id) pixUserIds.add(p.user_id);
-      for (const c of abacateCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
+      for (const c of pixCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
       
       // Get active PIX profiles
       const { data: profiles } = await supabase
@@ -320,7 +320,7 @@ const Admin = () => {
       const now = new Date();
       
       for (const p of profiles || []) {
-        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay') continue;
+        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay' && (p as any).payment_provider !== 'asaas') continue;
         if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
         pixMrrTotal += planPrices[p.plan] || 0;
         pixActiveSubs++;
@@ -337,15 +337,14 @@ const Admin = () => {
       let pixSalesValue = 0;
       for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
 
-      // Also count abacate checkouts completed this month
-      const abacateCheckoutsThisMonth = (abacateCheckouts || []).filter(c => 
+      // Also count PIX checkouts completed this month
+      const pixCheckoutsThisMonth = (pixCheckouts || []).filter(c => 
         c.checkout_completed_at && new Date(c.checkout_completed_at) >= new Date(monthStart)
       );
       
       // Add checkout values not already in pix_invoices
-      for (const c of abacateCheckoutsThisMonth) {
+      for (const c of pixCheckoutsThisMonth) {
         const planKey = planNameToKey[c.plan_attempted] || 'start';
-        // Only add if not already counted via pix_invoices (avoid double counting)
         const userId = c.user_id;
         const hasInvoice = (pixInvoiceUsers || []).some((p: any) => p.user_id === userId);
         if (!hasInvoice) {
@@ -356,8 +355,8 @@ const Admin = () => {
       // Build PIX monthly sales from BOTH checkout_leads AND pix_invoices
       const pixMonthlySalesMap: Record<string, { sales: number; salesValue: number; cancellations: number }> = {};
       
-      // From completed abacate checkouts (initial purchases)
-      for (const c of abacateCheckouts || []) {
+      // From completed PIX checkouts (initial purchases)
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at) continue;
         const d = new Date(c.checkout_completed_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -376,7 +375,7 @@ const Admin = () => {
       
       // Track checkout user+month combos to avoid double counting
       const checkoutKeys = new Set<string>();
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at || !c.user_id) continue;
         const d = new Date(c.checkout_completed_at);
         checkoutKeys.add(`${c.user_id}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
@@ -417,7 +416,7 @@ const Admin = () => {
       // Use checkout dates as "start" and churn events as "end"
       const pixUserTimelines: Array<{ userId: string; startMonth: string; endMonth: string | null; planKey: string }> = [];
       
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at || !c.user_id) continue;
         const d = new Date(c.checkout_completed_at);
         const startMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -494,7 +493,7 @@ const Admin = () => {
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
-        pixSalesThisMonth: (monthInvoices || []).length + abacateCheckoutsThisMonth.filter(c => !(pixInvoiceUsers || []).some((p: any) => p.user_id === c.user_id)).length,
+        pixSalesThisMonth: (monthInvoices || []).length + pixCheckoutsThisMonth.filter(c => !(pixInvoiceUsers || []).some((p: any) => p.user_id === c.user_id)).length,
         pixSalesValueThisMonth: pixSalesValue,
         pixCancellations: pixCancellationsTotal,
         pixMonthlySales,
@@ -649,7 +648,7 @@ const Admin = () => {
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
       } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        if (source === 'abacate_pay' || source === 'pix') {
+        if (source === 'abacate_pay' || source === 'asaas' || source === 'pix') {
           churnReasons.pix_not_renewed++;
         } else {
           churnReasons.downgraded_to_free++;
@@ -924,7 +923,7 @@ const Admin = () => {
         supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
         // Agents created in period
         supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
-        // Checkout leads in period (includes both Stripe and AbacatePay)
+        // Checkout leads in period (includes Stripe, AbacatePay and Asaas)
         supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
         // Purchases (subscription events) in period - Stripe
         supabase.from('subscription_events').select('id, user_id, event_type, created_at')
@@ -961,23 +960,23 @@ const Admin = () => {
       const checkoutStarted = checkoutData.length;
       const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
       
-      // Purchases: Stripe events + PIX invoices + completed abacate checkouts (deduplicated)
+      // Purchases: Stripe events + PIX invoices + completed PIX checkouts (deduplicated)
       const stripePurchasesCount = purchasesRes.data?.length || 0;
       const pixInvoicePurchasesCount = pixPurchasesRes.data?.length || 0;
       
-      // Also count completed abacate checkouts in period not already in pix_invoices
-      const { data: abacateCheckoutsInPeriod } = await supabase
+      // Also count completed PIX checkouts in period not already in pix_invoices
+      const { data: pixCheckoutsInPeriod } = await supabase
         .from('checkout_leads')
         .select('id, user_id, checkout_completed_at')
         .eq('checkout_completed', true)
-        .like('stripe_session_id', 'abacate_%')
+        .or('stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%')
         .gte('checkout_completed_at', startISO)
         .lte('checkout_completed_at', endISO);
       
       const pixInvoiceUserIds = new Set((pixPurchasesRes.data || []).map((p: any) => p.user_id));
-      const abacateOnlyCount = (abacateCheckoutsInPeriod || []).filter((c: any) => !pixInvoiceUserIds.has(c.user_id)).length;
+      const pixOnlyCount = (pixCheckoutsInPeriod || []).filter((c: any) => !pixInvoiceUserIds.has(c.user_id)).length;
       
-      const purchasesCount = stripePurchasesCount + pixInvoicePurchasesCount + abacateOnlyCount;
+      const purchasesCount = stripePurchasesCount + pixInvoicePurchasesCount + pixOnlyCount;
       
       // Conversion rate: paying users created in period / total users in period
       const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;

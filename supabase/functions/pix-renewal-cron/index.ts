@@ -5,17 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ABACATE_API = "https://api.abacatepay.com/v2";
+// Asaas handles recurring billing automatically, but this cron sends email reminders
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[PIX-RENEWAL] ${step}${detailsStr}`);
 };
 
+// Legacy product IDs kept for backward compatibility with existing pix_invoices
 const PRODUCT_IDS: Record<string, string> = {
-  start: "prod_YuGfZ0UukSSPPjbjn3DZJkMK",
-  growth: "prod_fNftUU0Pd5bEgdpnKTADKUgT",
-  scale: "prod_2KNLMQM5QHe0bb1TZxWenx2N",
+  start: "prod_bBzpH4uBuq4dE1uFb45SMXam",
+  growth: "prod_66shDJxarcQZcNrtQnDQ15BF",
+  scale: "prod_gf051bgXLGqKaJ0rzmWpsaqE",
 };
 
 const PLAN_NAMES: Record<string, string> = {
@@ -65,8 +66,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("ABACATE_PAY_API_KEY");
-    if (!apiKey) throw new Error("ABACATE_PAY_API_KEY not configured");
+    // No external API key needed — Asaas handles billing automatically
+    // This cron only sends email reminders
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseClient = createClient(
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
             invoicesCreated++;
           }
         } else {
-          // Update to own checkout URL if it was pointing to AbacatePay
+          // Update to own checkout URL if needed
           if (!checkoutUrl.includes("/checkout-pix")) {
             checkoutUrl = ownCheckoutUrl;
           }

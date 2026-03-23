@@ -154,7 +154,7 @@ async function reconcileCompletedPixCheckout(
 
   const completedPixLead = (checkoutLeads || []).find((lead) => {
     const checkoutId = lead.stripe_session_id || "";
-    const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_");
+    const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_") || checkoutId.startsWith("asaas_sub_");
     // Only reconcile if user_id is NOT yet set — means this checkout hasn't been applied yet
     // Once applied, user_id is set and it should never be re-applied
     return isPixCheckout && !lead.user_id;
@@ -190,7 +190,7 @@ async function reconcileCompletedPixCheckout(
       searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
       searches_used: 0,
       subscription_current_period_end: subscriptionEnd.toISOString(),
-      payment_provider: "abacate_pay",
+      payment_provider: "asaas",
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
@@ -319,7 +319,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No customer found in Stripe");
       
-      // If user has a paid plan but no Stripe customer, check if they're on AbacatePay
+      // If user has a paid plan but no Stripe customer, check if they're on Asaas/PIX
       if (currentProfile.plan && currentProfile.plan !== "free") {
         if (currentProfile.admin_assigned_plan) {
           logStep("Skipping downgrade - admin assigned plan", { 
@@ -336,13 +336,13 @@ serve(async (req) => {
           });
         }
         
-        // Check if subscription is still valid (AbacatePay or other provider)
+        // Check if subscription is still valid (Asaas/PIX or other provider)
         const subEnd = currentProfile.subscription_current_period_end 
           ? new Date(currentProfile.subscription_current_period_end) 
           : null;
         
         if (subEnd && subEnd > new Date()) {
-          logStep("Subscription still valid (non-Stripe provider, likely AbacatePay)", { 
+          logStep("Subscription still valid (non-Stripe provider, likely Asaas)", { 
             plan: currentProfile.plan,
             expiresAt: subEnd.toISOString()
           });

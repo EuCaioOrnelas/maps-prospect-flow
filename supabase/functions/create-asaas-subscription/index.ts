@@ -134,9 +134,8 @@ serve(async (req) => {
           if (existingRedemption) {
             logStep("Coupon already redeemed", { couponCode, email: userEmail });
           } else {
-            // Validate coupon via validate-abacate-coupon (reuse existing logic)
-            // For now, skip external coupon - can integrate later
-            logStep("Coupon validation skipped for Asaas migration", { couponCode });
+            // TODO: Implement coupon validation for Asaas
+            logStep("Coupon validation skipped - to be implemented", { couponCode });
           }
         }
       } catch (e) {
