@@ -193,16 +193,6 @@ export default function CheckoutPix() {
   // Compute display prices
   const cleanPrice = planPrice.replace(",", ".");
   const originalCents = Math.round(parseFloat(cleanPrice) * 100);
-  let discountAmount = 0;
-  if (couponApplied && couponDiscount) {
-    if (couponDiscount.discountKind === "PERCENTAGE") {
-      const pct = couponDiscount.discount / 100;
-      discountAmount = Math.round(originalCents * pct / 100);
-    } else {
-      discountAmount = couponDiscount.discount;
-    }
-  }
-  const finalCents = Math.max(100, originalCents - discountAmount);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
