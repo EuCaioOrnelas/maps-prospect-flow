@@ -103,6 +103,7 @@ export function AgentSummaryDialog({
   onSaveTemplate,
   onDelete,
   onShowLeadsLimitInfo,
+  onTestChat,
   disconnectedNumberIds = new Set(),
 }: AgentSummaryDialogProps) {
   const navigate = useNavigate();
