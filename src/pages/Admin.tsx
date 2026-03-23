@@ -143,6 +143,9 @@ interface PixMRRData {
   pixActiveSubscriptions: number;
   pixSalesThisMonth: number;
   pixSalesValueThisMonth: number;
+  pixCancellations: number;
+  pixMonthlySales: Array<{ month: string; sales: number; salesValue: number; cancellations: number }>;
+  pixMonthlyMRR: Array<{ month: string; mrr: number; activeCount: number }>;
 }
 
 interface SalesChartData {
