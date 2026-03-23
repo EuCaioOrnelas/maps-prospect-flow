@@ -214,7 +214,7 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 gap-0 h-[85vh] max-h-[700px] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30 pr-12">
           <DialogHeader className="flex-1">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">

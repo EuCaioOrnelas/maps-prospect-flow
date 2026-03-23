@@ -294,21 +294,6 @@ export function AgentSummaryDialog({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 p-4 border-t border-border bg-muted/30">
-          {/* Test button - always visible */}
-          {onTestChat && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-9 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-              onClick={() => {
-                onOpenChange(false);
-                onTestChat(agent);
-              }}
-            >
-              <FlaskConical className="h-4 w-4" />
-              Testar Agente
-            </Button>
-          )}
           <div className="flex items-center gap-2">
           {hasNumberProblem ? (
             <Button
