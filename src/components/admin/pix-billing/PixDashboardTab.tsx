@@ -116,7 +116,7 @@ export function PixDashboardTab() {
         .from("checkout_leads")
         .select("plan_attempted")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%")
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%")
         .gte("checkout_completed_at", monthStart);
 
       const checkoutRevenue = (paidCheckouts || []).reduce((sum: number, c: any) => {
