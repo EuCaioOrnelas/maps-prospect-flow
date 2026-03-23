@@ -306,11 +306,13 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Sidebar - Desktop only */}
-      <AppSidebar profile={profile} />
-
-      {/* Header */}
-      <AppHeader profile={profile} />
+      {/* Sidebar & Header only when NOT in clean renewal/expired mode */}
+      {!isCleanPage && (
+        <>
+          <AppSidebar profile={profile} />
+          <AppHeader profile={profile} />
+        </>
+      )}
 
       {/* Promo Banner */}
       <div className="lg:pl-14 bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
