@@ -132,6 +132,84 @@ async function ensureProfileAndApplyPendingCheckout(
   return profileAfterRecovery;
 }
 
+async function reconcileCompletedPixCheckout(
+  supabaseClient: ReturnType<typeof createClient>,
+  userId: string,
+  userEmail: string,
+  currentProfile: {
+    plan?: string;
+    searches_limit?: number;
+    searches_used?: number;
+    admin_assigned_plan?: boolean;
+    subscription_current_period_end?: string | null;
+  },
+) {
+  const { data: checkoutLeads } = await supabaseClient
+    .from("checkout_leads")
+    .select("id, user_id, plan_attempted, checkout_completed_at, stripe_session_id")
+    .eq("email", userEmail)
+    .eq("checkout_completed", true)
+    .order("checkout_completed_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  const completedPixLead = (checkoutLeads || []).find((lead) => {
+    const checkoutId = lead.stripe_session_id || "";
+    const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_");
+    return isPixCheckout && (!lead.user_id || lead.user_id === userId);
+  });
+
+  if (!completedPixLead) {
+    return currentProfile;
+  }
+
+  const currentPeriodEnd = currentProfile.subscription_current_period_end
+    ? new Date(currentProfile.subscription_current_period_end)
+    : null;
+
+  if (currentProfile.plan && currentProfile.plan !== "free" && currentPeriodEnd && currentPeriodEnd > new Date()) {
+    return currentProfile;
+  }
+
+  const planKey = PLAN_NAME_TO_KEY[completedPixLead.plan_attempted] || "start";
+  const subscriptionEnd = new Date();
+  subscriptionEnd.setDate(subscriptionEnd.getDate() + 30);
+
+  logStep("Reconciling completed PIX checkout with profile", {
+    userId,
+    email: userEmail,
+    checkoutLeadId: completedPixLead.id,
+    planKey,
+  });
+
+  const { error: updateError } = await supabaseClient
+    .from("profiles")
+    .update({
+      plan: planKey,
+      searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
+      searches_used: 0,
+      subscription_current_period_end: subscriptionEnd.toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (updateError) {
+    throw new Error(`Failed to reconcile PIX checkout: ${updateError.message}`);
+  }
+
+  await supabaseClient
+    .from("checkout_leads")
+    .update({ user_id: userId, updated_at: new Date().toISOString() })
+    .eq("id", completedPixLead.id);
+
+  const { data: updatedProfile } = await supabaseClient
+    .from("profiles")
+    .select("searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return updatedProfile || currentProfile;
+}
+
 // Calculate new searches limit considering remaining searches from previous plan
 const calculateNewSearchesLimit = (
   currentSearchesUsed: number,
@@ -214,6 +292,10 @@ serve(async (req) => {
 
     if (!currentProfile) {
       currentProfile = await ensureProfileAndApplyPendingCheckout(supabaseClient, userId, userEmail);
+    }
+
+    if (currentProfile) {
+      currentProfile = await reconcileCompletedPixCheckout(supabaseClient, userId, userEmail, currentProfile);
     }
 
     if (!currentProfile) {
