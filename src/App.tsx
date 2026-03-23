@@ -40,6 +40,7 @@ const SecurityFAQ = lazy(() => import("./pages/SecurityFAQ"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutFailed = lazy(() => import("./pages/CheckoutFailed"));
 const CheckoutPix = lazy(() => import("./pages/CheckoutPix"));
+const RenewalSuccess = lazy(() => import("./pages/RenewalSuccess"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CRM = lazy(() => import("./pages/CRM"));
@@ -117,6 +118,7 @@ const App = () => (
                 <Route path="/checkout-success" element={<CheckoutSuccess />} />
                 <Route path="/checkout-failed" element={<CheckoutFailed />} />
                 <Route path="/checkout-pix" element={<CheckoutPix />} />
+                <Route path="/renewal-success" element={<RenewalSuccess />} />
                 <Route path="/contato" element={<Contact />} />
                 <Route
                   path="/dashboard" 

@@ -143,7 +143,11 @@ export default function CheckoutPix() {
           setPaid(true);
           setCheckingPayment(false);
           toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
-          setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+          if (isRenewal) {
+            setTimeout(() => navigate(`/renewal-success?email=${encodeURIComponent(renewalEmail)}&plan=${encodeURIComponent(planKey)}`), 2000);
+          } else {
+            setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+          }
         }
       } catch {
         // Silent fail on polling
@@ -465,7 +469,7 @@ export default function CheckoutPix() {
             </div>
 
             {/* Coupon */}
-            {!isRenewal && <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Tag className="h-4 w-4 text-primary" />
                 Cupom de desconto
@@ -507,7 +511,7 @@ export default function CheckoutPix() {
                   ✗ {couponError}
                 </p>
               )}
-            </div>}
+            </div>
 
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
