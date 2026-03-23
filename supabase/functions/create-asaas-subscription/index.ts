@@ -162,11 +162,10 @@ serve(async (req) => {
     logStep("Authorization created", { 
       authorizationId: authJson.id, 
       status: authJson.status,
-      hasQrCode: !!authJson.immediateQrCode 
     });
 
-    const qrCodePayload = authJson.immediateQrCode?.payload || "";
-    const qrCodeImage = authJson.immediateQrCode?.encodedImage || "";
+    const qrCodePayload = authJson.payload || authJson.immediateQrCode?.payload || "";
+    const qrCodeImage = authJson.encodedImage || authJson.immediateQrCode?.encodedImage || "";
     const conciliationId = authJson.immediateQrCode?.conciliationIdentifier || "";
 
     // 4. Track checkout lead
