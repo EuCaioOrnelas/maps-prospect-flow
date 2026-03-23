@@ -15,6 +15,7 @@ interface KanbanBoardWithScrollProps {
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
+  agentSilencedStages?: Set<string>;
 }
 
 const KanbanBoardWithScrollComponent = ({
