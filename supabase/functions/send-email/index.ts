@@ -16,11 +16,14 @@ const BRAND = {
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
-function baseLayout(title: string, body: string): string {
+function baseLayout(title: string, body: string, preheader?: string): string {
+  // Hidden preheader trick: shows in email client preview, invisible in body
+  const preheaderHtml = preheader ? `<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</div>` : '';
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+${preheaderHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
 <tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -349,7 +352,8 @@ Deno.serve(async (req) => {
         .replace(/\{\{user_name\}\}/g, userName)
         .replace(/\{\{plan_name\}\}/g, planName);
 
-      html = baseLayout(dbTemplate.title, `
+      html = baseLayout(subject, `
+        <h1 style="margin:0 0 20px;font-size:22px;color:#18181b;font-weight:700;">${dbTemplate.title}</h1>
         <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
           ${compiledContent}
         </div>
@@ -357,7 +361,7 @@ Deno.serve(async (req) => {
         <div style="text-align:center;margin:24px 0;">
           <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${dbTemplate.cta_text}</a>
         </div>
-      `);
+      `, subject);
     } else {
       const templateFn = TEMPLATES[email_type];
       if (!templateFn) {
