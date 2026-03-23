@@ -64,6 +64,7 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [testCoupon, setTestCoupon] = useState("");
 
   // Load customer data from sessionStorage or query params (renewal)
   useEffect(() => {
