@@ -407,14 +407,18 @@ export default function CheckoutPix() {
               </div>
             </div>
 
-            {/* Coupon notice */}
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-1.5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
-                <Tag className="h-4 w-4" />
-                Cupons de desconto
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Cupons são aceitos somente para pagamentos via <strong>Cartão de Crédito</strong>. Para utilizar um cupom, volte e selecione o método de pagamento por cartão.
+            {/* TEMP: Test override price */}
+            <div className="rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4 space-y-2">
+              <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400">⚠️ TESTE — Sobrescrever valor (R$)</p>
+              <Input
+                placeholder="Ex: 1.00"
+                value={testCoupon}
+                onChange={(e) => setTestCoupon(e.target.value)}
+                className="h-8 text-sm"
+                disabled={!!pixData}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Digite um valor em reais (ex: 1.00) para testar. Deixe vazio para usar o preço real. <strong>Remover após testes.</strong>
               </p>
             </div>
 
