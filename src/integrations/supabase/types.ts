@@ -1628,6 +1628,7 @@ export type Database = {
         Row: {
           admin_assigned_plan: boolean
           avatar_url: string | null
+          cpf: string | null
           created_at: string
           device_fingerprint: string | null
           email: string
@@ -1637,6 +1638,7 @@ export type Database = {
           last_searches_reset: string | null
           name: string | null
           payment_provider: string | null
+          phone: string | null
           plan: string
           searches_limit: number
           searches_used: number
@@ -1650,6 +1652,7 @@ export type Database = {
         Insert: {
           admin_assigned_plan?: boolean
           avatar_url?: string | null
+          cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
           email: string
@@ -1659,6 +1662,7 @@ export type Database = {
           last_searches_reset?: string | null
           name?: string | null
           payment_provider?: string | null
+          phone?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
@@ -1672,6 +1676,7 @@ export type Database = {
         Update: {
           admin_assigned_plan?: boolean
           avatar_url?: string | null
+          cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
           email?: string
@@ -1681,6 +1686,7 @@ export type Database = {
           last_searches_reset?: string | null
           name?: string | null
           payment_provider?: string | null
+          phone?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
