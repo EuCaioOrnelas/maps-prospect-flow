@@ -60,6 +60,20 @@ serve(async (req) => {
       } else {
         downgraded++;
         logStep("User downgraded to free", { userId: user.id, email: user.email, previousPlan: user.plan });
+
+        // Log subscription event for churn tracking
+        try {
+          await supabaseClient.from("subscription_events").insert({
+            user_id: user.id,
+            email: user.email,
+            event_type: "pix_not_renewed",
+            event_source: "abacate_pay",
+            previous_plan: user.plan,
+            new_plan: "free",
+          });
+        } catch (e) {
+          logStep("Failed to log subscription event", { error: String(e) });
+        }
       }
     }
 

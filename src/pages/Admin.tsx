@@ -77,6 +77,7 @@ import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import * as XLSX from 'xlsx';
+import { Badge } from "@/components/ui/badge";
 
 // Função para verificar admin via banco de dados (seguro)
 // Preços dos planos (fallback caso Stripe falhe)
@@ -119,6 +120,7 @@ interface UserProfile {
   created_at: string;
   updated_at: string;
   is_blocked?: boolean;
+  payment_provider?: string | null;
 }
 
 interface StripeMRRData {
@@ -455,11 +457,13 @@ const Admin = () => {
       past_due: 0,
       unpaid: 0,
       downgraded_to_free: 0,
+      pix_not_renewed: 0,
     };
 
     for (const event of filteredEvents) {
       const eventType = event.event_type?.toLowerCase() || '';
       const newPlan = event.new_plan?.toLowerCase();
+      const source = event.event_source?.toLowerCase() || '';
       
       if (eventType === 'subscription_canceled') {
         churnReasons.canceled++;
@@ -470,14 +474,21 @@ const Admin = () => {
       } else if (eventType === 'subscription_unpaid') {
         churnReasons.unpaid++;
       } else if (eventType === 'subscription_updated' && newPlan === 'free') {
-        churnReasons.downgraded_to_free++;
+        if (source === 'abacate_pay' || source === 'pix') {
+          churnReasons.pix_not_renewed++;
+        } else {
+          churnReasons.downgraded_to_free++;
+        }
+      } else if (eventType === 'pix_not_renewed' || eventType === 'pix_expired') {
+        churnReasons.pix_not_renewed++;
       }
     }
 
     const churnData = [
-      { name: 'Cancelado', value: churnReasons.canceled, color: '#ef4444' },
+      { name: 'Cancelado (Stripe)', value: churnReasons.canceled, color: '#ef4444' },
       { name: 'Deletado', value: churnReasons.deleted, color: '#f97316' },
       { name: 'Downgrade p/ Free', value: churnReasons.downgraded_to_free, color: '#a855f7' },
+      { name: 'PIX Não Renovado', value: churnReasons.pix_not_renewed, color: '#10b981' },
       { name: 'Pagamento Atrasado', value: churnReasons.past_due, color: '#eab308' },
       { name: 'Não Pago', value: churnReasons.unpaid, color: '#6b7280' },
     ].filter(item => item.value > 0);
@@ -1031,6 +1042,7 @@ const Admin = () => {
       Nome: u.name || '-',
       'E-mail': u.email,
       Plano: u.plan.charAt(0).toUpperCase() + u.plan.slice(1),
+      Provedor: u.payment_provider === 'abacate_pay' ? 'PIX' : u.payment_provider === 'stripe' ? 'Stripe' : '-',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -2027,6 +2039,7 @@ const Admin = () => {
                       <TableRow>
                         <TableHead>Usuário</TableHead>
                         <TableHead>Plano</TableHead>
+                        <TableHead>Provedor</TableHead>
                         <TableHead>Buscas</TableHead>
                         <TableHead>Cadastro</TableHead>
                         <TableHead>Ações</TableHead>
@@ -2062,6 +2075,20 @@ const Admin = () => {
                                 <SelectItem value="scale">Scale</SelectItem>
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            {u.plan !== 'free' && u.payment_provider ? (
+                              <Badge variant="outline" className={cn(
+                                "text-[10px] font-medium",
+                                u.payment_provider === 'abacate_pay' 
+                                  ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' 
+                                  : 'border-blue-500/30 text-blue-400 bg-blue-500/10'
+                              )}>
+                                {u.payment_provider === 'abacate_pay' ? 'PIX' : 'Stripe'}
+                              </Badge>
+                            ) : u.plan !== 'free' ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : null}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
