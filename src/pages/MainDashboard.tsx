@@ -68,6 +68,7 @@ export default function MainDashboard() {
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+            <ExpiredSubscriptionDialog />
             <div className="max-w-7xl mx-auto space-y-8 relative z-10">
 
               <RenewalBanner />
