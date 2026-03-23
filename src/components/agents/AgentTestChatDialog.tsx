@@ -17,22 +17,38 @@ import {
   Mic,
   MicOff,
   RotateCcw,
-  User,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Headphones,
   FlaskConical,
-  Image,
   FileText,
+  ShieldAlert,
+  PauseCircle,
+  ArrowRightLeft,
+  Clock,
+  Ban,
+  Zap,
 } from "lucide-react";
+
+type EventType = 
+  | "objective_completed" 
+  | "lead_lost" 
+  | "human_handoff" 
+  | "media"
+  | "bot_detected"
+  | "antiloop_sent"
+  | "blocked_by_loop"
+  | "limit_reached"
+  | "agent_paused"
+  | "outside_hours"
+  | "crm_move";
 
 interface ChatMessage {
   id: string;
   direction: "sent" | "received";
   content: string;
   type?: "text" | "audio" | "event";
-  eventType?: "objective_completed" | "lead_lost" | "human_handoff" | "media";
+  eventType?: EventType;
   timestamp: Date;
 }
 
