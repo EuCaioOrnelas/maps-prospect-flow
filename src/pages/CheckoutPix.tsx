@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { Logo } from "@/components/Logo";
