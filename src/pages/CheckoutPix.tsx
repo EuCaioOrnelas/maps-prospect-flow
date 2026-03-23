@@ -99,7 +99,7 @@ export default function CheckoutPix() {
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         {
-          body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
+          body: { planKey, customerData },
         }
       );
       if (error) throw new Error(error.message);
