@@ -375,7 +375,7 @@ const Admin = () => {
       
       // Track checkout user+month combos to avoid double counting
       const checkoutKeys = new Set<string>();
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at || !c.user_id) continue;
         const d = new Date(c.checkout_completed_at);
         checkoutKeys.add(`${c.user_id}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
