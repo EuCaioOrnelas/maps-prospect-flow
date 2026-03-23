@@ -731,6 +731,51 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          allowed_plans: string[] | null
+          code: string
+          created_at: string
+          current_uses: number
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          allowed_plans?: string[] | null
+          code: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          allowed_plans?: string[] | null
+          code?: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       email_flow_edges: {
         Row: {
           condition_label: string | null

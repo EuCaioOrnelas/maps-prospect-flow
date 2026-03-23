@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
 import { Logo } from "@/components/Logo";
@@ -59,11 +59,6 @@ export default function CheckoutPix() {
 
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponValidating, setCouponValidating] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
-  const [couponError, setCouponError] = useState("");
   const [pixData, setPixData] = useState<{ brCode: string; brCodeBase64: string; amount: number; expiresAt: string; pixId: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
@@ -104,7 +99,7 @@ export default function CheckoutPix() {
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         {
-          body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
+          body: { planKey, customerData },
         }
       );
       if (error) throw new Error(error.message);
@@ -171,43 +166,11 @@ export default function CheckoutPix() {
     }
   };
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setCouponValidating(true);
-    setCouponError("");
-    try {
-      const { data, error } = await supabase.functions.invoke("validate-abacate-coupon", {
-        body: { couponCode: couponCode.trim(), email: customerData?.email },
-      });
-      if (error) throw new Error(error.message);
-      if (data?.valid) {
-        setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
-        setCouponApplied(true);
-      } else {
-        setCouponError(data?.error || "Cupom inválido");
-      }
-    } catch {
-      setCouponError("Erro ao validar cupom");
-    } finally {
-      setCouponValidating(false);
-    }
-  };
-
   if (!customerData) return null;
 
   // Compute display prices
   const cleanPrice = planPrice.replace(",", ".");
   const originalCents = Math.round(parseFloat(cleanPrice) * 100);
-  let discountAmount = 0;
-  if (couponApplied && couponDiscount) {
-    if (couponDiscount.discountKind === "PERCENTAGE") {
-      const pct = couponDiscount.discount / 100;
-      discountAmount = Math.round(originalCents * pct / 100);
-    } else {
-      discountAmount = couponDiscount.discount;
-    }
-  }
-  const finalCents = Math.max(100, originalCents - discountAmount);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -433,74 +396,24 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
-                {couponApplied && couponDiscount && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-emerald-600 text-xs font-medium">Cupom {couponDiscount.code}</span>
-                      <span className="text-emerald-600 text-xs font-medium">
-                        {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}%` : `R$ ${(couponDiscount.discount / 100).toFixed(2)}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground text-xs">Desconto</span>
-                      <span className="text-emerald-600 text-xs font-medium">
-                        -R$ {(discountAmount / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  </>
-                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="font-bold text-lg text-foreground">
-                    {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : formatCurrency(originalCents)}
+                    {formatCurrency(originalCents)}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Coupon */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Tag className="h-4 w-4 text-primary" />
-                Cupom de desconto
+            {/* Coupon notice */}
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-1.5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                <Tag className="h-4 w-4" />
+                Cupons de desconto
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Código do cupom"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    if (!couponApplied) setCouponError("");
-                  }}
-                  disabled={couponApplied || couponValidating}
-                  className="text-sm h-9"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim() || couponApplied || couponValidating}
-                  className="shrink-0 h-9"
-                >
-                  {couponValidating ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : couponApplied ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                  ) : (
-                    "Aplicar"
-                  )}
-                </Button>
-              </div>
-              {couponApplied && couponDiscount && (
-                <p className="text-xs text-emerald-600 font-medium">
-                  ✓ Cupom aplicado com sucesso!
-                </p>
-              )}
-              {couponError && (
-                <p className="text-xs text-destructive font-medium">
-                  ✗ {couponError}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Cupons são aceitos somente para pagamentos via <strong>Cartão de Crédito</strong>. Para utilizar um cupom, volte e selecione o método de pagamento por cartão.
+              </p>
             </div>
 
             {/* Security badges */}
