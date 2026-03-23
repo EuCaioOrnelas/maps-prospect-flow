@@ -47,9 +47,9 @@ export default function CheckoutPix() {
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
   const PLAN_PRICES: Record<string, string> = {
-    start: "97",
-    growth: "197",
-    scale: "397",
+    start: "97,00",
+    growth: "197,00",
+    scale: "397,00",
   };
   const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
 
@@ -191,7 +191,7 @@ export default function CheckoutPix() {
   if (!customerData) return null;
 
   // Compute display prices
-  const originalCents = parseFloat(planPrice) * 100;
+  const originalCents = Math.round(parseFloat(planPrice.replace(",", ".")) * 100);
   let discountAmount = 0;
   if (couponApplied && couponDiscount) {
     if (couponDiscount.discountKind === "PERCENTAGE") {
