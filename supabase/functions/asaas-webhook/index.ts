@@ -292,14 +292,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // Try to find profile via multiple methods
-      const checkoutPrefix = pixAutoAuthId
-        ? `asaas_pixauto_${pixAutoAuthId}`
-        : subscriptionId
-          ? `asaas_sub_${subscriptionId}`
-          : null;
-
+      // Find profile via multiple methods
       const profile = await findProfile(supabaseClient, externalReference, checkoutPrefix);
 
       if (!profile) {
