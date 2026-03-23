@@ -93,16 +93,16 @@ export default function CheckoutPix() {
     }
   }, [navigate, isRenewal, renewalEmail, renewalName, planKey]);
 
-  // Create subscription and redirect to AbacatePay checkout
+  // Create subscription via Asaas
   const handleSubscribe = async () => {
     if (!customerData || !planKey) return;
     setLoading(true);
     
-    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
+    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
     
     try {
       const { data, error } = await supabase.functions.invoke(
-        "create-abacate-subscription",
+        "create-asaas-subscription",
         {
           body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
         }
