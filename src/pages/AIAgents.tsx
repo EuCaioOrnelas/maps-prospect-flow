@@ -571,7 +571,15 @@ export default function AIAgents() {
         }}
         onDelete={(agent) => setAgentToDelete(agent)}
         onShowLeadsLimitInfo={() => setShowLeadsLimitInfo(true)}
+        onTestChat={(agent) => setTestChatAgent(agent)}
         disconnectedNumberIds={disconnectedNumberIds}
+      />
+
+      {/* Agent Test Chat Dialog */}
+      <AgentTestChatDialog
+        agent={testChatAgent}
+        open={!!testChatAgent}
+        onOpenChange={(open) => !open && setTestChatAgent(null)}
       />
 
       {/* Agent Details Dialog */}
