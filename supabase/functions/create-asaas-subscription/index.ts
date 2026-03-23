@@ -135,6 +135,7 @@ serve(async (req) => {
         value: finalPrice,
         description: `${plan.name} - 1a parcela`.slice(0, 35),
         externalReference: externalRef,
+        expirationSeconds: 3600,
       },
     };
 
