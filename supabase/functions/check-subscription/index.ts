@@ -190,7 +190,7 @@ async function reconcileCompletedPixCheckout(
       searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
       searches_used: 0,
       subscription_current_period_end: subscriptionEnd.toISOString(),
-      payment_provider: "abacate_pay",
+      payment_provider: "asaas",
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
