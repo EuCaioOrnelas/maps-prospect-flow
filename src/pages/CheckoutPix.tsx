@@ -313,6 +313,17 @@ export default function CheckoutPix() {
                 </motion.div>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:gap-5 py-2 sm:py-4 w-full max-w-md">
+                  {/* Expiration timer — above QR */}
+                  {timeLeft !== null && (
+                    <div className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold",
+                      timeLeft > 300 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive animate-pulse"
+                    )}>
+                      <Timer className="h-4 w-4" />
+                      <span>Expira em {formatTimer(timeLeft)}</span>
+                    </div>
+                  )}
+
                   {/* QR Code */}
                   <div className="rounded-2xl bg-white p-3 sm:p-4 shadow-sm border border-border/30">
                     {pixData.brCodeBase64 ? (
@@ -329,40 +340,24 @@ export default function CheckoutPix() {
                     <span className="text-sm sm:text-base font-normal text-muted-foreground">/mês</span>
                   </p>
 
-                  {/* Expiration timer */}
-                  {timeLeft !== null && (
-                    <div className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold",
-                      timeLeft > 300 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive animate-pulse"
-                    )}>
-                      <Timer className="h-4 w-4" />
-                      <span>Expira em {formatTimer(timeLeft)}</span>
-                    </div>
-                  )}
-
-                  {/* Copy-paste code preview */}
+                  {/* PIX Copia e Cola — single line overflow */}
                   {pixData.brCode && (
-                    <div className="w-full max-w-sm space-y-2">
-                      <p className="text-xs font-semibold text-foreground text-center">Código Copia e Cola</p>
+                    <div className="w-full max-w-sm">
+                      <p className="text-xs font-semibold text-foreground mb-1.5 text-center">PIX Copia e Cola</p>
                       <div 
                         onClick={handleCopyCode}
-                        className="relative rounded-xl border border-border/40 bg-muted/50 p-3 cursor-pointer hover:bg-muted/70 transition-colors group"
+                        className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/50 px-3 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors group"
                       >
-                        <p className="text-[11px] text-muted-foreground font-mono break-all line-clamp-3 pr-8">
+                        <p className="flex-1 text-xs text-muted-foreground font-mono truncate overflow-hidden whitespace-nowrap">
                           {pixData.brCode}
                         </p>
-                        <div className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                          {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
-                        </div>
+                        <button className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors">
+                          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied ? "Copiado!" : "Copiar"}
+                        </button>
                       </div>
                     </div>
                   )}
-
-                  {/* Copy code button */}
-                  <Button variant="outline" onClick={handleCopyCode} className="w-full max-w-xs gap-2">
-                    {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                    {copied ? "Código copiado!" : "Copiar código PIX"}
-                  </Button>
 
                   {/* Status */}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
