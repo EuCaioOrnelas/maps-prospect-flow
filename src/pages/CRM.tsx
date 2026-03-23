@@ -109,6 +109,26 @@ export default function CRM() {
     enabled: !!user,
   });
 
+  // Fetch agent-silenced stage names (columns where agents won't respond)
+  const { data: agentSilencedStages = new Set<string>() } = useQuery({
+    queryKey: ['agent-silenced-stages', user?.id],
+    queryFn: async () => {
+      if (!user) return new Set<string>();
+      const { data } = await supabase
+        .from('ai_agents')
+        .select('crm_stage_on_end, crm_stage_on_unknown')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'paused']);
+      const stageNames = new Set<string>();
+      data?.forEach(agent => {
+        if (agent.crm_stage_on_end) stageNames.add(agent.crm_stage_on_end);
+        if (agent.crm_stage_on_unknown) stageNames.add(agent.crm_stage_on_unknown);
+      });
+      return stageNames;
+    },
+    enabled: !!user,
+  });
+
   // Fetch user profile for sidebar
   const { data: sidebarProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -430,6 +450,7 @@ export default function CRM() {
                   await updateLead(leadId, { contact_name: newName });
                 }}
                 columnWidth={columnWidth}
+                agentSilencedStages={agentSilencedStages}
               />
             )}
           </div>

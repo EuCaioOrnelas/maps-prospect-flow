@@ -24,6 +24,7 @@ interface KanbanColumnProps {
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
+  isAgentSilenced?: boolean;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
@@ -58,6 +59,7 @@ const KanbanColumnComponent = ({
   onSelectAllInColumn,
   onUpdateLeadName,
   columnWidth = 'medium',
+  isAgentSilenced = false,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
@@ -134,6 +136,11 @@ const KanbanColumnComponent = ({
             {leads.length}
           </span>
         </div>
+        {isAgentSilenced && (
+          <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
+            🤖 Agente não responde leads nesta coluna
+          </p>
+        )}
       </div>
 
       {/* Cards */}

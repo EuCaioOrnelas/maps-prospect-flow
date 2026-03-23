@@ -340,7 +340,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
     const invalidStages: string[] = [];
     if (crmStageOnNewLead && !stageNames.includes(crmStageOnNewLead)) invalidStages.push(`"${crmStageOnNewLead}" (quando lead responde)`);
     if (crmStageOnReply && !stageNames.includes(crmStageOnReply)) invalidStages.push(`"${crmStageOnReply}" (quando agente responde)`);
-    if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando conversa encerra)`);
+    if (crmStageOnEnd && !stageNames.includes(crmStageOnEnd)) invalidStages.push(`"${crmStageOnEnd}" (quando objetivo é atingido)`);
     
     if (invalidStages.length > 0) {
       // Clear invalid values
@@ -1194,7 +1194,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Quando conversa é encerrada</Label>
+                      <Label className="text-xs flex items-center gap-1">Quando objetivo é atingido <span className="text-emerald-400">✅</span></Label>
                       <select
                         value={crmStageOnEnd}
                         onChange={(e) => setCrmStageOnEnd(e.target.value)}
@@ -1205,6 +1205,9 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
                           <option key={s.id} value={s.name}>{s.name}</option>
                         ))}
                       </select>
+                      <p className="text-xs text-muted-foreground">
+                        Quando o agente atingir o objetivo, o lead será movido para esta coluna e <span className="text-emerald-400 font-medium">o agente não responderá mais</span>.
+                      </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       O agente move automaticamente os leads entre as colunas do seu funil conforme a conversa avança.

@@ -260,6 +260,41 @@ function templateAgentHumanHandoff(payload: Record<string, unknown>): TemplateRe
   };
 }
 
+function templateAgentObjectiveCompleted(payload: Record<string, unknown>): TemplateResult {
+  const agentName = payload.agent_name as string || "Seu agente";
+  const leadPhone = payload.lead_phone as string || "Número desconhecido";
+  const leadName = payload.lead_name as string || null;
+  const stageName = payload.stage_name as string || "Objetivo atingido";
+  const reason = payload.reason as string || "O agente concluiu o objetivo da conversa com sucesso.";
+
+  const leadLabel = leadName ? `<strong>${leadName}</strong> (${leadPhone})` : `<strong>${leadPhone}</strong>`;
+
+  return {
+    subject: `✅ Objetivo atingido — Lead qualificado pelo agente`,
+    html: baseLayout(`Objetivo Atingido`, `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Objetivo concluído com sucesso! 🎉</h1>
+      <p style="margin:0 0 12px;color:#3f3f46;font-size:15px;">O agente <strong>"${agentName}"</strong> atingiu o objetivo da conversa com um lead.</p>
+      
+      <div style="margin:16px 0;padding:16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #22c55e;">
+        <p style="margin:0 0 8px;font-size:14px;color:#166534;font-weight:600;">📋 Detalhes</p>
+        <table role="presentation" width="100%" style="font-size:14px;color:#3f3f46;">
+          <tr><td style="padding:4px 0;font-weight:600;width:100px;">Lead:</td><td style="padding:4px 0;">${leadLabel}</td></tr>
+          <tr><td style="padding:4px 0;font-weight:600;">Agente:</td><td style="padding:4px 0;">${agentName}</td></tr>
+          <tr><td style="padding:4px 0;font-weight:600;">Coluna:</td><td style="padding:4px 0;">${stageName}</td></tr>
+        </table>
+      </div>
+
+      <div style="margin:16px 0;padding:12px 16px;background:#f0fdf4;border-left:4px solid #22c55e;border-radius:4px;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#166534;">💡 Contexto:</p>
+        <p style="margin:0;font-size:13px;color:#15803d;line-height:1.5;">${reason}</p>
+      </div>
+
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">O agente não responderá mais a este lead. Acesse o CRM para acompanhar o próximo passo.</p>
+      <a href="${BRAND.url}/crm" style="display:inline-block;margin-top:16px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Abrir CRM</a>
+    `, `Objetivo atingido pelo agente ${agentName}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
@@ -268,6 +303,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
   AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
+  AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
 };
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
