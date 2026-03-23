@@ -199,8 +199,21 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
     const aiData = await aiResponse.json();
     let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
 
-    // Detect markers
+    // Detect markers and generate all events
     const events: { type: string; label: string; stage?: string }[] = [];
+
+    // CRM stage events from the new lead
+    const crmStageReply = agent.crm_stage_on_reply;
+    const crmStageNewLead = agent.crm_stage_on_new_lead;
+    const isFirstMessage = messages.filter((m: any) => m.direction === 'received').length <= 1;
+
+    if (isFirstMessage && crmStageReply) {
+      events.push({
+        type: 'crm_move',
+        label: `📋 Lead movido para "${crmStageReply}" (agente respondeu)`,
+        stage: crmStageReply
+      });
+    }
 
     if (replyContent.includes('[CONVERSA_ENCERRADA]')) {
       events.push({ 
@@ -221,6 +234,57 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
         type: 'human_handoff', 
         label: `🤝 Agente não soube responder — Transferido para "${crmStageUnknownName || 'atendimento humano'}"`,
         stage: crmStageUnknownName || undefined
+      });
+    }
+
+    // Simulate bot detection patterns (check if lead messages look automated)
+    const leadMessages = messages.filter((m: any) => m.direction === 'received').map((m: any) => m.content || '');
+    const botPatterns = [
+      /^(1|2|3|4|5|6|7|8|9|0)$/,
+      /menu|voltar|sair|^#/i,
+      /digite|escolha uma opção|selecione/i,
+    ];
+    const recentLeadMsgs = leadMessages.slice(-3);
+    const looksLikeBot = recentLeadMsgs.length >= 2 && recentLeadMsgs.filter((m: string) => 
+      botPatterns.some(p => p.test(m.trim()))
+    ).length >= 2;
+
+    if (looksLikeBot) {
+      events.push({
+        type: 'bot_detected',
+        label: '🤖 Padrão de bot/automação detectado nas respostas do lead'
+      });
+      events.push({
+        type: 'antiloop_sent',
+        label: '⚡ Anti-loop ativado — Mensagem de verificação enviada ao lead'
+      });
+    }
+
+    // Check operating hours simulation
+    const now = new Date();
+    const spNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const currentMinutes = spNow.getHours() * 60 + spNow.getMinutes();
+    const [startH, startM] = (agent.operating_hours_start || '08:00').split(':').map(Number);
+    const [endH, endM] = (agent.operating_hours_end || '18:00').split(':').map(Number);
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+    const is24h = startH === 0 && startM === 0 && endH === 23 && endM === 59;
+    const isInHours = is24h || (endMin >= startMin ? (currentMinutes >= startMin && currentMinutes <= endMin) : (currentMinutes >= startMin || currentMinutes <= endMin));
+    
+    if (!isInHours) {
+      events.push({
+        type: 'outside_hours',
+        label: `⏰ Fora do horário de operação (${agent.operating_hours_start?.slice(0,5)} – ${agent.operating_hours_end?.slice(0,5)}) — Mensagem seria enfileirada`
+      });
+    }
+
+    // Check max replies simulation
+    const agentSentCount = messages.filter((m: any) => m.direction === 'sent' && m.type !== 'event').length;
+    const maxReplies = agent.max_replies || 1;
+    if (agentSentCount >= maxReplies) {
+      events.push({
+        type: 'agent_paused',
+        label: `⏸️ Limite de ${maxReplies} rodada(s) atingido — Agente pausaria até lead enviar nova mensagem`
       });
     }
 
