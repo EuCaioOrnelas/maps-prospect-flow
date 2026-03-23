@@ -1471,11 +1471,15 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-muted-foreground">
-                  {stripeMRR?.canceledSubscriptions ?? 0}
+                  {(stripeMRR?.canceledSubscriptions ?? 0) + (pixMRR?.pixCancellations ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Cancelamentos (Total)
                 </p>
+                <div className="flex gap-3 mt-1 text-xs text-muted-foreground/70">
+                  <span>Stripe: {stripeMRR?.canceledSubscriptions ?? 0}</span>
+                  <span>PIX: {pixMRR?.pixCancellations ?? 0}</span>
+                </div>
               </div>
             </div>
 
