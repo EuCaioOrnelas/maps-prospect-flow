@@ -66,7 +66,7 @@ serve(async (req) => {
       if (existingByIp) {
         logStep("Coupon already used from this IP", { couponCode, ip: clientIp });
         return new Response(
-          JSON.stringify({ valid: false, error: "Este cupom já foi utilizado. Cupons são válidos apenas para a primeira assinatura." }),
+          JSON.stringify({ valid: false, error: "Este cupom já foi utilizado recentemente em outra compra. Cada cupom é válido apenas uma vez." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
