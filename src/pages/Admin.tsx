@@ -416,7 +416,7 @@ const Admin = () => {
       // Use checkout dates as "start" and churn events as "end"
       const pixUserTimelines: Array<{ userId: string; startMonth: string; endMonth: string | null; planKey: string }> = [];
       
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at || !c.user_id) continue;
         const d = new Date(c.checkout_completed_at);
         const startMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
