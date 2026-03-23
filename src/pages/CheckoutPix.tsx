@@ -535,7 +535,7 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">PIX Recorrente</p>
+                    <p className="text-xs font-semibold text-foreground">PIX</p>
                     <p className="text-xs text-muted-foreground">Renovação mensal com envio de novo PIX</p>
                   </div>
                 </div>
