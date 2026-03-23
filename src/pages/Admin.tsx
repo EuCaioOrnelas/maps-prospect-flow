@@ -320,7 +320,7 @@ const Admin = () => {
       const now = new Date();
       
       for (const p of profiles || []) {
-        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay') continue;
+        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay' && (p as any).payment_provider !== 'asaas') continue;
         if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
         pixMrrTotal += planPrices[p.plan] || 0;
         pixActiveSubs++;
