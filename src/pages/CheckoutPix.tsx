@@ -356,10 +356,13 @@ export default function CheckoutPix() {
               )
             ) : (
               <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
-                <div className="text-center space-y-1">
-                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+                <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX Recorrente</h1>
                   <p className="text-sm text-muted-foreground">
-                    Gere o QR Code para pagar. Renovação mensal via novo PIX.
+                    O PIX funciona no formato de <strong>débito automático</strong>. Ao pagar, você autoriza a cobrança recorrente mensal.
+                  </p>
+                  <p className="text-xs text-muted-foreground/80">
+                    Cancele quando quiser, sem multa ou fidelidade.
                   </p>
                 </div>
 
