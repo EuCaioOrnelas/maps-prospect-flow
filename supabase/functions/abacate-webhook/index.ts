@@ -238,7 +238,7 @@ serve(async (req) => {
             .from("profiles")
             .update({
               plan: "free",
-              searches_limit: 5,
+              searches_limit: 10,
               searches_used: 0,
               subscription_current_period_end: null,
               updated_at: new Date().toISOString(),
