@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("ABACATE_PAY_API_KEY");
-    if (!apiKey) throw new Error("ABACATE_PAY_API_KEY not configured");
+    // No external API key needed — Asaas handles billing automatically
+    // This cron only sends email reminders
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseClient = createClient(
