@@ -960,23 +960,23 @@ const Admin = () => {
       const checkoutStarted = checkoutData.length;
       const checkoutNotCompleted = checkoutData.filter((c: any) => !c.checkout_completed).length;
       
-      // Purchases: Stripe events + PIX invoices + completed abacate checkouts (deduplicated)
+      // Purchases: Stripe events + PIX invoices + completed PIX checkouts (deduplicated)
       const stripePurchasesCount = purchasesRes.data?.length || 0;
       const pixInvoicePurchasesCount = pixPurchasesRes.data?.length || 0;
       
-      // Also count completed abacate checkouts in period not already in pix_invoices
-      const { data: abacateCheckoutsInPeriod } = await supabase
+      // Also count completed PIX checkouts in period not already in pix_invoices
+      const { data: pixCheckoutsInPeriod } = await supabase
         .from('checkout_leads')
         .select('id, user_id, checkout_completed_at')
         .eq('checkout_completed', true)
-        .like('stripe_session_id', 'abacate_%')
+        .or('stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%')
         .gte('checkout_completed_at', startISO)
         .lte('checkout_completed_at', endISO);
       
       const pixInvoiceUserIds = new Set((pixPurchasesRes.data || []).map((p: any) => p.user_id));
-      const abacateOnlyCount = (abacateCheckoutsInPeriod || []).filter((c: any) => !pixInvoiceUserIds.has(c.user_id)).length;
+      const pixOnlyCount = (pixCheckoutsInPeriod || []).filter((c: any) => !pixInvoiceUserIds.has(c.user_id)).length;
       
-      const purchasesCount = stripePurchasesCount + pixInvoicePurchasesCount + abacateOnlyCount;
+      const purchasesCount = stripePurchasesCount + pixInvoicePurchasesCount + pixOnlyCount;
       
       // Conversion rate: paying users created in period / total users in period
       const payingInPeriod = (usersRes.data || []).filter((u: any) => u.plan !== 'free').length;
