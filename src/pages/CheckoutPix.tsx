@@ -47,9 +47,9 @@ export default function CheckoutPix() {
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
   const PLAN_PRICES: Record<string, string> = {
-    start: "197,00",
-    growth: "297,00",
-    scale: "497,00",
+    start: "197",
+    growth: "497",
+    scale: "897",
   };
   const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
 
@@ -191,7 +191,8 @@ export default function CheckoutPix() {
   if (!customerData) return null;
 
   // Compute display prices
-  const originalCents = Math.round(parseFloat(planPrice.replace(",", ".")) * 100);
+  const cleanPrice = planPrice.replace(",", ".");
+  const originalCents = Math.round(parseFloat(cleanPrice) * 100);
   let discountAmount = 0;
   if (couponApplied && couponDiscount) {
     if (couponDiscount.discountKind === "PERCENTAGE") {
@@ -425,7 +426,7 @@ export default function CheckoutPix() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Valor mensal</span>
-                  <span className="font-semibold text-foreground">R$ {planPrice}</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(originalCents)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
@@ -457,7 +458,7 @@ export default function CheckoutPix() {
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="font-bold text-lg text-foreground">
-                    {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : `R$ ${planPrice}`}
+                    {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : formatCurrency(originalCents)}
                   </span>
                 </div>
               </div>
