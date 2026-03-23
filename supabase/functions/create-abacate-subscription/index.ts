@@ -66,6 +66,11 @@ serve(async (req) => {
       }
     }
 
+    // Get client IP for fraud prevention
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+      || req.headers.get("x-real-ip") 
+      || "unknown";
+
     // Determine final price
     let finalPrice = plan.priceInCents;
     let discountApplied = false;
@@ -83,8 +88,26 @@ serve(async (req) => {
             .eq("coupon_code", couponCode.toUpperCase())
             .maybeSingle();
 
+          // Also check by IP
+          let ipBlocked = false;
+          if (clientIp && clientIp !== "unknown") {
+            const { data: ipRedemption } = await supabaseClient
+              .from("coupon_redemptions")
+              .select("id")
+              .eq("ip_address", clientIp)
+              .eq("coupon_code", couponCode.toUpperCase())
+              .maybeSingle();
+            if (ipRedemption) {
+              logStep("Coupon already redeemed from this IP", { couponCode, ip: clientIp });
+              ipBlocked = true;
+            }
+          }
+
           if (existingRedemption) {
             logStep("Coupon already redeemed by user", { couponCode, email: userEmail });
+            // Skip coupon - proceed with full price
+          } else if (ipBlocked) {
+            logStep("Skipping coupon due to IP fraud block");
             // Skip coupon - proceed with full price
           } else {
             const couponRes = await fetch(`${ABACATE_API}/coupons/list`, {
@@ -121,6 +144,7 @@ serve(async (req) => {
                     coupon_code: couponCode.toUpperCase(),
                     plan_key: planKey,
                     discount_amount_cents: plan.priceInCents - finalPrice,
+                    ip_address: clientIp,
                   });
                   logStep("Coupon redemption recorded");
                 } catch (e) {
