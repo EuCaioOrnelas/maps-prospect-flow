@@ -566,10 +566,10 @@ export default function CheckoutPix() {
           <div className="flex flex-col items-center gap-2 mt-4">
             <p className="text-[10px] text-muted-foreground/60">
               Pagamentos processados com segurança por{" "}
-              <a href="https://abacatepay.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
-                AbacatePay
+              <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
+                Asaas
               </a>
-              {" "}• Intermediadora de pagamentos regulamentada
+              {" "}• Instituição de pagamento regulamentada pelo Banco Central
             </p>
             <p className="text-[10px] text-muted-foreground/60">
               © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
