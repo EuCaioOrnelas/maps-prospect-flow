@@ -292,6 +292,7 @@ const Admin = () => {
   const loadPixMRR = useCallback(async () => {
     try {
       const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
+      const planNameToKey: Record<string, string> = { 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' };
       
       // Get PIX user IDs
       const { data: pixInvoiceUsers } = await supabase
@@ -325,7 +326,7 @@ const Admin = () => {
         pixActiveSubs++;
       }
       
-      // PIX sales this month
+      // PIX sales this month from pix_invoices
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const { data: monthInvoices } = await supabase
         .from("pix_invoices")
@@ -336,16 +337,61 @@ const Admin = () => {
       let pixSalesValue = 0;
       for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
 
-      // PIX monthly sales from completed abacate checkouts
+      // Also count abacate checkouts completed this month
+      const abacateCheckoutsThisMonth = (abacateCheckouts || []).filter(c => 
+        c.checkout_completed_at && new Date(c.checkout_completed_at) >= new Date(monthStart)
+      );
+      
+      // Add checkout values not already in pix_invoices
+      for (const c of abacateCheckoutsThisMonth) {
+        const planKey = planNameToKey[c.plan_attempted] || 'start';
+        // Only add if not already counted via pix_invoices (avoid double counting)
+        const userId = c.user_id;
+        const hasInvoice = (pixInvoiceUsers || []).some((p: any) => p.user_id === userId);
+        if (!hasInvoice) {
+          pixSalesValue += planPrices[planKey] || 197;
+        }
+      }
+
+      // Build PIX monthly sales from BOTH checkout_leads AND pix_invoices
       const pixMonthlySalesMap: Record<string, { sales: number; salesValue: number; cancellations: number }> = {};
+      
+      // From completed abacate checkouts (initial purchases)
       for (const c of abacateCheckouts || []) {
         if (!c.checkout_completed_at) continue;
         const d = new Date(c.checkout_completed_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
         pixMonthlySalesMap[key].sales++;
-        const planKey = ({ 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' } as Record<string, string>)[c.plan_attempted] || 'start';
+        const planKey = planNameToKey[c.plan_attempted] || 'start';
         pixMonthlySalesMap[key].salesValue += planPrices[planKey] || 197;
+      }
+
+      // From paid pix_invoices (renewals)
+      const { data: allPaidInvoices } = await supabase
+        .from("pix_invoices")
+        .select("amount_cents, paid_at, user_id")
+        .eq("status", "paid")
+        .not("paid_at", "is", null);
+      
+      // Track checkout user+month combos to avoid double counting
+      const checkoutKeys = new Set<string>();
+      for (const c of abacateCheckouts || []) {
+        if (!c.checkout_completed_at || !c.user_id) continue;
+        const d = new Date(c.checkout_completed_at);
+        checkoutKeys.add(`${c.user_id}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      }
+      
+      for (const inv of allPaidInvoices || []) {
+        if (!inv.paid_at) continue;
+        const d = new Date(inv.paid_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const userMonthKey = `${inv.user_id}_${key}`;
+        // Skip if already counted from checkout_leads for same user+month
+        if (checkoutKeys.has(userMonthKey)) continue;
+        if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
+        pixMonthlySalesMap[key].sales++;
+        pixMonthlySalesMap[key].salesValue += (inv.amount_cents || 0) / 100;
       }
 
       // PIX cancellations from subscription_events
@@ -367,15 +413,88 @@ const Admin = () => {
         .map(([month, data]) => ({ month, ...data }))
         .sort((a, b) => a.month.localeCompare(b.month));
 
-      // PIX monthly MRR (simplified: use current active PIX profiles to estimate)
-      // For historical accuracy, we'd need snapshots - for now just add current month
+      // Build historical PIX MRR by reconstructing active PIX users per month
+      // Use checkout dates as "start" and churn events as "end"
+      const pixUserTimelines: Array<{ userId: string; startMonth: string; endMonth: string | null; planKey: string }> = [];
+      
+      for (const c of abacateCheckouts || []) {
+        if (!c.checkout_completed_at || !c.user_id) continue;
+        const d = new Date(c.checkout_completed_at);
+        const startMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const planKey = planNameToKey[c.plan_attempted] || 'start';
+        
+        // Check if this user churned
+        const churnEvent = (pixCancelEvents || []).find((evt: any) => {
+          // We don't have user_id in cancel events directly, so skip per-user matching
+          return false;
+        });
+        
+        pixUserTimelines.push({ userId: c.user_id, startMonth, endMonth: null, planKey });
+      }
+      
+      // Get PIX cancel events with user_id
+      const { data: pixCancelEventsDetailed } = await supabase
+        .from("subscription_events")
+        .select("created_at, user_id")
+        .eq("event_type", "pix_not_renewed");
+      
+      const churnByUser: Record<string, string> = {};
+      for (const evt of pixCancelEventsDetailed || []) {
+        if (!evt.user_id) continue;
+        const d = new Date(evt.created_at);
+        const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        churnByUser[evt.user_id] = month;
+      }
+      
+      // Update timelines with churn data
+      for (const tl of pixUserTimelines) {
+        if (churnByUser[tl.userId]) {
+          tl.endMonth = churnByUser[tl.userId];
+        }
+      }
+      
+      // Build monthly MRR from timelines
       const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const pixMonthlyMRR = [{ month: currentMonthKey, mrr: pixMrrTotal, activeCount: pixActiveSubs }];
+      const allMonths = new Set<string>();
+      // Generate months from earliest checkout to now
+      if (pixUserTimelines.length > 0) {
+        const earliest = pixUserTimelines.reduce((min, tl) => tl.startMonth < min ? tl.startMonth : min, pixUserTimelines[0].startMonth);
+        let [y, m] = earliest.split('-').map(Number);
+        const [cy, cm] = currentMonthKey.split('-').map(Number);
+        while (y < cy || (y === cy && m <= cm)) {
+          allMonths.add(`${y}-${String(m).padStart(2, '0')}`);
+          m++;
+          if (m > 12) { m = 1; y++; }
+        }
+      }
+      
+      const pixMonthlyMRR: Array<{ month: string; mrr: number; activeCount: number }> = [];
+      for (const month of [...allMonths].sort()) {
+        let mrr = 0;
+        let count = 0;
+        for (const tl of pixUserTimelines) {
+          if (tl.startMonth <= month && (!tl.endMonth || tl.endMonth > month)) {
+            mrr += planPrices[tl.planKey] || 197;
+            count++;
+          }
+        }
+        if (mrr > 0) {
+          pixMonthlyMRR.push({ month, mrr, activeCount: count });
+        }
+      }
+      
+      // Ensure current month reflects live data
+      const currentIdx = pixMonthlyMRR.findIndex(m => m.month === currentMonthKey);
+      if (currentIdx >= 0) {
+        pixMonthlyMRR[currentIdx] = { month: currentMonthKey, mrr: pixMrrTotal, activeCount: pixActiveSubs };
+      } else if (pixMrrTotal > 0) {
+        pixMonthlyMRR.push({ month: currentMonthKey, mrr: pixMrrTotal, activeCount: pixActiveSubs });
+      }
       
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
-        pixSalesThisMonth: (monthInvoices || []).length,
+        pixSalesThisMonth: (monthInvoices || []).length + abacateCheckoutsThisMonth.filter(c => !(pixInvoiceUsers || []).some((p: any) => p.user_id === c.user_id)).length,
         pixSalesValueThisMonth: pixSalesValue,
         pixCancellations: pixCancellationsTotal,
         pixMonthlySales,
