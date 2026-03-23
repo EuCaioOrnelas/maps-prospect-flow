@@ -545,7 +545,6 @@ export default function CheckoutPix() {
               <Logo size="sm" asLink={false} showText={false} />
               <div className="text-xs text-muted-foreground">
                 <p className="font-medium text-foreground/80">Wiize Tecnologia</p>
-                <p>CNPJ: 00.000.000/0001-00</p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
