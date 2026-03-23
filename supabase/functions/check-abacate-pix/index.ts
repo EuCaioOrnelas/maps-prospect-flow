@@ -112,6 +112,7 @@ serve(async (req) => {
                 searches_limit: searchesLimit,
                 searches_used: 0,
                 subscription_current_period_end: periodEnd.toISOString(),
+                payment_provider: "abacate_pay",
                 updated_at: new Date().toISOString(),
               })
               .eq("id", profileByEmail.id);
