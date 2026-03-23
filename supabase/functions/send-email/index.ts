@@ -352,7 +352,8 @@ Deno.serve(async (req) => {
         .replace(/\{\{user_name\}\}/g, userName)
         .replace(/\{\{plan_name\}\}/g, planName);
 
-      html = baseLayout(dbTemplate.title, `
+      html = baseLayout(subject, `
+        <h1 style="margin:0 0 20px;font-size:22px;color:#18181b;font-weight:700;">${dbTemplate.title}</h1>
         <div style="color:#3f3f46;font-size:15px;line-height:1.7;">
           ${compiledContent}
         </div>
@@ -360,7 +361,7 @@ Deno.serve(async (req) => {
         <div style="text-align:center;margin:24px 0;">
           <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${dbTemplate.cta_text}</a>
         </div>
-      `);
+      `, subject);
     } else {
       const templateFn = TEMPLATES[email_type];
       if (!templateFn) {
