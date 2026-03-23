@@ -164,6 +164,7 @@ serve(async (req) => {
           searches_used: 0,
           subscription_current_period_end: periodEnd.toISOString(),
           last_searches_reset: new Date().toISOString(),
+          payment_provider: "abacate_pay",
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id);

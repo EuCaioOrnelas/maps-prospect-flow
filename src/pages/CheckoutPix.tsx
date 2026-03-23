@@ -142,6 +142,7 @@ export default function CheckoutPix() {
           clearInterval(interval);
           setPaid(true);
           setCheckingPayment(false);
+          trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "abacate_pay", renewal: isRenewal });
           toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
           if (isRenewal) {
             setTimeout(() => navigate(`/renewal-success?email=${encodeURIComponent(renewalEmail)}&plan=${encodeURIComponent(planKey)}`), 2000);
