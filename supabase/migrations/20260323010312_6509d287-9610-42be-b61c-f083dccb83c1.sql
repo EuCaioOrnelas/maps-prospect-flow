@@ -1,0 +1,1 @@
+ALTER TABLE public.coupon_redemptions ADD COLUMN IF NOT EXISTS ip_address text;
