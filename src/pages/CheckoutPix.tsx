@@ -43,7 +43,15 @@ export default function CheckoutPix() {
 
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
-  const planPrice = searchParams.get("planPrice") || "";
+  const planPriceParam = searchParams.get("planPrice") || "";
+
+  // Auto-resolve price from plan key when not provided (e.g. renewal links)
+  const PLAN_PRICES: Record<string, string> = {
+    start: "97",
+    growth: "197",
+    scale: "397",
+  };
+  const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
 
   const isRenewal = searchParams.get("renewal") === "true";
   const renewalEmail = searchParams.get("email") || "";
