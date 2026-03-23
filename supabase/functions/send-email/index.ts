@@ -225,6 +225,41 @@ function templateWeeklySummary(payload: Record<string, unknown>): TemplateResult
 // SUBSCRIPTION_RENEWAL is handled as async — fetches from renewal_email_templates DB table
 // so the actual email matches what's configured in the admin panel.
 
+function templateAgentHumanHandoff(payload: Record<string, unknown>): TemplateResult {
+  const agentName = payload.agent_name as string || "Seu agente";
+  const leadPhone = payload.lead_phone as string || "Número desconhecido";
+  const leadName = payload.lead_name as string || null;
+  const stageName = payload.stage_name as string || "Atendimento humano";
+  const reason = payload.reason as string || "O agente não soube responder a pergunta do lead.";
+
+  const leadLabel = leadName ? `<strong>${leadName}</strong> (${leadPhone})` : `<strong>${leadPhone}</strong>`;
+
+  return {
+    subject: `🤝 Lead transferido para atendimento humano`,
+    html: baseLayout(`Transferência para Atendimento Humano`, `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Lead transferido para você</h1>
+      <p style="margin:0 0 12px;color:#3f3f46;font-size:15px;">O agente <strong>"${agentName}"</strong> transferiu um lead para atendimento humano.</p>
+      
+      <div style="margin:16px 0;padding:16px;background:#f0f9ff;border-radius:8px;border-left:4px solid #3b82f6;">
+        <p style="margin:0 0 8px;font-size:14px;color:#1e40af;font-weight:600;">📋 Detalhes da transferência</p>
+        <table role="presentation" width="100%" style="font-size:14px;color:#3f3f46;">
+          <tr><td style="padding:4px 0;font-weight:600;width:100px;">Lead:</td><td style="padding:4px 0;">${leadLabel}</td></tr>
+          <tr><td style="padding:4px 0;font-weight:600;">Agente:</td><td style="padding:4px 0;">${agentName}</td></tr>
+          <tr><td style="padding:4px 0;font-weight:600;">Coluna:</td><td style="padding:4px 0;">${stageName}</td></tr>
+        </table>
+      </div>
+
+      <div style="margin:16px 0;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#92400e;">💡 Motivo:</p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.5;">${reason}</p>
+      </div>
+
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">O agente foi silenciado para este lead. Acesse o CRM para dar continuidade ao atendimento.</p>
+      <a href="${BRAND.url}/crm" style="display:inline-block;margin-top:16px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Abrir CRM</a>
+    `, `Lead transferido para atendimento humano pelo agente ${agentName}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
@@ -232,6 +267,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
+  AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
 };
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
