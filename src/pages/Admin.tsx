@@ -77,6 +77,7 @@ import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import * as XLSX from 'xlsx';
+import { Badge } from "@/components/ui/badge";
 
 // Função para verificar admin via banco de dados (seguro)
 // Preços dos planos (fallback caso Stripe falhe)
