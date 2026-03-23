@@ -93,16 +93,16 @@ export default function CheckoutPix() {
     }
   }, [navigate, isRenewal, renewalEmail, renewalName, planKey]);
 
-  // Create subscription and redirect to AbacatePay checkout
+  // Create subscription via Asaas
   const handleSubscribe = async () => {
     if (!customerData || !planKey) return;
     setLoading(true);
     
-    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "abacate_pay" });
+    trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
     
     try {
       const { data, error } = await supabase.functions.invoke(
-        "create-abacate-subscription",
+        "create-asaas-subscription",
         {
           body: { planKey, customerData, couponCode: couponApplied ? couponCode : undefined },
         }
@@ -135,19 +135,19 @@ export default function CheckoutPix() {
     setCheckingPayment(true);
     const interval = setInterval(async () => {
       try {
-        const { data } = await supabase.functions.invoke("check-abacate-pix", {
+        const { data } = await supabase.functions.invoke("check-asaas-payment", {
           body: { pixId },
         });
-        if (data?.status === "PAID" || data?.status === "COMPLETED") {
+        if (data?.status === "PAID" || data?.status === "CONFIRMED" || data?.status === "RECEIVED") {
           clearInterval(interval);
           setPaid(true);
           setCheckingPayment(false);
-          trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "abacate_pay", renewal: isRenewal });
+          trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "asaas", renewal: isRenewal });
           toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
           if (isRenewal) {
             setTimeout(() => navigate(`/renewal-success?email=${encodeURIComponent(renewalEmail)}&plan=${encodeURIComponent(planKey)}`), 2000);
           } else {
-            setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+            setTimeout(() => navigate("/checkout-success?provider=asaas"), 2000);
           }
         }
       } catch {
@@ -514,8 +514,8 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">PIX</p>
-                    <p className="text-xs text-muted-foreground">Renovação mensal com envio de novo PIX</p>
+                    <p className="text-xs font-semibold text-foreground">PIX Recorrente</p>
+                    <p className="text-xs text-muted-foreground">Renovação automática mensal via Asaas</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -529,7 +529,7 @@ export default function CheckoutPix() {
                 </div>
                 <div className="h-px bg-border/30 my-1" />
                 <p className="text-[10px] text-muted-foreground/70">
-                  Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
+                  Pagamentos processados por <span className="font-semibold">Asaas</span> — intermediadora regulamentada pelo Banco Central
                 </p>
               </div>
             </div>
@@ -566,10 +566,10 @@ export default function CheckoutPix() {
           <div className="flex flex-col items-center gap-2 mt-4">
             <p className="text-[10px] text-muted-foreground/60">
               Pagamentos processados com segurança por{" "}
-              <a href="https://abacatepay.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
-                AbacatePay
+              <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
+                Asaas
               </a>
-              {" "}• Intermediadora de pagamentos regulamentada
+              {" "}• Instituição de pagamento regulamentada pelo Banco Central
             </p>
             <p className="text-[10px] text-muted-foreground/60">
               © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
