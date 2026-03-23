@@ -40,7 +40,7 @@ serve(async (req) => {
       });
     }
 
-    const { agentId, messages } = await req.json();
+    const { agentId, messages, simulateEvents } = await req.json();
 
     if (!agentId || !messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Missing agentId or messages' }), {
