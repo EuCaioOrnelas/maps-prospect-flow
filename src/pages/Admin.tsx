@@ -143,6 +143,9 @@ interface PixMRRData {
   pixActiveSubscriptions: number;
   pixSalesThisMonth: number;
   pixSalesValueThisMonth: number;
+  pixCancellations: number;
+  pixMonthlySales: Array<{ month: string; sales: number; salesValue: number; cancellations: number }>;
+  pixMonthlyMRR: Array<{ month: string; mrr: number; activeCount: number }>;
 }
 
 interface SalesChartData {
@@ -296,7 +299,7 @@ const Admin = () => {
         .select("user_id");
       const { data: abacateCheckouts } = await supabase
         .from("checkout_leads")
-        .select("user_id")
+        .select("user_id, plan_attempted, checkout_completed_at, stripe_session_id, checkout_completed")
         .eq("checkout_completed", true)
         .like("stripe_session_id", "abacate_%");
       
@@ -307,7 +310,7 @@ const Admin = () => {
       // Get active PIX profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, subscription_current_period_end")
+        .select("id, plan, subscription_current_period_end, payment_provider")
         .neq("plan", "free")
         .eq("is_blocked", false);
       
@@ -316,7 +319,7 @@ const Admin = () => {
       const now = new Date();
       
       for (const p of profiles || []) {
-        if (!pixUserIds.has(p.id)) continue;
+        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay') continue;
         if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
         pixMrrTotal += planPrices[p.plan] || 0;
         pixActiveSubs++;
@@ -332,12 +335,51 @@ const Admin = () => {
       
       let pixSalesValue = 0;
       for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
+
+      // PIX monthly sales from completed abacate checkouts
+      const pixMonthlySalesMap: Record<string, { sales: number; salesValue: number; cancellations: number }> = {};
+      for (const c of abacateCheckouts || []) {
+        if (!c.checkout_completed_at) continue;
+        const d = new Date(c.checkout_completed_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
+        pixMonthlySalesMap[key].sales++;
+        const planKey = ({ 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' } as Record<string, string>)[c.plan_attempted] || 'start';
+        pixMonthlySalesMap[key].salesValue += planPrices[planKey] || 197;
+      }
+
+      // PIX cancellations from subscription_events
+      const { data: pixCancelEvents } = await supabase
+        .from("subscription_events")
+        .select("created_at")
+        .eq("event_type", "pix_not_renewed");
+      
+      let pixCancellationsTotal = 0;
+      for (const evt of pixCancelEvents || []) {
+        const d = new Date(evt.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
+        pixMonthlySalesMap[key].cancellations++;
+        pixCancellationsTotal++;
+      }
+
+      const pixMonthlySales = Object.entries(pixMonthlySalesMap)
+        .map(([month, data]) => ({ month, ...data }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      // PIX monthly MRR (simplified: use current active PIX profiles to estimate)
+      // For historical accuracy, we'd need snapshots - for now just add current month
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const pixMonthlyMRR = [{ month: currentMonthKey, mrr: pixMrrTotal, activeCount: pixActiveSubs }];
       
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
         pixSalesThisMonth: (monthInvoices || []).length,
         pixSalesValueThisMonth: pixSalesValue,
+        pixCancellations: pixCancellationsTotal,
+        pixMonthlySales,
+        pixMonthlyMRR,
       });
     } catch (error) {
       console.error('Error loading PIX MRR:', error);
@@ -431,6 +473,20 @@ const Admin = () => {
         }
       }
     }
+    // Merge PIX monthly sales data
+    if (pixMRR?.pixMonthlySales) {
+      for (const pixSale of pixMRR.pixMonthlySales) {
+        const saleDate = monthKeyToLocalDate(pixSale.month);
+        if (saleDate >= startDate && (!endDate || saleDate <= endDate)) {
+          if (!monthlyData[pixSale.month]) {
+            monthlyData[pixSale.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+          }
+          monthlyData[pixSale.month].newSales += pixSale.sales;
+          monthlyData[pixSale.month].salesValue += pixSale.salesValue;
+          monthlyData[pixSale.month].cancellations += pixSale.cancellations;
+        }
+      }
+    }
     
     return Object.entries(monthlyData)
       .map(([month, data]) => ({
@@ -438,7 +494,7 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
+  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales, pixMRR?.pixMonthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
@@ -514,12 +570,22 @@ const Admin = () => {
     const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
     const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
 
-    return filteredMRRData.map((item) => ({
-      date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-      mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
-      activeCount: item.activeCount ?? 0,
-    }));
-  }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
+    // Build a map of PIX monthly MRR for merging
+    const pixMrrMap: Record<string, number> = {};
+    for (const pm of pixMRR?.pixMonthlyMRR || []) {
+      pixMrrMap[pm.month] = pm.mrr;
+    }
+
+    return filteredMRRData.map((item) => {
+      const pixMrrForMonth = pixMrrMap[item.month] || 0;
+      const combinedMrr = item.month === latestMonthKey ? currentTotalMrr : (item.mrr + pixMrrForMonth);
+      return {
+        date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+        mrr: combinedMrr,
+        activeCount: item.activeCount ?? 0,
+      };
+    });
+  }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr, pixMRR?.pixMonthlyMRR]);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
@@ -1387,15 +1453,26 @@ const Admin = () => {
                     <AlertTriangle size={20} className="text-warning" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold text-warning">
-                  {stripeMRR?.churnRate ?? 0}%
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Taxa de Cancelamento
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  Cancelados / (Ativos + Cancelados)
-                </p>
+                {(() => {
+                  const totalCanceled = (stripeMRR?.canceledSubscriptions ?? 0) + (pixMRR?.pixCancellations ?? 0);
+                  const totalActive = (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
+                  const combinedChurn = (totalActive + totalCanceled) > 0 
+                    ? ((totalCanceled / (totalActive + totalCanceled)) * 100).toFixed(1) 
+                    : '0';
+                  return (
+                    <>
+                      <p className="text-2xl sm:text-3xl font-bold text-warning">
+                        {combinedChurn}%
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Taxa de Cancelamento (Stripe + PIX)
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        Cancelados / (Ativos + Cancelados)
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
@@ -1405,11 +1482,15 @@ const Admin = () => {
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-muted-foreground">
-                  {stripeMRR?.canceledSubscriptions ?? 0}
+                  {(stripeMRR?.canceledSubscriptions ?? 0) + (pixMRR?.pixCancellations ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Cancelamentos (Total)
                 </p>
+                <div className="flex gap-3 mt-1 text-xs text-muted-foreground/70">
+                  <span>Stripe: {stripeMRR?.canceledSubscriptions ?? 0}</span>
+                  <span>PIX: {pixMRR?.pixCancellations ?? 0}</span>
+                </div>
               </div>
             </div>
 
