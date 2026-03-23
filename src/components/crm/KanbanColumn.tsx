@@ -59,6 +59,7 @@ const KanbanColumnComponent = ({
   onSelectAllInColumn,
   onUpdateLeadName,
   columnWidth = 'medium',
+  isAgentSilenced = false,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
