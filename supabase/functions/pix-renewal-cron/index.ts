@@ -44,7 +44,10 @@ function formatDate(dateStr: string): string {
 function daysUntil(dateStr: string): number {
   const now = new Date();
   const target = new Date(dateStr);
-  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const diffMs = target.getTime() - now.getTime();
+  // Use floor for negative (past) and ceil for positive (future) to get correct day count
+  if (diffMs < 0) return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
 function getCurrentStage(daysRemaining: number): string | null {
