@@ -162,7 +162,9 @@ serve(async (req) => {
     logStep("Authorization created", { 
       authorizationId: authJson.id, 
       status: authJson.status,
-      hasQrCode: !!authJson.immediateQrCode 
+      hasQrCode: !!authJson.immediateQrCode,
+      qrCodeKeys: authJson.immediateQrCode ? Object.keys(authJson.immediateQrCode) : [],
+      fullQrCode: authJson.immediateQrCode,
     });
 
     const qrCodePayload = authJson.immediateQrCode?.payload || "";
