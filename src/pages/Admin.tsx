@@ -1453,15 +1453,26 @@ const Admin = () => {
                     <AlertTriangle size={20} className="text-warning" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-bold text-warning">
-                  {stripeMRR?.churnRate ?? 0}%
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Taxa de Cancelamento
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  Cancelados / (Ativos + Cancelados)
-                </p>
+                {(() => {
+                  const totalCanceled = (stripeMRR?.canceledSubscriptions ?? 0) + (pixMRR?.pixCancellations ?? 0);
+                  const totalActive = (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
+                  const combinedChurn = (totalActive + totalCanceled) > 0 
+                    ? ((totalCanceled / (totalActive + totalCanceled)) * 100).toFixed(1) 
+                    : '0';
+                  return (
+                    <>
+                      <p className="text-2xl sm:text-3xl font-bold text-warning">
+                        {combinedChurn}%
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Taxa de Cancelamento (Stripe + PIX)
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        Cancelados / (Ativos + Cancelados)
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="glass rounded-xl p-4 sm:p-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
