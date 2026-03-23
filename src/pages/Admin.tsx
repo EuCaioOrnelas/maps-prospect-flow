@@ -298,15 +298,15 @@ const Admin = () => {
       const { data: pixInvoiceUsers } = await supabase
         .from("pix_invoices")
         .select("user_id");
-      const { data: abacateCheckouts } = await supabase
+      const { data: pixCheckouts } = await supabase
         .from("checkout_leads")
         .select("user_id, plan_attempted, checkout_completed_at, stripe_session_id, checkout_completed")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%");
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%");
       
       const pixUserIds = new Set<string>();
       for (const p of pixInvoiceUsers || []) if (p.user_id) pixUserIds.add(p.user_id);
-      for (const c of abacateCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
+      for (const c of pixCheckouts || []) if (c.user_id) pixUserIds.add(c.user_id);
       
       // Get active PIX profiles
       const { data: profiles } = await supabase
