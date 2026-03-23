@@ -131,6 +131,7 @@ export default function AIAgents() {
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
   const [testChatAgent, setTestChatAgent] = useState<AIAgent | null>(null);
+  const [showTestAgentSelector, setShowTestAgentSelector] = useState(false);
 
   // DB-backed beta warning popup
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
