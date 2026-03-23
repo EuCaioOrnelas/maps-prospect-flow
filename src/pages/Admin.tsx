@@ -1042,6 +1042,7 @@ const Admin = () => {
       Nome: u.name || '-',
       'E-mail': u.email,
       Plano: u.plan.charAt(0).toUpperCase() + u.plan.slice(1),
+      Provedor: u.payment_provider === 'abacate_pay' ? 'PIX' : u.payment_provider === 'stripe' ? 'Stripe' : '-',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
