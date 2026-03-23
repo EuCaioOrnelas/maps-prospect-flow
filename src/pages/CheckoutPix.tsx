@@ -47,9 +47,9 @@ export default function CheckoutPix() {
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
   const PLAN_PRICES: Record<string, string> = {
-    start: "97,00",
-    growth: "197,00",
-    scale: "397,00",
+    start: "197,00",
+    growth: "297,00",
+    scale: "497,00",
   };
   const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
 
@@ -464,7 +464,7 @@ export default function CheckoutPix() {
             </div>
 
             {/* Coupon */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
+            {!isRenewal && <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Tag className="h-4 w-4 text-primary" />
                 Cupom de desconto
@@ -506,7 +506,7 @@ export default function CheckoutPix() {
                   ✗ {couponError}
                 </p>
               )}
-            </div>
+            </div>}
 
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
