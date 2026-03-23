@@ -135,19 +135,19 @@ export default function CheckoutPix() {
     setCheckingPayment(true);
     const interval = setInterval(async () => {
       try {
-        const { data } = await supabase.functions.invoke("check-abacate-pix", {
+        const { data } = await supabase.functions.invoke("check-asaas-payment", {
           body: { pixId },
         });
-        if (data?.status === "PAID" || data?.status === "COMPLETED") {
+        if (data?.status === "PAID" || data?.status === "CONFIRMED" || data?.status === "RECEIVED") {
           clearInterval(interval);
           setPaid(true);
           setCheckingPayment(false);
-          trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "abacate_pay", renewal: isRenewal });
+          trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "asaas", renewal: isRenewal });
           toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
           if (isRenewal) {
             setTimeout(() => navigate(`/renewal-success?email=${encodeURIComponent(renewalEmail)}&plan=${encodeURIComponent(planKey)}`), 2000);
           } else {
-            setTimeout(() => navigate("/checkout-success?provider=abacate"), 2000);
+            setTimeout(() => navigate("/checkout-success?provider=asaas"), 2000);
           }
         }
       } catch {
