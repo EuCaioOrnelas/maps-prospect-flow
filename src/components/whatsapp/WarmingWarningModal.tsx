@@ -77,7 +77,7 @@ export const WarmingWarningModal = ({
                             ? warmingStatus === 'cold' 
                               ? 'bg-blue-400' 
                               : 'bg-yellow-500'
-                            : 'bg-muted'
+                            : 'bg-white/20'
                         }`}
                       />
                     ))}
