@@ -292,12 +292,12 @@ export function PaymentMethodModal({
                   <QrCode className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">PIX</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Pague via QR Code • Renovação automática</p>
+                  <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Débito automático mensal via PIX</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <RefreshCw className="h-3 w-3 text-muted-foreground/70" />
                     <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">
-                      PIX recorrente via Asaas
+                      Autorize a recorrência e cancele quando quiser
                     </span>
                   </div>
                 </div>
