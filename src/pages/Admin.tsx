@@ -355,8 +355,8 @@ const Admin = () => {
       // Build PIX monthly sales from BOTH checkout_leads AND pix_invoices
       const pixMonthlySalesMap: Record<string, { sales: number; salesValue: number; cancellations: number }> = {};
       
-      // From completed abacate checkouts (initial purchases)
-      for (const c of abacateCheckouts || []) {
+      // From completed PIX checkouts (initial purchases)
+      for (const c of pixCheckouts || []) {
         if (!c.checkout_completed_at) continue;
         const d = new Date(c.checkout_completed_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
