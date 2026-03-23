@@ -493,7 +493,7 @@ const Admin = () => {
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
-        pixSalesThisMonth: (monthInvoices || []).length + abacateCheckoutsThisMonth.filter(c => !(pixInvoiceUsers || []).some((p: any) => p.user_id === c.user_id)).length,
+        pixSalesThisMonth: (monthInvoices || []).length + pixCheckoutsThisMonth.filter(c => !(pixInvoiceUsers || []).some((p: any) => p.user_id === c.user_id)).length,
         pixSalesValueThisMonth: pixSalesValue,
         pixCancellations: pixCancellationsTotal,
         pixMonthlySales,
