@@ -55,6 +55,7 @@ interface AgentSummaryDialogProps {
   onSaveTemplate: (agent: any) => void;
   onDelete: (agent: any) => void;
   onShowLeadsLimitInfo: () => void;
+  onTestChat?: (agent: any) => void;
   disconnectedNumberIds?: Set<string>;
 }
 
