@@ -315,7 +315,7 @@ const Upgrade = () => {
       )}
 
       {/* Promo Banner */}
-      <div className="lg:pl-14 bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
+      <div className={`${isCleanPage ? '' : 'lg:pl-14'} bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden`}>
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
           <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
