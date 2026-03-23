@@ -1636,6 +1636,7 @@ export type Database = {
           is_blocked: boolean | null
           last_searches_reset: string | null
           name: string | null
+          payment_provider: string | null
           plan: string
           searches_limit: number
           searches_used: number
@@ -1657,6 +1658,7 @@ export type Database = {
           is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
+          payment_provider?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
@@ -1678,6 +1680,7 @@ export type Database = {
           is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
+          payment_provider?: string | null
           plan?: string
           searches_limit?: number
           searches_used?: number
