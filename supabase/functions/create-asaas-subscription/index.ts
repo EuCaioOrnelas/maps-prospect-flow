@@ -133,6 +133,7 @@ serve(async (req) => {
       value: finalPrice,
       description: `${plan.name} mensal`.slice(0, 35),
       immediateQrCode: {
+        originalValue: finalPrice,
         value: finalPrice,
         description: `${plan.name} - 1a parcela`.slice(0, 35),
         externalReference: externalRef,
