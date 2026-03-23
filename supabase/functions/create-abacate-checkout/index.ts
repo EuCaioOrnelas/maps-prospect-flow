@@ -15,9 +15,9 @@ const logStep = (step: string, details?: any) => {
 
 // Product IDs for v2 checkout
 const PRODUCT_IDS: Record<string, string> = {
-  start: "prod_YcCc6kL1TkWh42qZkjRaSjzX",
-  growth: "prod_easrZryXGH1UXHGNaj0xHxSn",
-  scale: "prod_bphBWzjHkCqx26TkcGwgABHa",
+  start: "prod_bBzpH4uBuq4dE1uFb45SMXam",
+  growth: "prod_66shDJxarcQZcNrtQnDQ15BF",
+  scale: "prod_gf051bgXLGqKaJ0rzmWpsaqE",
 };
 
 const PLAN_NAMES: Record<string, string> = {
