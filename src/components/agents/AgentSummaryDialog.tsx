@@ -410,6 +410,7 @@ export function AgentSummaryDialog({
             </TooltipTrigger>
             <TooltipContent>Excluir</TooltipContent>
           </Tooltip>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
