@@ -166,28 +166,6 @@ export default function CheckoutPix() {
     }
   };
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setCouponValidating(true);
-    setCouponError("");
-    try {
-      const { data, error } = await supabase.functions.invoke("validate-abacate-coupon", {
-        body: { couponCode: couponCode.trim(), email: customerData?.email },
-      });
-      if (error) throw new Error(error.message);
-      if (data?.valid) {
-        setCouponDiscount({ discountKind: data.discountKind, discount: data.discount, code: data.code });
-        setCouponApplied(true);
-      } else {
-        setCouponError(data?.error || "Cupom inválido");
-      }
-    } catch {
-      setCouponError("Erro ao validar cupom");
-    } finally {
-      setCouponValidating(false);
-    }
-  };
-
   if (!customerData) return null;
 
   // Compute display prices
