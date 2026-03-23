@@ -46,6 +46,11 @@ const EMAIL_TYPES = [
     label: "Broadcast Admin",
     payload: { subject: "Teste de Broadcast", title: "Novidades da Wiize", content: "<p>Este é um <strong>teste</strong> do sistema de broadcast.</p><p>Tudo funcionando corretamente! 🎉</p>" },
   },
+  {
+    type: "AGENT_HUMAN_HANDOFF",
+    label: "Transferência p/ Humano",
+    payload: { agent_name: "Agente Vendas", lead_phone: "+55 11 99999-9999", lead_name: "João Silva", stage_name: "Atendimento Humano", reason: "O agente não soube responder a pergunta do lead e transferiu para atendimento humano." },
+  },
 ];
 
 // ─── Compose Tab ────────────────────────────────────────────────────────────
