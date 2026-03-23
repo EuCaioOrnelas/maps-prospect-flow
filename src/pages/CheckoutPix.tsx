@@ -59,11 +59,6 @@ export default function CheckoutPix() {
 
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponValidating, setCouponValidating] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState<{ discountKind: string; discount: number; code: string } | null>(null);
-  const [couponError, setCouponError] = useState("");
   const [pixData, setPixData] = useState<{ brCode: string; brCodeBase64: string; amount: number; expiresAt: string; pixId: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
