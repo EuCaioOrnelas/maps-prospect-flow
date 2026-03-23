@@ -538,7 +538,7 @@ export default function CheckoutPix() {
                 <span>Dados protegidos</span>
               </div>
               <div className="h-3 w-px bg-border" />
-              <button onClick={() => navigate("/termos")} className="hover:text-foreground transition-colors">
+              <button onClick={() => <button onClick={() => navigate("/terms")} className="hover:text-foreground transition-colors">} className="hover:text-foreground transition-colors">
                 Termos de uso
               </button>
             </div>
