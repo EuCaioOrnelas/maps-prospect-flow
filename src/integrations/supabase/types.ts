@@ -702,6 +702,7 @@ export type Database = {
           discount_amount_cents: number
           email: string
           id: string
+          ip_address: string | null
           plan_key: string
           redeemed_at: string
           user_id: string
@@ -712,6 +713,7 @@ export type Database = {
           discount_amount_cents?: number
           email: string
           id?: string
+          ip_address?: string | null
           plan_key: string
           redeemed_at?: string
           user_id: string
@@ -722,6 +724,7 @@ export type Database = {
           discount_amount_cents?: number
           email?: string
           id?: string
+          ip_address?: string | null
           plan_key?: string
           redeemed_at?: string
           user_id?: string
