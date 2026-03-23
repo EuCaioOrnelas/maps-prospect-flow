@@ -202,7 +202,7 @@ serve(async (req) => {
     // Get current profile to check existing searches
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan, admin_assigned_plan')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end')
       .eq('id', userId)
       .maybeSingle();
 
