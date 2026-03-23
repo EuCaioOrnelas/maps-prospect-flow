@@ -30,6 +30,29 @@ function extractPlanFromValue(value: number): string | null {
   return null;
 }
 
+function planNameToKey(planName: string): string | null {
+  const lower = planName?.toLowerCase() || "";
+  if (lower.includes("start")) return "start";
+  if (lower.includes("growth")) return "growth";
+  if (lower.includes("scale")) return "scale";
+  return null;
+}
+
+async function getPlanFromCheckoutLead(supabaseClient: any, checkoutIdPrefix: string): Promise<string | null> {
+  const { data } = await supabaseClient
+    .from("checkout_leads")
+    .select("plan_attempted")
+    .eq("stripe_session_id", checkoutIdPrefix)
+    .limit(1);
+  
+  if (data && data.length > 0) {
+    const key = planNameToKey(data[0].plan_attempted);
+    logStep("Plan found via checkout_leads", { plan_attempted: data[0].plan_attempted, planKey: key });
+    return key;
+  }
+  return null;
+}
+
 async function findProfile(supabaseClient: any, externalReference: string | null, checkoutIdPrefix: string | null) {
   let profile: any = null;
 
@@ -190,10 +213,16 @@ serve(async (req) => {
       logStep("PIX Automático authorization activated", { authorizationId, value: authorization.value });
 
       const checkoutIdPrefix = `asaas_pixauto_${authorizationId}`;
-      const planKey = extractPlanFromValue(authorization.value);
+      let planKey = extractPlanFromValue(authorization.value);
+
+      // Fallback: buscar plano via checkout_leads se valor não bater (ex: teste com R$5)
+      if (!planKey) {
+        logStep("Value doesn't match standard prices, checking checkout_leads", { value: authorization.value });
+        planKey = await getPlanFromCheckoutLead(supabaseClient, checkoutIdPrefix);
+      }
 
       if (!planKey) {
-        logStep("Could not determine plan from value", { value: authorization.value });
+        logStep("Could not determine plan from any source", { value: authorization.value });
       }
 
       // Find profile via checkout_leads
@@ -245,20 +274,25 @@ serve(async (req) => {
 
       let planKey = extractPlanFromDescription(description) || extractPlanFromValue(value);
 
-      if (!planKey) {
-        logStep("Could not determine plan", { description, value });
-        return new Response(JSON.stringify({ received: true, warning: "unknown_plan" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Try to find profile via multiple methods
+      // Fallback: buscar plano via checkout_leads
       const checkoutPrefix = pixAutoAuthId
         ? `asaas_pixauto_${pixAutoAuthId}`
         : subscriptionId
           ? `asaas_sub_${subscriptionId}`
           : null;
 
+      if (!planKey && checkoutPrefix) {
+        logStep("Value/description doesn't match, checking checkout_leads", { description, value });
+        planKey = await getPlanFromCheckoutLead(supabaseClient, checkoutPrefix);
+      }
+
+      if (!planKey) {
+        logStep("Could not determine plan from any source", { description, value });
+        return new Response(JSON.stringify({ received: true, warning: "unknown_plan" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Find profile via multiple methods
       const profile = await findProfile(supabaseClient, externalReference, checkoutPrefix);
 
       if (!profile) {
