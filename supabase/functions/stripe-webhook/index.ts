@@ -506,7 +506,8 @@ serve(async (req) => {
                 .update({ 
                   plan: plan,
                   searches_limit: newLimit,
-                  searches_used: newSearchesUsed
+                  searches_used: newSearchesUsed,
+                  payment_provider: "stripe",
                 })
                 .eq("id", profile.id);
 
