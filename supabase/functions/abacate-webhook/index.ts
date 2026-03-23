@@ -176,7 +176,15 @@ serve(async (req) => {
 
       logStep("Profile updated (plan activated/renewed)", { userId: profile.id, newPlan: planKey, searchesReset: true });
 
-      // Mark checkout lead as completed
+      // Mark checkout lead as completed and copy phone/cpf to profile
+      const { data: checkoutLeads } = await supabaseClient
+        .from("checkout_leads")
+        .select("phone, tax_id")
+        .eq("email", customerEmail)
+        .eq("checkout_completed", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
       await supabaseClient
         .from("checkout_leads")
         .update({
@@ -187,6 +195,21 @@ serve(async (req) => {
         .eq("checkout_completed", false)
         .order("created_at", { ascending: false })
         .limit(1);
+
+      // Save phone/cpf to profile if available
+      if (checkoutLeads && checkoutLeads.length > 0) {
+        const lead = checkoutLeads[0];
+        const profileUpdate: Record<string, string> = {};
+        if (lead.phone) profileUpdate.phone = lead.phone;
+        if (lead.tax_id) profileUpdate.cpf = lead.tax_id;
+        if (Object.keys(profileUpdate).length > 0) {
+          await supabaseClient
+            .from("profiles")
+            .update(profileUpdate)
+            .eq("id", profile.id);
+          logStep("Phone/CPF saved to profile", profileUpdate);
+        }
+      }
 
       logStep("Checkout lead marked as completed");
 
