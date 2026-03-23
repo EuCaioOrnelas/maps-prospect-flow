@@ -331,7 +331,7 @@ const Upgrade = () => {
       </div>
 
       {/* Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 lg:pl-14">
+      <main className={`container mx-auto px-3 sm:px-4 py-6 sm:py-12 ${isCleanPage ? '' : 'lg:pl-14'}`}>
         {/* Trial Expired Banner */}
         {isTrialExpired && (
           <div className="max-w-3xl mx-auto mb-10 animate-fade-in">

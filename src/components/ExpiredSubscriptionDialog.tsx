@@ -53,7 +53,7 @@ export function ExpiredSubscriptionDialog() {
 
   const handleRenew = () => {
     handleDismiss();
-    navigate('/upgrade');
+    navigate('/upgrade?renewal=true');
   };
 
   return (
