@@ -38,6 +38,7 @@ import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
 import { AgentDetailsDialog } from "@/components/agents/AgentDetailsDialog";
 import { AgentWarningDialog } from "@/components/agents/AgentWarningDialog";
 import { AgentSummaryDialog } from "@/components/agents/AgentSummaryDialog";
+import { AgentTestChatDialog } from "@/components/agents/AgentTestChatDialog";
 import { ManageTemplatesDialog } from "@/components/agents/ManageTemplatesDialog";
 import {
   AlertDialog,
