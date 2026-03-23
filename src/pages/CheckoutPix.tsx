@@ -98,11 +98,11 @@ export default function CheckoutPix() {
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
     
     try {
+      const body: any = { planKey, customerData };
+      if (testCoupon.trim()) body.testOverridePrice = parseFloat(testCoupon.trim());
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
-        {
-          body: { planKey, customerData },
-        }
+        { body }
       );
       if (error) throw new Error(error.message);
       if (!data?.brCode) throw new Error("QR Code não gerado");
