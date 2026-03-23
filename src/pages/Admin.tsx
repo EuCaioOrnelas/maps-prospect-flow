@@ -337,15 +337,14 @@ const Admin = () => {
       let pixSalesValue = 0;
       for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
 
-      // Also count abacate checkouts completed this month
-      const abacateCheckoutsThisMonth = (abacateCheckouts || []).filter(c => 
+      // Also count PIX checkouts completed this month
+      const pixCheckoutsThisMonth = (pixCheckouts || []).filter(c => 
         c.checkout_completed_at && new Date(c.checkout_completed_at) >= new Date(monthStart)
       );
       
       // Add checkout values not already in pix_invoices
-      for (const c of abacateCheckoutsThisMonth) {
+      for (const c of pixCheckoutsThisMonth) {
         const planKey = planNameToKey[c.plan_attempted] || 'start';
-        // Only add if not already counted via pix_invoices (avoid double counting)
         const userId = c.user_id;
         const hasInvoice = (pixInvoiceUsers || []).some((p: any) => p.user_id === userId);
         if (!hasInvoice) {
