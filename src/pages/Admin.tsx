@@ -570,12 +570,22 @@ const Admin = () => {
     const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
     const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
 
-    return filteredMRRData.map((item) => ({
-      date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-      mrr: item.month === latestMonthKey ? currentTotalMrr : item.mrr,
-      activeCount: item.activeCount ?? 0,
-    }));
-  }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr]);
+    // Build a map of PIX monthly MRR for merging
+    const pixMrrMap: Record<string, number> = {};
+    for (const pm of pixMRR?.pixMonthlyMRR || []) {
+      pixMrrMap[pm.month] = pm.mrr;
+    }
+
+    return filteredMRRData.map((item) => {
+      const pixMrrForMonth = pixMrrMap[item.month] || 0;
+      const combinedMrr = item.month === latestMonthKey ? currentTotalMrr : (item.mrr + pixMrrForMonth);
+      return {
+        date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+        mrr: combinedMrr,
+        activeCount: item.activeCount ?? 0,
+      };
+    });
+  }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr, pixMRR?.pixMonthlyMRR]);
 
   // Load API key status from database
   const loadApiKeyStatus = useCallback(async () => {
