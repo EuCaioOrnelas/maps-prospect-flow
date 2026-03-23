@@ -17,6 +17,7 @@ import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvoluti
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { RenewalBanner } from "@/components/dashboard/RenewalBanner";
+import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
