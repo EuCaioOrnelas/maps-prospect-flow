@@ -520,22 +520,6 @@ export default function AIAgents() {
                                 <><Play className="h-3 w-3 mr-1" />Ativar</>
                               )}
                             </Button>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTestChatAgent(agent);
-                                  }}
-                                >
-                                  <FlaskConical className="h-3 w-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Testar Agente</TooltipContent>
-                            </Tooltip>
                           </div>
                         )}
                       </div>
