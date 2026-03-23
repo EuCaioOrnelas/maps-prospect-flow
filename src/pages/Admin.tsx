@@ -473,6 +473,20 @@ const Admin = () => {
         }
       }
     }
+    // Merge PIX monthly sales data
+    if (pixMRR?.pixMonthlySales) {
+      for (const pixSale of pixMRR.pixMonthlySales) {
+        const saleDate = monthKeyToLocalDate(pixSale.month);
+        if (saleDate >= startDate && (!endDate || saleDate <= endDate)) {
+          if (!monthlyData[pixSale.month]) {
+            monthlyData[pixSale.month] = { newSales: 0, upgrades: 0, cancellations: 0, salesValue: 0, refundValue: 0, refundCount: 0 };
+          }
+          monthlyData[pixSale.month].newSales += pixSale.sales;
+          monthlyData[pixSale.month].salesValue += pixSale.salesValue;
+          monthlyData[pixSale.month].cancellations += pixSale.cancellations;
+        }
+      }
+    }
     
     return Object.entries(monthlyData)
       .map(([month, data]) => ({
@@ -480,7 +494,7 @@ const Admin = () => {
         ...data
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales]);
+  }, [getFilterDateRange, stripeMRR?.monthlyRefunds, stripeMRR?.monthlySales, pixMRR?.pixMonthlySales]);
 
   // Process churn data by reason
   const churnByReasonData = useMemo(() => {
