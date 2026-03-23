@@ -167,8 +167,8 @@ serve(async (req) => {
       fullQrCode: authJson.immediateQrCode,
     });
 
-    const qrCodePayload = authJson.immediateQrCode?.payload || "";
-    const qrCodeImage = authJson.immediateQrCode?.encodedImage || "";
+    const qrCodePayload = authJson.payload || authJson.immediateQrCode?.payload || "";
+    const qrCodeImage = authJson.encodedImage || authJson.immediateQrCode?.encodedImage || "";
     const conciliationId = authJson.immediateQrCode?.conciliationIdentifier || "";
 
     // 4. Track checkout lead
