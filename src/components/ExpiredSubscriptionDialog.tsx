@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CreditCard, X } from 'lucide-react';
+import { AlertTriangle, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,13 @@ export function ExpiredSubscriptionDialog() {
     if (!user || !profile || profile.plan !== 'free') return;
 
     const checkSuspension = async () => {
+      const periodEnd = profile.subscription_current_period_end
+        ? new Date(profile.subscription_current_period_end)
+        : null;
+      const now = new Date();
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       // Check if there's a recent access_suspended event for this user
       const { data } = await supabase
         .from('pix_tracking_events')
@@ -24,22 +31,24 @@ export function ExpiredSubscriptionDialog() {
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (!data || data.length === 0) return;
+      const latestEvent = data?.[0];
+      const suspendedAt = latestEvent?.created_at ? new Date(latestEvent.created_at) : null;
 
-      // Only show if suspension was in the last 7 days
-      const suspendedAt = new Date(data[0].created_at);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const hasRecentSuspensionEvent = !!(suspendedAt && suspendedAt >= sevenDaysAgo);
+      const hasRecentExpiredSubscription = !!(
+        periodEnd &&
+        periodEnd < now &&
+        periodEnd >= sevenDaysAgo
+      );
 
-      if (suspendedAt < sevenDaysAgo) return;
+      if (!hasRecentSuspensionEvent && !hasRecentExpiredSubscription) return;
 
-      // Check if user already dismissed this
-      const dismissedKey = `expired_sub_dismissed_${data[0].id}`;
+      const popupIdentity = latestEvent?.id ?? `expired_${user.id}_${periodEnd?.toISOString() ?? 'unknown'}`;
+      const dismissedKey = `expired_sub_dismissed_${popupIdentity}`;
       if (localStorage.getItem(dismissedKey)) return;
 
       setOpen(true);
-      // Store the event id so we can dismiss it
-      localStorage.setItem('_expired_sub_event_id', data[0].id);
+      localStorage.setItem('_expired_sub_event_id', popupIdentity);
     };
 
     checkSuspension();
