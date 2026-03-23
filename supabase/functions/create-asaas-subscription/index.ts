@@ -127,8 +127,9 @@ serve(async (req) => {
     const authorizationBody = {
       customerId: customerId,
       frequency: "MONTHLY",
-      contractId: contractId.slice(0, 35), // max 35 chars
+      contractId: contractId.slice(0, 35),
       startDate: startDate.toISOString().split("T")[0],
+      originalValue: finalPrice,
       value: finalPrice,
       description: `${plan.name} mensal`.slice(0, 35),
       immediateQrCode: {
