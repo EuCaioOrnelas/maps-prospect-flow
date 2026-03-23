@@ -436,7 +436,7 @@ export default function CheckoutPix() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
                   <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                    <QrCode className="h-3.5 w-3.5" /> PIX Recorrente
+                    <QrCode className="h-3.5 w-3.5" /> PIX
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
