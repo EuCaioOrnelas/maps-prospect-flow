@@ -213,10 +213,16 @@ serve(async (req) => {
       logStep("PIX Automático authorization activated", { authorizationId, value: authorization.value });
 
       const checkoutIdPrefix = `asaas_pixauto_${authorizationId}`;
-      const planKey = extractPlanFromValue(authorization.value);
+      let planKey = extractPlanFromValue(authorization.value);
+
+      // Fallback: buscar plano via checkout_leads se valor não bater (ex: teste com R$5)
+      if (!planKey) {
+        logStep("Value doesn't match standard prices, checking checkout_leads", { value: authorization.value });
+        planKey = await getPlanFromCheckoutLead(supabaseClient, checkoutIdPrefix);
+      }
 
       if (!planKey) {
-        logStep("Could not determine plan from value", { value: authorization.value });
+        logStep("Could not determine plan from any source", { value: authorization.value });
       }
 
       // Find profile via checkout_leads
