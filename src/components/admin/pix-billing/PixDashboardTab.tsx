@@ -249,7 +249,7 @@ export function PixDashboardTab() {
             <p className="text-2xl font-bold text-foreground tabular-nums">
               {formatCurrency(metrics.pixMrr)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">MRR PIX · AbacatePay</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR PIX · Asaas</p>
           </CardContent>
         </Card>
       </div>

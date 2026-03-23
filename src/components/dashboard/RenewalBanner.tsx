@@ -30,7 +30,7 @@ export const RenewalBanner = () => {
         .select("stripe_session_id")
         .eq("user_id", user.id)
         .eq("checkout_completed", false)
-        .like("stripe_session_id", "abacate_renewal_%")
+        .like("stripe_session_id", "asaas_%")
         .order("created_at", { ascending: false })
         .limit(1);
 
