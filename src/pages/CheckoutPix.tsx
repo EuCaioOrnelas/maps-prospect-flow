@@ -349,17 +349,22 @@ export default function CheckoutPix() {
                   </div>
 
 
-                  <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                    Escaneie o QR Code ou cole o código no app do seu banco. O pagamento será confirmado automaticamente.
-                  </p>
+                  <div className="rounded-xl border border-border/30 bg-muted/30 p-3 text-center max-w-sm">
+                    <p className="text-[11px] text-muted-foreground">
+                      Escaneie o QR Code ou cole o código no app do seu banco. Ao pagar, você <strong>autoriza a cobrança automática mensal</strong>. Cancele quando quiser pelo seu perfil.
+                    </p>
+                  </div>
                 </div>
               )
             ) : (
               <div className="flex flex-col items-center gap-6 py-8 w-full max-w-md">
-                <div className="text-center space-y-1">
-                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX</h1>
+                <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-bold text-foreground">Pagamento via PIX Recorrente</h1>
                   <p className="text-sm text-muted-foreground">
-                    Gere o QR Code para pagar. Renovação mensal via novo PIX.
+                    O PIX funciona no formato de <strong>débito automático</strong>. Ao pagar, você autoriza a cobrança recorrente mensal.
+                  </p>
+                  <p className="text-xs text-muted-foreground/80">
+                    Cancele quando quiser, sem multa ou fidelidade.
                   </p>
                 </div>
 
@@ -383,9 +388,14 @@ export default function CheckoutPix() {
                   )}
                 </Button>
 
-                <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                  O QR Code será gerado para pagamento imediato. Após a confirmação, seu plano será ativado instantaneamente.
-                </p>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-center max-w-sm">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium mb-1">
+                    ⚡ PIX Recorrente (Débito Automático)
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Ao escanear o QR Code, você autoriza a cobrança automática mensal via PIX. O valor será debitado todo mês. Você pode cancelar a qualquer momento pelo seu perfil.
+                  </p>
+                </div>
               </div>
             )}
           </motion.div>
@@ -514,8 +524,8 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">PIX Recorrente</p>
-                    <p className="text-xs text-muted-foreground">Renovação automática mensal via Asaas</p>
+                    <p className="text-xs font-semibold text-foreground">Débito automático via PIX</p>
+                    <p className="text-xs text-muted-foreground">Renovação mensal automática. Cancele quando quiser.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
