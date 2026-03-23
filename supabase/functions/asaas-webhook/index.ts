@@ -274,8 +274,20 @@ serve(async (req) => {
 
       let planKey = extractPlanFromDescription(description) || extractPlanFromValue(value);
 
+      // Fallback: buscar plano via checkout_leads
+      const checkoutPrefix = pixAutoAuthId
+        ? `asaas_pixauto_${pixAutoAuthId}`
+        : subscriptionId
+          ? `asaas_sub_${subscriptionId}`
+          : null;
+
+      if (!planKey && checkoutPrefix) {
+        logStep("Value/description doesn't match, checking checkout_leads", { description, value });
+        planKey = await getPlanFromCheckoutLead(supabaseClient, checkoutPrefix);
+      }
+
       if (!planKey) {
-        logStep("Could not determine plan", { description, value });
+        logStep("Could not determine plan from any source", { description, value });
         return new Response(JSON.stringify({ received: true, warning: "unknown_plan" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
