@@ -65,6 +65,34 @@ export default function CheckoutPix() {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
   const [testCoupon, setTestCoupon] = useState("");
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  // Expiration timer (1 hour from QR generation)
+  useEffect(() => {
+    if (!pixData || paid) return;
+    const expirationMs = 60 * 60 * 1000; // 1 hour
+    const createdAt = Date.now();
+    const expiresAt = createdAt + expirationMs;
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        toast({ title: "QR Code expirado", description: "Gere um novo QR Code para continuar.", variant: "destructive" });
+        setPixData(null);
+        setCheckingPayment(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [pixData, paid]);
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
 
   // Load customer data from sessionStorage or query params (renewal)
   useEffect(() => {
