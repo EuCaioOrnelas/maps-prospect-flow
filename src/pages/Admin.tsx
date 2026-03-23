@@ -463,7 +463,7 @@ const Admin = () => {
     for (const event of filteredEvents) {
       const eventType = event.event_type?.toLowerCase() || '';
       const newPlan = event.new_plan?.toLowerCase();
-      const source = event.source?.toLowerCase() || '';
+      const source = event.event_source?.toLowerCase() || '';
       
       if (eventType === 'subscription_canceled') {
         churnReasons.canceled++;
