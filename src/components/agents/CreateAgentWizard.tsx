@@ -2238,21 +2238,23 @@ Preciso falar com meu marido/esposa"
             </div>
 
             {/* CRM Stage Configuration */}
-            <div className="space-y-3 border-t pt-4">
-              <Label className="flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5" />
-                Integração com CRM
-              </Label>
-              <p className="text-xs text-muted-foreground">Escolha para quais colunas do funil o lead será movido automaticamente</p>
+            <div className="space-y-4 border-t pt-5">
+              <div className="space-y-1">
+                <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                  <Target className="w-4 h-4" />
+                  Integração com CRM
+                </Label>
+                <p className="text-xs text-muted-foreground">Escolha para quais colunas do funil o lead será movido automaticamente</p>
+              </div>
               {pipelineStages.length === 0 ? (
                 <p className="text-xs text-yellow-500 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   Nenhuma coluna no CRM. Crie colunas no CRM para configurar a integração.
                 </p>
               ) : (
-                <div className="space-y-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Quando lead responde</Label>
+                <div className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Quando lead responde</Label>
                     <select
                       value={crmStageOnNewLead}
                       onChange={(e) => setCrmStageOnNewLead(e.target.value)}
@@ -2264,8 +2266,9 @@ Preciso falar com meu marido/esposa"
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Quando agente responde</Label>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Quando agente responde</Label>
                     <select
                       value={crmStageOnReply}
                       onChange={(e) => setCrmStageOnReply(e.target.value)}
@@ -2277,8 +2280,9 @@ Preciso falar com meu marido/esposa"
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+
+                  <div className="space-y-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                    <Label className="text-xs font-medium flex items-center gap-1">
                       Quando objetivo é atingido <span className="text-emerald-400">✅</span>
                     </Label>
                     <select
@@ -2291,12 +2295,13 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
                       Quando o agente atingir o objetivo da conversa, o lead será movido para esta coluna e <span className="text-emerald-400 font-medium">o agente não responderá mais</span>.
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1">
                       Quando lead é perdido <span className="text-red-400">✕</span>
                     </Label>
                     <select
@@ -2309,12 +2314,13 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
                       Quando o lead disser que não tem interesse, o agente moverá para esta coluna automaticamente.
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+
+                  <div className="space-y-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                    <Label className="text-xs font-medium flex items-center gap-1">
                       Coluna de atendimento humano <span className="text-destructive">*</span>
                     </Label>
                     <select
@@ -2327,7 +2333,7 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
                       O agente moverá leads para esta coluna quando não souber responder, e <span className="text-amber-400 font-medium">não responderá leads que já estão nela</span>. Você também pode mover leads manualmente para cá para pausar o agente.
                     </p>
                   </div>
