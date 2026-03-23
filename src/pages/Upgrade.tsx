@@ -108,8 +108,10 @@ const Upgrade = () => {
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
   const isTrialExpired = searchParams.get("expired") === "true";
+  const isRenewal = searchParams.get("renewal") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");
+  const isCleanPage = isRenewal || isTrialExpired;
 
   // Check for checkout result
   useEffect(() => {
