@@ -2028,6 +2028,7 @@ const Admin = () => {
                       <TableRow>
                         <TableHead>Usuário</TableHead>
                         <TableHead>Plano</TableHead>
+                        <TableHead>Provedor</TableHead>
                         <TableHead>Buscas</TableHead>
                         <TableHead>Cadastro</TableHead>
                         <TableHead>Ações</TableHead>
