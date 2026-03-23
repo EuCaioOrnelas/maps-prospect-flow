@@ -24,6 +24,7 @@ import {
   Pencil,
   WifiOff,
   QrCode,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
