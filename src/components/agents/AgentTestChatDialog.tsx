@@ -357,8 +357,8 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
             );
           })}
 
-          {/* Typing indicator */}
-          {isThinking && (
+          {/* Typing indicator - show during buffer wait OR while processing */}
+          {(isThinking || pendingMessages.length > 0) && (
             <div className="flex justify-start">
               <div className="flex items-end gap-2">
                 <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
