@@ -116,8 +116,15 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Determine final price (handle coupons internally)
+    // 2. Determine final price
     let finalPrice = plan.priceDecimal;
+    
+    // TEMP: Allow test override price
+    if (testOverridePrice && typeof testOverridePrice === "number" && testOverridePrice > 0) {
+      logStep("TEST OVERRIDE PRICE", { original: finalPrice, override: testOverridePrice });
+      finalPrice = testOverridePrice;
+    }
+    
     const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
     if (couponCode) {
