@@ -48,9 +48,9 @@ serve(async (req) => {
         .from("profiles")
         .update({
           plan: "free",
-          searches_limit: 5,
+          searches_limit: 10,
           searches_used: 0,
-          subscription_current_period_end: null,
+          // Keep the expired date so the popup can detect recent expiration
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
