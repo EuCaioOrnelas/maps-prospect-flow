@@ -378,6 +378,11 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
 
         {/* Input Area */}
         <div className="p-3 border-t border-border bg-background">
+          {pendingMessages.length > 0 && !isThinking && (
+            <p className="text-xs text-muted-foreground mb-2 text-center">
+              ⏳ Aguardando mais mensagens... O agente responderá em breve
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant={isRecording ? "destructive" : "ghost"}
@@ -393,15 +398,15 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Gravando áudio..." : "Digite como um lead..."}
+              placeholder={isRecording ? "Gravando áudio..." : isThinking ? "Agente pensando..." : "Digite como um lead..."}
               className="flex-1 h-9"
-              disabled={isThinking || isRecording}
+              disabled={isRecording}
             />
             <Button
               size="icon"
               className="h-9 w-9 shrink-0"
               onClick={() => sendMessage(inputText)}
-              disabled={!inputText.trim() || isThinking}
+              disabled={!inputText.trim()}
             >
               <Send className="h-4 w-4" />
             </Button>
