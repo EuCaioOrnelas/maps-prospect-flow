@@ -529,7 +529,7 @@ export default function CheckoutPix() {
                 </div>
                 <div className="h-px bg-border/30 my-1" />
                 <p className="text-[10px] text-muted-foreground/70">
-                  Pagamentos processados por <span className="font-semibold">AbacatePay</span> — intermediadora regulamentada
+                  Pagamentos processados por <span className="font-semibold">Asaas</span> — intermediadora regulamentada pelo Banco Central
                 </p>
               </div>
             </div>
