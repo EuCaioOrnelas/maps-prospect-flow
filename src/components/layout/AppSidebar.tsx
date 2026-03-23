@@ -333,19 +333,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
 
-            {/* PIX Billing (admin only) */}
-            {isAdmin && (
-              <li>
-                <SidebarNavItem
-                  title="Billing PIX"
-                  icon={Receipt}
-                  url="/admin/pix-billing"
-                  isActive={currentPath === "/admin/pix-billing"}
-                  isExpanded={isExpanded}
-                  tooltip="Billing PIX / Renovação"
-                />
-              </li>
-            )}
 
 
 
