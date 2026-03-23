@@ -12,10 +12,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[PIX-RENEWAL] ${step}${detailsStr}`);
 };
 
+// Legacy product IDs kept for backward compatibility with existing pix_invoices
 const PRODUCT_IDS: Record<string, string> = {
-  start: "prod_YuGfZ0UukSSPPjbjn3DZJkMK",
-  growth: "prod_fNftUU0Pd5bEgdpnKTADKUgT",
-  scale: "prod_2KNLMQM5QHe0bb1TZxWenx2N",
+  start: "prod_bBzpH4uBuq4dE1uFb45SMXam",
+  growth: "prod_66shDJxarcQZcNrtQnDQ15BF",
+  scale: "prod_gf051bgXLGqKaJ0rzmWpsaqE",
 };
 
 const PLAN_NAMES: Record<string, string> = {
