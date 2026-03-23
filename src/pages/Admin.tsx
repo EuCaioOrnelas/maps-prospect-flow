@@ -299,7 +299,7 @@ const Admin = () => {
         .select("user_id");
       const { data: abacateCheckouts } = await supabase
         .from("checkout_leads")
-        .select("user_id")
+        .select("user_id, plan_attempted, checkout_completed_at, stripe_session_id, checkout_completed")
         .eq("checkout_completed", true)
         .like("stripe_session_id", "abacate_%");
       
@@ -310,7 +310,7 @@ const Admin = () => {
       // Get active PIX profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, subscription_current_period_end")
+        .select("id, plan, subscription_current_period_end, payment_provider")
         .neq("plan", "free")
         .eq("is_blocked", false);
       
@@ -319,7 +319,7 @@ const Admin = () => {
       const now = new Date();
       
       for (const p of profiles || []) {
-        if (!pixUserIds.has(p.id)) continue;
+        if (!pixUserIds.has(p.id) && (p as any).payment_provider !== 'abacate_pay') continue;
         if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
         pixMrrTotal += planPrices[p.plan] || 0;
         pixActiveSubs++;
@@ -335,12 +335,51 @@ const Admin = () => {
       
       let pixSalesValue = 0;
       for (const inv of monthInvoices || []) pixSalesValue += (inv.amount_cents || 0) / 100;
+
+      // PIX monthly sales from completed abacate checkouts
+      const pixMonthlySalesMap: Record<string, { sales: number; salesValue: number; cancellations: number }> = {};
+      for (const c of abacateCheckouts || []) {
+        if (!c.checkout_completed_at) continue;
+        const d = new Date(c.checkout_completed_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
+        pixMonthlySalesMap[key].sales++;
+        const planKey = ({ 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' } as Record<string, string>)[c.plan_attempted] || 'start';
+        pixMonthlySalesMap[key].salesValue += planPrices[planKey] || 197;
+      }
+
+      // PIX cancellations from subscription_events
+      const { data: pixCancelEvents } = await supabase
+        .from("subscription_events")
+        .select("created_at")
+        .eq("event_type", "pix_not_renewed");
+      
+      let pixCancellationsTotal = 0;
+      for (const evt of pixCancelEvents || []) {
+        const d = new Date(evt.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
+        pixMonthlySalesMap[key].cancellations++;
+        pixCancellationsTotal++;
+      }
+
+      const pixMonthlySales = Object.entries(pixMonthlySalesMap)
+        .map(([month, data]) => ({ month, ...data }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      // PIX monthly MRR (simplified: use current active PIX profiles to estimate)
+      // For historical accuracy, we'd need snapshots - for now just add current month
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const pixMonthlyMRR = [{ month: currentMonthKey, mrr: pixMrrTotal, activeCount: pixActiveSubs }];
       
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
         pixSalesThisMonth: (monthInvoices || []).length,
         pixSalesValueThisMonth: pixSalesValue,
+        pixCancellations: pixCancellationsTotal,
+        pixMonthlySales,
+        pixMonthlyMRR,
       });
     } catch (error) {
       console.error('Error loading PIX MRR:', error);
