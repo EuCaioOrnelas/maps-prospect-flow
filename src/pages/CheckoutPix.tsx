@@ -349,9 +349,11 @@ export default function CheckoutPix() {
                   </div>
 
 
-                  <p className="text-[11px] text-muted-foreground text-center max-w-sm">
-                    Escaneie o QR Code ou cole o código no app do seu banco. O pagamento será confirmado automaticamente.
-                  </p>
+                  <div className="rounded-xl border border-border/30 bg-muted/30 p-3 text-center max-w-sm">
+                    <p className="text-[11px] text-muted-foreground">
+                      Escaneie o QR Code ou cole o código no app do seu banco. Ao pagar, você <strong>autoriza a cobrança automática mensal</strong>. Cancele quando quiser pelo seu perfil.
+                    </p>
+                  </div>
                 </div>
               )
             ) : (
