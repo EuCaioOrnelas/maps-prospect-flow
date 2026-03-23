@@ -504,21 +504,39 @@ export default function AIAgents() {
                             {isNumberDeleted ? 'Vincular Número' : 'Reconectar Número'}
                           </Button>
                         ) : (
-                          <Button
-                            variant={agent.status === 'active' ? 'outline' : 'default'}
-                            size="sm"
-                            className="w-full h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleAgentStatus(agent);
-                            }}
-                          >
-                            {agent.status === 'active' ? (
-                              <><Pause className="h-3 w-3 mr-1" />Pausar</>
-                            ) : (
-                              <><Play className="h-3 w-3 mr-1" />Ativar</>
-                            )}
-                          </Button>
+                          <div className="flex gap-1.5">
+                            <Button
+                              variant={agent.status === 'active' ? 'outline' : 'default'}
+                              size="sm"
+                              className="flex-1 h-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAgentStatus(agent);
+                              }}
+                            >
+                              {agent.status === 'active' ? (
+                                <><Pause className="h-3 w-3 mr-1" />Pausar</>
+                              ) : (
+                                <><Play className="h-3 w-3 mr-1" />Ativar</>
+                              )}
+                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTestChatAgent(agent);
+                                  }}
+                                >
+                                  <FlaskConical className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Testar Agente</TooltipContent>
+                            </Tooltip>
+                          </div>
                         )}
                       </div>
                     </Card>
