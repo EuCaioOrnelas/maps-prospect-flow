@@ -427,49 +427,15 @@ export default function CheckoutPix() {
               </div>
             </div>
 
-            {/* Coupon */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Tag className="h-4 w-4 text-primary" />
-                Cupom de desconto
+            {/* Coupon notice */}
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-1.5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                <Tag className="h-4 w-4" />
+                Cupons de desconto
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Código do cupom"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    if (!couponApplied) setCouponError("");
-                  }}
-                  disabled={couponApplied || couponValidating}
-                  className="text-sm h-9"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim() || couponApplied || couponValidating}
-                  className="shrink-0 h-9"
-                >
-                  {couponValidating ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : couponApplied ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                  ) : (
-                    "Aplicar"
-                  )}
-                </Button>
-              </div>
-              {couponApplied && couponDiscount && (
-                <p className="text-xs text-emerald-600 font-medium">
-                  ✓ Cupom aplicado com sucesso!
-                </p>
-              )}
-              {couponError && (
-                <p className="text-xs text-destructive font-medium">
-                  ✗ {couponError}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Cupons são aceitos somente para pagamentos via <strong>Cartão de Crédito</strong>. Para utilizar um cupom, volte e selecione o método de pagamento por cartão.
+              </p>
             </div>
 
             {/* Security badges */}
