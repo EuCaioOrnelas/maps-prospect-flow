@@ -687,6 +687,7 @@ const Admin = () => {
     if (!filteredMRRData.length) return [];
 
     const currentTotalMrr = (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
+    const currentTotalActive = (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
     const latestMonthKey = filteredMRRData[filteredMRRData.length - 1]?.month;
 
     // Build maps of PIX monthly MRR and active counts for merging
@@ -698,13 +699,15 @@ const Admin = () => {
     }
 
     return filteredMRRData.map((item) => {
+      const isLatest = item.month === latestMonthKey;
       const pixMrrForMonth = pixMrrMap[item.month] || 0;
       const pixActiveForMonth = pixActiveMap[item.month] || 0;
-      const combinedMrr = item.month === latestMonthKey ? currentTotalMrr : (item.mrr + pixMrrForMonth);
+      const combinedMrr = isLatest ? currentTotalMrr : (item.mrr + pixMrrForMonth);
+      const combinedActive = isLatest ? currentTotalActive : ((item.activeCount ?? 0) + pixActiveForMonth);
       return {
         date: monthKeyToLocalDate(item.month).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
         mrr: combinedMrr,
-        activeCount: (item.activeCount ?? 0) + pixActiveForMonth,
+        activeCount: combinedActive,
       };
     });
   }, [filteredMRRData, stripeMRR?.totalMRR, pixMRR?.pixMrr, pixMRR?.pixMonthlyMRR]);
