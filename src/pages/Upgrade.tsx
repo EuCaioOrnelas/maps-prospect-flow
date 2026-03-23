@@ -111,7 +111,7 @@ const Upgrade = () => {
   const isRenewal = searchParams.get("renewal") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");
-  const isCleanPage = isRenewal || isTrialExpired;
+  const isCleanPage = true;
 
   // Check for checkout result
   useEffect(() => {
