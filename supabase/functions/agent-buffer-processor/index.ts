@@ -1345,8 +1345,35 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   crmExtras.whatsapp_status = 'lost';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageLost, crmExtras);
                 } else if (isConversationEnded && crmStageEndSuccess) {
-                  // Conversation ended successfully
+                  // Conversation ended successfully — objective achieved
+                  console.log(`Objective achieved, moving lead to "${crmStageEndSuccess}"`);
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEndSuccess, crmExtras);
+
+                  // Send email notification about objective completion
+                  try {
+                    const lastLeadMessage = combinedMessage?.substring(0, 200) || '';
+                    const objectiveReason = lastLeadMessage
+                      ? `O agente concluiu o objetivo após a seguinte interação do lead: "${lastLeadMessage}${combinedMessage && combinedMessage.length > 200 ? '...' : ''}"`
+                      : 'O agente identificou que o objetivo da conversa foi atingido com sucesso.';
+
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        user_id: whatsappNumber.user_id,
+                        email_type: 'AGENT_OBJECTIVE_COMPLETED',
+                        payload: {
+                          agent_name: agent.name,
+                          lead_phone: conv.lead_phone,
+                          lead_name: conv.lead_name || null,
+                          stage_name: crmStageEndSuccess,
+                          reason: objectiveReason,
+                        },
+                        idempotency_key: `objective_${conv.id}_${Date.now()}`,
+                      },
+                    });
+                    console.log(`Objective completed email sent for conv ${conv.id}`);
+                  } catch (emailErr) {
+                    console.error(`Failed to send objective completed email for conv ${conv.id}:`, emailErr);
+                  }
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
                 }

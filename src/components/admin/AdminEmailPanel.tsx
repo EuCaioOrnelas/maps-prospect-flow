@@ -217,6 +217,11 @@ const EMAIL_TYPES = [
     payload: { agent_name: "Agente Vendas", lead_phone: "+55 11 99999-9999", lead_name: "João Silva", stage_name: "Atendimento Humano", reason: "O agente não soube responder a pergunta do lead e transferiu para atendimento humano." },
   },
   {
+    type: "AGENT_OBJECTIVE_COMPLETED",
+    label: "Objetivo Atingido (Agente)",
+    payload: { agent_name: "Agente Vendas", lead_phone: "+55 11 99999-9999", lead_name: "João Silva", stage_name: "Qualificado", reason: "O agente concluiu o objetivo após a seguinte interação do lead: \"Sim, pode agendar a reunião para amanhã às 14h\"" },
+  },
+  {
     type: "SUBSCRIPTION_RENEWAL",
     label: "Renovação D-5 (Início)",
     payload: { user_name: "Usuário Teste", plan_name: "Wiize Growth", plan_price: "R$ 497", expiry_date: "30/03/2026", remaining_days: 5, checkout_url: "https://wiize.com.br/checkout-pix?plan=growth", stage: "D-5" },
