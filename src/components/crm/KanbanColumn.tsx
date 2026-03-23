@@ -136,6 +136,11 @@ const KanbanColumnComponent = ({
             {leads.length}
           </span>
         </div>
+        {isAgentSilenced && (
+          <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
+            🤖 Agente não responde leads nesta coluna
+          </p>
+        )}
       </div>
 
       {/* Cards */}
