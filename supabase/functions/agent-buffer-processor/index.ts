@@ -515,6 +515,18 @@ serve(async (req) => {
         
         if (!agent || agent.status !== 'active') {
           console.log(`Skipping conv ${conv.id}: agent not active`);
+          // Clear process_after so it doesn't get picked up again
+          await supabase.from('agent_conversations').update({ process_after: null, is_processing: false }).eq('id', conv.id);
+          continue;
+        }
+
+        // Secondary group detection: block group phone numbers
+        const convPhoneDigits = conv.lead_phone?.replace(/\D/g, '') || '';
+        const isGroupPhone = convPhoneDigits.startsWith('120363') || convPhoneDigits.length > 15 || conv.lead_phone?.includes('@g.us');
+        
+        if (isGroupPhone && !agent.respond_to_groups) {
+          console.log(`Skipping conv ${conv.id}: group phone detected (${conv.lead_phone}) and respond_to_groups=false`);
+          await supabase.from('agent_conversations').update({ process_after: null, is_processing: false, status: 'lost' }).eq('id', conv.id);
           continue;
         }
 

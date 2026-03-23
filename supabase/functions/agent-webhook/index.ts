@@ -471,6 +471,22 @@ serve(async (req) => {
         );
       }
 
+      // Secondary group detection: block group messages if agent doesn't support groups
+      const phoneDigits = phone.replace(/\D/g, '');
+      const isGroupPhone = phoneDigits.startsWith('120363') || phoneDigits.length > 15 || phone.includes('@g.us');
+      
+      if (isGroupPhone && !agent.respond_to_groups) {
+        console.log(`Blocking group message for agent ${agent.name} (respond_to_groups=false). Phone: ${phone}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            reason: 'group_blocked',
+            message: 'Agent is not configured to respond in groups' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       // Buffer delay: 2 minutes
       const BUFFER_DELAY_MS = 2 * 60 * 1000;
       const processAfter = new Date(Date.now() + BUFFER_DELAY_MS).toISOString();
