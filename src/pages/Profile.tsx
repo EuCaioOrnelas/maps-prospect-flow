@@ -569,7 +569,7 @@ const Profile = () => {
               {/* Subscription Management - Provider-specific */}
               {!isFreePlan && (
                 <>
-                  {(profile as any)?.payment_provider === 'abacate_pay' ? (
+                  {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
                     // PIX Subscription Management
                     <div className="p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                       <div className="flex items-center gap-2">
