@@ -26,24 +26,47 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { couponCode, email } = await req.json();
+    const { couponCode, email, fingerprint } = await req.json();
     if (!couponCode) throw new Error("couponCode is required");
+
+    // Get client IP for fraud prevention
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+      || req.headers.get("x-real-ip") 
+      || "unknown";
 
     logStep("Validating coupon", { couponCode, email });
 
     // Check if user already redeemed this coupon
     if (email) {
-      const { data: existing } = await supabaseClient
+      const { data: existingByEmail } = await supabaseClient
         .from("coupon_redemptions")
         .select("id")
         .eq("email", email.toLowerCase())
         .eq("coupon_code", couponCode.toUpperCase())
         .maybeSingle();
 
-      if (existing) {
-        logStep("Coupon already used by this user", { couponCode, email });
+      if (existingByEmail) {
+        logStep("Coupon already used by this email", { couponCode, email });
         return new Response(
           JSON.stringify({ valid: false, error: "Você já utilizou este cupom. Ele é válido apenas para a primeira assinatura." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Check if this IP already redeemed any coupon (fraud prevention)
+    if (clientIp && clientIp !== "unknown") {
+      const { data: existingByIp } = await supabaseClient
+        .from("coupon_redemptions")
+        .select("id")
+        .eq("ip_address", clientIp)
+        .eq("coupon_code", couponCode.toUpperCase())
+        .maybeSingle();
+
+      if (existingByIp) {
+        logStep("Coupon already used from this IP", { couponCode, ip: clientIp });
+        return new Response(
+          JSON.stringify({ valid: false, error: "Este cupom já foi utilizado. Cupons são válidos apenas para a primeira assinatura." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
