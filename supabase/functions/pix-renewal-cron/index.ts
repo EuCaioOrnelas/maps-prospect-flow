@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
             invoicesCreated++;
           }
         } else {
-          // Update to own checkout URL if it was pointing to AbacatePay
+          // Update to own checkout URL if needed
           if (!checkoutUrl.includes("/checkout-pix")) {
             checkoutUrl = ownCheckoutUrl;
           }
