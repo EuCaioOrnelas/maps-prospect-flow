@@ -14,9 +14,9 @@ const logStep = (step: string, details?: any) => {
 // Map AbacatePay product externalId or product ID to plan name
 function extractPlanFromProducts(products: any[]): string | null {
   const productToPlan: Record<string, string> = {
-    "prod_YuGfZ0UukSSPPjbjn3DZJkMK": "start",
-    "prod_fNftUU0Pd5bEgdpnKTADKUgT": "growth",
-    "prod_2KNLMQM5QHe0bb1TZxWenx2N": "scale",
+    "prod_YcCc6kL1TkWh42qZkjRaSjzX": "start",
+    "prod_easrZryXGH1UXHGNaj0xHxSn": "growth",
+    "prod_bphBWzjHkCqx26TkcGwgABHa": "scale",
   };
 
   for (const product of products) {
