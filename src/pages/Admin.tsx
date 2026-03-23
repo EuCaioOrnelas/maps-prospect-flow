@@ -923,7 +923,7 @@ const Admin = () => {
         supabase.from('whatsapp_campaigns').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
         // Agents created in period
         supabase.from('ai_agents').select('id, user_id, created_at').gte('created_at', startISO).lte('created_at', endISO),
-        // Checkout leads in period (includes both Stripe and AbacatePay)
+        // Checkout leads in period (includes Stripe, AbacatePay and Asaas)
         supabase.from('checkout_leads' as any).select('*').gte('checkout_started_at', startISO).lte('checkout_started_at', endISO),
         // Purchases (subscription events) in period - Stripe
         supabase.from('subscription_events').select('id, user_id, event_type, created_at')
