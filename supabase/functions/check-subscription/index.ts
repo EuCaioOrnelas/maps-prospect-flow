@@ -336,7 +336,7 @@ serve(async (req) => {
           });
         }
         
-        // Check if subscription is still valid (AbacatePay or other provider)
+        // Check if subscription is still valid (Asaas/PIX or other provider)
         const subEnd = currentProfile.subscription_current_period_end 
           ? new Date(currentProfile.subscription_current_period_end) 
           : null;
