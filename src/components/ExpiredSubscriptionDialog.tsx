@@ -15,38 +15,26 @@ export function ExpiredSubscriptionDialog() {
     if (!user || !profile || profile.plan !== 'free') return;
 
     const checkSuspension = async () => {
+      // Show popup if user is on free plan but has an expired subscription date
+      // This means they were downgraded from a paid plan
       const periodEnd = profile.subscription_current_period_end
         ? new Date(profile.subscription_current_period_end)
         : null;
+      
+      if (!periodEnd) return; // Never had a paid plan
+      
       const now = new Date();
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      // Check if there's a recent access_suspended event for this user
-      const { data } = await supabase
-        .from('pix_tracking_events')
-        .select('id, created_at')
-        .eq('user_id', user.id)
-        .eq('event_type', 'access_suspended')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      const latestEvent = data?.[0];
-      const suspendedAt = latestEvent?.created_at ? new Date(latestEvent.created_at) : null;
-
-      const hasRecentSuspensionEvent = !!(suspendedAt && suspendedAt >= sevenDaysAgo);
-      const hasRecentExpiredSubscription = !!(
-        periodEnd &&
-        periodEnd < now &&
-        periodEnd >= sevenDaysAgo
-      );
-
-      if (!hasRecentSuspensionEvent && !hasRecentExpiredSubscription) return;
-
-      const popupIdentity = latestEvent?.id ?? `expired_${user.id}_${periodEnd?.toISOString() ?? 'unknown'}`;
+      if (periodEnd >= now) return; // Still active (shouldn't be free)
+      
+      // Only show for recent expirations (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      if (periodEnd < thirtyDaysAgo) return;
+      
+      const popupIdentity = `expired_${user.id}_${periodEnd.toISOString().split('T')[0]}`;
       const dismissedKey = `expired_sub_dismissed_${popupIdentity}`;
       if (localStorage.getItem(dismissedKey)) return;
-
+      
       setOpen(true);
       localStorage.setItem('_expired_sub_event_id', popupIdentity);
     };
