@@ -108,8 +108,10 @@ const Upgrade = () => {
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
   const isTrialExpired = searchParams.get("expired") === "true";
+  const isRenewal = searchParams.get("renewal") === "true";
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");
+  const isCleanPage = isRenewal || isTrialExpired;
 
   // Check for checkout result
   useEffect(() => {
@@ -304,14 +306,16 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Sidebar - Desktop only */}
-      <AppSidebar profile={profile} />
-
-      {/* Header */}
-      <AppHeader profile={profile} />
+      {/* Sidebar & Header only when NOT in clean renewal/expired mode */}
+      {!isCleanPage && (
+        <>
+          <AppSidebar profile={profile} />
+          <AppHeader profile={profile} />
+        </>
+      )}
 
       {/* Promo Banner */}
-      <div className="lg:pl-14 bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
+      <div className={`${isCleanPage ? '' : 'lg:pl-14'} bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden`}>
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
           <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
@@ -327,7 +331,7 @@ const Upgrade = () => {
       </div>
 
       {/* Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 lg:pl-14">
+      <main className={`container mx-auto px-3 sm:px-4 py-6 sm:py-12 ${isCleanPage ? '' : 'lg:pl-14'}`}>
         {/* Trial Expired Banner */}
         {isTrialExpired && (
           <div className="max-w-3xl mx-auto mb-10 animate-fade-in">
@@ -368,10 +372,16 @@ const Upgrade = () => {
 
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Escolha o plano <span className="text-gradient">ideal para você</span>
+            {isRenewal ? (
+              <>Renove seu plano <span className="text-gradient">e continue crescendo</span></>
+            ) : (
+              <>Escolha o plano <span className="text-gradient">ideal para você</span></>
+            )}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Faça upgrade do seu plano e desbloqueie mais buscas para encontrar novos clientes.
+            {isRenewal
+              ? "Selecione o plano desejado para renovar sua assinatura e restaurar todos os recursos."
+              : "Faça upgrade do seu plano e desbloqueie mais buscas para encontrar novos clientes."}
           </p>
         </div>
 
