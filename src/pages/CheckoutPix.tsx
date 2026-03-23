@@ -329,7 +329,36 @@ export default function CheckoutPix() {
                     <span className="text-sm sm:text-base font-normal text-muted-foreground">/mês</span>
                   </p>
 
-                  {/* Copy code */}
+                  {/* Expiration timer */}
+                  {timeLeft !== null && (
+                    <div className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold",
+                      timeLeft > 300 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive animate-pulse"
+                    )}>
+                      <Timer className="h-4 w-4" />
+                      <span>Expira em {formatTimer(timeLeft)}</span>
+                    </div>
+                  )}
+
+                  {/* Copy-paste code preview */}
+                  {pixData.brCode && (
+                    <div className="w-full max-w-sm space-y-2">
+                      <p className="text-xs font-semibold text-foreground text-center">Código Copia e Cola</p>
+                      <div 
+                        onClick={handleCopyCode}
+                        className="relative rounded-xl border border-border/40 bg-muted/50 p-3 cursor-pointer hover:bg-muted/70 transition-colors group"
+                      >
+                        <p className="text-[11px] text-muted-foreground font-mono break-all line-clamp-3 pr-8">
+                          {pixData.brCode}
+                        </p>
+                        <div className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                          {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Copy code button */}
                   <Button variant="outline" onClick={handleCopyCode} className="w-full max-w-xs gap-2">
                     {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     {copied ? "Código copiado!" : "Copiar código PIX"}
@@ -340,7 +369,6 @@ export default function CheckoutPix() {
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     <span>Aguardando pagamento...</span>
                   </div>
-
 
                   <div className="rounded-xl border border-border/30 bg-muted/30 p-3 text-center max-w-sm">
                     <p className="text-[11px] text-muted-foreground">
