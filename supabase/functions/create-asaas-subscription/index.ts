@@ -9,13 +9,13 @@ const corsHeaders = {
 const ASAAS_API = "https://api.asaas.com/v3";
 
 const logStep = (step: string, details?: any) => {
-  console.log(`[ASAAS-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
+  console.log(`[ASAAS-PIX-AUTO] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-const PLAN_CONFIG: Record<string, { name: string; priceInCents: number; priceDecimal: number }> = {
-  start: { name: "Wiize Start", priceInCents: 19700, priceDecimal: 197.00 },
-  growth: { name: "Wiize Growth", priceInCents: 49700, priceDecimal: 497.00 },
-  scale: { name: "Wiize Scale", priceInCents: 89700, priceDecimal: 897.00 },
+const PLAN_CONFIG: Record<string, { name: string; priceDecimal: number }> = {
+  start: { name: "Wiize Start", priceDecimal: 197.00 },
+  growth: { name: "Wiize Growth", priceDecimal: 497.00 },
+  scale: { name: "Wiize Scale", priceDecimal: 897.00 },
 };
 
 serve(async (req) => {
@@ -32,7 +32,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, couponCode, testOverridePrice } = await req.json();
+    const { planKey, customerData, testOverridePrice } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
     const plan = PLAN_CONFIG[planKey];
@@ -64,22 +64,17 @@ serve(async (req) => {
       }
     }
 
-    // Clean CPF/CNPJ - only digits
+    // Clean CPF/CNPJ
     const cpfCnpj = customerData.taxId?.replace(/\D/g, "") || "";
     if (!cpfCnpj || cpfCnpj.length < 11) {
       throw new Error("CPF/CNPJ é obrigatório");
     }
 
-    // Clean phone - only digits
     const phone = customerData.phone?.replace(/\D/g, "") || "";
 
     // 1. Create or find customer on Asaas
-    // First try to find existing customer by CPF/CNPJ
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
-      headers: {
-        "access_token": apiKey,
-        "Accept": "application/json",
-      },
+      headers: { "access_token": apiKey, "Accept": "application/json" },
     });
     const findJson = await findRes.json();
     
@@ -89,7 +84,6 @@ serve(async (req) => {
       customerId = findJson.data[0].id;
       logStep("Existing customer found", { customerId });
     } else {
-      // Create new customer
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
         headers: {
@@ -124,129 +118,55 @@ serve(async (req) => {
       logStep("TEST OVERRIDE PRICE", { original: finalPrice, override: testOverridePrice });
       finalPrice = testOverridePrice;
     }
-    
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-    if (couponCode) {
-      try {
-        const userEmail = customerData.email?.toLowerCase();
-        if (userEmail) {
-          const { data: existingRedemption } = await supabaseClient
-            .from("coupon_redemptions")
-            .select("id")
-            .eq("email", userEmail)
-            .eq("coupon_code", couponCode.toUpperCase())
-            .maybeSingle();
+    // 3. Create PIX Automático authorization with immediate QR Code
+    const startDate = new Date();
+    const contractId = `wiize_${planKey}_${Date.now()}`;
+    const externalRef = userId || customerData.email;
 
-          if (existingRedemption) {
-            logStep("Coupon already redeemed", { couponCode, email: userEmail });
-          } else {
-            // TODO: Implement coupon validation for Asaas
-            logStep("Coupon validation skipped - to be implemented", { couponCode });
-          }
-        }
-      } catch (e) {
-        logStep("Coupon check failed", { error: String(e) });
-      }
-    }
-
-    // 3. Create subscription with PIX billing
-    const nextDueDate = new Date();
-    nextDueDate.setDate(nextDueDate.getDate() + 0); // First payment today
-
-    const subscriptionBody = {
-      customer: customerId,
-      billingType: "PIX",
+    const authorizationBody = {
+      customerId: customerId,
+      frequency: "MONTHLY",
+      contractId: contractId.slice(0, 35), // max 35 chars
+      startDate: startDate.toISOString().split("T")[0],
       value: finalPrice,
-      nextDueDate: nextDueDate.toISOString().split("T")[0], // YYYY-MM-DD
-      cycle: "MONTHLY",
-      description: `${plan.name} - Assinatura mensal`,
-      externalReference: userId || customerData.email,
+      description: `${plan.name} mensal`.slice(0, 35),
+      immediateQrCode: {
+        value: finalPrice,
+        description: `${plan.name} - 1a parcela`.slice(0, 35),
+        externalReference: externalRef,
+      },
     };
 
-    logStep("Creating subscription", subscriptionBody);
+    logStep("Creating PIX Automático authorization", authorizationBody);
 
-    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
+    const authRes = await fetch(`${ASAAS_API}/pix/automatic/authorizations`, {
       method: "POST",
       headers: {
         "access_token": apiKey,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify(subscriptionBody),
+      body: JSON.stringify(authorizationBody),
     });
 
-    const subJson = await subRes.json();
-    if (!subRes.ok || subJson.errors) {
-      logStep("Subscription creation failed", subJson);
-      throw new Error(`Asaas subscription error: ${JSON.stringify(subJson.errors || subJson)}`);
+    const authJson = await authRes.json();
+    if (!authRes.ok || authJson.errors) {
+      logStep("Authorization creation failed", authJson);
+      throw new Error(`Asaas PIX Automático error: ${JSON.stringify(authJson.errors || authJson)}`);
     }
 
-    logStep("Subscription created", { subscriptionId: subJson.id, status: subJson.status });
-
-    // 4. Get the first payment (charge) to obtain QR Code
-    // Wait a moment for Asaas to generate the first charge
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const paymentsRes = await fetch(`${ASAAS_API}/subscriptions/${subJson.id}/payments`, {
-      headers: {
-        "access_token": apiKey,
-        "Accept": "application/json",
-      },
+    logStep("Authorization created", { 
+      authorizationId: authJson.id, 
+      status: authJson.status,
+      hasQrCode: !!authJson.immediateQrCode 
     });
 
-    const paymentsJson = await paymentsRes.json();
-    const firstPayment = paymentsJson.data?.[0];
+    const qrCodePayload = authJson.immediateQrCode?.payload || "";
+    const qrCodeImage = authJson.immediateQrCode?.encodedImage || "";
+    const conciliationId = authJson.immediateQrCode?.conciliationIdentifier || "";
 
-    if (!firstPayment) {
-      logStep("No payment found for subscription, returning subscription ID");
-      // Track checkout lead anyway
-      try {
-        await supabaseClient.from("checkout_leads").insert({
-          user_id: userId || null,
-          email: customerData.email,
-          name: customerData.name,
-          phone: customerData.phone || null,
-          tax_id: customerData.taxId || null,
-          plan_attempted: plan.name,
-          stripe_session_id: `asaas_sub_${subJson.id}`,
-          checkout_started_at: new Date().toISOString(),
-          checkout_completed: false,
-        });
-      } catch (e) {
-        logStep("Failed to track checkout lead", { error: String(e) });
-      }
-
-      return new Response(
-        JSON.stringify({
-          subscriptionId: subJson.id,
-          paymentId: null,
-          status: "PENDING",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    logStep("First payment found", { paymentId: firstPayment.id, status: firstPayment.status });
-
-    // 5. Get PIX QR Code for the first payment
-    const pixRes = await fetch(`${ASAAS_API}/payments/${firstPayment.id}/pixQrCode`, {
-      headers: {
-        "access_token": apiKey,
-        "Accept": "application/json",
-      },
-    });
-
-    const pixJson = await pixRes.json();
-    
-    if (!pixRes.ok) {
-      logStep("PIX QR Code fetch failed", pixJson);
-      // Still return payment info without QR code
-    }
-
-    logStep("PIX QR Code generated", { hasPayload: !!pixJson.payload, hasImage: !!pixJson.encodedImage });
-
-    // 6. Track checkout lead
+    // 4. Track checkout lead
     try {
       await supabaseClient.from("checkout_leads").insert({
         user_id: userId || null,
@@ -255,7 +175,7 @@ serve(async (req) => {
         phone: customerData.phone || null,
         tax_id: customerData.taxId || null,
         plan_attempted: plan.name,
-        stripe_session_id: `asaas_sub_${subJson.id}`,
+        stripe_session_id: `asaas_pixauto_${authJson.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
@@ -266,13 +186,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        subscriptionId: subJson.id,
-        paymentId: firstPayment.id,
-        brCode: pixJson.payload || "",
-        brCodeBase64: pixJson.encodedImage ? `data:image/png;base64,${pixJson.encodedImage}` : "",
-        amount: Math.round(finalPrice * 100), // return in cents for frontend compatibility
-        expiresAt: firstPayment.dueDate,
-        pixId: firstPayment.id, // for polling compatibility
+        authorizationId: authJson.id,
+        brCode: qrCodePayload,
+        brCodeBase64: qrCodeImage ? `data:image/png;base64,${qrCodeImage}` : "",
+        amount: Math.round(finalPrice * 100),
+        conciliationId: conciliationId,
+        pixId: authJson.id, // for polling compatibility
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -30,20 +30,133 @@ function extractPlanFromValue(value: number): string | null {
   return null;
 }
 
+async function findProfile(supabaseClient: any, externalReference: string | null, checkoutIdPrefix: string | null) {
+  let profile: any = null;
+
+  // Try as UUID
+  if (externalReference && externalReference.match(/^[0-9a-f-]{36}$/i)) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("id", externalReference)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  // Try as email
+  if (externalReference) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("email", externalReference)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  // Try via checkout_leads
+  if (checkoutIdPrefix) {
+    const { data: leads } = await supabaseClient
+      .from("checkout_leads")
+      .select("user_id, email")
+      .eq("stripe_session_id", checkoutIdPrefix)
+      .limit(1);
+
+    if (leads && leads.length > 0) {
+      const lead = leads[0];
+      if (lead.user_id) {
+        const { data } = await supabaseClient
+          .from("profiles")
+          .select("id, plan, email, subscription_current_period_end")
+          .eq("id", lead.user_id)
+          .maybeSingle();
+        if (data) return data;
+      }
+      if (lead.email) {
+        const { data } = await supabaseClient
+          .from("profiles")
+          .select("id, plan, email, subscription_current_period_end")
+          .eq("email", lead.email)
+          .maybeSingle();
+        if (data) return data;
+      }
+    }
+  }
+
+  return null;
+}
+
+async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null) {
+  const searchesLimit = getPlanSearchesLimit(planKey);
+  const currentPeriodEnd = profile.subscription_current_period_end
+    ? new Date(profile.subscription_current_period_end)
+    : new Date();
+
+  let periodEnd: Date;
+  if (profile.plan !== "free" && currentPeriodEnd > new Date()) {
+    periodEnd = new Date(currentPeriodEnd);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+    logStep("Early renewal, extending", { currentEnd: currentPeriodEnd.toISOString(), newEnd: periodEnd.toISOString() });
+  } else {
+    periodEnd = new Date();
+    periodEnd.setDate(periodEnd.getDate() + 30);
+  }
+
+  const { error: updateError } = await supabaseClient
+    .from("profiles")
+    .update({
+      plan: planKey,
+      searches_limit: searchesLimit,
+      searches_used: 0,
+      subscription_current_period_end: periodEnd.toISOString(),
+      last_searches_reset: new Date().toISOString(),
+      payment_provider: "asaas",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", profile.id);
+
+  if (updateError) {
+    throw new Error(`Profile update failed: ${updateError.message}`);
+  }
+
+  logStep("Profile updated", { userId: profile.id, plan: planKey });
+
+  // Mark checkout lead as completed and copy phone/cpf
+  if (checkoutIdPrefix) {
+    await supabaseClient
+      .from("checkout_leads")
+      .update({
+        checkout_completed: true,
+        checkout_completed_at: new Date().toISOString(),
+      })
+      .eq("stripe_session_id", checkoutIdPrefix)
+      .eq("checkout_completed", false);
+
+    const { data: checkoutLeads } = await supabaseClient
+      .from("checkout_leads")
+      .select("phone, tax_id")
+      .eq("stripe_session_id", checkoutIdPrefix)
+      .limit(1);
+
+    if (checkoutLeads && checkoutLeads.length > 0) {
+      const lead = checkoutLeads[0];
+      const profileUpdate: Record<string, string> = {};
+      if (lead.phone) profileUpdate.phone = lead.phone;
+      if (lead.tax_id) profileUpdate.cpf = lead.tax_id;
+      if (Object.keys(profileUpdate).length > 0) {
+        await supabaseClient.from("profiles").update(profileUpdate).eq("id", profile.id);
+      }
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate webhook token
     const webhookToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
     const receivedToken = req.headers.get("asaas-access-token");
-
-    logStep("Webhook auth check", {
-      hasConfiguredToken: !!webhookToken,
-      hasReceivedToken: !!receivedToken,
-    });
 
     if (webhookToken && webhookToken !== "" && receivedToken !== webhookToken) {
       logStep("Invalid webhook token");
@@ -60,11 +173,60 @@ serve(async (req) => {
 
     const body = await req.json();
     const event = body.event;
+
+    logStep("Webhook received", { event });
+
+    // ============ PIX AUTOMÁTICO: AUTHORIZATION ACTIVATED ============
+    if (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED") {
+      const authorization = body.authorization;
+      if (!authorization) {
+        logStep("No authorization data");
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const authorizationId = authorization.id;
+      logStep("PIX Automático authorization activated", { authorizationId, value: authorization.value });
+
+      const checkoutIdPrefix = `asaas_pixauto_${authorizationId}`;
+      const planKey = extractPlanFromValue(authorization.value);
+
+      if (!planKey) {
+        logStep("Could not determine plan from value", { value: authorization.value });
+      }
+
+      // Find profile via checkout_leads
+      const profile = await findProfile(supabaseClient, null, checkoutIdPrefix);
+
+      if (profile && planKey) {
+        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix);
+        return new Response(
+          JSON.stringify({ received: true, action: "pix_auto_activated", plan: planKey }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      logStep("No profile found for PIX Automático authorization", { authorizationId });
+      return new Response(
+        JSON.stringify({ received: true, warning: "no_profile_for_pix_auto" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ PIX AUTOMÁTICO: AUTHORIZATION CANCELLED ============
+    if (event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CANCELLED") {
+      const authorization = body.authorization;
+      logStep("PIX Automático authorization cancelled", { authorizationId: authorization?.id });
+      // Grace period — the subscription expiry cron handles cancellation
+      return new Response(
+        JSON.stringify({ received: true, action: "pix_auto_cancelled_noted" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ PAYMENT CONFIRMED (recurring charges) ============
     const payment = body.payment;
-
-    logStep("Webhook received", { event, paymentId: payment?.id, value: payment?.value });
-
-    // ============ PAYMENT CONFIRMED ============
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
       if (!payment) {
         logStep("No payment data");
@@ -77,10 +239,10 @@ serve(async (req) => {
       const description = payment.description || "";
       const value = payment.value;
       const subscriptionId = payment.subscription;
+      const pixAutoAuthId = payment.pixAutomaticAuthorizationId;
 
-      logStep("Processing payment", { externalReference, description, value, subscriptionId });
+      logStep("Processing payment", { externalReference, description, value, subscriptionId, pixAutoAuthId });
 
-      // Determine plan from description or value
       let planKey = extractPlanFromDescription(description) || extractPlanFromValue(value);
 
       if (!planKey) {
@@ -90,130 +252,23 @@ serve(async (req) => {
         });
       }
 
-      // Find user by externalReference (could be user_id or email)
-      let profile: any = null;
+      // Try to find profile via multiple methods
+      const checkoutPrefix = pixAutoAuthId
+        ? `asaas_pixauto_${pixAutoAuthId}`
+        : subscriptionId
+          ? `asaas_sub_${subscriptionId}`
+          : null;
 
-      // Try as UUID first
-      if (externalReference && externalReference.match(/^[0-9a-f-]{36}$/i)) {
-        const { data } = await supabaseClient
-          .from("profiles")
-          .select("id, plan, email, subscription_current_period_end")
-          .eq("id", externalReference)
-          .maybeSingle();
-        if (data) profile = data;
-      }
-
-      // Try as email
-      if (!profile && externalReference) {
-        const { data } = await supabaseClient
-          .from("profiles")
-          .select("id, plan, email, subscription_current_period_end")
-          .eq("email", externalReference)
-          .maybeSingle();
-        if (data) profile = data;
-      }
-
-      // Try via checkout_leads
-      if (!profile && subscriptionId) {
-        const { data: leads } = await supabaseClient
-          .from("checkout_leads")
-          .select("user_id, email")
-          .eq("stripe_session_id", `asaas_sub_${subscriptionId}`)
-          .limit(1);
-
-        if (leads && leads.length > 0) {
-          const lead = leads[0];
-          if (lead.user_id) {
-            const { data } = await supabaseClient
-              .from("profiles")
-              .select("id, plan, email, subscription_current_period_end")
-              .eq("id", lead.user_id)
-              .maybeSingle();
-            if (data) profile = data;
-          } else if (lead.email) {
-            const { data } = await supabaseClient
-              .from("profiles")
-              .select("id, plan, email, subscription_current_period_end")
-              .eq("email", lead.email)
-              .maybeSingle();
-            if (data) profile = data;
-          }
-        }
-      }
+      const profile = await findProfile(supabaseClient, externalReference, checkoutPrefix);
 
       if (!profile) {
-        logStep("No profile found for payment", { externalReference, subscriptionId });
+        logStep("No profile found for payment", { externalReference, subscriptionId, pixAutoAuthId });
         return new Response(JSON.stringify({ received: true, warning: "no_profile" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      logStep("Found profile", { userId: profile.id, currentPlan: profile.plan });
-
-      // Calculate period end - extend from current if early renewal
-      const searchesLimit = getPlanSearchesLimit(planKey);
-      const currentPeriodEnd = profile.subscription_current_period_end
-        ? new Date(profile.subscription_current_period_end)
-        : new Date();
-
-      let periodEnd: Date;
-      if (profile.plan !== "free" && currentPeriodEnd > new Date()) {
-        periodEnd = new Date(currentPeriodEnd);
-        periodEnd.setDate(periodEnd.getDate() + 30);
-        logStep("Early renewal, extending", { currentEnd: currentPeriodEnd.toISOString(), newEnd: periodEnd.toISOString() });
-      } else {
-        periodEnd = new Date();
-        periodEnd.setDate(periodEnd.getDate() + 30);
-      }
-
-      const { error: updateError } = await supabaseClient
-        .from("profiles")
-        .update({
-          plan: planKey,
-          searches_limit: searchesLimit,
-          searches_used: 0,
-          subscription_current_period_end: periodEnd.toISOString(),
-          last_searches_reset: new Date().toISOString(),
-          payment_provider: "asaas",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", profile.id);
-
-      if (updateError) {
-        logStep("Failed to update profile", { error: updateError.message });
-        throw new Error(`Profile update failed: ${updateError.message}`);
-      }
-
-      logStep("Profile updated", { userId: profile.id, plan: planKey });
-
-      // Mark checkout lead as completed
-      if (subscriptionId) {
-        await supabaseClient
-          .from("checkout_leads")
-          .update({
-            checkout_completed: true,
-            checkout_completed_at: new Date().toISOString(),
-          })
-          .eq("stripe_session_id", `asaas_sub_${subscriptionId}`)
-          .eq("checkout_completed", false);
-
-        // Copy phone/cpf from lead to profile
-        const { data: checkoutLeads } = await supabaseClient
-          .from("checkout_leads")
-          .select("phone, tax_id")
-          .eq("stripe_session_id", `asaas_sub_${subscriptionId}`)
-          .limit(1);
-
-        if (checkoutLeads && checkoutLeads.length > 0) {
-          const lead = checkoutLeads[0];
-          const profileUpdate: Record<string, string> = {};
-          if (lead.phone) profileUpdate.phone = lead.phone;
-          if (lead.tax_id) profileUpdate.cpf = lead.tax_id;
-          if (Object.keys(profileUpdate).length > 0) {
-            await supabaseClient.from("profiles").update(profileUpdate).eq("id", profile.id);
-          }
-        }
-      }
+      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix);
 
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
@@ -224,7 +279,6 @@ serve(async (req) => {
     // ============ PAYMENT OVERDUE ============
     if (event === "PAYMENT_OVERDUE") {
       logStep("Payment overdue", { paymentId: payment?.id });
-      // Grace period — the subscription expiry cron handles cancellation
       return new Response(
         JSON.stringify({ received: true, action: "overdue_noted" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -237,18 +291,7 @@ serve(async (req) => {
       logStep("Payment refunded/deleted", { event, externalReference });
 
       if (externalReference) {
-        let profile: any = null;
-
-        if (externalReference.match(/^[0-9a-f-]{36}$/i)) {
-          const { data } = await supabaseClient
-            .from("profiles").select("id, plan").eq("id", externalReference).maybeSingle();
-          if (data) profile = data;
-        }
-        if (!profile) {
-          const { data } = await supabaseClient
-            .from("profiles").select("id, plan").eq("email", externalReference).maybeSingle();
-          if (data) profile = data;
-        }
+        const profile = await findProfile(supabaseClient, externalReference, null);
 
         if (profile) {
           await supabaseClient.from("profiles").update({
@@ -264,6 +307,15 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ received: true, action: "refunded_downgraded" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ PIX AUTOMÁTICO PAYMENT INSTRUCTION EVENTS ============
+    if (event?.startsWith("PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_")) {
+      logStep("PIX Automático payment instruction event", { event, data: body.paymentInstruction });
+      return new Response(
+        JSON.stringify({ received: true, action: "pix_instruction_logged" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
