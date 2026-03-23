@@ -67,7 +67,7 @@ serve(async (req) => {
             user_id: user.id,
             email: user.email,
             event_type: "pix_not_renewed",
-            event_source: "abacate_pay",
+            event_source: "asaas",
             previous_plan: user.plan,
             new_plan: "free",
           });

@@ -342,7 +342,7 @@ serve(async (req) => {
           : null;
         
         if (subEnd && subEnd > new Date()) {
-          logStep("Subscription still valid (non-Stripe provider, likely AbacatePay)", { 
+          logStep("Subscription still valid (non-Stripe provider, likely Asaas)", { 
             plan: currentProfile.plan,
             expiresAt: subEnd.toISOString()
           });
