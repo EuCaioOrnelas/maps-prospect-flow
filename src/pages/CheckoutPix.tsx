@@ -436,7 +436,7 @@ export default function CheckoutPix() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
                   <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                    <QrCode className="h-3.5 w-3.5" /> PIX Recorrente
+                    <QrCode className="h-3.5 w-3.5" /> PIX
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -535,7 +535,7 @@ export default function CheckoutPix() {
                     <Shield className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">PIX Recorrente</p>
+                    <p className="text-xs font-semibold text-foreground">PIX</p>
                     <p className="text-xs text-muted-foreground">Renovação mensal com envio de novo PIX</p>
                   </div>
                 </div>

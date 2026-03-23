@@ -292,7 +292,7 @@ export function PaymentMethodModal({
                   <QrCode className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
+                  <p className="font-semibold text-foreground text-sm">PIX</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Pague via QR Code • Renovação mensal</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <RefreshCw className="h-3 w-3 text-muted-foreground/70" />

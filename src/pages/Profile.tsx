@@ -522,6 +522,7 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Current Plan Info */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -565,31 +566,140 @@ const Profile = () => {
                 )}
               </div>
 
+              {/* Subscription Management - Provider-specific */}
               {!isFreePlan && (
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Gerenciar assinatura</span>
+                <>
+                  {(profile as any)?.payment_provider === 'abacate_pay' ? (
+                    // PIX Subscription Management
+                    <div className="p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                          <CreditCard className="h-4 w-4 text-emerald-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Assinatura via PIX</p>
+                          <p className="text-xs text-muted-foreground">Pagamento mensal</p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {profile?.subscription_current_period_end && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" />
+                              Vencimento
+                            </span>
+                            <span className="font-semibold">
+                              {formatDate(profile.subscription_current_period_end)}
+                            </span>
+                          </div>
+
+                          {(() => {
+                            const expiry = new Date(profile.subscription_current_period_end);
+                            const now = new Date();
+                            const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                            const isExpired = daysLeft < 0;
+                            const isExpiringSoon = daysLeft >= 0 && daysLeft <= 5;
+
+                            return (
+                              <div className={`p-3 rounded-md text-xs space-y-1 ${
+                                isExpired 
+                                  ? 'bg-destructive/10 border border-destructive/20' 
+                                  : isExpiringSoon 
+                                    ? 'bg-warning/10 border border-warning/20'
+                                    : 'bg-emerald-500/5 border border-emerald-500/10'
+                              }`}>
+                                {isExpired ? (
+                                  <>
+                                    <p className="font-semibold text-destructive flex items-center gap-1">
+                                      <AlertCircle className="h-3.5 w-3.5" />
+                                      Assinatura vencida
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      Sua assinatura venceu. Renove para manter o acesso ao plano {getPlanName(profile.plan)}.
+                                    </p>
+                                  </>
+                                ) : isExpiringSoon ? (
+                                  <>
+                                    <p className="font-semibold text-warning flex items-center gap-1">
+                                      <AlertCircle className="h-3.5 w-3.5" />
+                                      Vence em {daysLeft} dia{daysLeft !== 1 ? 's' : ''}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      Após o vencimento, se o PIX não for pago, seu plano será automaticamente cancelado e voltará para o plano Gratuito.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="font-semibold text-emerald-600 flex items-center gap-1">
+                                      <Check className="h-3.5 w-3.5" />
+                                      Assinatura ativa — {daysLeft} dias restantes
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      Próximo ao vencimento, enviaremos um novo PIX para renovação automática.
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Renewal Button for PIX */}
+                          {(() => {
+                            const expiry = new Date(profile.subscription_current_period_end);
+                            const now = new Date();
+                            const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                            if (daysLeft <= 5) {
+                              return (
+                                <Link to={`/checkout-pix?plan=${profile.plan}&planName=Wiize%20${getPlanName(profile.plan)}&email=${encodeURIComponent(user?.email || '')}&name=${encodeURIComponent(profile.name || '')}&renewal=true`}>
+                                  <Button className="w-full gap-2 mt-1" size="sm">
+                                    <RefreshCcw className="h-3.5 w-3.5" />
+                                    Renovar agora via PIX
+                                  </Button>
+                                </Link>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Alterar forma de pagamento, cancelar ou trocar de plano
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleManageSubscription}
-                    disabled={isLoadingPortal}
-                    className="gap-2"
-                  >
-                    {isLoadingPortal ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ExternalLink className="h-4 w-4" />
-                    )}
-                    Gerenciar
-                  </Button>
-                </div>
+                  ) : (
+                    // Stripe Subscription Management
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium text-sm">Assinatura via Cartão</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Gerencie seu cartão, cancele ou altere seu plano pelo portal de pagamentos
+                        </p>
+                        {profile?.subscription_current_period_end && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
+                          </p>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleManageSubscription}
+                        disabled={isLoadingPortal}
+                        className="gap-2"
+                      >
+                        {isLoadingPortal ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
+                        Gerenciar
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
