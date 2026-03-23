@@ -68,8 +68,10 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
   const [isThinking, setIsThinking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [pendingMessages, setPendingMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const bufferTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-scroll
   useEffect(() => {
@@ -85,42 +87,43 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
     }
   }, [open]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (bufferTimerRef.current) clearTimeout(bufferTimerRef.current);
+    };
+  }, []);
+
   const resetConversation = () => {
     setMessages([]);
     setInputText("");
     setIsThinking(false);
+    setPendingMessages([]);
+    if (bufferTimerRef.current) {
+      clearTimeout(bufferTimerRef.current);
+      bufferTimerRef.current = null;
+    }
   };
 
-  const sendMessage = useCallback(async (content: string, type: "text" | "audio" = "text") => {
-    if (!content.trim() || !agent || isThinking) return;
+  const processBuffer = useCallback(async (allMsgs: ChatMessage[], buffered: ChatMessage[]) => {
+    if (!agent || buffered.length === 0) return;
 
-    const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      direction: "received",
-      content: content.trim(),
-      type,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setInputText("");
     setIsThinking(true);
 
     try {
-      // Build message history for the edge function
-      const allMessages = [...messages, userMsg].map(m => ({
+      const history = [...allMsgs, ...buffered].map(m => ({
         direction: m.direction,
         content: m.content,
         type: m.type === "audio" ? "audio" : "text",
       }));
 
       const { data, error } = await supabase.functions.invoke("agent-test-chat", {
-        body: { agentId: agent.id, messages: allMessages },
+        body: { agentId: agent.id, messages: history },
       });
 
       if (error) throw error;
 
-      // Add events first
+      // Add events
       if (data.events && data.events.length > 0) {
         const eventMessages: ChatMessage[] = data.events.map((evt: any) => ({
           id: crypto.randomUUID(),
@@ -170,8 +173,45 @@ export function AgentTestChatDialog({ agent, open, onOpenChange }: AgentTestChat
       setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsThinking(false);
+      setPendingMessages([]);
     }
-  }, [agent, messages, isThinking]);
+  }, [agent]);
+
+  const sendMessage = useCallback((content: string, type: "text" | "audio" = "text") => {
+    if (!content.trim() || !agent) return;
+
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      direction: "received",
+      content: content.trim(),
+      type,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputText("");
+
+    // If agent is already thinking (processing previous buffer), just add to messages
+    if (isThinking) return;
+
+    // Add to pending buffer
+    setPendingMessages(prev => {
+      const updated = [...prev, userMsg];
+
+      // Reset the 10s timer
+      if (bufferTimerRef.current) clearTimeout(bufferTimerRef.current);
+      bufferTimerRef.current = setTimeout(() => {
+        setMessages(currentMsgs => {
+          // Get messages excluding the buffered ones
+          const baseMsgs = currentMsgs.filter(m => !updated.some(u => u.id === m.id));
+          processBuffer(baseMsgs, updated);
+          return currentMsgs;
+        });
+      }, 10000);
+
+      return updated;
+    });
+  }, [agent, isThinking, processBuffer]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
