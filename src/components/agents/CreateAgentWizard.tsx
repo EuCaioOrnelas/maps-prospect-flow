@@ -2278,7 +2278,9 @@ Preciso falar com meu marido/esposa"
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Quando conversa encerra</Label>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Quando objetivo é atingido <span className="text-emerald-400">✅</span>
+                    </Label>
                     <select
                       value={crmStageOnEnd}
                       onChange={(e) => setCrmStageOnEnd(e.target.value)}
@@ -2289,6 +2291,9 @@ Preciso falar com meu marido/esposa"
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o agente atingir o objetivo da conversa, o lead será movido para esta coluna e <span className="text-emerald-400 font-medium">o agente não responderá mais</span>.
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
