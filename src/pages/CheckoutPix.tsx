@@ -418,26 +418,10 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
-                {couponApplied && couponDiscount && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-emerald-600 text-xs font-medium">Cupom {couponDiscount.code}</span>
-                      <span className="text-emerald-600 text-xs font-medium">
-                        {couponDiscount.discountKind === "PERCENTAGE" ? `${couponDiscount.discount / 100}%` : `R$ ${(couponDiscount.discount / 100).toFixed(2)}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground text-xs">Desconto</span>
-                      <span className="text-emerald-600 text-xs font-medium">
-                        -R$ {(discountAmount / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  </>
-                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="font-bold text-lg text-foreground">
-                    {couponApplied && discountAmount > 0 ? formatCurrency(finalCents) : formatCurrency(originalCents)}
+                    {formatCurrency(originalCents)}
                   </span>
                 </div>
               </div>
