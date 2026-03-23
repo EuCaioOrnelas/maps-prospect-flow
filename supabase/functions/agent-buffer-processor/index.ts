@@ -1315,6 +1315,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
 
                   // Send email notification to user about human handoff
                   try {
+                    // Build a contextual reason using the lead's last message
+                    const lastLeadMessage = combinedMessage?.substring(0, 200) || '';
+                    const handoffReason = lastLeadMessage
+                      ? `O agente não soube responder à seguinte mensagem do lead: "${lastLeadMessage}${combinedMessage && combinedMessage.length > 200 ? '...' : ''}"`
+                      : 'O agente identificou que não consegue responder adequadamente e transferiu para atendimento humano.';
+
                     await supabase.functions.invoke('send-email', {
                       body: {
                         user_id: whatsappNumber.user_id,
@@ -1324,7 +1330,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                           lead_phone: conv.lead_phone,
                           lead_name: conv.lead_name || null,
                           stage_name: crmStageUnknown,
-                          reason: 'O agente não soube responder a pergunta do lead e transferiu para atendimento humano.',
+                          reason: handoffReason,
                         },
                         idempotency_key: `handoff_${conv.id}_${Date.now()}`,
                       },
