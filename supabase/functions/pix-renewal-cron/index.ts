@@ -248,7 +248,13 @@ Deno.serve(async (req) => {
         if (currentStage === "D+1" && !user.is_blocked) {
           await supabaseClient
             .from("profiles")
-            .update({ plan: "free", is_blocked: false })
+            .update({
+              plan: "free",
+              is_blocked: false,
+              searches_limit: 10,
+              searches_used: 0,
+              subscription_current_period_end: null,
+            })
             .eq("id", user.id);
 
           await supabaseClient.from("pix_tracking_events").insert({

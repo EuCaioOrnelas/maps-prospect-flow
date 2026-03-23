@@ -17,6 +17,7 @@ import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvoluti
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { RenewalBanner } from "@/components/dashboard/RenewalBanner";
+import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -67,6 +68,7 @@ export default function MainDashboard() {
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+            <ExpiredSubscriptionDialog />
             <div className="max-w-7xl mx-auto space-y-8 relative z-10">
 
               <RenewalBanner />
