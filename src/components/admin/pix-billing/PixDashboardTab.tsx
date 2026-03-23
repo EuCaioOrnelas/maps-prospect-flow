@@ -70,13 +70,13 @@ export function PixDashboardTab() {
 
       const pixUserIds = new Set((pixInvoiceUsers || []).map((p: any) => p.user_id));
 
-      const { data: abacateCheckouts } = await supabase
+      const { data: pixCheckouts } = await supabase
         .from("checkout_leads")
         .select("user_id")
         .eq("checkout_completed", true)
-        .like("stripe_session_id", "abacate_%");
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%");
 
-      for (const c of abacateCheckouts || []) {
+      for (const c of pixCheckouts || []) {
         if (c.user_id) pixUserIds.add(c.user_id);
       }
 
