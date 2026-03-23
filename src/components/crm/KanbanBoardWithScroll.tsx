@@ -187,6 +187,7 @@ const KanbanBoardWithScrollComponent = ({
           onSelectAllInColumn={onSelectAllInColumn}
           onUpdateLeadName={onUpdateLeadName}
           columnWidth={columnWidth}
+          isAgentSilenced={agentSilencedStages?.has(stage.name)}
         />
       ))}
     </div>
