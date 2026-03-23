@@ -24,6 +24,7 @@ import {
   Pencil,
   WifiOff,
   QrCode,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ interface AgentSummaryDialogProps {
   onSaveTemplate: (agent: any) => void;
   onDelete: (agent: any) => void;
   onShowLeadsLimitInfo: () => void;
+  onTestChat?: (agent: any) => void;
   disconnectedNumberIds?: Set<string>;
 }
 
@@ -101,6 +103,7 @@ export function AgentSummaryDialog({
   onSaveTemplate,
   onDelete,
   onShowLeadsLimitInfo,
+  onTestChat,
   disconnectedNumberIds = new Set(),
 }: AgentSummaryDialogProps) {
   const navigate = useNavigate();
@@ -290,7 +293,23 @@ export function AgentSummaryDialog({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 p-4 border-t border-border bg-muted/30">
+        <div className="flex flex-col gap-2 p-4 border-t border-border bg-muted/30">
+          {/* Test button - always visible */}
+          {onTestChat && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-9 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+              onClick={() => {
+                onOpenChange(false);
+                onTestChat(agent);
+              }}
+            >
+              <FlaskConical className="h-4 w-4" />
+              Testar Agente
+            </Button>
+          )}
+          <div className="flex items-center gap-2">
           {hasNumberProblem ? (
             <Button
               variant="destructive"
@@ -391,6 +410,7 @@ export function AgentSummaryDialog({
             </TooltipTrigger>
             <TooltipContent>Excluir</TooltipContent>
           </Tooltip>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

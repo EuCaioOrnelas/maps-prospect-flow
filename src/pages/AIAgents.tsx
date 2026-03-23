@@ -38,6 +38,7 @@ import { CreateAgentWizard } from "@/components/agents/CreateAgentWizard";
 import { AgentDetailsDialog } from "@/components/agents/AgentDetailsDialog";
 import { AgentWarningDialog } from "@/components/agents/AgentWarningDialog";
 import { AgentSummaryDialog } from "@/components/agents/AgentSummaryDialog";
+import { AgentTestChatDialog } from "@/components/agents/AgentTestChatDialog";
 import { ManageTemplatesDialog } from "@/components/agents/ManageTemplatesDialog";
 import {
   AlertDialog,
@@ -129,6 +130,7 @@ export default function AIAgents() {
   const [showLeadsLimitInfo, setShowLeadsLimitInfo] = useState(false);
   const [warmingStatuses, setWarmingStatuses] = useState<Record<string, string>>({});
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
+  const [testChatAgent, setTestChatAgent] = useState<AIAgent | null>(null);
 
   // DB-backed beta warning popup
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
@@ -569,7 +571,15 @@ export default function AIAgents() {
         }}
         onDelete={(agent) => setAgentToDelete(agent)}
         onShowLeadsLimitInfo={() => setShowLeadsLimitInfo(true)}
+        onTestChat={(agent) => setTestChatAgent(agent)}
         disconnectedNumberIds={disconnectedNumberIds}
+      />
+
+      {/* Agent Test Chat Dialog */}
+      <AgentTestChatDialog
+        agent={testChatAgent}
+        open={!!testChatAgent}
+        onOpenChange={(open) => !open && setTestChatAgent(null)}
       />
 
       {/* Agent Details Dialog */}
