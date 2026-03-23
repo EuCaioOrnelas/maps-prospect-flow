@@ -162,6 +162,22 @@ async function reconcileCompletedPixCheckout(
     return currentProfile;
   }
 
+  // Don't reconcile if the checkout was completed BEFORE the current subscription period ended
+  // This prevents re-activating a plan that was already used and expired/downgraded
+  if (completedPixLead.checkout_completed_at && currentProfile.subscription_current_period_end) {
+    const checkoutDate = new Date(completedPixLead.checkout_completed_at);
+    const periodEnd = new Date(currentProfile.subscription_current_period_end);
+    // If checkout was done before the period end, it means this checkout already generated
+    // a subscription cycle that has since expired — don't re-apply it
+    if (checkoutDate < periodEnd) {
+      logStep("Skipping PIX reconciliation - checkout is from a previous billing cycle", {
+        checkoutDate: checkoutDate.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+      });
+      return currentProfile;
+    }
+  }
+
   const currentPeriodEnd = currentProfile.subscription_current_period_end
     ? new Date(currentProfile.subscription_current_period_end)
     : null;
