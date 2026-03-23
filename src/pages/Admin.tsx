@@ -119,6 +119,7 @@ interface UserProfile {
   created_at: string;
   updated_at: string;
   is_blocked?: boolean;
+  payment_provider?: string | null;
 }
 
 interface StripeMRRData {
