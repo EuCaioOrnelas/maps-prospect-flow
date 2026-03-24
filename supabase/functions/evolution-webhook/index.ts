@@ -724,8 +724,8 @@ REGRAS:
             }
 
             // If message is received (not from me), try to fetch profile picture
-            // Only do this if conversations table exists
-            if (!fromMe && rawPhone && hasConversationsTable) {
+            // Only do this for fresh 1:1 messages to avoid heavy sync/replay work
+            if (!fromMe && rawPhone && hasConversationsTable && !isGroup && !isHistoricalSyncMessage) {
               try {
                 const profilePicture = await fetchProfilePicture(instance, rawPhone, instanceApiCreds);
                 if (profilePicture) {
