@@ -126,7 +126,6 @@ export default function CheckoutPix() {
     
     try {
       const body: any = { planKey, customerData };
-      if (testCoupon.trim()) body.testOverridePrice = parseFloat(testCoupon.trim());
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         { body }
