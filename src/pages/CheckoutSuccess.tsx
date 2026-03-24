@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,16 @@ const CheckoutSuccess = () => {
     setLoading(true);
 
     try {
+      if (!isPasswordStrong(password)) {
+        toast({
+          title: "Senha muito fraca",
+          description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -266,13 +277,14 @@ const CheckoutSuccess = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Crie uma senha forte"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   required
                   className="h-12"
                 />
+                <PasswordStrength password={password} />
               </motion.div>
 
               <motion.div

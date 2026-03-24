@@ -24,6 +24,7 @@ import {
   Timer,
   ShieldCheck,
   ExternalLink,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -64,7 +65,6 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
-  const [testCoupon, setTestCoupon] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   // Expiration timer (1 hour from QR generation)
@@ -127,7 +127,6 @@ export default function CheckoutPix() {
     
     try {
       const body: any = { planKey, customerData };
-      if (testCoupon.trim()) body.testOverridePrice = parseFloat(testCoupon.trim());
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         { body }
@@ -458,19 +457,24 @@ export default function CheckoutPix() {
               </div>
             </div>
 
-            {/* TEMP: Test override price */}
-            <div className="rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4 space-y-2">
-              <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400">⚠️ TESTE — Sobrescrever valor (R$)</p>
-              <Input
-                placeholder="Ex: 1.00"
-                value={testCoupon}
-                onChange={(e) => setTestCoupon(e.target.value)}
-                className="h-8 text-sm"
-                disabled={!!pixData}
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Digite um valor em reais (ex: 1.00) para testar. Deixe vazio para usar o preço real. <strong>Remover após testes.</strong>
+            {/* Coupon notice — only for credit card */}
+            <div className="rounded-2xl border border-border/40 bg-muted/30 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-semibold text-foreground">Cupom de desconto</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cupons de desconto estão disponíveis apenas para pagamentos via <strong>Cartão de Crédito</strong>. Se você possui um cupom, volte e selecione o método de pagamento por cartão.
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => navigate("/upgrade")}
+              >
+                <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                Pagar com Cartão de Crédito
+              </Button>
             </div>
 
             {/* Security badges */}
