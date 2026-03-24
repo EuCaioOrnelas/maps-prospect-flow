@@ -49,6 +49,16 @@ const CheckoutSuccess = () => {
     setLoading(true);
 
     try {
+      if (!isPasswordStrong(password)) {
+        toast({
+          title: "Senha muito fraca",
+          description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
