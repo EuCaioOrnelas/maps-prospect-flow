@@ -139,88 +139,10 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const now = new Date().toISOString();
 
-    // ─── PERIODIC CONNECTION HEALTH CHECK ───────────────────────────────
-    // Refresh is_connected flag for all numbers marked as connected in DB.
-    // IMPORTANT: Never restart instances that have running/paused campaigns
-    // or were recently connected (< 5 min), as this causes real disconnections.
-    try {
-      const { data: connectedNumbers } = await supabase
-        .from('whatsapp_numbers')
-        .select('id, instance_name, api_tier, user_id, is_connected, phone_number, updated_at')
-        .eq('is_connected', true);
-
-      // Get all numbers with active campaigns to protect them from restarts
-      const { data: activeCampaignNumbers } = await supabase
-        .from('whatsapp_campaigns')
-        .select('whatsapp_number_id')
-        .in('status', ['running', 'paused', 'scheduled', 'postponed', 'pending']);
-
-      const numbersWithCampaigns = new Set(
-        (activeCampaignNumbers || []).map((c: any) => c.whatsapp_number_id)
-      );
-
-      for (const num of (connectedNumbers || [])) {
-        if (!num.instance_name) continue;
-
-        // SAFETY: Skip numbers with active campaigns — never restart them
-        if (numbersWithCampaigns.has(num.id)) {
-          console.log(`[health-check] ⏭️ Skipping ${num.instance_name} — has active campaign`);
-          continue;
-        }
-
-        // SAFETY: Skip recently connected numbers (< 5 min) — transient states are normal
-        const lastUpdate = new Date(num.updated_at).getTime();
-        const minutesSinceUpdate = (Date.now() - lastUpdate) / (1000 * 60);
-        if (minutesSinceUpdate < 5) {
-          console.log(`[health-check] ⏭️ Skipping ${num.instance_name} — updated ${minutesSinceUpdate.toFixed(1)} min ago (< 5 min cooldown)`);
-          continue;
-        }
-
-        const creds = await getEvolutionCredentialsForNumber(supabase, num, num.user_id);
-        const check = await checkInstanceConnection(creds.url, creds.apiKey, num.instance_name);
-
-        if (!check.connected) {
-          // Double-check with a retry before marking offline
-          await new Promise(r => setTimeout(r, 2000));
-          const recheck = await checkInstanceConnection(creds.url, creds.apiKey, num.instance_name);
-          
-          if (!recheck.connected) {
-            // DO NOT restart — just log and mark as disconnected.
-            // Restarting from the health check is the #1 cause of campaign disconnections.
-            console.log(`[health-check] ❌ ${num.instance_name} is NOT connected after 2 checks. Marking offline (NO restart).`);
-            await supabase.from('whatsapp_numbers').update({
-              is_connected: false,
-              updated_at: new Date().toISOString()
-            }).eq('id', num.id);
-          }
-        } else {
-          // Connected — ensure phone_number is hydrated if null
-          if (!num.phone_number) {
-            try {
-              const infoResp = await fetch(`${creds.url}/instance/fetchInstances?instanceName=${num.instance_name}`, {
-                method: 'GET', headers: { 'apikey': creds.apiKey },
-              });
-              if (infoResp.ok) {
-                const infoData = await infoResp.json();
-                const inst = Array.isArray(infoData) ? infoData[0] : infoData;
-                const rawOwner = inst?.owner || inst?.instance?.owner || inst?.number || inst?.wuid || null;
-                if (rawOwner) {
-                  const digits = String(rawOwner).replace(/\D/g, '');
-                  if (digits.length >= 10) {
-                    const phone = digits.startsWith('55') ? digits : `55${digits}`;
-                    await supabase.from('whatsapp_numbers').update({ phone_number: phone, updated_at: new Date().toISOString() }).eq('id', num.id);
-                    console.log(`[health-check] 📱 Hydrated phone_number for ${num.instance_name}: ${phone}`);
-                  }
-                }
-              }
-            } catch (e) { /* ignore */ }
-          }
-        }
-      }
-    } catch (healthErr) {
-      console.error('[health-check] Error during periodic check:', healthErr);
-    }
-    // ─── END HEALTH CHECK ───────────────────────────────────────────────
+    // NOTE: No periodic health check here — it was causing excessive API calls
+    // to Evolution every minute, destabilizing connections. Connection state
+    // is managed by evolution-webhook (CONNECTION_UPDATE events) and
+    // campaign-processor's own live checks before sending.
 
     // Find scheduled campaigns that should start now
     const { data: scheduledCampaigns, error: fetchError } = await supabase
