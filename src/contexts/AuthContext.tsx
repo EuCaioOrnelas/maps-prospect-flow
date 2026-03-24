@@ -118,12 +118,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const results = await Promise.allSettled(pendingQueries);
       const pendingPixIds = Array.from(
         new Set(
-          results
-            .filter((result): result is PromiseFulfilledResult<{ data: { stripe_session_id: string | null }[] | null; error: any }> => result.status === 'fulfilled')
-            .flatMap((result) => result.value.data ?? [])
-            .map((lead) => lead.stripe_session_id)
-            .filter((sessionId): sessionId is string => !!sessionId)
-            .map((sessionId) => sessionId.replace('asaas_pixauto_', ''))
+          results.flatMap((result) => {
+            if (result.status !== 'fulfilled') {
+              return [];
+            }
+
+            return (result.value.data ?? [])
+              .map((lead) => lead.stripe_session_id)
+              .filter((sessionId): sessionId is string => !!sessionId)
+              .map((sessionId) => sessionId.replace('asaas_pixauto_', ''));
+          })
         )
       ).slice(0, 3);
 
