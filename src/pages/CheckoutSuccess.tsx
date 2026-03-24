@@ -267,13 +267,14 @@ const CheckoutSuccess = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Crie uma senha forte"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   required
                   className="h-12"
                 />
+                <PasswordStrength password={password} />
               </motion.div>
 
               <motion.div
