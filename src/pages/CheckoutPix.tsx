@@ -64,7 +64,6 @@ export default function CheckoutPix() {
   const [copied, setCopied] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
-  const [testCoupon, setTestCoupon] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   // Expiration timer (1 hour from QR generation)
