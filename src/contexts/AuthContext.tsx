@@ -89,14 +89,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data as Profile | null;
   };
 
+  const reconcilePendingAsaasCheckout = async (userId: string, email?: string | null) => {
+    try {
+      const pendingQueries = [
+        supabase
+          .from('checkout_leads')
+          .select('stripe_session_id, email, user_id, created_at')
+          .eq('checkout_completed', false)
+          .eq('user_id', userId)
+          .like('stripe_session_id', 'asaas_pixauto_%')
+          .order('created_at', { ascending: false })
+          .limit(3),
+      ];
+
+      if (email) {
+        pendingQueries.push(
+          supabase
+            .from('checkout_leads')
+            .select('stripe_session_id, email, user_id, created_at')
+            .eq('checkout_completed', false)
+            .eq('email', email)
+            .like('stripe_session_id', 'asaas_pixauto_%')
+            .order('created_at', { ascending: false })
+            .limit(3)
+        );
+      }
+
+      const results = await Promise.allSettled(pendingQueries);
+      const pendingPixIds = Array.from(
+        new Set(
+          results.flatMap((result) => {
+            if (result.status !== 'fulfilled') {
+              return [];
+            }
+
+            return (result.value.data ?? [])
+              .map((lead) => lead.stripe_session_id)
+              .filter((sessionId): sessionId is string => !!sessionId)
+              .map((sessionId) => sessionId.replace('asaas_pixauto_', ''));
+          })
+        )
+      ).slice(0, 3);
+
+      if (pendingPixIds.length === 0) {
+        return false;
+      }
+
+      console.log('[AuthContext] Reconciling pending Asaas checkouts', { userId, pendingPixIds });
+
+      const paymentChecks = await Promise.allSettled(
+        pendingPixIds.map((pixId) =>
+          supabase.functions.invoke('check-asaas-payment', {
+            body: { pixId },
+          })
+        )
+      );
+
+      const hasConfirmedPayment = paymentChecks.some(
+        (result) =>
+          result.status === 'fulfilled' &&
+          !result.value.error &&
+          ['PAID', 'CONFIRMED', 'RECEIVED'].includes(result.value.data?.status)
+      );
+
+      if (!hasConfirmedPayment) {
+        return false;
+      }
+
+      console.log('[AuthContext] Pending Asaas checkout confirmed during account sync', { userId });
+      return true;
+    } catch (err) {
+      console.error('[AuthContext] Pending Asaas reconciliation failed:', err);
+      return false;
+    }
+  };
+
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
-  const syncAccountState = async (userId: string, reason: string) => {
+  const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
     try {
       console.log(`[AuthContext] Sync account state (${reason})...`);
 
       const results = await Promise.allSettled([
         supabase.functions.invoke('check-subscription'),
         supabase.rpc('check_and_reset_monthly_searches', { user_id: userId }),
+        reconcilePendingAsaasCheckout(userId, email),
       ]);
 
       if (results[0].status === 'rejected') {
@@ -109,6 +185,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('[AuthContext] Error resetting monthly searches:', results[1].reason);
       } else if (results[1].value?.error) {
         console.error('[AuthContext] Error resetting monthly searches:', results[1].value.error);
+      }
+
+      if (results[2].status === 'rejected') {
+        console.error('[AuthContext] Error reconciling pending Asaas checkout:', results[2].reason);
       }
 
       const updatedProfile = await fetchProfile(userId);
@@ -135,7 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          syncAccountState(session.user.id, 'refocus');
+          syncAccountState(session.user.id, 'refocus', session.user.email);
         }
       } catch (e) {
         console.error('[AuthContext] Refocus sync failed:', e);
@@ -158,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Sync account after login or token refresh to ensure plan/searches are up to date
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               setTimeout(() => {
-                syncAccountState(session.user.id, event);
+                syncAccountState(session.user.id, event, session.user.email);
               }, 500);
             }
 
@@ -218,7 +298,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Sync on initial load
           setTimeout(() => {
-            syncAccountState(session.user.id, 'initial');
+            syncAccountState(session.user.id, 'initial', session.user.email);
           }, 500);
         }
       } catch (error) {
@@ -232,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const intervalId = window.setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        syncAccountState(session.user.id, 'interval');
+        syncAccountState(session.user.id, 'interval', session.user.email);
       }
     }, 1000 * 60 * 60 * 6); // 6h
 
