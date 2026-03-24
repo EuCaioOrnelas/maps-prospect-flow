@@ -578,6 +578,16 @@ REGRAS:
           // Remove any non-digit characters for matching
           const normalizedPhone = rawPhone.replace(/\D/g, '');
           const canonicalLeadPhone = !isGroup ? normalizeBrazilianMobileE164(rawPhone) : null;
+          const rawMessageTimestamp = Number(data?.messageTimestamp || payload?.data?.messageTimestamp || 0);
+          const normalizedMessageTimestampMs = Number.isFinite(rawMessageTimestamp) && rawMessageTimestamp > 0
+            ? (rawMessageTimestamp < 1_000_000_000_000 ? rawMessageTimestamp * 1000 : rawMessageTimestamp)
+            : null;
+          const messageAgeMs = normalizedMessageTimestampMs ? Date.now() - normalizedMessageTimestampMs : null;
+          const isHistoricalSyncMessage = messageAgeMs !== null && messageAgeMs > 10 * 60 * 1000;
+
+          if (isHistoricalSyncMessage) {
+            console.log(`Skipping CRM/agent automation for historical message (${Math.round(messageAgeMs / 1000)}s old) on ${instance}`);
+          }
           
           // Get the WhatsApp number (instance) info
           const { data: whatsappNumber } = await supabase
