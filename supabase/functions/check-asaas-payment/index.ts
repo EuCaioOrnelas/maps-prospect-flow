@@ -58,6 +58,61 @@ serve(async (req) => {
       mappedStatus = "PAID";
     }
 
+    // If authorization was REFUSED/CANCELLED, the bank rejected recurrence
+    // BUT the immediate QR Code payment may still have gone through
+    // Check payments endpoint to confirm if money was actually received
+    if (status === "REFUSED" || status === "CANCELLED" || status === "AWAITING_AUTHORIZATION") {
+      logStep("Authorization not active, checking if immediate payment was received", { pixId, status });
+      
+      try {
+        // Check payments linked to this authorization
+        const paymentsRes = await fetch(
+          `${ASAAS_API}/payments?pixAutomaticAuthorizationId=${pixId}&status=CONFIRMED&limit=1`,
+          {
+            headers: {
+              "access_token": apiKey,
+              "Accept": "application/json",
+            },
+          }
+        );
+        
+        const paymentsJson = await paymentsRes.json();
+        
+        if (paymentsJson.data && paymentsJson.data.length > 0) {
+          logStep("Immediate payment found despite authorization status", { 
+            pixId, 
+            authStatus: status, 
+            paymentStatus: paymentsJson.data[0].status,
+            paymentId: paymentsJson.data[0].id 
+          });
+          mappedStatus = "PAID";
+        } else {
+          // Also check RECEIVED status
+          const receivedRes = await fetch(
+            `${ASAAS_API}/payments?pixAutomaticAuthorizationId=${pixId}&status=RECEIVED&limit=1`,
+            {
+              headers: {
+                "access_token": apiKey,
+                "Accept": "application/json",
+              },
+            }
+          );
+          const receivedJson = await receivedRes.json();
+          
+          if (receivedJson.data && receivedJson.data.length > 0) {
+            logStep("Received payment found despite authorization status", {
+              pixId,
+              authStatus: status,
+              paymentId: receivedJson.data[0].id
+            });
+            mappedStatus = "PAID";
+          }
+        }
+      } catch (paymentCheckError) {
+        logStep("Error checking payments fallback", { error: String(paymentCheckError) });
+      }
+    }
+
     // If authorization is ACTIVE, activate the plan
     if (mappedStatus === "PAID") {
       const { data: leads } = await supabaseClient
