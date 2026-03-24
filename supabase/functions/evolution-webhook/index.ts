@@ -966,7 +966,7 @@ REGRAS:
             }
 
             // If message has media, download it and store in Supabase Storage
-            if (hasMedia) {
+            if (hasMedia && !isHistoricalSyncMessage) {
               console.log(`Message has ${messageType} media, downloading...`);
               const storedMedia = await downloadAndStoreMedia(
                 instance,
@@ -983,6 +983,8 @@ REGRAS:
               } else {
                 console.log('Failed to download media, message will be saved without media URL');
               }
+            } else if (hasMedia) {
+              console.log(`Skipping media download for historical message ${messageId}`);
             }
 
             // ===== MESSAGE STORAGE (only if conversations/messages tables exist) =====
