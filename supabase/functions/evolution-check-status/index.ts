@@ -292,24 +292,36 @@ serve(async (req) => {
               }
             }
 
-            // Try to force reconnect by restarting the instance
-            try {
-              const restartResponse = await fetch(`${evoCredentials.url}/instance/restart/${instanceName}`, {
-                method: 'PUT',
-                headers: { 'apikey': evoCredentials.apiKey },
-              });
-              console.log(`Restart attempt for stuck instance ${instanceName}: ${restartResponse.status}`);
-              
-              if (!restartResponse.ok) {
-                // If restart fails, try logout + connect to force new QR
-                const logoutResponse = await fetch(`${evoCredentials.url}/instance/logout/${instanceName}`, {
-                  method: 'DELETE',
+            // Check if this number has active campaigns before attempting restart
+            const { data: activeCampaigns } = await supabase
+              .from('whatsapp_campaigns')
+              .select('id')
+              .eq('whatsapp_number_id', numberId)
+              .in('status', ['running', 'paused', 'scheduled', 'postponed', 'pending'])
+              .limit(1);
+
+            if (activeCampaigns && activeCampaigns.length > 0) {
+              console.log(`⚠️ Instance ${instanceName} stuck but has active campaigns — NOT restarting to avoid disconnection`);
+            } else {
+              // Safe to restart — no active campaigns
+              try {
+                const restartResponse = await fetch(`${evoCredentials.url}/instance/restart/${instanceName}`, {
+                  method: 'PUT',
                   headers: { 'apikey': evoCredentials.apiKey },
                 });
-                console.log(`Logout attempt for stuck instance ${instanceName}: ${logoutResponse.status}`);
+                console.log(`Restart attempt for stuck instance ${instanceName}: ${restartResponse.status}`);
+                
+                if (!restartResponse.ok) {
+                  // If restart fails, try logout + connect to force new QR
+                  const logoutResponse = await fetch(`${evoCredentials.url}/instance/logout/${instanceName}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': evoCredentials.apiKey },
+                  });
+                  console.log(`Logout attempt for stuck instance ${instanceName}: ${logoutResponse.status}`);
+                }
+              } catch (e) {
+                console.error(`Failed to restart stuck instance ${instanceName}:`, e);
               }
-            } catch (e) {
-              console.error(`Failed to restart stuck instance ${instanceName}:`, e);
             }
           }
         }
