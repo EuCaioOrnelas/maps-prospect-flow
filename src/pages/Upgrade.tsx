@@ -385,24 +385,8 @@ const Upgrade = () => {
           </p>
         </div>
 
-        {/* Manage Subscription Button for paid users */}
-        {hasPaidPlan && (
-          <div className="flex justify-center mb-8">
-            <Button
-              variant="outline"
-              onClick={handleManageSubscription}
-              disabled={loadingPortal}
-              className="gap-2"
-            >
-              {loadingPortal ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Settings size={16} />
-              )}
-              Gerenciar Assinatura
-            </Button>
-          </div>
-        )}
+
+
 
         {/* Auto-checking indicator when coming from checkout */}
         {isFromCheckout && currentPlan === "free" && (
