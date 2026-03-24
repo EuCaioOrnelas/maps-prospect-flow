@@ -1076,7 +1076,7 @@ REGRAS:
             }
 
             // ===== LEAD STATUS UPDATES (works without conversations/messages tables) =====
-            if (!fromMe) {
+            if (!fromMe && !isGroup && !isHistoricalSyncMessage) {
               const ownCanonicalPhone = normalizeBrazilianMobileE164(String(whatsappNumber?.phone_number || ''));
               const effectiveLeadPhone = ownCanonicalPhone && canonicalLeadPhone === ownCanonicalPhone
                 ? null
