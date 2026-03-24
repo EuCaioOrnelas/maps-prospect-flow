@@ -146,16 +146,27 @@ serve(async (req) => {
         }
 
         if (targetId) {
-          await supabaseClient.from("profiles").update({
-            plan: planKey,
-            searches_limit: searchesLimit,
-            searches_used: 0,
-            subscription_current_period_end: periodEnd.toISOString(),
-            payment_provider: "asaas",
-            updated_at: new Date().toISOString(),
-          }).eq("id", targetId);
+          // Check if this is an admin-assigned account - don't overwrite
+          const { data: targetProfile } = await supabaseClient
+            .from("profiles")
+            .select("admin_assigned_plan")
+            .eq("id", targetId)
+            .maybeSingle();
 
-          logStep("Profile updated", { userId: targetId, planKey });
+          if (targetProfile?.admin_assigned_plan) {
+            logStep("Skipping profile update - admin assigned plan", { userId: targetId });
+          } else {
+            await supabaseClient.from("profiles").update({
+              plan: planKey,
+              searches_limit: searchesLimit,
+              searches_used: 0,
+              subscription_current_period_end: periodEnd.toISOString(),
+              payment_provider: "asaas",
+              updated_at: new Date().toISOString(),
+            }).eq("id", targetId);
+
+            logStep("Profile updated", { userId: targetId, planKey });
+          }
         }
 
         await supabaseClient.from("checkout_leads").update({
