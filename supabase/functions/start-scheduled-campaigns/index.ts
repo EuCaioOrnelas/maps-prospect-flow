@@ -135,6 +135,20 @@ serve(async (req) => {
     console.error('[start-scheduled-campaigns] agent-buffer-processor trigger error:', e);
   }
 
+  // ─── TRIGGER CAMPAIGN PROCESSOR (fire-and-forget) ────────────────────
+  try {
+    fetch(`${SUPABASE_URL}/functions/v1/campaign-processor`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'cron' }),
+    }).catch(err => console.error('[start-scheduled-campaigns] campaign-processor call failed:', err));
+  } catch (e) {
+    console.error('[start-scheduled-campaigns] campaign-processor trigger error:', e);
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const now = new Date().toISOString();
