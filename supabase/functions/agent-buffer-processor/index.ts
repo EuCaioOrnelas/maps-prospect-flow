@@ -515,6 +515,18 @@ serve(async (req) => {
         
         if (!agent || agent.status !== 'active') {
           console.log(`Skipping conv ${conv.id}: agent not active`);
+          // Clear process_after so it doesn't get picked up again
+          await supabase.from('agent_conversations').update({ process_after: null, is_processing: false }).eq('id', conv.id);
+          continue;
+        }
+
+        // Secondary group detection: block group phone numbers
+        const convPhoneDigits = conv.lead_phone?.replace(/\D/g, '') || '';
+        const isGroupPhone = convPhoneDigits.startsWith('120363') || convPhoneDigits.length > 15 || conv.lead_phone?.includes('@g.us');
+        
+        if (isGroupPhone && !agent.respond_to_groups) {
+          console.log(`Skipping conv ${conv.id}: group phone detected (${conv.lead_phone}) and respond_to_groups=false`);
+          await supabase.from('agent_conversations').update({ process_after: null, is_processing: false, status: 'lost' }).eq('id', conv.id);
           continue;
         }
 
@@ -1300,14 +1312,68 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                   console.log(`Agent doesn't know answer, moving lead to "${crmStageUnknown}" for human handling`);
                   crmExtras.whatsapp_status = 'in_conversation';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageUnknown, crmExtras);
+
+                  // Send email notification to user about human handoff
+                  try {
+                    // Build a contextual reason using the lead's last message
+                    const lastLeadMessage = combinedMessage?.substring(0, 200) || '';
+                    const handoffReason = lastLeadMessage
+                      ? `O agente não soube responder à seguinte mensagem do lead: "${lastLeadMessage}${combinedMessage && combinedMessage.length > 200 ? '...' : ''}"`
+                      : 'O agente identificou que não consegue responder adequadamente e transferiu para atendimento humano.';
+
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        user_id: whatsappNumber.user_id,
+                        email_type: 'AGENT_HUMAN_HANDOFF',
+                        payload: {
+                          agent_name: agent.name,
+                          lead_phone: conv.lead_phone,
+                          lead_name: conv.lead_name || null,
+                          stage_name: crmStageUnknown,
+                          reason: handoffReason,
+                        },
+                        idempotency_key: `handoff_${conv.id}_${Date.now()}`,
+                      },
+                    });
+                    console.log(`Human handoff email sent for conv ${conv.id}`);
+                  } catch (emailErr) {
+                    console.error(`Failed to send human handoff email for conv ${conv.id}:`, emailErr);
+                  }
                 } else if (isLeadLost && crmStageLost) {
                   // Lead explicitly not interested — move to lost stage
                   console.log(`Lead lost, moving to "${crmStageLost}"`);
                   crmExtras.whatsapp_status = 'lost';
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageLost, crmExtras);
                 } else if (isConversationEnded && crmStageEndSuccess) {
-                  // Conversation ended successfully
+                  // Conversation ended successfully — objective achieved
+                  console.log(`Objective achieved, moving lead to "${crmStageEndSuccess}"`);
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageEndSuccess, crmExtras);
+
+                  // Send email notification about objective completion
+                  try {
+                    const lastLeadMessage = combinedMessage?.substring(0, 200) || '';
+                    const objectiveReason = lastLeadMessage
+                      ? `O agente concluiu o objetivo após a seguinte interação do lead: "${lastLeadMessage}${combinedMessage && combinedMessage.length > 200 ? '...' : ''}"`
+                      : 'O agente identificou que o objetivo da conversa foi atingido com sucesso.';
+
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        user_id: whatsappNumber.user_id,
+                        email_type: 'AGENT_OBJECTIVE_COMPLETED',
+                        payload: {
+                          agent_name: agent.name,
+                          lead_phone: conv.lead_phone,
+                          lead_name: conv.lead_name || null,
+                          stage_name: crmStageEndSuccess,
+                          reason: objectiveReason,
+                        },
+                        idempotency_key: `objective_${conv.id}_${Date.now()}`,
+                      },
+                    });
+                    console.log(`Objective completed email sent for conv ${conv.id}`);
+                  } catch (emailErr) {
+                    console.error(`Failed to send objective completed email for conv ${conv.id}:`, emailErr);
+                  }
                 } else {
                   await moveLeadToCRMStage(supabase, conv.lead_phone, whatsappNumber.user_id, crmStageReply, crmExtras);
                 }
