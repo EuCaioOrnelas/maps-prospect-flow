@@ -663,7 +663,6 @@ const WhatsAppReports = () => {
               </div>
             </div>
           </Card>
-          </div>
           </>
           )}
           </div>
