@@ -714,7 +714,7 @@ export const LeadDetailDialog = ({
           </div>
         </div>
 
-        {/* Agent Pause Banner - prominent at top */}
+        {/* Agent Status Banner - always visible when user has agents */}
         {agentPauseStatus && (
           <div className={cn(
             "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
@@ -729,7 +729,7 @@ export const LeadDetailDialog = ({
               )} />
               <span className="text-xs font-medium truncate">
                 {agentPauseStatus.isPaused
-                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
+                  ? `Agente IA desativado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
                   : 'Agente IA ativo neste lead'}
               </span>
             </div>
@@ -743,12 +743,12 @@ export const LeadDetailDialog = ({
               {agentPauseStatus.isPaused ? (
                 <>
                   <Play className="w-3.5 h-3.5" />
-                  Retomar
+                  Ativar
                 </>
               ) : (
                 <>
                   <Pause className="w-3.5 h-3.5" />
-                  Pausar
+                  Desativar
                 </>
               )}
             </Button>
