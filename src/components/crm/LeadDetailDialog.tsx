@@ -310,9 +310,10 @@ export const LeadDetailDialog = ({
 
   // Agent pause state
   const [agentPauseStatus, setAgentPauseStatus] = useState<{
-    conversationId: string;
+    conversationId: string | null;
     isPaused: boolean;
     pausedUntil: string | null;
+    hasAgent: boolean;
   } | null>(null);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
 
