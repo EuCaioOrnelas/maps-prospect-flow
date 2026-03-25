@@ -81,7 +81,8 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
   const estimatedOpportunities = Math.round(messagesSent * opportunityRate);
   const prevEstimatedOpportunities = Math.round(prevMessagesSent * opportunityRate);
 
-  const steps = [
+  const maxVal = Math.max(leadsProspected, messagesSent, 1);
+
     { 
       label: "Leads Prospectados", 
       value: leadsProspected, 
