@@ -247,17 +247,24 @@ export default function AdminEmailFlowEditor() {
     }
 
     // Sync edges: delete old, insert current state
-    await supabase.from("email_flow_edges").delete().eq("flow_id", id);
+    const { error: delErr } = await supabase.from("email_flow_edges").delete().eq("flow_id", id);
+    if (delErr) console.error("Error deleting edges:", delErr);
+
     for (const edge of edges) {
-      await supabase.from("email_flow_edges").insert({
-        ...(edge.id.startsWith("temp-") ? {} : { id: edge.id }),
+      const edgeData: any = {
         flow_id: id,
         source_node_id: edge.source,
         target_node_id: edge.target,
         source_handle: edge.sourceHandle || null,
         target_handle: edge.targetHandle || null,
         condition_label: typeof edge.label === "string" ? edge.label : null,
-      });
+      };
+      // Only keep ID if it's a valid UUID (not temp-)
+      if (!edge.id.startsWith("temp-")) {
+        edgeData.id = edge.id;
+      }
+      const { error: insErr } = await supabase.from("email_flow_edges").insert(edgeData);
+      if (insErr) console.error("Error inserting edge:", insErr, edgeData);
     }
 
     toast.success("Fluxo salvo!");

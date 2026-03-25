@@ -4,6 +4,9 @@ import { GitBranch } from "lucide-react";
 const conditionLabels: Record<string, string> = {
   email_opened: "Abriu email",
   email_clicked: "Clicou no email",
+  button_clicked_checkout: "Clicou botão Checkout",
+  button_clicked_dashboard: "Clicou botão Dashboard",
+  button_clicked_any: "Clicou qualquer botão",
   score_above: "Score acima de",
   has_tag: "Possui tag",
   is_customer: "Virou cliente",

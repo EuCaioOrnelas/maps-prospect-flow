@@ -147,6 +147,8 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
         payload: {
           subject: `[TESTE] ${config.subject}`,
           content: config.body,
+          reply_to: config.reply_to || undefined,
+          from_name: config.from_name || "Wiize",
         },
         override_email: user.email,
       },
