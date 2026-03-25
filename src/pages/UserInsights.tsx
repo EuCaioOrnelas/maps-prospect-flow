@@ -190,6 +190,7 @@ const UserInsights = () => {
 
       setOnboardingData(onboarding || []);
       setFeedbackData(feedback || []);
+      setCancellationData(cancellations || []);
       setUserProfiles(profilesMap);
     } catch (error) {
       console.error('Error loading data:', error);
