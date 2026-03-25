@@ -117,6 +117,7 @@ const UserInsights = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData[]>([]);
   const [feedbackData, setFeedbackData] = useState<FeedbackData[]>([]);
+  const [cancellationData, setCancellationData] = useState<CancellationData[]>([]);
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
   
   // Filters
