@@ -172,6 +172,12 @@ const UserInsights = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
+      // Load cancellation feedback
+      const { data: cancellations } = await supabase
+        .from('cancellation_feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       // Load user profiles
       const { data: profiles } = await supabase
         .from('profiles')
