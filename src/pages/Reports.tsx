@@ -61,6 +61,7 @@ import { AgentMetricsDashboard } from "@/components/agents/AgentMetricsDashboard
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { ReportEmptyState } from "@/components/dashboard/ReportEmptyState";
 
 interface SearchHistoryItem {
   id: string;
