@@ -666,6 +666,7 @@ const WhatsAppReports = () => {
         </div>
           </>
           )}
+        </div>
           </main>
 
       {/* Share Dialog */}
