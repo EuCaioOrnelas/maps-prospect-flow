@@ -67,18 +67,21 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
           return;
         }
 
-        // Walk the flow from entry node following edges
+        // BFS traversal to visit ALL nodes in ALL branches
+        const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "dias" };
         const emailsSent: string[] = [];
         const flowPath: string[] = [];
-        let currentNodeId: string | null = entry?.id || null;
+        const sendErrors: string[] = [];
         const visited = new Set<string>();
+        const queue: string[] = entry ? [entry.id] : [];
 
-        while (currentNodeId && !visited.has(currentNodeId)) {
+        while (queue.length > 0) {
+          const currentNodeId = queue.shift()!;
+          if (visited.has(currentNodeId)) continue;
           visited.add(currentNodeId);
-          const node = (nodes || []).find(n => n.id === currentNodeId);
-          if (!node) break;
 
-          const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "dias" };
+          const node = (nodes || []).find(n => n.id === currentNodeId);
+          if (!node) continue;
 
           if (node.node_type === "entry") {
             flowPath.push(`🟢 Entrada: ${node.name}`);
@@ -98,7 +101,7 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
                 },
               });
               if (error) {
-                issues.push(`Erro ao enviar "${node.name}": ${error.message}`);
+                sendErrors.push(`Erro ao enviar "${node.name}": ${error.message}`);
               } else {
                 emailsSent.push(cfg.subject);
               }
@@ -108,25 +111,25 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
             const cfg = node.config as any;
             flowPath.push(`⏳ Espera: ${cfg.delay_value || 1} ${unitLabels[cfg.delay_unit] || cfg.delay_unit}`);
           } else if (node.node_type === "condition") {
-            flowPath.push(`🔀 Condição: ${node.name} (seguindo caminho "Sim")`);
+            flowPath.push(`🔀 Condição: ${node.name} (testando ambos os caminhos)`);
           } else if (node.node_type === "end") {
             flowPath.push(`🔴 Fim: ${node.name}`);
-            break;
           }
 
-          // Find next node
-          let nextEdge;
-          if (node.node_type === "condition") {
-            nextEdge = (edges || []).find(e => e.source_node_id === currentNodeId && e.source_handle === "yes")
-              || (edges || []).find(e => e.source_node_id === currentNodeId);
-          } else {
-            nextEdge = (edges || []).find(e => e.source_node_id === currentNodeId);
+          // Enqueue ALL outgoing edges (both "yes" and "no" for conditions, all for others)
+          const outgoing = (edges || []).filter(e => e.source_node_id === currentNodeId);
+          for (const edge of outgoing) {
+            if (!visited.has(edge.target_node_id)) {
+              if (node.node_type === "condition" && edge.source_handle) {
+                flowPath.push(`  ↳ Caminho "${edge.source_handle === "yes" ? "Sim" : "Não"}"`);
+              }
+              queue.push(edge.target_node_id);
+            }
           }
-          currentNodeId = nextEdge?.target_node_id || null;
         }
 
-        if (issues.length > 0) {
-          setResult(`⚠ Erros durante o teste:\n${issues.map(i => `• ${i}`).join("\n")}`);
+        if (sendErrors.length > 0) {
+          setResult(`⚠ Erros durante o teste:\n${sendErrors.map(i => `• ${i}`).join("\n")}\n\n📋 Caminho percorrido:\n${flowPath.join("\n")}`);
         } else if (emailsSent.length > 0) {
           setResult(`✅ ${emailsSent.length} email(s) enviado(s) para ${testEmail}:\n\n${emailsSent.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\n📋 Caminho percorrido:\n${flowPath.join("\n")}`);
         } else {
@@ -154,7 +157,7 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
 
         <div className="space-y-4 mt-2">
           <p className="text-sm text-muted-foreground">
-            Valida o fluxo e envia <strong>todos</strong> os emails do caminho principal para o email de teste.
+            Valida o fluxo e envia <strong>todos</strong> os emails de <strong>todos os caminhos</strong> (incluindo condições Sim/Não) para o email de teste.
           </p>
           <div>
             <Label>Email de teste (opcional)</Label>
