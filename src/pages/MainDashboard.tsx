@@ -31,9 +31,12 @@ const PERIOD_OPTIONS = [
 export default function MainDashboard() {
   const { profile } = useAuth();
   useAutoScoreTracking("main_dashboard");
+  const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
+
+  const hasData = data.leadsProspected > 0 || data.messagesSent > 0 || data.allTimeLeads > 0;
 
   if (data.loading) {
     return (
