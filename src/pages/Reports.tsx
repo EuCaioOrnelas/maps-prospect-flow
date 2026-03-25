@@ -621,6 +621,16 @@ const Reports = () => {
                 </TabsList>
 
                 <TabsContent value="prospecting" className="space-y-6">
+                  {stats.totalSearches === 0 ? (
+                    <ReportEmptyState
+                      title="Sem dados suficientes para análise"
+                      description="Comece a prospectar leads para visualizar seus relatórios de performance, nichos explorados e evolução ao longo do tempo."
+                      actionLabel="Prospectar leads"
+                      actionLink="/dashboard"
+                      icon={<Search size={28} className="text-muted-foreground/40" />}
+                    />
+                  ) : (
+                  <>
                   {/* Stats Cards with staggered animation */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
