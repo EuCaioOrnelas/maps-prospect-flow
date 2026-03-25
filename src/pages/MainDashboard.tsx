@@ -37,7 +37,7 @@ export default function MainDashboard() {
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
 
-  const hasData = data.leadsProspected > 0 || data.messagesSent > 0 || data.allTimeLeads > 0;
+  
 
   if (data.loading) {
     return (
