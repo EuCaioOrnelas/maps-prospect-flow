@@ -254,8 +254,8 @@ export default function AdminEmailFlowEditor() {
         flow_id: id,
         source_node_id: edge.source,
         target_node_id: edge.target,
-        source_handle: edge.sourceHandle || "source",
-        target_handle: edge.targetHandle || "target",
+        source_handle: edge.sourceHandle || null,
+        target_handle: edge.targetHandle || null,
         condition_label: typeof edge.label === "string" ? edge.label : null,
       });
     }
