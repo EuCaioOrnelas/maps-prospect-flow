@@ -397,6 +397,16 @@ const WhatsAppReports = () => {
             </div>
           )}
 
+          {campaigns.length === 0 ? (
+            <ReportEmptyState
+              title="Sem dados suficientes para análise"
+              description="Crie e envie suas primeiras campanhas de WhatsApp para visualizar relatórios de performance, taxa de sucesso e evolução dos disparos."
+              actionLabel="Criar campanha"
+              actionLink="/whatsapp-campaign"
+              icon={<MessageSquare size={28} className="text-muted-foreground/40" />}
+            />
+          ) : (
+          <>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="p-4 glass">
