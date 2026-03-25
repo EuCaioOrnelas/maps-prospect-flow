@@ -403,11 +403,11 @@ export default function CheckoutPix() {
                   )}
                 </Button>
 
-                <div className="rounded-xl border border-border/50 bg-muted/30 p-3 text-center max-w-sm">
-                  <p className="text-[11px] text-muted-foreground font-medium mb-1 flex items-center justify-center gap-1">
-                    <span className="text-primary">⚡</span> PIX Recorrente (Débito Automático)
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center max-w-sm">
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mb-1 flex items-center justify-center gap-1">
+                    ⚡ PIX Recorrente (Débito Automático)
                   </p>
-                  <p className="text-[11px] text-muted-foreground/80">
+                  <p className="text-[11px] text-muted-foreground">
                     Ao escanear o QR Code, você autoriza a cobrança automática mensal via PIX. O valor será debitado todo mês. Você pode cancelar a qualquer momento pelo seu perfil.
                   </p>
                 </div>
