@@ -18,6 +18,9 @@ import { ActivationChecklistInline } from "@/components/dashboard/ActivationChec
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { RenewalBanner } from "@/components/dashboard/RenewalBanner";
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
+import { useOnboardingModals } from "@/hooks/useOnboardingModals";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
