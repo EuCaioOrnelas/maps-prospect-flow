@@ -717,7 +717,7 @@ export const LeadDetailDialog = ({
         {/* Agent Status Banner - always visible when user has agents */}
         {agentPauseStatus && (
           <div className={cn(
-            "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
+            "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-y shrink-0 transition-colors",
             agentPauseStatus.isPaused 
               ? "bg-destructive/10 border-destructive/20" 
               : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20"
