@@ -61,10 +61,25 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
   const messagesSent = props.messagesSent ?? 0;
   const prevMessagesSent = props.prevMessagesSent ?? 0;
   const opportunityRate = props.conversionRate ?? DEFAULT_OPPORTUNITY_RATE;
+
+  const hasData = leadsProspected > 0 || messagesSent > 0;
+
+  if (!hasData) {
+    return (
+      <Card className="bg-card border-border/50 rounded-xl">
+        <CardHeader className="pb-2 pt-5 px-6">
+          <CardTitle className="text-sm font-semibold text-foreground">Funil de Performance</CardTitle>
+        </CardHeader>
+        <CardContent className="py-8 px-6 flex flex-col items-center text-center space-y-2">
+          <TrendingUp size={24} className="text-muted-foreground/30" />
+          <p className="text-xs text-muted-foreground/50">Sem dados para montar o funil</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const estimatedOpportunities = Math.round(messagesSent * opportunityRate);
   const prevEstimatedOpportunities = Math.round(prevMessagesSent * opportunityRate);
-
-  const maxVal = Math.max(leadsProspected, messagesSent, 1);
 
   const steps = [
     { 
