@@ -84,6 +84,7 @@ export function DashboardImpactAccumulated({
     );
   }
 
+  return (
     <div className="space-y-4">
       {/* Header: title + period filter + comparison button */}
       <div className="flex items-center justify-between gap-2">
