@@ -83,6 +83,7 @@ export function DashboardFunnel(props: DashboardFunnelProps) {
 
   const maxVal = Math.max(leadsProspected, messagesSent, 1);
 
+  const steps = [
     { 
       label: "Leads Prospectados", 
       value: leadsProspected, 
