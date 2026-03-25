@@ -76,6 +76,16 @@ interface FeedbackData {
   created_at: string;
 }
 
+interface CancellationData {
+  id: string;
+  user_id: string;
+  email: string | null;
+  cancellation_reason: string;
+  usage_level: string | null;
+  additional_comments: string | null;
+  created_at: string;
+}
+
 interface UserProfile {
   id: string;
   email: string;
