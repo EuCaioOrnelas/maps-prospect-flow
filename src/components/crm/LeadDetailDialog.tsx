@@ -400,17 +400,49 @@ export const LeadDetailDialog = ({
     setIsTogglingPause(true);
     try {
       const newPaused = !agentPauseStatus.isPaused;
-      await supabase
-        .from('agent_conversations')
-        .update({
-          agent_manually_paused: newPaused,
-          agent_paused_until: null,
-        })
-        .eq('id', agentPauseStatus.conversationId);
+      
+      if (agentPauseStatus.conversationId) {
+        // Has existing conversation — update it
+        await supabase
+          .from('agent_conversations')
+          .update({
+            agent_manually_paused: newPaused,
+            agent_paused_until: null,
+          })
+          .eq('id', agentPauseStatus.conversationId);
+      } else if (newPaused && lead && user) {
+        // No conversation yet — create one with paused state
+        const phoneDigits = lead.phone.replace(/\D/g, '');
+        const { data: agents } = await supabase
+          .from('ai_agents')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+        if (agents?.length) {
+          const { data: newConv } = await supabase
+            .from('agent_conversations')
+            .insert({
+              agent_id: agents[0].id,
+              lead_phone: phoneDigits,
+              lead_name: lead.contact_name || lead.company_name || null,
+              status: 'paused',
+              agent_manually_paused: true,
+            })
+            .select('id')
+            .single();
+          if (newConv) {
+            setAgentPauseStatus(prev => prev ? { ...prev, conversationId: newConv.id, isPaused: true, pausedUntil: null } : null);
+            toast.success('Agente IA desativado para este lead');
+            setIsTogglingPause(false);
+            return;
+          }
+        }
+      }
+      
       setAgentPauseStatus(prev => prev ? { ...prev, isPaused: newPaused, pausedUntil: null } : null);
-      toast.success(newPaused ? 'Agente IA pausado para este lead' : 'Agente IA retomado para este lead');
+      toast.success(newPaused ? 'Agente IA desativado para este lead' : 'Agente IA ativado para este lead');
     } catch {
-      toast.error('Erro ao alterar pausa do agente');
+      toast.error('Erro ao alterar status do agente');
     } finally {
       setIsTogglingPause(false);
     }
