@@ -253,6 +253,7 @@ const App = () => (
                 />
                 <Route path="/shared-report/:reportId" element={<SharedReport />} />
                 <Route path="/obrigado" element={<ThankYou />} />
+                <Route path="/cancelamento" element={<CancellationFeedback />} />
                 <Route 
                   path="/admin/tests" 
                   element={
