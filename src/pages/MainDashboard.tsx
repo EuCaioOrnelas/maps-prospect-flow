@@ -14,7 +14,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
 import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
-import { DashboardEmptyState } from "@/components/dashboard/DashboardEmptyState";
+
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { RenewalBanner } from "@/components/dashboard/RenewalBanner";
@@ -37,7 +37,7 @@ export default function MainDashboard() {
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
 
-  const hasData = data.leadsProspected > 0 || data.messagesSent > 0 || data.allTimeLeads > 0;
+  
 
   if (data.loading) {
     return (
@@ -83,75 +83,69 @@ export default function MainDashboard() {
               <RenewalBanner />
               <ActivationChecklistInline />
 
-              {hasData ? (
-                <>
-                  {/* 1️⃣ Impacto Financeiro */}
-                  <DashboardImpactAccumulated
-                    allTimeLeads={data.allTimeLeads}
-                    cumulativeByMonth={data.cumulativeByMonth}
-                    periodDays={periodDays}
-                    leadsProspected={data.leadsProspected}
-                    prevLeadsProspected={data.prevLeadsProspected}
-                    totalResponses={data.totalResponses}
-                    prevTotalResponses={data.prevTotalResponses}
-                    periodFilter={
-                      <Select value={period} onValueChange={setPeriod}>
-                        <SelectTrigger className="w-[170px] h-8 text-xs">
-                          <Calendar size={13} className="mr-1.5" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PERIOD_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    }
-                  />
+              {/* 1️⃣ Impacto Financeiro */}
+              <DashboardImpactAccumulated
+                allTimeLeads={data.allTimeLeads}
+                cumulativeByMonth={data.cumulativeByMonth}
+                periodDays={periodDays}
+                leadsProspected={data.leadsProspected}
+                prevLeadsProspected={data.prevLeadsProspected}
+                totalResponses={data.totalResponses}
+                prevTotalResponses={data.prevTotalResponses}
+                periodFilter={
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="w-[170px] h-8 text-xs">
+                      <Calendar size={13} className="mr-1.5" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERIOD_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                }
+              />
 
-                  {/* 2️⃣ KPIs Estratégicos */}
-                  <DashboardKPIs
-                    leadsProspected={data.leadsProspected}
-                    prevLeadsProspected={data.prevLeadsProspected}
-                    totalResponses={data.totalResponses}
-                    prevTotalResponses={data.prevTotalResponses}
-                    messagesSent={data.messagesSent}
-                    prevMessagesSent={data.prevMessagesSent}
-                    responseRate={data.responseRate}
-                    prevResponseRate={data.prevResponseRate}
-                  />
+              {/* 2️⃣ KPIs Estratégicos */}
+              <DashboardKPIs
+                leadsProspected={data.leadsProspected}
+                prevLeadsProspected={data.prevLeadsProspected}
+                totalResponses={data.totalResponses}
+                prevTotalResponses={data.prevTotalResponses}
+                messagesSent={data.messagesSent}
+                prevMessagesSent={data.prevMessagesSent}
+                responseRate={data.responseRate}
+                prevResponseRate={data.prevResponseRate}
+              />
 
-                  {/* 3️⃣ Funil + Potencial */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <DashboardFunnel
-                      leadsProspected={data.leadsProspected}
-                      totalResponses={data.totalResponses}
-                      prevLeadsProspected={data.prevLeadsProspected}
-                      prevTotalResponses={data.prevTotalResponses}
-                      messagesSent={data.messagesSent}
-                      prevMessagesSent={data.prevMessagesSent}
-                      periodDays={periodDays}
-                    />
-                    <DashboardEvolutionChart
-                      monthlyData={data.monthlyBreakdown}
-                    />
-                  </div>
+              {/* 3️⃣ Funil + Evolução */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DashboardFunnel
+                  leadsProspected={data.leadsProspected}
+                  totalResponses={data.totalResponses}
+                  prevLeadsProspected={data.prevLeadsProspected}
+                  prevTotalResponses={data.prevTotalResponses}
+                  messagesSent={data.messagesSent}
+                  prevMessagesSent={data.prevMessagesSent}
+                  periodDays={periodDays}
+                />
+                <DashboardEvolutionChart
+                  monthlyData={data.monthlyBreakdown}
+                />
+              </div>
 
-                  {/* 4️⃣ Insights */}
-                  <DashboardInsights
-                    leadsProspected={data.leadsProspected}
-                    prevLeadsProspected={data.prevLeadsProspected}
-                    responseRate={data.responseRate}
-                    prevResponseRate={data.prevResponseRate}
-                    totalResponses={data.totalResponses}
-                    campaigns={data.campaigns}
-                    messagesSent={data.messagesSent}
-                    prevMessagesSent={data.prevMessagesSent}
-                  />
-                </>
-              ) : (
-                <DashboardEmptyState />
-              )}
+              {/* 4️⃣ Insights */}
+              <DashboardInsights
+                leadsProspected={data.leadsProspected}
+                prevLeadsProspected={data.prevLeadsProspected}
+                responseRate={data.responseRate}
+                prevResponseRate={data.prevResponseRate}
+                totalResponses={data.totalResponses}
+                campaigns={data.campaigns}
+                messagesSent={data.messagesSent}
+                prevMessagesSent={data.prevMessagesSent}
+              />
             </div>
           </main>
         </div>

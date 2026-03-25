@@ -60,6 +60,30 @@ export function DashboardImpactAccumulated({
   const dailyAvgLeads = periodDays > 0 ? leadsProspected / periodDays : 0;
   const projectedMonthlyLeads = Math.round(dailyAvgLeads * 30);
 
+  const hasData = allTimeLeads > 0 || leadsProspected > 0;
+
+  if (!hasData) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold text-foreground">Visão Geral</h1>
+          <div className="flex items-center gap-2">
+            {periodFilter}
+          </div>
+        </div>
+        <Card className="bg-card border-border/50 overflow-hidden relative rounded-xl">
+          <CardContent className="py-12 px-8 flex flex-col items-center text-center space-y-2">
+            <Briefcase size={24} className="text-muted-foreground/30" />
+            <p className="text-sm font-medium text-muted-foreground">Sem dados suficientes</p>
+            <p className="text-xs text-muted-foreground/60 max-w-sm">
+              Prospecte seus primeiros leads para visualizar o impacto financeiro e a economia gerada pela plataforma.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header: title + period filter + comparison button */}
