@@ -147,8 +147,8 @@ export default function AdminEmailFlowEditor() {
         flow_id: id,
         source_node_id: params.source,
         target_node_id: params.target,
-        source_handle: params.sourceHandle || "source",
-        target_handle: params.targetHandle || "target",
+        source_handle: params.sourceHandle || null,
+        target_handle: params.targetHandle || null,
         condition_label: null,
       })
       .select("id")
