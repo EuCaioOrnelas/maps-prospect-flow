@@ -718,9 +718,7 @@ export const LeadDetailDialog = ({
         {agentPauseStatus && (
           <div className={cn(
             "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
-            agentPauseStatus.isPaused 
-              ? "bg-destructive/10 border-destructive/20" 
-              : "bg-primary/10 border-primary/20"
+            "bg-primary/10 border-primary/20"
           )}>
             <div className="flex items-center gap-2 min-w-0">
               <Bot className={cn(
