@@ -488,18 +488,27 @@ Deno.serve(async (req) => {
     }
 
     // Send via Resend
+    const fromName = (payload.from_name as string) || BRAND.name;
+    const fromAddress = `${fromName} <no-reply@wiize.com.br>`;
+    const replyTo = payload.reply_to as string || undefined;
+
+    const resendPayload: any = {
+      from: fromAddress,
+      to: [toEmail],
+      subject,
+      html: trackedHtml,
+    };
+    if (replyTo) {
+      resendPayload.reply_to = replyTo;
+    }
+
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: BRAND.from,
-        to: [toEmail],
-        subject,
-        html: trackedHtml,
-      }),
+      body: JSON.stringify(resendPayload),
     });
 
     const resendData = await resendResponse.json();
