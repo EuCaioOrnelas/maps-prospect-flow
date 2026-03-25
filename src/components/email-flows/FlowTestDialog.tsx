@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TestTube, CheckCircle } from "lucide-react";
+import { TestTube, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -23,7 +23,6 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
     setResult(null);
 
     try {
-      // Validate flow
       const { data: nodes } = await supabase.from("email_flow_nodes").select("*").eq("flow_id", flowId);
       const { data: edges } = await supabase.from("email_flow_edges").select("*").eq("flow_id", flowId);
 
@@ -48,7 +47,6 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
         if (!cfg?.delay_value || cfg.delay_value <= 0) issues.push(`Espera "${n.name}" sem duração`);
       });
 
-      // Check orphan nodes
       (nodes || []).forEach(n => {
         if (n.node_type === "entry") return;
         const hasIncoming = (edges || []).some(e => e.target_node_id === n.id);
@@ -57,24 +55,88 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
 
       if (issues.length > 0) {
         setResult(`⚠ ${issues.length} problema(s):\n${issues.map(i => `• ${i}`).join("\n")}`);
-      } else {
-        // Send test email if provided
-        if (testEmail) {
-          const firstEmail = emailNodes[0];
-          if (firstEmail) {
-            const cfg = firstEmail.config as any;
-            await supabase.functions.invoke("send-email", {
-              body: { to: testEmail, subject: `[TESTE FLUXO] ${cfg.subject}`, html: cfg.body },
-            });
-            setResult(`✅ Fluxo validado! Email de teste enviado para ${testEmail}`);
-          } else {
-            setResult("✅ Fluxo validado! (Sem email para enviar teste)");
-          }
-        } else {
-          setResult("✅ Fluxo validado com sucesso! Nenhum problema encontrado.");
+        setTesting(false);
+        return;
+      }
+
+      if (testEmail) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setResult("❌ Usuário não autenticado");
+          setTesting(false);
+          return;
         }
+
+        // Walk the flow from entry node following edges
+        const emailsSent: string[] = [];
+        const flowPath: string[] = [];
+        let currentNodeId: string | null = entry?.id || null;
+        const visited = new Set<string>();
+
+        while (currentNodeId && !visited.has(currentNodeId)) {
+          visited.add(currentNodeId);
+          const node = (nodes || []).find(n => n.id === currentNodeId);
+          if (!node) break;
+
+          const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "dias" };
+
+          if (node.node_type === "entry") {
+            flowPath.push(`🟢 Entrada: ${node.name}`);
+          } else if (node.node_type === "email") {
+            const cfg = node.config as any;
+            flowPath.push(`📧 Email: ${node.name}`);
+            if (cfg?.subject && cfg?.body) {
+              const { error } = await supabase.functions.invoke("send-email", {
+                body: {
+                  user_id: user.id,
+                  email_type: "ADMIN_BROADCAST",
+                  payload: {
+                    subject: `[TESTE FLUXO] ${cfg.subject}`,
+                    content: cfg.body,
+                  },
+                  override_email: testEmail,
+                },
+              });
+              if (error) {
+                issues.push(`Erro ao enviar "${node.name}": ${error.message}`);
+              } else {
+                emailsSent.push(cfg.subject);
+              }
+              await new Promise(r => setTimeout(r, 800));
+            }
+          } else if (node.node_type === "wait") {
+            const cfg = node.config as any;
+            flowPath.push(`⏳ Espera: ${cfg.delay_value || 1} ${unitLabels[cfg.delay_unit] || cfg.delay_unit}`);
+          } else if (node.node_type === "condition") {
+            flowPath.push(`🔀 Condição: ${node.name} (seguindo caminho "Sim")`);
+          } else if (node.node_type === "end") {
+            flowPath.push(`🔴 Fim: ${node.name}`);
+            break;
+          }
+
+          // Find next node
+          let nextEdge;
+          if (node.node_type === "condition") {
+            nextEdge = (edges || []).find(e => e.source_node_id === currentNodeId && e.source_handle === "yes")
+              || (edges || []).find(e => e.source_node_id === currentNodeId);
+          } else {
+            nextEdge = (edges || []).find(e => e.source_node_id === currentNodeId);
+          }
+          currentNodeId = nextEdge?.target_node_id || null;
+        }
+
+        if (issues.length > 0) {
+          setResult(`⚠ Erros durante o teste:\n${issues.map(i => `• ${i}`).join("\n")}`);
+        } else if (emailsSent.length > 0) {
+          setResult(`✅ ${emailsSent.length} email(s) enviado(s) para ${testEmail}:\n\n${emailsSent.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\n📋 Caminho percorrido:\n${flowPath.join("\n")}`);
+        } else {
+          setResult(`✅ Fluxo validado! (Nenhum email no caminho)\n\n📋 Caminho:\n${flowPath.join("\n")}`);
+        }
+      } else {
+        setResult("✅ Fluxo validado com sucesso! Nenhum problema encontrado.");
       }
     } catch (err) {
+      console.error(err);
       setResult("❌ Erro ao validar fluxo");
     }
 
@@ -92,18 +154,18 @@ export function FlowTestDialog({ open, onOpenChange, flowId }: Props) {
 
         <div className="space-y-4 mt-2">
           <p className="text-sm text-muted-foreground">
-            Valida o fluxo e opcionalmente envia o primeiro email como teste.
+            Valida o fluxo e envia <strong>todos</strong> os emails do caminho principal para o email de teste.
           </p>
           <div>
             <Label>Email de teste (opcional)</Label>
             <Input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="seu@email.com" type="email" />
           </div>
           <Button onClick={runTest} disabled={testing} className="w-full gap-2">
-            {testing ? "Validando..." : "Executar Teste"}
+            {testing ? <><Loader2 size={14} className="animate-spin" /> Testando...</> : "Executar Teste"}
           </Button>
 
           {result && (
-            <div className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-line">
+            <div className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-line max-h-[300px] overflow-y-auto">
               {result}
             </div>
           )}

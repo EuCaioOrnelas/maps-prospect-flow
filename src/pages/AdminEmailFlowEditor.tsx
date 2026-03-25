@@ -114,8 +114,8 @@ export default function AdminEmailFlowEditor() {
       id: e.id,
       source: e.source_node_id,
       target: e.target_node_id,
-      sourceHandle: e.source_handle,
-      targetHandle: e.target_handle,
+      sourceHandle: e.source_handle === "source" ? null : (e.source_handle || null),
+      targetHandle: e.target_handle === "target" ? null : (e.target_handle || null),
       label: e.condition_label || undefined,
       markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
       style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
@@ -147,8 +147,8 @@ export default function AdminEmailFlowEditor() {
         flow_id: id,
         source_node_id: params.source,
         target_node_id: params.target,
-        source_handle: params.sourceHandle || "source",
-        target_handle: params.targetHandle || "target",
+        source_handle: params.sourceHandle || null,
+        target_handle: params.targetHandle || null,
         condition_label: null,
       })
       .select("id")
@@ -254,8 +254,8 @@ export default function AdminEmailFlowEditor() {
         flow_id: id,
         source_node_id: edge.source,
         target_node_id: edge.target,
-        source_handle: edge.sourceHandle || "source",
-        target_handle: edge.targetHandle || "target",
+        source_handle: edge.sourceHandle || null,
+        target_handle: edge.targetHandle || null,
         condition_label: typeof edge.label === "string" ? edge.label : null,
       });
     }
