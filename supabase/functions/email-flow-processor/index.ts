@@ -440,6 +440,30 @@ async function evaluateCondition(supabase: any, node: any, enrollment: any, user
       return (count || 0) > 0;
     }
 
+    case "button_clicked_checkout":
+    case "button_clicked_dashboard":
+    case "button_clicked_any": {
+      const btnType = conditionType.replace("button_clicked_", "");
+      const { data: clicks } = await supabase
+        .from("email_flow_execution_logs")
+        .select("details")
+        .eq("enrollment_id", enrollment.id)
+        .eq("flow_id", enrollment.flow_id)
+        .eq("user_id", user.id)
+        .eq("action_type", "email_clicked");
+
+      if (btnType === "any") {
+        return (clicks || []).some((c: any) => {
+          const url = (c.details as any)?.url || "";
+          return url.includes("btn=");
+        });
+      }
+      return (clicks || []).some((c: any) => {
+        const url = (c.details as any)?.url || "";
+        return url.includes(`btn=${btnType}`);
+      });
+    }
+
     case "score_above": {
       const threshold = parseInt(config.value) || 50;
       // Check user_scores table (from score-processor)
