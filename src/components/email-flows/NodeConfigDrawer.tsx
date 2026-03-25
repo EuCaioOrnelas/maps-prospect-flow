@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, MousePointerClick } from "lucide-react";
 import type { Node } from "@xyflow/react";
 
 interface Props {
@@ -47,6 +47,9 @@ const audiences = [
 const conditions = [
   { value: "email_opened", label: "Abriu email anterior" },
   { value: "email_clicked", label: "Clicou no email" },
+  { value: "button_clicked_checkout", label: "Clicou no botão Checkout" },
+  { value: "button_clicked_dashboard", label: "Clicou no botão Dashboard" },
+  { value: "button_clicked_any", label: "Clicou em qualquer botão" },
   { value: "score_above", label: "Score acima de" },
   { value: "has_tag", label: "Possui tag" },
   { value: "is_customer", label: "Virou cliente" },
@@ -59,11 +62,20 @@ const variables = [
   "{{plan}}", "{{score}}", "{{company_name}}", "{{cta_link}}"
 ];
 
+const buttonTypes = [
+  { value: "checkout", label: "Abrir Checkout", url: "https://wiize.com.br/upgrade" },
+  { value: "dashboard", label: "Abrir Dashboard", url: "https://wiize.com.br/dashboard" },
+  { value: "custom", label: "Link Personalizado", url: "" },
+];
+
 export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, onDelete }: Props) {
   const [name, setName] = useState("");
   const [config, setConfig] = useState<any>({});
   const [templates, setTemplates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [buttonType, setButtonType] = useState("checkout");
+  const [buttonText, setButtonText] = useState("");
+  const [buttonUrl, setButtonUrl] = useState("");
 
   useEffect(() => {
     if (node) {
@@ -85,7 +97,6 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
     if (error) { toast.error("Erro ao salvar"); setSaving(false); return; }
     onUpdate(node.id, { label: name, config });
 
-    // Also update flow-level trigger/audience if entry node
     if (node.type === "entry") {
       await supabase.from("email_flows").update({
         trigger_type: config.trigger_type,
@@ -131,13 +142,49 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
 
     const { error } = await supabase.functions.invoke("send-email", {
       body: {
-        to: user.email,
-        subject: `[TESTE] ${config.subject}`,
-        html: config.body,
+        user_id: user.id,
+        email_type: "ADMIN_BROADCAST",
+        payload: {
+          subject: `[TESTE] ${config.subject}`,
+          content: config.body,
+        },
+        override_email: user.email,
       },
     });
     if (error) { toast.error("Erro ao enviar teste"); return; }
     toast.success(`Email teste enviado para ${user.email}`);
+  };
+
+  const insertTrackedButton = () => {
+    if (!buttonText) { toast.error("Preencha o texto do botão"); return; }
+
+    const btnInfo = buttonTypes.find(b => b.value === buttonType);
+    let url = btnInfo?.url || "";
+
+    if (buttonType === "custom") {
+      if (!buttonUrl) { toast.error("Preencha a URL do botão"); return; }
+      url = buttonUrl;
+    }
+
+    // Add tracking params
+    const sep = url.includes("?") ? "&" : "?";
+    const trackedUrl = `${url}${sep}ref=email_flow&btn=${buttonType}`;
+
+    const buttonHtml = `\n<p style="text-align:center;margin:24px 0;"><a href="${trackedUrl}" style="display:inline-block;padding:12px 28px;background:#3daa57;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;">${buttonText}</a></p>`;
+
+    // Store button metadata in config for condition tracking
+    const existingButtons = config.tracked_buttons || [];
+    const newButton = { type: buttonType, text: buttonText, url: trackedUrl };
+
+    setConfig({
+      ...config,
+      body: (config.body || "") + buttonHtml,
+      tracked_buttons: [...existingButtons, newButton],
+    });
+
+    setButtonText("");
+    setButtonUrl("");
+    toast.success("Botão rastreável inserido!");
   };
 
   if (!node) return null;
@@ -218,6 +265,7 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
             <Tabs defaultValue="content" className="w-full">
               <TabsList className="w-full">
                 <TabsTrigger value="content" className="flex-1">Conteúdo</TabsTrigger>
+                <TabsTrigger value="buttons" className="flex-1">Botões</TabsTrigger>
                 <TabsTrigger value="settings" className="flex-1">Config</TabsTrigger>
                 <TabsTrigger value="template" className="flex-1">Template</TabsTrigger>
               </TabsList>
@@ -254,6 +302,55 @@ export function NodeConfigDrawer({ open, onOpenChange, node, flowId, onUpdate, o
                   <Button variant="outline" size="sm" onClick={sendTestEmail} className="flex-1">Enviar Teste</Button>
                 </div>
               </TabsContent>
+
+              {/* TRACKED BUTTONS TAB */}
+              <TabsContent value="buttons" className="space-y-3 mt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MousePointerClick size={14} className="text-primary" />
+                  <Label className="text-sm font-medium">Inserir Botão Rastreável</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Botões com rastreamento permitem identificar cliques e usar como condição nos fluxos.
+                </p>
+                <div>
+                  <Label className="text-xs">Tipo do botão</Label>
+                  <Select value={buttonType} onValueChange={setButtonType}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {buttonTypes.map(bt => (
+                        <SelectItem key={bt.value} value={bt.value}>{bt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Texto do botão</Label>
+                  <Input className="h-8 text-xs" value={buttonText} onChange={e => setButtonText(e.target.value)} placeholder="Ex: Assinar agora" />
+                </div>
+                {buttonType === "custom" && (
+                  <div>
+                    <Label className="text-xs">URL do link</Label>
+                    <Input className="h-8 text-xs" value={buttonUrl} onChange={e => setButtonUrl(e.target.value)} placeholder="https://..." />
+                  </div>
+                )}
+                <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={insertTrackedButton}>
+                  <MousePointerClick size={12} /> Inserir Botão no Email
+                </Button>
+
+                {/* Show existing tracked buttons */}
+                {config.tracked_buttons?.length > 0 && (
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <Label className="text-xs text-muted-foreground">Botões inseridos neste email</Label>
+                    {(config.tracked_buttons as any[]).map((btn: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1.5">
+                        <span className="font-medium">{btn.text}</span>
+                        <span className="text-muted-foreground">({buttonTypes.find(bt => bt.value === btn.type)?.label})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="settings" className="space-y-3 mt-3">
                 <div>
                   <Label>Nome do remetente</Label>
