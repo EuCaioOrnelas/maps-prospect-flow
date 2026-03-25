@@ -310,9 +310,10 @@ export const LeadDetailDialog = ({
 
   // Agent pause state
   const [agentPauseStatus, setAgentPauseStatus] = useState<{
-    conversationId: string;
+    conversationId: string | null;
     isPaused: boolean;
     pausedUntil: string | null;
+    hasAgent: boolean;
   } | null>(null);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
 
@@ -381,9 +382,16 @@ export const LeadDetailDialog = ({
         conversationId: c.id,
         isPaused: !!(c.agent_manually_paused || isPausedUntil),
         pausedUntil: isPausedUntil ? c.agent_paused_until : null,
+        hasAgent: true,
       });
     } else {
-      setAgentPauseStatus(null);
+      // User has agents but no conversation for this lead — show as active (not paused)
+      setAgentPauseStatus({
+        conversationId: null,
+        isPaused: false,
+        pausedUntil: null,
+        hasAgent: true,
+      });
     }
   };
 
@@ -392,17 +400,49 @@ export const LeadDetailDialog = ({
     setIsTogglingPause(true);
     try {
       const newPaused = !agentPauseStatus.isPaused;
-      await supabase
-        .from('agent_conversations')
-        .update({
-          agent_manually_paused: newPaused,
-          agent_paused_until: null,
-        })
-        .eq('id', agentPauseStatus.conversationId);
+      
+      if (agentPauseStatus.conversationId) {
+        // Has existing conversation — update it
+        await supabase
+          .from('agent_conversations')
+          .update({
+            agent_manually_paused: newPaused,
+            agent_paused_until: null,
+          })
+          .eq('id', agentPauseStatus.conversationId);
+      } else if (newPaused && lead && user) {
+        // No conversation yet — create one with paused state
+        const phoneDigits = lead.phone.replace(/\D/g, '');
+        const { data: agents } = await supabase
+          .from('ai_agents')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+        if (agents?.length) {
+          const { data: newConv } = await supabase
+            .from('agent_conversations')
+            .insert({
+              agent_id: agents[0].id,
+              lead_phone: phoneDigits,
+              lead_name: lead.contact_name || lead.company_name || null,
+              status: 'paused',
+              agent_manually_paused: true,
+            })
+            .select('id')
+            .single();
+          if (newConv) {
+            setAgentPauseStatus(prev => prev ? { ...prev, conversationId: newConv.id, isPaused: true, pausedUntil: null } : null);
+            toast.success('Agente IA desativado para este lead');
+            setIsTogglingPause(false);
+            return;
+          }
+        }
+      }
+      
       setAgentPauseStatus(prev => prev ? { ...prev, isPaused: newPaused, pausedUntil: null } : null);
-      toast.success(newPaused ? 'Agente IA pausado para este lead' : 'Agente IA retomado para este lead');
+      toast.success(newPaused ? 'Agente IA desativado para este lead' : 'Agente IA ativado para este lead');
     } catch {
-      toast.error('Erro ao alterar pausa do agente');
+      toast.error('Erro ao alterar status do agente');
     } finally {
       setIsTogglingPause(false);
     }
@@ -674,7 +714,7 @@ export const LeadDetailDialog = ({
           </div>
         </div>
 
-        {/* Agent Pause Banner - prominent at top */}
+        {/* Agent Status Banner - always visible when user has agents */}
         {agentPauseStatus && (
           <div className={cn(
             "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
@@ -689,7 +729,7 @@ export const LeadDetailDialog = ({
               )} />
               <span className="text-xs font-medium truncate">
                 {agentPauseStatus.isPaused
-                  ? `Agente IA pausado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
+                  ? `Agente IA desativado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
                   : 'Agente IA ativo neste lead'}
               </span>
             </div>
@@ -703,12 +743,12 @@ export const LeadDetailDialog = ({
               {agentPauseStatus.isPaused ? (
                 <>
                   <Play className="w-3.5 h-3.5" />
-                  Retomar
+                  Ativar
                 </>
               ) : (
                 <>
                   <Pause className="w-3.5 h-3.5" />
-                  Pausar
+                  Desativar
                 </>
               )}
             </Button>
