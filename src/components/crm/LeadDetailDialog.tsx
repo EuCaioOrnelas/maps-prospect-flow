@@ -382,9 +382,16 @@ export const LeadDetailDialog = ({
         conversationId: c.id,
         isPaused: !!(c.agent_manually_paused || isPausedUntil),
         pausedUntil: isPausedUntil ? c.agent_paused_until : null,
+        hasAgent: true,
       });
     } else {
-      setAgentPauseStatus(null);
+      // User has agents but no conversation for this lead — show as active (not paused)
+      setAgentPauseStatus({
+        conversationId: null,
+        isPaused: false,
+        pausedUntil: null,
+        hasAgent: true,
+      });
     }
   };
 
