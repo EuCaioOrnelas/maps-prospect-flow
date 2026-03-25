@@ -718,15 +718,10 @@ export const LeadDetailDialog = ({
         {agentPauseStatus && (
           <div className={cn(
             "flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 border-b shrink-0 transition-colors",
-            agentPauseStatus.isPaused 
-              ? "bg-destructive/10 border-destructive/20" 
-              : "bg-primary/10 border-primary/20"
+            "bg-primary/10 border-primary/20"
           )}>
             <div className="flex items-center gap-2 min-w-0">
-              <Bot className={cn(
-                "w-4 h-4 shrink-0",
-                agentPauseStatus.isPaused ? "text-destructive" : "text-primary"
-              )} />
+              <Bot className="w-4 h-4 shrink-0 text-primary" />
               <span className="text-xs font-medium truncate">
                 {agentPauseStatus.isPaused
                   ? `Agente IA desativado${agentPauseStatus.pausedUntil ? ` até ${format(new Date(agentPauseStatus.pausedUntil), 'HH:mm')}` : ''}`
@@ -735,8 +730,8 @@ export const LeadDetailDialog = ({
             </div>
             <Button
               size="sm"
-              variant={agentPauseStatus.isPaused ? "default" : "destructive"}
-              className="h-7 text-xs shrink-0 gap-1.5"
+              variant={agentPauseStatus.isPaused ? "default" : "outline"}
+              className={cn("h-7 text-xs shrink-0 gap-1.5", !agentPauseStatus.isPaused && "text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive")}
               onClick={toggleAgentPause}
               disabled={isTogglingPause}
             >
