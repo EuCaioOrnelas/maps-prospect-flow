@@ -71,7 +71,7 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     }
 
     // ── Standard profile-based triggers ──
-    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
+    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at").eq("is_blocked", false);
 
     switch (audienceType) {
       case "all": break;
@@ -125,15 +125,17 @@ async function enrollEligibleLeads(supabase: any, results: any) {
 // ── CHECKOUT ABANDONED: uses checkout_leads table (includes non-users) ──
 async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt: string, entryRules: any, results: any) {
   // Get checkout leads that started AFTER flow activation and didn't complete
+  // Sort by checkout_started_at DESC so dedup keeps the most recent per email
   const { data: checkoutLeads } = await supabase
     .from("checkout_leads")
     .select("id, user_id, email, name, plan_attempted, checkout_started_at")
     .eq("checkout_completed", false)
-    .gte("checkout_started_at", flowActivatedAt);
+    .gte("checkout_started_at", flowActivatedAt)
+    .order("checkout_started_at", { ascending: false });
 
   if (!checkoutLeads?.length) return;
 
-  // Deduplicate by email (keep most recent)
+  // Deduplicate by email (keep most recent — already sorted DESC)
   const seen = new Set<string>();
   const uniqueLeads = [];
   for (const lead of checkoutLeads) {
@@ -279,18 +281,19 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
     case "free_trial": return !!trialStart && trialEnd! > now;
     case "signup": return true;
     case "checkout_started": return true;
-    case "checkout_abandoned": return true;
+    case "checkout_abandoned": return true; // Handled separately via enrollCheckoutAbandoned
     case "trial_expired_10d": {
       if (!trialEnd) return false;
       const daysSinceExpiry = Math.floor((now.getTime() - trialEnd.getTime()) / 86400000);
       return daysSinceExpiry >= 10;
     }
-    case "downgrade": return true;
+    case "downgrade": return true; // Handled separately via enrollDowngradedUsers
     case "inactive": {
       const days = triggerConfig.inactive_days || 7;
       return inactiveDays >= days;
     }
     case "score_reached": return true;
+    case "tag_added": return true; // Tag-based trigger — eligibility checked via tag match
     case "manual": return false;
     default: return false;
   }
@@ -350,6 +353,28 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       case "email": {
         const config = node.config || {};
         if (config.subject && config.body) {
+          // Check email preferences — skip if user opted out of marketing
+          if (user.id && user.plan !== "none") {
+            const { data: prefs } = await supabase
+              .from("email_preferences")
+              .select("marketing_enabled")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (prefs && prefs.marketing_enabled === false) {
+              console.log(`[email-flow] Skipping email to ${user.email} — marketing opt-out`);
+              await supabase.from("email_flow_execution_logs").insert({
+                flow_id: enrollment.flow_id,
+                enrollment_id: enrollment.id,
+                user_id: user.id,
+                node_id: node.id,
+                action_type: "email_skipped",
+                status: "success",
+                details: { reason: "marketing_opt_out" },
+              });
+              // Still advance to next node
+              break;
+            }
+          }
           const templateVars: Record<string, string> = {
             user_name: user.name || user.email?.split("@")[0] || "usuário",
             user_email: user.email,
@@ -463,20 +488,10 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
         if (nextEdge) {
           await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
         } else {
-          // Fallback: try any edge from this node
-          const { data: fallbackEdge } = await supabase
-            .from("email_flow_edges")
-            .select("target_node_id")
-            .eq("flow_id", enrollment.flow_id)
-            .eq("source_node_id", node.id)
-            .limit(1)
-            .maybeSingle();
-
-          if (fallbackEdge) {
-            await moveToNextNode(supabase, enrollment, fallbackEdge.target_node_id);
-          } else {
-            await completeEnrollment(supabase, enrollment, "no_next_node_after_condition");
-          }
+          // NO fallback — if the specific branch (yes/no) has no edge, complete the enrollment.
+          // Using a fallback "any edge" would route to the WRONG branch (e.g., "yes" path when result was "no").
+          console.warn(`[email-flow] Condition node ${node.id} has no "${handle}" edge — completing enrollment ${enrollment.id}`);
+          await completeEnrollment(supabase, enrollment, `no_${handle}_branch`);
         }
 
         results.steps_advanced++;
@@ -597,10 +612,22 @@ async function evaluateCondition(supabase: any, node: any, enrollment: any, user
     }
 
     case "is_customer": {
-      return user.plan !== "free";
+      // Must be a real paying plan (not "free", not "none" for non-user leads)
+      return user.plan !== "free" && user.plan !== "none" && !!user.plan;
     }
 
     case "checkout_started": {
+      // For non-user leads (checkout_abandoned), check by email instead of user_id
+      const isNonUser = enrollment.metadata?.is_checkout_lead;
+      if (isNonUser) {
+        const email = enrollment.metadata?.email;
+        if (!email) return false;
+        const { count } = await supabase
+          .from("checkout_leads")
+          .select("*", { count: "exact", head: true })
+          .eq("email", email);
+        return (count || 0) > 0;
+      }
       const { count } = await supabase
         .from("checkout_leads")
         .select("*", { count: "exact", head: true })
