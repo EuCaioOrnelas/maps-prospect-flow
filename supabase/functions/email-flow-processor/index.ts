@@ -590,7 +590,8 @@ async function evaluateCondition(supabase: any, node: any, enrollment: any, user
     }
 
     case "is_customer": {
-      return user.plan !== "free";
+      // Must be a real paying plan (not "free", not "none" for non-user leads)
+      return user.plan !== "free" && user.plan !== "none" && !!user.plan;
     }
 
     case "checkout_started": {
