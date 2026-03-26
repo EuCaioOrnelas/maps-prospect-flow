@@ -71,7 +71,7 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     }
 
     // ── Standard profile-based triggers ──
-    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
+    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at").eq("is_blocked", false);
 
     switch (audienceType) {
       case "all": break;
