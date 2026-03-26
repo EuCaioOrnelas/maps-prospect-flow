@@ -105,6 +105,15 @@ async function enrollEligibleLeads(supabase: any, results: any) {
       const eligible = checkTriggerEligibility(triggerType, user, flow.trigger_config || {}, now);
       if (!eligible) continue;
 
+      const currentStateCheck = await validateCurrentEligibility(
+        supabase,
+        flow,
+        user.id,
+        user,
+        undefined,
+      );
+      if (!currentStateCheck.eligible) continue;
+
       if (audienceType === "trial_expired") {
         const ts = user.trial_start_at ? new Date(user.trial_start_at) : new Date(user.created_at);
         const trialEnd = new Date(ts.getTime() + 14 * 86400000);
@@ -146,15 +155,28 @@ async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt
   }
 
   for (const lead of uniqueLeads) {
-    // Use user_id if available, otherwise use a deterministic ID from email
-    const enrollUserId = lead.user_id || lead.id;
-
-    await enrollUserIfEligible(supabase, flow, enrollUserId, "checkout_abandoned", flow.audience_type, entryRules, results, {
+    const metadata = {
       email: lead.email,
       name: lead.name,
       plan_attempted: lead.plan_attempted,
       is_checkout_lead: !lead.user_id,
-    });
+      checkout_lead_id: lead.id,
+      checkout_started_at: lead.checkout_started_at,
+    };
+
+    const currentStateCheck = await validateCurrentEligibility(
+      supabase,
+      flow,
+      lead.user_id || lead.id,
+      null,
+      metadata,
+    );
+    if (!currentStateCheck.eligible) continue;
+
+    // Use user_id if available, otherwise use a deterministic ID from email
+    const enrollUserId = lead.user_id || lead.id;
+
+    await enrollUserIfEligible(supabase, flow, enrollUserId, "checkout_abandoned", flow.audience_type, entryRules, results, metadata);
   }
 }
 
@@ -173,9 +195,14 @@ async function enrollDowngradedUsers(supabase: any, flow: any, flowActivatedAt: 
   if (!users?.length) return;
 
   for (const user of users) {
-    // Extra safety: subscription must have ended (period_end is in the past)
-    const periodEnd = new Date(user.subscription_current_period_end);
-    if (periodEnd > new Date()) continue; // still active, not a real downgrade
+    const currentStateCheck = await validateCurrentEligibility(
+      supabase,
+      flow,
+      user.id,
+      user,
+      undefined,
+    );
+    if (!currentStateCheck.eligible) continue;
 
     await enrollUserIfEligible(supabase, flow, user.id, "downgrade", flow.audience_type, entryRules, results);
   }
@@ -299,6 +326,248 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
   }
 }
 
+async function validateCurrentEligibility(
+  supabase: any,
+  flow: any,
+  userId: string,
+  baseUser?: any,
+  metadata?: any,
+): Promise<{ eligible: boolean; reason?: string; user?: any }> {
+  const now = new Date();
+  const currentUser = await getCurrentUserState(supabase, userId, baseUser, metadata);
+
+  if (currentUser?.is_blocked) {
+    return { eligible: false, reason: "user_blocked", user: currentUser };
+  }
+
+  if (flow.trigger_type !== "checkout_abandoned" && !currentUser) {
+    return { eligible: false, reason: "user_not_found" };
+  }
+
+  if (!matchesAudienceState(flow.audience_type, currentUser, now, flow.trigger_type)) {
+    return { eligible: false, reason: "audience_state_mismatch", user: currentUser };
+  }
+
+  switch (flow.trigger_type) {
+    case "checkout_abandoned": {
+      const email = (metadata?.email || currentUser?.email || "").toLowerCase().trim();
+      if (!email) return { eligible: false, reason: "checkout_email_missing", user: currentUser };
+
+      const { data: latestLeads } = await supabase
+        .from("checkout_leads")
+        .select("id, checkout_started_at, checkout_completed, checkout_completed_at, user_id")
+        .eq("email", email)
+        .order("checkout_started_at", { ascending: false })
+        .limit(5);
+
+      const latestLead = latestLeads?.[0];
+      if (!latestLead) return { eligible: false, reason: "checkout_not_found", user: currentUser };
+      if (latestLead.checkout_completed) return { eligible: false, reason: "checkout_recovered", user: currentUser };
+
+      if (metadata?.checkout_lead_id && latestLead.id !== metadata.checkout_lead_id) {
+        return { eligible: false, reason: "stale_checkout_state", user: currentUser };
+      }
+
+      const latestStartedAt = latestLead.checkout_started_at || metadata?.checkout_started_at;
+      const recoveredCheckout = latestStartedAt
+        ? await hasCompletedCheckoutAfter(supabase, {
+            email,
+            userId: currentUser?.id,
+            since: latestStartedAt,
+          })
+        : false;
+
+      if (recoveredCheckout) {
+        return { eligible: false, reason: "checkout_recovered", user: currentUser };
+      }
+
+      if (currentUser?.plan && currentUser.plan !== "free" && currentUser.plan !== "none") {
+        return { eligible: false, reason: "already_customer", user: currentUser };
+      }
+
+      return { eligible: true, user: currentUser };
+    }
+
+    case "downgrade": {
+      if (!currentUser || currentUser.plan !== "free") {
+        return { eligible: false, reason: "not_downgraded", user: currentUser };
+      }
+
+      if (!currentUser.subscription_current_period_end) {
+        return { eligible: false, reason: "no_paid_history", user: currentUser };
+      }
+
+      const periodEnd = new Date(currentUser.subscription_current_period_end);
+      if (periodEnd > now) {
+        return { eligible: false, reason: "subscription_still_active", user: currentUser };
+      }
+
+      const recoveredCheckout = await hasCompletedCheckoutAfter(supabase, {
+        email: currentUser.email,
+        userId: currentUser.id,
+        since: currentUser.updated_at,
+      });
+      if (recoveredCheckout) {
+        return { eligible: false, reason: "repurchased_after_downgrade", user: currentUser };
+      }
+
+      return { eligible: true, user: currentUser };
+    }
+
+    case "free_trial": {
+      const trialStart = currentUser?.trial_start_at ? new Date(currentUser.trial_start_at) : null;
+      const trialEnd = trialStart ? new Date(trialStart.getTime() + 14 * 86400000) : null;
+      return {
+        eligible: !!currentUser && currentUser.plan === "free" && !!trialEnd && trialEnd > now,
+        reason: "trial_not_active",
+        user: currentUser,
+      };
+    }
+
+    case "trial_expired_10d": {
+      const trialStart = currentUser?.trial_start_at ? new Date(currentUser.trial_start_at) : null;
+      const trialEnd = trialStart ? new Date(trialStart.getTime() + 14 * 86400000) : null;
+      if (!currentUser || currentUser.plan !== "free" || !trialEnd) {
+        return { eligible: false, reason: "trial_not_expired", user: currentUser };
+      }
+
+      const daysSinceExpiry = Math.floor((now.getTime() - trialEnd.getTime()) / 86400000);
+      if (daysSinceExpiry < 10) {
+        return { eligible: false, reason: "trial_expiry_window_not_reached", user: currentUser };
+      }
+
+      const recoveredCheckout = await hasCompletedCheckoutAfter(supabase, {
+        email: currentUser.email,
+        userId: currentUser.id,
+        since: trialEnd.toISOString(),
+      });
+      if (recoveredCheckout) {
+        return { eligible: false, reason: "converted_after_trial", user: currentUser };
+      }
+
+      return { eligible: true, user: currentUser };
+    }
+
+    case "inactive": {
+      if (!currentUser) return { eligible: false, reason: "user_not_found" };
+      const days = flow.trigger_config?.inactive_days || 7;
+      const lastActive = new Date(currentUser.updated_at);
+      const inactiveDays = Math.floor((now.getTime() - lastActive.getTime()) / 86400000);
+      return {
+        eligible: inactiveDays >= days,
+        reason: "user_active_again",
+        user: currentUser,
+      };
+    }
+
+    default:
+      return { eligible: true, user: currentUser };
+  }
+}
+
+function matchesAudienceState(audienceType: string, user: any, now: Date, triggerType: string): boolean {
+  if (triggerType === "checkout_abandoned") return true;
+  if (!user) return false;
+
+  switch (audienceType) {
+    case "all":
+      return true;
+    case "all_free":
+      return user.plan === "free";
+    case "all_paid":
+      return !!user.plan && user.plan !== "free" && user.plan !== "none";
+    case "trial_active": {
+      if (!user.trial_start_at || user.plan !== "free") return false;
+      const trialEnd = new Date(new Date(user.trial_start_at).getTime() + 14 * 86400000);
+      return trialEnd > now;
+    }
+    case "trial_expired": {
+      if (!user.trial_start_at || user.plan !== "free") return false;
+      const trialEnd = new Date(new Date(user.trial_start_at).getTime() + 14 * 86400000);
+      return trialEnd <= now;
+    }
+    case "inactive_7d": {
+      const lastActive = new Date(user.updated_at);
+      return Math.floor((now.getTime() - lastActive.getTime()) / 86400000) >= 7;
+    }
+    case "inactive_30d": {
+      const lastActive = new Date(user.updated_at);
+      return Math.floor((now.getTime() - lastActive.getTime()) / 86400000) >= 30;
+    }
+    default:
+      return true;
+  }
+}
+
+async function getCurrentUserState(supabase: any, userId: string, baseUser?: any, metadata?: any) {
+  let currentUser = baseUser || null;
+
+  if (userId) {
+    const { data: profileById } = await supabase
+      .from("profiles")
+      .select("id, email, name, plan, trial_start_at, created_at, updated_at, subscription_current_period_end, is_blocked")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileById) currentUser = profileById;
+  }
+
+  const email = (metadata?.email || currentUser?.email || "").toLowerCase().trim();
+  if ((!currentUser || !currentUser.email) && email) {
+    const { data: profileByEmail } = await supabase
+      .from("profiles")
+      .select("id, email, name, plan, trial_start_at, created_at, updated_at, subscription_current_period_end, is_blocked")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (profileByEmail) currentUser = profileByEmail;
+  }
+
+  if (currentUser) return currentUser;
+
+  if (email) {
+    return {
+      id: userId,
+      email,
+      name: metadata?.name || email.split("@")[0],
+      plan: "none",
+      trial_start_at: null,
+      created_at: metadata?.checkout_started_at || null,
+      updated_at: metadata?.checkout_started_at || new Date().toISOString(),
+      subscription_current_period_end: null,
+      is_blocked: false,
+    };
+  }
+
+  return null;
+}
+
+async function hasCompletedCheckoutAfter(
+  supabase: any,
+  params: { email?: string | null; userId?: string | null; since?: string | null },
+): Promise<boolean> {
+  const { email, userId, since } = params;
+  if (!email && !userId) return false;
+
+  let query = supabase
+    .from("checkout_leads")
+    .select("id", { count: "exact", head: true })
+    .eq("checkout_completed", true);
+
+  if (email) {
+    query = query.eq("email", email.toLowerCase().trim());
+  } else if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  if (since) {
+    query = query.gte("checkout_completed_at", since);
+  }
+
+  const { count } = await query;
+  return (count || 0) > 0;
+}
+
 async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiKey: string, results: any) {
   const now = new Date().toISOString();
 
@@ -312,6 +581,17 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
   if (!pendingEnrollments?.length) return;
 
   for (const enrollment of pendingEnrollments) {
+    const { data: flow } = await supabase
+      .from("email_flows")
+      .select("id, trigger_type, audience_type, trigger_config")
+      .eq("id", enrollment.flow_id)
+      .maybeSingle();
+
+    if (!flow) {
+      await completeEnrollment(supabase, enrollment, "flow_not_found");
+      continue;
+    }
+
     const { data: node } = await supabase
       .from("email_flow_nodes")
       .select("*")
@@ -342,12 +622,28 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
           email: meta.email,
           name: meta.name || meta.email.split("@")[0],
           plan: "none",
+          is_blocked: false,
         };
       } else {
         await completeEnrollment(supabase, enrollment, "user_not_found");
         continue;
       }
     }
+
+    const currentStateCheck = await validateCurrentEligibility(
+      supabase,
+      flow,
+      enrollment.user_id,
+      user,
+      enrollment.metadata,
+    );
+
+    if (!currentStateCheck.eligible) {
+      await completeEnrollment(supabase, enrollment, currentStateCheck.reason || "state_changed");
+      continue;
+    }
+
+    user = currentStateCheck.user || user;
 
     switch (node.node_type) {
       case "email": {
