@@ -281,18 +281,19 @@ function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: 
     case "free_trial": return !!trialStart && trialEnd! > now;
     case "signup": return true;
     case "checkout_started": return true;
-    case "checkout_abandoned": return true;
+    case "checkout_abandoned": return true; // Handled separately via enrollCheckoutAbandoned
     case "trial_expired_10d": {
       if (!trialEnd) return false;
       const daysSinceExpiry = Math.floor((now.getTime() - trialEnd.getTime()) / 86400000);
       return daysSinceExpiry >= 10;
     }
-    case "downgrade": return true;
+    case "downgrade": return true; // Handled separately via enrollDowngradedUsers
     case "inactive": {
       const days = triggerConfig.inactive_days || 7;
       return inactiveDays >= days;
     }
     case "score_reached": return true;
+    case "tag_added": return true; // Tag-based trigger — eligibility checked via tag match
     case "manual": return false;
     default: return false;
   }
