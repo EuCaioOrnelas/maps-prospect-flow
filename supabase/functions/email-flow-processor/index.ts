@@ -595,6 +595,17 @@ async function evaluateCondition(supabase: any, node: any, enrollment: any, user
     }
 
     case "checkout_started": {
+      // For non-user leads (checkout_abandoned), check by email instead of user_id
+      const isNonUser = enrollment.metadata?.is_checkout_lead;
+      if (isNonUser) {
+        const email = enrollment.metadata?.email;
+        if (!email) return false;
+        const { count } = await supabase
+          .from("checkout_leads")
+          .select("*", { count: "exact", head: true })
+          .eq("email", email);
+        return (count || 0) > 0;
+      }
       const { count } = await supabase
         .from("checkout_leads")
         .select("*", { count: "exact", head: true })
