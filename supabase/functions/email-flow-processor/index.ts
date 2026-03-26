@@ -320,15 +320,30 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       continue;
     }
 
-    const { data: user } = await supabase
+    // Try to get user from profiles
+    let user: any = null;
+    const { data: profileUser } = await supabase
       .from("profiles")
       .select("id, email, name, plan")
       .eq("id", enrollment.user_id)
       .maybeSingle();
 
-    if (!user) {
-      await completeEnrollment(supabase, enrollment, "user_not_found");
-      continue;
+    if (profileUser) {
+      user = profileUser;
+    } else {
+      // Non-user enrollment (e.g. checkout_abandoned lead) — use metadata
+      const meta = enrollment.metadata;
+      if (meta?.is_checkout_lead && meta?.email) {
+        user = {
+          id: enrollment.user_id,
+          email: meta.email,
+          name: meta.name || meta.email.split("@")[0],
+          plan: "none",
+        };
+      } else {
+        await completeEnrollment(supabase, enrollment, "user_not_found");
+        continue;
+      }
     }
 
     switch (node.node_type) {
