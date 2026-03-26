@@ -58,6 +58,7 @@ const AdminUserScoring = lazy(() => import("./pages/AdminUserScoring"));
 const AdminEmailFlows = lazy(() => import("./pages/AdminEmailFlows"));
 const AdminEmailFlowEditor = lazy(() => import("./pages/AdminEmailFlowEditor"));
 const AdminPixBilling = lazy(() => import("./pages/AdminPixBilling"));
+const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
@@ -252,6 +253,7 @@ const App = () => (
                 />
                 <Route path="/shared-report/:reportId" element={<SharedReport />} />
                 <Route path="/obrigado" element={<ThankYou />} />
+                <Route path="/cancelamento" element={<CancellationFeedback />} />
                 <Route 
                   path="/admin/tests" 
                   element={

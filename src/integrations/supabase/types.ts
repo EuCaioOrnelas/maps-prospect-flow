@@ -647,6 +647,36 @@ export type Database = {
           },
         ]
       }
+      cancellation_feedback: {
+        Row: {
+          additional_comments: string | null
+          cancellation_reason: string
+          created_at: string
+          email: string | null
+          id: string
+          usage_level: string | null
+          user_id: string
+        }
+        Insert: {
+          additional_comments?: string | null
+          cancellation_reason: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          usage_level?: string | null
+          user_id: string
+        }
+        Update: {
+          additional_comments?: string | null
+          cancellation_reason?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          usage_level?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       checkout_leads: {
         Row: {
           checkout_completed: boolean
