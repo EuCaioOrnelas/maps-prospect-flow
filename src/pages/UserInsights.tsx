@@ -885,6 +885,90 @@ const UserInsights = () => {
               )}
             </div>
 
+            {/* Cancellation Feedback Section */}
+            {cancellationData.length > 0 && (
+              <div className="space-y-6 mt-12">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <X size={20} className="text-destructive" />
+                  Feedback de Cancelamento ({cancellationData.length})
+                </h2>
+
+                {/* Cancellation reason chart */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-4">Motivos de Cancelamento</h3>
+                    {(() => {
+                      const reasonCounts: Record<string, number> = {};
+                      cancellationData.forEach(c => {
+                        reasonCounts[c.cancellation_reason] = (reasonCounts[c.cancellation_reason] || 0) + 1;
+                      });
+                      const chartData = Object.entries(reasonCounts)
+                        .map(([name, value]) => ({ name, value }))
+                        .sort((a, b) => b.value - a.value);
+                      return (
+                        <ResponsiveContainer width="100%" height={220}>
+                          <PieChart>
+                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name.substring(0, 15)}${name.length > 15 ? '…' : ''} ${(percent * 100).toFixed(0)}%`}>
+                              {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-4">Nível de Uso</h3>
+                    {(() => {
+                      const usageCounts: Record<string, number> = {};
+                      cancellationData.filter(c => c.usage_level).forEach(c => {
+                        usageCounts[c.usage_level!] = (usageCounts[c.usage_level!] || 0) + 1;
+                      });
+                      const chartData = Object.entries(usageCounts).map(([name, value]) => ({ name, value }));
+                      return (
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Cancellation list */}
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Motivo</TableHead>
+                        <TableHead>Uso</TableHead>
+                        <TableHead>Comentário</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cancellationData.map((c) => (
+                        <TableRow key={c.id}>
+                          <TableCell className="text-sm">{c.email || userProfiles[c.user_id]?.email || 'N/A'}</TableCell>
+                          <TableCell className="text-sm">{c.cancellation_reason}</TableCell>
+                          <TableCell className="text-sm">{c.usage_level || '—'}</TableCell>
+                          <TableCell className="text-sm max-w-[200px] truncate">{c.additional_comments || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
             {/* Response Detail Modal */}
             <Dialog open={!!selectedResponse} onOpenChange={() => setSelectedResponse(null)}>
               <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
