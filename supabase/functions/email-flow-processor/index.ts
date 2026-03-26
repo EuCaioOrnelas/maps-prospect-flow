@@ -56,9 +56,21 @@ async function enrollEligibleLeads(supabase: any, results: any) {
 
     // CRITICAL: Use flow.updated_at as activation cutoff date.
     // Only enroll users whose triggering event happened AFTER the flow was activated.
-    // This prevents enrolling historical users (e.g. someone who downgraded months ago).
     const flowActivatedAt = flow.updated_at;
 
+    // ── CHECKOUT ABANDONED: special path using checkout_leads table ──
+    if (triggerType === "checkout_abandoned") {
+      await enrollCheckoutAbandoned(supabase, flow, flowActivatedAt, entryRules, results);
+      continue;
+    }
+
+    // ── DOWNGRADE: special path — must verify subscription_current_period_end exists ──
+    if (triggerType === "downgrade") {
+      await enrollDowngradedUsers(supabase, flow, flowActivatedAt, entryRules, results);
+      continue;
+    }
+
+    // ── Standard profile-based triggers ──
     let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
 
     switch (audienceType) {
@@ -77,15 +89,10 @@ async function enrollEligibleLeads(supabase: any, results: any) {
         break;
     }
 
-    // Apply time-based filter: only users whose relevant event happened after flow activation
-    // For signup/free_trial: created_at after activation
-    // For downgrade/checkout_abandoned/inactive/trial_expired: updated_at after activation
-    // This ensures we never pick up historical users
+    // Time filter: only events after flow activation
     if (triggerType === "signup" || triggerType === "free_trial") {
       query = query.gte("created_at", flowActivatedAt);
     } else {
-      // For downgrade, checkout_abandoned, inactive, trial_expired, etc.
-      // Only pick up users whose profile was updated after flow activation
       query = query.gte("updated_at", flowActivatedAt);
     }
 
@@ -110,87 +117,156 @@ async function enrollEligibleLeads(supabase: any, results: any) {
         if (inactiveDays < days) continue;
       }
 
-      const { data: activeFlows } = await supabase
-        .from("email_flows")
-        .select("id")
-        .eq("trigger_type", triggerType)
-        .eq("status", "active");
-
-      const activeFlowIds = (activeFlows || []).map((f: any) => f.id);
-
-      if (activeFlowIds.length > 0) {
-        const { count: activeCount } = await supabase
-          .from("email_flow_enrollments")
-          .select("*", { count: "exact", head: true })
-          .in("flow_id", activeFlowIds)
-          .eq("user_id", user.id)
-          .eq("status", "active");
-
-        if ((activeCount || 0) > 0) continue;
-      }
-
-      const maxEntries = entryRules.max_entries_per_user || 1;
-      const { count } = await supabase
-        .from("email_flow_enrollments")
-        .select("*", { count: "exact", head: true })
-        .eq("flow_id", flow.id)
-        .eq("user_id", user.id);
-
-      if ((count || 0) >= maxEntries) continue;
-
-      if (entryRules.reentry_after_days && (count || 0) > 0) {
-        const { data: lastEnrollment } = await supabase
-          .from("email_flow_enrollments")
-          .select("entered_at")
-          .eq("flow_id", flow.id)
-          .eq("user_id", user.id)
-          .order("entered_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (lastEnrollment) {
-          const daysSince = Math.floor((now.getTime() - new Date(lastEnrollment.entered_at).getTime()) / 86400000);
-          if (daysSince < entryRules.reentry_after_days) continue;
-        }
-      }
-
-      const { data: entryNode } = await supabase
-        .from("email_flow_nodes")
-        .select("id")
-        .eq("flow_id", flow.id)
-        .eq("node_type", "entry")
-        .maybeSingle();
-
-      if (!entryNode) continue;
-
-      const { data: firstEdge } = await supabase
-        .from("email_flow_edges")
-        .select("target_node_id")
-        .eq("flow_id", flow.id)
-        .eq("source_node_id", entryNode.id)
-        .maybeSingle();
-
-      const firstNodeId = firstEdge?.target_node_id || entryNode.id;
-
-      await supabase.from("email_flow_enrollments").insert({
-        flow_id: flow.id,
-        user_id: user.id,
-        current_node_id: firstNodeId,
-        next_step_at: now.toISOString(),
-      });
-
-      await supabase.from("email_flow_execution_logs").insert({
-        flow_id: flow.id,
-        user_id: user.id,
-        node_id: entryNode.id,
-        action_type: "enrolled",
-        status: "success",
-        details: { trigger: triggerType, audience: audienceType },
-      });
-
-      results.enrollments_created++;
+      await enrollUserIfEligible(supabase, flow, user.id, triggerType, audienceType, entryRules, results);
     }
   }
+}
+
+// ── CHECKOUT ABANDONED: uses checkout_leads table (includes non-users) ──
+async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt: string, entryRules: any, results: any) {
+  // Get checkout leads that started AFTER flow activation and didn't complete
+  const { data: checkoutLeads } = await supabase
+    .from("checkout_leads")
+    .select("id, user_id, email, name, plan_attempted, checkout_started_at")
+    .eq("checkout_completed", false)
+    .gte("checkout_started_at", flowActivatedAt);
+
+  if (!checkoutLeads?.length) return;
+
+  // Deduplicate by email (keep most recent)
+  const seen = new Set<string>();
+  const uniqueLeads = [];
+  for (const lead of checkoutLeads) {
+    const key = lead.email.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueLeads.push(lead);
+  }
+
+  for (const lead of uniqueLeads) {
+    // Use user_id if available, otherwise use a deterministic ID from email
+    const enrollUserId = lead.user_id || lead.id;
+
+    await enrollUserIfEligible(supabase, flow, enrollUserId, "checkout_abandoned", flow.audience_type, entryRules, results, {
+      email: lead.email,
+      name: lead.name,
+      plan_attempted: lead.plan_attempted,
+      is_checkout_lead: !lead.user_id,
+    });
+  }
+}
+
+// ── DOWNGRADE: only users who were paying and became free AFTER activation ──
+async function enrollDowngradedUsers(supabase: any, flow: any, flowActivatedAt: string, entryRules: any, results: any) {
+  // Downgraded = plan is 'free' BUT has subscription_current_period_end (was once paying)
+  // AND updated_at is after flow activation (the downgrade happened recently)
+  const { data: users } = await supabase
+    .from("profiles")
+    .select("id, email, name, plan, subscription_current_period_end, updated_at")
+    .eq("plan", "free")
+    .eq("is_blocked", false)
+    .not("subscription_current_period_end", "is", null)
+    .gte("updated_at", flowActivatedAt);
+
+  if (!users?.length) return;
+
+  for (const user of users) {
+    // Extra safety: subscription must have ended (period_end is in the past)
+    const periodEnd = new Date(user.subscription_current_period_end);
+    if (periodEnd > new Date()) continue; // still active, not a real downgrade
+
+    await enrollUserIfEligible(supabase, flow, user.id, "downgrade", flow.audience_type, entryRules, results);
+  }
+}
+
+// ── Shared enrollment logic ──
+async function enrollUserIfEligible(
+  supabase: any, flow: any, userId: string, triggerType: string,
+  audienceType: string, entryRules: any, results: any, metadata?: any
+) {
+  const now = new Date();
+
+  // Check if already enrolled in any active flow with same trigger
+  const { data: activeFlows } = await supabase
+    .from("email_flows")
+    .select("id")
+    .eq("trigger_type", triggerType)
+    .eq("status", "active");
+
+  const activeFlowIds = (activeFlows || []).map((f: any) => f.id);
+
+  if (activeFlowIds.length > 0) {
+    const { count: activeCount } = await supabase
+      .from("email_flow_enrollments")
+      .select("*", { count: "exact", head: true })
+      .in("flow_id", activeFlowIds)
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    if ((activeCount || 0) > 0) return;
+  }
+
+  const maxEntries = entryRules.max_entries_per_user || 1;
+  const { count } = await supabase
+    .from("email_flow_enrollments")
+    .select("*", { count: "exact", head: true })
+    .eq("flow_id", flow.id)
+    .eq("user_id", userId);
+
+  if ((count || 0) >= maxEntries) return;
+
+  if (entryRules.reentry_after_days && (count || 0) > 0) {
+    const { data: lastEnrollment } = await supabase
+      .from("email_flow_enrollments")
+      .select("entered_at")
+      .eq("flow_id", flow.id)
+      .eq("user_id", userId)
+      .order("entered_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastEnrollment) {
+      const daysSince = Math.floor((now.getTime() - new Date(lastEnrollment.entered_at).getTime()) / 86400000);
+      if (daysSince < entryRules.reentry_after_days) return;
+    }
+  }
+
+  const { data: entryNode } = await supabase
+    .from("email_flow_nodes")
+    .select("id")
+    .eq("flow_id", flow.id)
+    .eq("node_type", "entry")
+    .maybeSingle();
+
+  if (!entryNode) return;
+
+  const { data: firstEdge } = await supabase
+    .from("email_flow_edges")
+    .select("target_node_id")
+    .eq("flow_id", flow.id)
+    .eq("source_node_id", entryNode.id)
+    .maybeSingle();
+
+  const firstNodeId = firstEdge?.target_node_id || entryNode.id;
+
+  await supabase.from("email_flow_enrollments").insert({
+    flow_id: flow.id,
+    user_id: userId,
+    current_node_id: firstNodeId,
+    next_step_at: now.toISOString(),
+    metadata: metadata || null,
+  });
+
+  await supabase.from("email_flow_execution_logs").insert({
+    flow_id: flow.id,
+    user_id: userId,
+    node_id: entryNode.id,
+    action_type: "enrolled",
+    status: "success",
+    details: { trigger: triggerType, audience: audienceType, ...(metadata || {}) },
+  });
+
+  results.enrollments_created++;
 }
 
 function checkTriggerEligibility(triggerType: string, user: any, triggerConfig: any, now: Date): boolean {
