@@ -125,15 +125,17 @@ async function enrollEligibleLeads(supabase: any, results: any) {
 // ── CHECKOUT ABANDONED: uses checkout_leads table (includes non-users) ──
 async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt: string, entryRules: any, results: any) {
   // Get checkout leads that started AFTER flow activation and didn't complete
+  // Sort by checkout_started_at DESC so dedup keeps the most recent per email
   const { data: checkoutLeads } = await supabase
     .from("checkout_leads")
     .select("id, user_id, email, name, plan_attempted, checkout_started_at")
     .eq("checkout_completed", false)
-    .gte("checkout_started_at", flowActivatedAt);
+    .gte("checkout_started_at", flowActivatedAt)
+    .order("checkout_started_at", { ascending: false });
 
   if (!checkoutLeads?.length) return;
 
-  // Deduplicate by email (keep most recent)
+  // Deduplicate by email (keep most recent — already sorted DESC)
   const seen = new Set<string>();
   const uniqueLeads = [];
   for (const lead of checkoutLeads) {
