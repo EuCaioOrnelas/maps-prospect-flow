@@ -466,20 +466,10 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
         if (nextEdge) {
           await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
         } else {
-          // Fallback: try any edge from this node
-          const { data: fallbackEdge } = await supabase
-            .from("email_flow_edges")
-            .select("target_node_id")
-            .eq("flow_id", enrollment.flow_id)
-            .eq("source_node_id", node.id)
-            .limit(1)
-            .maybeSingle();
-
-          if (fallbackEdge) {
-            await moveToNextNode(supabase, enrollment, fallbackEdge.target_node_id);
-          } else {
-            await completeEnrollment(supabase, enrollment, "no_next_node_after_condition");
-          }
+          // NO fallback — if the specific branch (yes/no) has no edge, complete the enrollment.
+          // Using a fallback "any edge" would route to the WRONG branch (e.g., "yes" path when result was "no").
+          console.warn(`[email-flow] Condition node ${node.id} has no "${handle}" edge — completing enrollment ${enrollment.id}`);
+          await completeEnrollment(supabase, enrollment, `no_${handle}_branch`);
         }
 
         results.steps_advanced++;
