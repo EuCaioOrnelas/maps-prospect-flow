@@ -353,6 +353,28 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       case "email": {
         const config = node.config || {};
         if (config.subject && config.body) {
+          // Check email preferences — skip if user opted out of marketing
+          if (user.id && user.plan !== "none") {
+            const { data: prefs } = await supabase
+              .from("email_preferences")
+              .select("marketing_enabled")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (prefs && prefs.marketing_enabled === false) {
+              console.log(`[email-flow] Skipping email to ${user.email} — marketing opt-out`);
+              await supabase.from("email_flow_execution_logs").insert({
+                flow_id: enrollment.flow_id,
+                enrollment_id: enrollment.id,
+                user_id: user.id,
+                node_id: node.id,
+                action_type: "email_skipped",
+                status: "success",
+                details: { reason: "marketing_opt_out" },
+              });
+              // Still advance to next node
+              break;
+            }
+          }
           const templateVars: Record<string, string> = {
             user_name: user.name || user.email?.split("@")[0] || "usuário",
             user_email: user.email,
