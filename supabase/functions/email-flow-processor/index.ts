@@ -54,6 +54,11 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     const audienceType = flow.audience_type;
     const entryRules = flow.entry_rules || {};
 
+    // CRITICAL: Use flow.updated_at as activation cutoff date.
+    // Only enroll users whose triggering event happened AFTER the flow was activated.
+    // This prevents enrolling historical users (e.g. someone who downgraded months ago).
+    const flowActivatedAt = flow.updated_at;
+
     let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at");
 
     switch (audienceType) {
@@ -70,6 +75,18 @@ async function enrollEligibleLeads(supabase: any, results: any) {
       case "inactive_30d":
         query = query.eq("plan", "free");
         break;
+    }
+
+    // Apply time-based filter: only users whose relevant event happened after flow activation
+    // For signup/free_trial: created_at after activation
+    // For downgrade/checkout_abandoned/inactive/trial_expired: updated_at after activation
+    // This ensures we never pick up historical users
+    if (triggerType === "signup" || triggerType === "free_trial") {
+      query = query.gte("created_at", flowActivatedAt);
+    } else {
+      // For downgrade, checkout_abandoned, inactive, trial_expired, etc.
+      // Only pick up users whose profile was updated after flow activation
+      query = query.gte("updated_at", flowActivatedAt);
     }
 
     const { data: users } = await query;
