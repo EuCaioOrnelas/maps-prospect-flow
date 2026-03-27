@@ -67,7 +67,7 @@ const CATEGORY_COST: Record<string, string> = {
 
 const TEMPLATES_PER_PAGE = 6;
 
-export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
+export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: MetaCampaignFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
