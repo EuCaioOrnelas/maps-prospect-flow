@@ -35,10 +35,9 @@ interface WabaConnection {
   waba_id: string;
   phone_number_id: string;
   business_name: string | null;
-  display_phone: string | null;
+  display_phone_number: string | null;
   access_token: string;
-  messaging_tier: string | null;
-  daily_limit: number;
+  status: string | null;
 }
 
 interface MetaTemplate {
