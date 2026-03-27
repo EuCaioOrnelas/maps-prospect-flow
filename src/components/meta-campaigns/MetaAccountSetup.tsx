@@ -110,6 +110,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
         description: "Sua conta Meta Business foi vinculada com sucesso.",
       });
 
+      clearDraft();
       onConnectionSaved(data as unknown as WabaConnection);
     } catch (err: any) {
       console.error("Error saving WABA connection:", err);
