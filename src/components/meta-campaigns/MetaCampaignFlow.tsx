@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,10 @@ import {
   ExternalLink,
   Phone,
   MessageSquare,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  XCircle,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -29,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaTemplate {
@@ -44,11 +49,24 @@ interface MetaCampaignFlowProps {
   connections: WabaConnection[];
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  MARKETING: "Marketing",
+  UTILITY: "Utilidade",
+  AUTHENTICATION: "Autenticação",
+};
+
+const CATEGORY_COST: Record<string, string> = {
+  MARKETING: "~R$ 0,50",
+  UTILITY: "~R$ 0,15",
+  AUTHENTICATION: "~R$ 0,15",
+};
+
+const TEMPLATES_PER_PAGE = 6;
+
 export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // If single connection, auto-select; otherwise user must choose
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>(
     connections.length === 1 ? connections[0].id : ""
   );
@@ -63,6 +81,8 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
   const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [templatePage, setTemplatePage] = useState(1);
 
   // Audience
   const [phoneNumbers, setPhoneNumbers] = useState("");
@@ -103,6 +123,26 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     }
   };
 
+  // Filtered + paginated templates
+  const filteredTemplates = useMemo(() => {
+    if (!templateSearch.trim()) return templates;
+    const q = templateSearch.toLowerCase();
+    return templates.filter(
+      (t) => t.name.toLowerCase().includes(q) || (CATEGORY_LABELS[t.category] || t.category).toLowerCase().includes(q)
+    );
+  }, [templates, templateSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / TEMPLATES_PER_PAGE));
+  const paginatedTemplates = filteredTemplates.slice(
+    (templatePage - 1) * TEMPLATES_PER_PAGE,
+    templatePage * TEMPLATES_PER_PAGE
+  );
+
+  // Reset page on search change
+  useEffect(() => {
+    setTemplatePage(1);
+  }, [templateSearch]);
+
   const extractVariables = (template: MetaTemplate): string[] => {
     const vars: string[] = [];
     template.components?.forEach((comp: any) => {
@@ -131,6 +171,16 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
       .split(/[\n,;]+/)
       .map((p) => p.trim().replace(/\D/g, ""))
       .filter((p) => p.length >= 10);
+  };
+
+  const parseAllNumbers = () => {
+    const all = phoneNumbers
+      .split(/[\n,;]+/)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    const valid = all.filter((p) => p.replace(/\D/g, "").length >= 10);
+    const invalid = all.filter((p) => p.replace(/\D/g, "").length < 10);
+    return { valid, invalid, total: all.length };
   };
 
   const audienceCount = parsePhoneNumbers().length;
@@ -190,6 +240,8 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     setPhoneNumbers("");
     setCampaignName("");
     setSendResult(null);
+    setTemplateSearch("");
+    setTemplatePage(1);
   };
 
   // Success screen
@@ -212,28 +264,10 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     );
   }
 
+  const { valid: validNums, invalid: invalidNums } = parseAllNumbers();
+
   return (
     <div className="space-y-6">
-      {/* API Info Banner */}
-      <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/5 border border-warning/20">
-        <AlertTriangle size={18} className="text-warning shrink-0 mt-0.5" />
-        <div className="text-sm space-y-1">
-          <p className="font-medium text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-          <p className="text-muted-foreground text-xs">
-            Esta API usa <strong>templates pré-aprovados pela Meta</strong>. Você só pode enviar mensagens para contatos que <strong>já interagiram com seu número</strong> ou que <strong>fizeram opt-in</strong> (ex: formulário no site, cadastro). 
-            <strong> Não funciona para leads totalmente frios</strong> que nunca tiveram contato com sua empresa. Para leads frios, use as <strong>Campanhas Wiize</strong>.
-          </p>
-          <a
-            href="https://developers.facebook.com/docs/whatsapp/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-          >
-            <ExternalLink size={12} /> Documentação oficial da Meta
-          </a>
-        </div>
-      </div>
-
       {/* Step: Number Selection (only if multiple) */}
       {step === "number" && (
         <div className="glass rounded-2xl p-6 animate-in fade-in">
@@ -252,7 +286,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               <button
                 key={conn.id}
                 onClick={() => setSelectedConnectionId(conn.id)}
-                className={`text-left p-4 rounded-lg border transition-all ${
+                className={`text-left p-3 rounded-lg border transition-all ${
                   selectedConnectionId === conn.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary"
                     : "border-border hover:border-primary/30 hover:bg-muted/30"
@@ -260,8 +294,8 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Phone size={18} className="text-primary" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Phone size={14} className="text-primary" />
                     </div>
                     <div>
                       <p className="font-medium text-sm">
@@ -273,7 +307,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                     </div>
                   </div>
                   {selectedConnectionId === conn.id && (
-                    <CheckCircle2 size={20} className="text-primary" />
+                    <CheckCircle2 size={18} className="text-primary" />
                   )}
                 </div>
               </button>
@@ -305,11 +339,36 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 Escolha um template aprovado pela Meta para sua campanha
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={fetchTemplates} disabled={loadingTemplates} className="gap-1">
-              <RefreshCw size={14} className={loadingTemplates ? "animate-spin" : ""} />
-              Atualizar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={fetchTemplates} disabled={loadingTemplates} className="gap-1">
+                <RefreshCw size={14} className={loadingTemplates ? "animate-spin" : ""} />
+                Atualizar
+              </Button>
+              <a
+                href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm" className="gap-1">
+                  <ExternalLink size={14} />
+                  Criar template
+                </Button>
+              </a>
+            </div>
           </div>
+
+          {/* Search */}
+          {templates.length > 0 && (
+            <div className="relative mb-4">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+                placeholder="Buscar template por nome ou categoria..."
+                className="pl-9 bg-secondary"
+              />
+            </div>
+          )}
 
           {loadingTemplates ? (
             <div className="flex items-center justify-center py-12">
@@ -330,34 +389,73 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </a>
             </div>
           ) : (
-            <div className="grid gap-3 max-h-[400px] overflow-y-auto pr-1">
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => handleSelectTemplate(t)}
-                  className={`text-left p-4 rounded-lg border transition-all ${
-                    selectedTemplate?.id === t.id
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border hover:border-primary/30 hover:bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{t.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded">{t.category}</span>
-                      <span className="text-xs text-muted-foreground">{t.language}</span>
+            <>
+              <div className="grid gap-2">
+                {paginatedTemplates.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => handleSelectTemplate(t)}
+                    className={`text-left p-3 rounded-lg border transition-all ${
+                      selectedTemplate?.id === t.id
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border hover:border-primary/30 hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{t.name}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {CATEGORY_LABELS[t.category] || t.category}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          {CATEGORY_COST[t.category] || "—"}/msg
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{t.language}</span>
+                      </div>
                     </div>
+                    {t.components?.map((comp: any, i: number) =>
+                      comp.type === "BODY" ? (
+                        <p key={i} className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                          {comp.text}
+                        </p>
+                      ) : null
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-xs text-muted-foreground">
+                    {filteredTemplates.length} template(s) encontrado(s)
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setTemplatePage((p) => Math.max(1, p - 1))}
+                      disabled={templatePage === 1}
+                    >
+                      <ChevronLeft size={14} />
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2">
+                      {templatePage}/{totalPages}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setTemplatePage((p) => Math.min(totalPages, p + 1))}
+                      disabled={templatePage === totalPages}
+                    >
+                      <ChevronRight size={14} />
+                    </Button>
                   </div>
-                  {t.components?.map((comp: any, i: number) =>
-                    comp.type === "BODY" ? (
-                      <p key={i} className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                        {comp.text}
-                      </p>
-                    ) : null
-                  )}
-                </button>
-              ))}
-            </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Template variables */}
@@ -434,16 +532,27 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Números de telefone</Label>
-                <span className="text-xs text-muted-foreground">
-                  {audienceCount} número(s) detectado(s)
-                </span>
               </div>
               <Textarea
                 value={phoneNumbers}
                 onChange={(e) => setPhoneNumbers(e.target.value)}
                 placeholder={"5511999999999\n5521988888888; 5531977777777\n5541966666666, 5551955555555\n\nCole números separados por linha, vírgula (,) ou ponto-e-vírgula (;)"}
-                className="bg-secondary min-h-[200px] font-mono text-sm"
+                className="bg-secondary min-h-[180px] font-mono text-sm"
               />
+
+              {/* Valid/Invalid counter */}
+              {phoneNumbers.trim().length > 0 && (
+                <div className="flex items-center gap-4 text-xs">
+                  <span className="flex items-center gap-1 text-primary">
+                    <CheckCircle2 size={12} /> {validNums.length} válido(s)
+                  </span>
+                  {invalidNums.length > 0 && (
+                    <span className="flex items-center gap-1 text-destructive">
+                      <XCircle size={12} /> {invalidNums.length} inválido(s) — serão ignorados
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Rules box */}
               <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
@@ -466,9 +575,18 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">Importante: Opt-in obrigatório</p>
                   <p>
-                    A Meta exige que os contatos tenham dado <strong>consentimento prévio (opt-in)</strong> para receber mensagens. 
-                    Enviar para contatos que não fizeram opt-in pode resultar em <strong>baixa qualidade do número</strong> e até <strong>restrições na conta</strong>.
+                    A Meta exige que os contatos tenham dado <strong>consentimento prévio (opt-in)</strong> para receber mensagens.
+                    Isso inclui: formulários no site, interações anteriores no WhatsApp, ou cadastro explícito.
+                    Enviar para contatos sem opt-in pode resultar em <strong>baixa qualidade do número</strong> e até <strong>restrições na conta</strong>.
                   </p>
+                  <a
+                    href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline flex items-center gap-1 mt-1"
+                  >
+                    <ExternalLink size={10} /> Como obter opt-in dos contatos
+                  </a>
                 </div>
               </div>
             </div>
@@ -497,7 +615,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               disabled={!canProceedToReview}
               className="gap-2"
             >
-              Revisar <ArrowRight size={16} />
+              Revisar ({validNums.length} contatos) <ArrowRight size={16} />
             </Button>
           </div>
         </div>
@@ -524,7 +642,12 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground">Categoria</p>
-                <p className="text-sm font-medium">{selectedTemplate?.category}</p>
+                <p className="text-sm font-medium">
+                  {CATEGORY_LABELS[selectedTemplate?.category || ""] || selectedTemplate?.category}
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({CATEGORY_COST[selectedTemplate?.category || ""] || "—"}/msg)
+                  </span>
+                </p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground">Destinatários</p>
@@ -585,6 +708,19 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           </div>
         </div>
       )}
+
+      {/* Footer disclaimer */}
+      <div className="text-xs text-muted-foreground/70 text-center max-w-3xl mx-auto pt-2">
+        <strong>API de Marketing do WhatsApp (Cloud API):</strong> Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios — para isso, use as <strong>Campanhas Wiize</strong>.{" "}
+        <a
+          href="https://developers.facebook.com/docs/whatsapp/overview"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline inline-flex items-center gap-0.5"
+        >
+          <ExternalLink size={10} /> Docs Meta
+        </a>
+      </div>
     </div>
   );
 };
