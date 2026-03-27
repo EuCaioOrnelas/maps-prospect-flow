@@ -382,7 +382,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
               <Textarea
                 value={phoneNumbers}
                 onChange={(e) => setPhoneNumbers(e.target.value)}
-                placeholder={"5511999999999\n5521988888888\n5531977777777\n\nCole um número por linha, separados por vírgula ou ponto-e-vírgula"}
+                placeholder={"5511999999999\n5521988888888; 5531977777777\n5541966666666, 5551955555555\n\nCole números separados por linha, vírgula (,) ou ponto-e-vírgula (;)"}
                 className="bg-secondary min-h-[200px] font-mono text-sm"
               />
               <div className="flex items-start gap-2 text-xs text-muted-foreground p-2 rounded bg-muted/50">
