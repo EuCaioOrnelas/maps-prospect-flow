@@ -29,16 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface WabaConnection {
-  id: string;
-  waba_id: string;
-  phone_number_id: string;
-  business_name: string | null;
-  display_phone_number: string | null;
-  access_token: string;
-  status: string | null;
-}
+import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaTemplate {
   id: string;
@@ -50,13 +41,22 @@ interface MetaTemplate {
 }
 
 interface MetaCampaignFlowProps {
-  connection: WabaConnection;
+  connections: WabaConnection[];
 }
 
-export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
+export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<"template" | "audience" | "review">("template");
+
+  // If single connection, auto-select; otherwise user must choose
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string>(
+    connections.length === 1 ? connections[0].id : ""
+  );
+  const selectedConnection = connections.find((c) => c.id === selectedConnectionId) || null;
+
+  const [step, setStep] = useState<"number" | "template" | "audience" | "review">(
+    connections.length === 1 ? "template" : "number"
+  );
 
   // Template
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);
@@ -72,28 +72,20 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
 
-  // Tier info
-  const tierLimits: Record<string, { label: string; daily: string }> = {
-    TIER_1: { label: "Tier 1", daily: "1.000/dia" },
-    TIER_2: { label: "Tier 2", daily: "10.000/dia" },
-    TIER_3: { label: "Tier 3", daily: "100.000/dia" },
-    TIER_4: { label: "Tier 4", daily: "Ilimitado" },
-    UNKNOWN: { label: "Não verificado", daily: "Verifique no painel Meta" },
-  };
-
-  const currentTier = tierLimits["UNKNOWN"];
-
   useEffect(() => {
-    fetchTemplates();
-  }, []);
+    if (selectedConnection) {
+      fetchTemplates();
+    }
+  }, [selectedConnectionId]);
 
   const fetchTemplates = async () => {
+    if (!selectedConnection) return;
     setLoadingTemplates(true);
     try {
       const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
         body: {
-          waba_id: connection.waba_id,
-          access_token: connection.access_token,
+          waba_id: selectedConnection.waba_id,
+          access_token: selectedConnection.access_token,
         },
       });
 
@@ -142,13 +134,12 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
   };
 
   const audienceCount = parsePhoneNumbers().length;
-
   const canProceedToAudience = !!selectedTemplate;
   const canProceedToReview = audienceCount > 0;
   const allVariablesFilled = Object.values(templateVariables).every((v) => v.trim());
 
   const handleSendCampaign = async () => {
-    if (!user || !selectedTemplate) return;
+    if (!user || !selectedTemplate || !selectedConnection) return;
     setSending(true);
 
     try {
@@ -157,10 +148,10 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
 
       const { data, error } = await supabase.functions.invoke("meta-send-campaign", {
         body: {
-          connection_id: connection.id,
-          waba_id: connection.waba_id,
-          phone_number_id: connection.phone_number_id,
-          access_token: connection.access_token,
+          connection_id: selectedConnection.id,
+          waba_id: selectedConnection.waba_id,
+          phone_number_id: selectedConnection.phone_number_id,
+          access_token: selectedConnection.access_token,
           template_name: selectedTemplate.name,
           template_language: selectedTemplate.language,
           template_variables: templateVariables,
@@ -193,7 +184,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
   };
 
   const handleReset = () => {
-    setStep("template");
+    setStep(connections.length === 1 ? "template" : "number");
     setSelectedTemplate(null);
     setTemplateVariables({});
     setPhoneNumbers("");
@@ -223,22 +214,83 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Tier info banner */}
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-        <Info size={18} className="text-primary shrink-0" />
-        <div className="text-sm">
-          <span className="font-medium">Seu nível: {currentTier.label}</span>
-          <span className="text-muted-foreground"> — Limite: {currentTier.daily}</span>
+      {/* API Info Banner */}
+      <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/5 border border-warning/20">
+        <AlertTriangle size={18} className="text-warning shrink-0 mt-0.5" />
+        <div className="text-sm space-y-1">
+          <p className="font-medium text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+          <p className="text-muted-foreground text-xs">
+            Esta API usa <strong>templates pré-aprovados pela Meta</strong>. Você só pode enviar mensagens para contatos que <strong>já interagiram com seu número</strong> ou que <strong>fizeram opt-in</strong> (ex: formulário no site, cadastro). 
+            <strong> Não funciona para leads totalmente frios</strong> que nunca tiveram contato com sua empresa. Para leads frios, use as <strong>Campanhas Wiize</strong>.
+          </p>
+          <a
+            href="https://developers.facebook.com/docs/whatsapp/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+          >
+            <ExternalLink size={12} /> Documentação oficial da Meta
+          </a>
         </div>
-        <a
-          href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-auto text-xs text-primary hover:underline flex items-center gap-1"
-        >
-          <ExternalLink size={12} /> Saiba mais
-        </a>
       </div>
+
+      {/* Step: Number Selection (only if multiple) */}
+      {step === "number" && (
+        <div className="glass rounded-2xl p-6 animate-in fade-in">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Phone size={20} className="text-primary" />
+              Selecione o número de envio
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Escolha qual número será usado para disparar esta campanha
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            {connections.map((conn) => (
+              <button
+                key={conn.id}
+                onClick={() => setSelectedConnectionId(conn.id)}
+                className={`text-left p-4 rounded-lg border transition-all ${
+                  selectedConnectionId === conn.id
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-primary/30 hover:bg-muted/30"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Phone size={18} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">
+                        {conn.nickname || conn.display_phone_number || `Número ${conn.phone_number_id.slice(-4)}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {conn.business_name || conn.waba_id}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedConnectionId === conn.id && (
+                    <CheckCircle2 size={20} className="text-primary" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <Button
+              onClick={() => setStep("template")}
+              disabled={!selectedConnectionId}
+              className="gap-2"
+            >
+              Próximo <ArrowRight size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Step: Template Selection */}
       {step === "template" && (
@@ -336,14 +388,21 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
             </div>
           )}
 
-          <div className="flex justify-end mt-6">
-            <Button
-              onClick={() => setStep("audience")}
-              disabled={!canProceedToAudience || (Object.keys(templateVariables).length > 0 && !allVariablesFilled)}
-              className="gap-2"
-            >
-              Próximo <ArrowRight size={16} />
-            </Button>
+          <div className="flex justify-between mt-6">
+            {connections.length > 1 && (
+              <Button variant="ghost" onClick={() => setStep("number")} className="gap-2">
+                <ArrowLeft size={16} /> Voltar
+              </Button>
+            )}
+            <div className={connections.length === 1 ? "ml-auto" : ""}>
+              <Button
+                onClick={() => setStep("audience")}
+                disabled={!canProceedToAudience || (Object.keys(templateVariables).length > 0 && !allVariablesFilled)}
+                className="gap-2"
+              >
+                Próximo <ArrowRight size={16} />
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -357,7 +416,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
               Defina o público
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Cole os números de telefone para envio (com código do país)
+              Cole os números de telefone para envio
             </p>
           </div>
 
@@ -385,19 +444,47 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
                 placeholder={"5511999999999\n5521988888888; 5531977777777\n5541966666666, 5551955555555\n\nCole números separados por linha, vírgula (,) ou ponto-e-vírgula (;)"}
                 className="bg-secondary min-h-[200px] font-mono text-sm"
               />
-              <div className="flex items-start gap-2 text-xs text-muted-foreground p-2 rounded bg-muted/50">
-                <Info size={12} className="mt-0.5 shrink-0" />
-                <p>
-                  Os números devem incluir o código do país (ex: 55 para Brasil).
-                  O sistema vai filtrar números inválidos automaticamente.
+
+              {/* Rules box */}
+              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                <p className="text-xs font-medium text-foreground flex items-center gap-1">
+                  <Info size={12} /> Regras de formatação dos números:
                 </p>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Inclua o <strong>código do país</strong> (ex: <code>55</code> para Brasil)</li>
+                  <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos</li>
+                  <li>Formato correto: <code>5511999999999</code> (13 dígitos para BR)</li>
+                  <li>Não use espaços, traços ou parênteses — o sistema limpa automaticamente</li>
+                  <li>Separe os números por <strong>quebra de linha</strong>, <strong>vírgula (,)</strong> ou <strong>ponto-e-vírgula (;)</strong></li>
+                  <li>Números com menos de 10 dígitos serão ignorados</li>
+                </ul>
+              </div>
+
+              {/* Opt-in warning */}
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+                <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground">Importante: Opt-in obrigatório</p>
+                  <p>
+                    A Meta exige que os contatos tenham dado <strong>consentimento prévio (opt-in)</strong> para receber mensagens. 
+                    Enviar para contatos que não fizeram opt-in pode resultar em <strong>baixa qualidade do número</strong> e até <strong>restrições na conta</strong>.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Template preview */}
-            <div className="p-3 rounded-lg border border-border bg-muted/30">
-              <p className="text-xs font-medium mb-1">Template selecionado:</p>
-              <p className="text-sm text-primary font-medium">{selectedTemplate?.name}</p>
+            {/* Selected number & template preview */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg border border-border bg-muted/30">
+                <p className="text-xs text-muted-foreground">Número de envio</p>
+                <p className="text-sm font-medium">
+                  {selectedConnection?.nickname || selectedConnection?.display_phone_number || selectedConnection?.phone_number_id}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg border border-border bg-muted/30">
+                <p className="text-xs text-muted-foreground">Template selecionado</p>
+                <p className="text-sm font-medium text-primary">{selectedTemplate?.name}</p>
+              </div>
             </div>
           </div>
 
@@ -445,7 +532,9 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground">Número de envio</p>
-                <p className="text-sm font-medium">{connection.display_phone_number || connection.phone_number_id}</p>
+                <p className="text-sm font-medium">
+                  {selectedConnection?.nickname || selectedConnection?.display_phone_number || selectedConnection?.phone_number_id}
+                </p>
               </div>
             </div>
 

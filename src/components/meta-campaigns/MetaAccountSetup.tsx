@@ -17,6 +17,8 @@ import {
   Loader2,
   Info,
   HelpCircle,
+  Plus,
+  Tag,
 } from "lucide-react";
 import {
   Tooltip,
@@ -24,23 +26,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-interface WabaConnection {
-  id: string;
-  waba_id: string;
-  phone_number_id: string;
-  business_name: string | null;
-  display_phone_number: string | null;
-  access_token: string;
-  status: string | null;
-}
+import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaAccountSetupProps {
   onConnectionSaved: (connection: WabaConnection) => void;
   existingConnection?: WabaConnection | null;
+  isAddingExtra?: boolean;
 }
 
-export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: MetaAccountSetupProps) => {
+export const MetaAccountSetup = ({ onConnectionSaved, existingConnection, isAddingExtra }: MetaAccountSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const STORAGE_KEY = "meta_setup_draft";
@@ -55,9 +49,13 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
 
   const draft = existingConnection ? null : loadDraft();
 
+  // If isAddingExtra, start collapsed
+  const [showForm, setShowForm] = useState(!isAddingExtra);
+
   const [step, setStepRaw] = useState(existingConnection ? 4 : (draft?.step || 1));
   const [saving, setSaving] = useState(false);
 
+  const [nickname, setNickname] = useState(existingConnection?.nickname || draft?.nickname || "");
   const [wabaId, setWabaId] = useState(existingConnection?.waba_id || draft?.wabaId || "");
   const [phoneNumberId, setPhoneNumberId] = useState(existingConnection?.phone_number_id || draft?.phoneNumberId || "");
   const [accessToken, setAccessToken] = useState(existingConnection?.access_token || draft?.accessToken || "");
@@ -66,7 +64,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
 
   const saveDraft = (updates: Record<string, any> = {}) => {
     if (existingConnection) return;
-    const data = { step, wabaId, phoneNumberId, accessToken, businessName, displayPhone, ...updates };
+    const data = { step, nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone, ...updates };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   };
 
@@ -80,9 +78,9 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
   // Auto-persist fields to localStorage on change
   useEffect(() => {
     if (!existingConnection) {
-      saveDraft({ step, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
+      saveDraft({ step, nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
     }
-  }, [wabaId, phoneNumberId, accessToken, businessName, displayPhone]);
+  }, [nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone]);
 
   const steps = [
     { num: 1, title: "Conta Business", icon: Building2 },
@@ -105,6 +103,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
           access_token: accessToken,
           business_name: businessName || null,
           display_phone_number: displayPhone || null,
+          nickname: nickname || null,
         }, { onConflict: "user_id,waba_id" })
         .select()
         .single();
@@ -118,6 +117,18 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
 
       clearDraft();
       onConnectionSaved(data as unknown as WabaConnection);
+
+      // Reset form if adding extra
+      if (isAddingExtra) {
+        setShowForm(false);
+        setStepRaw(1);
+        setNickname("");
+        setWabaId("");
+        setPhoneNumberId("");
+        setAccessToken("");
+        setBusinessName("");
+        setDisplayPhone("");
+      }
     } catch (err: any) {
       console.error("Error saving WABA connection:", err);
       toast({
@@ -146,7 +157,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <HelpCircle size={14} className="text-muted-foreground cursor-help" />
+          <span><HelpCircle size={14} className="text-muted-foreground cursor-help" /></span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <p className="text-xs">{text}</p>
@@ -154,6 +165,20 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
       </Tooltip>
     </TooltipProvider>
   );
+
+  // Collapsed add button for extra numbers
+  if (isAddingExtra && !showForm) {
+    return (
+      <Button
+        variant="outline"
+        onClick={() => setShowForm(true)}
+        className="w-full gap-2 border-dashed py-6"
+      >
+        <Plus size={18} />
+        Adicionar outro número
+      </Button>
+    );
+  }
 
   return (
     <div className="glass rounded-2xl p-6 max-w-2xl mx-auto">
@@ -186,14 +211,31 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
         ))}
       </div>
 
-      {/* Step 1: WABA ID */}
+      {/* Step 1: WABA ID + Nickname */}
       {step === 1 && (
         <div className="space-y-4 animate-in fade-in">
           <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">Conta WhatsApp Business</h2>
+            <h2 className="text-xl font-bold">
+              {isAddingExtra ? "Adicionar novo número" : "Conta WhatsApp Business"}
+            </h2>
             <p className="text-sm text-muted-foreground mt-1">
               Informe o ID da sua conta WhatsApp Business (WABA)
             </p>
+          </div>
+
+          {/* Nickname */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="nickname">Apelido do número (opcional)</Label>
+              <FieldHelp text="Dê um nome para identificar este número facilmente, ex: 'Comercial', 'Suporte', 'Marketing'." />
+            </div>
+            <Input
+              id="nickname"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Ex: Comercial, Suporte, Marketing"
+              className="bg-secondary"
+            />
           </div>
 
           <div className="space-y-2">
@@ -225,8 +267,13 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
             />
           </div>
 
-          <div className="flex justify-end mt-6">
-            <Button onClick={() => setStep(2)} disabled={!wabaId.trim()} className="gap-2">
+          <div className="flex justify-between mt-6">
+            {isAddingExtra && (
+              <Button variant="ghost" onClick={() => setShowForm(false)} className="gap-2">
+                Cancelar
+              </Button>
+            )}
+            <Button onClick={() => setStep(2)} disabled={!wabaId.trim()} className={`gap-2 ${!isAddingExtra ? 'ml-auto' : ''}`}>
               Próximo <ArrowRight size={16} />
             </Button>
           </div>
@@ -374,6 +421,16 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
           </div>
 
           <div className="space-y-3">
+            {nickname && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-2">
+                  <Tag size={16} className="text-primary" />
+                  <span className="text-sm font-medium">Apelido</span>
+                </div>
+                <span className="text-sm text-muted-foreground">{nickname}</span>
+              </div>
+            )}
+
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
               <div className="flex items-center gap-2">
                 <Building2 size={16} className="text-primary" />
@@ -427,7 +484,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
             </Button>
             <Button onClick={handleSave} disabled={saving} className="gap-2">
               {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {existingConnection ? "Atualizar configuração" : "Salvar e conectar"}
+              {existingConnection ? "Atualizar configuração" : isAddingExtra ? "Adicionar número" : "Salvar e conectar"}
             </Button>
           </div>
         </div>
