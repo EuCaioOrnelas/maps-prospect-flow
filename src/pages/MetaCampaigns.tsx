@@ -80,6 +80,11 @@ const MetaCampaigns = () => {
     await supabase.from("user_dismissed_popups").insert({
       user_id: user.id,
       popup_key: "meta_campaigns_disclaimer",
+      metadata: {
+        accepted_at: new Date().toISOString(),
+        terms_version: "1.0",
+        section: "meta_whatsapp_api",
+      },
     });
 
     setShowDisclaimer(false);
