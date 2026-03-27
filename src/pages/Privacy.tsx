@@ -117,7 +117,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Segurança dos Dados</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Segurança dos Dados</h2>
               <p>
                 Implementamos medidas de segurança técnicas e organizacionais para proteger seus dados, incluindo 
                 criptografia, controle de acesso e monitoramento contínuo.
