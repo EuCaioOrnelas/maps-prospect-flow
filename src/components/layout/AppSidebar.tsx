@@ -135,6 +135,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleCampaignsClick = () => {
+    if (isExpanded) {
+      setIsCampaignsOpen(!isCampaignsOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
