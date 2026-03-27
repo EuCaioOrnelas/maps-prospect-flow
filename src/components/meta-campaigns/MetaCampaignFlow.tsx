@@ -35,10 +35,9 @@ interface WabaConnection {
   waba_id: string;
   phone_number_id: string;
   business_name: string | null;
-  display_phone: string | null;
+  display_phone_number: string | null;
   access_token: string;
-  messaging_tier: string | null;
-  daily_limit: number;
+  status: string | null;
 }
 
 interface MetaTemplate {
@@ -82,7 +81,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
     UNKNOWN: { label: "Não verificado", daily: "Verifique no painel Meta" },
   };
 
-  const currentTier = tierLimits[connection.messaging_tier || "UNKNOWN"] || tierLimits.UNKNOWN;
+  const currentTier = tierLimits["UNKNOWN"];
 
   useEffect(() => {
     fetchTemplates();
@@ -446,7 +445,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground">Número de envio</p>
-                <p className="text-sm font-medium">{connection.display_phone || connection.phone_number_id}</p>
+                <p className="text-sm font-medium">{connection.display_phone_number || connection.phone_number_id}</p>
               </div>
             </div>
 
