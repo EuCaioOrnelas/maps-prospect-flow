@@ -7,6 +7,7 @@ import {
   LogOut,
   FileSearch,
   Send,
+  Smartphone,
   
   Megaphone,
   Users,
@@ -45,6 +46,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
+  const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
@@ -58,6 +60,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
+  const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -133,10 +136,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleCampaignsClick = () => {
+    if (isExpanded) {
+      setIsCampaignsOpen(!isCampaignsOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsReportsOpen(false);
+    setIsCampaignsOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
@@ -243,16 +253,60 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Disparos */}
+            {/* Campanhas with submenu */}
             <li>
               <SidebarNavItem
                 title="Campanhas"
                 icon={Megaphone}
-                url="/whatsapp"
-                isActive={currentPath === "/whatsapp"}
+                onClick={handleCampaignsClick}
+                isActive={isOnCampaignsPage}
                 isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isCampaignsOpen}
                 tooltip="Campanhas"
               />
+
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isCampaignsOpen
+                      ? "max-h-28 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    <li>
+                      <Link
+                        to="/whatsapp"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/whatsapp"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Send size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Campanhas Wiize</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/meta-campaigns"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/meta-campaigns"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Smartphone size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Campanhas Meta</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </li>
 
             {/* Aquecimento */}

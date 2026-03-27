@@ -31,6 +31,7 @@ const Reports = lazy(() => import("./pages/Reports"));
 const CRMComingSoon = lazy(() => import("./pages/CRMComingSoon"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
 const WhatsAppCampaign = lazy(() => import("./pages/WhatsAppCampaign"));
+const MetaCampaigns = lazy(() => import("./pages/MetaCampaigns"));
 const UserInsights = lazy(() => import("./pages/UserInsights"));
 const WhatsAppReports = lazy(() => import("./pages/WhatsAppReports"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -184,6 +185,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <WhatsAppCampaign />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/meta-campaigns" 
+                  element={
+                    <ProtectedRoute>
+                      <MetaCampaigns />
                     </ProtectedRoute>
                   } 
                 />

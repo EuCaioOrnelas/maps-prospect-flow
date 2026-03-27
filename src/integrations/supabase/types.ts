@@ -1556,6 +1556,62 @@ export type Database = {
           },
         ]
       }
+      meta_campaigns: {
+        Row: {
+          campaign_name: string
+          connection_id: string | null
+          created_at: string
+          error_details: Json | null
+          failed_count: number
+          id: string
+          status: string
+          success_count: number
+          template_language: string
+          template_name: string
+          total_recipients: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_name: string
+          connection_id?: string | null
+          created_at?: string
+          error_details?: Json | null
+          failed_count?: number
+          id?: string
+          status?: string
+          success_count?: number
+          template_language?: string
+          template_name: string
+          total_recipients?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_name?: string
+          connection_id?: string | null
+          created_at?: string
+          error_details?: Json | null
+          failed_count?: number
+          id?: string
+          status?: string
+          success_count?: number
+          template_language?: string
+          template_name?: string
+          total_recipients?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_campaigns_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_waba_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meta_webhook_events: {
         Row: {
           contact_name: string | null
