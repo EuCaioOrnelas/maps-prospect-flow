@@ -62,7 +62,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
   const [phoneNumberId, setPhoneNumberId] = useState(existingConnection?.phone_number_id || draft?.phoneNumberId || "");
   const [accessToken, setAccessToken] = useState(existingConnection?.access_token || draft?.accessToken || "");
   const [businessName, setBusinessName] = useState(existingConnection?.business_name || draft?.businessName || "");
-  const [displayPhone, setDisplayPhone] = useState(existingConnection?.display_phone || draft?.displayPhone || "");
+  const [displayPhone, setDisplayPhone] = useState(existingConnection?.display_phone_number || draft?.displayPhone || "");
 
   const saveDraft = (updates: Record<string, any> = {}) => {
     if (existingConnection) return;
