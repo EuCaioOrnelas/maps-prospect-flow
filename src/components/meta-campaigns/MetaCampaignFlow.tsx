@@ -112,6 +112,13 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
 
   const fetchTemplates = async () => {
     if (!selectedConnection) return;
+
+    if (expiredTokenIds.has(selectedConnection.id)) {
+      setTemplates([]);
+      setLoadingTemplates(false);
+      return;
+    }
+
     setLoadingTemplates(true);
     try {
       const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
@@ -140,9 +147,15 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
     } catch (err: any) {
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
-      const isTokenError = errMsg.includes("Session has expired") || errMsg.includes("access token") || errMsg.includes("OAuthException");
+        const isTokenError =
+          expiredTokenIds.has(selectedConnection?.id || "") ||
+          errMsg.includes("Session has expired") ||
+          errMsg.includes("access token") ||
+          errMsg.includes("OAuthException") ||
+          errMsg.includes("non-2xx status code");
       if (isTokenError) {
         console.warn("[MetaCampaignFlow] Token expired (catch):", selectedConnection?.display_phone_number);
+          setTemplates([]);
       } else {
         toast({
           title: "Erro ao buscar templates",
@@ -582,7 +595,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
                   <p className="mt-0.5">
-                    A Meta exige consentimento prévio (opt-in) dos contatos. Não é possível enviar para leads frios pela API oficial, para prospecção fria use as Campanhas Wiize. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
+                    A Meta exige consentimento prévio (opt-in) dos contatos. Não é possível enviar para leads frios pela API oficial, para prospecção fria use a Prospecção. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
                   </p>
                   <a
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
@@ -702,7 +715,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         <div className="text-sm">
           <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
           <p className="text-muted-foreground mt-0.5">
-            Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios, para isso use as Campanhas Wiize.
+            Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios, para isso use a Prospecção.
           </p>
           <a
             href="https://developers.facebook.com/docs/whatsapp/overview"

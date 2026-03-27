@@ -256,14 +256,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {/* Campanhas with submenu */}
             <li>
               <SidebarNavItem
-                title="Campanhas"
+                title="Campanha"
                 icon={Megaphone}
                 onClick={handleCampaignsClick}
                 isActive={isOnCampaignsPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isCampaignsOpen}
-                tooltip="Campanhas"
+                tooltip="Campanha"
               />
 
               {isExpanded && (
@@ -287,7 +287,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Send size={16} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Campanhas Wiize</span>
+                        <span className="whitespace-nowrap truncate">Prospecção</span>
                       </Link>
                     </li>
                     <li>
@@ -301,7 +301,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Smartphone size={16} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Campanhas Meta</span>
+                        <span className="whitespace-nowrap truncate">Relacionamento</span>
                       </Link>
                     </li>
                   </ul>

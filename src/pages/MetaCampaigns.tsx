@@ -266,9 +266,9 @@ const MetaCampaigns = () => {
 
         <main className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold">Campanhas Meta</h1>
-            <p className="text-muted-foreground mt-1">
-              Envie mensagens em massa via API Oficial do WhatsApp — sem risco de bloqueio
+            <h1 className="text-3xl font-bold">Relacionamento</h1>
+            <p className="text-muted-foreground mt-1 max-w-3xl">
+              Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
             </p>
           </div>
 
@@ -300,7 +300,7 @@ const MetaCampaigns = () => {
                   <History size={16} />
                   Histórico
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-2 relative">
+                <TabsTrigger value="settings" className="gap-2 relative data-[state=active]:shadow-sm">
                   <Settings size={16} />
                   Números Conectados
                   {hasExpired && <AlertTriangle size={14} className="text-destructive" />}
@@ -319,19 +319,21 @@ const MetaCampaigns = () => {
                 <div className="space-y-6">
                   {/* Expired tokens alert */}
                   {hasExpired && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl border border-destructive/40 bg-destructive/5">
-                      <ShieldAlert size={20} className="text-destructive mt-0.5 shrink-0" />
+                    <div className="flex items-start gap-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                        <ShieldAlert size={20} className="text-destructive" />
+                      </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-sm text-destructive">
+                        <p className="font-semibold text-base text-destructive">
                           {expiredConnections.length === 1 ? "1 token expirado" : `${expiredConnections.length} tokens expirados`}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-0.5">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {expiredConnections.map(c => c.nickname || c.display_phone_number || c.phone_number_id).join(", ")} — o token de acesso expirou. Clique em editar para atualizar.
                         </p>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="mt-2 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                          className="mt-3 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
                           onClick={() => setShowExpiredAlert(true)}
                         >
                           <Info size={12} /> Como resolver
@@ -347,7 +349,7 @@ const MetaCampaigns = () => {
                       return (
                         <div
                           key={conn.id}
-                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          className={`flex items-center justify-between rounded-xl border p-4 transition-colors ${
                             isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
                           }`}
                         >
@@ -368,6 +370,11 @@ const MetaCampaigns = () => {
                               <p className="text-[11px] text-muted-foreground truncate">
                                 {conn.business_name || conn.waba_id}
                               </p>
+                              {isExpired && (
+                                <p className="mt-1 text-[11px] font-medium text-destructive">
+                                  Atualize o token para voltar a carregar templates e enviar mensagens.
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
@@ -407,7 +414,7 @@ const MetaCampaigns = () => {
                     <div className="text-sm">
                       <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
                       <p className="text-muted-foreground mt-0.5">
-                        A API Oficial só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier</strong>. <strong className="text-destructive">Não é possível enviar para leads frios</strong>, para isso use as <strong className="text-primary">Campanhas Wiize</strong>.
+                        A API Oficial só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier</strong>. <strong className="text-destructive">Não é possível enviar para leads frios</strong>, para isso use a <strong className="text-primary">Prospecção</strong>.
                       </p>
                       <a
                         href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
