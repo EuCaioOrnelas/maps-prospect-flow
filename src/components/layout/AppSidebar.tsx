@@ -386,46 +386,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
             
-            {/* Profile */}
-            <li>
-              <Link
-                to="/profile"
-                className={cn(
-                  "flex items-center rounded-lg transition-colors duration-200",
-                  "w-10 h-10 justify-center",
-                  isExpanded && "w-full px-2.5 justify-start gap-3",
-                  currentPath === "/profile"
-                    ? "bg-sidebar-accent/60 text-primary"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
-              >
-                <Avatar className="h-5 w-5 shrink-0 border border-sidebar-border">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-                {isExpanded && (
-                  <span className="whitespace-nowrap truncate overflow-hidden flex-1">
-                    {profile?.name || 'Meu Perfil'}
-                  </span>
-                )}
-              </Link>
-            </li>
-
-            {/* Consultoria */}
-            <li>
-              <SidebarNavItem
-                title="Consultoria"
-                icon={GraduationCap}
-                url="/consultoria"
-                isActive={currentPath === "/consultoria"}
-                isExpanded={isExpanded}
-                tooltip="Consultoria Estratégica"
-              />
-            </li>
-
-            {/* Notifications */}
+            {/* Avisos */}
             <li>
               <SidebarNavItem
                 title="Avisos"
@@ -454,6 +415,45 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   </div>
                 ) : "Avisos"}
               />
+            </li>
+
+            {/* Consultoria */}
+            <li>
+              <SidebarNavItem
+                title="Consultoria"
+                icon={GraduationCap}
+                url="/consultoria"
+                isActive={currentPath === "/consultoria"}
+                isExpanded={isExpanded}
+                tooltip="Consultoria Estratégica"
+              />
+            </li>
+
+            {/* Profile */}
+            <li>
+              <Link
+                to="/profile"
+                className={cn(
+                  "flex items-center rounded-lg transition-colors duration-200",
+                  "w-10 h-10 justify-center",
+                  isExpanded && "w-full px-2.5 justify-start gap-3",
+                  currentPath === "/profile"
+                    ? "bg-sidebar-accent/60 text-primary"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+              >
+                <Avatar className="h-5 w-5 shrink-0 border border-sidebar-border">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                {isExpanded && (
+                  <span className="whitespace-nowrap truncate overflow-hidden flex-1">
+                    {profile?.name || 'Meu Perfil'}
+                  </span>
+                )}
+              </Link>
             </li>
           </ul>
         </div>
