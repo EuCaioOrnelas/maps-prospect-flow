@@ -7,8 +7,7 @@ import {
   LogOut,
   FileSearch,
   Send,
-  Smartphone,
-  
+  Handshake,
   Megaphone,
   Users,
   Flame,
