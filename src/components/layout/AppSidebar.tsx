@@ -300,7 +300,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Smartphone size={16} className="shrink-0" />
+                        <Mail size={16} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Relacionamento</span>
                       </Link>
                     </li>
