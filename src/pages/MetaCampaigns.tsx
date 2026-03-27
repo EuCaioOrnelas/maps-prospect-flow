@@ -11,7 +11,8 @@ import { MetaCampaignHistory } from "@/components/meta-campaigns/MetaCampaignHis
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Check, X, Info, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,20 +37,17 @@ const MetaCampaigns = () => {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [activeTab, setActiveTab] = useState<"new" | "history" | "settings">("new");
 
-  // Inline editing
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Edit dialog
+  const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
 
   useEffect(() => {
-    if (user) {
-      checkSetup();
-    }
+    if (user) checkSetup();
   }, [user]);
 
   const checkSetup = async () => {
     if (!user) return;
     setLoading(true);
-
     try {
       const { data: dismissed } = await supabase
         .from("user_dismissed_popups")
@@ -81,12 +79,10 @@ const MetaCampaigns = () => {
 
   const handleDisclaimerAccept = async () => {
     if (!user) return;
-
     await supabase.from("user_dismissed_popups").insert({
       user_id: user.id,
       popup_key: "meta_campaigns_disclaimer",
     });
-
     await supabase.from("user_events").insert({
       user_id: user.id,
       event_name: "meta_disclaimer_accepted",
@@ -96,7 +92,6 @@ const MetaCampaigns = () => {
         section: "meta_whatsapp_api",
       },
     });
-
     setShowDisclaimer(false);
     setDisclaimerAccepted(true);
   };
@@ -114,21 +109,27 @@ const MetaCampaigns = () => {
     setActiveTab("new");
   };
 
-  const handleSaveNickname = async (connId: string) => {
+  const handleSaveNickname = async () => {
+    if (!editingConn) return;
     try {
       await supabase
         .from("user_waba_connections")
         .update({ nickname: editNickname || null })
-        .eq("id", connId);
+        .eq("id", editingConn.id);
 
       setConnections((prev) =>
-        prev.map((c) => (c.id === connId ? { ...c, nickname: editNickname || null } : c))
+        prev.map((c) => (c.id === editingConn.id ? { ...c, nickname: editNickname || null } : c))
       );
-      setEditingId(null);
+      setEditingConn(null);
       toast({ title: "Apelido atualizado!" });
     } catch {
       toast({ title: "Erro ao salvar", variant: "destructive" });
     }
+  };
+
+  const maskSecret = (token: string) => {
+    if (!token || token.length < 12) return "••••••••";
+    return token.slice(0, 8) + "••••••••••••";
   };
 
   const hasConnections = connections.length > 0;
@@ -162,10 +163,7 @@ const MetaCampaigns = () => {
             </p>
           </div>
 
-          <MetaDisclaimerModal
-            open={showDisclaimer}
-            onAccept={handleDisclaimerAccept}
-          />
+          <MetaDisclaimerModal open={showDisclaimer} onAccept={handleDisclaimerAccept} />
 
           {!disclaimerAccepted && !showDisclaimer && null}
 
@@ -186,7 +184,7 @@ const MetaCampaigns = () => {
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-2">
                   <Settings size={16} />
-                  Números
+                  Números Conectados
                 </TabsTrigger>
               </TabsList>
 
@@ -206,7 +204,7 @@ const MetaCampaigns = () => {
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p className="font-medium text-foreground text-sm">Sobre números conectados</p>
                       <p>
-                        A API Oficial do WhatsApp (Cloud API) só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número conectado tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier do número</strong>.
+                        A API Oficial do WhatsApp (Cloud API) só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número conectado tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier do número</strong>. <strong>Não é possível enviar para leads frios</strong> — para isso, use as <strong>Campanhas Wiize</strong>.
                       </p>
                       <a
                         href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
@@ -219,56 +217,35 @@ const MetaCampaigns = () => {
                     </div>
                   </div>
 
-                  {/* Compact connected numbers */}
-                  <div className="space-y-2">
+                  {/* Grid 2 per row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {connections.map((conn) => (
                       <div key={conn.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <Phone size={14} className="text-primary" />
                           </div>
-                          {editingId === conn.id ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                value={editNickname}
-                                onChange={(e) => setEditNickname(e.target.value)}
-                                className="h-7 text-sm w-40"
-                                placeholder="Apelido"
-                                autoFocus
-                                onKeyDown={(e) => e.key === "Enter" && handleSaveNickname(conn.id)}
-                              />
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSaveNickname(conn.id)}>
-                                <Check size={14} className="text-primary" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}>
-                                <X size={14} />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="truncate">
-                              <p className="font-medium text-sm truncate">
-                                {conn.nickname || conn.display_phone_number || conn.phone_number_id}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground truncate">
-                                {conn.business_name || conn.waba_id}
-                              </p>
-                            </div>
-                          )}
+                          <div className="truncate">
+                            <p className="font-medium text-sm truncate">
+                              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {conn.business_name || conn.waba_id}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {editingId !== conn.id && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingId(conn.id);
-                                setEditNickname(conn.nickname || "");
-                              }}
-                            >
-                              <Pencil size={13} className="text-muted-foreground" />
-                            </Button>
-                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setEditingConn(conn);
+                              setEditNickname(conn.nickname || "");
+                            }}
+                          >
+                            <Pencil size={13} className="text-muted-foreground" />
+                          </Button>
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                             Ativo
                           </span>
@@ -277,18 +254,54 @@ const MetaCampaigns = () => {
                     ))}
                   </div>
 
-                  <MetaAccountSetup
-                    onConnectionSaved={handleConnectionSaved}
-                    isAddingExtra
-                  />
+                  <MetaAccountSetup onConnectionSaved={handleConnectionSaved} isAddingExtra />
                 </div>
               </TabsContent>
             </Tabs>
           )}
         </main>
       </div>
+
+      {/* Edit Number Dialog */}
+      <Dialog open={!!editingConn} onOpenChange={(o) => !o && setEditingConn(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Número</DialogTitle>
+          </DialogHeader>
+          {editingConn && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
+                <DetailRow label="WABA ID" value={editingConn.waba_id} />
+                <DetailRow label="Número" value={editingConn.display_phone_number || "—"} />
+                <DetailRow label="Empresa" value={editingConn.business_name || "—"} />
+                <DetailRow label="Access Token" value={maskSecret(editingConn.access_token)} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Apelido do número</label>
+                <Input
+                  value={editNickname}
+                  onChange={(e) => setEditNickname(e.target.value)}
+                  placeholder="Ex: Atendimento, Vendas..."
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
+                />
+              </div>
+              <Button onClick={handleSaveNickname} className="w-full">
+                Salvar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+const DetailRow = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <p className="text-[11px] text-muted-foreground">{label}</p>
+    <p className="text-sm font-mono truncate">{value}</p>
+  </div>
+);
 
 export default MetaCampaigns;

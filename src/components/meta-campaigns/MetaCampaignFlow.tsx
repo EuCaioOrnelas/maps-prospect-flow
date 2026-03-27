@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   XCircle,
+  ChevronDown,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaTemplate {
@@ -76,7 +78,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     connections.length === 1 ? "template" : "number"
   );
 
-  // Template
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
@@ -84,18 +85,15 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const [templateSearch, setTemplateSearch] = useState("");
   const [templatePage, setTemplatePage] = useState(1);
 
-  // Audience
   const [phoneNumbers, setPhoneNumbers] = useState("");
   const [campaignName, setCampaignName] = useState("");
+  const [rulesOpen, setRulesOpen] = useState(false);
 
-  // Sending
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
 
   useEffect(() => {
-    if (selectedConnection) {
-      fetchTemplates();
-    }
+    if (selectedConnection) fetchTemplates();
   }, [selectedConnectionId]);
 
   const fetchTemplates = async () => {
@@ -108,7 +106,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           access_token: selectedConnection.access_token,
         },
       });
-
       if (error) throw error;
       setTemplates((data?.templates || []).filter((t: MetaTemplate) => t.status === "APPROVED"));
     } catch (err: any) {
@@ -123,7 +120,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     }
   };
 
-  // Filtered + paginated templates
   const filteredTemplates = useMemo(() => {
     if (!templateSearch.trim()) return templates;
     const q = templateSearch.toLowerCase();
@@ -138,10 +134,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     templatePage * TEMPLATES_PER_PAGE
   );
 
-  // Reset page on search change
-  useEffect(() => {
-    setTemplatePage(1);
-  }, [templateSearch]);
+  useEffect(() => { setTemplatePage(1); }, [templateSearch]);
 
   const extractVariables = (template: MetaTemplate): string[] => {
     const vars: string[] = [];
@@ -191,11 +184,9 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const handleSendCampaign = async () => {
     if (!user || !selectedTemplate || !selectedConnection) return;
     setSending(true);
-
     try {
       const phones = parsePhoneNumbers();
       const name = campaignName || `Meta ${new Date().toLocaleDateString("pt-BR")}`;
-
       const { data, error } = await supabase.functions.invoke("meta-send-campaign", {
         body: {
           connection_id: selectedConnection.id,
@@ -209,25 +200,12 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           campaign_name: name,
         },
       });
-
       if (error) throw error;
-
-      setSendResult({
-        success: data?.success_count || 0,
-        failed: data?.failed_count || 0,
-      });
-
-      toast({
-        title: "Campanha enviada!",
-        description: `${data?.success_count || 0} mensagens enviadas com sucesso.`,
-      });
+      setSendResult({ success: data?.success_count || 0, failed: data?.failed_count || 0 });
+      toast({ title: "Campanha enviada!", description: `${data?.success_count || 0} mensagens enviadas com sucesso.` });
     } catch (err: any) {
       console.error("Error sending campaign:", err);
-      toast({
-        title: "Erro ao enviar campanha",
-        description: err.message || "Tente novamente",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao enviar campanha", description: err.message || "Tente novamente", variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -244,7 +222,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
     setTemplatePage(1);
   };
 
-  // Success screen
   if (sendResult) {
     return (
       <div className="glass rounded-2xl p-8 text-center max-w-lg mx-auto">
@@ -257,8 +234,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           {sendResult.failed > 0 && `, ${sendResult.failed} falharam`}
         </p>
         <Button onClick={handleReset} className="gap-2">
-          <Rocket size={16} />
-          Nova campanha
+          <Rocket size={16} /> Nova campanha
         </Button>
       </div>
     );
@@ -268,7 +244,27 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Step: Number Selection (only if multiple) */}
+      {/* API Warning Banner */}
+      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
+        <Info size={18} className="text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+          <p className="text-muted-foreground mt-0.5">
+            Usa <strong>templates pré-aprovados</strong> pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram <strong>opt-in</strong>.{" "}
+            <strong className="text-destructive">Não funciona para leads frios</strong> — para isso, use as <strong className="text-primary">Campanhas Wiize</strong>.
+          </p>
+          <a
+            href="https://developers.facebook.com/docs/whatsapp/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
+          >
+            <ExternalLink size={10} /> Documentação oficial da Meta
+          </a>
+        </div>
+      </div>
+
+      {/* Step: Number Selection */}
       {step === "number" && (
         <div className="glass rounded-2xl p-6 animate-in fade-in">
           <div className="mb-4">
@@ -280,7 +276,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               Escolha qual número será usado para disparar esta campanha
             </p>
           </div>
-
           <div className="grid gap-3">
             {connections.map((conn) => (
               <button
@@ -301,25 +296,16 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                       <p className="font-medium text-sm">
                         {conn.nickname || conn.display_phone_number || `Número ${conn.phone_number_id.slice(-4)}`}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {conn.business_name || conn.waba_id}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{conn.business_name || conn.waba_id}</p>
                     </div>
                   </div>
-                  {selectedConnectionId === conn.id && (
-                    <CheckCircle2 size={18} className="text-primary" />
-                  )}
+                  {selectedConnectionId === conn.id && <CheckCircle2 size={18} className="text-primary" />}
                 </div>
               </button>
             ))}
           </div>
-
           <div className="flex justify-end mt-6">
-            <Button
-              onClick={() => setStep("template")}
-              disabled={!selectedConnectionId}
-              className="gap-2"
-            >
+            <Button onClick={() => setStep("template")} disabled={!selectedConnectionId} className="gap-2">
               Próximo <ArrowRight size={16} />
             </Button>
           </div>
@@ -344,20 +330,14 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 <RefreshCw size={14} className={loadingTemplates ? "animate-spin" : ""} />
                 Atualizar
               </Button>
-              <a
-                href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://business.facebook.com/latest/whatsapp_manager/message_templates" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="gap-1">
-                  <ExternalLink size={14} />
-                  Criar template
+                  <ExternalLink size={14} /> Criar template
                 </Button>
               </a>
             </div>
           </div>
 
-          {/* Search */}
           {templates.length > 0 && (
             <div className="relative mb-4">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -384,8 +364,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline mt-2 inline-flex items-center gap-1"
               >
-                <ExternalLink size={12} />
-                Criar template no painel Meta
+                <ExternalLink size={12} /> Criar template no painel Meta
               </a>
             </div>
           ) : (
@@ -403,53 +382,34 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{t.name}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {CATEGORY_LABELS[t.category] || t.category}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground font-medium">
+                        <span className="text-xs font-medium text-primary">
                           {CATEGORY_COST[t.category] || "—"}/msg
                         </span>
-                        <span className="text-[10px] text-muted-foreground">{t.language}</span>
+                        <span className="text-xs text-muted-foreground">{t.language}</span>
                       </div>
                     </div>
                     {t.components?.map((comp: any, i: number) =>
                       comp.type === "BODY" ? (
-                        <p key={i} className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {comp.text}
-                        </p>
+                        <p key={i} className="text-xs text-muted-foreground mt-1 line-clamp-1">{comp.text}</p>
                       ) : null
                     )}
                   </button>
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
-                  <p className="text-xs text-muted-foreground">
-                    {filteredTemplates.length} template(s) encontrado(s)
-                  </p>
+                  <p className="text-xs text-muted-foreground">{filteredTemplates.length} template(s)</p>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setTemplatePage((p) => Math.max(1, p - 1))}
-                      disabled={templatePage === 1}
-                    >
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setTemplatePage((p) => Math.max(1, p - 1))} disabled={templatePage === 1}>
                       <ChevronLeft size={14} />
                     </Button>
-                    <span className="text-xs text-muted-foreground px-2">
-                      {templatePage}/{totalPages}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setTemplatePage((p) => Math.min(totalPages, p + 1))}
-                      disabled={templatePage === totalPages}
-                    >
+                    <span className="text-xs text-muted-foreground px-2">{templatePage}/{totalPages}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setTemplatePage((p) => Math.min(totalPages, p + 1))} disabled={templatePage === totalPages}>
                       <ChevronRight size={14} />
                     </Button>
                   </div>
@@ -458,7 +418,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
             </>
           )}
 
-          {/* Template variables */}
           {selectedTemplate && Object.keys(templateVariables).length > 0 && (
             <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
               <p className="text-sm font-medium mb-3">Variáveis do template:</p>
@@ -468,9 +427,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                     <Label className="text-xs">{"{{" + key + "}}"}</Label>
                     <Input
                       value={templateVariables[key]}
-                      onChange={(e) =>
-                        setTemplateVariables((prev) => ({ ...prev, [key]: e.target.value }))
-                      }
+                      onChange={(e) => setTemplateVariables((prev) => ({ ...prev, [key]: e.target.value }))}
                       placeholder={`Valor para variável ${key}`}
                       className="bg-secondary text-sm"
                     />
@@ -479,8 +436,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </div>
               {!allVariablesFilled && (
                 <p className="text-xs text-warning mt-2 flex items-center gap-1">
-                  <AlertTriangle size={12} />
-                  Preencha todas as variáveis para prosseguir
+                  <AlertTriangle size={12} /> Preencha todas as variáveis para prosseguir
                 </p>
               )}
             </div>
@@ -513,9 +469,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               <Users size={20} className="text-primary" />
               Defina o público
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Cole os números de telefone para envio
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">Cole os números de telefone para envio</p>
           </div>
 
           <div className="space-y-4">
@@ -540,7 +494,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 className="bg-secondary min-h-[180px] font-mono text-sm"
               />
 
-              {/* Valid/Invalid counter */}
               {phoneNumbers.trim().length > 0 && (
                 <div className="flex items-center gap-4 text-xs">
                   <span className="flex items-center gap-1 text-primary">
@@ -554,30 +507,36 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 </div>
               )}
 
-              {/* Rules box */}
-              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
-                <p className="text-xs font-medium text-foreground flex items-center gap-1">
-                  <Info size={12} /> Regras de formatação dos números:
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Inclua o <strong>código do país</strong> (ex: <code>55</code> para Brasil)</li>
-                  <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos</li>
-                  <li>Formato correto: <code>5511999999999</code> (13 dígitos para BR)</li>
-                  <li>Não use espaços, traços ou parênteses — o sistema limpa automaticamente</li>
-                  <li>Separe os números por <strong>quebra de linha</strong>, <strong>vírgula (,)</strong> ou <strong>ponto-e-vírgula (;)</strong></li>
-                  <li>Números com menos de 10 dígitos serão ignorados</li>
-                </ul>
-              </div>
+              {/* Collapsible rules */}
+              <Collapsible open={rulesOpen} onOpenChange={setRulesOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full p-2 rounded-lg hover:bg-muted/30">
+                    <Info size={12} />
+                    <span>Regras de formatação dos números</span>
+                    <ChevronDown size={12} className={`ml-auto transition-transform ${rulesOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border mt-1">
+                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <li>Inclua o <strong>código do país</strong> (ex: <code>55</code> para Brasil)</li>
+                      <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos</li>
+                      <li>Formato: <code>5511999999999</code> (13 dígitos para BR)</li>
+                      <li>Espaços, traços e parênteses são removidos automaticamente</li>
+                      <li>Separe por <strong>linha</strong>, <strong>vírgula</strong> ou <strong>ponto-e-vírgula</strong></li>
+                      <li>Números com menos de 10 dígitos serão ignorados</li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Opt-in warning */}
               <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
                 <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Importante: Opt-in obrigatório</p>
+                  <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
                   <p>
-                    A Meta exige que os contatos tenham dado <strong>consentimento prévio (opt-in)</strong> para receber mensagens.
-                    Isso inclui: formulários no site, interações anteriores no WhatsApp, ou cadastro explícito.
-                    Enviar para contatos sem opt-in pode resultar em <strong>baixa qualidade do número</strong> e até <strong>restrições na conta</strong>.
+                    A Meta exige <strong>consentimento prévio (opt-in)</strong> dos contatos. <strong className="text-destructive">Não é possível enviar para leads frios pela API oficial</strong> — para prospecção fria, use as <strong className="text-primary">Campanhas Wiize</strong>.
                   </p>
                   <a
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
@@ -591,7 +550,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </div>
             </div>
 
-            {/* Selected number & template preview */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg border border-border bg-muted/30">
                 <p className="text-xs text-muted-foreground">Número de envio</p>
@@ -610,11 +568,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
             <Button variant="ghost" onClick={() => setStep("template")} className="gap-2">
               <ArrowLeft size={16} /> Voltar
             </Button>
-            <Button
-              onClick={() => setStep("review")}
-              disabled={!canProceedToReview}
-              className="gap-2"
-            >
+            <Button onClick={() => setStep("review")} disabled={!canProceedToReview} className="gap-2">
               Revisar ({validNums.length} contatos) <ArrowRight size={16} />
             </Button>
           </div>
@@ -629,9 +583,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               <Send size={20} className="text-primary" />
               Revisar e enviar
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Confira os detalhes antes de disparar a campanha
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">Confira os detalhes antes de disparar</p>
           </div>
 
           <div className="space-y-3">
@@ -666,8 +618,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 <p className="text-xs text-muted-foreground mb-1">Variáveis</p>
                 {Object.entries(templateVariables).map(([key, value]) => (
                   <p key={key} className="text-sm">
-                    <span className="text-muted-foreground">{"{{" + key + "}}"}</span>:{" "}
-                    <span className="font-medium">{value}</span>
+                    <span className="text-muted-foreground">{"{{" + key + "}}"}</span>: <span className="font-medium">{value}</span>
                   </p>
                 ))}
               </div>
@@ -688,39 +639,16 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
             <Button variant="ghost" onClick={() => setStep("audience")} className="gap-2">
               <ArrowLeft size={16} /> Voltar
             </Button>
-            <Button
-              onClick={handleSendCampaign}
-              disabled={sending}
-              className="gap-2 bg-primary hover:bg-primary/90"
-            >
+            <Button onClick={handleSendCampaign} disabled={sending} className="gap-2 bg-primary hover:bg-primary/90">
               {sending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Enviando...
-                </>
+                <><Loader2 size={16} className="animate-spin" /> Enviando...</>
               ) : (
-                <>
-                  <Rocket size={16} />
-                  Enviar campanha ({audienceCount} contatos)
-                </>
+                <><Rocket size={16} /> Enviar campanha ({audienceCount} contatos)</>
               )}
             </Button>
           </div>
         </div>
       )}
-
-      {/* Footer disclaimer */}
-      <div className="text-xs text-muted-foreground/70 text-center max-w-3xl mx-auto pt-2">
-        <strong>API de Marketing do WhatsApp (Cloud API):</strong> Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios — para isso, use as <strong>Campanhas Wiize</strong>.{" "}
-        <a
-          href="https://developers.facebook.com/docs/whatsapp/overview"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline inline-flex items-center gap-0.5"
-        >
-          <ExternalLink size={10} /> Docs Meta
-        </a>
-      </div>
     </div>
   );
 };
