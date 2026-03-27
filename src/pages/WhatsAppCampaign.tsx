@@ -1052,10 +1052,10 @@ const WhatsAppCampaign = () => {
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 lg:pl-[88px]">
         {/* Page Header */}
-        <div className="max-w-4xl mx-auto mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="max-w-4xl mx-auto mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold">Campanhas de Mensagens</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">Gerencie suas campanhas de WhatsApp</p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold">Prospecção</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Abordagem outbound para novos leads, sem opt-in prévio. Requer boas práticas para manter a estabilidade do canal.</p>
           </div>
           <div className="flex items-center gap-2">
             <NumbersManager
