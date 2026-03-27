@@ -1,32 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CheckCircle2,
-  ArrowRight,
-  ArrowLeft,
   ExternalLink,
-  Building2,
   Phone,
-  Key,
   Shield,
   Loader2,
   Info,
-  HelpCircle,
-  Plus,
-  Tag,
+  MessageSquare,
+  Zap,
+  AlertTriangle,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
+
+const META_APP_ID = "988774494328539";
 
 interface MetaAccountSetupProps {
   onConnectionSaved: (connection: WabaConnection) => void;
@@ -34,461 +24,244 @@ interface MetaAccountSetupProps {
   isAddingExtra?: boolean;
 }
 
-export const MetaAccountSetup = ({ onConnectionSaved, existingConnection, isAddingExtra }: MetaAccountSetupProps) => {
+// Extend window for Facebook SDK
+declare global {
+  interface Window {
+    fbAsyncInit: () => void;
+    FB: {
+      init: (params: any) => void;
+      login: (callback: (response: any) => void, params: any) => void;
+      getLoginStatus: (callback: (response: any) => void) => void;
+    };
+  }
+}
+
+export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccountSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const STORAGE_KEY = "meta_setup_draft";
 
-  const loadDraft = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return null;
-  };
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const draft = existingConnection ? null : loadDraft();
-
-  // If isAddingExtra, start collapsed
-  const [showForm, setShowForm] = useState(!isAddingExtra);
-
-  const [step, setStepRaw] = useState(existingConnection ? 4 : (draft?.step || 1));
-  const [saving, setSaving] = useState(false);
-
-  const [nickname, setNickname] = useState(existingConnection?.nickname || draft?.nickname || "");
-  const [wabaId, setWabaId] = useState(existingConnection?.waba_id || draft?.wabaId || "");
-  const [phoneNumberId, setPhoneNumberId] = useState(existingConnection?.phone_number_id || draft?.phoneNumberId || "");
-  const [accessToken, setAccessToken] = useState(existingConnection?.access_token || draft?.accessToken || "");
-  const [businessName, setBusinessName] = useState(existingConnection?.business_name || draft?.businessName || "");
-  const [displayPhone, setDisplayPhone] = useState(existingConnection?.display_phone_number || draft?.displayPhone || "");
-
-  const saveDraft = (updates: Record<string, any> = {}) => {
-    if (existingConnection) return;
-    const data = { step, nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone, ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  };
-
-  const setStep = (s: number) => {
-    setStepRaw(s);
-    saveDraft({ step: s });
-  };
-
-  const clearDraft = () => localStorage.removeItem(STORAGE_KEY);
-
-  // Auto-persist fields to localStorage on change
+  // Load Facebook SDK
   useEffect(() => {
-    if (!existingConnection) {
-      saveDraft({ step, nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
+    if (window.FB) {
+      setSdkLoaded(true);
+      return;
     }
-  }, [nickname, wabaId, phoneNumberId, accessToken, businessName, displayPhone]);
 
-  const steps = [
-    { num: 1, title: "Conta Business", icon: Building2 },
-    { num: 2, title: "Número WhatsApp", icon: Phone },
-    { num: 3, title: "Token de Acesso", icon: Key },
-    { num: 4, title: "Confirmação", icon: Shield },
-  ];
+    window.fbAsyncInit = () => {
+      window.FB.init({
+        appId: META_APP_ID,
+        cookie: true,
+        xfbml: false,
+        version: "v21.0",
+      });
+      setSdkLoaded(true);
+    };
 
-  const handleSave = async () => {
+    // Check if script already exists
+    if (!document.getElementById("facebook-jssdk")) {
+      const script = document.createElement("script");
+      script.id = "facebook-jssdk";
+      script.src = "https://connect.facebook.net/pt_BR/sdk.js";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const handleFacebookLogin = useCallback(() => {
+    if (!window.FB || !user) return;
+
+    setConnecting(true);
+    setError(null);
+
+    window.FB.login(
+      (response: any) => {
+        if (response.authResponse?.code) {
+          exchangeCode(response.authResponse.code);
+        } else {
+          setConnecting(false);
+          if (response.status === "not_authorized") {
+            setError("Você precisa autorizar o acesso à sua conta WhatsApp Business.");
+          } else {
+            setError("Conexão cancelada. Tente novamente quando estiver pronto.");
+          }
+        }
+      },
+      {
+        scope: "whatsapp_business_management,whatsapp_business_messaging",
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {
+            // Embedded Signup specific params
+            solutionID: META_APP_ID,
+          },
+        },
+      }
+    );
+  }, [user]);
+
+  const exchangeCode = async (code: string) => {
     if (!user) return;
-    setSaving(true);
 
     try {
-      const { data, error } = await supabase
-        .from("user_waba_connections")
-        .upsert({
-          user_id: user.id,
-          waba_id: wabaId,
-          phone_number_id: phoneNumberId,
-          access_token: accessToken,
-          business_name: businessName || null,
-          display_phone_number: displayPhone || null,
-          nickname: nickname || null,
-        }, { onConflict: "user_id,waba_id" })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Conta configurada!",
-        description: "Sua conta Meta Business foi vinculada com sucesso.",
+      const { data, error: fnError } = await supabase.functions.invoke("meta-embedded-signup", {
+        body: { code, user_id: user.id },
       });
 
-      clearDraft();
-      onConnectionSaved(data as unknown as WabaConnection);
+      if (fnError) throw new Error(fnError.message || "Erro ao processar conexão");
 
-      // Reset form if adding extra
-      if (isAddingExtra) {
-        setShowForm(false);
-        setStepRaw(1);
-        setNickname("");
-        setWabaId("");
-        setPhoneNumberId("");
-        setAccessToken("");
-        setBusinessName("");
-        setDisplayPhone("");
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.success && data?.connection) {
+        toast({
+          title: "Conta conectada com sucesso!",
+          description: `${data.connection.display_phone_number || data.connection.business_name || "Número"} vinculado e webhook configurado automaticamente.`,
+        });
+
+        onConnectionSaved({
+          id: data.connection.id,
+          waba_id: data.connection.waba_id || "",
+          phone_number_id: data.connection.phone_number_id || "",
+          business_name: data.connection.business_name,
+          display_phone_number: data.connection.display_phone_number,
+          access_token: "", // Don't expose token
+          status: data.connection.status,
+          nickname: null,
+        });
+      } else {
+        throw new Error("Resposta inesperada do servidor");
       }
     } catch (err: any) {
-      console.error("Error saving WABA connection:", err);
-      toast({
-        title: "Erro ao salvar",
-        description: err.message || "Tente novamente",
-        variant: "destructive",
-      });
+      console.error("[MetaAccountSetup] Exchange error:", err);
+      setError(err.message || "Erro ao conectar. Tente novamente.");
     } finally {
-      setSaving(false);
+      setConnecting(false);
     }
   };
 
-  const HelpLink = ({ url, label }: { url: string; label: string }) => (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-    >
-      <ExternalLink size={10} />
-      {label}
-    </a>
-  );
-
-  const FieldHelp = ({ text }: { text: string }) => (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span><HelpCircle size={14} className="text-muted-foreground cursor-help" /></span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <p className="text-xs">{text}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-
-  // Collapsed add button for extra numbers
-  if (isAddingExtra && !showForm) {
-    return (
-      <Button
-        variant="outline"
-        onClick={() => setShowForm(true)}
-        className="w-full gap-2 border-dashed py-6"
-      >
-        <Plus size={18} />
-        Adicionar outro número
-      </Button>
-    );
-  }
-
   return (
-    <div className="glass rounded-2xl p-6 max-w-2xl mx-auto">
-      {/* Step indicator */}
-      <div className="flex items-center justify-between mb-8">
-        {steps.map((s, i) => (
-          <div key={s.num} className="flex items-center">
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                  step >= s.num
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {step > s.num ? <CheckCircle2 size={18} /> : <s.icon size={18} />}
-              </div>
-              <span className="text-xs mt-1.5 text-muted-foreground hidden sm:block">
-                {s.title}
-              </span>
-            </div>
-            {i < steps.length - 1 && (
-              <div
-                className={`h-0.5 w-8 sm:w-16 mx-1 transition-colors ${
-                  step > s.num ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            )}
+    <div className="max-w-2xl mx-auto">
+      <div className="glass rounded-2xl p-8 text-center space-y-6">
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <MessageSquare size={32} className="text-primary" />
           </div>
-        ))}
+          <h2 className="text-2xl font-bold">
+            {isAddingExtra ? "Adicionar outro número" : "Conecte sua conta WhatsApp Business"}
+          </h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Conecte via Meta Business Suite para enviar mensagens e receber status de entrega automaticamente.
+          </p>
+        </div>
+
+        {/* Benefits */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/30 border border-border">
+            <Zap size={16} className="text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Configuração automática</p>
+              <p className="text-xs text-muted-foreground">Token permanente e webhook configurados em 1 clique</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/30 border border-border">
+            <Shield size={16} className="text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Token permanente</p>
+              <p className="text-xs text-muted-foreground">Sem expiração — não precisa renovar manualmente</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/30 border border-border">
+            <CheckCircle2 size={16} className="text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Status em tempo real</p>
+              <p className="text-xs text-muted-foreground">Receba confirmações de entrega e leitura</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Connect Button */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleFacebookLogin}
+            disabled={!sdkLoaded || connecting}
+            size="lg"
+            className="gap-3 px-8 py-6 text-base font-semibold w-full sm:w-auto"
+          >
+            {connecting ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
+            )}
+            {connecting ? "Conectando..." : "Conectar com Meta Business"}
+          </Button>
+
+          {!sdkLoaded && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center">
+              <Loader2 size={12} className="animate-spin" /> Carregando Facebook SDK...
+            </p>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-left">
+            <AlertTriangle size={16} className="text-destructive mt-0.5 shrink-0" />
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
+        {/* How it works */}
+        <div className="text-left space-y-3 pt-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Como funciona</p>
+          <div className="space-y-2">
+            <StepRow number={1} text="Clique em 'Conectar com Meta Business'" />
+            <StepRow number={2} text="Faça login no Facebook e autorize o acesso à sua conta WhatsApp Business" />
+            <StepRow number={3} text="Selecione o número que deseja conectar" />
+            <StepRow number={4} text="Pronto! Token e webhook são configurados automaticamente" />
+          </div>
+        </div>
+
+        {/* Info footer */}
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/30 border border-border text-left">
+          <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Ao conectar, você compartilha o acesso à sua conta WhatsApp Business com a Wiize para envio de campanhas.
+            Seus dados são protegidos e o acesso pode ser revogado a qualquer momento no{" "}
+            <a
+              href="https://business.facebook.com/settings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline inline-flex items-center gap-0.5"
+            >
+              Meta Business Suite <ExternalLink size={9} />
+            </a>.
+          </p>
+        </div>
+
+        {/* Cancel for add extra */}
+        {isAddingExtra && (
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onConnectionSaved(null as any)}>
+            Cancelar
+          </Button>
+        )}
       </div>
-
-      {/* Step 1: WABA ID + Nickname */}
-      {step === 1 && (
-        <div className="space-y-4 animate-in fade-in">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">
-              {isAddingExtra ? "Adicionar novo número" : "Conta WhatsApp Business"}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Informe o ID da sua conta WhatsApp Business (WABA)
-            </p>
-          </div>
-
-          {/* Nickname */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="nickname">Apelido do número (opcional)</Label>
-              <FieldHelp text="Dê um nome para identificar este número facilmente, ex: 'Comercial', 'Suporte', 'Marketing'." />
-            </div>
-            <Input
-              id="nickname"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Ex: Comercial, Suporte, Marketing"
-              className="bg-secondary"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="waba-id">WABA ID (WhatsApp Business Account ID)</Label>
-              <FieldHelp text="O ID da sua conta WhatsApp Business. É um número de 15-18 dígitos encontrado no painel da Meta Business." />
-            </div>
-            <Input
-              id="waba-id"
-              value={wabaId}
-              onChange={(e) => setWabaId(e.target.value)}
-              placeholder="Ex: 123456789012345"
-              className="bg-secondary"
-            />
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-              <Info size={14} className="mt-0.5 shrink-0" />
-              <div>
-                <p className="font-medium text-foreground mb-1">Como encontrar seu WABA ID:</p>
-                <ol className="space-y-1 list-decimal list-inside">
-                  <li>Acesse o <strong>Meta Business Suite</strong></li>
-                  <li>Vá em <strong>Configurações → Contas do WhatsApp</strong></li>
-                  <li>O WABA ID aparece ao lado do nome da sua conta</li>
-                </ol>
-              </div>
-            </div>
-            <HelpLink
-              url="https://business.facebook.com/settings/whatsapp-business-accounts"
-              label="Abrir Meta Business Suite → WhatsApp"
-            />
-          </div>
-
-          <div className="flex justify-between mt-6">
-            {isAddingExtra && (
-              <Button variant="ghost" onClick={() => setShowForm(false)} className="gap-2">
-                Cancelar
-              </Button>
-            )}
-            <Button onClick={() => setStep(2)} disabled={!wabaId.trim()} className={`gap-2 ${!isAddingExtra ? 'ml-auto' : ''}`}>
-              Próximo <ArrowRight size={16} />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Phone Number ID */}
-      {step === 2 && (
-        <div className="space-y-4 animate-in fade-in">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">Número do WhatsApp</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Informe o ID do número de telefone e o número que será usado nos envios
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="phone-id">Phone Number ID</Label>
-                <FieldHelp text="ID do número de telefone registrado na Meta. Diferente do número em si, é um identificador interno da API." />
-              </div>
-              <Input
-                id="phone-id"
-                value={phoneNumberId}
-                onChange={(e) => setPhoneNumberId(e.target.value)}
-                placeholder="Ex: 109876543210987"
-                className="bg-secondary"
-              />
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                <Info size={14} className="mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium text-foreground mb-1">Como encontrar o Phone Number ID:</p>
-                  <ol className="space-y-1 list-decimal list-inside">
-                    <li>No Meta Business Suite, vá em <strong>WhatsApp → Configuração da API</strong></li>
-                    <li>Em <strong>Números de telefone</strong>, clique no número desejado</li>
-                    <li>O <strong>Phone number ID</strong> aparece nos detalhes</li>
-                  </ol>
-                </div>
-              </div>
-              <HelpLink
-                url="https://developers.facebook.com/apps"
-                label="Abrir painel de desenvolvedor Meta"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="display-phone">Número de exibição (opcional)</Label>
-              <Input
-                id="display-phone"
-                value={displayPhone}
-                onChange={(e) => setDisplayPhone(e.target.value)}
-                placeholder="Ex: +55 11 99999-9999"
-                className="bg-secondary"
-              />
-              <p className="text-xs text-muted-foreground">
-                O número real que aparecerá nas mensagens. Usado apenas para sua referência.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => setStep(1)} className="gap-2">
-              <ArrowLeft size={16} /> Voltar
-            </Button>
-            <Button onClick={() => setStep(3)} disabled={!phoneNumberId.trim()} className="gap-2">
-              Próximo <ArrowRight size={16} />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Access Token */}
-      {step === 3 && (
-        <div className="space-y-4 animate-in fade-in">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">Token de Acesso</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Informe o token permanente para envio de mensagens via API
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="access-token">Access Token (Permanente)</Label>
-              <FieldHelp text="Token de acesso permanente gerado no painel Meta. Tokens temporários expiram em 24h — use o token permanente do System User." />
-            </div>
-            <Input
-              id="access-token"
-              type="password"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              placeholder="EAAxxxxxxx..."
-              className="bg-secondary font-mono text-xs"
-            />
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-              <Info size={14} className="mt-0.5 shrink-0" />
-              <div>
-                <p className="font-medium text-foreground mb-1">Como gerar o Token Permanente:</p>
-                <ol className="space-y-1 list-decimal list-inside">
-                  <li>No Meta Business Suite, vá em <strong>Configurações → Usuários do sistema</strong></li>
-                  <li>Crie ou selecione um <strong>System User</strong></li>
-                  <li>Clique em <strong>Gerar novo token</strong></li>
-                  <li>Selecione o app e as permissões: <code>whatsapp_business_messaging</code>, <code>whatsapp_business_management</code></li>
-                  <li>Copie o token gerado e cole aqui</li>
-                </ol>
-              </div>
-            </div>
-            <HelpLink
-              url="https://business.facebook.com/settings/system-users"
-              label="Abrir Meta → Usuários do sistema"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="biz-name">Nome do negócio (opcional)</Label>
-            <Input
-              id="biz-name"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="Ex: Minha Empresa Ltda"
-              className="bg-secondary"
-            />
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => setStep(2)} className="gap-2">
-              <ArrowLeft size={16} /> Voltar
-            </Button>
-            <Button onClick={() => setStep(4)} disabled={!accessToken.trim()} className="gap-2">
-              Próximo <ArrowRight size={16} />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Confirmation */}
-      {step === 4 && (
-        <div className="space-y-4 animate-in fade-in">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">Confirmar configuração</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Verifique os dados antes de salvar
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {nickname && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                <div className="flex items-center gap-2">
-                  <Tag size={16} className="text-primary" />
-                  <span className="text-sm font-medium">Apelido</span>
-                </div>
-                <span className="text-sm text-muted-foreground">{nickname}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-              <div className="flex items-center gap-2">
-                <Building2 size={16} className="text-primary" />
-                <span className="text-sm font-medium">WABA ID</span>
-              </div>
-              <span className="text-sm font-mono text-muted-foreground">{wabaId}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-primary" />
-                <span className="text-sm font-medium">Phone Number ID</span>
-              </div>
-              <span className="text-sm font-mono text-muted-foreground">{phoneNumberId}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-              <div className="flex items-center gap-2">
-                <Key size={16} className="text-primary" />
-                <span className="text-sm font-medium">Token</span>
-              </div>
-              <span className="text-sm font-mono text-muted-foreground">
-                {accessToken.slice(0, 10)}...{accessToken.slice(-4)}
-              </span>
-            </div>
-
-            {businessName && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                <div className="flex items-center gap-2">
-                  <Building2 size={16} className="text-primary" />
-                  <span className="text-sm font-medium">Negócio</span>
-                </div>
-                <span className="text-sm text-muted-foreground">{businessName}</span>
-              </div>
-            )}
-
-            {displayPhone && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                <div className="flex items-center gap-2">
-                  <Phone size={16} className="text-primary" />
-                  <span className="text-sm font-medium">Número</span>
-                </div>
-                <span className="text-sm text-muted-foreground">{displayPhone}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => setStep(3)} className="gap-2">
-              <ArrowLeft size={16} /> Voltar
-            </Button>
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {existingConnection ? "Atualizar configuração" : isAddingExtra ? "Adicionar número" : "Salvar e conectar"}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
+const StepRow = ({ number, text }: { number: number; text: string }) => (
+  <div className="flex items-center gap-2.5">
+    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+      <span className="text-[10px] font-bold text-primary">{number}</span>
+    </div>
+    <p className="text-xs text-muted-foreground">{text}</p>
+  </div>
+);
