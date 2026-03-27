@@ -77,9 +77,21 @@ const MetaCampaigns = () => {
   const handleDisclaimerAccept = async () => {
     if (!user) return;
 
+    // Save popup dismissal
     await supabase.from("user_dismissed_popups").insert({
       user_id: user.id,
       popup_key: "meta_campaigns_disclaimer",
+    });
+
+    // Log the terms acceptance event with details
+    await supabase.from("user_events").insert({
+      user_id: user.id,
+      event_name: "meta_disclaimer_accepted",
+      event_data: {
+        accepted_at: new Date().toISOString(),
+        terms_version: "1.0",
+        section: "meta_whatsapp_api",
+      },
     });
 
     setShowDisclaimer(false);
