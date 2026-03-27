@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -10,9 +10,10 @@ import { MetaCampaignFlow } from "@/components/meta-campaigns/MetaCampaignFlow";
 import { MetaCampaignHistory } from "@/components/meta-campaigns/MetaCampaignHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, CheckCircle2, Copy } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,9 +41,15 @@ const MetaCampaigns = () => {
   // Edit dialog
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
+  const [editToken, setEditToken] = useState("");
+  const [showTokenField, setShowTokenField] = useState(false);
 
   // Add number dialog
   const [showAddNumber, setShowAddNumber] = useState(false);
+
+  // Expired tokens tracking
+  const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
+  const [showExpiredAlert, setShowExpiredAlert] = useState(false);
 
   useEffect(() => {
     if (user) checkSetup();
@@ -71,7 +78,10 @@ const MetaCampaigns = () => {
         .eq("user_id", user.id);
 
       if (conns && conns.length > 0) {
-        setConnections(conns as unknown as WabaConnection[]);
+        const typedConns = conns as unknown as WabaConnection[];
+        setConnections(typedConns);
+        // Validate tokens in background
+        validateTokens(typedConns);
       }
     } catch (err) {
       console.error("Error checking meta setup:", err);
@@ -79,6 +89,30 @@ const MetaCampaigns = () => {
       setLoading(false);
     }
   };
+
+  const validateTokens = useCallback(async (conns: WabaConnection[]) => {
+    const expired = new Set<string>();
+    await Promise.all(
+      conns.map(async (conn) => {
+        try {
+          const { data } = await supabase.functions.invoke("meta-fetch-templates", {
+            body: { waba_id: conn.waba_id, access_token: conn.access_token },
+          });
+          if (data?.error) {
+            const details = data?.details?.error;
+            if (details?.code === 190 || details?.error_subcode === 463) {
+              expired.add(conn.id);
+            }
+          }
+        } catch {
+          // Network errors are not token issues
+        }
+      })
+    );
+    if (expired.size > 0) {
+      setExpiredTokenIds(expired);
+    }
+  }, []);
 
   const handleDisclaimerAccept = async () => {
     if (!user) return;
@@ -109,23 +143,50 @@ const MetaCampaigns = () => {
       }
       return [...prev, connection];
     });
+    // Remove from expired if it was expired before
+    setExpiredTokenIds((prev) => {
+      const next = new Set(prev);
+      next.delete(connection.id);
+      return next;
+    });
     setShowAddNumber(false);
     setActiveTab("new");
   };
 
-  const handleSaveNickname = async () => {
+  const handleSaveEdit = async () => {
     if (!editingConn) return;
     try {
+      const updates: Record<string, any> = { nickname: editNickname || null };
+      if (showTokenField && editToken.trim()) {
+        updates.access_token = editToken.trim();
+      }
+
       await supabase
         .from("user_waba_connections")
-        .update({ nickname: editNickname || null })
+        .update(updates)
         .eq("id", editingConn.id);
 
       setConnections((prev) =>
-        prev.map((c) => (c.id === editingConn.id ? { ...c, nickname: editNickname || null } : c))
+        prev.map((c) =>
+          c.id === editingConn.id
+            ? { ...c, nickname: editNickname || null, ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}) }
+            : c
+        )
       );
+
+      // If token was updated, remove from expired
+      if (showTokenField && editToken.trim()) {
+        setExpiredTokenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(editingConn.id);
+          return next;
+        });
+      }
+
       setEditingConn(null);
-      toast({ title: "Apelido atualizado!" });
+      setShowTokenField(false);
+      setEditToken("");
+      toast({ title: "Número atualizado!" });
     } catch {
       toast({ title: "Erro ao salvar", variant: "destructive" });
     }
@@ -135,6 +196,11 @@ const MetaCampaigns = () => {
     try {
       await supabase.from("user_waba_connections").delete().eq("id", connId);
       setConnections((prev) => prev.filter((c) => c.id !== connId));
+      setExpiredTokenIds((prev) => {
+        const next = new Set(prev);
+        next.delete(connId);
+        return next;
+      });
       setEditingConn(null);
       toast({ title: "Número removido!" });
     } catch {
@@ -148,6 +214,8 @@ const MetaCampaigns = () => {
   };
 
   const hasConnections = connections.length > 0;
+  const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
+  const hasExpired = expiredConnections.length > 0;
 
   if (loading) {
     return (
@@ -197,14 +265,20 @@ const MetaCampaigns = () => {
                   <History size={16} />
                   Histórico
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-2">
+                <TabsTrigger value="settings" className="gap-2 relative">
                   <Settings size={16} />
                   Números Conectados
+                  {hasExpired && (
+                    <span className="ml-1 relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                      <AlertTriangle size={12} className="relative text-destructive" />
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="new">
-                <MetaCampaignFlow connections={connections} />
+                <MetaCampaignFlow connections={connections} expiredTokenIds={expiredTokenIds} />
               </TabsContent>
 
               <TabsContent value="history">
@@ -213,41 +287,84 @@ const MetaCampaigns = () => {
 
               <TabsContent value="settings">
                 <div className="space-y-6">
+                  {/* Expired tokens alert */}
+                  {hasExpired && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl border border-destructive/40 bg-destructive/5">
+                      <ShieldAlert size={20} className="text-destructive mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-destructive">
+                          {expiredConnections.length === 1 ? "1 token expirado" : `${expiredConnections.length} tokens expirados`}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {expiredConnections.map(c => c.nickname || c.display_phone_number || c.phone_number_id).join(", ")} — o token de acesso expirou. Clique em editar para atualizar.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                          onClick={() => setShowExpiredAlert(true)}
+                        >
+                          <Info size={12} /> Como resolver
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Grid 2 per row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {connections.map((conn) => (
-                      <div key={conn.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <Phone size={14} className="text-primary" />
+                    {connections.map((conn) => {
+                      const isExpired = expiredTokenIds.has(conn.id);
+                      return (
+                        <div
+                          key={conn.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                            isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                              isExpired ? "bg-destructive/10" : "bg-primary/10"
+                            }`}>
+                              {isExpired ? (
+                                <AlertTriangle size={14} className="text-destructive" />
+                              ) : (
+                                <Phone size={14} className="text-primary" />
+                              )}
+                            </div>
+                            <div className="truncate">
+                              <p className="font-medium text-sm truncate">
+                                {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {conn.business_name || conn.waba_id}
+                              </p>
+                            </div>
                           </div>
-                          <div className="truncate">
-                            <p className="font-medium text-sm truncate">
-                              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {conn.business_name || conn.waba_id}
-                            </p>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                setEditingConn(conn);
+                                setEditNickname(conn.nickname || "");
+                                setEditToken("");
+                                setShowTokenField(isExpired);
+                              }}
+                            >
+                              <Pencil size={13} className="text-muted-foreground" />
+                            </Button>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                              isExpired
+                                ? "bg-destructive/10 text-destructive"
+                                : "bg-primary/10 text-primary"
+                            }`}>
+                              {isExpired ? "Expirado" : "Ativo"}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => {
-                              setEditingConn(conn);
-                              setEditNickname(conn.nickname || "");
-                            }}
-                          >
-                            <Pencil size={13} className="text-muted-foreground" />
-                          </Button>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            Ativo
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <Button variant="outline" className="gap-2" onClick={() => setShowAddNumber(true)}>
@@ -280,10 +397,17 @@ const MetaCampaigns = () => {
       </div>
 
       {/* Edit Number Dialog */}
-      <Dialog open={!!editingConn} onOpenChange={(o) => !o && setEditingConn(null)}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={!!editingConn} onOpenChange={(o) => { if (!o) { setEditingConn(null); setShowTokenField(false); setEditToken(""); } }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Detalhes do Número</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Detalhes do Número
+              {editingConn && expiredTokenIds.has(editingConn.id) && (
+                <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-destructive/10 text-destructive flex items-center gap-1">
+                  <AlertTriangle size={10} /> Token expirado
+                </span>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {editingConn && (
             <div className="space-y-4">
@@ -292,19 +416,59 @@ const MetaCampaigns = () => {
                 <DetailRow label="WABA ID" value={editingConn.waba_id} />
                 <DetailRow label="Número" value={editingConn.display_phone_number || "N/A"} />
                 <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
-                <DetailRow label="Access Token" value={maskSecret(editingConn.access_token)} />
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Access Token</p>
+                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token)}</p>
+                </div>
               </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Apelido do número</label>
                 <Input
                   value={editNickname}
                   onChange={(e) => setEditNickname(e.target.value)}
                   placeholder="Ex: Atendimento, Vendas..."
-                  onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
                 />
               </div>
+
+              {/* Token update section */}
+              {!showTokenField ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowTokenField(true)}
+                >
+                  <Pencil size={11} /> Atualizar token de acesso
+                </Button>
+              ) : (
+                <div className="space-y-2 p-3 rounded-lg border border-accent/30 bg-accent/5">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <ShieldAlert size={13} className="text-accent-foreground" />
+                    Novo Access Token
+                  </label>
+                  <Textarea
+                    value={editToken}
+                    onChange={(e) => setEditToken(e.target.value)}
+                    placeholder="Cole aqui o novo token permanente..."
+                    className="font-mono text-xs min-h-[60px]"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Use um token de <strong>System User</strong> para evitar expirações.{" "}
+                    <a
+                      href="https://business.facebook.com/settings/system-users"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Gerar token permanente →
+                    </a>
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-2">
-                <Button onClick={handleSaveNickname} className="flex-1">
+                <Button onClick={handleSaveEdit} className="flex-1">
                   Salvar
                 </Button>
                 <Button
@@ -317,6 +481,58 @@ const MetaCampaigns = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Expired Token Help Dialog */}
+      <Dialog open={showExpiredAlert} onOpenChange={setShowExpiredAlert}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert size={18} className="text-destructive" />
+              Token de acesso expirado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Tokens temporários da Meta expiram em poucas horas. Para resolver, gere um <strong>token permanente</strong> usando um Usuário do Sistema.
+            </p>
+
+            <div className="space-y-3">
+              <StepItem number={1} title="Acesse o Meta Business Suite">
+                <a
+                  href="https://business.facebook.com/settings/system-users"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline text-xs flex items-center gap-1"
+                >
+                  <ExternalLink size={10} /> Abrir Usuários do Sistema
+                </a>
+              </StepItem>
+
+              <StepItem number={2} title="Crie ou selecione um Usuário do Sistema">
+                <p className="text-xs text-muted-foreground">
+                  Se não tiver, clique em "Adicionar" e crie um com tipo "Admin".
+                </p>
+              </StepItem>
+
+              <StepItem number={3} title="Gere um token permanente">
+                <p className="text-xs text-muted-foreground">
+                  Clique em "Gerar token", selecione o app e as permissões: <strong>whatsapp_business_messaging</strong> e <strong>whatsapp_business_management</strong>.
+                </p>
+              </StepItem>
+
+              <StepItem number={4} title="Atualize o token aqui">
+                <p className="text-xs text-muted-foreground">
+                  Volte, clique no ícone de edição do número e cole o novo token.
+                </p>
+              </StepItem>
+            </div>
+
+            <Button onClick={() => setShowExpiredAlert(false)} className="w-full">
+              Entendi
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -337,6 +553,18 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
   <div>
     <p className="text-[11px] text-muted-foreground">{label}</p>
     <p className="text-sm font-mono truncate">{value}</p>
+  </div>
+);
+
+const StepItem = ({ number, title, children }: { number: number; title: string; children: React.ReactNode }) => (
+  <div className="flex gap-3">
+    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+      <span className="text-xs font-bold text-primary">{number}</span>
+    </div>
+    <div>
+      <p className="text-sm font-medium">{title}</p>
+      {children}
+    </div>
   </div>
 );
 

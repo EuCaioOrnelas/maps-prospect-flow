@@ -50,6 +50,7 @@ interface MetaTemplate {
 
 interface MetaCampaignFlowProps {
   connections: WabaConnection[];
+  expiredTokenIds?: Set<string>;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -66,7 +67,7 @@ const CATEGORY_COST: Record<string, string> = {
 
 const TEMPLATES_PER_PAGE = 6;
 
-export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
+export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: MetaCampaignFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -301,32 +302,50 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
             </p>
           </div>
           <div className="grid gap-3">
-            {connections.map((conn) => (
-              <button
-                key={conn.id}
-                onClick={() => handleSelectNumber(conn.id)}
-                className={`text-left p-3 rounded-lg border transition-all ${
-                  selectedConnectionId === conn.id
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-border hover:border-primary/30 hover:bg-muted/30"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Phone size={14} className="text-primary" />
+            {connections.map((conn) => {
+              const isExpired = expiredTokenIds.has(conn.id);
+              return (
+                <button
+                  key={conn.id}
+                  onClick={() => !isExpired && handleSelectNumber(conn.id)}
+                  disabled={isExpired}
+                  className={`text-left p-3 rounded-lg border transition-all ${
+                    isExpired
+                      ? "border-destructive/30 bg-destructive/5 opacity-60 cursor-not-allowed"
+                      : selectedConnectionId === conn.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/30 hover:bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isExpired ? "bg-destructive/10" : "bg-primary/10"
+                      }`}>
+                        {isExpired ? (
+                          <AlertTriangle size={14} className="text-destructive" />
+                        ) : (
+                          <Phone size={14} className="text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">
+                          {conn.nickname || conn.display_phone_number || `Número ${conn.phone_number_id.slice(-4)}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {isExpired ? (
+                            <span className="text-destructive">Token expirado — atualize em Números Conectados</span>
+                          ) : (
+                            conn.business_name || conn.waba_id
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">
-                        {conn.nickname || conn.display_phone_number || `Número ${conn.phone_number_id.slice(-4)}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{conn.business_name || conn.waba_id}</p>
-                    </div>
+                    {selectedConnectionId === conn.id && !isExpired && <CheckCircle2 size={18} className="text-primary" />}
                   </div>
-                  {selectedConnectionId === conn.id && <CheckCircle2 size={18} className="text-primary" />}
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
           <div className="flex justify-end mt-6">
             <Button onClick={() => setStep("template")} disabled={!selectedConnectionId} className="gap-2">
