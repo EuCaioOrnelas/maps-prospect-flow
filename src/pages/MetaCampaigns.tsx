@@ -9,10 +9,10 @@ import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
 import { MetaCampaignFlow } from "@/components/meta-campaigns/MetaCampaignFlow";
 import { MetaCampaignHistory } from "@/components/meta-campaigns/MetaCampaignHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, History, Settings, Loader2 } from "lucide-react";
+import { Plus, History, Settings, Loader2, Phone } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
-interface WabaConnection {
+export interface WabaConnection {
   id: string;
   waba_id: string;
   phone_number_id: string;
@@ -20,12 +20,13 @@ interface WabaConnection {
   display_phone_number: string | null;
   access_token: string;
   status: string | null;
+  nickname: string | null;
 }
 
 const MetaCampaigns = () => {
   const { user, profile } = useAuth();
   const { trackScoreEvent } = useAutoScoreTracking("meta-campaigns");
-  const [wabaConnection, setWabaConnection] = useState<WabaConnection | null>(null);
+  const [connections, setConnections] = useState<WabaConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -42,7 +43,6 @@ const MetaCampaigns = () => {
     setLoading(true);
 
     try {
-      // Check if user already dismissed the meta disclaimer
       const { data: dismissed } = await supabase
         .from("user_dismissed_popups")
         .select("id")
@@ -56,15 +56,14 @@ const MetaCampaigns = () => {
         setDisclaimerAccepted(true);
       }
 
-      // Check if user has a WABA connection
-      const { data: connection } = await supabase
+      // Load ALL connections
+      const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
-      if (connection) {
-        setWabaConnection(connection as unknown as WabaConnection);
+      if (conns && conns.length > 0) {
+        setConnections(conns as unknown as WabaConnection[]);
       }
     } catch (err) {
       console.error("Error checking meta setup:", err);
@@ -76,13 +75,11 @@ const MetaCampaigns = () => {
   const handleDisclaimerAccept = async () => {
     if (!user) return;
 
-    // Save popup dismissal
     await supabase.from("user_dismissed_popups").insert({
       user_id: user.id,
       popup_key: "meta_campaigns_disclaimer",
     });
 
-    // Log the terms acceptance event with details
     await supabase.from("user_events").insert({
       user_id: user.id,
       event_name: "meta_disclaimer_accepted",
@@ -98,9 +95,19 @@ const MetaCampaigns = () => {
   };
 
   const handleConnectionSaved = (connection: WabaConnection) => {
-    setWabaConnection(connection);
+    setConnections((prev) => {
+      const idx = prev.findIndex((c) => c.id === connection.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = connection;
+        return updated;
+      }
+      return [...prev, connection];
+    });
     setActiveTab("new");
   };
+
+  const hasConnections = connections.length > 0;
 
   if (loading) {
     return (
@@ -131,22 +138,20 @@ const MetaCampaigns = () => {
             </p>
           </div>
 
-          {/* Disclaimer Modal */}
           <MetaDisclaimerModal
             open={showDisclaimer}
             onAccept={handleDisclaimerAccept}
           />
 
-          {/* If disclaimer not accepted yet, show nothing */}
           {!disclaimerAccepted && !showDisclaimer && null}
 
-          {/* If no WABA connection, show setup */}
-          {disclaimerAccepted && !wabaConnection && (
+          {/* If no connection, show setup */}
+          {disclaimerAccepted && !hasConnections && (
             <MetaAccountSetup onConnectionSaved={handleConnectionSaved} />
           )}
 
-          {/* If connected, show campaign flow */}
-          {disclaimerAccepted && wabaConnection && (
+          {/* If has connections, show campaign interface */}
+          {disclaimerAccepted && hasConnections && (
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
               <TabsList className="mb-6">
                 <TabsTrigger value="new" className="gap-2">
@@ -159,23 +164,50 @@ const MetaCampaigns = () => {
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-2">
                   <Settings size={16} />
-                  Configurações
+                  Números Conectados
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="new">
-                <MetaCampaignFlow connection={wabaConnection} />
+                <MetaCampaignFlow connections={connections} />
               </TabsContent>
 
               <TabsContent value="history">
-                <MetaCampaignHistory connection={wabaConnection} />
+                <MetaCampaignHistory connections={connections} />
               </TabsContent>
 
               <TabsContent value="settings">
-                <MetaAccountSetup
-                  onConnectionSaved={handleConnectionSaved}
-                  existingConnection={wabaConnection}
-                />
+                <div className="space-y-6">
+                  {/* Existing connections */}
+                  <div className="space-y-3">
+                    {connections.map((conn) => (
+                      <div key={conn.id} className="glass rounded-xl p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Phone size={18} className="text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {conn.business_name || conn.waba_id}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                          Ativo
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add new number */}
+                  <MetaAccountSetup
+                    onConnectionSaved={handleConnectionSaved}
+                    isAddingExtra
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           )}
