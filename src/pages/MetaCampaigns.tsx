@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, CheckCircle2, Copy } from "lucide-react";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,22 +38,54 @@ const MetaCampaigns = () => {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [activeTab, setActiveTab] = useState<"new" | "history" | "settings">("new");
 
-  // Edit dialog
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
-
-  // Add number dialog
   const [showAddNumber, setShowAddNumber] = useState(false);
 
-  // Expired tokens tracking
   const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
   const [showExpiredAlert, setShowExpiredAlert] = useState(false);
+
+  const validateConnectionToken = useCallback(async (conn: WabaConnection) => {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-fetch-templates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
+        waba_id: conn.waba_id,
+        access_token: conn.access_token,
+      }),
+    });
+
+    const rawText = await response.text();
+    let payload: any = null;
+
+    try {
+      payload = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      payload = null;
+    }
+
+    const details = payload?.details?.error;
+    return details?.code === 190 || details?.error_subcode === 463;
+  }, []);
 
   useEffect(() => {
     if (user) checkSetup();
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === "settings" && expiredTokenIds.size > 0) {
+      setShowExpiredAlert(true);
+    }
+  }, [activeTab, expiredTokenIds]);
 
   const checkSetup = async () => {
     if (!user) return;
@@ -80,8 +112,9 @@ const MetaCampaigns = () => {
       if (conns && conns.length > 0) {
         const typedConns = conns as unknown as WabaConnection[];
         setConnections(typedConns);
-        // Validate tokens in background
         validateTokens(typedConns);
+      } else {
+        setExpiredTokenIds(new Set());
       }
     } catch (err) {
       console.error("Error checking meta setup:", err);
@@ -91,28 +124,20 @@ const MetaCampaigns = () => {
   };
 
   const validateTokens = useCallback(async (conns: WabaConnection[]) => {
-    const expired = new Set<string>();
-    await Promise.all(
+    const validationResults = await Promise.all(
       conns.map(async (conn) => {
         try {
-          const { data } = await supabase.functions.invoke("meta-fetch-templates", {
-            body: { waba_id: conn.waba_id, access_token: conn.access_token },
-          });
-          if (data?.error) {
-            const details = data?.details?.error;
-            if (details?.code === 190 || details?.error_subcode === 463) {
-              expired.add(conn.id);
-            }
-          }
+          const isExpired = await validateConnectionToken(conn);
+          return isExpired ? conn.id : null;
         } catch {
-          // Network errors are not token issues
+          return null;
         }
       })
     );
-    if (expired.size > 0) {
-      setExpiredTokenIds(expired);
-    }
-  }, []);
+
+    const nextExpired = new Set(validationResults.filter(Boolean) as string[]);
+    setExpiredTokenIds(nextExpired);
+  }, [validateConnectionToken]);
 
   const handleDisclaimerAccept = async () => {
     if (!user) return;
@@ -143,7 +168,6 @@ const MetaCampaigns = () => {
       }
       return [...prev, connection];
     });
-    // Remove from expired if it was expired before
     setExpiredTokenIds((prev) => {
       const next = new Set(prev);
       next.delete(connection.id);
@@ -161,32 +185,34 @@ const MetaCampaigns = () => {
         updates.access_token = editToken.trim();
       }
 
-      await supabase
-        .from("user_waba_connections")
-        .update(updates)
-        .eq("id", editingConn.id);
+      await supabase.from("user_waba_connections").update(updates).eq("id", editingConn.id);
 
-      setConnections((prev) =>
-        prev.map((c) =>
-          c.id === editingConn.id
-            ? { ...c, nickname: editNickname || null, ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}) }
-            : c
-        )
-      );
+      const updatedConnection = {
+        ...editingConn,
+        nickname: editNickname || null,
+        ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}),
+      };
 
-      // If token was updated, remove from expired
+      setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? updatedConnection : c)));
+
       if (showTokenField && editToken.trim()) {
+        const isStillExpired = await validateConnectionToken(updatedConnection);
         setExpiredTokenIds((prev) => {
           const next = new Set(prev);
-          next.delete(editingConn.id);
+          if (isStillExpired) next.add(editingConn.id);
+          else next.delete(editingConn.id);
           return next;
         });
+        if (!isStillExpired) {
+          toast({ title: "Token atualizado com sucesso!" });
+        }
+      } else {
+        toast({ title: "Número atualizado!" });
       }
 
       setEditingConn(null);
       setShowTokenField(false);
       setEditToken("");
-      toast({ title: "Número atualizado!" });
     } catch {
       toast({ title: "Erro ao salvar", variant: "destructive" });
     }
