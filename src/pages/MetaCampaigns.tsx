@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink } from "lucide-react";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2 } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,6 +40,9 @@ const MetaCampaigns = () => {
   // Edit dialog
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
+
+  // Add number dialog
+  const [showAddNumber, setShowAddNumber] = useState(false);
 
   useEffect(() => {
     if (user) checkSetup();
@@ -106,6 +109,7 @@ const MetaCampaigns = () => {
       }
       return [...prev, connection];
     });
+    setShowAddNumber(false);
     setActiveTab("new");
   };
 
@@ -124,6 +128,17 @@ const MetaCampaigns = () => {
       toast({ title: "Apelido atualizado!" });
     } catch {
       toast({ title: "Erro ao salvar", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteConnection = async (connId: string) => {
+    try {
+      await supabase.from("user_waba_connections").delete().eq("id", connId);
+      setConnections((prev) => prev.filter((c) => c.id !== connId));
+      setEditingConn(null);
+      toast({ title: "Número removido!" });
+    } catch {
+      toast({ title: "Erro ao remover", variant: "destructive" });
     }
   };
 
@@ -198,25 +213,6 @@ const MetaCampaigns = () => {
 
               <TabsContent value="settings">
                 <div className="space-y-6">
-                  {/* Opt-in info */}
-                  <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border">
-                    <Info size={16} className="text-primary mt-0.5 shrink-0" />
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <p className="font-medium text-foreground text-sm">Sobre números conectados</p>
-                      <p>
-                        A API Oficial do WhatsApp (Cloud API) só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número conectado tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier do número</strong>. <strong>Não é possível enviar para leads frios</strong> — para isso, use as <strong>Campanhas Wiize</strong>.
-                      </p>
-                      <a
-                        href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-1 mt-1"
-                      >
-                        <ExternalLink size={10} /> Ver limites de envio da Meta
-                      </a>
-                    </div>
-                  </div>
-
                   {/* Grid 2 per row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {connections.map((conn) => (
@@ -254,7 +250,28 @@ const MetaCampaigns = () => {
                     ))}
                   </div>
 
-                  <MetaAccountSetup onConnectionSaved={handleConnectionSaved} isAddingExtra />
+                  <Button variant="outline" className="gap-2" onClick={() => setShowAddNumber(true)}>
+                    <Plus size={14} /> Adicionar número
+                  </Button>
+
+                  {/* Footer info */}
+                  <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
+                    <Info size={18} className="text-primary mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+                      <p className="text-muted-foreground mt-0.5">
+                        A API Oficial só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong> (ex: formulário no site, cadastro). Cada número tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier</strong>. <strong className="text-destructive">Não é possível enviar para leads frios</strong>, para isso use as <strong className="text-primary">Campanhas Wiize</strong>.
+                      </p>
+                      <a
+                        href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline flex items-center gap-1 mt-1 text-xs"
+                      >
+                        <ExternalLink size={10} /> Ver limites de envio da Meta
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -273,8 +290,8 @@ const MetaCampaigns = () => {
               <div className="space-y-3">
                 <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
                 <DetailRow label="WABA ID" value={editingConn.waba_id} />
-                <DetailRow label="Número" value={editingConn.display_phone_number || "—"} />
-                <DetailRow label="Empresa" value={editingConn.business_name || "—"} />
+                <DetailRow label="Número" value={editingConn.display_phone_number || "N/A"} />
+                <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
                 <DetailRow label="Access Token" value={maskSecret(editingConn.access_token)} />
               </div>
               <div className="space-y-2">
@@ -286,11 +303,30 @@ const MetaCampaigns = () => {
                   onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
                 />
               </div>
-              <Button onClick={handleSaveNickname} className="w-full">
-                Salvar
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleSaveNickname} className="flex-1">
+                  Salvar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDeleteConnection(editingConn.id)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Number Dialog */}
+      <Dialog open={showAddNumber} onOpenChange={setShowAddNumber}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adicionar Número</DialogTitle>
+          </DialogHeader>
+          <MetaAccountSetup onConnectionSaved={handleConnectionSaved} />
         </DialogContent>
       </Dialog>
     </div>
