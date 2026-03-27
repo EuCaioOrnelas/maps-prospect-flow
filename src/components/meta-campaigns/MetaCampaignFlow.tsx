@@ -141,13 +141,15 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
       const isTokenError = errMsg.includes("Session has expired") || errMsg.includes("access token") || errMsg.includes("OAuthException");
-      toast({
-        title: isTokenError ? "Token de acesso expirado" : "Erro ao buscar templates",
-        description: isTokenError
-          ? "O token da Meta expirou. Vá em Números Conectados, clique em editar e atualize com um token permanente (System User)."
-          : "Verifique seu token de acesso e tente novamente.",
-        variant: "destructive",
-      });
+      if (isTokenError) {
+        console.warn("[MetaCampaignFlow] Token expired (catch):", selectedConnection?.display_phone_number);
+      } else {
+        toast({
+          title: "Erro ao buscar templates",
+          description: "Verifique seu token de acesso e tente novamente.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoadingTemplates(false);
     }
