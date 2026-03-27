@@ -655,6 +655,25 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           </div>
         </div>
       )}
+
+      {/* Footer info - always visible */}
+      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mt-2">
+        <Info size={18} className="text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+          <p className="text-muted-foreground mt-0.5">
+            Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios, para isso use as Campanhas Wiize.
+          </p>
+          <a
+            href="https://developers.facebook.com/docs/whatsapp/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
+          >
+            <ExternalLink size={10} /> Documentação oficial da Meta
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
