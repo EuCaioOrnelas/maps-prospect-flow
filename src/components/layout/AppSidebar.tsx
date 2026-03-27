@@ -45,6 +45,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
+  const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
