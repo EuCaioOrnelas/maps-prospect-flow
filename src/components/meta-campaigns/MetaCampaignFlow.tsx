@@ -119,13 +119,35 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           access_token: selectedConnection.access_token,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // Check if it's a token expiry error
+        const errorText = typeof error === 'object' && error.message ? error.message : String(error);
+        throw new Error(errorText);
+      }
+      // Check if response contains token error
+      if (data?.error) {
+        const details = data?.details?.error;
+        if (details?.code === 190 || details?.error_subcode === 463) {
+          toast({
+            title: "Token de acesso expirado",
+            description: "O token da Meta expirou. Vá em Números Conectados, clique em editar e atualize o token. Use um token permanente (System User) para evitar expirações.",
+            variant: "destructive",
+          });
+          setLoadingTemplates(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
       setTemplates((data?.templates || []).filter((t: MetaTemplate) => t.status === "APPROVED"));
     } catch (err: any) {
       console.error("Error fetching templates:", err);
+      const errMsg = err?.message || String(err);
+      const isTokenError = errMsg.includes("Session has expired") || errMsg.includes("access token") || errMsg.includes("OAuthException");
       toast({
-        title: "Erro ao buscar templates",
-        description: "Verifique seu token de acesso e tente novamente",
+        title: isTokenError ? "Token de acesso expirado" : "Erro ao buscar templates",
+        description: isTokenError
+          ? "O token da Meta expirou. Vá em Números Conectados, clique em editar e atualize com um token permanente (System User)."
+          : "Verifique seu token de acesso e tente novamente.",
         variant: "destructive",
       });
     } finally {
