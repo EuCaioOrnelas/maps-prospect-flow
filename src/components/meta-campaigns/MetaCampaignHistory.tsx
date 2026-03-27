@@ -45,15 +45,15 @@ export const MetaCampaignHistory = ({ connection }: MetaCampaignHistoryProps) =>
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("meta_campaigns")
+      const { data, error } = await (supabase
+        .from("meta_campaigns" as any)
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(50) as any);
 
       if (error) throw error;
-      setCampaigns((data || []) as unknown as MetaCampaign[]);
+      setCampaigns((data || []) as MetaCampaign[]);
     } catch (err) {
       console.error("Error fetching meta campaigns:", err);
     } finally {
