@@ -81,10 +81,39 @@ const Privacy = () => {
                 Não vendemos suas informações pessoais. Podemos compartilhar dados apenas com:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>Processadores de pagamento (Stripe)</li>
+                <li>Processadores de pagamento (Stripe, Asaas)</li>
                 <li>Serviços de infraestrutura (hospedagem)</li>
+                <li>Meta Platforms, Inc. — ao utilizar a integração com a API Oficial do WhatsApp Business, dados necessários 
+                    para o envio e recebimento de mensagens são processados pela Meta conforme suas próprias políticas de privacidade</li>
                 <li>Autoridades legais quando exigido por lei</li>
               </ul>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Dados do WhatsApp Business (API Oficial Meta)</h2>
+              <p>
+                Ao conectar sua conta WhatsApp Business ao Wiize via Embedded Signup, os seguintes dados podem ser coletados e processados:
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Dados da conta:</strong> ID da conta WhatsApp Business (WABA), nome comercial, número de telefone associado</li>
+                <li><strong>Tokens de acesso:</strong> armazenados de forma criptografada para viabilizar a operação dos serviços</li>
+                <li><strong>Metadados de mensagens:</strong> status de entrega (enviado, entregue, lido), timestamps e identificadores de mensagem</li>
+                <li><strong>Dados de contatos:</strong> números de telefone e nomes de perfil dos destinatários, conforme fornecidos pela API da Meta</li>
+              </ul>
+              <p>
+                <strong>O Wiize não armazena o conteúdo das mensagens trocadas via API Oficial.</strong> O processamento das mensagens 
+                é realizado pela infraestrutura da Meta, que aplica criptografia de ponta a ponta.
+              </p>
+              <p>
+                Os tokens de acesso podem ser revogados pelo usuário a qualquer momento, desconectando sua conta WABA da plataforma. 
+                Após a revogação, todos os tokens e dados associados são excluídos em até 30 dias.
+              </p>
+              <p>
+                Para mais informações sobre como a Meta trata seus dados, consulte a{" "}
+                <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Política de Privacidade da Meta
+                </a>.
+              </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
