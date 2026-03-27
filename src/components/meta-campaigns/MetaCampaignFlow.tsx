@@ -50,6 +50,7 @@ interface MetaTemplate {
 
 interface MetaCampaignFlowProps {
   connections: WabaConnection[];
+  expiredTokenIds?: Set<string>;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
