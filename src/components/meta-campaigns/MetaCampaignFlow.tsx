@@ -25,6 +25,7 @@ import {
   ChevronRight,
   XCircle,
   ChevronDown,
+  HelpCircle,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -74,9 +75,8 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   );
   const selectedConnection = connections.find((c) => c.id === selectedConnectionId) || null;
 
-  const [step, setStep] = useState<"number" | "template" | "audience" | "review">(
-    connections.length === 1 ? "template" : "number"
-  );
+  // Always start with number selection now
+  const [step, setStep] = useState<"number" | "template" | "audience" | "review">("number");
 
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -92,9 +92,22 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
 
+  // Fetch templates when connection changes (and connection is selected)
   useEffect(() => {
-    if (selectedConnection) fetchTemplates();
+    if (selectedConnection) {
+      fetchTemplates();
+    } else {
+      setTemplates([]);
+    }
   }, [selectedConnectionId]);
+
+  // Auto-advance if only 1 connection
+  useEffect(() => {
+    if (connections.length === 1 && step === "number") {
+      setSelectedConnectionId(connections[0].id);
+      setStep("template");
+    }
+  }, []);
 
   const fetchTemplates = async () => {
     if (!selectedConnection) return;
@@ -181,6 +194,15 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
   const canProceedToReview = audienceCount > 0;
   const allVariablesFilled = Object.values(templateVariables).every((v) => v.trim());
 
+  const handleSelectNumber = (connId: string) => {
+    setSelectedConnectionId(connId);
+    // Reset template when changing number since templates are per-number
+    setSelectedTemplate(null);
+    setTemplateVariables({});
+    setTemplateSearch("");
+    setTemplatePage(1);
+  };
+
   const handleSendCampaign = async () => {
     if (!user || !selectedTemplate || !selectedConnection) return;
     setSending(true);
@@ -244,8 +266,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
 
   return (
     <div className="space-y-6">
-
-
       {/* Step: Number Selection */}
       {step === "number" && (
         <div className="glass rounded-2xl p-6 animate-in fade-in">
@@ -255,14 +275,14 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               Selecione o número de envio
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Escolha qual número será usado para disparar esta campanha
+              Escolha qual número será usado para disparar esta campanha. Os templates serão carregados com base no número selecionado.
             </p>
           </div>
           <div className="grid gap-3">
             {connections.map((conn) => (
               <button
                 key={conn.id}
-                onClick={() => setSelectedConnectionId(conn.id)}
+                onClick={() => handleSelectNumber(conn.id)}
                 className={`text-left p-3 rounded-lg border transition-all ${
                   selectedConnectionId === conn.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -297,6 +317,26 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
       {/* Step: Template Selection */}
       {step === "template" && (
         <div className="glass rounded-2xl p-6 animate-in fade-in">
+          {/* API Info Banner - only shown at template step */}
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mb-5">
+            <Info size={18} className="text-primary mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+              <p className="text-muted-foreground mt-0.5">
+                Usa <strong>templates pré-aprovados</strong> pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram <strong>opt-in</strong>.{" "}
+                <strong className="text-destructive">Não funciona para leads frios</strong>, para isso use as <strong className="text-primary">Campanhas Wiize</strong>.
+              </p>
+              <a
+                href="https://developers.facebook.com/docs/whatsapp/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
+              >
+                <ExternalLink size={10} /> Documentação oficial da Meta
+              </a>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -304,7 +344,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                 Selecione o Template
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Escolha um template aprovado pela Meta para sua campanha
+                Templates do número: <strong>{selectedConnection?.nickname || selectedConnection?.display_phone_number || selectedConnection?.phone_number_id}</strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -479,11 +519,11 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               {phoneNumbers.trim().length > 0 && (
                 <div className="flex items-center gap-4 text-xs">
                   <span className="flex items-center gap-1 text-primary">
-                    <CheckCircle2 size={12} /> {validNums.length} válido(s)
+                    <CheckCircle2 size={12} /> {validNums.length} número(s) com formato válido
                   </span>
                   {invalidNums.length > 0 && (
                     <span className="flex items-center gap-1 text-destructive">
-                      <XCircle size={12} /> {invalidNums.length} inválido(s) — serão ignorados
+                      <XCircle size={12} /> {invalidNums.length} inválido(s), serão ignorados
                     </span>
                   )}
                 </div>
@@ -492,9 +532,10 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               {/* Collapsible rules */}
               <Collapsible open={rulesOpen} onOpenChange={setRulesOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full p-2 rounded-lg hover:bg-muted/30">
-                    <Info size={12} />
-                    <span>Regras de formatação dos números</span>
+                  <button className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors p-2 rounded-lg hover:bg-muted/30">
+                    <HelpCircle size={14} />
+                    <span className="font-medium">Regras de formatação dos números</span>
+                    <span className="text-xs text-muted-foreground">(clique para ver)</span>
                     <ChevronDown size={12} className={`ml-auto transition-transform ${rulesOpen ? "rotate-180" : ""}`} />
                   </button>
                 </CollapsibleTrigger>
@@ -508,6 +549,9 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                       <li>Separe por <strong>linha</strong>, <strong>vírgula</strong> ou <strong>ponto-e-vírgula</strong></li>
                       <li>Números com menos de 10 dígitos serão ignorados</li>
                     </ul>
+                    <p className="text-xs text-muted-foreground mt-2 italic">
+                      ⚠️ A validação verifica apenas o formato do número. O status de opt-in é verificado pela Meta no momento do envio.
+                    </p>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -516,9 +560,9 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
                 <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
+                  <p className="font-medium text-foreground">Opt-in obrigatório: leads frios não são permitidos</p>
                   <p>
-                    A Meta exige <strong>consentimento prévio (opt-in)</strong> dos contatos. <strong className="text-destructive">Não é possível enviar para leads frios pela API oficial</strong> — para prospecção fria, use as <strong className="text-primary">Campanhas Wiize</strong>.
+                    A Meta exige <strong>consentimento prévio (opt-in)</strong> dos contatos. <strong className="text-destructive">Não é possível enviar para leads frios pela API oficial</strong>, para prospecção fria use as <strong className="text-primary">Campanhas Wiize</strong>. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
                   </p>
                   <a
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
@@ -631,26 +675,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           </div>
         </div>
       )}
-
-      {/* Footer disclaimer */}
-      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mt-2">
-        <Info size={18} className="text-primary mt-0.5 shrink-0" />
-        <div className="text-sm">
-          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-          <p className="text-muted-foreground mt-0.5">
-            Usa <strong>templates pré-aprovados</strong> pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram <strong>opt-in</strong>.{" "}
-            <strong className="text-destructive">Não funciona para leads frios</strong> — para isso, use as <strong className="text-primary">Campanhas Wiize</strong>.
-          </p>
-          <a
-            href="https://developers.facebook.com/docs/whatsapp/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
-          >
-            <ExternalLink size={10} /> Documentação oficial da Meta
-          </a>
-        </div>
-      </div>
     </div>
   );
 };
