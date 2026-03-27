@@ -161,7 +161,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Alterações nesta Política</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Alterações nesta Política</h2>
               <p>
                 Podemos atualizar esta política periodicamente. Alterações significativas serão comunicadas 
                 através da plataforma.
