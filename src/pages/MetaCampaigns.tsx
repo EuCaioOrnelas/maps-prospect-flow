@@ -442,9 +442,9 @@ const MetaCampaigns = () => {
                   <Pencil size={11} /> Atualizar token de acesso
                 </Button>
               ) : (
-                <div className="space-y-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <div className="space-y-2 p-3 rounded-lg border border-accent/30 bg-accent/5">
                   <label className="text-sm font-medium flex items-center gap-1.5">
-                    <ShieldAlert size={13} className="text-amber-500" />
+                    <ShieldAlert size={13} className="text-accent-foreground" />
                     Novo Access Token
                   </label>
                   <Textarea
