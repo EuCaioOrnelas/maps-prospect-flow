@@ -153,7 +153,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Retenção de Dados</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Retenção de Dados</h2>
               <p>
                 Mantemos seus dados pelo tempo necessário para fornecer nossos serviços e cumprir obrigações 
                 legais. Após o encerramento da conta, os dados são excluídos em até 90 dias.
