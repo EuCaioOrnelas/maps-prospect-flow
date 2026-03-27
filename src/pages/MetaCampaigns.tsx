@@ -281,7 +281,16 @@ const MetaCampaigns = () => {
           )}
 
           {disclaimerAccepted && hasConnections && (
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => {
+                const nextTab = v as "new" | "history" | "settings";
+                setActiveTab(nextTab);
+                if (nextTab === "settings" && hasExpired) {
+                  setShowExpiredAlert(true);
+                }
+              }}
+            >
               <TabsList className="mb-6">
                 <TabsTrigger value="new" className="gap-2">
                   <Plus size={16} />
@@ -294,12 +303,7 @@ const MetaCampaigns = () => {
                 <TabsTrigger value="settings" className="gap-2 relative">
                   <Settings size={16} />
                   Números Conectados
-                  {hasExpired && (
-                    <span className="ml-1 relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
-                      <AlertTriangle size={12} className="relative text-destructive" />
-                    </span>
-                  )}
+                  {hasExpired && <AlertTriangle size={14} className="text-destructive" />}
                 </TabsTrigger>
               </TabsList>
 
