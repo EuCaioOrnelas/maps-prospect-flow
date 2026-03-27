@@ -144,7 +144,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Cookies</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Cookies</h2>
               <p>
                 Utilizamos cookies essenciais para o funcionamento da plataforma e cookies analíticos para 
                 melhorar a experiência do usuário. Você pode gerenciar suas preferências de cookies nas 
