@@ -145,6 +145,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsReportsOpen(false);
+    setIsCampaignsOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
