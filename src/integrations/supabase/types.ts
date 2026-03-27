@@ -1556,6 +1556,48 @@ export type Database = {
           },
         ]
       }
+      meta_webhook_events: {
+        Row: {
+          contact_name: string | null
+          created_at: string | null
+          event_type: string
+          from_phone: string | null
+          id: string
+          message_content: string | null
+          message_type: string | null
+          phone_number_id: string | null
+          raw_payload: Json | null
+          received_at: string | null
+          waba_id: string | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string | null
+          event_type: string
+          from_phone?: string | null
+          id?: string
+          message_content?: string | null
+          message_type?: string | null
+          phone_number_id?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
+          waba_id?: string | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string | null
+          event_type?: string
+          from_phone?: string | null
+          id?: string
+          message_content?: string | null
+          message_type?: string | null
+          phone_number_id?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
+          waba_id?: string | null
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           color: string | null
