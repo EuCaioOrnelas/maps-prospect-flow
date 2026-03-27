@@ -444,15 +444,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </Link>
             </li>
 
-            {/* Logout */}
+            {/* Consultoria */}
             <li>
               <SidebarNavItem
-                title="Sair"
-                icon={LogOut}
-                onClick={handleLogout}
+                title="Consultoria"
+                icon={GraduationCap}
+                url="/consultoria"
+                isActive={currentPath === "/consultoria"}
                 isExpanded={isExpanded}
-                className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                tooltip="Sair"
+                tooltip="Consultoria Estratégica"
               />
             </li>
           </ul>
