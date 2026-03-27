@@ -445,7 +445,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground">Número de envio</p>
-                <p className="text-sm font-medium">{connection.display_phone || connection.phone_number_id}</p>
+                <p className="text-sm font-medium">{connection.display_phone_number || connection.phone_number_id}</p>
               </div>
             </div>
 
