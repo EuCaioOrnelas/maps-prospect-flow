@@ -1,0 +1,1 @@
+ALTER TABLE public.user_waba_connections ADD COLUMN IF NOT EXISTS nickname TEXT;

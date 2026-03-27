@@ -3647,6 +3647,7 @@ export type Database = {
           created_at: string
           display_phone_number: string | null
           id: string
+          nickname: string | null
           phone_number_id: string | null
           raw_signup_data: Json | null
           status: string
@@ -3661,6 +3662,7 @@ export type Database = {
           created_at?: string
           display_phone_number?: string | null
           id?: string
+          nickname?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
           status?: string
@@ -3675,6 +3677,7 @@ export type Database = {
           created_at?: string
           display_phone_number?: string | null
           id?: string
+          nickname?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
           status?: string
