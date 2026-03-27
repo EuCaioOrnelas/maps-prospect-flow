@@ -303,7 +303,11 @@ const MetaCampaigns = () => {
                 <TabsTrigger value="settings" className="gap-2 relative data-[state=active]:shadow-sm">
                   <Settings size={16} />
                   Números Conectados
-                  {hasExpired && <AlertTriangle size={14} className="text-destructive" />}
+                  {hasExpired && (
+                    <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive animate-pulse">
+                      <AlertTriangle size={11} className="text-destructive-foreground" />
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
 

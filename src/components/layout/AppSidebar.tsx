@@ -360,32 +360,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Consultoria */}
-            <li>
-              <SidebarNavItem
-                title="Consultoria"
-                icon={GraduationCap}
-                url="/consultoria"
-                isActive={currentPath === "/consultoria"}
-                isExpanded={isExpanded}
-                tooltip="Consultoria Estratégica"
-              />
-            </li>
 
-            {/* Wiize Revenue (admin only) */}
-            {isAdmin && (
-              <li>
-                <SidebarNavItem
-                  title="Revenue"
-                  icon={DollarSign}
-                  url="/revenue"
-                  isActive={currentPath.startsWith("/revenue")}
-                  isExpanded={isExpanded}
-                  highlight
-                  tooltip="Wiize Revenue (Beta)"
-                />
-              </li>
-            )}
 
 
 
