@@ -3584,6 +3584,51 @@ export type Database = {
           },
         ]
       }
+      user_waba_connections: {
+        Row: {
+          access_token: string
+          business_name: string | null
+          created_at: string
+          display_phone_number: string | null
+          id: string
+          phone_number_id: string | null
+          raw_signup_data: Json | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+          waba_id: string
+        }
+        Insert: {
+          access_token: string
+          business_name?: string | null
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id?: string | null
+          raw_signup_data?: Json | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+          waba_id: string
+        }
+        Update: {
+          access_token?: string
+          business_name?: string | null
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id?: string | null
+          raw_signup_data?: Json | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+          waba_id?: string
+        }
+        Relationships: []
+      }
       warming_interactions: {
         Row: {
           conversation_ended: boolean
