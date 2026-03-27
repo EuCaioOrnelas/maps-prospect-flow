@@ -537,8 +537,8 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </Collapsible>
 
               {/* Opt-in warning */}
-              <div className="flex items-start gap-2.5 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5">
-                <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2.5 p-3 rounded-lg border border-warning/20 bg-warning/5">
+                <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
                   <p className="mt-0.5">
@@ -548,7 +548,7 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 hover:underline flex items-center gap-1 mt-1.5"
+                    className="text-primary hover:underline flex items-center gap-1 mt-1.5"
                   >
                     <ExternalLink size={10} /> Como obter opt-in dos contatos
                   </a>
