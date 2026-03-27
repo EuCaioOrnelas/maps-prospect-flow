@@ -524,8 +524,19 @@ const MetaCampaigns = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Show which numbers are expired */}
+            <div className="space-y-2">
+              {expiredConnections.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <AlertTriangle size={14} className="text-destructive shrink-0" />
+                  <span className="text-sm font-medium">{c.nickname || c.display_phone_number || c.phone_number_id}</span>
+                  {c.business_name && <span className="text-xs text-muted-foreground">({c.business_name})</span>}
+                </div>
+              ))}
+            </div>
+
             <p className="text-sm text-muted-foreground">
-              Tokens temporários da Meta expiram em poucas horas. Para resolver, gere um <strong>token permanente</strong> usando um Usuário do Sistema.
+              O token de acesso {expiredConnections.length === 1 ? "deste número" : "destes números"} expirou. Isso acontece quando é usado um <strong>token temporário</strong> da Meta, que tem validade de poucas horas. Para evitar esse problema, gere um <strong>token permanente</strong> usando um Usuário do Sistema no Meta Business Suite.
             </p>
 
             <div className="space-y-3">

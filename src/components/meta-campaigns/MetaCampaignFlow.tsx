@@ -129,11 +129,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       if (data?.error) {
         const details = data?.details?.error;
         if (details?.code === 190 || details?.error_subcode === 463) {
-          toast({
-            title: "Token de acesso expirado",
-            description: "O token da Meta expirou. Vá em Números Conectados, clique em editar e atualize o token. Use um token permanente (System User) para evitar expirações.",
-            variant: "destructive",
-          });
+          // Silently handle - the expired token detection system in MetaCampaigns already shows alerts
+          console.warn("[MetaCampaignFlow] Token expired for connection:", selectedConnection.display_phone_number || selectedConnection.waba_id);
           setLoadingTemplates(false);
           return;
         }
@@ -144,13 +141,15 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
       const isTokenError = errMsg.includes("Session has expired") || errMsg.includes("access token") || errMsg.includes("OAuthException");
-      toast({
-        title: isTokenError ? "Token de acesso expirado" : "Erro ao buscar templates",
-        description: isTokenError
-          ? "O token da Meta expirou. Vá em Números Conectados, clique em editar e atualize com um token permanente (System User)."
-          : "Verifique seu token de acesso e tente novamente.",
-        variant: "destructive",
-      });
+      if (isTokenError) {
+        console.warn("[MetaCampaignFlow] Token expired (catch):", selectedConnection?.display_phone_number);
+      } else {
+        toast({
+          title: "Erro ao buscar templates",
+          description: "Verifique seu token de acesso e tente novamente.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoadingTemplates(false);
     }
