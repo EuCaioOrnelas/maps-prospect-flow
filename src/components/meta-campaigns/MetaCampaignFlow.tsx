@@ -244,8 +244,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Footer disclaimer */}
-      {step === "review" && null}
 
 
       {/* Step: Number Selection */}
