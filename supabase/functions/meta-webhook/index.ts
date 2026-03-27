@@ -59,9 +59,8 @@ serve(async (req) => {
 
           console.log(`[meta-webhook] WABA ${wabaId} | field: ${field}`);
 
-          switch (field) {
-            case 'messages': {
-              // Incoming message from a customer
+          // Handle messages field (incoming messages + statuses)
+          if (field === 'messages') {
               const messages = value.messages || [];
               const contacts = value.contacts || [];
               const metadata = value.metadata || {};
@@ -69,7 +68,7 @@ serve(async (req) => {
               const displayPhone = metadata.display_phone_number;
 
               for (const msg of messages) {
-                const from = msg.from; // customer phone number
+                const from = msg.from;
                 const msgType = msg.type;
                 const timestamp = msg.timestamp;
                 const contactName = contacts.find((c: any) => c.wa_id === from)?.profile?.name || null;
@@ -85,7 +84,6 @@ serve(async (req) => {
                   textContent = msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '';
                 }
 
-                // Log the incoming message
                 await supabase.from('meta_webhook_events').insert({
                   waba_id: wabaId,
                   phone_number_id: phoneNumberId,
@@ -99,7 +97,6 @@ serve(async (req) => {
                 });
               }
 
-              // Message status updates (sent, delivered, read, failed)
               const statuses = value.statuses || [];
               for (const status of statuses) {
                 console.log(`[meta-webhook] 📊 Status: ${status.status} for msg ${status.id} to ${status.recipient_id}`);
@@ -109,45 +106,23 @@ serve(async (req) => {
                   phone_number_id: value.metadata?.phone_number_id,
                   event_type: 'status',
                   from_phone: status.recipient_id,
-                  message_type: status.status, // sent, delivered, read, failed
+                  message_type: status.status,
                   message_content: status.errors?.[0]?.message || null,
                   raw_payload: status,
                   received_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
                 });
               }
-              break;
-            }
-
-            case 'message_template_status_update': {
-              // Template approval/rejection
-              console.log(`[meta-webhook] 📋 Template update:`, JSON.stringify(value));
+          } else {
+              // All other fields: template updates, account updates, security, flows, etc.
+              console.log(`[meta-webhook] 📋 Event field=${field}:`, JSON.stringify(value).substring(0, 300));
 
               await supabase.from('meta_webhook_events').insert({
                 waba_id: wabaId,
-                event_type: 'template_status',
-                message_type: value.event,
-                message_content: `Template "${value.message_template_name}" → ${value.event}`,
+                event_type: field,
+                message_type: value.event || value.status || field,
+                message_content: JSON.stringify(value).substring(0, 1000),
                 raw_payload: value,
               });
-              break;
-            }
-
-            case 'account_update': {
-              // WABA account changes (ban, restrict, etc.)
-              console.log(`[meta-webhook] 🏢 Account update:`, JSON.stringify(value));
-
-              await supabase.from('meta_webhook_events').insert({
-                waba_id: wabaId,
-                event_type: 'account_update',
-                message_type: value.event,
-                message_content: JSON.stringify(value),
-                raw_payload: value,
-              });
-              break;
-            }
-
-            default:
-              console.log(`[meta-webhook] Unhandled field: ${field}`, JSON.stringify(value).substring(0, 200));
           }
         }
       }
