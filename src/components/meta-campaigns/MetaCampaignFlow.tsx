@@ -81,7 +81,7 @@ export const MetaCampaignFlow = ({ connection }: MetaCampaignFlowProps) => {
     UNKNOWN: { label: "Não verificado", daily: "Verifique no painel Meta" },
   };
 
-  const currentTier = tierLimits[connection.messaging_tier || "UNKNOWN"] || tierLimits.UNKNOWN;
+  const currentTier = tierLimits["UNKNOWN"];
 
   useEffect(() => {
     fetchTemplates();
