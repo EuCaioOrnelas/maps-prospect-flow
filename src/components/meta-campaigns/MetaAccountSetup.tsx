@@ -78,12 +78,12 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
 
   const clearDraft = () => localStorage.removeItem(STORAGE_KEY);
 
-  // Auto-save draft when fields change
-  const saveDraftEffect = () => {
+  // Auto-persist fields to localStorage on change
+  useEffect(() => {
     if (!existingConnection) {
       saveDraft({ step, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
     }
-  };
+  }, [wabaId, phoneNumberId, accessToken, businessName, displayPhone]);
 
   const steps = [
     { num: 1, title: "Conta Business", icon: Building2 },
