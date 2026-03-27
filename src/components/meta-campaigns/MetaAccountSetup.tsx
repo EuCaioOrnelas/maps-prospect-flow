@@ -78,6 +78,13 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
 
   const clearDraft = () => localStorage.removeItem(STORAGE_KEY);
 
+  // Auto-save draft when fields change
+  const saveDraftEffect = () => {
+    if (!existingConnection) {
+      saveDraft({ step, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
+    }
+  };
+
   const steps = [
     { num: 1, title: "Conta Business", icon: Building2 },
     { num: 2, title: "Número WhatsApp", icon: Phone },
