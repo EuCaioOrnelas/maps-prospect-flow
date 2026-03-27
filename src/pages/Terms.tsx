@@ -180,7 +180,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Modificações dos Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Modificações dos Termos</h2>
               <p>
                 Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas 
                 serão comunicadas através da plataforma ou por email.
@@ -188,7 +188,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Lei Aplicável</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Lei Aplicável</h2>
               <p>
                 Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será 
                 resolvida nos tribunais competentes do Brasil.
