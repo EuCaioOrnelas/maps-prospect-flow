@@ -322,7 +322,7 @@ const MetaCampaigns = () => {
 
       {/* Add Number Dialog */}
       <Dialog open={showAddNumber} onOpenChange={setShowAddNumber}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Número</DialogTitle>
           </DialogHeader>

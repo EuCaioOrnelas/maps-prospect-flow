@@ -317,26 +317,6 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
       {/* Step: Template Selection */}
       {step === "template" && (
         <div className="glass rounded-2xl p-6 animate-in fade-in">
-          {/* API Info Banner - only shown at template step */}
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mb-5">
-            <Info size={18} className="text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-              <p className="text-muted-foreground mt-0.5">
-                Usa <strong>templates pré-aprovados</strong> pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram <strong>opt-in</strong>.{" "}
-                <strong className="text-destructive">Não funciona para leads frios</strong>, para isso use as <strong className="text-primary">Campanhas Wiize</strong>.
-              </p>
-              <a
-                href="https://developers.facebook.com/docs/whatsapp/overview"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
-              >
-                <ExternalLink size={10} /> Documentação oficial da Meta
-              </a>
-            </div>
-          </div>
-
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -557,18 +537,18 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </Collapsible>
 
               {/* Opt-in warning */}
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+              <div className="flex items-start gap-2.5 p-3 rounded-lg border border-warning/20 bg-warning/5">
                 <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Opt-in obrigatório: leads frios não são permitidos</p>
-                  <p>
-                    A Meta exige <strong>consentimento prévio (opt-in)</strong> dos contatos. <strong className="text-destructive">Não é possível enviar para leads frios pela API oficial</strong>, para prospecção fria use as <strong className="text-primary">Campanhas Wiize</strong>. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
+                  <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
+                  <p className="mt-0.5">
+                    A Meta exige consentimento prévio (opt-in) dos contatos. Não é possível enviar para leads frios pela API oficial, para prospecção fria use as Campanhas Wiize. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
                   </p>
                   <a
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1 mt-1"
+                    className="text-primary hover:underline flex items-center gap-1 mt-1.5"
                   >
                     <ExternalLink size={10} /> Como obter opt-in dos contatos
                   </a>
@@ -675,6 +655,25 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
           </div>
         </div>
       )}
+
+      {/* Footer info - always visible */}
+      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mt-2">
+        <Info size={18} className="text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+          <p className="text-muted-foreground mt-0.5">
+            Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios, para isso use as Campanhas Wiize.
+          </p>
+          <a
+            href="https://developers.facebook.com/docs/whatsapp/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
+          >
+            <ExternalLink size={10} /> Documentação oficial da Meta
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
