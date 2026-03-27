@@ -196,7 +196,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">12. Contato</h2>
               <p>
                 Para dúvidas ou sugestões sobre estes termos,{" "}
                 <Link to="/contato" className="text-primary hover:underline">
