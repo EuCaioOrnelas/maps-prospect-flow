@@ -78,31 +78,43 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
     setConnecting(true);
     setError(null);
 
-    window.FB.login(
-      (response: any) => {
-        if (response.authResponse?.code) {
-          exchangeCode(response.authResponse.code);
-        } else {
-          setConnecting(false);
-          if (response.status === "not_authorized") {
-            setError("Você precisa autorizar o acesso à sua conta WhatsApp Business.");
+    // Safety timeout - if callback never fires (popup closed without interaction)
+    const safetyTimeout = setTimeout(() => {
+      setConnecting(false);
+    }, 120000); // 2 min max
+
+    try {
+      window.FB.login(
+        (response: any) => {
+          clearTimeout(safetyTimeout);
+          
+          if (response.authResponse?.code) {
+            exchangeCode(response.authResponse.code);
           } else {
-            setError("Conexão cancelada. Tente novamente quando estiver pronto.");
+            setConnecting(false);
+            if (response.status === "not_authorized") {
+              setError("Você precisa autorizar o acesso à sua conta WhatsApp Business.");
+            } else {
+              setError("Conexão cancelada. Tente novamente quando estiver pronto.");
+            }
           }
-        }
-      },
-      {
-        scope: "whatsapp_business_management,whatsapp_business_messaging",
-        response_type: "code",
-        override_default_response_type: true,
-        extras: {
-          setup: {
-            // Embedded Signup specific params
-            solutionID: META_APP_ID,
-          },
         },
-      }
-    );
+        {
+          scope: "whatsapp_business_management,whatsapp_business_messaging",
+          response_type: "code",
+          override_default_response_type: true,
+          extras: {
+            setup: {
+              solutionID: META_APP_ID,
+            },
+          },
+        }
+      );
+    } catch (err) {
+      clearTimeout(safetyTimeout);
+      setConnecting(false);
+      setError("Erro ao abrir janela do Facebook. Verifique se popups estão permitidos.");
+    }
   }, [user]);
 
   const exchangeCode = async (code: string) => {
