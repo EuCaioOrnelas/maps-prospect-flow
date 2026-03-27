@@ -780,24 +780,6 @@ const Profile = () => {
                 </Link>
               </div>
 
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="font-medium text-destructive">Sair da conta</span>
-                  <p className="text-sm text-muted-foreground">
-                    Encerrar sua sessão atual
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
-                  onClick={() => signOut()}
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sair
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>

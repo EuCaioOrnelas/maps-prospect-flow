@@ -386,37 +386,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
             
-            {/* Notifications */}
-            <li>
-              <SidebarNavItem
-                title="Avisos"
-                icon={Bell}
-                onClick={() => setAnnouncementsOpen(true)}
-                isExpanded={isExpanded}
-                badge={unreadAnnouncements > 0 ? (
-                  <div className={cn(
-                    "absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
-                    disconnectedNumberAlerts.length > 0 
-                      ? "bg-destructive animate-pulse" 
-                      : "bg-primary"
-                  )}>
-                    <span className={cn(
-                      "text-[10px] font-bold",
-                      disconnectedNumberAlerts.length > 0 
-                        ? "text-destructive-foreground" 
-                        : "text-primary-foreground"
-                    )}>{unreadAnnouncements}</span>
-                  </div>
-                ) : undefined}
-                tooltip={disconnectedNumberAlerts.length > 0 ? (
-                  <div>
-                    <p className="font-medium">⚠️ Número desconectado</p>
-                    <p className="text-xs opacity-90">{disconnectedNumberAlerts.length} número(s) precisa(m) reconectar</p>
-                  </div>
-                ) : "Avisos"}
-              />
-            </li>
-
             {/* Profile */}
             <li>
               <Link
@@ -453,6 +422,37 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/consultoria"}
                 isExpanded={isExpanded}
                 tooltip="Consultoria Estratégica"
+              />
+            </li>
+
+            {/* Notifications */}
+            <li>
+              <SidebarNavItem
+                title="Avisos"
+                icon={Bell}
+                onClick={() => setAnnouncementsOpen(true)}
+                isExpanded={isExpanded}
+                badge={unreadAnnouncements > 0 ? (
+                  <div className={cn(
+                    "absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
+                    disconnectedNumberAlerts.length > 0 
+                      ? "bg-destructive animate-pulse" 
+                      : "bg-primary"
+                  )}>
+                    <span className={cn(
+                      "text-[10px] font-bold",
+                      disconnectedNumberAlerts.length > 0 
+                        ? "text-destructive-foreground" 
+                        : "text-primary-foreground"
+                    )}>{unreadAnnouncements}</span>
+                  </div>
+                ) : undefined}
+                tooltip={disconnectedNumberAlerts.length > 0 ? (
+                  <div>
+                    <p className="font-medium">⚠️ Número desconectado</p>
+                    <p className="text-xs opacity-90">{disconnectedNumberAlerts.length} número(s) precisa(m) reconectar</p>
+                  </div>
+                ) : "Avisos"}
               />
             </li>
           </ul>
