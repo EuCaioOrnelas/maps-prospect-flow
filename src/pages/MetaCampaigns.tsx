@@ -583,7 +583,13 @@ const MetaCampaigns = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Número</DialogTitle>
           </DialogHeader>
-          <MetaAccountSetup onConnectionSaved={handleConnectionSaved} />
+          <MetaAccountSetup
+            onConnectionSaved={(conn) => {
+              if (conn) handleConnectionSaved(conn);
+              else setShowAddNumber(false);
+            }}
+            isAddingExtra
+          />
         </DialogContent>
       </Dialog>
     </div>
