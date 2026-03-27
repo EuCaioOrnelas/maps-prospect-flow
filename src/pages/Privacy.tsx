@@ -81,14 +81,43 @@ const Privacy = () => {
                 Não vendemos suas informações pessoais. Podemos compartilhar dados apenas com:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>Processadores de pagamento (Stripe)</li>
+                <li>Processadores de pagamento (Stripe, Asaas)</li>
                 <li>Serviços de infraestrutura (hospedagem)</li>
+                <li>Meta Platforms, Inc. — ao utilizar a integração com a API Oficial do WhatsApp Business, dados necessários 
+                    para o envio e recebimento de mensagens são processados pela Meta conforme suas próprias políticas de privacidade</li>
                 <li>Autoridades legais quando exigido por lei</li>
               </ul>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Segurança dos Dados</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Dados do WhatsApp Business (API Oficial Meta)</h2>
+              <p>
+                Ao conectar sua conta WhatsApp Business ao Wiize via Embedded Signup, os seguintes dados podem ser coletados e processados:
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Dados da conta:</strong> ID da conta WhatsApp Business (WABA), nome comercial, número de telefone associado</li>
+                <li><strong>Tokens de acesso:</strong> armazenados de forma criptografada para viabilizar a operação dos serviços</li>
+                <li><strong>Metadados de mensagens:</strong> status de entrega (enviado, entregue, lido), timestamps e identificadores de mensagem</li>
+                <li><strong>Dados de contatos:</strong> números de telefone e nomes de perfil dos destinatários, conforme fornecidos pela API da Meta</li>
+              </ul>
+              <p>
+                <strong>O Wiize não armazena o conteúdo das mensagens trocadas via API Oficial.</strong> O processamento das mensagens 
+                é realizado pela infraestrutura da Meta, que aplica criptografia de ponta a ponta.
+              </p>
+              <p>
+                Os tokens de acesso podem ser revogados pelo usuário a qualquer momento, desconectando sua conta WABA da plataforma. 
+                Após a revogação, todos os tokens e dados associados são excluídos em até 30 dias.
+              </p>
+              <p>
+                Para mais informações sobre como a Meta trata seus dados, consulte a{" "}
+                <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Política de Privacidade da Meta
+                </a>.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Segurança dos Dados</h2>
               <p>
                 Implementamos medidas de segurança técnicas e organizacionais para proteger seus dados, incluindo 
                 criptografia, controle de acesso e monitoramento contínuo.
@@ -103,7 +132,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Seus Direitos (LGPD)</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Seus Direitos (LGPD)</h2>
               <p>De acordo com a Lei Geral de Proteção de Dados, você tem direito a:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li>Acessar seus dados pessoais</li>
@@ -115,7 +144,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Cookies</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Cookies</h2>
               <p>
                 Utilizamos cookies essenciais para o funcionamento da plataforma e cookies analíticos para 
                 melhorar a experiência do usuário. Você pode gerenciar suas preferências de cookies nas 
@@ -124,7 +153,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Retenção de Dados</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Retenção de Dados</h2>
               <p>
                 Mantemos seus dados pelo tempo necessário para fornecer nossos serviços e cumprir obrigações 
                 legais. Após o encerramento da conta, os dados são excluídos em até 90 dias.
@@ -132,7 +161,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Alterações nesta Política</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Alterações nesta Política</h2>
               <p>
                 Podemos atualizar esta política periodicamente. Alterações significativas serão comunicadas 
                 através da plataforma.
@@ -140,7 +169,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Contato</h2>
               <p>
                 Para exercer seus direitos ou esclarecer dúvidas sobre nossa política de privacidade,{" "}
                 <Link to="/contato" className="text-primary hover:underline">

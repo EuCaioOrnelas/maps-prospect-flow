@@ -133,7 +133,54 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Modificações dos Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Integração com a API Oficial do WhatsApp (Meta Business Platform)</h2>
+              <p>
+                O Wiize oferece a possibilidade de conexão com a API Oficial do WhatsApp Business, fornecida pela Meta Platforms, Inc., 
+                por meio do recurso de Embedded Signup. Ao utilizar esta funcionalidade, você declara estar ciente e de acordo com o seguinte:
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>
+                  <strong>O Wiize atua exclusivamente como intermediário tecnológico.</strong> A plataforma facilita a conexão entre o 
+                  usuário e a Meta, mas <strong>não é proprietária, co-responsável nem operadora</strong> da conta WhatsApp Business (WABA) do usuário.
+                </li>
+                <li>
+                  <strong>A conta WABA pertence integralmente ao usuário.</strong> Ao conectar sua conta via Embedded Signup, 
+                  você autoriza o Wiize a acessar e gerenciar mensagens e configurações em seu nome, dentro do escopo das permissões concedidas.
+                </li>
+                <li>
+                  <strong>O usuário é o único responsável</strong> pelo conteúdo das mensagens enviadas, pela conformidade com as 
+                  Políticas de Uso do WhatsApp Business, pela Política Comercial da Meta e por todas as leis aplicáveis, incluindo a LGPD.
+                </li>
+                <li>
+                  <strong>Custos de mensagens são de responsabilidade do usuário.</strong> As taxas cobradas pela Meta por mensagens 
+                  enviadas através da API Oficial são faturadas diretamente ao usuário pela Meta, sem qualquer intermediação financeira do Wiize.
+                </li>
+                <li>
+                  <strong>O Wiize não se responsabiliza</strong> por suspensões, restrições, bloqueios ou encerramento de contas WABA 
+                  realizados pela Meta, seja por violação de políticas, denúncias de spam ou qualquer outro motivo.
+                </li>
+                <li>
+                  <strong>Tokens de acesso e credenciais</strong> são armazenados de forma criptografada e utilizados exclusivamente 
+                  para a operação dos serviços contratados. O usuário pode revogar o acesso a qualquer momento.
+                </li>
+                <li>
+                  <strong>O usuário declara possuir</strong> a verificação de empresa (Business Verification) exigida pela Meta e 
+                  compromete-se a manter seus dados cadastrais atualizados junto à plataforma Meta Business.
+                </li>
+              </ul>
+              <p>
+                Ao conectar sua conta WhatsApp Business ao Wiize, você confirma ter lido e concordado com os{" "}
+                <a href="https://www.whatsapp.com/legal/business-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Termos de Serviço do WhatsApp Business
+                </a>{" "}e a{" "}
+                <a href="https://www.whatsapp.com/legal/business-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Política Comercial do WhatsApp
+                </a>.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Modificações dos Termos</h2>
               <p>
                 Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas 
                 serão comunicadas através da plataforma ou por email.
@@ -141,7 +188,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Lei Aplicável</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Lei Aplicável</h2>
               <p>
                 Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será 
                 resolvida nos tribunais competentes do Brasil.
@@ -149,7 +196,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">12. Contato</h2>
               <p>
                 Para dúvidas ou sugestões sobre estes termos,{" "}
                 <Link to="/contato" className="text-primary hover:underline">
