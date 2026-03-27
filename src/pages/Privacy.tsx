@@ -169,7 +169,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Contato</h2>
               <p>
                 Para exercer seus direitos ou esclarecer dúvidas sobre nossa política de privacidade,{" "}
                 <Link to="/contato" className="text-primary hover:underline">
