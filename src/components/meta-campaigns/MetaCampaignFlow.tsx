@@ -537,18 +537,18 @@ export const MetaCampaignFlow = ({ connections }: MetaCampaignFlowProps) => {
               </Collapsible>
 
               {/* Opt-in warning */}
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2.5 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5">
+                <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Opt-in obrigatório: leads frios não são permitidos</p>
-                  <p>
-                    A Meta exige <strong>consentimento prévio (opt-in)</strong> dos contatos. <strong className="text-destructive">Não é possível enviar para leads frios pela API oficial</strong>, para prospecção fria use as <strong className="text-primary">Campanhas Wiize</strong>. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
+                  <p className="font-medium text-foreground">Opt-in obrigatório — Leads frios não são permitidos</p>
+                  <p className="mt-0.5">
+                    A Meta exige consentimento prévio (opt-in) dos contatos. Não é possível enviar para leads frios pela API oficial, para prospecção fria use as Campanhas Wiize. Enviar para contatos sem opt-in pode resultar em baixa qualidade do número e restrições na conta.
                   </p>
                   <a
                     href="https://developers.facebook.com/docs/whatsapp/overview/getting-opt-in/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1 mt-1"
+                    className="text-amber-600 hover:underline flex items-center gap-1 mt-1.5"
                   >
                     <ExternalLink size={10} /> Como obter opt-in dos contatos
                   </a>
