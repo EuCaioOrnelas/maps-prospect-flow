@@ -105,7 +105,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
           phone_number_id: phoneNumberId,
           access_token: accessToken,
           business_name: businessName || null,
-          display_phone: displayPhone || null,
+          display_phone_number: displayPhone || null,
         }, { onConflict: "user_id,waba_id" })
         .select()
         .single();
