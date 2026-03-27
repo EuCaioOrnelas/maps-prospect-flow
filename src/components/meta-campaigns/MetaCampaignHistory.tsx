@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, History, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, History, CheckCircle2, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaCampaignHistoryProps {
@@ -12,6 +13,7 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -63,27 +65,67 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
   return (
     <div className="glass rounded-2xl p-6">
       <h2 className="text-xl font-bold mb-4">Histórico de Campanhas</h2>
-      <div className="space-y-3">
-        {campaigns.map((c) => (
-          <div key={c.id} className="flex items-center justify-between p-4 rounded-lg border border-border">
-            <div>
-              <p className="font-medium text-sm">{c.campaign_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(c.created_at).toLocaleDateString("pt-BR")} — via {getConnectionLabel(c.connection_id)}
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-primary">
-                <CheckCircle2 size={14} /> {c.success_count}
-              </span>
-              {c.failed_count > 0 && (
-                <span className="flex items-center gap-1 text-destructive">
-                  <XCircle size={14} /> {c.failed_count}
-                </span>
+      <div className="space-y-2">
+        {campaigns.map((c) => {
+          const isExpanded = expandedId === c.id;
+          return (
+            <div key={c.id} className="rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div>
+                    <p className="font-medium text-sm truncate">{c.campaign_name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="flex items-center gap-1 text-xs text-primary">
+                    <CheckCircle2 size={12} /> {c.success_count}
+                  </span>
+                  {c.failed_count > 0 && (
+                    <span className="flex items-center gap-1 text-xs text-destructive">
+                      <XCircle size={12} /> {c.failed_count}
+                    </span>
+                  )}
+                  {isExpanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="px-3 pb-3 border-t border-border pt-3 bg-muted/20 animate-in fade-in">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Template:</span>{" "}
+                      <span className="font-medium">{c.template_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Idioma:</span>{" "}
+                      <span className="font-medium">{c.template_language}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Número:</span>{" "}
+                      <span className="font-medium">{getConnectionLabel(c.connection_id)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Total:</span>{" "}
+                      <span className="font-medium">{c.total_recipients} destinatário(s)</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status:</span>{" "}
+                      <Badge variant={c.status === "completed" ? "default" : "secondary"} className="text-[10px] ml-1">
+                        {c.status === "completed" ? "Concluída" : c.status === "sending" ? "Enviando" : c.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
