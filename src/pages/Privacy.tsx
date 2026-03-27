@@ -132,7 +132,7 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Seus Direitos (LGPD)</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Seus Direitos (LGPD)</h2>
               <p>De acordo com a Lei Geral de Proteção de Dados, você tem direito a:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li>Acessar seus dados pessoais</li>
