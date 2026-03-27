@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,14 +44,46 @@ interface MetaAccountSetupProps {
 export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: MetaAccountSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState(existingConnection ? 4 : 1);
+  const STORAGE_KEY = "meta_setup_draft";
+
+  const loadDraft = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  };
+
+  const draft = existingConnection ? null : loadDraft();
+
+  const [step, setStepRaw] = useState(existingConnection ? 4 : (draft?.step || 1));
   const [saving, setSaving] = useState(false);
 
-  const [wabaId, setWabaId] = useState(existingConnection?.waba_id || "");
-  const [phoneNumberId, setPhoneNumberId] = useState(existingConnection?.phone_number_id || "");
-  const [accessToken, setAccessToken] = useState(existingConnection?.access_token || "");
-  const [businessName, setBusinessName] = useState(existingConnection?.business_name || "");
-  const [displayPhone, setDisplayPhone] = useState(existingConnection?.display_phone || "");
+  const [wabaId, setWabaId] = useState(existingConnection?.waba_id || draft?.wabaId || "");
+  const [phoneNumberId, setPhoneNumberId] = useState(existingConnection?.phone_number_id || draft?.phoneNumberId || "");
+  const [accessToken, setAccessToken] = useState(existingConnection?.access_token || draft?.accessToken || "");
+  const [businessName, setBusinessName] = useState(existingConnection?.business_name || draft?.businessName || "");
+  const [displayPhone, setDisplayPhone] = useState(existingConnection?.display_phone || draft?.displayPhone || "");
+
+  const saveDraft = (updates: Record<string, any> = {}) => {
+    if (existingConnection) return;
+    const data = { step, wabaId, phoneNumberId, accessToken, businessName, displayPhone, ...updates };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  };
+
+  const setStep = (s: number) => {
+    setStepRaw(s);
+    saveDraft({ step: s });
+  };
+
+  const clearDraft = () => localStorage.removeItem(STORAGE_KEY);
+
+  // Auto-persist fields to localStorage on change
+  useEffect(() => {
+    if (!existingConnection) {
+      saveDraft({ step, wabaId, phoneNumberId, accessToken, businessName, displayPhone });
+    }
+  }, [wabaId, phoneNumberId, accessToken, businessName, displayPhone]);
 
   const steps = [
     { num: 1, title: "Conta Business", icon: Building2 },
@@ -85,6 +117,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, existingConnection }: Meta
         description: "Sua conta Meta Business foi vinculada com sucesso.",
       });
 
+      clearDraft();
       onConnectionSaved(data as unknown as WabaConnection);
     } catch (err: any) {
       console.error("Error saving WABA connection:", err);
