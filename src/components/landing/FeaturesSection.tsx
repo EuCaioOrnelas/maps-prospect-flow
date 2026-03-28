@@ -158,7 +158,11 @@ export const FeaturesSection = () => {
           }`}
         >
           {/* Card with arrows inside */}
-          <div className="glass rounded-2xl border border-border/50 overflow-hidden">
+          <div
+            className="glass rounded-2xl border border-border/50 overflow-hidden"
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+          >
             <div className="p-5 sm:p-8 lg:p-10 flex items-center gap-3 sm:gap-6 min-h-[340px] relative">
               {/* Left arrow */}
               <button
