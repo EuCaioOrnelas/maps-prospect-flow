@@ -279,7 +279,7 @@ const HelpCenter = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <HelpCircle className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
               Central de Ajuda
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto mb-6">
@@ -358,13 +358,13 @@ const HelpCenter = () => {
                   <>
                     <div className="flex items-center gap-3 mb-8 pb-5 border-b border-border/50">
                       <activeData.icon size={24} className="text-primary shrink-0" />
-                      <h2 className="text-2xl sm:text-3xl font-bold">{activeData.title}</h2>
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{activeData.title}</h2>
                     </div>
 
                     <div className="space-y-8">
                       {activeData.questions.map((q, i) => (
                         <div key={i} className="group">
-                          <h3 className="font-semibold text-base sm:text-lg mb-3 text-foreground">
+                          <h3 className="font-semibold text-lg sm:text-xl mb-3 text-foreground">
                             {q.question}
                           </h3>
                           <p className="text-muted-foreground text-sm sm:text-base leading-relaxed border-l-2 border-primary/30 pl-4 ml-1">
