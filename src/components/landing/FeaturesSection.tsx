@@ -159,82 +159,33 @@ export const FeaturesSection = () => {
         >
           {/* Main feature display */}
           <div className="glass rounded-2xl border border-border/50 overflow-hidden mb-6">
-            <div className="flex flex-col lg:flex-row">
-              {/* Left: Feature showcase */}
-              <div className="flex-1 p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[280px] relative">
-                {/* Badge */}
-                {activeFeature.badge && (
-                  <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
-                    {activeFeature.badge}
-                  </span>
-                )}
+            {/* Feature showcase */}
+            <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[280px] relative">
+              {activeFeature.badge && (
+                <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
+                  {activeFeature.badge}
+                </span>
+              )}
 
-                <div
-                  key={activeIndex}
-                  className="animate-in fade-in slide-in-from-right-4 duration-500"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
-                    <activeFeature.icon size={28} className="text-white" />
-                  </div>
-
-                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
-                    {activeFeature.title}
-                  </h3>
-
-                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-lg">
-                    {activeFeature.description}
-                  </p>
-
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
-                    <CheckCircle size={16} className="text-primary flex-shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
-                  </div>
+              <div
+                key={activeIndex}
+                className="animate-in fade-in slide-in-from-right-4 duration-500"
+              >
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
+                  <activeFeature.icon size={28} className="text-white" />
                 </div>
-              </div>
 
-              {/* Right: Navigation thumbnails (desktop) */}
-              <div className="hidden lg:flex flex-col w-72 border-l border-border/50 bg-muted/20">
-                <div className="p-3 overflow-y-auto max-h-[400px] space-y-1 scrollbar-none">
-                  {features.map((feature, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleManualNav(index)}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-xl p-3 text-left transition-all duration-300",
-                        index === activeIndex
-                          ? "bg-primary/10 border border-primary/20 shadow-sm"
-                          : "hover:bg-muted/50 border border-transparent"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
-                          index === activeIndex ? "bg-primary/20" : "bg-muted/50"
-                        )}
-                      >
-                        <feature.icon
-                          size={16}
-                          className={cn(
-                            "transition-colors",
-                            index === activeIndex ? "text-primary" : "text-muted-foreground"
-                          )}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <p
-                          className={cn(
-                            "text-sm font-medium truncate transition-colors",
-                            index === activeIndex ? "text-foreground" : "text-muted-foreground"
-                          )}
-                        >
-                          {feature.title}
-                        </p>
-                        {feature.badge && (
-                          <span className="text-[10px] font-semibold text-primary">{feature.badge}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
+                  {activeFeature.title}
+                </h3>
+
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-lg">
+                  {activeFeature.description}
+                </p>
+
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+                  <CheckCircle size={16} className="text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
                 </div>
               </div>
             </div>
