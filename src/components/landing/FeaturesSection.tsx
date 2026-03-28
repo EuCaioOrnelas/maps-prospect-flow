@@ -157,18 +157,19 @@ export const FeaturesSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="relative flex items-center gap-3 sm:gap-5">
-            {/* Left arrow */}
-            <button
-              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
-            >
-              <ChevronLeft size={20} />
-            </button>
+          {/* Card with arrows inside */}
+          <div className="glass rounded-2xl border border-border/50 overflow-hidden">
+            <div className="p-5 sm:p-8 lg:p-10 flex items-center gap-3 sm:gap-6 min-h-[340px] relative">
+              {/* Left arrow */}
+              <button
+                onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-            {/* Card */}
-            <div className="glass rounded-2xl border border-border/50 overflow-hidden flex-1">
-              <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center justify-center text-center min-h-[340px] relative">
+              {/* Content */}
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
                 {activeFeature.badge && (
                   <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                     {activeFeature.badge}
@@ -191,21 +192,21 @@ export const FeaturesSection = () => {
                     {activeFeature.description}
                   </p>
 
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10 mb-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10">
                     <CheckCircle size={16} className="text-primary flex-shrink-0" />
                     <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right arrow */}
-            <button
-              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
-            >
-              <ChevronRight size={20} />
-            </button>
+              {/* Right arrow */}
+              <button
+                onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Dots */}
@@ -222,22 +223,6 @@ export const FeaturesSection = () => {
                 )}
               />
             ))}
-          </div>
-
-          {/* Mobile arrows */}
-          <div className="flex sm:hidden items-center justify-center gap-3 mt-4">
-            <button
-              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <ChevronRight size={18} />
-            </button>
           </div>
         </div>
       </div>
