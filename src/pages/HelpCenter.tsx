@@ -279,7 +279,7 @@ const HelpCenter = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <HelpCircle className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
               Central de Ajuda
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto mb-6">
