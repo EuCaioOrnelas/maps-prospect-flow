@@ -207,22 +207,22 @@ export const FeaturesSection = () => {
                 <ChevronRight size={18} />
               </button>
             </div>
-          </div>
 
-          {/* Dots */}
-          <div className="flex items-center justify-center gap-2 mt-6">
-            {features.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleManualNav(index)}
-                className={cn(
-                  "rounded-full transition-all duration-300",
-                  index === activeIndex
-                    ? "w-7 h-2.5 bg-primary"
-                    : "w-2.5 h-2.5 bg-muted-foreground/25 hover:bg-primary/40"
-                )}
-              />
-            ))}
+            {/* Dots inside card */}
+            <div className="flex items-center justify-center gap-2 pb-5">
+              {features.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleManualNav(index)}
+                  className={cn(
+                    "rounded-full transition-all duration-300",
+                    index === activeIndex
+                      ? "w-7 h-2.5 bg-primary"
+                      : "w-2.5 h-2.5 bg-muted-foreground/25 hover:bg-primary/40"
+                  )}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
