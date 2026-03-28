@@ -358,7 +358,7 @@ const HelpCenter = () => {
                   <>
                     <div className="flex items-center gap-3 mb-8 pb-5 border-b border-border/50">
                       <activeData.icon size={24} className="text-primary shrink-0" />
-                      <h2 className="text-2xl sm:text-3xl font-bold">{activeData.title}</h2>
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{activeData.title}</h2>
                     </div>
 
                     <div className="space-y-8">
