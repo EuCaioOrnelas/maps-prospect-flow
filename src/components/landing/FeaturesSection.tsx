@@ -157,59 +157,87 @@ export const FeaturesSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          {/* Main feature display */}
-          <div className="glass rounded-2xl border border-border/50 overflow-hidden mb-6">
-            {/* Feature showcase */}
-            <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center justify-center text-center min-h-[300px] relative">
-              {activeFeature.badge && (
-                <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
-                  {activeFeature.badge}
-                </span>
-              )}
+          <div className="relative flex items-center gap-3 sm:gap-5">
+            {/* Left arrow */}
+            <button
+              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+            >
+              <ChevronLeft size={20} />
+            </button>
 
-              <div
-                key={activeIndex}
-                className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col items-center"
-              >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
-                  <activeFeature.icon size={28} className="text-white" />
-                </div>
+            {/* Card */}
+            <div className="glass rounded-2xl border border-border/50 overflow-hidden flex-1">
+              <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center justify-center text-center min-h-[340px] relative">
+                {activeFeature.badge && (
+                  <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
+                    {activeFeature.badge}
+                  </span>
+                )}
 
-                <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
-                  {activeFeature.title}
-                </h3>
+                <div
+                  key={activeIndex}
+                  className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col items-center"
+                >
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
+                    <activeFeature.icon size={28} className="text-white" />
+                  </div>
 
-                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-lg">
-                  {activeFeature.description}
-                </p>
+                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
+                    {activeFeature.title}
+                  </h3>
 
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
-                  <CheckCircle size={16} className="text-primary flex-shrink-0" />
-                  <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
+                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-2xl">
+                    {activeFeature.description}
+                  </p>
+
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10 mb-4">
+                    <CheckCircle size={16} className="text-primary flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Bottom controls */}
-            <div className="flex items-center justify-center gap-4 px-6 py-4 border-t border-border/50 bg-muted/10">
-              <button
-                onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-                className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                <ChevronLeft size={18} />
-              </button>
+            {/* Right arrow */}
+            <button
+              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
 
-              <span className="text-sm text-muted-foreground font-medium tabular-nums">
-                {activeIndex + 1} / {features.length}
-              </span>
-
+          {/* Dots */}
+          <div className="flex items-center justify-center gap-2 mt-6">
+            {features.map((_, index) => (
               <button
-                onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-                className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+                key={index}
+                onClick={() => handleManualNav(index)}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  index === activeIndex
+                    ? "w-7 h-2.5 bg-primary"
+                    : "w-2.5 h-2.5 bg-muted-foreground/25 hover:bg-primary/40"
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Mobile arrows */}
+          <div className="flex sm:hidden items-center justify-center gap-3 mt-4">
+            <button
+              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
       </div>
