@@ -43,6 +43,18 @@ const faqs = [
   {
     question: "Qual plano é ideal para mim?",
     answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números WhatsApp."
+  },
+  {
+    question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
+    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de aquecimento para máxima segurança."
+  },
+  {
+    question: "Minhas mensagens são seguras com a API Oficial?",
+    answer: "Sim. As mensagens enviadas pela Meta API Oficial possuem criptografia de ponta a ponta e seguem todas as diretrizes de privacidade do WhatsApp. Além disso, o Wiize segue as normas da LGPD para garantir a proteção completa dos seus dados e dos seus contatos."
+  },
+  {
+    question: "Preciso de uma conta Meta Business para usar o Wiize?",
+    answer: "Para campanhas via API Oficial (relacionamento/inbound), sim — você conecta sua conta Meta Business diretamente pelo Wiize em poucos cliques. Para prospecção outbound com disparos em massa, não é necessário. Basta conectar seu número WhatsApp pelo QR Code e começar."
   }
 ];
 
