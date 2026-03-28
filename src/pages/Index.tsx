@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { WarmingSection } from "@/components/landing/WarmingSection";
+import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
 import { AIAgentsSection } from "@/components/landing/AIAgentsSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
