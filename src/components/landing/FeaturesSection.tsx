@@ -7,53 +7,53 @@ const features = [
   {
     icon: Brain,
     title: "Curadoria com IA",
-    description: "Nossa inteligência artificial analisa e filtra resultados para entregar apenas empresas ativas com maior potencial de conversão.",
+    description: "Nossa inteligência artificial analisa milhares de resultados do Google Maps e filtra automaticamente empresas inativas, números inválidos e contatos desatualizados. O resultado? Apenas empresas com atividade recente, avaliações positivas e alto potencial de conversão chegam até você.",
     highlight: "IA avançada filtra leads ruins automaticamente",
   },
   {
     icon: Target,
     title: "Leads Estratégicos e Geolocalizados",
-    description: "Cada lead é selecionado por localização, atividade recente e contatos verificados. Filtre por cidade, bairro ou região.",
+    description: "Cada lead é selecionado criteriosamente por localização geográfica, atividade recente no Google e contatos verificados. Filtre por cidade, bairro ou região específica e encontre exatamente os clientes que estão na sua área de atuação — sem perder tempo com leads distantes ou irrelevantes.",
     highlight: "Busca por cidade, bairro ou região específica",
   },
   {
     icon: Bot,
     title: "Agente de IA no WhatsApp",
-    description: "Um vendedor virtual que responde, qualifica e organiza seus leads 24h. Configure em minutos e ele cuida do operacional.",
+    description: "Um vendedor virtual que trabalha 24 horas por dia, 7 dias por semana. Ele responde mensagens automaticamente, qualifica leads com perguntas inteligentes e organiza tudo no CRM. Sem prompts complexos — configure em poucos minutos e deixe a IA cuidar do operacional enquanto você foca em fechar negócios.",
     badge: "Beta",
     highlight: "Atendimento automático 24 horas por dia",
   },
   {
     icon: Download,
     title: "Até 50 Leads por Busca",
-    description: "Cada busca estratégica retorna até 50 leads qualificados, prontos para download em planilha Excel.",
+    description: "Cada busca estratégica retorna até 50 leads qualificados com nome da empresa, telefone, endereço, categoria e link do Google Maps. Todos prontos para download em planilha Excel, facilitando a organização e o início imediato da sua prospecção.",
     highlight: "Export direto para Excel em um clique",
   },
   {
     icon: MessageSquare,
     title: "Disparos em Massa via WhatsApp",
-    description: "Envie mensagens automatizadas para seus leads com limite de 200 disparos/dia. Sistema de janelas inteligente com API oficial.",
+    description: "Envie mensagens personalizadas em escala para seus leads com limite seguro de 200 disparos por dia. O sistema usa janelas inteligentes com delays aleatórios, variações de texto e pausas automáticas para simular comportamento humano e proteger seu número de bloqueios.",
     badge: "Novo",
     highlight: "200 disparos/dia com intervalos inteligentes",
   },
   {
     icon: BarChart3,
     title: "Relatórios Inteligentes",
-    description: "Acompanhe métricas de campanhas, taxa de conversão e performance dos leads com dashboards visuais completos.",
+    description: "Acompanhe em tempo real as métricas das suas campanhas: taxa de entrega, respostas recebidas, performance por número e evolução diária. Dashboards visuais completos que mostram exatamente o que está funcionando e onde otimizar sua estratégia de prospecção.",
     badge: "Novo",
     highlight: "Dashboards visuais em tempo real",
   },
   {
     icon: Flame,
     title: "Aquecimento de Chips",
-    description: "Prepare números novos para uso comercial em 20 dias. Simula uso natural do WhatsApp com mensagens automáticas para evitar bloqueios.",
+    description: "Prepare números novos para uso comercial em apenas 20 dias. O sistema simula conversas naturais com IA, enviando e recebendo mensagens progressivamente para construir reputação no WhatsApp. Conecte até 10 chips simultâneos e deixe o processo 100% automatizado.",
     badge: "Novo",
     highlight: "20 dias para chip pronto para campanhas",
   },
   {
     icon: TrendingUp,
     title: "Maior Taxa de Conversão",
-    description: "Leads curados significam menos tempo desperdiçado e mais oportunidades reais de negócio fechado.",
+    description: "Leads curados por inteligência artificial significam menos tempo desperdiçado com contatos frios e mais oportunidades reais de negócio. Nossos usuários reportam taxas de resposta significativamente maiores comparado a listas genéricas de prospecção.",
     highlight: "Foco em qualidade, não quantidade",
   },
 ];
@@ -157,18 +157,19 @@ export const FeaturesSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="relative flex items-center gap-3 sm:gap-5">
-            {/* Left arrow */}
-            <button
-              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
-            >
-              <ChevronLeft size={20} />
-            </button>
+          {/* Card with arrows inside */}
+          <div className="glass rounded-2xl border border-border/50 overflow-hidden">
+            <div className="p-5 sm:p-8 lg:p-10 flex items-center gap-3 sm:gap-6 min-h-[340px] relative">
+              {/* Left arrow */}
+              <button
+                onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-            {/* Card */}
-            <div className="glass rounded-2xl border border-border/50 overflow-hidden flex-1">
-              <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center justify-center text-center min-h-[340px] relative">
+              {/* Content */}
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
                 {activeFeature.badge && (
                   <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                     {activeFeature.badge}
@@ -191,21 +192,21 @@ export const FeaturesSection = () => {
                     {activeFeature.description}
                   </p>
 
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10 mb-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10">
                     <CheckCircle size={16} className="text-primary flex-shrink-0" />
                     <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right arrow */}
-            <button
-              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="hidden sm:flex w-11 h-11 rounded-full border border-border/50 items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
-            >
-              <ChevronRight size={20} />
-            </button>
+              {/* Right arrow */}
+              <button
+                onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shrink-0"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Dots */}
@@ -222,22 +223,6 @@ export const FeaturesSection = () => {
                 )}
               />
             ))}
-          </div>
-
-          {/* Mobile arrows */}
-          <div className="flex sm:hidden items-center justify-center gap-3 mt-4">
-            <button
-              onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-              className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <ChevronRight size={18} />
-            </button>
           </div>
         </div>
       </div>
