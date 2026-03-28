@@ -159,114 +159,56 @@ export const FeaturesSection = () => {
         >
           {/* Main feature display */}
           <div className="glass rounded-2xl border border-border/50 overflow-hidden mb-6">
-            <div className="flex flex-col lg:flex-row">
-              {/* Left: Feature showcase */}
-              <div className="flex-1 p-6 sm:p-8 lg:p-10 flex flex-col justify-center min-h-[320px] relative">
-                {activeFeature.badge && (
-                  <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
-                    {activeFeature.badge}
-                  </span>
-                )}
+            {/* Feature showcase */}
+            <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center justify-center text-center min-h-[300px] relative">
+              {activeFeature.badge && (
+                <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
+                  {activeFeature.badge}
+                </span>
+              )}
 
-                <div
-                  key={activeIndex}
-                  className="animate-in fade-in slide-in-from-right-4 duration-500"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
-                    <activeFeature.icon size={28} className="text-white" />
-                  </div>
-
-                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
-                    {activeFeature.title}
-                  </h3>
-
-                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-lg">
-                    {activeFeature.description}
-                  </p>
-
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
-                    <CheckCircle size={16} className="text-primary flex-shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
-                  </div>
+              <div
+                key={activeIndex}
+                className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col items-center"
+              >
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
+                  <activeFeature.icon size={28} className="text-white" />
                 </div>
-              </div>
 
-              {/* Right: Navigation grid — 2 columns, no scroll */}
-              <div className="hidden lg:flex flex-col w-80 border-l border-border/50 bg-muted/10">
-                <div className="grid grid-cols-2 gap-px bg-border/30 h-full">
-                  {features.map((feature, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleManualNav(index)}
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-1.5 p-4 text-center transition-all duration-300 bg-card/50",
-                        index === activeIndex
-                          ? "bg-primary/10"
-                          : "hover:bg-muted/50"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                          index === activeIndex ? "bg-primary/20" : "bg-muted/50"
-                        )}
-                      >
-                        <feature.icon
-                          size={15}
-                          className={cn(
-                            "transition-colors",
-                            index === activeIndex ? "text-primary" : "text-muted-foreground"
-                          )}
-                        />
-                      </div>
-                      <span
-                        className={cn(
-                          "text-[11px] font-medium leading-tight transition-colors line-clamp-2",
-                          index === activeIndex ? "text-foreground" : "text-muted-foreground"
-                        )}
-                      >
-                        {feature.title}
-                      </span>
-                    </button>
-                  ))}
+                <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
+                  {activeFeature.title}
+                </h3>
+
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-5 max-w-lg">
+                  {activeFeature.description}
+                </p>
+
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+                  <CheckCircle size={16} className="text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom controls (mobile + tablet) */}
-            <div className="flex lg:hidden items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/10">
-              <div className="flex items-center gap-1">
-                {features.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleManualNav(index)}
-                    className={cn(
-                      "transition-all duration-300 rounded-full",
-                      index === activeIndex
-                        ? "w-6 h-2 bg-primary"
-                        : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
+            {/* Bottom controls */}
+            <div className="flex items-center justify-center gap-4 px-6 py-4 border-t border-border/50 bg-muted/10">
+              <button
+                onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground mr-2 hidden sm:inline">
-                  {activeIndex + 1} / {features.length}
-                </span>
-                <button
-                  onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-                  className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
-                  className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
+              <span className="text-sm text-muted-foreground font-medium tabular-nums">
+                {activeIndex + 1} / {features.length}
+              </span>
+
+              <button
+                onClick={() => { next(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
+                className="w-9 h-9 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           </div>
         </div>
