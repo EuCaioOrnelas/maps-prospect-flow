@@ -364,7 +364,7 @@ const HelpCenter = () => {
                     <div className="space-y-8">
                       {activeData.questions.map((q, i) => (
                         <div key={i} className="group">
-                          <h3 className="font-semibold text-base sm:text-lg mb-3 text-foreground">
+                          <h3 className="font-semibold text-lg sm:text-xl mb-3 text-foreground">
                             {q.question}
                           </h3>
                           <p className="text-muted-foreground text-sm sm:text-base leading-relaxed border-l-2 border-primary/30 pl-4 ml-1">
