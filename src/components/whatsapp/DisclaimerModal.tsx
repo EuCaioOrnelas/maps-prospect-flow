@@ -48,7 +48,7 @@ export function DisclaimerModal() {
               <p className="font-medium text-sm">Cuidados e diretrizes obrigatórias</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Mesmo sendo prospecção fria, é essencial seguir as <strong className="text-foreground">diretrizes de privacidade da Meta e do WhatsApp</strong>. 
-                Quebrar essas regras — como enviar conteúdo abusivo, spam excessivo ou ignorar solicitações de opt-out — 
+                Quebrar essas regras, como enviar conteúdo abusivo, spam excessivo ou ignorar solicitações de opt-out, 
                 pode resultar em <strong className="text-foreground">bloqueio do seu número</strong>.
               </p>
             </div>
