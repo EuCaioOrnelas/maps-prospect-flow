@@ -123,6 +123,13 @@ interface UserProfile {
   payment_provider?: string | null;
 }
 
+const getProviderFromSessionId = (sessionId?: string | null) => {
+  if (!sessionId) return null;
+  if (sessionId.startsWith('asaas_')) return 'asaas';
+  if (sessionId.startsWith('abacate_')) return 'abacate_pay';
+  return 'stripe';
+};
+
 interface StripeMRRData {
   totalMRR: number;
   activeSubscriptions: number;
@@ -1010,14 +1017,35 @@ const Admin = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch all users
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [{ data: usersData, error: usersError }, { data: checkoutData, error: checkoutError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('checkout_leads')
+          .select('user_id, stripe_session_id, checkout_completed_at, created_at')
+          .eq('checkout_completed', true)
+          .not('user_id', 'is', null)
+          .order('checkout_completed_at', { ascending: false }),
+      ]);
 
       if (usersError) throw usersError;
-      setUsers(usersData || []);
+      if (checkoutError) throw checkoutError;
+
+      const latestProviderByUser = new Map<string, string>();
+      for (const checkout of checkoutData || []) {
+        if (!checkout.user_id || latestProviderByUser.has(checkout.user_id)) continue;
+        const provider = getProviderFromSessionId(checkout.stripe_session_id);
+        if (provider) latestProviderByUser.set(checkout.user_id, provider);
+      }
+
+      const normalizedUsers = (usersData || []).map((user) => ({
+        ...user,
+        payment_provider: latestProviderByUser.get(user.id) || user.payment_provider || null,
+      }));
+
+      setUsers(normalizedUsers);
 
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -1025,22 +1053,22 @@ const Admin = () => {
 
       // Filtrar admins do cálculo de MRR (usuários com role admin)
       // Para simplificar, filtrar quem tem plano free como indicador
-      const payingUsersData = usersData?.filter(u => u.plan !== 'free') || [];
+      const payingUsersData = normalizedUsers.filter(u => u.plan !== 'free');
 
       // Calculate stats
-      const totalUsers = usersData?.length || 0;
-      const totalSearches = usersData?.reduce((acc, u) => acc + u.searches_used, 0) || 0;
-      const activeUsers = usersData?.filter(u => u.searches_used > 0).length || 0;
+      const totalUsers = normalizedUsers.length;
+      const totalSearches = normalizedUsers.reduce((acc, u) => acc + u.searches_used, 0);
+      const activeUsers = normalizedUsers.filter(u => u.searches_used > 0).length;
       
       // Usuários ativos nos últimos 7 dias
-      const activeUsers7Days = usersData?.filter(u => 
+      const activeUsers7Days = normalizedUsers.filter(u => 
         new Date(u.updated_at) >= sevenDaysAgo && u.searches_used > 0
-      ).length || 0;
+      ).length;
       
       // Usuários ativos nos últimos 30 dias
-      const activeUsers30Days = usersData?.filter(u => 
+      const activeUsers30Days = normalizedUsers.filter(u => 
         new Date(u.updated_at) >= thirtyDaysAgo && u.searches_used > 0
-      ).length || 0;
+      ).length;
       
       // Calcular MRR (excluindo admin)
       const mrr = payingUsersData.reduce((acc, u) => acc + (PLAN_PRICES[u.plan] || 0), 0);
@@ -1189,11 +1217,6 @@ const Admin = () => {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
     return users.filter(u => {
-      // Period date filter - filter by created_at within selected range
-      const createdAt = new Date(u.created_at);
-      const matchesPeriod = createdAt >= statsStartDate && createdAt <= statsEndDate;
-      if (!matchesPeriod) return false;
-
       // Search filter
       const matchesSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1224,7 +1247,7 @@ const Admin = () => {
       
       return matchesSearch && matchesPlan && matchesActivity;
     });
-  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList, statsStartDate, statsEndDate]);
+  }, [users, searchTerm, userPlanFilter, userActivityFilter, checkoutLeadsList]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
@@ -1237,7 +1260,7 @@ const Admin = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, userPlanFilter, userActivityFilter, statsStartDate, statsEndDate]);
+  }, [searchTerm, userPlanFilter, userActivityFilter]);
 
   // Export users to Excel
   const exportUsersToExcel = () => {
@@ -1245,7 +1268,7 @@ const Admin = () => {
       Nome: u.name || '-',
       'E-mail': u.email,
       Plano: u.plan.charAt(0).toUpperCase() + u.plan.slice(1),
-      Provedor: u.payment_provider === 'abacate_pay' ? 'PIX' : u.payment_provider === 'stripe' ? 'Stripe' : '-',
+      Provedor: u.payment_provider === 'abacate_pay' ? 'PIX AbacatePay' : u.payment_provider === 'asaas' ? 'PIX Asaas' : u.payment_provider === 'stripe' ? 'Stripe' : '-',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -2298,11 +2321,11 @@ const Admin = () => {
                             {u.plan !== 'free' && u.payment_provider ? (
                               <Badge variant="outline" className={cn(
                                 "text-[10px] font-medium",
-                                u.payment_provider === 'abacate_pay' 
+                                u.payment_provider === 'abacate_pay' || u.payment_provider === 'asaas'
                                   ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' 
                                   : 'border-blue-500/30 text-blue-400 bg-blue-500/10'
                               )}>
-                                {u.payment_provider === 'abacate_pay' ? 'PIX' : 'Stripe'}
+                                {u.payment_provider === 'abacate_pay' ? 'PIX AbacatePay' : u.payment_provider === 'asaas' ? 'PIX Asaas' : 'Stripe'}
                               </Badge>
                             ) : u.plan !== 'free' ? (
                               <span className="text-xs text-muted-foreground">—</span>

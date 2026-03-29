@@ -60,6 +60,15 @@ interface NumbersManagerProps {
 }
 
 const DAILY_LIMIT_PER_NUMBER = 200;
+const DELETABLE_CAMPAIGN_STATUSES = ['running', 'paused', 'scheduled', 'postponed', 'pending'] as const;
+
+interface NumberDeleteImpact {
+  campaigns: Array<{
+    id: string;
+    name: string;
+    status: string;
+  }>;
+}
 
 export const NumbersManager = ({
   numbers,
@@ -77,6 +86,8 @@ export const NumbersManager = ({
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [numberToDelete, setNumberToDelete] = useState<string | null>(null);
+  const [deleteImpact, setDeleteImpact] = useState<NumberDeleteImpact>({ campaigns: [] });
+  const [deleteImpactLoading, setDeleteImpactLoading] = useState(false);
   const [newNumberName, setNewNumberName] = useState("");
   const [connectingNumberId, setConnectingNumberId] = useState<string | null>(null);
   const [connectingInstanceName, setConnectingInstanceName] = useState<string>("");
@@ -520,32 +531,27 @@ export const NumbersManager = ({
 
     setLoading(true);
 
-    // Check for active campaigns on this number before deleting
     try {
-      const { data: activeCampaigns } = await supabase
-        .from('whatsapp_campaigns')
-        .select('id, name, status')
-        .eq('whatsapp_number_id', numberToDelete)
-        .in('status', ['running', 'paused', 'scheduled', 'postponed', 'pending']);
-
-      if (activeCampaigns && activeCampaigns.length > 0) {
-        const campaignNames = activeCampaigns.map(c => c.name).join(', ');
-        toast({
-          title: "Não é possível excluir",
-          description: `Este número possui campanhas ativas: ${campaignNames}. Cancele ou finalize as campanhas antes de excluir o número.`,
-          variant: "destructive",
-        });
-        setLoading(false);
-        setDeleteConfirmOpen(false);
-        return;
-      }
-    } catch (err) {
-      console.error('Error checking active campaigns:', err);
-    }
-    try {
-      // Find the number to get instance name
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
-      
+      const campaignsToDelete = deleteImpact.campaigns.length > 0
+        ? deleteImpact.campaigns
+        : ((await supabase
+            .from('whatsapp_campaigns')
+            .select('id, name, status')
+            .eq('whatsapp_number_id', numberToDelete)
+            .in('status', [...DELETABLE_CAMPAIGN_STATUSES])) as any).data || [];
+      const campaignIdsToDelete = campaignsToDelete.map((campaign: { id: string }) => campaign.id);
+
+      if (campaignIdsToDelete.length > 0) {
+        await Promise.allSettled([
+          (supabase as any).from('campaign_daily_reservations').delete().in('campaign_id', campaignIdsToDelete),
+          (supabase as any).from('campaign_responses').delete().in('campaign_id', campaignIdsToDelete),
+          (supabase as any).from('campaign_incidents').update({ campaign_id: null }).in('campaign_id', campaignIdsToDelete),
+          (supabase as any).from('ignored_contacts').update({ campaign_id: null }).in('campaign_id', campaignIdsToDelete),
+          supabase.from('whatsapp_campaigns').delete().in('id', campaignIdsToDelete),
+        ]);
+      }
+
       // Delete the instance entirely from Evolution API since the number is being removed
       if (numberToRemove?.instance_name) {
         try {
@@ -620,7 +626,9 @@ export const NumbersManager = ({
 
       toast({
         title: "Número removido",
-        description: "O número foi desconectado e removido",
+        description: campaignsToDelete.length > 0
+          ? `O número foi removido junto com ${campaignsToDelete.length} campanha(s) ativa(s)/agendada(s).`
+          : "O número foi desconectado e removido",
       });
     } catch (err) {
       console.error('Error deleting number:', err);
@@ -631,6 +639,7 @@ export const NumbersManager = ({
       });
     } finally {
       setLoading(false);
+      setDeleteImpact({ campaigns: [] });
     }
   };
 
@@ -750,8 +759,26 @@ export const NumbersManager = ({
     await createInstanceAndGetQR(numberId, instanceName);
   };
 
-  const confirmDelete = (numberId: string) => {
+  const confirmDelete = async (numberId: string) => {
     setNumberToDelete(numberId);
+    setDeleteImpactLoading(true);
+
+    try {
+      const { data } = await supabase
+        .from('whatsapp_campaigns')
+        .select('id, name, status')
+        .eq('whatsapp_number_id', numberId)
+        .in('status', [...DELETABLE_CAMPAIGN_STATUSES])
+        .order('created_at', { ascending: false });
+
+      setDeleteImpact({ campaigns: data || [] });
+    } catch (error) {
+      console.error('Error loading delete impact:', error);
+      setDeleteImpact({ campaigns: [] });
+    } finally {
+      setDeleteImpactLoading(false);
+    }
+
     setDeleteConfirmOpen(true);
   };
 
@@ -1389,16 +1416,21 @@ export const NumbersManager = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir número?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O número será desconectado e removido permanentemente.
+              {deleteImpactLoading
+                ? "Verificando campanhas vinculadas a este número..."
+                : deleteImpact.campaigns.length > 0
+                  ? `Esta ação não pode ser desfeita. O número será removido permanentemente e ${deleteImpact.campaigns.length} campanha(s) ativa(s)/agendada(s) também serão excluídas: ${deleteImpact.campaigns.slice(0, 3).map((campaign) => campaign.name).join(', ')}${deleteImpact.campaigns.length > 3 ? '...' : ''}.`
+                  : "Esta ação não pode ser desfeita. O número será desconectado e removido permanentemente."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteNumber}
+              disabled={loading || deleteImpactLoading}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Excluir
+              {loading || deleteImpactLoading ? 'Processando...' : 'Excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
