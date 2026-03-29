@@ -59,13 +59,16 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
         <div className="space-y-4 mt-2">
           {/* Benefits */}
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <Zap size={20} className="text-primary mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <Zap size={20} className="text-amber-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Envios ilimitados sem bloqueio</p>
+                <p className="font-medium text-sm">API Outbound — Somente leads com opt-in</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Seu número é verificado pela Meta. As mensagens são enviadas pela API oficial,
-                  garantindo que seu número nunca será bloqueado.
+                  A API oficial da Meta <strong>não funciona para prospecção fria</strong>. 
+                  Você só pode enviar mensagens para leads que já tiveram contato prévio com você: 
+                  te enviaram mensagem no WhatsApp, preencheram formulários nos seus sites conectados à Meta, 
+                  ou aceitaram receber ofertas suas (opt-in). Envios para contatos sem relacionamento prévio 
+                  serão bloqueados pela Meta.
                 </p>
               </div>
             </div>
