@@ -60,8 +60,8 @@ const HelpCenter = () => {
             </p>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Cards Grid - 2 columns like reference */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {/* FAQ Card */}
             <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
@@ -98,28 +98,27 @@ const HelpCenter = () => {
             <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
                 <Link2 size={24} className="text-primary shrink-0" />
-                <h2 className="text-2xl sm:text-3xl font-bold">Links úteis</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold">Links</h2>
               </div>
               <p className="text-muted-foreground text-sm sm:text-base mb-5">
-                Separamos alguns links úteis sobre temas importantes.
+                Separamos alguns links úteis.
               </p>
               <ul className="space-y-2.5 flex-1">
                 {usefulLinks.map((link, i) => (
-                  <li key={i}>
+                  <li key={i} className="flex items-center gap-1.5">
+                    <span className="text-primary">•</span>
                     {link.path ? (
                       <Link
                         to={link.path}
-                        className="text-primary hover:underline text-sm sm:text-base flex items-center gap-1.5"
+                        className="text-primary hover:underline text-sm sm:text-base"
                       >
-                        <ExternalLink size={14} className="shrink-0" />
                         {link.label}
                       </Link>
                     ) : (
                       <Link
                         to={`/ajuda/faq#${link.hash}`}
-                        className="text-primary hover:underline text-sm sm:text-base flex items-center gap-1.5"
+                        className="text-primary hover:underline text-sm sm:text-base"
                       >
-                        <ExternalLink size={14} className="shrink-0" />
                         {link.label}
                       </Link>
                     )}
@@ -128,55 +127,58 @@ const HelpCenter = () => {
               </ul>
             </div>
 
-            {/* Sociais Card */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <MessageSquareText size={24} className="text-primary shrink-0" />
-                <h2 className="text-2xl sm:text-3xl font-bold">Sociais</h2>
+            {/* Right column: Sociais + Fale Conosco stacked */}
+            <div className="flex flex-col gap-6 lg:gap-8">
+              {/* Sociais Card */}
+              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <MessageSquareText size={24} className="text-primary shrink-0" />
+                  <h2 className="text-2xl sm:text-3xl font-bold">Sociais</h2>
+                </div>
+                <p className="text-muted-foreground text-sm sm:text-base mb-5">
+                  Nossas redes sociais.
+                </p>
+                <div className="flex items-center gap-4">
+                  <a
+                    href="https://www.youtube.com/@wiizebrasil"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                    aria-label="YouTube"
+                  >
+                    <Youtube size={20} className="text-foreground" />
+                  </a>
+                  <a
+                    href="https://www.instagram.com/wiizebrasil"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                    aria-label="Instagram"
+                  >
+                    <Instagram size={20} className="text-foreground" />
+                  </a>
+                </div>
               </div>
-              <p className="text-muted-foreground text-sm sm:text-base mb-5 flex-1">
-                Acompanhe nosso conteúdo, novidades e dicas nas redes sociais. Siga-nos para ficar por dentro de tudo!
-              </p>
-              <div className="flex items-center gap-4">
-                <a
-                  href="https://www.instagram.com/wiizebrasil"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
-                  aria-label="Instagram"
-                >
-                  <Instagram size={20} className="text-foreground" />
-                </a>
-                <a
-                  href="https://www.youtube.com/@wiizebrasil"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
-                  aria-label="YouTube"
-                >
-                  <Youtube size={20} className="text-foreground" />
-                </a>
-              </div>
-            </div>
 
-            {/* Fale Conosco Card */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <Mail size={24} className="text-primary shrink-0" />
-                <h2 className="text-2xl sm:text-3xl font-bold">Fale conosco</h2>
+              {/* Fale Conosco Card */}
+              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <Mail size={24} className="text-primary shrink-0" />
+                  <h2 className="text-2xl sm:text-3xl font-bold">Fale conosco</h2>
+                </div>
+                <p className="text-muted-foreground text-sm sm:text-base mb-2">
+                  E-mail comercial para assuntos não relacionados ao suporte:{" "}
+                  <a
+                    href="mailto:Wiize.app@gmail.com"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Wiize.app@gmail.com
+                  </a>
+                </p>
+                <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed">
+                  E-mail exclusivo para tratativas comerciais, parcerias e semelhantes. Assuntos relacionados a suporte <strong>não</strong> serão respondidos.
+                </p>
               </div>
-              <p className="text-muted-foreground text-sm sm:text-base mb-2 flex-1">
-                E-mail comercial para assuntos não relacionados ao suporte:
-              </p>
-              <a
-                href="mailto:Wiize.app@gmail.com"
-                className="text-primary hover:underline font-medium text-sm sm:text-base"
-              >
-                Wiize.app@gmail.com
-              </a>
-              <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed">
-                E-mail exclusivo para tratativas comerciais, parcerias e semelhantes. Assuntos relacionados a suporte <strong>não</strong> serão respondidos.
-              </p>
             </div>
           </div>
         </main>
