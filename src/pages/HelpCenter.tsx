@@ -128,58 +128,55 @@ const HelpCenter = () => {
               </ul>
             </div>
 
-            {/* Right column: Sociais + Fale Conosco stacked */}
-            <div className="flex flex-col gap-6 lg:gap-8">
-              {/* Sociais Card */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <MessageSquareText size={24} className="text-primary shrink-0" />
-                  <h2 className="text-2xl sm:text-3xl font-bold">Sociais</h2>
-                </div>
-                <p className="text-muted-foreground text-sm sm:text-base mb-5">
-                  Nossas redes sociais.
-                </p>
-                <div className="flex items-center gap-4 justify-center">
-                  <a
-                    href="https://www.instagram.com/wiizebrasil"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
-                    aria-label="Instagram"
-                  >
-                    <Instagram size={20} className="text-foreground" />
-                  </a>
-                  <a
-                    href="https://www.youtube.com/@wiizebrasil"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
-                    aria-label="YouTube"
-                  >
-                    <Youtube size={20} className="text-foreground" />
-                  </a>
-                </div>
+            {/* Sociais Card */}
+            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageSquareText size={24} className="text-primary shrink-0" />
+                <h2 className="text-2xl sm:text-3xl font-bold">Sociais</h2>
               </div>
-
-              {/* Fale Conosco Card */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <Mail size={24} className="text-primary shrink-0" />
-                  <h2 className="text-2xl sm:text-3xl font-bold">Fale conosco</h2>
-                </div>
-                <p className="text-muted-foreground text-sm sm:text-base mb-2">
-                  E-mail comercial para assuntos não relacionados ao suporte:
-                </p>
+              <p className="text-muted-foreground text-sm sm:text-base mb-5 flex-1">
+                Acompanhe nosso conteúdo, novidades e dicas nas redes sociais. Siga-nos para ficar por dentro de tudo!
+              </p>
+              <div className="flex items-center gap-4">
                 <a
-                  href="mailto:Wiize.app@gmail.com"
-                  className="text-primary hover:underline font-medium text-sm sm:text-base"
+                  href="https://www.instagram.com/wiizebrasil"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                  aria-label="Instagram"
                 >
-                  Wiize.app@gmail.com
+                  <Instagram size={20} className="text-foreground" />
                 </a>
-                <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed">
-                  E-mail exclusivo para tratativas comerciais, parcerias e semelhantes. Assuntos relacionados a suporte <strong>não</strong> serão respondidos.
-                </p>
+                <a
+                  href="https://www.youtube.com/@wiizebrasil"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                  aria-label="YouTube"
+                >
+                  <Youtube size={20} className="text-foreground" />
+                </a>
               </div>
+            </div>
+
+            {/* Fale Conosco Card */}
+            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <Mail size={24} className="text-primary shrink-0" />
+                <h2 className="text-2xl sm:text-3xl font-bold">Fale conosco</h2>
+              </div>
+              <p className="text-muted-foreground text-sm sm:text-base mb-2 flex-1">
+                E-mail comercial para assuntos não relacionados ao suporte:
+              </p>
+              <a
+                href="mailto:Wiize.app@gmail.com"
+                className="text-primary hover:underline font-medium text-sm sm:text-base"
+              >
+                Wiize.app@gmail.com
+              </a>
+              <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed">
+                E-mail exclusivo para tratativas comerciais, parcerias e semelhantes. Assuntos relacionados a suporte <strong>não</strong> serão respondidos.
+              </p>
             </div>
           </div>
         </main>
