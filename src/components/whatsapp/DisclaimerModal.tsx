@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Shield, MessageSquare, Clock, AlertTriangle, Target } from "lucide-react";
+import { Zap, Shield, MessageSquare, Clock, AlertTriangle, Target, ExternalLink } from "lucide-react";
 import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 
 export function DisclaimerModal() {
@@ -89,6 +89,17 @@ export function DisclaimerModal() {
               <li>Outros critérios internos da plataforma</li>
             </ul>
           </div>
+
+          {/* Meta rules link */}
+          <a
+            href="https://business.whatsapp.com/policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          >
+            <ExternalLink size={12} />
+            Ver regras da Meta para prospecção e mensagens comerciais
+          </a>
 
           <p className="text-xs text-muted-foreground text-center italic">
             A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
