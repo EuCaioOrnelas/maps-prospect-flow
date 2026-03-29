@@ -1,24 +1,51 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link } from "react-router-dom";
-import { Menu, X, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Shield, Zap, CreditCard, Gift, Bot, Flame } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
-export const PromoBanner = () => (
-  <div className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
-    <div className="container mx-auto px-4 py-3 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
-      <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
-        <Sparkles size={14} className="inline-block mr-1.5 text-primary animate-pulse" />
-        <span className="text-primary font-semibold">Promoção de Lançamento:</span>{" "}
-        até 50% de desconto em todos os planos{" "}
-        <span className="inline-flex items-center gap-1 ml-1 bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-          Por tempo limitado
-        </span>
-      </p>
+const promoItems = [
+  { icon: Shield, text: "API Oficial do WhatsApp — Meta Business Partner verificado" },
+  { icon: Gift, text: "Teste gratuito de 5 dias — sem cartão de crédito" },
+  { icon: CreditCard, text: "PIX recorrente — parcele sem cartão, débito automático mensal" },
+  { icon: Zap, text: "Até 50% de desconto nos planos — promoção por tempo limitado" },
+  { icon: Bot, text: "Agente de IA no WhatsApp — atendimento automático 24h" },
+  { icon: Flame, text: "Aquecimento de chips incluso — proteja seus números" },
+];
+
+export const PromoBanner = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Duplicate items for seamless loop
+  const items = [...promoItems, ...promoItems];
+
+  return (
+    <div
+      className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <div className="relative py-2.5">
+        <div
+          ref={scrollRef}
+          className="flex whitespace-nowrap"
+          style={{
+            animation: `scroll-banner 40s linear infinite`,
+            animationPlayState: isPaused ? "paused" : "running",
+          }}
+        >
+          {items.map((item, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 mx-6 text-xs sm:text-sm text-muted-foreground shrink-0">
+              <item.icon size={14} className="text-primary" />
+              <span>{item.text}</span>
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface NavbarProps {
   onSignupClick?: () => void;
