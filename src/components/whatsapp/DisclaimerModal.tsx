@@ -78,32 +78,20 @@ export function DisclaimerModal() {
           </div>
 
           {/* Final warning */}
-          <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-4 space-y-2">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Mesmo com todas as proteções, <strong className="text-foreground">bloqueios podem ocorrer</strong> por fatores externos:
-            </p>
-            <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
-              <li>Denúncias de usuários que recebem a mensagem</li>
-              <li>Número recente ou sem aquecimento adequado</li>
-              <li>Conteúdo percebido como spam pelo WhatsApp</li>
-              <li>Outros critérios internos da plataforma</li>
-            </ul>
-          </div>
+          <p className="text-xs text-amber-500 text-center font-medium">
+            ⚠️ Mesmo com todas as proteções, bloqueios podem ocorrer por fatores externos.
+          </p>
 
           {/* Meta rules link */}
           <a
             href="https://business.whatsapp.com/policy"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline justify-center"
           >
             <ExternalLink size={12} />
             Ver regras da Meta para prospecção e mensagens comerciais
           </a>
-
-          <p className="text-xs text-muted-foreground text-center italic">
-            A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
-          </p>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
@@ -116,7 +104,7 @@ export function DisclaimerModal() {
             {canClose ? "Estou ciente, continuar" : `Aguarde ${countdown}s`}
           </Button>
           <p className="text-[10px] text-muted-foreground/70 text-center">
-            Ao continuar, você declara estar ciente dos riscos e se compromete a seguir as diretrizes.
+            A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
           </p>
         </DialogFooter>
       </DialogContent>
