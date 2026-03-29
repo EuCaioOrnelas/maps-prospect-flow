@@ -128,7 +128,8 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
             >
               <ExternalLink size={12} />
               Ver Termos de Uso completos (Seção 9 — WhatsApp API)
-          </a>
+            </a>
+          </div>
 
           {/* Agreement checkbox */}
           <div className="flex items-start gap-2 pt-2">
