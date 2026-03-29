@@ -34,7 +34,7 @@ export function DisclaimerModal() {
             <div>
               <p className="font-medium text-sm">API exclusiva para aquisição de leads</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Este módulo utiliza uma API inbound dedicada à <strong className="text-foreground">prospecção fria</strong> — 
+                Este módulo utiliza uma API inbound dedicada à <strong className="text-foreground">prospecção fria</strong>, 
                 ideal para contatar leads que ainda não tiveram relacionamento prévio com você. 
                 Diferente da API oficial da Meta (outbound/relacionamento), aqui você pode buscar novos clientes ativamente.
               </p>
@@ -48,7 +48,7 @@ export function DisclaimerModal() {
               <p className="font-medium text-sm">Cuidados e diretrizes obrigatórias</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Mesmo sendo prospecção fria, é essencial seguir as <strong className="text-foreground">diretrizes de privacidade da Meta e do WhatsApp</strong>. 
-                Quebrar essas regras — como enviar conteúdo abusivo, spam excessivo ou ignorar solicitações de opt-out — 
+                Quebrar essas regras, como enviar conteúdo abusivo, spam excessivo ou ignorar solicitações de opt-out, 
                 pode resultar em <strong className="text-foreground">bloqueio do seu número</strong>.
               </p>
             </div>
