@@ -67,14 +67,22 @@ export function PixInvoicesTab() {
       const { data: checkoutData } = await supabase
         .from("checkout_leads")
         .select("*")
-        .like("stripe_session_id", "abacate_%")
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%")
         .order("created_at", { ascending: false })
         .limit(200);
 
       // Merge data - pix_invoices takes priority
-      const existingUserIds = new Set((data || []).map((d: any) => d.user_id));
+      const existingKeys = new Set((data || []).map((d: any) => `${d.user_id || ''}:${d.email || ''}:${d.amount_cents || 0}:${d.created_at || ''}`));
+      const seenCheckoutSessions = new Set<string>();
       const legacyInvoices: InvoiceRow[] = (checkoutData || [])
-        .filter((c: any) => !existingUserIds.has(c.user_id))
+        .filter((c: any) => {
+          const sessionKey = c.stripe_session_id || c.id;
+          if (seenCheckoutSessions.has(sessionKey)) return false;
+          seenCheckoutSessions.add(sessionKey);
+
+          const invoiceKey = `${c.user_id || ''}:${c.email || ''}:${c.plan_attempted?.includes("Start") ? 19700 : c.plan_attempted?.includes("Growth") ? 49700 : c.plan_attempted?.includes("Scale") ? 89700 : 0}:${c.created_at || ''}`;
+          return !existingKeys.has(invoiceKey);
+        })
         .map((c: any) => ({
           id: c.id,
           user_id: c.user_id || "",

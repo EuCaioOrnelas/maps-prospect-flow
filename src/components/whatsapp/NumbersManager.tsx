@@ -552,12 +552,6 @@ export const NumbersManager = ({
         ]);
       }
 
-      const { data: remainingCampaigns } = await supabase
-        .from('whatsapp_campaigns')
-        .select('id, name, status')
-        .eq('whatsapp_number_id', numberToDelete)
-        .not('id', 'in', campaignIdsToDelete.length > 0 ? `(${campaignIdsToDelete.join(',')})` : '(null)');
-      
       // Delete the instance entirely from Evolution API since the number is being removed
       if (numberToRemove?.instance_name) {
         try {
