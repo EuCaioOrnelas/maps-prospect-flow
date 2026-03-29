@@ -38,6 +38,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const SecurityFAQ = lazy(() => import("./pages/SecurityFAQ"));
+const SendingGuidelines = lazy(() => import("./pages/SendingGuidelines"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 const HelpCenterFAQ = lazy(() => import("./pages/HelpCenterFAQ"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
@@ -117,6 +118,7 @@ const App = () => (
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/seguranca-faq" element={<SecurityFAQ />} />
+                <Route path="/diretrizes-de-envio" element={<SendingGuidelines />} />
                 <Route path="/ajuda" element={<HelpCenter />} />
                 <Route path="/ajuda/faq" element={<HelpCenterFAQ />} />
                 <Route path="/upgrade" element={<Upgrade />} />

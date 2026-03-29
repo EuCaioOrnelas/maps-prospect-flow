@@ -82,7 +82,15 @@ export function DisclaimerModal() {
             ⚠️ Mesmo com todas as proteções, bloqueios podem ocorrer por fatores externos.
           </p>
 
-          {/* Meta rules link */}
+          <a
+            href="/diretrizes-de-envio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline justify-center"
+          >
+            <ExternalLink size={12} />
+            Ver Diretrizes de Envio completas
+          </a>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">

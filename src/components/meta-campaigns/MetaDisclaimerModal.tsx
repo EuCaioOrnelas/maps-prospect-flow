@@ -109,16 +109,27 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
             </ul>
           </div>
 
-          {/* Terms link */}
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
-          >
-            <ExternalLink size={12} />
-            Ver Termos de Uso completos (Seção 9 — WhatsApp API)
-          </a>
+          {/* Guidelines links */}
+          <div className="flex flex-col gap-1">
+            <a
+              href="/diretrizes-de-envio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <ExternalLink size={12} />
+              Ver Diretrizes de Envio
+            </a>
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <ExternalLink size={12} />
+              Ver Termos de Uso completos (Seção 9 — WhatsApp API)
+            </a>
+          </div>
 
           {/* Agreement checkbox */}
           <div className="flex items-start gap-2 pt-2">
