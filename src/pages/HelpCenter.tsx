@@ -15,12 +15,8 @@ const HelpCenter = () => {
     { label: "Bloqueios de WhatsApp e Prevenção", hash: "aquecimento" },
     { label: "Prospecção Inteligente e Buscas", hash: "plataforma" },
     { label: "Agentes de IA e Automação", hash: "agentes-ia" },
-    { label: "CRM e Gestão de Leads", hash: "crm" },
     { label: "Planos, Pagamentos e Reembolso", hash: "planos" },
-    { label: "Relatórios e Métricas", hash: "relatorios" },
     { label: "Como Conectar a Meta API Oficial", hash: "meta-api" },
-    { label: "Termos de Uso", path: "/terms" },
-    { label: "Política de Privacidade", path: "/privacy" },
     { label: "Política de Reembolso", path: "/refund-policy" },
   ];
 
