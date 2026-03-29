@@ -84,13 +84,13 @@ export function DisclaimerModal() {
 
           {/* Meta rules link */}
           <a
-            href="https://business.whatsapp.com/policy"
+            href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-primary hover:underline justify-center"
           >
             <ExternalLink size={12} />
-            Ver regras da Meta para prospecção e mensagens comerciais
+            Ver diretrizes da Meta para mensagens comerciais
           </a>
         </div>
 
