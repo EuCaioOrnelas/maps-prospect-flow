@@ -54,11 +54,23 @@ const categories = [
       },
       {
         question: "Meu número pode ser bloqueado?",
-        answer: "O Wiize implementa diversas proteções como delays inteligentes, variações de texto e limites diários. Porém, bloqueios são decisões exclusivas do WhatsApp. Recomendamos usar o Aquecimento de Chips antes de iniciar campanhas e seguir as boas práticas de envio."
+        answer: "Bloqueios são decisões exclusivas do WhatsApp e podem ocorrer com qualquer ferramenta de envio. No Wiize, implementamos um conjunto robusto de proteções para minimizar drasticamente esse risco: delays aleatórios entre envios, variações automáticas de texto, pausas inteligentes, limites diários seguros e o sistema de Aquecimento de Chips. Seguindo nossas recomendações e boas práticas, a grande maioria dos nossos usuários opera com tranquilidade e sem intercorrências."
       },
       {
-        question: "Quais práticas devo evitar para não ser bloqueado?",
-        answer: "Evite: enviar mensagens para contatos que não conhecem você, usar textos muito comerciais ou com muitos links, enviar o mesmo texto para muitas pessoas, ignorar solicitações de parada e enviar mensagens fora do horário comercial. Prefira sempre uma abordagem personalizada."
+        question: "Por que acontecem bloqueios no WhatsApp?",
+        answer: "O WhatsApp utiliza algoritmos de detecção de comportamento não orgânico. Bloqueios geralmente acontecem quando há envio de mensagens em volume muito alto para contatos desconhecidos, uso de textos repetitivos ou muito comerciais, muitos links em uma única mensagem, denúncias de spam pelos destinatários ou envios fora do horário comercial. Esses fatores são independentes da ferramenta utilizada — por isso o Wiize oferece recursos específicos para mitigar cada um deles."
+      },
+      {
+        question: "Como o Wiize me protege contra bloqueios?",
+        answer: "O Wiize oferece um ecossistema completo de proteção: 1) Aquecimento de Chips em 4 níveis progressivos durante 20 dias; 2) Delays aleatórios que simulam comportamento humano; 3) Variações automáticas de texto para cada envio; 4) Pausas inteligentes configuráveis após X contatos; 5) Limite diário seguro de 200 mensagens por número; 6) Alertas automáticos quando detectamos risco elevado. Essas camadas combinadas reduzem significativamente a probabilidade de bloqueio."
+      },
+      {
+        question: "O que fazer se meu número for bloqueado?",
+        answer: "Caso ocorra um bloqueio, você pode solicitar uma revisão diretamente pelo aplicativo do WhatsApp. A maioria dos bloqueios temporários é revertida em 24 a 72 horas. Para números com bom histórico, o desbloqueio costuma ser rápido. Nossa equipe de suporte pode orientá-lo sobre os próximos passos e ajudar a ajustar sua estratégia para evitar futuras ocorrências."
+      },
+      {
+        question: "Quais práticas devo seguir para evitar bloqueios?",
+        answer: "Recomendamos: sempre aquecer números novos antes de campanhas; começar com volumes baixos e aumentar gradualmente; usar variações de mensagem personalizadas; respeitar horário comercial (8h-20h); nunca ignorar pedidos de 'pare' ou 'não quero'; evitar textos com muitos links ou emojis excessivos; e manter uma abordagem consultiva e personalizada ao invés de puramente comercial."
       },
       {
         question: "Posso personalizar as mensagens?",

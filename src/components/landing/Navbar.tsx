@@ -107,13 +107,6 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                 >
                   FAQ
                 </a>
-                <Link 
-                  to="/contato" 
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Contato
-                </Link>
                 <div className="flex flex-col gap-2 pt-2 border-t border-border">
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-center">

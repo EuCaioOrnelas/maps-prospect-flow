@@ -61,7 +61,7 @@ const HelpCenter = () => {
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* FAQ Card */}
             <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
