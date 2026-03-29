@@ -90,6 +90,17 @@ export function DisclaimerModal() {
             </ul>
           </div>
 
+          {/* Meta rules link */}
+          <a
+            href="https://business.whatsapp.com/policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          >
+            <ExternalLink size={12} />
+            Ver regras da Meta para prospecção e mensagens comerciais
+          </a>
+
           <p className="text-xs text-muted-foreground text-center italic">
             A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp.
           </p>
