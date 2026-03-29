@@ -2,6 +2,7 @@ import { ArrowLeft, HelpCircle, MessageSquareText, Link2, Instagram, Youtube, Ma
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
 
 const HelpCenter = () => {
