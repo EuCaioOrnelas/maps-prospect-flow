@@ -42,7 +42,7 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
         hideCloseButton
-        className="max-w-lg max-h-[90vh] overflow-y-auto"
+        className="max-w-2xl"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
