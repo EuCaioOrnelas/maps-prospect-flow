@@ -179,6 +179,7 @@ const HelpCenter = () => {
             </div>
           </div>
         </main>
+        <Footer />
       </div>
     </>
   );
