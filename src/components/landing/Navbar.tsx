@@ -5,12 +5,12 @@ import { Menu, X, Shield, Zap, CreditCard, Gift, Bot, Flame } from "lucide-react
 import { useState, useEffect, useRef } from "react";
 
 const promoItems = [
-  { icon: Shield, text: "API Oficial do WhatsApp — Meta Business Partner verificado" },
-  { icon: Gift, text: "Teste gratuito de 5 dias — sem cartão de crédito" },
-  { icon: CreditCard, text: "PIX recorrente — parcele sem cartão, débito automático mensal" },
-  { icon: Zap, text: "Até 50% de desconto nos planos — promoção por tempo limitado" },
-  { icon: Bot, text: "Agente de IA no WhatsApp — atendimento automático 24h" },
-  { icon: Flame, text: "Aquecimento de chips incluso — proteja seus números" },
+  { icon: Shield, text: "API Oficial do WhatsApp: Meta Business Partner verificado" },
+  { icon: Gift, text: "Teste gratuito de 5 dias: sem cartão de crédito" },
+  { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
+  { icon: Zap, text: "Até 50% de desconto nos planos: promoção por tempo limitado" },
+  { icon: Bot, text: "Agente de IA no WhatsApp: atendimento automático 24h" },
+  { icon: Flame, text: "Aquecimento de chips incluso: proteja seus números" },
 ];
 
 export const PromoBanner = () => {
