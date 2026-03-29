@@ -439,11 +439,3 @@ input::placeholder, textarea::placeholder {
   color: hsl(var(--muted-foreground));
 }
 
-@keyframes scroll-banner {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-25%);
-  }
-}
