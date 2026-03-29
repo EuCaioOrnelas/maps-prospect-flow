@@ -201,7 +201,7 @@ const categories = [
     questions: [
       {
         question: "Qual plano é ideal para mim?",
-        answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números."
+        answer: "O plano Start (R$197/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$497/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$897/mês) é indicado para agências com 1.200 buscas e 5 números."
       },
       {
         question: "Posso cancelar minha assinatura a qualquer momento?",
