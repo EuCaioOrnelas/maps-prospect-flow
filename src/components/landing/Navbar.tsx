@@ -51,9 +51,6 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">
                 FAQ
               </a>
-              <Link to="/contato" className="text-muted-foreground hover:text-foreground transition-colors">
-                Contato
-              </Link>
             </div>
 
             <div className="hidden sm:flex items-center gap-3">
