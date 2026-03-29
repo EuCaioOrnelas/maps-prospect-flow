@@ -16,15 +16,13 @@ export function DisclaimerModal() {
 
   return (
     <Dialog open={showPopup} onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
-        <DialogHeader className="space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
-            <Target className="h-7 w-7 text-primary" />
-          </div>
-          <DialogTitle className="text-center text-xl font-semibold">
+      <DialogContent className="max-w-3xl border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-lg font-semibold flex items-center justify-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
             Prospecção Ativa — API Inbound
           </DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogDescription className="text-center text-xs">
             Leia atentamente antes de prosseguir
           </DialogDescription>
         </DialogHeader>
