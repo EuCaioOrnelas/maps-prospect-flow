@@ -34,7 +34,7 @@ export function DisclaimerModal() {
             <div>
               <p className="font-medium text-sm">API exclusiva para aquisição de leads</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Este módulo utiliza uma API inbound dedicada à <strong className="text-foreground">prospecção fria</strong> — 
+                Este módulo utiliza uma API inbound dedicada à <strong className="text-foreground">prospecção fria</strong>, 
                 ideal para contatar leads que ainda não tiveram relacionamento prévio com você. 
                 Diferente da API oficial da Meta (outbound/relacionamento), aqui você pode buscar novos clientes ativamente.
               </p>
