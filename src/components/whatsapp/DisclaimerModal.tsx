@@ -83,15 +83,6 @@ export function DisclaimerModal() {
           </p>
 
           {/* Meta rules link */}
-          <a
-            href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-primary hover:underline justify-center"
-          >
-            <ExternalLink size={12} />
-            Ver diretrizes da Meta para mensagens comerciais
-          </a>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
