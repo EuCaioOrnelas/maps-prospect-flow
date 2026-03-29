@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Shield, MessageSquare, Clock } from "lucide-react";
+import { Zap, Shield, MessageSquare, Clock, AlertTriangle, Target } from "lucide-react";
 import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 
 export function DisclaimerModal() {
@@ -16,50 +16,79 @@ export function DisclaimerModal() {
 
   return (
     <Dialog open={showPopup} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-lg border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
-        <DialogHeader className="space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
-            <AlertTriangle className="h-7 w-7 text-amber-500" />
+      <DialogContent className="max-w-2xl border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+        <DialogHeader className="space-y-3">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+            <Target className="h-7 w-7 text-primary" />
           </div>
           <DialogTitle className="text-center text-xl font-semibold">
-            Aviso Importante
+            Prospecção Ativa — API Inbound
           </DialogTitle>
+          <DialogDescription className="text-center">
+            Leia atentamente antes de prosseguir
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            A Wiize utiliza diversas estratégias para reduzir riscos e prolongar a vida útil dos números, como:
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
-              <Shield className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs">Limite de 200 disparos/dia</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
-              <Clock className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs">Delay e pausas inteligentes</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
-              <MessageSquare className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs">Mensagens aleatórias</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
-              <Shield className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs">API oficial do WhatsApp</span>
+        <div className="space-y-4 py-2">
+          {/* What this API is */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <Zap size={20} className="text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-sm">API exclusiva para aquisição de leads</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Este módulo utiliza uma API inbound dedicada à <strong className="text-foreground">prospecção fria</strong> — 
+                ideal para contatar leads que ainda não tiveram relacionamento prévio com você. 
+                Diferente da API oficial da Meta (outbound/relacionamento), aqui você pode buscar novos clientes ativamente.
+              </p>
             </div>
           </div>
 
+          {/* Warning about Meta rules */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <AlertTriangle size={20} className="text-amber-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-sm">Cuidados e diretrizes obrigatórias</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Mesmo sendo prospecção fria, é essencial seguir as <strong className="text-foreground">diretrizes de privacidade da Meta e do WhatsApp</strong>. 
+                Quebrar essas regras — como enviar conteúdo abusivo, spam excessivo ou ignorar solicitações de opt-out — 
+                pode resultar em <strong className="text-foreground">bloqueio do seu número</strong>.
+              </p>
+            </div>
+          </div>
+
+          {/* Protection strategies */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Nossas estratégias para reduzir riscos:</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
+                <Shield className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs">Limite de 200 disparos/dia</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
+                <Clock className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs">Delay e pausas inteligentes</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
+                <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs">Variações aleatórias de texto</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 border border-border/50">
+                <Shield className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs">Aquecimento progressivo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Final warning */}
           <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-4 space-y-2">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Mesmo assim, <strong className="text-foreground">bloqueios podem acontecer</strong> por motivos que não dependem da ferramenta, como:
+              Mesmo com todas as proteções, <strong className="text-foreground">bloqueios podem ocorrer</strong> por fatores externos:
             </p>
             <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
-              <li>Denúncias de usuários</li>
-              <li>Suspeita de spam ou golpe</li>
-              <li>Número recente sem aquecimento</li>
-              <li>Conteúdo das mensagens</li>
-              <li>Outros critérios do próprio WhatsApp</li>
+              <li>Denúncias de usuários que recebem a mensagem</li>
+              <li>Número recente ou sem aquecimento adequado</li>
+              <li>Conteúdo percebido como spam pelo WhatsApp</li>
+              <li>Outros critérios internos da plataforma</li>
             </ul>
           </div>
 
@@ -78,7 +107,7 @@ export function DisclaimerModal() {
             {canClose ? "Estou ciente, continuar" : `Aguarde ${countdown}s`}
           </Button>
           <p className="text-[10px] text-muted-foreground/70 text-center">
-            Ao continuar, você declara estar ciente desses riscos.
+            Ao continuar, você declara estar ciente dos riscos e se compromete a seguir as diretrizes.
           </p>
         </DialogFooter>
       </DialogContent>
