@@ -2,6 +2,7 @@ import { ArrowLeft, HelpCircle, MessageSquareText, Link2, Instagram, Youtube, Ma
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
 
 const HelpCenter = () => {
@@ -14,12 +15,8 @@ const HelpCenter = () => {
     { label: "Bloqueios de WhatsApp e Prevenção", hash: "aquecimento" },
     { label: "Prospecção Inteligente e Buscas", hash: "plataforma" },
     { label: "Agentes de IA e Automação", hash: "agentes-ia" },
-    { label: "CRM e Gestão de Leads", hash: "crm" },
     { label: "Planos, Pagamentos e Reembolso", hash: "planos" },
-    { label: "Relatórios e Métricas", hash: "relatorios" },
     { label: "Como Conectar a Meta API Oficial", hash: "meta-api" },
-    { label: "Termos de Uso", path: "/terms" },
-    { label: "Política de Privacidade", path: "/privacy" },
     { label: "Política de Reembolso", path: "/refund-policy" },
   ];
 
@@ -182,6 +179,7 @@ const HelpCenter = () => {
             </div>
           </div>
         </main>
+        <Footer />
       </div>
     </>
   );
