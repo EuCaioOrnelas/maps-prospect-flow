@@ -36,12 +36,9 @@ export const PromoBanner = () => {
           }}
         >
           {items.map((item, i) => (
-            <span key={i} className="inline-flex items-center shrink-0">
-              <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                <item.icon size={14} className="text-primary" />
-                <span>{item.text}</span>
-              </span>
-              <span className="mx-4 text-primary/40 text-xs">●</span>
+            <span key={i} className="inline-flex items-center gap-1.5 mx-6 text-xs sm:text-sm text-muted-foreground shrink-0">
+              <item.icon size={14} className="text-primary" />
+              <span>{item.text}</span>
             </span>
           ))}
         </div>
