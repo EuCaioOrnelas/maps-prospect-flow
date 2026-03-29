@@ -17,8 +17,8 @@ export const PromoBanner = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Duplicate items for seamless loop
-  const items = [...promoItems, ...promoItems];
+  // Triplicate for seamless infinite loop
+  const items = [...promoItems, ...promoItems, ...promoItems];
 
   return (
     <div
@@ -29,16 +29,19 @@ export const PromoBanner = () => {
       <div className="relative py-2.5">
         <div
           ref={scrollRef}
-          className="flex whitespace-nowrap"
+          className="flex whitespace-nowrap will-change-transform"
           style={{
-            animation: `scroll-banner 40s linear infinite`,
+            animation: `scroll-banner 45s linear infinite`,
             animationPlayState: isPaused ? "paused" : "running",
           }}
         >
           {items.map((item, i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 mx-6 text-xs sm:text-sm text-muted-foreground shrink-0">
-              <item.icon size={14} className="text-primary" />
-              <span>{item.text}</span>
+            <span key={i} className="inline-flex items-center shrink-0">
+              <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+                <item.icon size={14} className="text-primary" />
+                <span>{item.text}</span>
+              </span>
+              <span className="mx-4 text-primary/40 text-xs">●</span>
             </span>
           ))}
         </div>
