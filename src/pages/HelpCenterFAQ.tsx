@@ -320,10 +320,6 @@ const categories = [
         answer: "Entre em contato com nosso suporte através da página de contato. Informe seu e-mail cadastrado e os detalhes da cobrança. Nossa equipe analisará e resolverá em até 48 horas úteis."
       },
       {
-        question: "O Wiize emite nota fiscal?",
-        answer: "Sim. Notas fiscais são emitidas automaticamente para todos os pagamentos processados. Você pode acessá-las na área de assinatura da sua conta."
-      },
-      {
         question: "O que acontece se meu pagamento falhar?",
         answer: "Se o pagamento falhar, você receberá um aviso por e-mail. Seu acesso será mantido por um período de carência de alguns dias para que regularize a situação. Após esse período, o acesso será suspenso até a regularização."
       },
