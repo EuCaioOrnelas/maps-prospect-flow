@@ -1,0 +1,508 @@
+import { useState, useEffect } from "react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Logo } from "@/components/Logo";
+import { SEO } from "@/components/SEO";
+import { cn } from "@/lib/utils";
+
+const categories = [
+  {
+    id: "plataforma",
+    title: "Plataforma",
+    icon: Brain,
+    questions: [
+      {
+        question: "O que é o Wiize?",
+        answer: "O Wiize é uma plataforma completa de prospecção inteligente que utiliza IA para encontrar leads qualificados no Google Maps e automatizar o contato via WhatsApp. Combinamos busca estratégica, CRM integrado, agentes de IA e disparos em massa em uma única solução."
+      },
+      {
+        question: "Como funciona o período gratuito?",
+        answer: "Ao criar sua conta, você recebe 10 buscas estratégicas grátis para testar a plataforma. Não é necessário cartão de crédito. Após usar suas buscas gratuitas, você pode fazer upgrade para um dos nossos planos."
+      },
+      {
+        question: "O que é uma busca estratégica?",
+        answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 50 leads pré-qualificados."
+      },
+      {
+        question: "Preciso instalar algum software?",
+        answer: "Não. O Wiize é 100% online e funciona diretamente no navegador. Basta criar sua conta e começar a usar. Não é necessário instalar extensões, plugins ou softwares adicionais."
+      },
+      {
+        question: "Os dados dos leads são atualizados?",
+        answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
+      },
+      {
+        question: "Posso usar o Wiize no celular?",
+        answer: "O Wiize é otimizado para uso em desktop e notebook. Algumas funcionalidades como o CRM Kanban e os disparos de campanha são melhor aproveitadas em telas maiores. Porém, relatórios e métricas podem ser acompanhados pelo celular."
+      },
+    ]
+  },
+  {
+    id: "whatsapp",
+    title: "WhatsApp e Disparos",
+    icon: MessageSquare,
+    questions: [
+      {
+        question: "Como funcionam os disparos em massa via WhatsApp?",
+        answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O sistema usa delays aleatórios, variações de texto e pausas automáticas para simular comportamento humano. O limite é resetado automaticamente à meia-noite."
+      },
+      {
+        question: "Quantos números WhatsApp posso conectar?",
+        answer: "Depende do seu plano: Start permite 1 número (200 disparos/dia), Growth permite 2 números (400 disparos/dia no total), e Scale permite 5 números (1.000 disparos/dia no total). Cada número tem limite individual de 200 disparos."
+      },
+      {
+        question: "Meu número pode ser bloqueado?",
+        answer: "O Wiize implementa diversas proteções como delays inteligentes, variações de texto e limites diários. Porém, bloqueios são decisões exclusivas do WhatsApp. Recomendamos usar o Aquecimento de Chips antes de iniciar campanhas e seguir as boas práticas de envio."
+      },
+      {
+        question: "Quais práticas devo evitar para não ser bloqueado?",
+        answer: "Evite: enviar mensagens para contatos que não conhecem você, usar textos muito comerciais ou com muitos links, enviar o mesmo texto para muitas pessoas, ignorar solicitações de parada e enviar mensagens fora do horário comercial. Prefira sempre uma abordagem personalizada."
+      },
+      {
+        question: "Posso personalizar as mensagens?",
+        answer: "Sim! Você pode criar múltiplas variações de mensagem para cada campanha. O sistema rotaciona automaticamente entre as variações, tornando os envios mais naturais e reduzindo o risco de detecção como spam."
+      },
+      {
+        question: "Qual a diferença entre Outbound e Inbound?",
+        answer: "Outbound são disparos proativos que você envia para leads prospectados (via Evolution API). Inbound são mensagens de relacionamento enviadas a contatos que já interagiram com você (via Meta API Oficial). O Wiize oferece ambos os modelos integrados."
+      },
+      {
+        question: "Como funciona o sistema de pausas inteligentes?",
+        answer: "O Wiize oferece pausas automáticas configuráveis. Após um número definido de envios, o sistema pausa por alguns minutos antes de continuar. Isso simula comportamento humano natural e reduz drasticamente os riscos de detecção pelo WhatsApp."
+      },
+    ]
+  },
+  {
+    id: "meta-api",
+    title: "Meta API Oficial",
+    icon: Shield,
+    questions: [
+      {
+        question: "O que é a Meta API Oficial?",
+        answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta/Facebook para envio de mensagens via WhatsApp Business. Ela oferece máxima confiabilidade, criptografia de ponta a ponta e conformidade total com as políticas do WhatsApp."
+      },
+      {
+        question: "O Wiize é um Meta Business Partner?",
+        answer: "Sim. O Wiize é integrado como Meta Business Partner, o que garante acesso à API oficial com suporte direto da Meta e total conformidade com as diretrizes de uso da plataforma."
+      },
+      {
+        question: "Qual a diferença entre API Oficial e Evolution API?",
+        answer: "A API Oficial do Meta é usada para campanhas de relacionamento (inbound), com templates aprovados e máxima segurança. A Evolution API é utilizada para prospecção outbound com estratégias de aquecimento. O Wiize combina ambas para oferecer a melhor experiência em cada cenário."
+      },
+      {
+        question: "Preciso de uma conta Meta Business?",
+        answer: "Para campanhas via API Oficial (relacionamento/inbound), sim — você conecta sua conta Meta Business diretamente pelo Wiize em poucos cliques. Para prospecção outbound com disparos em massa, não é necessário. Basta conectar seu número WhatsApp pelo QR Code."
+      },
+      {
+        question: "As mensagens pela API Oficial são criptografadas?",
+        answer: "Sim. Todas as mensagens enviadas pela Meta API Oficial possuem criptografia de ponta a ponta, garantindo que apenas você e o destinatário tenham acesso ao conteúdo."
+      },
+      {
+        question: "Como conecto minha conta Meta Business ao Wiize?",
+        answer: "O processo é simples: acesse a seção 'Meta Campanhas' no Wiize, clique em 'Conectar conta Meta', faça login com sua conta do Facebook/Meta Business e autorize o Wiize. Todo o processo leva menos de 2 minutos e a conexão é feita via Embedded Signup oficial do Meta."
+      },
+      {
+        question: "O que são templates aprovados pela Meta?",
+        answer: "Templates são modelos de mensagem que devem ser aprovados pela Meta antes de serem usados para iniciar conversas. Eles garantem que as mensagens sigam as políticas do WhatsApp. Você pode criar e gerenciar templates diretamente pelo Wiize."
+      },
+      {
+        question: "Posso usar API Oficial e Evolution API ao mesmo tempo?",
+        answer: "Sim! Essa é uma das grandes vantagens do Wiize. Você pode usar a Meta API Oficial para campanhas de relacionamento e remarketing (inbound), e a Evolution API para prospecção de novos leads (outbound). Ambas funcionam de forma integrada na mesma plataforma."
+      },
+    ]
+  },
+  {
+    id: "aquecimento",
+    title: "Aquecimento de Chips",
+    icon: Flame,
+    questions: [
+      {
+        question: "O que é o Aquecimento de Chips?",
+        answer: "O Aquecimento de Chips é um sistema inteligente que prepara números novos ou inativos para uso comercial em 20 dias. Funciona em 4 níveis progressivos: nos primeiros 5 dias envia mensagens simples, depois evolui para interações mais naturais e mensagens pré-comerciais."
+      },
+      {
+        question: "O aquecimento garante que meu número não será bloqueado?",
+        answer: "Não. O aquecimento reduz significativamente o risco de bloqueio ao construir reputação gradualmente, mas não elimina completamente essa possibilidade. O WhatsApp utiliza algoritmos próprios e nenhuma ferramenta pode garantir 100% de proteção."
+      },
+      {
+        question: "Quantos chips posso aquecer simultaneamente?",
+        answer: "Você pode conectar e aquecer até 10 chips simultaneamente, dependendo do seu plano. O processo é 100% automatizado — basta conectar o número e o sistema cuida de todo o restante."
+      },
+      {
+        question: "Quanto tempo dura o aquecimento?",
+        answer: "O processo completo leva 20 dias. É dividido em 4 níveis de 5 dias cada, com intensidade progressiva. Após o aquecimento, o número está preparado para campanhas de maior volume com segurança."
+      },
+      {
+        question: "Posso pular o aquecimento?",
+        answer: "Sim, é possível pular o aquecimento. Porém, recomendamos fortemente completar o processo, especialmente para números novos. Números sem aquecimento têm maior risco de bloqueio ao iniciar campanhas de volume."
+      },
+    ]
+  },
+  {
+    id: "agentes-ia",
+    title: "Agentes de IA",
+    icon: Bot,
+    questions: [
+      {
+        question: "O que são os Agentes de IA?",
+        answer: "Os Agentes de IA são vendedores virtuais que trabalham 24/7 no seu WhatsApp. Eles respondem mensagens automaticamente, qualificam leads com perguntas inteligentes e organizam tudo no CRM — sem precisar de prompts complexos."
+      },
+      {
+        question: "Como configuro um Agente de IA?",
+        answer: "A configuração é simples: escolha um número WhatsApp conectado, defina o objetivo do agente (vendas, suporte, qualificação), ajuste o estilo de comunicação e pronto. O assistente de configuração guia você em cada etapa."
+      },
+      {
+        question: "O agente responde a qualquer mensagem?",
+        answer: "O agente responde dentro do horário de operação configurado e segue as regras que você definir. Você pode configurar limites de respostas por conversa, critérios de encerramento e comportamento pós-resposta."
+      },
+      {
+        question: "Posso pausar o agente a qualquer momento?",
+        answer: "Sim. Você pode pausar e retomar o agente quando quiser, tanto manualmente quanto automaticamente baseado em horários de operação definidos."
+      },
+      {
+        question: "O agente funciona com o CRM?",
+        answer: "Sim! O agente integra com o CRM automaticamente. Quando um lead responde, o agente pode mover o lead para etapas específicas do pipeline, como 'Respondeu', 'Qualificado' ou 'Perdido', baseado nas regras que você configurar."
+      },
+    ]
+  },
+  {
+    id: "crm",
+    title: "CRM e Leads",
+    icon: Target,
+    questions: [
+      {
+        question: "O que é o CRM do Wiize?",
+        answer: "O CRM integrado permite gerenciar todos os seus leads em um pipeline visual estilo Kanban. Acompanhe cada lead desde a prospecção até o fechamento, adicione notas, tags e acompanhe o histórico completo de interações."
+      },
+      {
+        question: "Posso importar leads de outras fontes?",
+        answer: "Sim. Além dos leads prospectados pelo Wiize, você pode adicionar leads manualmente com nome, telefone e informações de contato. Todos os leads são organizados no mesmo pipeline."
+      },
+      {
+        question: "Os leads são compartilhados entre usuários?",
+        answer: "Não. Cada usuário tem acesso exclusivo aos seus próprios leads. Implementamos políticas de segurança em nível de linha (RLS) que garantem total isolamento dos dados."
+      },
+      {
+        question: "Posso exportar meus leads?",
+        answer: "Sim. Você pode exportar seus leads em formato Excel (.xlsx) a qualquer momento, incluindo todas as informações de contato, status e histórico de interações."
+      },
+      {
+        question: "Como funcionam as etapas do pipeline?",
+        answer: "Você pode personalizar as etapas do pipeline de acordo com seu processo de vendas. Arraste e solte leads entre etapas no quadro Kanban. As etapas padrão incluem: Novo, Contatado, Respondeu, Qualificado e Fechado."
+      },
+    ]
+  },
+  {
+    id: "planos",
+    title: "Planos e Pagamentos",
+    icon: CreditCard,
+    questions: [
+      {
+        question: "Qual plano é ideal para mim?",
+        answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números."
+      },
+      {
+        question: "Posso cancelar minha assinatura a qualquer momento?",
+        answer: "Sim! Você pode cancelar sua assinatura quando quiser. Não há fidelidade ou taxas de cancelamento. Seu acesso continua ativo até o final do período pago."
+      },
+      {
+        question: "Quais formas de pagamento são aceitas?",
+        answer: "Aceitamos cartão de crédito (Visa, Mastercard, Amex) e PIX. Todos os pagamentos são processados de forma segura pelo Stripe, com certificação PCI DSS Level 1."
+      },
+      {
+        question: "Meus dados de pagamento são seguros?",
+        answer: "Sim. Não armazenamos dados de cartão de crédito em nossos servidores. Todos os pagamentos são processados pelo Stripe, uma das plataformas mais seguras do mundo."
+      },
+      {
+        question: "Como funciona a política de reembolso?",
+        answer: "Reembolsos são avaliados caso a caso, considerando o uso da plataforma e possíveis falhas técnicas. Consulte nossa Política de Reembolso completa para mais detalhes."
+      },
+      {
+        question: "Posso fazer upgrade ou downgrade do plano?",
+        answer: "Sim. Você pode alterar seu plano a qualquer momento. O upgrade é aplicado imediatamente com cobrança proporcional. O downgrade é aplicado no próximo ciclo de cobrança."
+      },
+      {
+        question: "Como funciona o pagamento via PIX?",
+        answer: "Ao escolher PIX, você receberá um QR Code para pagamento. Após a confirmação (geralmente instantânea), seu acesso é liberado automaticamente. O PIX é processado com total segurança."
+      },
+    ]
+  },
+  {
+    id: "seguranca",
+    title: "Segurança e Privacidade",
+    icon: Shield,
+    questions: [
+      {
+        question: "Como meus dados são protegidos?",
+        answer: "Utilizamos criptografia de ponta a ponta, controle de acesso rigoroso e monitoramento contínuo. Todos os dados sensíveis são criptografados em repouso e em trânsito usando TLS 1.3. Nossa infraestrutura possui certificações de segurança reconhecidas internacionalmente."
+      },
+      {
+        question: "O Wiize está em conformidade com a LGPD?",
+        answer: "Sim. Seguimos todas as diretrizes da Lei Geral de Proteção de Dados. Você tem direito a acessar, corrigir, solicitar exclusão e portabilidade dos seus dados a qualquer momento."
+      },
+      {
+        question: "Vocês vendem meus dados?",
+        answer: "Não. O Wiize nunca vende, aluga ou compartilha seus dados pessoais com terceiros para fins de marketing. Dados são compartilhados apenas com processadores essenciais para o serviço."
+      },
+      {
+        question: "Meus contatos e leads ficam expostos?",
+        answer: "Não. Seus contatos são armazenados de forma segura e acessíveis apenas para você. Implementamos políticas de segurança em nível de linha que garantem isolamento total dos dados de cada usuário."
+      },
+      {
+        question: "O que acontece com meus dados se eu cancelar?",
+        answer: "Após o cancelamento, seus dados ficam disponíveis até o final do período pago. Depois disso, são mantidos por 30 dias para eventual reativação. Você pode solicitar a exclusão completa a qualquer momento conforme a LGPD."
+      },
+    ]
+  },
+  {
+    id: "conectar-meta",
+    title: "Conectar Meta API",
+    icon: Plug,
+    questions: [
+      {
+        question: "Quais são os pré-requisitos para conectar a Meta API?",
+        answer: "Você precisa de: uma conta do Facebook ativa, uma conta Meta Business (pode criar gratuitamente em business.facebook.com), e um número de telefone que não esteja vinculado a nenhuma outra conta do WhatsApp Business API."
+      },
+      {
+        question: "Passo a passo: Como conectar a Meta API no Wiize?",
+        answer: "1) Acesse 'Meta Campanhas' no menu lateral. 2) Clique em 'Conectar conta Meta'. 3) Faça login com sua conta do Facebook. 4) Autorize o Wiize como parceiro. 5) Selecione ou crie uma conta WhatsApp Business. 6) Escolha o número de telefone. Pronto! A conexão é imediata."
+      },
+      {
+        question: "Preciso verificar meu negócio no Meta Business?",
+        answer: "Para envios de alto volume, sim. A verificação do negócio no Meta Business Suite aumenta seus limites de envio e dá acesso a recursos adicionais. Para começar com volumes menores, não é obrigatório."
+      },
+      {
+        question: "Quanto custa usar a Meta API Oficial?",
+        answer: "O uso da Meta API dentro do Wiize está incluído no seu plano. Porém, a Meta cobra por conversa iniciada (conversation-based pricing). Os custos variam por país e tipo de conversa (marketing, utilidade, autenticação). Consulte a tabela de preços da Meta para valores atualizados."
+      },
+      {
+        question: "Posso usar o mesmo número na API Oficial e nos disparos?",
+        answer: "Não. Um número vinculado à Meta API Oficial não pode ser usado simultaneamente na Evolution API para disparos outbound. Recomendamos usar números diferentes para cada tipo de campanha."
+      },
+    ]
+  },
+  {
+    id: "relatorios",
+    title: "Relatórios e Métricas",
+    icon: BarChart3,
+    questions: [
+      {
+        question: "Quais métricas posso acompanhar?",
+        answer: "O Wiize oferece dashboards completos com taxa de entrega, taxa de resposta, performance por número, evolução diária, funil de conversão e muito mais. Tudo em tempo real para você otimizar sua estratégia."
+      },
+      {
+        question: "Posso compartilhar relatórios?",
+        answer: "Sim. Você pode gerar links de relatórios compartilháveis protegidos por senha para apresentar resultados a clientes ou equipe."
+      },
+      {
+        question: "Os relatórios são atualizados em tempo real?",
+        answer: "Sim. Todos os dashboards e métricas são atualizados em tempo real conforme as campanhas são processadas e as respostas chegam."
+      },
+      {
+        question: "Posso exportar os relatórios?",
+        answer: "Sim. Os relatórios podem ser exportados em PDF para apresentações e compartilhamento. Você também pode exportar os dados brutos de leads em Excel para análises próprias."
+      },
+    ]
+  },
+  {
+    id: "financeiro",
+    title: "Financeiro",
+    icon: Wallet,
+    questions: [
+      {
+        question: "Onde vejo minhas faturas?",
+        answer: "Suas faturas e histórico de pagamentos podem ser acessados na seção 'Minha Conta' > 'Assinatura'. Lá você encontra todas as cobranças, status de pagamento e pode baixar recibos."
+      },
+      {
+        question: "Recebi uma cobrança indevida, o que faço?",
+        answer: "Entre em contato com nosso suporte através da página de contato. Informe seu e-mail cadastrado e os detalhes da cobrança. Nossa equipe analisará e resolverá em até 48 horas úteis."
+      },
+      {
+        question: "O Wiize emite nota fiscal?",
+        answer: "Sim. Notas fiscais são emitidas automaticamente para todos os pagamentos processados. Você pode acessá-las na área de assinatura da sua conta."
+      },
+      {
+        question: "O que acontece se meu pagamento falhar?",
+        answer: "Se o pagamento falhar, você receberá um aviso por e-mail. Seu acesso será mantido por um período de carência de alguns dias para que regularize a situação. Após esse período, o acesso será suspenso até a regularização."
+      },
+    ]
+  },
+];
+
+const HelpCenterFAQ = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeCategory, setActiveCategory] = useState("plataforma");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (location.hash) {
+      const hash = location.hash.replace("#", "");
+      const found = categories.find(c => c.id === hash);
+      if (found) {
+        setActiveCategory(hash);
+      }
+    }
+  }, [location.hash]);
+
+  const activeData = categories.find(c => c.id === activeCategory);
+
+  const filteredQuestions = searchQuery.trim()
+    ? categories.flatMap(cat =>
+        cat.questions
+          .filter(q =>
+            q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            q.answer.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+          .map(q => ({ ...q, category: cat.title }))
+      )
+    : null;
+
+  return (
+    <>
+      <SEO
+        title="FAQ - Central de Ajuda"
+        description="Encontre respostas para todas as suas dúvidas sobre o Wiize."
+        keywords="FAQ, ajuda, suporte, perguntas frequentes, wiize"
+      />
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-3 sm:py-4">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/ajuda")}
+                className="gap-2 text-sm px-3"
+              >
+                <ArrowLeft size={16} />
+                Central de Ajuda
+              </Button>
+              <Logo size="md" />
+              <div className="w-20" />
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8 sm:py-12 max-w-6xl">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <HelpCircle className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+              Perguntas Frequentes
+            </h1>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Tire suas dúvidas sobre a plataforma, funcionalidades e muito mais.
+            </p>
+
+            <div className="max-w-md mx-auto relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar pergunta..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {filteredQuestions ? (
+            <div className="max-w-3xl mx-auto space-y-4">
+              {filteredQuestions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-12">
+                  Nenhum resultado encontrado para "{searchQuery}"
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {filteredQuestions.length} resultado(s) encontrado(s)
+                  </p>
+                  {filteredQuestions.map((q, i) => (
+                    <div key={i} className="border border-border/50 rounded-lg p-5 bg-card/50">
+                      <span className="text-xs text-primary font-medium mb-1 block">{q.category}</span>
+                      <h3 className="font-semibold text-base mb-2">{q.question}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{q.answer}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
+              <aside className="md:w-64 lg:w-72 shrink-0">
+                <div className="md:sticky md:top-24">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
+                    Tópicos
+                  </h3>
+                  <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+                    {categories.map((cat) => {
+                      const Icon = cat.icon;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => setActiveCategory(cat.id)}
+                          className={cn(
+                            "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                            activeCategory === cat.id
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          )}
+                        >
+                          <Icon size={16} className="shrink-0" />
+                          {cat.title}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              </aside>
+
+              <div className="flex-1 min-w-0">
+                {activeData && (
+                  <>
+                    <div className="flex items-center gap-3 mb-8 pb-5 border-b border-border/50">
+                      <activeData.icon size={24} className="text-primary shrink-0" />
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{activeData.title}</h2>
+                    </div>
+
+                    <div className="space-y-8">
+                      {activeData.questions.map((q, i) => (
+                        <div key={i} className="group">
+                          <h3 className="font-semibold text-lg sm:text-xl mb-3 text-foreground">
+                            {q.question}
+                          </h3>
+                          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed border-l-2 border-primary/30 pl-4 ml-1">
+                            {q.answer}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-12 p-6 bg-card/50 border border-border/50 rounded-xl text-center">
+            <h3 className="text-lg font-semibold mb-2">Ainda tem dúvidas?</h3>
+            <p className="text-muted-foreground mb-4">
+              Nossa equipe está pronta para ajudar.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button asChild>
+                <Link to="/contato">Fale Conosco</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/seguranca-faq">FAQ de Segurança</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
+  );
+};
+
+export default HelpCenterFAQ;

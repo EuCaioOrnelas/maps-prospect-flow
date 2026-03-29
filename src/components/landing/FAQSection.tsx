@@ -89,7 +89,7 @@ export const FAQSection = () => {
 
         <div className="max-w-4xl mx-auto">
           <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
-            {faqs.map((faq, index) => (
+            {faqs.slice(0, 8).map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
@@ -107,6 +107,15 @@ export const FAQSection = () => {
               </AccordionItem>
             ))}
           </Accordion>
+
+          <div className="flex justify-center mt-8">
+            <a
+              href="/ajuda/faq"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors text-sm sm:text-base"
+            >
+              Ver todas as perguntas
+            </a>
+          </div>
         </div>
       </div>
     </section>

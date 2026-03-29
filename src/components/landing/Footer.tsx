@@ -24,8 +24,8 @@ export const Footer = () => {
               <Link to="/seguranca-faq" className="hover:text-foreground transition-colors">
                 Segurança FAQ
               </Link>
-              <Link to="/contato" className="hover:text-foreground transition-colors">
-                Contato
+              <Link to="/ajuda" className="hover:text-foreground transition-colors">
+                Central de Ajuda
               </Link>
             </div>
 
