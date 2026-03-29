@@ -39,6 +39,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const SecurityFAQ = lazy(() => import("./pages/SecurityFAQ"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const HelpCenterFAQ = lazy(() => import("./pages/HelpCenterFAQ"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
 const CheckoutFailed = lazy(() => import("./pages/CheckoutFailed"));
 const CheckoutPix = lazy(() => import("./pages/CheckoutPix"));
