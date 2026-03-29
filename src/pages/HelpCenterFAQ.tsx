@@ -73,6 +73,14 @@ const categories = [
         answer: "Recomendamos: sempre aquecer números novos antes de campanhas; começar com volumes baixos e aumentar gradualmente; usar variações de mensagem personalizadas; respeitar horário comercial (8h-20h); nunca ignorar pedidos de 'pare' ou 'não quero'; evitar textos com muitos links ou emojis excessivos; e manter uma abordagem consultiva e personalizada ao invés de puramente comercial."
       },
       {
+        question: "Que tipo de conteúdo é proibido nos envios?",
+        answer: "É proibido enviar mensagens promovendo cassinos, apostas ou jogos de azar; conteúdo adulto ou sexualmente explícito; produtos falsificados, réplicas ou piratas; esquemas financeiros, pirâmides ou promessas de ganho fácil; conteúdo que incite violência, ódio ou discriminação; phishing, golpes ou tentativas de fraude; venda de armas, drogas ou substâncias ilegais; e mensagens enganosas ou com informações falsas. Essas regras são definidas pelo WhatsApp/Meta e violá-las pode resultar em bloqueio permanente do seu número. Consulte nossas Diretrizes de Envio completas em /diretrizes-de-envio."
+      },
+      {
+        question: "O que acontece se eu violar as regras do WhatsApp?",
+        answer: "As consequências podem incluir: bloqueio temporário ou permanente do seu número, suspensão da conta no Meta Business Suite, redução do tier de envio e limites da sua conta, perda do número e de todo o histórico de conversas, e impossibilidade de recuperação em casos de violações graves. A Wiize não se responsabiliza por bloqueios, pois essas decisões são exclusivas do WhatsApp."
+      },
+      {
         question: "Posso personalizar as mensagens?",
         answer: "Sim! Você pode criar múltiplas variações de mensagem para cada campanha. O sistema rotaciona automaticamente entre as variações, tornando os envios mais naturais e reduzindo o risco de detecção como spam."
       },
