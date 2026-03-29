@@ -1,12 +1,13 @@
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link } from "react-router-dom";
 import { Menu, X, Shield, Zap, CreditCard, Gift, Bot, Flame } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 
 const promoItems = [
   { icon: Shield, text: "API Oficial do WhatsApp: Meta Business Partner verificado" },
-  { icon: Gift, text: "Teste gratuito de 5 dias: sem cartão de crédito" },
+  { icon: Gift, text: "Teste gratuito de 30 dias: sem cartão de crédito" },
   { icon: Zap, text: "Até 50% de desconto nos planos: promoção por tempo limitado" },
   { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
   { icon: Bot, text: "Agente de IA no WhatsApp: atendimento automático 24h" },
@@ -14,35 +15,31 @@ const promoItems = [
 ];
 
 export const PromoBanner = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Quadruplicate items for seamless infinite loop
-  const items = [...promoItems, ...promoItems, ...promoItems, ...promoItems];
+  const marqueeItems = [...promoItems, ...promoItems];
 
   return (
-    <div
-      className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      <div className="relative py-2.5 overflow-hidden">
-        <div
-          ref={scrollRef}
-          className="flex whitespace-nowrap"
-          style={{
-            animation: `scroll-banner 50s linear infinite`,
-            animationPlayState: isPaused ? "paused" : "running",
-            willChange: "transform",
+    <div className="bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden">
+      <div className="relative py-2.5">
+        <motion.div
+          className="flex w-max min-w-max whitespace-nowrap"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{
+            duration: 36,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "loop",
           }}
         >
-          {items.map((item, i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 mx-6 text-xs sm:text-sm text-muted-foreground shrink-0">
+          {marqueeItems.map((item, i) => (
+            <span
+              key={`${item.text}-${i}`}
+              className="inline-flex items-center gap-1.5 pr-10 text-xs sm:text-sm text-muted-foreground shrink-0"
+            >
               <item.icon size={14} className="text-primary" />
               <span>{item.text}</span>
             </span>
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
