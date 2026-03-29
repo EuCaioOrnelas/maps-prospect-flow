@@ -17,6 +17,7 @@ const HelpCenter = () => {
     { label: "Agentes de IA e Automação", hash: "agentes-ia" },
     { label: "Planos, Pagamentos e Reembolso", hash: "planos" },
     { label: "Como Conectar a Meta API Oficial", hash: "meta-api" },
+    { label: "Diretrizes de Envio", path: "/diretrizes-de-envio" },
     { label: "Política de Reembolso", path: "/refund-policy" },
   ];
 
