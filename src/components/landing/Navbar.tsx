@@ -7,8 +7,8 @@ import { useState, useEffect, useRef } from "react";
 const promoItems = [
   { icon: Shield, text: "API Oficial do WhatsApp: Meta Business Partner verificado" },
   { icon: Gift, text: "Teste gratuito de 5 dias: sem cartão de crédito" },
-  { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
   { icon: Zap, text: "Até 50% de desconto nos planos: promoção por tempo limitado" },
+  { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
   { icon: Bot, text: "Agente de IA no WhatsApp: atendimento automático 24h" },
   { icon: Flame, text: "Aquecimento de chips incluso: proteja seus números" },
 ];
@@ -17,8 +17,8 @@ export const PromoBanner = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Triplicate for seamless infinite loop
-  const items = [...promoItems, ...promoItems, ...promoItems];
+  // Quadruplicate items for seamless infinite loop
+  const items = [...promoItems, ...promoItems, ...promoItems, ...promoItems];
 
   return (
     <div
@@ -26,13 +26,14 @@ export const PromoBanner = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative py-2.5">
+      <div className="relative py-2.5 overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex whitespace-nowrap will-change-transform"
+          className="flex whitespace-nowrap"
           style={{
-            animation: `scroll-banner 45s linear infinite`,
+            animation: `scroll-banner 50s linear infinite`,
             animationPlayState: isPaused ? "paused" : "running",
+            willChange: "transform",
           }}
         >
           {items.map((item, i) => (
