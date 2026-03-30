@@ -60,51 +60,46 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
           {/* Benefits */}
           <div className="space-y-2">
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <Zap size={20} className="text-amber-500 mt-0.5 shrink-0" />
+              <Zap size={16} className="text-amber-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">API Outbound — Somente leads com opt-in</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="font-medium text-xs">API Outbound — Somente leads com opt-in</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   A API oficial da Meta <strong>não funciona para prospecção fria</strong>. 
-                  Você só pode enviar mensagens para leads que já tiveram contato prévio com você: 
-                  te enviaram mensagem no WhatsApp, preencheram formulários nos seus sites conectados à Meta, 
-                  ou aceitaram receber ofertas suas (opt-in). Envios para contatos sem relacionamento prévio 
-                  serão bloqueados pela Meta.
+                  Você só pode enviar mensagens para leads que já tiveram contato prévio com você 
+                  ou aceitaram receber ofertas suas (opt-in). Envios sem relacionamento prévio serão bloqueados.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <CreditCard size={20} className="text-primary mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+              <CreditCard size={16} className="text-primary mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Pagamento direto à Meta</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  A Wiize <strong>não cobra nenhum valor</strong> por mensagem enviada.
-                  O pagamento é feito diretamente à Meta através da sua conta Business.
-                  Nós apenas intermediamos a integração.
+                <p className="font-medium text-xs">Pagamento direto à Meta</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  A Wiize <strong>não cobra nenhum valor</strong> por mensagem. O pagamento é feito diretamente à Meta pela sua conta Business.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <CheckCircle2 size={20} className="text-primary mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+              <CheckCircle2 size={16} className="text-primary mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Templates verificados</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Todas as mensagens precisam usar templates aprovados pela Meta,
-                  garantindo conformidade e alta taxa de entrega.
+                <p className="font-medium text-xs">Templates verificados</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Todas as mensagens precisam usar templates aprovados pela Meta, garantindo conformidade e alta taxa de entrega.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Important disclaimers */}
-          <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
-            <p className="text-sm font-medium">Informações importantes:</p>
-            <ul className="text-xs text-muted-foreground space-y-1.5">
+          <div className="p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
+            <p className="text-xs font-medium">Informações importantes:</p>
+            <ul className="text-[11px] text-muted-foreground space-y-1">
               <li>• A Wiize atua exclusivamente como intermediária tecnológica</li>
               <li>• Você é responsável pelo conteúdo das mensagens e custos junto à Meta</li>
               <li>• É necessário ter uma conta Meta Business verificada</li>
-              <li>• Os templates de mensagem devem ser criados e aprovados no painel da Meta</li>
+              <li>• Templates devem ser criados e aprovados no painel da Meta</li>
               <li>• O limite de envios depende do tier da sua conta na Meta</li>
             </ul>
           </div>
