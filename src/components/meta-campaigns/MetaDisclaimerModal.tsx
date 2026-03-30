@@ -56,7 +56,7 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="space-y-3 mt-1">
           {/* Benefits */}
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
