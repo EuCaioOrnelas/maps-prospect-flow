@@ -63,6 +63,7 @@ const AdminEmailFlows = lazy(() => import("./pages/AdminEmailFlows"));
 const AdminEmailFlowEditor = lazy(() => import("./pages/AdminEmailFlowEditor"));
 const AdminPixBilling = lazy(() => import("./pages/AdminPixBilling"));
 const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
+const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
@@ -128,6 +129,7 @@ const App = () => (
                 <Route path="/checkout-pix" element={<CheckoutPix />} />
                 <Route path="/renewal-success" element={<RenewalSuccess />} />
                 <Route path="/contato" element={<Contact />} />
+                <Route path="/d7x9k2m4-meta-review" element={<MetaAppDocumentation />} />
                 <Route
                   path="/dashboard" 
                   element={
