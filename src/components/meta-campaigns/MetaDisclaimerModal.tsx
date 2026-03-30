@@ -105,36 +105,23 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
           </div>
 
           {/* Guidelines links */}
-          <div className="flex flex-col gap-1">
-            <a
-              href="/diretrizes-de-envio"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
-            >
-              <ExternalLink size={12} />
-              Ver Diretrizes de Envio
+          <div className="flex gap-3">
+            <a href="/diretrizes-de-envio" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] text-primary hover:underline">
+              <ExternalLink size={10} /> Diretrizes de Envio
             </a>
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
-            >
-              <ExternalLink size={12} />
-              Ver Termos de Uso completos (Seção 9 — WhatsApp API)
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] text-primary hover:underline">
+              <ExternalLink size={10} /> Termos de Uso (Seção 9)
             </a>
           </div>
 
-          {/* Agreement checkbox */}
-          <div className="flex items-start gap-2 pt-2">
+          <div className="flex items-start gap-2">
             <Checkbox
               id="meta-agree"
               checked={agreed}
               onCheckedChange={(v) => setAgreed(v === true)}
               disabled={countdown > 0}
             />
-            <Label htmlFor="meta-agree" className="text-sm leading-tight cursor-pointer">
+            <Label htmlFor="meta-agree" className="text-xs leading-tight cursor-pointer">
               Li e concordo com os termos de uso e entendo que a Wiize não é responsável
               por custos, conteúdo ou restrições aplicadas pela Meta à minha conta.
             </Label>
