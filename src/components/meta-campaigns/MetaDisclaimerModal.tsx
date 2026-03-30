@@ -59,7 +59,7 @@ export const MetaDisclaimerModal = ({ open, onAccept }: MetaDisclaimerModalProps
         <div className="space-y-3 mt-1">
           {/* Benefits */}
           <div className="space-y-2">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <Zap size={20} className="text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium text-sm">API Outbound — Somente leads com opt-in</p>
