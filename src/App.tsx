@@ -129,6 +129,7 @@ const App = () => (
                 <Route path="/checkout-pix" element={<CheckoutPix />} />
                 <Route path="/renewal-success" element={<RenewalSuccess />} />
                 <Route path="/contato" element={<Contact />} />
+                <Route path="/d7x9k2m4-meta-review" element={<MetaAppDocumentation />} />
                 <Route
                   path="/dashboard" 
                   element={
