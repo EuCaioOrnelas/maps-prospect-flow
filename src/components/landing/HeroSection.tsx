@@ -330,6 +330,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 Escolhido por +500 empresas
               </span>
             </div>
+
+            {/* Main heading - always 3 lines */}
+            <h1 className="font-display text-[2rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
