@@ -52,23 +52,39 @@ async function relinkWarmingSessions(supabase: any, numberId: string, userId: st
     // Find orphaned sessions with matching phone_key
     const { data: orphanedSessions } = await supabase
       .from('warming_sessions')
-      .select('id')
+      .select('id, status')
       .eq('user_id', userId)
       .eq('phone_key', phoneKey)
       .is('whatsapp_number_id', null);
 
     if (orphanedSessions && orphanedSessions.length > 0) {
-      const sessionIds = orphanedSessions.map((s: any) => s.id);
+      // Separate paused sessions (need reactivation) from completed/other (just re-link)
+      const pausedSessions = orphanedSessions.filter((s: any) => s.status === 'paused');
+      const otherSessions = orphanedSessions.filter((s: any) => s.status !== 'paused');
 
-      await supabase
-        .from('warming_sessions')
-        .update({
-          whatsapp_number_id: numberId,
-          status: 'active',
-          paused_at: null,
-          error_message: null,
-        })
-        .in('id', sessionIds);
+      // Re-activate paused sessions
+      if (pausedSessions.length > 0) {
+        await supabase
+          .from('warming_sessions')
+          .update({
+            whatsapp_number_id: numberId,
+            status: 'active',
+            paused_at: null,
+            error_message: null,
+          })
+          .in('id', pausedSessions.map((s: any) => s.id));
+      }
+
+      // Re-link completed/other sessions without changing their status
+      if (otherSessions.length > 0) {
+        await supabase
+          .from('warming_sessions')
+          .update({
+            whatsapp_number_id: numberId,
+            error_message: null,
+          })
+          .in('id', otherSessions.map((s: any) => s.id));
+      }
 
       // Re-link search assignments too
       await supabase
