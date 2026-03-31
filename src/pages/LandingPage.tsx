@@ -4,6 +4,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { WarmingSection } from "@/components/landing/WarmingSection";
 import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
 import { AIAgentsSection } from "@/components/landing/AIAgentsSection";
@@ -81,6 +82,7 @@ const LandingPage = () => {
         <div className="relative z-10">
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection onSignupClick={trackSignupClick} />
+          <TrustedBySection />
           <HowItWorksSection />
           <FeaturesSection />
           <OfficialAPISection />
