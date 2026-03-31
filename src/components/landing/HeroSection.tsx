@@ -169,7 +169,7 @@ const floatingCards = [
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-2 lg:-right-10 xl:-right-16 top-12 lg:top-8",
+    position: "-right-6 lg:-right-16 xl:-right-24 -top-4 lg:-top-6",
     delay: "1.2s"
   },
   { 
