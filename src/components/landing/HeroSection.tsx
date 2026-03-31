@@ -194,7 +194,7 @@ const floatingCards = [
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-12 lg:-left-32 xl:-left-40 bottom-[160px] lg:bottom-[150px]",
+    position: "-left-12 lg:-left-32 xl:-left-40 bottom-[100px] lg:bottom-[90px]",
     delay: "1.6s"
   },
   { 
