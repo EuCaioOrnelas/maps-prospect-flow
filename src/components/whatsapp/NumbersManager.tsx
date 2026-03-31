@@ -958,15 +958,7 @@ export const NumbersManager = ({
                 <Smartphone size={20} />
                 Gerenciar Números ({numbers.length}/{maxNumbers})
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefreshStatus}
-                disabled={loading}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              </Button>
+              {/* Sync button removed - not used */}
             </DialogTitle>
           </DialogHeader>
           
@@ -1121,15 +1113,6 @@ export const NumbersManager = ({
                           </Button>
                         ) : (
                           <>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1"
-                              onClick={() => handleReconfigureWebhook(number.instance_name!)}
-                            >
-                              <RefreshCw size={14} className="mr-1" />
-                              Sincronizar
-                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 

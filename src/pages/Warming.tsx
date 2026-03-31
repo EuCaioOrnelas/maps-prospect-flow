@@ -568,7 +568,7 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
       const phoneKey = getPhoneKey(number?.phone_number || null);
       
       if (session) {
-        // Mark existing session as completed (skipped)
+        // Mark existing session as completed (skipped) — also save phone_key for reconnection
         const { error } = await supabase
           .from('warming_sessions')
           .update({ 
@@ -576,7 +576,8 @@ Quando o lead perguntar "posso ajudar?", "o que você precisa?", "em que posso a
             completed_at: new Date().toISOString(),
             warming_status: 'hot',
             warming_level: 4,
-            error_message: 'SKIPPED: Aquecimento pulado pelo usuário'
+            error_message: 'SKIPPED: Aquecimento pulado pelo usuário',
+            phone_key: phoneKey || (session as any).phone_key || null
           })
           .eq('id', session.id);
 
