@@ -121,8 +121,8 @@ export const FeaturesSection = () => {
           }`}
         >
           <div className="flex flex-col sm:flex-row items-start gap-4 mb-4 sm:mb-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Zap size={20} className="text-primary" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+              <Zap size={20} className="text-white" />
             </div>
             <div>
               <h3 className="font-display text-lg sm:text-xl font-semibold mb-2">

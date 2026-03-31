@@ -306,10 +306,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
 
           {/* Main heading */}
-          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 animate-slide-up px-2" style={{ animationDelay: "0.1s" }}>
+          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 animate-slide-up px-2 text-foreground" style={{ animationDelay: "0.1s" }}>
             Prospecção{" "}
             <span className="text-gradient">Inteligente</span>
-            {" "}com IA
+            <span className="text-foreground">{" "}com IA</span>
           </h1>
 
           {/* Subheading */}
