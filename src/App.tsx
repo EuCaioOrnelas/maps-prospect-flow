@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+import LightThemeWrapper from "@/components/LightThemeWrapper";
 
 // Eager load critical pages
 import Index from "./pages/Index";
