@@ -512,6 +512,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
       </div>
+      {/* Scroll indicator */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-50">
+        <ChevronDown size={22} className="text-muted-foreground" />
+      </div>
     </section>
   );
 };
