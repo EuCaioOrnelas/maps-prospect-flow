@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
+import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Animated counter component
