@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
+import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Animated counter component
@@ -511,6 +511,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
           </div>
         </div>
+      </div>
+      {/* Scroll indicator */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-50">
+        <ChevronDown size={22} className="text-muted-foreground" />
       </div>
     </section>
   );
