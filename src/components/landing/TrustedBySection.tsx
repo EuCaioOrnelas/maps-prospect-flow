@@ -15,7 +15,7 @@ const brands = [
   { name: "Instagram", logo: instagramLogo, className: "" },
   { name: "Stripe", logo: stripeLogo, className: "" },
   { name: "Asaas", logo: asaasLogo, className: "" },
-  { name: "Vercel", logo: vercelLogo, className: "!h-10 sm:!h-14" },
+  { name: "Vercel", logo: vercelLogo, className: "!h-20 sm:!h-28" },
   { name: "OpenAI", logo: openaiLogo, className: "" },
   { name: "WhatsApp", logo: whatsappLogo, className: "" },
   { name: "Notion", logo: notionLogo, className: "" },

@@ -249,7 +249,7 @@ export const PricingSection = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-4 p-4 rounded-xl glass">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
@@ -259,7 +259,7 @@ export const PricingSection = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-4 p-4 rounded-xl glass">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
@@ -269,7 +269,7 @@ export const PricingSection = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-4 p-4 rounded-xl glass">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
