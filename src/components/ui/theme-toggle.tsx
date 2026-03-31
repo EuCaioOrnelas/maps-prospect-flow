@@ -2,9 +2,9 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Sun, Moon, Monitor, Palette } from "lucide-react";
+import { Sun, Moon, Palette } from "lucide-react";
 
-type ThemeType = "light" | "dark" | "system";
+type ThemeType = "light" | "dark";
 
 interface ThemeOption {
   value: ThemeType;
@@ -45,19 +45,6 @@ const themes: ThemeOption[] = [
       card: "bg-[hsl(220,18%,9%)]",
       text: "bg-[hsl(210,40%,90%)]",
       accent: "bg-[hsl(158,72%,38%)]",
-    },
-  },
-  {
-    value: "system",
-    label: "Sistema",
-    description: "Acompanha o tema do SO",
-    icon: Monitor,
-    preview: {
-      bg: "bg-gradient-to-r from-white to-[hsl(220,20%,7%)]",
-      sidebar: "bg-gradient-to-r from-[hsl(210,20%,97%)] to-[hsl(220,18%,6%)]",
-      card: "bg-gradient-to-r from-[hsl(210,20%,98%)] to-[hsl(220,18%,9%)]",
-      text: "bg-[hsl(220,12%,46%)]",
-      accent: "bg-[hsl(158,72%,35%)]",
     },
   },
 ];

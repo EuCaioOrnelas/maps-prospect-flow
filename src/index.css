@@ -332,19 +332,6 @@
     background-color: hsl(0 72% 51% / 0.6);
   }
 
-  /* Scrollbar */
-  .landing-light ::-webkit-scrollbar-track {
-    background: hsl(0 0% 100%);
-  }
-
-  .landing-light ::-webkit-scrollbar-thumb {
-    background: hsl(220 12% 85%);
-    border-radius: 4px;
-  }
-
-  .landing-light ::-webkit-scrollbar-thumb:hover {
-    background: hsl(220 12% 75%);
-  }
 
   .landing-light input:-webkit-autofill,
   .landing-light input:-webkit-autofill:hover,
@@ -747,38 +734,38 @@
   animation-play-state: paused;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - dark theme default */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--secondary));
+  background: hsl(220 20% 6%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.3);
+  background: hsl(220 14% 18%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.5);
+  background: hsl(220 14% 24%);
 }
 
-/* Light scrollbar for landing */
+/* Light scrollbar - applied when landing-light class is present */
 .landing-light ::-webkit-scrollbar-track {
-  background: hsl(0 0% 100%);
+  background: hsl(0 0% 98%) !important;
 }
 
 .landing-light ::-webkit-scrollbar-thumb {
-  background: hsl(220 12% 85%);
+  background: hsl(220 12% 82%) !important;
   border-radius: 4px;
 }
 
 .landing-light ::-webkit-scrollbar-thumb:hover {
-  background: hsl(220 12% 75%);
+  background: hsl(220 12% 70%) !important;
 }
 
 /* Shimmer highlight text effect (AbacatePay style) */
