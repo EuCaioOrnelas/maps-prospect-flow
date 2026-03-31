@@ -1117,15 +1117,6 @@ export const NumbersManager = ({
                               variant="outline" 
                               size="sm" 
                               className="flex-1"
-                              onClick={() => handleReconfigureWebhook(number.instance_name!)}
-                            >
-                              <RefreshCw size={14} className="mr-1" />
-                              Sincronizar
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1"
                               onClick={() => handleDisconnect(number.id)}
                             >
                               <WifiOff size={14} className="mr-1" />
