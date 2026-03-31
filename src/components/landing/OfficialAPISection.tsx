@@ -41,8 +41,6 @@ export const OfficialAPISection = () => {
       className="py-16 md:py-24 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/3 to-background" />
-
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         {/* Header */}
         <div

@@ -46,9 +46,6 @@ export const HowItWorksSection = () => {
       id="how-it-works"
       className="py-20 sm:py-28 relative overflow-hidden"
     >
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
-      
       {/* Decorative elements */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />

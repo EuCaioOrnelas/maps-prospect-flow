@@ -269,10 +269,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       ref={sectionRef}
       className="relative min-h-screen flex items-center justify-center pt-16 pb-16 overflow-hidden w-full"
     >
-      {/* Parallax Background effects */}
+      {/* Parallax background overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-hero will-change-transform"
-        style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
+        className="absolute inset-0 will-change-transform"
+        style={{
+          transform: `translateY(${parallaxOffset * 0.5}px)`,
+          background: "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)"
+        }}
       />
 
       {/* World map dot pattern */}
