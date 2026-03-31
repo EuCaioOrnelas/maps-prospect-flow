@@ -277,7 +277,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
       {/* World map dot pattern */}
       <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.07] will-change-transform"
+        className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform"
         style={{
           transform: `translateY(${parallaxOffset * 0.2}px)`,
           backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
@@ -327,8 +327,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Prospecte leads qualificados e dispare campanhas de mensagens em massa
-              via API Oficial da Meta — tudo automatizado com inteligência artificial.
+              Prospecção inteligente de leads qualificados e campanhas de mensagens em massa
+              via API Oficial da Meta, tudo automatizado com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
