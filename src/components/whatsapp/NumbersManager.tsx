@@ -197,7 +197,57 @@ export const NumbersManager = ({
     return `wiize_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
   }, [user?.id]);
 
-  // Refresh connection status for all numbers
+  // Re-link orphaned warming sessions when a number reconnects with the same chip
+  const relinkWarmingSessions = async (numberId: string, phoneNumber?: string | null) => {
+    if (!phoneNumber || !user) return;
+    
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
+    if (!phoneKey) return;
+
+    try {
+      // Find orphaned warming sessions with matching phone_key (unlinked from any number)
+      const { data: orphanedSessions } = await supabase
+        .from('warming_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('phone_key', phoneKey)
+        .is('whatsapp_number_id', null);
+
+      if (orphanedSessions && orphanedSessions.length > 0) {
+        const sessionIds = orphanedSessions.map(s => s.id);
+        
+        // Re-link and resume
+        await supabase
+          .from('warming_sessions')
+          .update({
+            whatsapp_number_id: numberId,
+            status: 'active',
+            paused_at: null,
+            error_message: null,
+          })
+          .in('id', sessionIds);
+
+        // Re-link search assignments too
+        await (supabase as any)
+          .from('warming_search_assignments')
+          .update({ whatsapp_number_id: numberId })
+          .eq('user_id', user.id)
+          .is('whatsapp_number_id', null);
+
+        console.log(`Re-linked ${orphanedSessions.length} warming session(s) to number ${numberId} via phone_key ${phoneKey}`);
+        
+        toast({
+          title: "Aquecimento retomado!",
+          description: `${orphanedSessions.length} sessão(ões) de aquecimento foram restauradas automaticamente.`,
+        });
+      }
+    } catch (e) {
+      console.error('Error re-linking warming sessions:', e);
+    }
+  };
+
+
   const handleRefreshStatus = async () => {
     setLoading(true);
     try {
