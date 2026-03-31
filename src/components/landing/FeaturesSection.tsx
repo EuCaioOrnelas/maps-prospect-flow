@@ -121,8 +121,8 @@ export const FeaturesSection = () => {
           }`}
         >
           <div className="flex flex-col sm:flex-row items-start gap-4 mb-4 sm:mb-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Zap size={20} className="text-primary" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+              <Zap size={20} className="text-white" />
             </div>
             <div>
               <h3 className="font-display text-lg sm:text-xl font-semibold mb-2">
@@ -136,17 +136,23 @@ export const FeaturesSection = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-3 sm:p-4">
-              <CheckCircle size={18} className="text-primary flex-shrink-0" />
-              <span className="text-xs sm:text-sm">Empresas com atividade recente</span>
+            <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle size={16} className="text-white" />
+              </div>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Empresas com atividade recente</span>
             </div>
-            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-3 sm:p-4">
-              <CheckCircle size={18} className="text-primary flex-shrink-0" />
-              <span className="text-xs sm:text-sm">Contatos ativos e verificados</span>
+            <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle size={16} className="text-white" />
+              </div>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Contatos ativos e verificados</span>
             </div>
-            <div className="flex items-center gap-3 bg-primary/5 rounded-lg p-3 sm:p-4">
-              <CheckCircle size={18} className="text-primary flex-shrink-0" />
-              <span className="text-xs sm:text-sm">Alto potencial de conversão</span>
+            <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle size={16} className="text-white" />
+              </div>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Alto potencial de conversão</span>
             </div>
           </div>
         </div>

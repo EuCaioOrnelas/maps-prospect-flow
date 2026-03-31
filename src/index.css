@@ -196,19 +196,19 @@
 
   /* Stronger green accents in light theme */
   .landing-light .bg-primary\/5 {
-    background-color: hsl(158 72% 32% / 0.08);
+    background: linear-gradient(135deg, hsl(158 72% 32% / 0.1) 0%, hsl(170 65% 28% / 0.06) 100%);
   }
 
   .landing-light .bg-primary\/10 {
-    background-color: hsl(158 72% 32% / 0.12);
+    background: linear-gradient(135deg, hsl(158 72% 32% / 0.15) 0%, hsl(170 65% 28% / 0.1) 100%);
   }
 
   .landing-light .bg-primary\/15 {
-    background-color: hsl(158 72% 32% / 0.15);
+    background: linear-gradient(135deg, hsl(158 72% 32% / 0.2) 0%, hsl(170 65% 28% / 0.12) 100%);
   }
 
   .landing-light .bg-primary\/20 {
-    background-color: hsl(158 72% 32% / 0.2);
+    background: linear-gradient(135deg, hsl(158 72% 32% / 0.25) 0%, hsl(170 65% 28% / 0.15) 100%);
   }
 
   /* Borders with green tint in light theme */
@@ -227,6 +227,11 @@
   /* Fix red-400 text for light theme */
   .landing-light .text-red-400 {
     color: hsl(0 72% 45%);
+  }
+
+  /* Fix pulse-glow animation shadow for light theme */
+  .landing-light .animate-pulse-glow {
+    animation: pulse-glow-light 2s ease-in-out infinite;
   }
 
   .landing-light ::-webkit-scrollbar-track {
@@ -268,6 +273,21 @@
   /* Fix gradient card for pricing */
   .landing-light .bg-gradient-card {
     background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(158 72% 32% / 0.04) 100%);
+  }
+
+  /* Fix white text that doesn't use tokens */
+  .landing-light .text-white {
+    color: white;
+  }
+
+  /* Fix glow dots */
+  .landing-light .bg-primary\/50 {
+    background-color: hsl(158 72% 32% / 0.5);
+  }
+
+  /* Fix destructive opacity */
+  .landing-light .bg-destructive\/60 {
+    background-color: hsl(0 72% 51% / 0.6);
   }
 }
 
@@ -396,7 +416,18 @@
   }
 }
 
-@keyframes slide-up {
+@keyframes pulse-glow-light {
+  0%, 100% { 
+    opacity: 1; 
+    box-shadow: 0 0 20px 5px hsl(158 72% 32% / 0.2);
+  }
+  50% { 
+    opacity: 0.6; 
+    box-shadow: 0 0 40px 10px hsl(158 72% 32% / 0.35);
+  }
+}
+
+
   from { 
     opacity: 0; 
     transform: translateY(20px); 

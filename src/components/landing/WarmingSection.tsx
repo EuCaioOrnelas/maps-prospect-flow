@@ -178,17 +178,23 @@ export const WarmingSection = () => {
 
           {/* Benefits */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-8 border-t border-border/50">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
-              <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-              <span className="text-sm">Zero intervenção manual</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Zero intervenção manual</span>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
-              <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-              <span className="text-sm">Conversas naturais com IA</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Conversas naturais com IA</span>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
-              <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-              <span className="text-sm">Até 10 chips simultâneos</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Até 10 chips simultâneos</span>
             </div>
           </div>
         </motion.div>
