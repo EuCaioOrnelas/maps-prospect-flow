@@ -716,8 +716,8 @@ export const NumbersManager = ({
       if (error) throw error;
 
       onNumbersChange(numbers.filter(n => n.id !== numberToDelete));
-      setDeleteConfirmOpen(false);
       setNumberToDelete(null);
+      setDeletingNumberId(null);
 
       toast({
         title: "Número removido",
