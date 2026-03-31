@@ -47,19 +47,6 @@ const themes: ThemeOption[] = [
       accent: "bg-[hsl(158,72%,38%)]",
     },
   },
-  {
-    value: "system",
-    label: "Sistema",
-    description: "Acompanha o tema do SO",
-    icon: Monitor,
-    preview: {
-      bg: "bg-gradient-to-r from-white to-[hsl(220,20%,7%)]",
-      sidebar: "bg-gradient-to-r from-[hsl(210,20%,97%)] to-[hsl(220,18%,6%)]",
-      card: "bg-gradient-to-r from-[hsl(210,20%,98%)] to-[hsl(220,18%,9%)]",
-      text: "bg-[hsl(220,12%,46%)]",
-      accent: "bg-[hsl(158,72%,35%)]",
-    },
-  },
 ];
 
 export function ThemeToggle() {
