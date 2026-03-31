@@ -43,7 +43,7 @@ const Index = () => {
         description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens e geração de leads qualificados."
         keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes"
       />
-      <main className="landing-light min-h-screen bg-background overflow-x-hidden w-full max-w-full relative">
+      <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         {/* Aurora/mesh gradient background - gives life to the page */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
           {/* Top-right warm blob */}

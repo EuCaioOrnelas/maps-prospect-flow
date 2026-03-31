@@ -299,7 +299,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-8 lg:gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-6 lg:gap-8 items-center">
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
