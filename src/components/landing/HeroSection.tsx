@@ -264,9 +264,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
       
-      {/* Main glow */}
+      {/* Main glow - softer */}
       <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-50 will-change-transform"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
       
