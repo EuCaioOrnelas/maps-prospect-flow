@@ -519,27 +519,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </div>
               </div>
 
-              {/* 3 benefit cards BELOW the demo */}
-              <div className="grid grid-cols-3 gap-3 mt-4 animate-slide-up" style={{ animationDelay: "0.7s" }}>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <Target size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Leads pré-qualificados</span>
-                </div>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <MessageCircle size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Disparo em massa via WhatsApp</span>
-                </div>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <TrendingUp size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Maior taxa de conversão</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
