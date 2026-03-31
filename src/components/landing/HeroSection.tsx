@@ -319,16 +319,17 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
-              <Brain size={16} className="text-primary flex-shrink-0" />
+            {/* Trust badge with avatars */}
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
+              <div className="flex -space-x-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-emerald-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">M</div>
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">R</div>
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">A</div>
+              </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
-                IA que identifica leads com maior potencial de conversão
+                Escolhido por +500 empresas
               </span>
             </div>
-
-            {/* Main heading - always 3 lines */}
-            <h1 className="font-display text-[1.75rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] xl:text-5xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
