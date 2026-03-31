@@ -34,6 +34,55 @@ async function getEvolutionCredentialsForNumber(supabase: any, numberId: string,
   }
   return credentials;
 }
+// Re-link orphaned warming sessions when a number reconnects (match by phone_key)
+async function relinkWarmingSessions(supabase: any, numberId: string, userId: string) {
+  try {
+    // Get the phone_number of the reconnected number
+    const { data: numberData } = await supabase
+      .from('whatsapp_numbers')
+      .select('phone_number')
+      .eq('id', numberId)
+      .single();
+
+    const phoneNumber = numberData?.phone_number || '';
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
+    if (!phoneKey) return;
+
+    // Find orphaned sessions with matching phone_key
+    const { data: orphanedSessions } = await supabase
+      .from('warming_sessions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('phone_key', phoneKey)
+      .is('whatsapp_number_id', null);
+
+    if (orphanedSessions && orphanedSessions.length > 0) {
+      const sessionIds = orphanedSessions.map((s: any) => s.id);
+
+      await supabase
+        .from('warming_sessions')
+        .update({
+          whatsapp_number_id: numberId,
+          status: 'active',
+          paused_at: null,
+          error_message: null,
+        })
+        .in('id', sessionIds);
+
+      // Re-link search assignments too
+      await supabase
+        .from('warming_search_assignments')
+        .update({ whatsapp_number_id: numberId })
+        .eq('user_id', userId)
+        .is('whatsapp_number_id', null);
+
+      console.log(`Re-linked ${orphanedSessions.length} warming session(s) to number ${numberId} via phone_key ${phoneKey}`);
+    }
+  } catch (e) {
+    console.error('Error re-linking warming sessions:', e);
+  }
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
