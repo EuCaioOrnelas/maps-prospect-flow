@@ -60,7 +60,7 @@ export const AIAgentsSection = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 mb-6">
             <Bot size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground font-medium">Agentes de IA para WhatsApp</span>
-            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full uppercase tracking-wide">Beta</span>
+            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-full uppercase tracking-wide">Beta</span>
           </div>
 
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight">
@@ -150,7 +150,7 @@ export const AIAgentsSection = () => {
                     </div>
                     <div className="flex items-center justify-between rounded-lg bg-secondary/40 border border-border/30 px-4 py-2.5">
                       <span className="text-sm text-foreground/90">Ao encerrar conversa</span>
-                      <span className="text-xs bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-md font-medium">→ Negociação</span>
+                      <span className="text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-md font-medium">→ Negociação</span>
                     </div>
                   </div>
                 </div>
