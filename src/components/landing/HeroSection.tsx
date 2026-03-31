@@ -201,7 +201,7 @@ const floatingCards = [
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-8 lg:-right-24 xl:-right-32 bottom-[120px] lg:bottom-[110px]",
+    position: "-right-8 lg:-right-24 xl:-right-32 bottom-2 lg:bottom-0",
     delay: "2s"
   },
 ];
@@ -299,7 +299,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-8 lg:gap-10 items-center">
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
