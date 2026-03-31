@@ -2306,7 +2306,7 @@ REGRAS:
               .from('whatsapp_numbers')
               .select('id, user_id')
               .eq('instance_name', instanceName)
-              .single();
+              .maybeSingle();
 
             const apiCreds = await getApiCredentials(instanceName);
             const updatePayload: Record<string, any> = {
