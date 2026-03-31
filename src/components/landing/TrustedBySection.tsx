@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import googleLogo from "@/assets/logos/google.svg";
 import metaLogo from "@/assets/logos/meta.svg";
 import instagramLogo from "@/assets/logos/instagram.svg";
@@ -21,8 +20,6 @@ const brands = [
   { name: "Notion", logo: notionLogo, className: "" },
 ];
 
-const marqueeItems = [...brands, ...brands];
-
 export const TrustedBySection = () => {
   return (
     <section className="relative border-y border-primary/10 overflow-hidden">
@@ -32,31 +29,27 @@ export const TrustedBySection = () => {
         </p>
       </div>
 
-      <div className="relative py-3">
-        <motion.div
-          className="flex w-max min-w-max whitespace-nowrap items-center"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            duration: 30,
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "loop",
-          }}
-        >
-          {marqueeItems.map((brand, i) => (
-            <div
-              key={`${brand.name}-${i}`}
-              className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-all duration-500"
-              title={brand.name}
-            >
-              <img
-                src={brand.logo}
-                alt={brand.name}
-                className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
-              />
+      <div className="relative py-3 overflow-hidden marquee-mask">
+        <div className="marquee-track">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="marquee-content" aria-hidden={copy === 1}>
+              {brands.map((brand) => (
+                <div
+                  key={brand.name}
+                  className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-500"
+                  title={brand.name}
+                >
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    loading="lazy"
+                    className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
+                  />
+                </div>
+              ))}
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
