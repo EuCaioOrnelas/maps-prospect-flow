@@ -601,6 +601,8 @@ export const NumbersManager = ({
     if (!numberToDelete) return;
 
     setLoading(true);
+    setDeletingNumberId(numberToDelete);
+    setDeleteConfirmOpen(false);
 
     try {
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
