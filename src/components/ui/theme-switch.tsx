@@ -13,20 +13,20 @@ const ThemeSwitch = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
         checked={isDark}
         onCheckedChange={() => toggleTheme()}
         className={cn(
-          "relative h-8 w-[68px] rounded-full transition-colors duration-300",
+          "relative h-8 w-[68px] rounded-full transition-all duration-300",
           isDark
             ? "bg-[hsl(220,18%,12%)] border border-[hsl(220,14%,20%)]"
-            : "bg-[hsl(210,20%,94%)] border border-[hsl(220,13%,88%)]",
+            : "bg-[hsl(158,50%,92%)] border border-[hsl(158,40%,85%)]",
           "[&>span]:h-7 [&>span]:w-7 [&>span]:rounded-full [&>span]:shadow-md [&>span]:z-10",
-          "[&>span]:transition-transform [&>span]:duration-300",
+          "[&>span]:transition-all [&>span]:duration-300",
           "data-[state=unchecked]:[&>span]:translate-x-0.5",
           "data-[state=checked]:[&>span]:translate-x-[36px]",
           isDark
             ? "[&>span]:bg-[hsl(220,18%,18%)] [&>span]:border [&>span]:border-[hsl(220,14%,24%)]"
-            : "[&>span]:bg-white [&>span]:border [&>span]:border-[hsl(220,13%,90%)]",
+            : "[&>span]:bg-white [&>span]:border [&>span]:border-[hsl(158,40%,88%)]",
           isDark
             ? "hover:bg-[hsl(220,18%,14%)]"
-            : "hover:bg-[hsl(210,20%,91%)]"
+            : "hover:bg-[hsl(158,50%,88%)]"
         )}
       />
 
