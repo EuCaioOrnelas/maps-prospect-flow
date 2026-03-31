@@ -198,64 +198,109 @@ export const NumbersManager = ({
     return `wiize_${user?.id?.substring(0, 8)}_${timestamp}_${random}`;
   }, [user?.id]);
 
-  // Re-link orphaned warming sessions when a number reconnects with the same chip
+  // Re-link orphaned warming sessions and recent orphaned campaigns when the same chip reconnects
   const relinkWarmingSessions = async (numberId: string, phoneNumber?: string | null) => {
-    if (!phoneNumber || !user) return;
-    
-    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    if (!user) return;
+
+    const phoneDigits = phoneNumber?.replace(/\D/g, '') || '';
     const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
-    if (!phoneKey) return;
 
     try {
-      // Find orphaned warming sessions with matching phone_key (unlinked from any number)
-      const { data: orphanedSessions } = await supabase
-        .from('warming_sessions')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .eq('phone_key', phoneKey)
-        .is('whatsapp_number_id', null);
+      let restoredWarmingSessions = 0;
+      let restoredCampaigns = 0;
 
-      if (orphanedSessions && orphanedSessions.length > 0) {
-        // Separate paused sessions (need reactivation) from completed/other (just re-link)
-        const pausedSessions = orphanedSessions.filter(s => s.status === 'paused');
-        const otherSessions = orphanedSessions.filter(s => s.status !== 'paused');
-
-        // Re-activate paused sessions
-        if (pausedSessions.length > 0) {
-          await supabase
-            .from('warming_sessions')
-            .update({
-              whatsapp_number_id: numberId,
-              status: 'active',
-              paused_at: null,
-              error_message: null,
-            })
-            .in('id', pausedSessions.map(s => s.id));
-        }
-
-        // Re-link completed/other sessions without changing their status
-        if (otherSessions.length > 0) {
-          await supabase
-            .from('warming_sessions')
-            .update({
-              whatsapp_number_id: numberId,
-              error_message: null,
-            })
-            .in('id', otherSessions.map(s => s.id));
-        }
-
-        // Re-link search assignments too
-        await (supabase as any)
-          .from('warming_search_assignments')
-          .update({ whatsapp_number_id: numberId })
+      if (phoneKey) {
+        // Find orphaned warming sessions with matching phone_key (unlinked from any number)
+        const { data: orphanedSessions } = await supabase
+          .from('warming_sessions')
+          .select('id, status')
           .eq('user_id', user.id)
+          .eq('phone_key', phoneKey)
           .is('whatsapp_number_id', null);
 
-        console.log(`Re-linked ${orphanedSessions.length} warming session(s) to number ${numberId} via phone_key ${phoneKey}`);
-        
+        if (orphanedSessions && orphanedSessions.length > 0) {
+          const pausedSessions = orphanedSessions.filter(s => s.status === 'paused');
+          const otherSessions = orphanedSessions.filter(s => s.status !== 'paused');
+
+          if (pausedSessions.length > 0) {
+            await supabase
+              .from('warming_sessions')
+              .update({
+                whatsapp_number_id: numberId,
+                status: 'active',
+                paused_at: null,
+                error_message: null,
+              })
+              .in('id', pausedSessions.map(s => s.id));
+          }
+
+          if (otherSessions.length > 0) {
+            await supabase
+              .from('warming_sessions')
+              .update({
+                whatsapp_number_id: numberId,
+                error_message: null,
+              })
+              .in('id', otherSessions.map(s => s.id));
+          }
+
+          await (supabase as any)
+            .from('warming_search_assignments')
+            .update({ whatsapp_number_id: numberId })
+            .eq('user_id', user.id)
+            .is('whatsapp_number_id', null);
+
+          restoredWarmingSessions = orphanedSessions.length;
+          console.log(`Re-linked ${orphanedSessions.length} warming session(s) to number ${numberId} via phone_key ${phoneKey}`);
+        }
+      }
+
+      // Best-effort relink for recent campaign history after the same chip is re-added
+      const { count: connectedNumbersCount } = await supabase
+        .from('whatsapp_numbers')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_connected', true);
+
+      if ((connectedNumbersCount ?? 0) === 1) {
+        const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: orphanedCampaigns } = await supabase
+          .from('whatsapp_campaigns')
+          .select('id')
+          .eq('user_id', user.id)
+          .is('whatsapp_number_id', null)
+          .in('status', ['paused', 'scheduled', 'postponed', 'pending', 'completed', 'failed'])
+          .gte('updated_at', recentCutoff)
+          .order('updated_at', { ascending: false })
+          .limit(10);
+
+        if (orphanedCampaigns && orphanedCampaigns.length > 0) {
+          const { error: relinkCampaignsError } = await supabase
+            .from('whatsapp_campaigns')
+            .update({
+              whatsapp_number_id: numberId,
+              updated_at: new Date().toISOString(),
+            })
+            .in('id', orphanedCampaigns.map(campaign => campaign.id));
+
+          if (relinkCampaignsError) {
+            console.error('Error re-linking orphaned campaigns:', relinkCampaignsError);
+          } else {
+            restoredCampaigns = orphanedCampaigns.length;
+            console.log(`Re-linked ${orphanedCampaigns.length} orphaned campaign(s) to number ${numberId}`);
+          }
+        }
+      }
+
+      if (restoredWarmingSessions > 0 || restoredCampaigns > 0) {
+        const restoredLabels = [
+          restoredWarmingSessions > 0 ? `${restoredWarmingSessions} aquecimento(s)` : null,
+          restoredCampaigns > 0 ? `${restoredCampaigns} campanha(s)` : null,
+        ].filter(Boolean);
+
         toast({
-          title: "Aquecimento retomado!",
-          description: `${orphanedSessions.length} sessão(ões) de aquecimento foram restauradas automaticamente.`,
+          title: 'Dados restaurados!',
+          description: `${restoredLabels.join(' e ')} foram religados automaticamente.`,
         });
       }
     } catch (e) {

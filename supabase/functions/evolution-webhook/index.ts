@@ -2418,6 +2418,42 @@ REGRAS:
                 console.log(`Updated connection status for ${instanceName}: connected (${apiCreds.tier})`);
               }
 
+              // Re-link recent orphaned campaigns when the same chip is re-added as a new number
+              const { count: connectedNumbersCount } = await supabase
+                .from('whatsapp_numbers')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', numberRow.user_id)
+                .eq('is_connected', true);
+
+              if ((connectedNumbersCount ?? 0) === 1) {
+                const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                const { data: orphanedCampaigns } = await supabase
+                  .from('whatsapp_campaigns')
+                  .select('id, name, status')
+                  .eq('user_id', numberRow.user_id)
+                  .is('whatsapp_number_id', null)
+                  .in('status', ['paused', 'scheduled', 'postponed', 'pending', 'completed', 'failed'])
+                  .gte('updated_at', recentCutoff)
+                  .order('updated_at', { ascending: false })
+                  .limit(10);
+
+                if (orphanedCampaigns && orphanedCampaigns.length > 0) {
+                  const { error: relinkCampaignsError } = await supabase
+                    .from('whatsapp_campaigns')
+                    .update({
+                      whatsapp_number_id: numberRow.id,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .in('id', orphanedCampaigns.map((campaign: any) => campaign.id));
+
+                  if (relinkCampaignsError) {
+                    console.error('Error re-linking orphaned campaigns:', relinkCampaignsError);
+                  } else {
+                    console.log(`🔗 Re-linked ${orphanedCampaigns.length} orphaned campaign(s) to ${instanceName}`);
+                  }
+                }
+              }
+
               // AUTO-RESUME: Find and resume paused campaigns on this number
               const { data: pausedCampaigns } = await supabase
                 .from('whatsapp_campaigns')
