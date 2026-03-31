@@ -989,8 +989,14 @@ export const NumbersManager = ({
                   return (
                     <div 
                       key={number.id}
-                      className="p-4 rounded-lg border border-border bg-card"
+                      className={`p-4 rounded-lg border border-border bg-card relative overflow-hidden transition-opacity duration-300 ${deletingNumberId === number.id ? 'opacity-60 pointer-events-none' : ''}`}
                     >
+                      {deletingNumberId === number.id && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm rounded-lg">
+                          <Loader2 className="w-6 h-6 animate-spin text-destructive mb-2" />
+                          <span className="text-sm font-medium text-destructive">Excluindo número...</span>
+                        </div>
+                      )}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           {number.is_connected ? (
