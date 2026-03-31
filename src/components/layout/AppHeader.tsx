@@ -28,6 +28,7 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const getPlanName = (plan: string) => {
     switch (plan) {
