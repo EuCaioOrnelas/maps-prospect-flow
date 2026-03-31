@@ -496,7 +496,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           </div>
         </div>
       </div>
-      </div>
     </section>
   );
 };
