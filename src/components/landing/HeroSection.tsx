@@ -349,9 +349,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           </div>
 
-          {/* RIGHT: Animated Demo */}
+          {/* RIGHT: Animated Demo - hidden on small screens */}
           <div 
-            className="animate-slide-up will-change-transform w-full" 
+            className="animate-slide-up will-change-transform w-full hidden lg:block"
             style={{ 
               animationDelay: "0.5s",
               transform: `translateY(${-parallaxOffset * 0.05}px)`,
