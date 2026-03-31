@@ -85,6 +85,7 @@ serve(async (req) => {
       }
 
       // Unlink proxy before deleting
+      let savedPhoneNumber: string | null = null;
       try {
         const { data: numberData } = await supabase
           .from('whatsapp_numbers')
@@ -92,6 +93,8 @@ serve(async (req) => {
           .eq('id', numberId)
           .single();
         
+        savedPhoneNumber = numberData?.phone_number || null;
+
         if (numberData?.proxy_id) {
           // Decrement proxy assigned count
           const { data: proxyData } = await supabase
@@ -113,7 +116,7 @@ serve(async (req) => {
 
       // PRESERVE warming sessions: pause and unlink (phone_key enables re-linking on reconnection)
       try {
-        const phoneDigits = (numberData?.phone_number || '').replace(/\D/g, '');
+        const phoneDigits = (savedPhoneNumber || '').replace(/\D/g, '');
         const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
         
         const { data: warmingSessions } = await supabase
