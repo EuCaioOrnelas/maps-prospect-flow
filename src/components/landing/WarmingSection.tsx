@@ -51,7 +51,7 @@ export const WarmingSection = () => {
   return (
     <section 
       id="warming" 
-      className="py-16 md:py-24 relative overflow-hidden w-full bg-gradient-to-b from-background via-primary/5 to-background"
+      className="py-16 md:py-24 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">

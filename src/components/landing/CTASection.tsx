@@ -15,7 +15,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
       className="py-16 sm:py-24 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      <div className="absolute inset-0 bg-gradient-glow" />
+      <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-20 blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div 

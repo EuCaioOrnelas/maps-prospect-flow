@@ -67,7 +67,7 @@ export const FAQSection = () => {
       className="py-16 md:py-24 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      <div className="absolute inset-0 bg-gradient-glow opacity-20" />
+      <div className="absolute left-1/2 top-8 h-40 w-[26rem] -translate-x-1/2 rounded-full bg-gradient-glow opacity-10 blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div 
