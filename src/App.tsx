@@ -112,25 +112,25 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/refund-policy" element={<RefundPolicy />} />
-                <Route path="/seguranca-faq" element={<SecurityFAQ />} />
-                <Route path="/diretrizes-de-envio" element={<SendingGuidelines />} />
-                <Route path="/ajuda" element={<HelpCenter />} />
-                <Route path="/ajuda/faq" element={<HelpCenterFAQ />} />
-                <Route path="/upgrade" element={<Upgrade />} />
-                <Route path="/upgrade-promo" element={<UpgradePromo />} />
-                <Route path="/checkout-success" element={<CheckoutSuccess />} />
-                <Route path="/checkout-failed" element={<CheckoutFailed />} />
-                <Route path="/checkout-pix" element={<CheckoutPix />} />
-                <Route path="/renewal-success" element={<RenewalSuccess />} />
-                <Route path="/contato" element={<Contact />} />
-                <Route path="/d7x9k2m4-meta-review" element={<MetaAppDocumentation />} />
+                <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
+                <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
+                <Route path="/forgot-password" element={<LightThemeWrapper><ForgotPassword /></LightThemeWrapper>} />
+                <Route path="/reset-password" element={<LightThemeWrapper><ResetPassword /></LightThemeWrapper>} />
+                <Route path="/terms" element={<LightThemeWrapper><Terms /></LightThemeWrapper>} />
+                <Route path="/privacy" element={<LightThemeWrapper><Privacy /></LightThemeWrapper>} />
+                <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
+                <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
+                <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
+                <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
+                <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
+                <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
+                <Route path="/upgrade-promo" element={<LightThemeWrapper><UpgradePromo /></LightThemeWrapper>} />
+                <Route path="/checkout-success" element={<LightThemeWrapper><CheckoutSuccess /></LightThemeWrapper>} />
+                <Route path="/checkout-failed" element={<LightThemeWrapper><CheckoutFailed /></LightThemeWrapper>} />
+                <Route path="/checkout-pix" element={<LightThemeWrapper><CheckoutPix /></LightThemeWrapper>} />
+                <Route path="/renewal-success" element={<LightThemeWrapper><RenewalSuccess /></LightThemeWrapper>} />
+                <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
+                <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
                 <Route
                   path="/dashboard" 
                   element={
