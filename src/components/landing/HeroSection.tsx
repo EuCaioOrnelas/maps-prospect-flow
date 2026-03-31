@@ -299,7 +299,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-16 items-center">
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
@@ -317,7 +317,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
 
             {/* Main heading - always 3 lines */}
-            <h1 className="font-display text-[2.25rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] xl:text-[3.75rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
@@ -358,7 +358,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               opacity: imageOpacity
             }}
           >
-            <div className="relative w-full">
+            <div className="relative w-full max-w-md ml-auto">
               {/* Background glow */}
               <div 
                 className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
@@ -407,18 +407,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                   {/* Search bar simulation */}
-                  <div className="flex flex-col sm:flex-row gap-2 mb-3 sm:mb-4">
-                    <div className="flex-1 bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm flex items-center">
-                      <span className="text-muted-foreground mr-2">🔍</span>
-                      <span className="text-foreground">{displayText}</span>
-                      <span className="typing-cursor">|</span>
+                  <div className="flex gap-2 mb-3 sm:mb-4">
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm flex items-center">
+                        <span className="text-muted-foreground mr-2">🔍</span>
+                        <span className="text-foreground">{displayText}</span>
+                        <span className="typing-cursor">|</span>
+                      </div>
+                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm text-muted-foreground">
+                        📍 {currentData.location}
+                      </div>
                     </div>
-                    <div className="flex-1 bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm text-muted-foreground">
-                      📍 {currentData.location}
-                    </div>
-                    <button className="bg-primary text-primary-foreground rounded-lg px-4 py-2 font-medium text-xs sm:text-sm flex items-center justify-center gap-2 search-pulse">
-                      <Search size={14} />
-                      Buscar
+                    <button className="bg-primary text-primary-foreground rounded-lg px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 search-pulse aspect-square">
+                      <Search size={16} />
+                      <span>Buscar</span>
                     </button>
                   </div>
                   
