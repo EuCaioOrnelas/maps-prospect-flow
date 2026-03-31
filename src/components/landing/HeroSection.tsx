@@ -348,7 +348,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </Button>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
-              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto">
+              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto rounded-full">
                 Ver como funciona
               </Button>
             </a>
