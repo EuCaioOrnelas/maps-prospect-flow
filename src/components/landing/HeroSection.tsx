@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
 import { Link } from "react-router-dom";
