@@ -356,28 +356,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </Button>
               </Link>
               <a href="#features" className="group shrink-0">
-                <Button variant="outline" size="lg" className="rounded-full text-sm border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
+                <Button variant="ghost" size="lg" className="rounded-full text-sm border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver como funciona
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </a>
             </div>
 
-            {/* Feature highlights */}
-            <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 sm:gap-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Search size={16} className="text-primary flex-shrink-0" />
-                <span>Busca por palavra-chave</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <MapPin size={16} className="text-primary flex-shrink-0" />
-                <span>Filtro por cidade/região</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Download size={16} className="text-primary flex-shrink-0" />
-                <span>Download em planilha</span>
-              </div>
-            </div>
           </div>
 
           {/* RIGHT: Animated Demo */}
