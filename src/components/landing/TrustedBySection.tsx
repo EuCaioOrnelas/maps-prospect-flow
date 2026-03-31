@@ -26,13 +26,13 @@ const marqueeItems = [...brands, ...brands];
 export const TrustedBySection = () => {
   return (
     <section className="relative border-y border-primary/10 overflow-hidden">
-      <div className="text-center pt-6 pb-3">
+      <div className="text-center pt-4 pb-0">
         <p className="text-[10px] sm:text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground/50">
           Empresas que confiam na Wiize
         </p>
       </div>
 
-      <div className="relative py-5">
+      <div className="relative py-3">
         <motion.div
           className="flex w-max min-w-max whitespace-nowrap items-center"
           animate={{ x: ["0%", "-50%"] }}
