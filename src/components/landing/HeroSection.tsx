@@ -322,9 +322,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
               <div className="flex -space-x-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-emerald-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">M</div>
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">R</div>
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">A</div>
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
                 Escolhido por +500 empresas
@@ -347,18 +348,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 sm:gap-5 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-                <Button variant="hero" size="lg" className="group w-full sm:w-auto rounded-full text-sm">
-                  Começar com 10 buscas grátis
+            <div className="flex flex-row items-center justify-center lg:justify-start gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+              <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
+                <Button variant="hero" size="lg" className="group rounded-full text-sm">
+                  Começar agora
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <a href="#features" className="w-full sm:w-auto group">
-                <span className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
+              <a href="#features" className="group shrink-0">
+                <Button variant="outline" size="lg" className="rounded-full text-sm border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
                   Ver como funciona
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </span>
+                </Button>
               </a>
             </div>
 
