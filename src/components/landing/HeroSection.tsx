@@ -116,6 +116,7 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [phase, setPhase] = useState<'typing' | 'showing' | 'sending' | 'deleting'>('typing');
+  const [sendingIndex, setSendingIndex] = useState(-1);
 
   useEffect(() => {
     const currentFullText = texts[textIndex];
@@ -124,16 +125,25 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
       if (phase === 'showing') {
         const sendTimer = setTimeout(() => {
           setPhase('sending');
+          setSendingIndex(0);
         }, pauseDuration);
         return () => clearTimeout(sendTimer);
       }
       if (phase === 'sending') {
-        const deleteTimer = setTimeout(() => {
-          setIsPaused(false);
-          setIsDeleting(true);
-          setPhase('deleting');
-        }, 2200);
-        return () => clearTimeout(deleteTimer);
+        if (sendingIndex < 2) {
+          const nextTimer = setTimeout(() => {
+            setSendingIndex(prev => prev + 1);
+          }, 600);
+          return () => clearTimeout(nextTimer);
+        } else {
+          const deleteTimer = setTimeout(() => {
+            setIsPaused(false);
+            setIsDeleting(true);
+            setPhase('deleting');
+            setSendingIndex(-1);
+          }, 1000);
+          return () => clearTimeout(deleteTimer);
+        }
       }
     }
 
@@ -159,9 +169,9 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
         setPhase('showing');
       }
     }
-  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase]);
+  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase, sendingIndex]);
 
-  return { displayText, textIndex, phase };
+  return { displayText, textIndex, phase, sendingIndex };
 };
 
 // Floating stats cards data - positioned around the demo
@@ -207,11 +217,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const demoRef = useRef<HTMLDivElement>(null);
   
   // Synchronized typing animation
-  const { displayText, textIndex, phase } = useTypingAnimation(
+  const { displayText, textIndex, phase, sendingIndex } = useTypingAnimation(
     demoData.map(d => d.searchTerm),
     80,
     40,
-    2500
+    1800
   );
   
   const currentData = demoData[textIndex];
@@ -309,16 +319,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
-              <Brain size={16} className="text-primary flex-shrink-0" />
+            {/* Trust badge with avatars */}
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
+              <div className="flex -space-x-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-emerald-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">M</div>
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">R</div>
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 border-2 border-background flex items-center justify-center text-[10px] text-white font-bold">A</div>
+              </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
-                IA que identifica leads com maior potencial de conversão
+                Escolhido por +500 empresas
               </span>
             </div>
 
             {/* Main heading - always 3 lines */}
-            <h1 className="font-display text-[1.75rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] xl:text-5xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-[2rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
@@ -333,17 +347,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 sm:gap-5 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-                <Button variant="hero" size="xl" className="group w-full sm:w-auto rounded-full">
+                <Button variant="hero" size="lg" className="group w-full sm:w-auto rounded-full text-sm">
                   Começar com 10 buscas grátis
-                  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <a href="#features" className="w-full sm:w-auto">
-                <Button variant="hero-outline" size="xl" className="w-full sm:w-auto rounded-full">
+              <a href="#features" className="w-full sm:w-auto group">
+                <span className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
                   Ver como funciona
-                </Button>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </span>
               </a>
             </div>
 
@@ -438,7 +453,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
                   
                   {/* Animated leads */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-h-[180px]">
                     {currentData.leads.map((lead, idx) => (
                       <div 
                         key={`${textIndex}-${idx}`}
@@ -454,36 +469,24 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                           <p className="font-medium text-xs sm:text-sm truncate">{lead.name}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate">📱 {lead.phone} • ⭐ {lead.rating}</p>
                         </div>
-                        {/* Send status icon - changes from message to sending to sent */}
-                        <div className="flex items-center gap-1.5">
-                          {phase === 'sending' ? (
-                            <div 
-                              className="flex items-center gap-1 transition-all duration-500"
-                              style={{ 
-                                animationDelay: `${idx * 300}ms`,
-                              }}
-                            >
-                              <div 
-                                className={`transition-all duration-500 ${idx * 300 < 900 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-                                style={{ transitionDelay: `${idx * 300}ms` }}
-                              >
-                                <div className="bg-primary/20 text-primary rounded-full p-1.5">
+                        {/* Send status icon */}
+                        <div className="flex items-center gap-1.5 min-w-[70px] justify-end">
+                          {phase === 'sending' && sendingIndex >= idx ? (
+                            <div className="flex items-center gap-1">
+                              <div className="bg-primary/20 text-primary rounded-full p-1.5">
+                                {sendingIndex === idx ? (
                                   <Send size={11} className="animate-pulse" />
-                                </div>
+                                ) : (
+                                  <Check size={11} />
+                                )}
                               </div>
-                              <span 
-                                className="text-[9px] text-primary font-medium transition-all duration-300 opacity-0"
-                                style={{ 
-                                  transitionDelay: `${idx * 300 + 200}ms`,
-                                  opacity: 1,
-                                }}
-                              >
-                                Enviada ✓
+                              <span className="text-[9px] text-primary font-medium">
+                                {sendingIndex > idx ? 'Enviada ✓' : 'Enviando...'}
                               </span>
                             </div>
                           ) : (
                             <div 
-                              className={`transition-all duration-300 ${phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                              className={`transition-all duration-300 ${phase === 'showing' || phase === 'sending' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
                               style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
                             >
                               <div className="bg-success/20 text-success rounded-full p-1.5">
@@ -496,17 +499,19 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     ))}
                   </div>
 
-                  {/* Sending progress bar - appears during sending phase */}
-                  <div className={`mt-2 transition-all duration-500 overflow-hidden ${phase === 'sending' ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2">
-                      <Send size={12} className="text-primary animate-pulse" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-medium text-primary">Disparando mensagens...</span>
-                          <span className="text-[10px] text-primary">3/3</span>
-                        </div>
-                        <div className="w-full bg-primary/10 rounded-full h-1">
-                          <div className="bg-primary h-1 rounded-full transition-all duration-[2000ms] ease-out" style={{ width: phase === 'sending' ? '100%' : '0%' }} />
+                  {/* Sending progress bar */}
+                  <div className="mt-2 h-10">
+                    <div className={`transition-all duration-400 ${phase === 'sending' ? 'opacity-100' : 'opacity-0'}`}>
+                      <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2">
+                        <Send size={12} className="text-primary animate-pulse" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-medium text-primary">Disparando mensagens...</span>
+                            <span className="text-[10px] text-primary">{Math.min(sendingIndex + 1, 3)}/3</span>
+                          </div>
+                          <div className="w-full bg-primary/10 rounded-full h-1">
+                            <div className="bg-primary h-1 rounded-full transition-all duration-500 ease-out" style={{ width: `${((sendingIndex + 1) / 3) * 100}%` }} />
+                          </div>
                         </div>
                       </div>
                     </div>
