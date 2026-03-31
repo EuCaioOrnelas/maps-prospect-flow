@@ -782,6 +782,9 @@ const Profile = () => {
 
             </CardContent>
           </Card>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
         </div>
       </main>
 
