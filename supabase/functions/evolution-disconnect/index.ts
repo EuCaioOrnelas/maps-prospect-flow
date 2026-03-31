@@ -85,13 +85,16 @@ serve(async (req) => {
       }
 
       // Unlink proxy before deleting
+      let savedPhoneNumber: string | null = null;
       try {
         const { data: numberData } = await supabase
           .from('whatsapp_numbers')
-          .select('proxy_id')
+          .select('proxy_id, phone_number')
           .eq('id', numberId)
           .single();
         
+        savedPhoneNumber = numberData?.phone_number || null;
+
         if (numberData?.proxy_id) {
           // Decrement proxy assigned count
           const { data: proxyData } = await supabase
@@ -111,6 +114,40 @@ serve(async (req) => {
         console.error('Error unlinking proxy:', e);
       }
 
+      // PRESERVE warming sessions: pause and unlink (phone_key enables re-linking on reconnection)
+      try {
+        const phoneDigits = (savedPhoneNumber || '').replace(/\D/g, '');
+        const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
+        
+        const { data: warmingSessions } = await supabase
+          .from('warming_sessions')
+          .select('id')
+          .eq('whatsapp_number_id', numberId);
+        
+        if (warmingSessions && warmingSessions.length > 0) {
+          await supabase
+            .from('warming_sessions')
+            .update({
+              status: 'paused',
+              paused_at: new Date().toISOString(),
+              error_message: 'Número removido - reconecte o mesmo chip para retomar',
+              whatsapp_number_id: null,
+              ...(phoneKey ? { phone_key: phoneKey } : {})
+            })
+            .eq('whatsapp_number_id', numberId);
+          
+          // Also unlink search assignments
+          await supabase
+            .from('warming_search_assignments')
+            .update({ whatsapp_number_id: null })
+            .eq('whatsapp_number_id', numberId);
+          
+          console.log(`Preserved ${warmingSessions.length} warming session(s) with phone_key: ${phoneKey}`);
+        }
+      } catch (e) {
+        console.error('Error preserving warming sessions:', e);
+      }
+
       const { error: updateError } = await supabase
         .from('whatsapp_numbers')
         .update({ 
@@ -121,7 +158,7 @@ serve(async (req) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', numberId)
-        .eq('user_id', user.id);
+        ;
 
       if (updateError) {
         console.error('Error updating number status:', updateError);
@@ -135,7 +172,7 @@ serve(async (req) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', numberId)
-        .eq('user_id', user.id);
+        ;
 
       if (updateError) {
         console.error('Error updating number status:', updateError);
