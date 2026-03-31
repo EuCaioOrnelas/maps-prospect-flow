@@ -88,22 +88,22 @@
   /* Light theme for landing/sales pages */
   .landing-light {
     --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
+    --foreground: 220 25% 14%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 220 20% 10%;
+    --card: 210 20% 98%;
+    --card-foreground: 220 25% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 220 25% 14%;
 
     --primary: 158 72% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 220 20% 10%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 25% 14%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 210 15% 93%;
+    --muted-foreground: 220 12% 46%;
 
     --accent: 158 72% 32%;
     --accent-foreground: 0 0% 100%;
@@ -111,8 +111,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 88%;
-    --input: 220 14% 88%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 158 72% 32%;
 
     --success: 158 72% 32%;
@@ -120,21 +120,21 @@
     --info: 200 98% 39%;
 
     --gradient-primary: linear-gradient(135deg, hsl(158 72% 32%) 0%, hsl(170 65% 28%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 96%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 97%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 32% / 0.08) 0%, transparent 70%);
+    --gradient-hero: linear-gradient(180deg, hsl(210 30% 99%) 0%, hsl(210 25% 97%) 50%, hsl(158 20% 97%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.06) 0%, transparent 70%);
 
-    --shadow-glow: 0 0 60px hsl(158 72% 32% / 0.15);
-    --shadow-card: 0 4px 24px hsl(158 72% 32% / 0.08);
-    --shadow-button: 0 4px 16px hsl(158 72% 32% / 0.2);
+    --shadow-glow: 0 0 80px hsl(158 72% 40% / 0.12);
+    --shadow-card: 0 1px 3px hsl(220 25% 14% / 0.04), 0 4px 16px hsl(220 25% 14% / 0.04);
+    --shadow-button: 0 2px 8px hsl(158 72% 32% / 0.2), 0 4px 16px hsl(158 72% 32% / 0.12);
 
     --whatsapp-outgoing: 158 37% 94%;
-    --whatsapp-outgoing-foreground: 220 20% 10%;
+    --whatsapp-outgoing-foreground: 220 25% 14%;
     --whatsapp-read: 199 89% 48%;
     --whatsapp-quote: 158 37% 90%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 20% 10%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 220 25% 14%;
 
     --chart-1: 158 72% 32%;
     --chart-2: 170 65% 30%;
@@ -144,106 +144,199 @@
     --chart-6: 199 89% 48%;
     --chart-7: 291 64% 42%;
     --chart-8: 24 95% 53%;
+
+    color: hsl(220 25% 14%);
+  }
+
+  /* Force all text in landing-light to use proper dark colors */
+  .landing-light h1,
+  .landing-light h2,
+  .landing-light h3,
+  .landing-light h4,
+  .landing-light h5,
+  .landing-light h6 {
+    color: hsl(220 25% 14%);
+  }
+
+  .landing-light p,
+  .landing-light span,
+  .landing-light li,
+  .landing-light label,
+  .landing-light div {
+    color: inherit;
+  }
+
+  /* Specific overrides for semantic tokens */
+  .landing-light .text-foreground {
+    color: hsl(220 25% 14%) !important;
+  }
+
+  .landing-light .text-foreground\/90 {
+    color: hsl(220 25% 14% / 0.9) !important;
+  }
+
+  .landing-light .text-muted-foreground {
+    color: hsl(220 12% 46%) !important;
+  }
+
+  /* Cards - clean, elevated, professional */
+  .landing-light .glass {
+    backdrop-filter: blur(20px);
+    background: hsl(0 0% 100% / 0.7);
+    border: 1px solid hsl(220 20% 92%);
+    box-shadow: 
+      0 1px 2px hsl(220 25% 14% / 0.03),
+      0 4px 16px hsl(220 25% 14% / 0.04);
+  }
+
+  .landing-light .glass:hover {
+    box-shadow: 
+      0 2px 4px hsl(220 25% 14% / 0.04),
+      0 8px 24px hsl(220 25% 14% / 0.06);
   }
 
   .landing-light .dashboard-card {
-    background: linear-gradient(168deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
-    border: 1px solid hsl(220 14% 88%);
-    box-shadow: 0 2px 16px -2px hsl(158 72% 32% / 0.06);
+    background: hsl(0 0% 100%);
+    border: 1px solid hsl(220 20% 92%);
+    box-shadow: 0 1px 3px hsl(220 25% 14% / 0.04), 0 4px 16px hsl(220 25% 14% / 0.04);
   }
 
   .landing-light .dashboard-card:hover {
-    border-color: hsl(158 72% 32% / 0.25);
-    box-shadow: 0 4px 24px -4px hsl(158 72% 32% / 0.12);
-  }
-
-  .landing-light .glass {
-    backdrop-filter: blur(16px);
-    background: hsl(0 0% 100% / 0.85);
-    border: 1px solid hsl(220 14% 88% / 0.6);
-    box-shadow: 0 2px 12px hsl(158 72% 32% / 0.04);
+    border-color: hsl(220 20% 88%);
+    box-shadow: 0 4px 24px hsl(220 25% 14% / 0.08);
   }
 
   .landing-light .shadow-card {
-    box-shadow: 0 4px 24px hsl(158 72% 32% / 0.08) !important;
+    box-shadow: 0 1px 3px hsl(220 25% 14% / 0.04), 0 4px 16px hsl(220 25% 14% / 0.04) !important;
   }
 
   .landing-light .shadow-glow {
-    box-shadow: 0 0 60px hsl(158 72% 32% / 0.15) !important;
+    box-shadow: 0 0 80px hsl(158 72% 40% / 0.12) !important;
   }
 
   .landing-light .shadow-button {
-    box-shadow: 0 4px 16px hsl(158 72% 32% / 0.2) !important;
+    box-shadow: 0 2px 8px hsl(158 72% 32% / 0.2), 0 4px 16px hsl(158 72% 32% / 0.12) !important;
   }
 
-  /* Fix cards and backgrounds in light theme */
+  /* Card/bg opacity variants - clean white backgrounds */
   .landing-light .bg-card\/50,
   .landing-light .bg-card\/60,
   .landing-light .bg-card\/80,
   .landing-light .bg-card\/90 {
-    background-color: hsl(0 0% 98% / 0.9);
+    background-color: hsl(0 0% 100% / 0.8);
   }
 
-  .landing-light .bg-secondary\/20,
-  .landing-light .bg-secondary\/30,
+  .landing-light .bg-secondary\/20 {
+    background-color: hsl(210 20% 96% / 0.5);
+  }
+
+  .landing-light .bg-secondary\/30 {
+    background-color: hsl(210 20% 96% / 0.6);
+  }
+
   .landing-light .bg-secondary\/40 {
-    background-color: hsl(220 14% 94% / 0.5);
+    background-color: hsl(210 20% 96% / 0.7);
   }
 
   .landing-light .bg-muted\/30 {
-    background-color: hsl(220 14% 94% / 0.6);
+    background-color: hsl(210 15% 96%);
   }
 
-  /* Stronger green accents in light theme */
+  .landing-light .bg-background\/50 {
+    background-color: hsl(0 0% 100% / 0.85);
+  }
+
+  .landing-light .bg-background\/90 {
+    background-color: hsl(0 0% 100% / 0.95);
+  }
+
+  /* Green accent backgrounds - subtle and professional */
   .landing-light .bg-primary\/5 {
-    background: linear-gradient(135deg, hsl(158 72% 32% / 0.1) 0%, hsl(170 65% 28% / 0.06) 100%);
+    background-color: hsl(158 50% 96%);
   }
 
   .landing-light .bg-primary\/10 {
-    background: linear-gradient(135deg, hsl(158 72% 32% / 0.15) 0%, hsl(170 65% 28% / 0.1) 100%);
+    background-color: hsl(158 50% 94%);
   }
 
   .landing-light .bg-primary\/15 {
-    background: linear-gradient(135deg, hsl(158 72% 32% / 0.2) 0%, hsl(170 65% 28% / 0.12) 100%);
+    background-color: hsl(158 50% 92%);
   }
 
   .landing-light .bg-primary\/20 {
-    background: linear-gradient(135deg, hsl(158 72% 32% / 0.25) 0%, hsl(170 65% 28% / 0.15) 100%);
+    background-color: hsl(158 50% 90%);
   }
 
-  /* Borders with green tint in light theme */
-  .landing-light .border-border\/30,
-  .landing-light .border-border\/40,
-  .landing-light .border-border\/50,
+  .landing-light .bg-primary\/50 {
+    background-color: hsl(158 72% 32% / 0.5);
+  }
+
+  /* Borders - subtle neutral, NOT green */
+  .landing-light .border-border\/30 {
+    border-color: hsl(220 13% 93%);
+  }
+
+  .landing-light .border-border\/40 {
+    border-color: hsl(220 13% 92%);
+  }
+
+  .landing-light .border-border\/50 {
+    border-color: hsl(220 13% 91%);
+  }
+
   .landing-light .border-border\/60 {
-    border-color: hsl(158 72% 32% / 0.12);
+    border-color: hsl(220 13% 90%);
   }
 
-  /* Fix amber-400 text for light theme */
+  .landing-light .border-primary\/10,
+  .landing-light .border-primary\/15,
+  .landing-light .border-primary\/20 {
+    border-color: hsl(158 40% 88%);
+  }
+
+  .landing-light .border-primary\/30 {
+    border-color: hsl(158 40% 82%);
+  }
+
+  /* Fix amber/red text for light theme */
   .landing-light .text-amber-400 {
     color: hsl(45 93% 35%);
   }
 
-  /* Fix red-400 text for light theme */
   .landing-light .text-red-400 {
     color: hsl(0 72% 45%);
   }
 
-  /* Fix pulse-glow animation shadow for light theme */
+  /* Pulse glow for light theme */
   .landing-light .animate-pulse-glow {
     animation: pulse-glow-light 2s ease-in-out infinite;
   }
 
+  /* Gradient card for pricing */
+  .landing-light .bg-gradient-card {
+    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+  }
+
+  /* Fix white text stays white (for gradient bg icons) */
+  .landing-light .text-white {
+    color: white !important;
+  }
+
+  .landing-light .bg-destructive\/60 {
+    background-color: hsl(0 72% 51% / 0.6);
+  }
+
+  /* Scrollbar */
   .landing-light ::-webkit-scrollbar-track {
-    background: hsl(220 14% 94%);
+    background: hsl(210 15% 96%);
   }
 
   .landing-light ::-webkit-scrollbar-thumb {
-    background: hsl(158 72% 32% / 0.2);
+    background: hsl(220 12% 80%);
   }
 
   .landing-light ::-webkit-scrollbar-thumb:hover {
-    background: hsl(158 72% 32% / 0.4);
+    background: hsl(220 12% 70%);
   }
 
   .landing-light input:-webkit-autofill,
@@ -251,43 +344,8 @@
   .landing-light input:-webkit-autofill:focus,
   .landing-light input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 30px hsl(0 0% 100%) inset !important;
-    -webkit-text-fill-color: hsl(220 20% 10%) !important;
-    caret-color: hsl(220 20% 10%) !important;
-  }
-
-  /* Fix background-50 areas */
-  .landing-light .bg-background\/50,
-  .landing-light .bg-background\/90 {
-    background-color: hsl(0 0% 100% / 0.95);
-  }
-
-  /* Green shadows for hover effects */
-  .landing-light [class*="hover:shadow-lg"]:hover {
-    box-shadow: 0 10px 30px -5px hsl(158 72% 32% / 0.1);
-  }
-
-  .landing-light [class*="hover:shadow-xl"]:hover {
-    box-shadow: 0 15px 40px -5px hsl(158 72% 32% / 0.12);
-  }
-
-  /* Fix gradient card for pricing */
-  .landing-light .bg-gradient-card {
-    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(158 72% 32% / 0.04) 100%);
-  }
-
-  /* Fix white text that doesn't use tokens */
-  .landing-light .text-white {
-    color: white;
-  }
-
-  /* Fix glow dots */
-  .landing-light .bg-primary\/50 {
-    background-color: hsl(158 72% 32% / 0.5);
-  }
-
-  /* Fix destructive opacity */
-  .landing-light .bg-destructive\/60 {
-    background-color: hsl(0 72% 51% / 0.6);
+    -webkit-text-fill-color: hsl(220 25% 14%) !important;
+    caret-color: hsl(220 25% 14%) !important;
   }
 }
 
