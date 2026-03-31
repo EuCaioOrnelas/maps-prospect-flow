@@ -2,7 +2,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Sun, Moon, Monitor, Palette } from "lucide-react";
+import { Sun, Moon, Palette } from "lucide-react";
 
 type ThemeType = "light" | "dark" | "system";
 
