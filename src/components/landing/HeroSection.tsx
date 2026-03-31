@@ -201,7 +201,7 @@ const floatingCards = [
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-8 lg:-right-24 xl:-right-32 bottom-[120px] lg:bottom-[110px]",
+    position: "-right-8 lg:-right-24 xl:-right-32 bottom-2 lg:bottom-0",
     delay: "2s"
   },
 ];
