@@ -99,7 +99,7 @@ export const WarmingSection = () => {
               {problems.map((problem, index) => (
                 <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-red-500/5 border border-red-500/10">
                   <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                    <problem.icon className="w-4 h-4 text-red-400" />
+                    <problem.icon className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
                     <h4 className="font-medium text-foreground mb-1">{problem.title}</h4>
