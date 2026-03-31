@@ -23,7 +23,7 @@ const ThemeSwitch = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
           "data-[state=checked]:[&>span]:translate-x-[36px]",
           isDark
             ? "[&>span]:bg-[hsl(220,18%,18%)] [&>span]:border [&>span]:border-[hsl(220,14%,24%)]"
-            : "[&>span]:bg-white [&>span]:border [&>span]:border-[hsl(220,14%,38%)]",
+            : "[&>span]:bg-white [&>span]:border [&>span]:border-[hsl(220,12%,80%)]",
           isDark
             ? "hover:bg-[hsl(220,18%,14%)]"
             : "hover:bg-[hsl(220,16%,32%)]"
