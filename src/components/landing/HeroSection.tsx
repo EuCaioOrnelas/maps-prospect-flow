@@ -281,36 +281,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         className="absolute inset-0 bg-gradient-hero will-change-transform"
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
+
+      {/* World map dot pattern */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.07] will-change-transform"
+        style={{
+          transform: `translateY(${parallaxOffset * 0.2}px)`,
+          backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
+          backgroundSize: '18px 18px',
+          maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
+          WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
+          maskSize: 'cover',
+          WebkitMaskSize: 'cover',
+          maskPosition: 'center',
+          WebkitMaskPosition: 'center',
+        }}
+      />
       
       {/* Main glow - softer */}
       <div 
         className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
-      />
-      
-      {/* Small glow dots - pontos pequenos com float */}
-      {glowDots.map((dot, i) => (
-        <div
-          key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-float"
-          style={{
-            left: dot.left,
-            top: dot.top,
-            animationDelay: `${dot.delay}s`,
-            animationDuration: `${4 + i}s`,
-            boxShadow: '0 0 8px 2px hsl(var(--primary) / 0.4)',
-          }}
-        />
-      ))}
-      
-      {/* Corner accents */}
-      <div 
-        className="absolute top-20 right-10 md:right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
-        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
-      />
-      <div 
-        className="absolute bottom-40 left-10 md:left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
-        style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
       <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">

@@ -696,16 +696,16 @@
 
 /* Light scrollbar for landing */
 .landing-light ::-webkit-scrollbar-track {
-  background: hsl(210 20% 96%);
+  background: hsl(0 0% 100%);
 }
 
 .landing-light ::-webkit-scrollbar-thumb {
-  background: hsl(158 72% 32% / 0.2);
+  background: hsl(220 12% 85%);
   border-radius: 4px;
 }
 
 .landing-light ::-webkit-scrollbar-thumb:hover {
-  background: hsl(158 72% 32% / 0.35);
+  background: hsl(220 12% 75%);
 }
 
 /* Shimmer highlight text effect (AbacatePay style) */
