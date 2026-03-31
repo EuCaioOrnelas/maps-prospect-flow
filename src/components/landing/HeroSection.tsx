@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
+import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Animated counter component
@@ -263,13 +263,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
   const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
 
-  // Pontos de brilho pequenos e sutis
-  const glowDots = useMemo(() => [
-    { left: '10%', top: '30%', delay: 0 },
-    { left: '88%', top: '25%', delay: 1.2 },
-    { left: '18%', top: '70%', delay: 0.6 },
-    { left: '82%', top: '65%', delay: 1.8 },
-  ], []);
 
   return (
     <section 
@@ -281,36 +274,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         className="absolute inset-0 bg-gradient-hero will-change-transform"
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
+
+      {/* World map dot pattern */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.07] will-change-transform"
+        style={{
+          transform: `translateY(${parallaxOffset * 0.2}px)`,
+          backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
+          backgroundSize: '18px 18px',
+          maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
+          WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
+          maskSize: 'cover',
+          WebkitMaskSize: 'cover',
+          maskPosition: 'center',
+          WebkitMaskPosition: 'center',
+        }}
+      />
       
       {/* Main glow - softer */}
       <div 
         className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
-      />
-      
-      {/* Small glow dots - pontos pequenos com float */}
-      {glowDots.map((dot, i) => (
-        <div
-          key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-primary/50 pointer-events-none animate-float"
-          style={{
-            left: dot.left,
-            top: dot.top,
-            animationDelay: `${dot.delay}s`,
-            animationDuration: `${4 + i}s`,
-            boxShadow: '0 0 8px 2px hsl(var(--primary) / 0.4)',
-          }}
-        />
-      ))}
-      
-      {/* Corner accents */}
-      <div 
-        className="absolute top-20 right-10 md:right-20 w-2 h-2 bg-primary rounded-full animate-pulse-glow will-change-transform" 
-        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
-      />
-      <div 
-        className="absolute bottom-40 left-10 md:left-20 w-3 h-3 bg-primary/50 rounded-full animate-pulse-glow will-change-transform" 
-        style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
       <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
@@ -333,7 +317,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
 
             {/* Main heading - always 3 lines */}
-            <h1 className="font-display text-[2rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-[2.25rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] xl:text-[3.75rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
@@ -343,22 +327,22 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
-              empresas ativas, com contatos verificados e alto potencial de conversão.
+              Prospecte leads qualificados e dispare campanhas de mensagens em massa
+              via API Oficial da Meta — tudo automatizado com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-row items-center justify-center lg:justify-start gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
-                <Button variant="hero" size="lg" className="group rounded-full text-sm">
+                <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
                   Começar agora
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <a href="#features" className="group shrink-0">
-                <Button variant="ghost" size="lg" className="rounded-full text-sm border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
+                <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver como funciona
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </a>
             </div>
@@ -519,27 +503,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </div>
               </div>
 
-              {/* 3 benefit cards BELOW the demo */}
-              <div className="grid grid-cols-3 gap-3 mt-4 animate-slide-up" style={{ animationDelay: "0.7s" }}>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <Target size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Leads pré-qualificados</span>
-                </div>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <MessageCircle size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Disparo em massa via WhatsApp</span>
-                </div>
-                <div className="glass rounded-2xl px-3 py-3 flex flex-col items-center gap-2 text-center">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
-                    <TrendingUp size={16} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground leading-tight">Maior taxa de conversão</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
