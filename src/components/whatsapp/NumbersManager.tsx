@@ -1444,25 +1444,81 @@ export const NumbersManager = ({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir número?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteImpactLoading
-                ? "Verificando campanhas vinculadas a este número..."
-                : deleteImpact.campaigns.length > 0
-                  ? `Esta ação não pode ser desfeita. O número será removido permanentemente e ${deleteImpact.campaigns.length} campanha(s) ativa(s)/agendada(s) também serão excluídas: ${deleteImpact.campaigns.slice(0, 3).map((campaign) => campaign.name).join(', ')}${deleteImpact.campaigns.length > 3 ? '...' : ''}.`
-                  : "Esta ação não pode ser desfeita. O número será desconectado e removido permanentemente."}
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-lg">Excluir número</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 pt-1">
+                {deleteImpactLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verificando campanhas vinculadas...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Esta ação não pode ser desfeita. O número será desconectado e removido permanentemente.
+                    </p>
+
+                    {deleteImpact.campaigns.length > 0 && (
+                      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+                          <span className="text-sm font-medium text-destructive">
+                            {deleteImpact.campaigns.length} campanha{deleteImpact.campaigns.length > 1 ? 's' : ''} será{deleteImpact.campaigns.length > 1 ? 'ão' : ''} excluída{deleteImpact.campaigns.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <ul className="space-y-1 pl-6">
+                          {deleteImpact.campaigns.slice(0, 5).map((campaign) => (
+                            <li key={campaign.id} className="text-xs text-muted-foreground flex items-center justify-between">
+                              <span className="truncate mr-2">• {campaign.name}</span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 capitalize">
+                                {campaign.status === 'running' ? 'em execução' : campaign.status === 'scheduled' ? 'agendada' : campaign.status}
+                              </Badge>
+                            </li>
+                          ))}
+                          {deleteImpact.campaigns.length > 5 && (
+                            <li className="text-xs text-muted-foreground">
+                              ...e mais {deleteImpact.campaigns.length - 5}
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {warmingSessions[numberToDelete || ''] && (
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                        <div className="flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span className="text-xs text-muted-foreground">
+                            O aquecimento será pausado e poderá ser retomado ao reconectar o mesmo chip.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="mt-2">
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteNumber}
               disabled={loading || deleteImpactLoading}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {loading || deleteImpactLoading ? 'Processando...' : 'Excluir'}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Excluindo...
+                </span>
+              ) : 'Excluir número'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
