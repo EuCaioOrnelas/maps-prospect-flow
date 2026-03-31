@@ -466,22 +466,22 @@
 @keyframes pulse-glow {
   0%, 100% { 
     opacity: 1; 
-    box-shadow: 0 0 20px 5px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 12px 3px hsl(var(--primary) / 0.15);
   }
   50% { 
-    opacity: 0.6; 
-    box-shadow: 0 0 40px 10px hsl(var(--primary) / 0.5);
+    opacity: 0.7; 
+    box-shadow: 0 0 24px 6px hsl(var(--primary) / 0.25);
   }
 }
 
 @keyframes pulse-glow-light {
   0%, 100% { 
     opacity: 1; 
-    box-shadow: 0 0 20px 5px hsl(158 72% 32% / 0.2);
+    box-shadow: 0 0 10px 3px hsl(158 72% 32% / 0.1);
   }
   50% { 
-    opacity: 0.6; 
-    box-shadow: 0 0 40px 10px hsl(158 72% 32% / 0.35);
+    opacity: 0.7; 
+    box-shadow: 0 0 20px 6px hsl(158 72% 32% / 0.18);
   }
 }
 
@@ -691,6 +691,42 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
+}
+
+/* Light scrollbar for landing */
+.landing-light ::-webkit-scrollbar-track {
+  background: hsl(210 20% 96%);
+}
+
+.landing-light ::-webkit-scrollbar-thumb {
+  background: hsl(158 72% 32% / 0.2);
+  border-radius: 4px;
+}
+
+.landing-light ::-webkit-scrollbar-thumb:hover {
+  background: hsl(158 72% 32% / 0.35);
+}
+
+/* Shimmer highlight text effect (AbacatePay style) */
+.text-shimmer-highlight {
+  background: linear-gradient(
+    90deg,
+    hsl(158 72% 32%) 0%,
+    hsl(158 72% 32%) 40%,
+    hsl(158 72% 55%) 50%,
+    hsl(158 72% 32%) 60%,
+    hsl(158 72% 32%) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes text-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* Fix autofill styles for inputs */

@@ -264,9 +264,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       />
       
-      {/* Main glow */}
+      {/* Main glow - softer */}
       <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-50 will-change-transform"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform"
         style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
       />
       
@@ -307,9 +307,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* Main heading */}
           <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 animate-slide-up px-2 text-foreground" style={{ animationDelay: "0.1s" }}>
-            Prospecção{" "}
-            <span className="text-gradient">Inteligente</span>
-            <span className="text-foreground">{" "}com IA</span>
+            Prospecção Inteligente de{" "}
+            <span className="text-shimmer-highlight">Leads B2B com IA</span>
           </h1>
 
           {/* Subheading */}
@@ -318,40 +317,38 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             empresas ativas, com contatos verificados e alto potencial de conversão.
           </p>
 
-          {/* AI Value Proposition */}
-          <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-4 sm:mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
-                  <Target size={13} className="text-white" />
-                </div>
-                <span>Leads pré-qualificados</span>
+          {/* AI Value Proposition - 3 separate cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10 max-w-2xl mx-4 sm:mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
+            <div className="glass rounded-2xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
+                <Target size={18} className="text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle size={13} className="text-white" />
-                </div>
-                <span>Disparo em massa via WhatsApp</span>
+              <span className="text-sm font-medium text-foreground">Leads pré-qualificados</span>
+            </div>
+            <div className="glass rounded-2xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
+                <MessageCircle size={18} className="text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp size={13} className="text-white" />
-                </div>
-                <span>Maior taxa de conversão</span>
+              <span className="text-sm font-medium text-foreground">Disparo em massa via WhatsApp</span>
+            </div>
+            <div className="glass rounded-2xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
+                <TrendingUp size={18} className="text-white" />
               </div>
+              <span className="text-sm font-medium text-foreground">Maior taxa de conversão</span>
             </div>
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-slide-up px-4" style={{ animationDelay: "0.3s" }}>
             <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-              <Button variant="hero" size="xl" className="group w-full sm:w-auto">
+              <Button variant="hero" size="xl" className="group w-full sm:w-auto rounded-full">
                 Começar com 10 buscas grátis
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
-              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto">
+              <Button variant="hero-outline" size="xl" className="w-full sm:w-auto rounded-full">
                 Ver como funciona
               </Button>
             </a>
