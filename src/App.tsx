@@ -187,7 +187,7 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
-                <Route path="/lp/:slug" element={<LandingPage />} />
+                <Route path="/lp/:slug" element={<LightThemeWrapper><LandingPage /></LightThemeWrapper>} />
                 {/* /reports now redirects to /dashboard */}
                 <Route 
                   path="/whatsapp" 
