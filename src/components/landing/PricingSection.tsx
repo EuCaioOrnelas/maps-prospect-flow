@@ -178,7 +178,7 @@ export const PricingSection = () => {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap">
+                    <div className="flex items-center gap-1 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap">
                       <Sparkles size={14} />
                       Mais Popular
                     </div>
