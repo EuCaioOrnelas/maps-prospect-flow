@@ -63,13 +63,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
           {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeSwitch />
 
           {/* Credits indicator */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
