@@ -354,6 +354,68 @@
     -webkit-text-fill-color: hsl(220 25% 14%) !important;
     caret-color: hsl(220 25% 14%) !important;
   }
+
+  /* Sidebar in light mode - clean white */
+  .landing-light .bg-sidebar {
+    background-color: hsl(0 0% 100%) !important;
+  }
+
+  .landing-light .border-sidebar-border {
+    border-color: hsl(220 13% 91%) !important;
+  }
+
+  .landing-light .text-sidebar-foreground,
+  .landing-light .text-sidebar-foreground\/60,
+  .landing-light .text-sidebar-foreground\/50 {
+    color: hsl(220 12% 46%) !important;
+  }
+
+  .landing-light .hover\:text-sidebar-foreground:hover {
+    color: hsl(220 25% 14%) !important;
+  }
+
+  .landing-light .hover\:bg-sidebar-accent\/50:hover,
+  .landing-light .bg-sidebar-accent\/60,
+  .landing-light .bg-sidebar-accent\/50 {
+    background-color: hsl(158 50% 94%) !important;
+  }
+
+  .landing-light .text-primary {
+    color: hsl(158 72% 32%) !important;
+  }
+
+  /* Background glow - softer for light */
+  .landing-light .bg-gradient-glow,
+  .landing-light [class*="bg-emerald-500/5"],
+  .landing-light [class*="bg-blue-500/5"] {
+    opacity: 0.7;
+  }
+
+  /* Muted backgrounds */
+  .landing-light .bg-muted\/50 {
+    background-color: hsl(210 15% 96%) !important;
+  }
+
+  /* Input styling */
+  .landing-light .bg-muted\/50 input,
+  .landing-light input.bg-muted\/50 {
+    background-color: hsl(210 15% 97%) !important;
+    color: hsl(220 25% 14%) !important;
+  }
+
+  /* Hover accent - green instead of gray */  
+  .landing-light .hover\:bg-muted\/50:hover {
+    background-color: hsl(158 50% 95%) !important;
+  }
+
+  .landing-light .hover\:bg-secondary\/50:hover {
+    background-color: hsl(158 50% 95%) !important;
+  }
+
+  /* Dropdown menus in light theme */
+  .landing-light .bg-card {
+    background-color: hsl(0 0% 100%) !important;
+  }
 }
 
 @layer base {
