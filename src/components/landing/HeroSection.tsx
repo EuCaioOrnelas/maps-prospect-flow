@@ -169,7 +169,7 @@ const floatingCards = [
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-2 lg:-right-10 xl:-right-16 top-12 lg:top-8",
+    position: "-right-6 lg:-right-16 xl:-right-24 -top-4 lg:-top-6",
     delay: "1.2s"
   },
   { 
@@ -295,9 +295,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
-      <div className="container mx-auto px-4 relative z-10 max-w-7xl w-full">
+      <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16 items-center">
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
