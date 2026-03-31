@@ -325,6 +325,8 @@ export const NumbersManager = ({
               isInsertingRef.current = false;
               return;
             }
+            // Re-link orphaned warming sessions by phone_key
+            await relinkWarmingSessions(newNumber.id, data.phoneNumber);
             
             // Add to local state
             onNumbersChange([...numbers, newNumber]);
