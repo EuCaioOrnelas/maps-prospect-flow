@@ -320,17 +320,23 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* AI Value Proposition */}
           <div className="glass rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-8 sm:mb-10 max-w-2xl mx-4 sm:mx-auto animate-slide-up" style={{ animationDelay: "0.25s" }}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-foreground">
               <div className="flex items-center gap-2">
-                <Target size={16} className="text-primary flex-shrink-0" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <Target size={13} className="text-white" />
+                </div>
                 <span>Leads pré-qualificados</span>
               </div>
               <div className="flex items-center gap-2">
-                <MessageCircle size={16} className="text-primary flex-shrink-0" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle size={13} className="text-white" />
+                </div>
                 <span>Disparo em massa via WhatsApp</span>
               </div>
               <div className="flex items-center gap-2">
-                <TrendingUp size={16} className="text-primary flex-shrink-0" />
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp size={13} className="text-white" />
+                </div>
                 <span>Maior taxa de conversão</span>
               </div>
             </div>
