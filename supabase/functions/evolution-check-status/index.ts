@@ -351,12 +351,24 @@ serve(async (req) => {
       if (infoResponse.ok) {
         const infoData = await infoResponse.json();
         console.log('Instance info:', JSON.stringify(infoData));
-        
-        if (infoData && infoData.length > 0) {
-          const rawOwner = infoData[0].owner || infoData[0].instance?.owner || infoData[0].number || infoData[0].instance?.number || infoData[0].wuid || infoData[0].instance?.wuid || null;
-          const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
-          phoneNumber = ownerDigits.length >= 10 ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`) : null;
-        }
+
+        const instanceInfo = Array.isArray(infoData)
+          ? infoData[0]
+          : (Array.isArray(infoData?.data) ? infoData.data[0] : infoData?.data || infoData);
+
+        const rawOwner =
+          instanceInfo?.owner ||
+          instanceInfo?.instance?.owner ||
+          instanceInfo?.number ||
+          instanceInfo?.instance?.number ||
+          instanceInfo?.wuid ||
+          instanceInfo?.instance?.wuid ||
+          instanceInfo?.instance?.jid ||
+          instanceInfo?.jid ||
+          null;
+
+        const ownerDigits = rawOwner ? String(rawOwner).replace(/\D/g, '') : '';
+        phoneNumber = ownerDigits.length >= 10 ? (ownerDigits.startsWith('55') ? ownerDigits : `55${ownerDigits}`) : null;
       }
     } catch (e) {
       console.error('Error fetching instance info:', e);
