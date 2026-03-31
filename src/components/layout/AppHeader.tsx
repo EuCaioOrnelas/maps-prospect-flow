@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, User, Settings, LogOut } from "lucide-react";
+import { Search, User, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MobileNav } from "./MobileNav";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface AppHeaderProps {
   profile?: {
