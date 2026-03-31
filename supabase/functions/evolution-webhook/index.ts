@@ -2319,6 +2319,15 @@ REGRAS:
             // Strategy: try multiple sources to maximize chance of getting the phone number
             let ownerPhone: string | null = null;
 
+            // Source 0: data.wuid (most reliable - directly from connection payload)
+            if (!ownerPhone && data?.wuid) {
+              const wuidDigits = String(data.wuid).replace(/\D/g, '');
+              if (wuidDigits.length >= 10) {
+                ownerPhone = wuidDigits.startsWith('55') ? wuidDigits : `55${wuidDigits}`;
+                console.log(`[phone-hydrate] Got phone from data.wuid: ${ownerPhone}`);
+              }
+            }
+
             // Source 1: payload.sender (root-level sender from Evolution API)
             if (!ownerPhone && payload.sender) {
               const senderDigits = String(payload.sender).replace(/\D/g, '');
