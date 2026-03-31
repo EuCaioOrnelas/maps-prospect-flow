@@ -584,15 +584,30 @@ export const NumbersManager = ({
         console.error('Error unlinking proxy:', e);
       }
 
-      // Unlink related tables before deleting
+      // Also delete any remaining campaigns (completed, etc.) linked to this number
+      const { data: remainingCampaigns } = await supabase
+        .from('whatsapp_campaigns')
+        .select('id')
+        .eq('whatsapp_number_id', numberToDelete);
+      
+      if (remainingCampaigns && remainingCampaigns.length > 0) {
+        const remainingIds = remainingCampaigns.map(c => c.id);
+        await Promise.allSettled([
+          (supabase as any).from('campaign_daily_reservations').delete().in('campaign_id', remainingIds),
+          (supabase as any).from('campaign_responses').delete().in('campaign_id', remainingIds),
+          (supabase as any).from('campaign_incidents').update({ campaign_id: null }).in('campaign_id', remainingIds),
+          (supabase as any).from('ignored_contacts').update({ campaign_id: null }).in('campaign_id', remainingIds),
+        ]);
+        await supabase.from('whatsapp_campaigns').delete().in('id', remainingIds);
+      }
+
+      // Unlink related tables before deleting the number
       const unlinkPromises = [
-        supabase.from('whatsapp_campaigns').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         supabase.from('ai_agents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('campaign_incidents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
         (supabase as any).from('ignored_contacts').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        // Revenue tables with FK to whatsapp_numbers
         (supabase as any).from('revenue_conversations').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
         (supabase as any).from('revenue_events').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
         (supabase as any).from('revenue_leads').update({ source_number_instance_id: null }).eq('source_number_instance_id', numberToDelete),
