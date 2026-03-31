@@ -384,11 +384,16 @@
     color: hsl(158 72% 32%) !important;
   }
 
-  /* Background glow - softer for light */
+  /* Background glow - much softer in light mode */
   .landing-light .bg-gradient-glow,
   .landing-light [class*="bg-emerald-500/5"],
   .landing-light [class*="bg-blue-500/5"] {
-    opacity: 0.7;
+    opacity: 0.4;
+  }
+
+  /* Reduce the BackgroundGlow component opacity in light theme */
+  .landing-light .fixed.inset-0[aria-hidden="true"] {
+    opacity: 0.25 !important;
   }
 
   /* Muted backgrounds */

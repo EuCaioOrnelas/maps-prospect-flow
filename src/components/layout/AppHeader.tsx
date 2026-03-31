@@ -62,9 +62,6 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
 
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
-          {/* Theme toggle */}
-          <ThemeSwitch />
-
           {/* Credits indicator */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
             <Search size={14} className="text-muted-foreground" />
@@ -90,6 +87,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             <span className="text-muted-foreground">/</span>
             <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
           </div>
+
+          {/* Theme toggle - between credits and avatar */}
+          <ThemeSwitch />
 
           {/* Desktop Avatar dropdown */}
           <div className="hidden lg:block">
