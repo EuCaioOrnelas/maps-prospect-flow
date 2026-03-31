@@ -958,15 +958,7 @@ export const NumbersManager = ({
                 <Smartphone size={20} />
                 Gerenciar Números ({numbers.length}/{maxNumbers})
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefreshStatus}
-                disabled={loading}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              </Button>
+              {/* Sync button removed - not used */}
             </DialogTitle>
           </DialogHeader>
           
