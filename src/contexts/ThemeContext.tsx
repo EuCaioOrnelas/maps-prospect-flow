@@ -46,7 +46,15 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     try {
       localStorage.setItem("dashboard-theme", theme);
     } catch {}
-    setResolvedTheme(resolveTheme(theme));
+    const resolved = resolveTheme(theme);
+    setResolvedTheme(resolved);
+
+    // Apply landing-light to document.body so Radix portals (dialogs, popovers) inherit the theme
+    if (resolved === "light") {
+      document.body.classList.add("landing-light");
+    } else {
+      document.body.classList.remove("landing-light");
+    }
   }, [theme]);
 
   // Listen for system theme changes
