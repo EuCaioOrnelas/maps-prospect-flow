@@ -356,7 +356,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </Button>
               </Link>
               <a href="#features" className="group shrink-0">
-                <Button variant="outline" size="lg" className="rounded-full text-sm border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
+                <Button variant="ghost" size="lg" className="rounded-full text-sm border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver como funciona
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
