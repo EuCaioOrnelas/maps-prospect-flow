@@ -162,28 +162,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-4 lg:-left-14 xl:-left-20 top-0 lg:-top-2",
+    position: "-left-6 lg:-left-16 xl:-left-24 top-4 lg:top-2",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-4 lg:-right-14 xl:-right-20 top-0 lg:-top-2",
+    position: "-right-2 lg:-right-10 xl:-right-16 top-12 lg:top-8",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-4 lg:-left-14 xl:-left-20 bottom-[140px] lg:bottom-[130px]",
+    position: "-left-8 lg:-left-20 xl:-left-28 bottom-[160px] lg:bottom-[150px]",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-4 lg:-right-14 xl:-right-20 bottom-[140px] lg:bottom-[130px]",
+    position: "-right-4 lg:-right-12 xl:-right-20 bottom-[120px] lg:bottom-[110px]",
     delay: "2s"
   },
 ];
