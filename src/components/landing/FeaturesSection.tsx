@@ -194,7 +194,7 @@ export const FeaturesSection = () => {
                     <activeFeature.icon size={28} className="text-white" />
                   </div>
 
-                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
+                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3 text-foreground">
                     {activeFeature.title}
                   </h3>
 
