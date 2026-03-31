@@ -3771,7 +3771,7 @@ export type Database = {
           updated_at: string
           user_id: string
           warming_session_id: string | null
-          whatsapp_number_id: string
+          whatsapp_number_id: string | null
         }
         Insert: {
           created_at?: string
@@ -3783,7 +3783,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           warming_session_id?: string | null
-          whatsapp_number_id: string
+          whatsapp_number_id?: string | null
         }
         Update: {
           created_at?: string
@@ -3795,7 +3795,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           warming_session_id?: string | null
-          whatsapp_number_id?: string
+          whatsapp_number_id?: string | null
         }
         Relationships: [
           {
@@ -3838,7 +3838,7 @@ export type Database = {
           user_id: string
           warming_level: number
           warming_status: string
-          whatsapp_number_id: string
+          whatsapp_number_id: string | null
         }
         Insert: {
           agent_reply_limit?: number | null
@@ -3863,7 +3863,7 @@ export type Database = {
           user_id: string
           warming_level?: number
           warming_status?: string
-          whatsapp_number_id: string
+          whatsapp_number_id?: string | null
         }
         Update: {
           agent_reply_limit?: number | null
@@ -3888,7 +3888,7 @@ export type Database = {
           user_id?: string
           warming_level?: number
           warming_status?: string
-          whatsapp_number_id?: string
+          whatsapp_number_id?: string | null
         }
         Relationships: [
           {
