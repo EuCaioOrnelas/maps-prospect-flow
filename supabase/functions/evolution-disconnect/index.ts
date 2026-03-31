@@ -114,27 +114,45 @@ serve(async (req) => {
         console.error('Error unlinking proxy:', e);
       }
 
-      // PRESERVE warming sessions: pause and unlink (phone_key enables re-linking on reconnection)
+      // PRESERVE warming sessions: unlink but keep original status (phone_key enables re-linking on reconnection)
       try {
         const phoneDigits = (savedPhoneNumber || '').replace(/\D/g, '');
         const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
         
         const { data: warmingSessions } = await supabase
           .from('warming_sessions')
-          .select('id')
+          .select('id, status')
           .eq('whatsapp_number_id', numberId);
         
         if (warmingSessions && warmingSessions.length > 0) {
-          await supabase
-            .from('warming_sessions')
-            .update({
-              status: 'paused',
-              paused_at: new Date().toISOString(),
-              error_message: 'Número removido - reconecte o mesmo chip para retomar',
-              whatsapp_number_id: null,
-              ...(phoneKey ? { phone_key: phoneKey } : {})
-            })
-            .eq('whatsapp_number_id', numberId);
+          // For completed sessions, preserve status as-is; only pause active ones
+          const activeSessions = warmingSessions.filter((s: any) => s.status === 'active');
+          const otherSessions = warmingSessions.filter((s: any) => s.status !== 'active');
+          
+          // Pause active sessions
+          if (activeSessions.length > 0) {
+            await supabase
+              .from('warming_sessions')
+              .update({
+                status: 'paused',
+                paused_at: new Date().toISOString(),
+                error_message: 'Número removido - reconecte o mesmo chip para retomar',
+                whatsapp_number_id: null,
+                ...(phoneKey ? { phone_key: phoneKey } : {})
+              })
+              .in('id', activeSessions.map((s: any) => s.id));
+          }
+          
+          // For completed/other sessions, just unlink without changing status
+          if (otherSessions.length > 0) {
+            await supabase
+              .from('warming_sessions')
+              .update({
+                whatsapp_number_id: null,
+                ...(phoneKey ? { phone_key: phoneKey } : {})
+              })
+              .in('id', otherSessions.map((s: any) => s.id));
+          }
           
           // Also unlink search assignments
           await supabase
@@ -142,7 +160,7 @@ serve(async (req) => {
             .update({ whatsapp_number_id: null })
             .eq('whatsapp_number_id', numberId);
           
-          console.log(`Preserved ${warmingSessions.length} warming session(s) with phone_key: ${phoneKey}`);
+          console.log(`Preserved ${warmingSessions.length} warming session(s) with phone_key: ${phoneKey} (${activeSessions.length} paused, ${otherSessions.length} kept original status)`);
         }
       } catch (e) {
         console.error('Error preserving warming sessions:', e);
