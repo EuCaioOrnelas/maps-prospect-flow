@@ -27,7 +27,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <Zap size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
             Comece a prospectar{" "}
             <span className="text-gradient">agora mesmo</span>
           </h2>
