@@ -55,7 +55,7 @@ export const OfficialAPISection = () => {
             <span className="text-sm text-muted-foreground">API Oficial & Segurança</span>
           </div>
 
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Tecnologia <span className="text-gradient">oficial e segura</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">

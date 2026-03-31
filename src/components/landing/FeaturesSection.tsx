@@ -104,7 +104,7 @@ export const FeaturesSection = () => {
             <Brain size={16} className="text-primary" />
             <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
             Tudo que você precisa para{" "}
             <span className="text-gradient">vender mais</span>
           </h2>

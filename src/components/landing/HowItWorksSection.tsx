@@ -63,7 +63,7 @@ export const HowItWorksSection = () => {
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
             Simples e Eficiente
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Como <span className="text-gradient">Funciona</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
