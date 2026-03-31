@@ -46,7 +46,7 @@ export const TrustedBySection = () => {
           {marqueeItems.map((brand, i) => (
             <div
               key={`${brand.name}-${i}`}
-              className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500"
+              className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-all duration-500"
               title={brand.name}
             >
               <img
