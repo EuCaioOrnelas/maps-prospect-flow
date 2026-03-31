@@ -86,6 +86,7 @@ export const NumbersManager = ({
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [numberToDelete, setNumberToDelete] = useState<string | null>(null);
+  const [deletingNumberId, setDeletingNumberId] = useState<string | null>(null);
   const [deleteImpact, setDeleteImpact] = useState<NumberDeleteImpact>({ campaigns: [] });
   const [deleteImpactLoading, setDeleteImpactLoading] = useState(false);
   const [newNumberName, setNewNumberName] = useState("");
@@ -600,6 +601,8 @@ export const NumbersManager = ({
     if (!numberToDelete) return;
 
     setLoading(true);
+    setDeletingNumberId(numberToDelete);
+    setDeleteConfirmOpen(false);
 
     try {
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
@@ -713,8 +716,8 @@ export const NumbersManager = ({
       if (error) throw error;
 
       onNumbersChange(numbers.filter(n => n.id !== numberToDelete));
-      setDeleteConfirmOpen(false);
       setNumberToDelete(null);
+      setDeletingNumberId(null);
 
       toast({
         title: "Número removido",
@@ -724,6 +727,7 @@ export const NumbersManager = ({
       });
     } catch (err) {
       console.error('Error deleting number:', err);
+      setDeletingNumberId(null);
       toast({
         title: "Erro",
         description: err instanceof Error ? err.message : "Não foi possível remover o número",
@@ -985,8 +989,14 @@ export const NumbersManager = ({
                   return (
                     <div 
                       key={number.id}
-                      className="p-4 rounded-lg border border-border bg-card"
+                      className={`p-4 rounded-lg border border-border bg-card relative overflow-hidden transition-opacity duration-300 ${deletingNumberId === number.id ? 'opacity-60 pointer-events-none' : ''}`}
                     >
+                      {deletingNumberId === number.id && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/80 backdrop-blur-sm rounded-lg">
+                          <Loader2 className="w-6 h-6 animate-spin text-destructive mb-2" />
+                          <span className="text-sm font-medium text-destructive">Excluindo número...</span>
+                        </div>
+                      )}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           {number.is_connected ? (
