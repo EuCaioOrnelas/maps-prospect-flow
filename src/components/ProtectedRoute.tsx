@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { BlockedUserModal } from '@/components/BlockedUserModal';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardThemeProvider } from '@/contexts/ThemeContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -103,5 +104,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/upgrade?expired=true" replace />;
   }
 
-  return <>{children}</>;
+  return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
 };

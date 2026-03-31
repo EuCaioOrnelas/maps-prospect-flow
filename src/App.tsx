@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
+import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 
 // Eager load critical pages
 import Index from "./pages/Index";
