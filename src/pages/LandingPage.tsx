@@ -66,19 +66,32 @@ const LandingPage = () => {
         description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens e geração de leads qualificados."
         keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp"
       />
-      <main className="landing-light min-h-screen bg-background overflow-x-hidden w-full max-w-full">
-        <Navbar onSignupClick={trackSignupClick} />
-        <HeroSection onSignupClick={trackSignupClick} />
-        <HowItWorksSection />
-        <FeaturesSection />
-        <OfficialAPISection />
-        <WarmingSection />
-        <AIAgentsSection />
-        <TestimonialsSection />
-        <PricingSection />
-        <FAQSection />
-        <CTASection onSignupClick={trackSignupClick} />
-        <Footer />
+      <main className="landing-light min-h-screen bg-background overflow-x-hidden w-full max-w-full relative">
+        {/* Aurora/mesh gradient background */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[50%] rounded-full opacity-[0.07]"
+            style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
+          <div className="absolute top-[30%] -left-[15%] w-[50%] h-[50%] rounded-full opacity-[0.05]"
+            style={{ background: 'radial-gradient(ellipse, hsl(200 80% 55%), transparent 70%)' }} />
+          <div className="absolute top-[60%] right-[5%] w-[45%] h-[40%] rounded-full opacity-[0.05]"
+            style={{ background: 'radial-gradient(ellipse, hsl(170 65% 40%), transparent 70%)' }} />
+          <div className="absolute inset-0 opacity-[0.02]"
+            style={{ backgroundImage: 'radial-gradient(hsl(220 25% 14%) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        </div>
+        <div className="relative z-10">
+          <Navbar onSignupClick={trackSignupClick} />
+          <HeroSection onSignupClick={trackSignupClick} />
+          <HowItWorksSection />
+          <FeaturesSection />
+          <OfficialAPISection />
+          <WarmingSection />
+          <AIAgentsSection />
+          <TestimonialsSection />
+          <PricingSection />
+          <FAQSection />
+          <CTASection onSignupClick={trackSignupClick} />
+          <Footer />
+        </div>
       </main>
     </>
   );
