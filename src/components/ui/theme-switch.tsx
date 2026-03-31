@@ -36,7 +36,7 @@ const ThemeSwitch = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
           size={14}
           className={cn(
             "transition-opacity duration-300",
-            isDark ? "opacity-40 text-[hsl(220,12%,50%)]" : "opacity-100 text-[hsl(45,93%,47%)]"
+            isDark ? "opacity-100 text-white" : "opacity-100 text-[hsl(45,93%,47%)]"
           )}
         />
       </div>
