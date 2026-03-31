@@ -727,6 +727,7 @@ export const NumbersManager = ({
       });
     } catch (err) {
       console.error('Error deleting number:', err);
+      setDeletingNumberId(null);
       toast({
         title: "Erro",
         description: err instanceof Error ? err.message : "Não foi possível remover o número",
