@@ -407,18 +407,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                   {/* Search bar simulation */}
-                  <div className="flex flex-col sm:flex-row gap-2 mb-3 sm:mb-4">
-                    <div className="flex-1 bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm flex items-center">
-                      <span className="text-muted-foreground mr-2">🔍</span>
-                      <span className="text-foreground">{displayText}</span>
-                      <span className="typing-cursor">|</span>
+                  <div className="flex gap-2 mb-3 sm:mb-4">
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm flex items-center">
+                        <span className="text-muted-foreground mr-2">🔍</span>
+                        <span className="text-foreground">{displayText}</span>
+                        <span className="typing-cursor">|</span>
+                      </div>
+                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm text-muted-foreground">
+                        📍 {currentData.location}
+                      </div>
                     </div>
-                    <div className="flex-1 bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm text-muted-foreground">
-                      📍 {currentData.location}
-                    </div>
-                    <button className="bg-primary text-primary-foreground rounded-lg px-4 py-2 font-medium text-xs sm:text-sm flex items-center justify-center gap-2 search-pulse">
-                      <Search size={14} />
-                      Buscar
+                    <button className="bg-primary text-primary-foreground rounded-lg px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 search-pulse aspect-square">
+                      <Search size={16} />
+                      <span>Buscar</span>
                     </button>
                   </div>
                   
