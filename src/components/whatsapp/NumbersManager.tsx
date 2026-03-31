@@ -342,7 +342,10 @@ export const NumbersManager = ({
               isInsertingRef.current = false;
             }, 2000);
           } else {
-            // Existing number - just update local state
+            // Existing number - re-link warming sessions and update local state
+            if (connectingNumberId) {
+              await relinkWarmingSessions(connectingNumberId, data.phoneNumber);
+            }
             onNumbersChange(numbers.map(n => 
               n.id === connectingNumberId 
                 ? { ...n, is_connected: true, phone_number: data.phoneNumber, instance_name: connectingInstanceName } 
