@@ -208,9 +208,16 @@ export const NumbersManager = ({
     try {
       let restoredWarmingSessions = 0;
       let restoredCampaigns = 0;
+      let orphanedSessionsToRestore: Array<{ id: string; status: string }> = [];
 
-      if (phoneKey) {
-        // Find orphaned warming sessions with matching phone_key (unlinked from any number)
+      const { data: existingLinkedSession } = await supabase
+        .from('warming_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('whatsapp_number_id', numberId)
+        .maybeSingle();
+
+      if (!existingLinkedSession && phoneKey) {
         const { data: orphanedSessions } = await supabase
           .from('warming_sessions')
           .select('id, status')
@@ -218,41 +225,77 @@ export const NumbersManager = ({
           .eq('phone_key', phoneKey)
           .is('whatsapp_number_id', null);
 
-        if (orphanedSessions && orphanedSessions.length > 0) {
-          const pausedSessions = orphanedSessions.filter(s => s.status === 'paused');
-          const otherSessions = orphanedSessions.filter(s => s.status !== 'paused');
+        orphanedSessionsToRestore = orphanedSessions || [];
+      }
 
-          if (pausedSessions.length > 0) {
-            await supabase
-              .from('warming_sessions')
-              .update({
-                whatsapp_number_id: numberId,
-                status: 'active',
-                paused_at: null,
-                error_message: null,
-              })
-              .in('id', pausedSessions.map(s => s.id));
-          }
+      // Fallback seguro: se a API ainda não informou o telefone, mas só existe 1 sessão órfã,
+      // vinculamos ela ao número recém-conectado.
+      if (!existingLinkedSession && orphanedSessionsToRestore.length === 0) {
+        const { data: fallbackOrphanedSessions } = await supabase
+          .from('warming_sessions')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .is('whatsapp_number_id', null)
+          .order('updated_at', { ascending: false })
+          .limit(2);
 
-          if (otherSessions.length > 0) {
-            await supabase
-              .from('warming_sessions')
-              .update({
-                whatsapp_number_id: numberId,
-                error_message: null,
-              })
-              .in('id', otherSessions.map(s => s.id));
-          }
+        if ((fallbackOrphanedSessions?.length ?? 0) === 1) {
+          orphanedSessionsToRestore = fallbackOrphanedSessions;
+          console.log(`Fallback re-link: single orphaned warming session restored for number ${numberId}`);
+        }
+      }
 
+      if (!existingLinkedSession && orphanedSessionsToRestore.length > 0) {
+        const pausedSessions = orphanedSessionsToRestore.filter(s => s.status === 'paused');
+        const otherSessions = orphanedSessionsToRestore.filter(s => s.status !== 'paused');
+
+        if (pausedSessions.length > 0) {
+          await supabase
+            .from('warming_sessions')
+            .update({
+              whatsapp_number_id: numberId,
+              status: 'active',
+              paused_at: null,
+              error_message: null,
+            })
+            .in('id', pausedSessions.map(s => s.id));
+        }
+
+        if (otherSessions.length > 0) {
+          await supabase
+            .from('warming_sessions')
+            .update({
+              whatsapp_number_id: numberId,
+              error_message: null,
+            })
+            .in('id', otherSessions.map(s => s.id));
+        }
+
+        if (phoneKey) {
           await (supabase as any)
             .from('warming_search_assignments')
             .update({ whatsapp_number_id: numberId })
             .eq('user_id', user.id)
+            .eq('phone_key', phoneKey)
             .is('whatsapp_number_id', null);
+        } else {
+          const { data: orphanedAssignments } = await (supabase as any)
+            .from('warming_search_assignments')
+            .select('id')
+            .eq('user_id', user.id)
+            .is('whatsapp_number_id', null)
+            .limit(2);
 
-          restoredWarmingSessions = orphanedSessions.length;
-          console.log(`Re-linked ${orphanedSessions.length} warming session(s) to number ${numberId} via phone_key ${phoneKey}`);
+          if ((orphanedAssignments?.length ?? 0) === 1) {
+            await (supabase as any)
+              .from('warming_search_assignments')
+              .update({ whatsapp_number_id: numberId })
+              .in('id', orphanedAssignments.map((assignment: { id: string }) => assignment.id));
+          }
         }
+
+        restoredWarmingSessions = orphanedSessionsToRestore.length;
+        console.log(`Re-linked ${orphanedSessionsToRestore.length} warming session(s) to number ${numberId}${phoneKey ? ` via phone_key ${phoneKey}` : ' via fallback'}`);
       }
 
       // Best-effort relink for recent campaign history after the same chip is re-added
@@ -725,7 +768,7 @@ export const NumbersManager = ({
       // PRESERVE warming sessions instead of deleting - pause and unlink so phone_key matching can re-link later
       const { data: warmingData } = await supabase
         .from('warming_sessions')
-        .select('id, phone_key')
+        .select('id, status')
         .eq('whatsapp_number_id', numberToDelete);
       
       if (warmingData && warmingData.length > 0) {
@@ -733,22 +776,42 @@ export const NumbersManager = ({
         const phoneNumber = numberToRemove?.phone_number || '';
         const phoneDigits = phoneNumber.replace(/\D/g, '');
         const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
-        
-        // Pause sessions and unlink from this number (keep phone_key for reconnection matching)
-        await supabase
-          .from('warming_sessions')
-          .update({
-            status: 'paused',
-            paused_at: new Date().toISOString(),
-            error_message: 'Número removido - reconecte o mesmo chip para retomar o aquecimento',
-            whatsapp_number_id: null,
-            ...(phoneKey ? { phone_key: phoneKey } : {})
-          })
-          .eq('whatsapp_number_id', numberToDelete);
+
+        const activeSessions = warmingData.filter(session => session.status === 'active');
+        const otherSessions = warmingData.filter(session => session.status !== 'active');
+
+        if (activeSessions.length > 0) {
+          await supabase
+            .from('warming_sessions')
+            .update({
+              status: 'paused',
+              paused_at: new Date().toISOString(),
+              error_message: 'Número removido - reconecte o mesmo chip para retomar o aquecimento',
+              whatsapp_number_id: null,
+              ...(phoneKey ? { phone_key: phoneKey } : {})
+            })
+            .in('id', activeSessions.map(session => session.id));
+        }
+
+        if (otherSessions.length > 0) {
+          await supabase
+            .from('warming_sessions')
+            .update({
+              whatsapp_number_id: null,
+              ...(phoneKey ? { phone_key: phoneKey } : {})
+            })
+            .in('id', otherSessions.map(session => session.id));
+        }
       }
 
       // Unlink warming_search_assignments (preserve with phone_key for re-linking)
-      await (supabase as any).from('warming_search_assignments').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete);
+      await (supabase as any)
+        .from('warming_search_assignments')
+        .update({
+          whatsapp_number_id: null,
+          ...(numberToRemove?.phone_number ? { phone_key: numberToRemove.phone_number.replace(/\D/g, '').slice(-8) } : {})
+        })
+        .eq('whatsapp_number_id', numberToDelete);
 
       await Promise.allSettled(unlinkPromises);
 
