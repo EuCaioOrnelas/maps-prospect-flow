@@ -162,28 +162,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-16 lg:-left-32 xl:-left-44 top-20 lg:top-16",
+    position: "-left-4 lg:-left-14 xl:-left-20 top-0 lg:-top-2",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-8 lg:-right-20 xl:-right-28 top-8 lg:top-4",
+    position: "-right-4 lg:-right-14 xl:-right-20 top-0 lg:-top-2",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-6 lg:-left-16 xl:-left-24 bottom-28 lg:bottom-24",
+    position: "-left-4 lg:-left-14 xl:-left-20 bottom-[140px] lg:bottom-[130px]",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-6 lg:-right-16 xl:-right-24 bottom-12 lg:bottom-8",
+    position: "-right-4 lg:-right-14 xl:-right-20 bottom-[140px] lg:bottom-[130px]",
     delay: "2s"
   },
 ];
@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden w-full"
+      className="relative min-h-screen flex items-center justify-center pt-16 pb-32 overflow-hidden w-full"
     >
       {/* Parallax Background effects */}
       <div 
@@ -310,9 +310,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
 
             {/* Main heading */}
-            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground whitespace-nowrap lg:whitespace-normal" style={{ animationDelay: "0.1s" }}>
               Prospecção Inteligente de{" "}
-              <span className="text-shimmer-highlight">Leads B2B com IA</span>
+              <br className="hidden lg:block" />
+              <span className="text-shimmer-highlight whitespace-nowrap">Leads B2B com IA</span>
             </h1>
 
             {/* Subheading */}
