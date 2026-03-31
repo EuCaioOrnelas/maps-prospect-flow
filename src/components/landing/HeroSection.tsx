@@ -217,11 +217,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const demoRef = useRef<HTMLDivElement>(null);
   
   // Synchronized typing animation
-  const { displayText, textIndex, phase } = useTypingAnimation(
+  const { displayText, textIndex, phase, sendingIndex } = useTypingAnimation(
     demoData.map(d => d.searchTerm),
     80,
     40,
-    2500
+    1800
   );
   
   const currentData = demoData[textIndex];
