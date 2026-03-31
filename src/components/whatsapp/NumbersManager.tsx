@@ -584,22 +584,12 @@ export const NumbersManager = ({
         console.error('Error unlinking proxy:', e);
       }
 
-      // Also delete any remaining campaigns (completed, etc.) linked to this number
-      const { data: remainingCampaigns } = await supabase
+      // Unlink completed/failed campaigns (preserve history, just remove FK)
+      await supabase
         .from('whatsapp_campaigns')
-        .select('id')
-        .eq('whatsapp_number_id', numberToDelete);
-      
-      if (remainingCampaigns && remainingCampaigns.length > 0) {
-        const remainingIds = remainingCampaigns.map(c => c.id);
-        await Promise.allSettled([
-          (supabase as any).from('campaign_daily_reservations').delete().in('campaign_id', remainingIds),
-          (supabase as any).from('campaign_responses').delete().in('campaign_id', remainingIds),
-          (supabase as any).from('campaign_incidents').update({ campaign_id: null }).in('campaign_id', remainingIds),
-          (supabase as any).from('ignored_contacts').update({ campaign_id: null }).in('campaign_id', remainingIds),
-        ]);
-        await supabase.from('whatsapp_campaigns').delete().in('id', remainingIds);
-      }
+        .update({ whatsapp_number_id: null })
+        .eq('whatsapp_number_id', numberToDelete)
+        .not('status', 'in', `(${[...DELETABLE_CAMPAIGN_STATUSES].join(',')})`);
 
       // Unlink related tables before deleting the number
       const unlinkPromises = [
