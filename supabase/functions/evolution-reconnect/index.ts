@@ -229,6 +229,9 @@ serve(async (req) => {
           .eq('id', numberId)
           .eq('user_id', user.id);
 
+        // Re-link orphaned warming sessions via phone_key
+        await relinkWarmingSessions(supabase, numberId, user.id);
+
         return new Response(JSON.stringify({
           success: true,
           connected: true,
