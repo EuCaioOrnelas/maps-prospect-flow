@@ -347,17 +347,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 sm:gap-5 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="w-full sm:w-auto" onClick={onSignupClick}>
-                <Button variant="hero" size="xl" className="group w-full sm:w-auto rounded-full">
+                <Button variant="hero" size="lg" className="group w-full sm:w-auto rounded-full text-sm">
                   Começar com 10 buscas grátis
-                  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <a href="#features" className="w-full sm:w-auto">
-                <Button variant="hero-outline" size="xl" className="w-full sm:w-auto rounded-full">
+              <a href="#features" className="w-full sm:w-auto group">
+                <span className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
                   Ver como funciona
-                </Button>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </span>
               </a>
             </div>
 
