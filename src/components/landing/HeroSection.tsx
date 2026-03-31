@@ -72,34 +72,34 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
 // Data for synchronized demo animation
 const demoData = [
   {
-    searchTerm: "restaurantes italianos",
+    searchTerm: "academias",
     location: "São Paulo, SP",
     leads: [
-      { emoji: "🍝", name: "Trattoria Bella Italia", phone: "(11) 99XXX-XXXX", rating: "4.8" },
-      { emoji: "🍕", name: "Cantina do Nonno", phone: "(11) 98XXX-XXXX", rating: "4.6" },
-      { emoji: "🍷", name: "Ristorante Milano", phone: "(11) 97XXX-XXXX", rating: "4.9" },
+      { emoji: "🏋️", name: "CrossFit Box SP", phone: "(11) 99XXX-XXXX", rating: "4.8" },
+      { emoji: "💪", name: "Arena Fit Training", phone: "(11) 98XXX-XXXX", rating: "4.6" },
+      { emoji: "🔥", name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9" },
     ]
   },
   {
-    searchTerm: "clínicas odontológicas",
+    searchTerm: "dentistas",
     location: "Rio de Janeiro, RJ",
     leads: [
       { emoji: "🦷", name: "OdontoLife Centro", phone: "(21) 99XXX-XXXX", rating: "4.9" },
       { emoji: "😁", name: "Sorriso Perfeito", phone: "(21) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🏥", name: "Clínica Dental Prime", phone: "(21) 97XXX-XXXX", rating: "4.8" },
+      { emoji: "🏥", name: "Dental Prime RJ", phone: "(21) 97XXX-XXXX", rating: "4.8" },
     ]
   },
   {
-    searchTerm: "academias crossfit",
+    searchTerm: "restaurantes",
     location: "Belo Horizonte, MG",
     leads: [
-      { emoji: "🏋️", name: "CrossFit Box BH", phone: "(31) 99XXX-XXXX", rating: "4.9" },
-      { emoji: "💪", name: "Arena Fit Training", phone: "(31) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🔥", name: "Power CrossFit", phone: "(31) 97XXX-XXXX", rating: "4.8" },
+      { emoji: "🍝", name: "Trattoria Bella", phone: "(31) 99XXX-XXXX", rating: "4.9" },
+      { emoji: "🍕", name: "Cantina do Nonno", phone: "(31) 98XXX-XXXX", rating: "4.7" },
+      { emoji: "🍷", name: "Bistrô Mineiro", phone: "(31) 97XXX-XXXX", rating: "4.8" },
     ]
   },
   {
-    searchTerm: "escritórios advocacia",
+    searchTerm: "advogados",
     location: "Curitiba, PR",
     leads: [
       { emoji: "⚖️", name: "Silva & Associados", phone: "(41) 99XXX-XXXX", rating: "4.9" },
