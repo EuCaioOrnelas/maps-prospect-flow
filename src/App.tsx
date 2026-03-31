@@ -349,9 +349,9 @@ const App = () => (
                   <Route path="settings" element={<RevenueSettings />} />
                 </Route>
                 {/* Explicit 404 route */}
-                <Route path="/404" element={<NotFound />} />
+                <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
               </Routes>
             </Suspense>
             <ActivationChecklist />
