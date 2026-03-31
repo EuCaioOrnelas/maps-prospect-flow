@@ -263,13 +263,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
   const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
 
-  // Pontos de brilho pequenos e sutis
-  const glowDots = useMemo(() => [
-    { left: '10%', top: '30%', delay: 0 },
-    { left: '88%', top: '25%', delay: 1.2 },
-    { left: '18%', top: '70%', delay: 0.6 },
-    { left: '82%', top: '65%', delay: 1.8 },
-  ], []);
 
   return (
     <section 
