@@ -25,7 +25,7 @@ const marqueeItems = [...brands, ...brands];
 
 export const TrustedBySection = () => {
   return (
-    <section className="relative border-y border-border/40 bg-muted/30 overflow-hidden">
+    <section className="relative border-y border-primary/10 overflow-hidden">
       <div className="text-center pt-6 pb-3">
         <p className="text-[10px] sm:text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground/50">
           Empresas que confiam na Wiize
