@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Sun, Moon, Palette } from "lucide-react";
 
-type ThemeType = "light" | "dark" | "system";
+type ThemeType = "light" | "dark";
 
 interface ThemeOption {
   value: ThemeType;
