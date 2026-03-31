@@ -295,9 +295,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         style={{ animationDelay: "0.5s", transform: `translateY(${parallaxOffset * 0.15}px)` }} 
       />
       
-      <div className="container mx-auto px-4 relative z-10 max-w-7xl w-full">
+      <div className="container mx-auto px-4 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16 items-center">
           
           {/* LEFT: Text content */}
           <div className="text-center lg:text-left">
