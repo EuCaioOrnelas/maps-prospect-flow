@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send } from "lucide-react";
+import { ArrowRight, Search, Download, Zap, MapPin, Brain, Target, TrendingUp, MessageCircle, Users, Send, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Animated counter component
@@ -72,34 +72,34 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
 // Data for synchronized demo animation
 const demoData = [
   {
-    searchTerm: "restaurantes italianos",
+    searchTerm: "academias",
     location: "São Paulo, SP",
     leads: [
-      { emoji: "🍝", name: "Trattoria Bella Italia", phone: "(11) 99XXX-XXXX", rating: "4.8" },
-      { emoji: "🍕", name: "Cantina do Nonno", phone: "(11) 98XXX-XXXX", rating: "4.6" },
-      { emoji: "🍷", name: "Ristorante Milano", phone: "(11) 97XXX-XXXX", rating: "4.9" },
+      { emoji: "🏋️", name: "CrossFit Box SP", phone: "(11) 99XXX-XXXX", rating: "4.8" },
+      { emoji: "💪", name: "Arena Fit Training", phone: "(11) 98XXX-XXXX", rating: "4.6" },
+      { emoji: "🔥", name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9" },
     ]
   },
   {
-    searchTerm: "clínicas odontológicas",
+    searchTerm: "dentistas",
     location: "Rio de Janeiro, RJ",
     leads: [
       { emoji: "🦷", name: "OdontoLife Centro", phone: "(21) 99XXX-XXXX", rating: "4.9" },
       { emoji: "😁", name: "Sorriso Perfeito", phone: "(21) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🏥", name: "Clínica Dental Prime", phone: "(21) 97XXX-XXXX", rating: "4.8" },
+      { emoji: "🏥", name: "Dental Prime RJ", phone: "(21) 97XXX-XXXX", rating: "4.8" },
     ]
   },
   {
-    searchTerm: "academias crossfit",
+    searchTerm: "restaurantes",
     location: "Belo Horizonte, MG",
     leads: [
-      { emoji: "🏋️", name: "CrossFit Box BH", phone: "(31) 99XXX-XXXX", rating: "4.9" },
-      { emoji: "💪", name: "Arena Fit Training", phone: "(31) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🔥", name: "Power CrossFit", phone: "(31) 97XXX-XXXX", rating: "4.8" },
+      { emoji: "🍝", name: "Trattoria Bella", phone: "(31) 99XXX-XXXX", rating: "4.9" },
+      { emoji: "🍕", name: "Cantina do Nonno", phone: "(31) 98XXX-XXXX", rating: "4.7" },
+      { emoji: "🍷", name: "Bistrô Mineiro", phone: "(31) 97XXX-XXXX", rating: "4.8" },
     ]
   },
   {
-    searchTerm: "escritórios advocacia",
+    searchTerm: "advogados",
     location: "Curitiba, PR",
     leads: [
       { emoji: "⚖️", name: "Silva & Associados", phone: "(41) 99XXX-XXXX", rating: "4.9" },
@@ -110,24 +110,31 @@ const demoData = [
 ];
 
 // Typing animation component with callback for index changes
-const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 2500) => {
+const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 1800) => {
   const [displayText, setDisplayText] = useState("");
   const [textIndex, setTextIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [phase, setPhase] = useState<'typing' | 'showing' | 'deleting'>('typing');
+  const [phase, setPhase] = useState<'typing' | 'showing' | 'sending' | 'deleting'>('typing');
 
   useEffect(() => {
     const currentFullText = texts[textIndex];
     
     if (isPaused) {
-      setPhase('showing');
-      const pauseTimer = setTimeout(() => {
-        setIsPaused(false);
-        setIsDeleting(true);
-        setPhase('deleting');
-      }, pauseDuration);
-      return () => clearTimeout(pauseTimer);
+      if (phase === 'showing') {
+        const sendTimer = setTimeout(() => {
+          setPhase('sending');
+        }, pauseDuration);
+        return () => clearTimeout(sendTimer);
+      }
+      if (phase === 'sending') {
+        const deleteTimer = setTimeout(() => {
+          setIsPaused(false);
+          setIsDeleting(true);
+          setPhase('deleting');
+        }, 2200);
+        return () => clearTimeout(deleteTimer);
+      }
     }
 
     if (isDeleting) {
@@ -149,9 +156,10 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
         return () => clearTimeout(typeTimer);
       } else {
         setIsPaused(true);
+        setPhase('showing');
       }
     }
-  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration]);
+  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase]);
 
   return { displayText, textIndex, phase };
 };
@@ -309,11 +317,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </span>
             </div>
 
-            {/* Main heading */}
-            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground whitespace-nowrap lg:whitespace-normal" style={{ animationDelay: "0.1s" }}>
-              Prospecção Inteligente de{" "}
-              <br className="hidden lg:block" />
-              <span className="text-shimmer-highlight whitespace-nowrap">Leads B2B com IA</span>
+            {/* Main heading - always 3 lines */}
+            <h1 className="font-display text-[1.75rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] xl:text-5xl font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
+              Prospecção
+              <br />
+              Inteligente de
+              <br />
+              <span className="text-shimmer-highlight">Leads B2B com IA</span>
             </h1>
 
             {/* Subheading */}
@@ -432,8 +442,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     {currentData.leads.map((lead, idx) => (
                       <div 
                         key={`${textIndex}-${idx}`}
-                        className={`flex items-center gap-3 bg-secondary/50 rounded-lg p-3 transition-all duration-300 ${
-                          phase === 'showing' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                        className={`flex items-center gap-3 bg-secondary/50 rounded-lg p-3 transition-all duration-500 ${
+                          phase === 'showing' || phase === 'sending' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
                         }`}
                         style={{ transitionDelay: phase === 'showing' ? `${idx * 150}ms` : '0ms' }}
                       >
@@ -444,16 +454,62 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                           <p className="font-medium text-xs sm:text-sm truncate">{lead.name}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate">📱 {lead.phone} • ⭐ {lead.rating}</p>
                         </div>
-                        <div 
-                          className={`transition-all duration-300 ${phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-                          style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
-                        >
-                          <div className="bg-success/20 text-success rounded-full p-1.5">
-                            <MessageCircle size={12} />
-                          </div>
+                        {/* Send status icon - changes from message to sending to sent */}
+                        <div className="flex items-center gap-1.5">
+                          {phase === 'sending' ? (
+                            <div 
+                              className="flex items-center gap-1 transition-all duration-500"
+                              style={{ 
+                                animationDelay: `${idx * 300}ms`,
+                              }}
+                            >
+                              <div 
+                                className={`transition-all duration-500 ${idx * 300 < 900 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                                style={{ transitionDelay: `${idx * 300}ms` }}
+                              >
+                                <div className="bg-primary/20 text-primary rounded-full p-1.5">
+                                  <Send size={11} className="animate-pulse" />
+                                </div>
+                              </div>
+                              <span 
+                                className="text-[9px] text-primary font-medium transition-all duration-300 opacity-0"
+                                style={{ 
+                                  transitionDelay: `${idx * 300 + 200}ms`,
+                                  opacity: 1,
+                                }}
+                              >
+                                Enviada ✓
+                              </span>
+                            </div>
+                          ) : (
+                            <div 
+                              className={`transition-all duration-300 ${phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                              style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
+                            >
+                              <div className="bg-success/20 text-success rounded-full p-1.5">
+                                <MessageCircle size={12} />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Sending progress bar - appears during sending phase */}
+                  <div className={`mt-2 transition-all duration-500 overflow-hidden ${phase === 'sending' ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2">
+                      <Send size={12} className="text-primary animate-pulse" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-medium text-primary">Disparando mensagens...</span>
+                          <span className="text-[10px] text-primary">3/3</span>
+                        </div>
+                        <div className="w-full bg-primary/10 rounded-full h-1">
+                          <div className="bg-primary h-1 rounded-full transition-all duration-[2000ms] ease-out" style={{ width: phase === 'sending' ? '100%' : '0%' }} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Stats bar */}
