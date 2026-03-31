@@ -125,7 +125,7 @@ export const FeaturesSection = () => {
               <Zap size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-display text-lg sm:text-xl font-semibold mb-2">
+              <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
                 Menos leads, mais resultados
               </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
