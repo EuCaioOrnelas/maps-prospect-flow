@@ -391,7 +391,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 className={`absolute ${card.position} z-30 floating-card hidden sm:block`}
                 style={{ animationDelay: card.delay }}
               >
-                <div className="glass rounded-lg p-3 shadow-lg border border-primary/20 hover:border-primary/40 transition-all hover:scale-105">
+                <div className="glass rounded-lg p-3 shadow-lg shadow-primary/10 border border-primary/20 hover:border-primary/40 transition-all hover:scale-105">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                       <card.icon size={14} className="text-primary" />
