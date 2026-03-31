@@ -16,7 +16,7 @@ const ThemeSwitch = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
           "relative h-8 w-[68px] rounded-full transition-all duration-300",
           isDark
             ? "bg-[hsl(220,18%,12%)] border border-[hsl(220,14%,20%)]"
-            : "bg-[hsl(158,50%,92%)] border border-[hsl(158,40%,85%)]",
+            : "bg-[hsl(220,16%,28%)] border border-[hsl(220,14%,34%)]",
           "[&>span]:h-7 [&>span]:w-7 [&>span]:rounded-full [&>span]:shadow-md [&>span]:z-10",
           "[&>span]:transition-all [&>span]:duration-300",
           "data-[state=unchecked]:[&>span]:translate-x-0.5",
