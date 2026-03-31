@@ -277,7 +277,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
       {/* World map dot pattern */}
       <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.07] will-change-transform"
+        className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform"
         style={{
           transform: `translateY(${parallaxOffset * 0.2}px)`,
           backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
