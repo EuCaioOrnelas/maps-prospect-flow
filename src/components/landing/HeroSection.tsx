@@ -116,6 +116,7 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [phase, setPhase] = useState<'typing' | 'showing' | 'sending' | 'deleting'>('typing');
+  const [sendingIndex, setSendingIndex] = useState(-1);
 
   useEffect(() => {
     const currentFullText = texts[textIndex];
@@ -124,16 +125,25 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
       if (phase === 'showing') {
         const sendTimer = setTimeout(() => {
           setPhase('sending');
+          setSendingIndex(0);
         }, pauseDuration);
         return () => clearTimeout(sendTimer);
       }
       if (phase === 'sending') {
-        const deleteTimer = setTimeout(() => {
-          setIsPaused(false);
-          setIsDeleting(true);
-          setPhase('deleting');
-        }, 2200);
-        return () => clearTimeout(deleteTimer);
+        if (sendingIndex < 2) {
+          const nextTimer = setTimeout(() => {
+            setSendingIndex(prev => prev + 1);
+          }, 600);
+          return () => clearTimeout(nextTimer);
+        } else {
+          const deleteTimer = setTimeout(() => {
+            setIsPaused(false);
+            setIsDeleting(true);
+            setPhase('deleting');
+            setSendingIndex(-1);
+          }, 1000);
+          return () => clearTimeout(deleteTimer);
+        }
       }
     }
 
@@ -159,9 +169,9 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
         setPhase('showing');
       }
     }
-  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase]);
+  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase, sendingIndex]);
 
-  return { displayText, textIndex, phase };
+  return { displayText, textIndex, phase, sendingIndex };
 };
 
 // Floating stats cards data - positioned around the demo
