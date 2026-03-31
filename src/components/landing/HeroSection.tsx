@@ -333,7 +333,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
 
             {/* Main heading - always 3 lines */}
-            <h1 className="font-display text-[2rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem] xl:text-[3.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-[2.25rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] xl:text-[3.75rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.15]" style={{ animationDelay: "0.1s" }}>
               Prospecção
               <br />
               Inteligente de
@@ -343,22 +343,22 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Nossa IA analisa milhares de empresas e entrega apenas os leads estratégicos:
-              empresas ativas, com contatos verificados e alto potencial de conversão.
+              Prospecte leads qualificados e dispare campanhas de mensagens em massa
+              via API Oficial da Meta — tudo automatizado com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-row items-center justify-center lg:justify-start gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
-                <Button variant="hero" size="lg" className="group rounded-full text-sm">
+                <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
                   Começar agora
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <a href="#features" className="group shrink-0">
-                <Button variant="ghost" size="lg" className="rounded-full text-sm border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
+                <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver como funciona
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </a>
             </div>
