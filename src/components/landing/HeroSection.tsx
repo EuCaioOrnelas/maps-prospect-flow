@@ -442,8 +442,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     {currentData.leads.map((lead, idx) => (
                       <div 
                         key={`${textIndex}-${idx}`}
-                        className={`flex items-center gap-3 bg-secondary/50 rounded-lg p-3 transition-all duration-300 ${
-                          phase === 'showing' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                        className={`flex items-center gap-3 bg-secondary/50 rounded-lg p-3 transition-all duration-500 ${
+                          phase === 'showing' || phase === 'sending' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
                         }`}
                         style={{ transitionDelay: phase === 'showing' ? `${idx * 150}ms` : '0ms' }}
                       >
@@ -454,16 +454,62 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                           <p className="font-medium text-xs sm:text-sm truncate">{lead.name}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate">📱 {lead.phone} • ⭐ {lead.rating}</p>
                         </div>
-                        <div 
-                          className={`transition-all duration-300 ${phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-                          style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
-                        >
-                          <div className="bg-success/20 text-success rounded-full p-1.5">
-                            <MessageCircle size={12} />
-                          </div>
+                        {/* Send status icon - changes from message to sending to sent */}
+                        <div className="flex items-center gap-1.5">
+                          {phase === 'sending' ? (
+                            <div 
+                              className="flex items-center gap-1 transition-all duration-500"
+                              style={{ 
+                                animationDelay: `${idx * 300}ms`,
+                              }}
+                            >
+                              <div 
+                                className={`transition-all duration-500 ${idx * 300 < 900 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                                style={{ transitionDelay: `${idx * 300}ms` }}
+                              >
+                                <div className="bg-primary/20 text-primary rounded-full p-1.5">
+                                  <Send size={11} className="animate-pulse" />
+                                </div>
+                              </div>
+                              <span 
+                                className="text-[9px] text-primary font-medium transition-all duration-300 opacity-0"
+                                style={{ 
+                                  transitionDelay: `${idx * 300 + 200}ms`,
+                                  opacity: 1,
+                                }}
+                              >
+                                Enviada ✓
+                              </span>
+                            </div>
+                          ) : (
+                            <div 
+                              className={`transition-all duration-300 ${phase === 'showing' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                              style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
+                            >
+                              <div className="bg-success/20 text-success rounded-full p-1.5">
+                                <MessageCircle size={12} />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Sending progress bar - appears during sending phase */}
+                  <div className={`mt-2 transition-all duration-500 overflow-hidden ${phase === 'sending' ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2">
+                      <Send size={12} className="text-primary animate-pulse" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-medium text-primary">Disparando mensagens...</span>
+                          <span className="text-[10px] text-primary">3/3</span>
+                        </div>
+                        <div className="w-full bg-primary/10 rounded-full h-1">
+                          <div className="bg-primary h-1 rounded-full transition-all duration-[2000ms] ease-out" style={{ width: phase === 'sending' ? '100%' : '0%' }} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Stats bar */}
