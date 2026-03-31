@@ -84,6 +84,102 @@
     --background: 220 20% 4%;
     --foreground: 210 40% 98%;
   }
+
+  /* Light theme for landing/sales pages */
+  .landing-light {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 158 72% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 40%;
+
+    --accent: 158 72% 32%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 158 72% 32%;
+
+    --success: 158 72% 32%;
+    --warning: 45 93% 47%;
+    --info: 200 98% 39%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(158 72% 32%) 0%, hsl(170 65% 28%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 96%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 97%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 32% / 0.08) 0%, transparent 70%);
+
+    --shadow-glow: 0 0 60px hsl(158 72% 32% / 0.1);
+    --shadow-card: 0 4px 24px hsl(220 20% 10% / 0.08);
+    --shadow-button: 0 4px 16px hsl(158 72% 32% / 0.2);
+
+    --whatsapp-outgoing: 158 37% 94%;
+    --whatsapp-outgoing-foreground: 220 20% 10%;
+    --whatsapp-read: 199 89% 48%;
+    --whatsapp-quote: 158 37% 90%;
+
+    --chart-1: 158 72% 32%;
+    --chart-2: 170 65% 30%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 43 96% 56%;
+    --chart-6: 199 89% 48%;
+    --chart-7: 291 64% 42%;
+    --chart-8: 24 95% 53%;
+  }
+
+  .landing-light .dashboard-card {
+    background: linear-gradient(168deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+    border: 1px solid hsl(220 14% 88%);
+    box-shadow: 0 2px 16px -2px hsl(220 20% 10% / 0.06);
+  }
+
+  .landing-light .dashboard-card:hover {
+    border-color: hsl(158 72% 32% / 0.2);
+    box-shadow: 0 4px 24px -4px hsl(220 20% 10% / 0.1);
+  }
+
+  .landing-light .glass {
+    backdrop-filter: blur(16px);
+    background: hsl(0 0% 100% / 0.8);
+    border: 1px solid hsl(220 14% 88% / 0.5);
+  }
+
+  .landing-light ::-webkit-scrollbar-track {
+    background: hsl(220 14% 94%);
+  }
+
+  .landing-light ::-webkit-scrollbar-thumb {
+    background: hsl(158 72% 32% / 0.2);
+  }
+
+  .landing-light ::-webkit-scrollbar-thumb:hover {
+    background: hsl(158 72% 32% / 0.4);
+  }
+
+  .landing-light input:-webkit-autofill,
+  .landing-light input:-webkit-autofill:hover,
+  .landing-light input:-webkit-autofill:focus,
+  .landing-light input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px hsl(0 0% 100%) inset !important;
+    -webkit-text-fill-color: hsl(220 20% 10%) !important;
+    caret-color: hsl(220 20% 10%) !important;
+  }
 }
 
 @layer base {
