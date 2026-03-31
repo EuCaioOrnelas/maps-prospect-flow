@@ -34,9 +34,9 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     try {
       const stored = localStorage.getItem("dashboard-theme");
       if (stored === "light" || stored === "dark" || stored === "system") return stored;
-      return "dark";
+      return "light";
     } catch {
-      return "dark";
+      return "light";
     }
   });
 
