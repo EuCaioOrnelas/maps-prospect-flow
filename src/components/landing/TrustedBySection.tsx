@@ -10,15 +10,15 @@ import whatsappLogo from "@/assets/logos/whatsapp.svg";
 import notionLogo from "@/assets/logos/notion.svg";
 
 const brands = [
-  { name: "Google", logo: googleLogo },
-  { name: "Meta", logo: metaLogo },
-  { name: "Instagram", logo: instagramLogo },
-  { name: "Stripe", logo: stripeLogo },
-  { name: "Asaas", logo: asaasLogo },
-  { name: "Vercel", logo: vercelLogo },
-  { name: "OpenAI", logo: openaiLogo },
-  { name: "WhatsApp", logo: whatsappLogo },
-  { name: "Notion", logo: notionLogo },
+  { name: "Google", logo: googleLogo, className: "" },
+  { name: "Meta", logo: metaLogo, className: "" },
+  { name: "Instagram", logo: instagramLogo, className: "" },
+  { name: "Stripe", logo: stripeLogo, className: "" },
+  { name: "Asaas", logo: asaasLogo, className: "" },
+  { name: "Vercel", logo: vercelLogo, className: "!h-10 sm:!h-14" },
+  { name: "OpenAI", logo: openaiLogo, className: "" },
+  { name: "WhatsApp", logo: whatsappLogo, className: "" },
+  { name: "Notion", logo: notionLogo, className: "" },
 ];
 
 const marqueeItems = [...brands, ...brands];
