@@ -110,24 +110,31 @@ const demoData = [
 ];
 
 // Typing animation component with callback for index changes
-const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 2500) => {
+const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 1800) => {
   const [displayText, setDisplayText] = useState("");
   const [textIndex, setTextIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [phase, setPhase] = useState<'typing' | 'showing' | 'deleting'>('typing');
+  const [phase, setPhase] = useState<'typing' | 'showing' | 'sending' | 'deleting'>('typing');
 
   useEffect(() => {
     const currentFullText = texts[textIndex];
     
     if (isPaused) {
-      setPhase('showing');
-      const pauseTimer = setTimeout(() => {
-        setIsPaused(false);
-        setIsDeleting(true);
-        setPhase('deleting');
-      }, pauseDuration);
-      return () => clearTimeout(pauseTimer);
+      if (phase === 'showing') {
+        const sendTimer = setTimeout(() => {
+          setPhase('sending');
+        }, pauseDuration);
+        return () => clearTimeout(sendTimer);
+      }
+      if (phase === 'sending') {
+        const deleteTimer = setTimeout(() => {
+          setIsPaused(false);
+          setIsDeleting(true);
+          setPhase('deleting');
+        }, 2200);
+        return () => clearTimeout(deleteTimer);
+      }
     }
 
     if (isDeleting) {
@@ -149,9 +156,10 @@ const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 4
         return () => clearTimeout(typeTimer);
       } else {
         setIsPaused(true);
+        setPhase('showing');
       }
     }
-  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration]);
+  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase]);
 
   return { displayText, textIndex, phase };
 };
