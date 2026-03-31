@@ -58,11 +58,25 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
-  const setTheme = (t: Theme) => setThemeState(t);
-  const toggleTheme = () => setThemeState((prev) => {
-    const resolved = resolveTheme(prev);
-    return resolved === "dark" ? "light" : "dark";
-  });
+  const setTheme = (t: Theme) => {
+    // Add transition class for smooth animation
+    document.documentElement.classList.add("theme-transition");
+    setThemeState(t);
+    setTimeout(() => {
+      document.documentElement.classList.remove("theme-transition");
+    }, 500);
+  };
+
+  const toggleTheme = () => {
+    document.documentElement.classList.add("theme-transition");
+    setThemeState((prev) => {
+      const resolved = resolveTheme(prev);
+      return resolved === "dark" ? "light" : "dark";
+    });
+    setTimeout(() => {
+      document.documentElement.classList.remove("theme-transition");
+    }, 500);
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
