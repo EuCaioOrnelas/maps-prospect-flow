@@ -332,19 +332,6 @@
     background-color: hsl(0 72% 51% / 0.6);
   }
 
-  /* Scrollbar */
-  .landing-light ::-webkit-scrollbar-track {
-    background: hsl(0 0% 100%);
-  }
-
-  .landing-light ::-webkit-scrollbar-thumb {
-    background: hsl(220 12% 85%);
-    border-radius: 4px;
-  }
-
-  .landing-light ::-webkit-scrollbar-thumb:hover {
-    background: hsl(220 12% 75%);
-  }
 
   .landing-light input:-webkit-autofill,
   .landing-light input:-webkit-autofill:hover,
