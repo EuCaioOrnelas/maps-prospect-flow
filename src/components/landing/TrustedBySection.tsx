@@ -52,7 +52,7 @@ export const TrustedBySection = () => {
               <img
                 src={brand.logo}
                 alt={brand.name}
-                className="h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain"
+                className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
               />
             </div>
           ))}
