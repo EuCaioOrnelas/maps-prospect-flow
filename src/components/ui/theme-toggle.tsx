@@ -10,7 +10,7 @@ interface ThemeOption {
   value: ThemeType;
   label: string;
   description: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: React.ElementType;
   preview: {
     bg: string;
     sidebar: string;
