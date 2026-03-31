@@ -363,21 +363,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </a>
             </div>
 
-            {/* Feature highlights */}
-            <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 sm:gap-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Search size={16} className="text-primary flex-shrink-0" />
-                <span>Busca por palavra-chave</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <MapPin size={16} className="text-primary flex-shrink-0" />
-                <span>Filtro por cidade/região</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Download size={16} className="text-primary flex-shrink-0" />
-                <span>Download em planilha</span>
-              </div>
-            </div>
           </div>
 
           {/* RIGHT: Animated Demo */}
