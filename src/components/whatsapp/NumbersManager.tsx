@@ -86,6 +86,7 @@ export const NumbersManager = ({
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [numberToDelete, setNumberToDelete] = useState<string | null>(null);
+  const [deletingNumberId, setDeletingNumberId] = useState<string | null>(null);
   const [deleteImpact, setDeleteImpact] = useState<NumberDeleteImpact>({ campaigns: [] });
   const [deleteImpactLoading, setDeleteImpactLoading] = useState(false);
   const [newNumberName, setNewNumberName] = useState("");
