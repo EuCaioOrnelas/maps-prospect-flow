@@ -256,7 +256,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center pt-16 pb-24 overflow-hidden w-full"
+      className="relative min-h-screen flex items-center justify-center pt-16 pb-32 overflow-hidden w-full"
     >
       {/* Parallax Background effects */}
       <div 
