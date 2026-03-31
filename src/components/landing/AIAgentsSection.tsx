@@ -150,7 +150,7 @@ export const AIAgentsSection = () => {
                     </div>
                     <div className="flex items-center justify-between rounded-lg bg-secondary/40 border border-border/30 px-4 py-2.5">
                       <span className="text-sm text-foreground/90">Ao encerrar conversa</span>
-                      <span className="text-xs bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-md font-medium">→ Negociação</span>
+                      <span className="text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-md font-medium">→ Negociação</span>
                     </div>
                   </div>
                 </div>

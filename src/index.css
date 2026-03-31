@@ -124,14 +124,17 @@
     --gradient-card: linear-gradient(180deg, hsl(0 0% 99%) 0%, hsl(0 0% 97%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 32% / 0.08) 0%, transparent 70%);
 
-    --shadow-glow: 0 0 60px hsl(158 72% 32% / 0.1);
-    --shadow-card: 0 4px 24px hsl(220 20% 10% / 0.08);
+    --shadow-glow: 0 0 60px hsl(158 72% 32% / 0.15);
+    --shadow-card: 0 4px 24px hsl(158 72% 32% / 0.08);
     --shadow-button: 0 4px 16px hsl(158 72% 32% / 0.2);
 
     --whatsapp-outgoing: 158 37% 94%;
     --whatsapp-outgoing-foreground: 220 20% 10%;
     --whatsapp-read: 199 89% 48%;
     --whatsapp-quote: 158 37% 90%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 20% 10%;
 
     --chart-1: 158 72% 32%;
     --chart-2: 170 65% 30%;
@@ -146,18 +149,84 @@
   .landing-light .dashboard-card {
     background: linear-gradient(168deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
     border: 1px solid hsl(220 14% 88%);
-    box-shadow: 0 2px 16px -2px hsl(220 20% 10% / 0.06);
+    box-shadow: 0 2px 16px -2px hsl(158 72% 32% / 0.06);
   }
 
   .landing-light .dashboard-card:hover {
-    border-color: hsl(158 72% 32% / 0.2);
-    box-shadow: 0 4px 24px -4px hsl(220 20% 10% / 0.1);
+    border-color: hsl(158 72% 32% / 0.25);
+    box-shadow: 0 4px 24px -4px hsl(158 72% 32% / 0.12);
   }
 
   .landing-light .glass {
     backdrop-filter: blur(16px);
-    background: hsl(0 0% 100% / 0.8);
-    border: 1px solid hsl(220 14% 88% / 0.5);
+    background: hsl(0 0% 100% / 0.85);
+    border: 1px solid hsl(220 14% 88% / 0.6);
+    box-shadow: 0 2px 12px hsl(158 72% 32% / 0.04);
+  }
+
+  .landing-light .shadow-card {
+    box-shadow: 0 4px 24px hsl(158 72% 32% / 0.08) !important;
+  }
+
+  .landing-light .shadow-glow {
+    box-shadow: 0 0 60px hsl(158 72% 32% / 0.15) !important;
+  }
+
+  .landing-light .shadow-button {
+    box-shadow: 0 4px 16px hsl(158 72% 32% / 0.2) !important;
+  }
+
+  /* Fix cards and backgrounds in light theme */
+  .landing-light .bg-card\/50,
+  .landing-light .bg-card\/60,
+  .landing-light .bg-card\/80,
+  .landing-light .bg-card\/90 {
+    background-color: hsl(0 0% 98% / 0.9);
+  }
+
+  .landing-light .bg-secondary\/20,
+  .landing-light .bg-secondary\/30,
+  .landing-light .bg-secondary\/40 {
+    background-color: hsl(220 14% 94% / 0.5);
+  }
+
+  .landing-light .bg-muted\/30 {
+    background-color: hsl(220 14% 94% / 0.6);
+  }
+
+  /* Stronger green accents in light theme */
+  .landing-light .bg-primary\/5 {
+    background-color: hsl(158 72% 32% / 0.08);
+  }
+
+  .landing-light .bg-primary\/10 {
+    background-color: hsl(158 72% 32% / 0.12);
+  }
+
+  .landing-light .bg-primary\/15 {
+    background-color: hsl(158 72% 32% / 0.15);
+  }
+
+  .landing-light .bg-primary\/20 {
+    background-color: hsl(158 72% 32% / 0.2);
+  }
+
+  /* Borders with green tint in light theme */
+  .landing-light .border-border\/30,
+  .landing-light .border-border\/40,
+  .landing-light .border-border\/50,
+  .landing-light .border-border\/60 {
+    border-color: hsl(158 72% 32% / 0.12);
+  }
+
+  /* Fix amber-400 text for light theme */
+  .landing-light .text-amber-400 {
+    color: hsl(45 93% 35%);
+  }
+
+  /* Fix red-400 text for light theme */
+  .landing-light .text-red-400 {
+    color: hsl(0 72% 45%);
   }
 
   .landing-light ::-webkit-scrollbar-track {
@@ -179,6 +248,26 @@
     -webkit-box-shadow: 0 0 0 30px hsl(0 0% 100%) inset !important;
     -webkit-text-fill-color: hsl(220 20% 10%) !important;
     caret-color: hsl(220 20% 10%) !important;
+  }
+
+  /* Fix background-50 areas */
+  .landing-light .bg-background\/50,
+  .landing-light .bg-background\/90 {
+    background-color: hsl(0 0% 100% / 0.95);
+  }
+
+  /* Green shadows for hover effects */
+  .landing-light [class*="hover:shadow-lg"]:hover {
+    box-shadow: 0 10px 30px -5px hsl(158 72% 32% / 0.1);
+  }
+
+  .landing-light [class*="hover:shadow-xl"]:hover {
+    box-shadow: 0 15px 40px -5px hsl(158 72% 32% / 0.12);
+  }
+
+  /* Fix gradient card for pricing */
+  .landing-light .bg-gradient-card {
+    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(158 72% 32% / 0.04) 100%);
   }
 }
 
