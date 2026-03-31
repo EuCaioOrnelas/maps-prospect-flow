@@ -26,8 +26,8 @@ const marqueeItems = [...brands, ...brands];
 export const TrustedBySection = () => {
   return (
     <section className="relative border-y border-border/40 bg-muted/30 overflow-hidden">
-      <div className="text-center pt-8 pb-4">
-        <p className="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
+      <div className="text-center pt-6 pb-3">
+        <p className="text-[10px] sm:text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground/50">
           Empresas que confiam na Wiize
         </p>
       </div>
@@ -46,13 +46,13 @@ export const TrustedBySection = () => {
           {marqueeItems.map((brand, i) => (
             <div
               key={`${brand.name}-${i}`}
-              className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500"
+              className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-all duration-500"
               title={brand.name}
             >
               <img
                 src={brand.logo}
                 alt={brand.name}
-                className="h-5 sm:h-6 w-auto max-w-[120px] sm:max-w-[140px] object-contain"
+                className="h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain"
               />
             </div>
           ))}
