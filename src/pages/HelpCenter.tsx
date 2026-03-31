@@ -61,15 +61,16 @@ const HelpCenter = () => {
           {/* Cards Grid - 2 columns like reference */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {/* FAQ Card */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+              <div className="absolute -top-16 -right-16 w-40 h-40 bg-[hsl(158,72%,45%)]/[0.06] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(158,72%,45%)]/[0.1] transition-colors duration-500" />
+              <div className="flex items-center gap-3 mb-4 relative z-10">
                 <HelpCircle size={24} className="text-primary shrink-0" />
                 <h2 className="text-2xl sm:text-3xl font-bold">Perguntas frequentes</h2>
               </div>
-              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6 flex-1">
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6 flex-1 relative z-10">
                 Lista de respostas para as dúvidas mais frequentes que os nossos usuários costumam ter. Antes de usar os outros meios de suporte, verifique se a sua dúvida já não está respondida aqui!
               </p>
-              <div className="flex justify-end">
+              <div className="flex justify-end relative z-10">
                 <Button asChild>
                   <Link to="/ajuda/faq">Ver FAQ's</Link>
                 </Button>
@@ -77,15 +78,16 @@ const HelpCenter = () => {
             </div>
 
             {/* Suporte Card */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+              <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-[hsl(200,98%,45%)]/[0.06] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(200,98%,45%)]/[0.1] transition-colors duration-500" />
+              <div className="flex items-center gap-3 mb-4 relative z-10">
                 <Headphones size={24} className="text-primary shrink-0" />
                 <h2 className="text-2xl sm:text-3xl font-bold">Suporte</h2>
               </div>
-              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6 flex-1">
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6 flex-1 relative z-10">
                 Precisa de ajuda técnica? Tem algum problema com sua conta ou funcionalidade? Nossa equipe de suporte está pronta para ajudar você a resolver qualquer questão.
               </p>
-              <div className="flex justify-end">
+              <div className="flex justify-end relative z-10">
                 <Button asChild>
                   <Link to="/contato">Ir para Suporte</Link>
                 </Button>
@@ -93,15 +95,16 @@ const HelpCenter = () => {
             </div>
 
             {/* Links Úteis Card */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+              <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-[hsl(262,83%,58%)]/[0.05] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(262,83%,58%)]/[0.09] transition-colors duration-500" />
+              <div className="flex items-center gap-3 mb-4 relative z-10">
                 <Link2 size={24} className="text-primary shrink-0" />
                 <h2 className="text-2xl sm:text-3xl font-bold">Links</h2>
               </div>
-              <p className="text-muted-foreground text-sm sm:text-base mb-5">
+              <p className="text-muted-foreground text-sm sm:text-base mb-5 relative z-10">
                 Separamos alguns links úteis.
               </p>
-              <ul className="space-y-2.5 flex-1">
+              <ul className="space-y-2.5 flex-1 relative z-10">
                 {usefulLinks.map((link, i) => (
                   <li key={i} className="flex items-center gap-1.5">
                     <span className="text-primary">•</span>
@@ -128,15 +131,16 @@ const HelpCenter = () => {
             {/* Right column: Sociais + Fale Conosco stacked */}
             <div className="flex flex-col gap-6 lg:gap-8">
               {/* Sociais Card */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-                <div className="flex items-center gap-3 mb-4">
+              <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+                <div className="absolute -top-12 -left-12 w-32 h-32 bg-[hsl(340,75%,55%)]/[0.05] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(340,75%,55%)]/[0.09] transition-colors duration-500" />
+                <div className="flex items-center gap-3 mb-4 relative z-10">
                   <MessageSquareText size={24} className="text-primary shrink-0" />
                   <h2 className="text-2xl sm:text-3xl font-bold">Sociais</h2>
                 </div>
-                <p className="text-muted-foreground text-sm sm:text-base mb-5">
+                <p className="text-muted-foreground text-sm sm:text-base mb-5 relative z-10">
                   Nossas redes sociais.
                 </p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 relative z-10">
                   <a
                     href="https://www.youtube.com/@wiizebrasil"
                     target="_blank"
@@ -159,12 +163,13 @@ const HelpCenter = () => {
               </div>
 
               {/* Fale Conosco Card */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 flex flex-col">
-                <div className="flex items-center gap-3 mb-4">
+              <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+                <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-[hsl(43,96%,56%)]/[0.06] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(43,96%,56%)]/[0.1] transition-colors duration-500" />
+                <div className="flex items-center gap-3 mb-4 relative z-10">
                   <Mail size={24} className="text-primary shrink-0" />
                   <h2 className="text-2xl sm:text-3xl font-bold">Fale conosco</h2>
                 </div>
-                <p className="text-muted-foreground text-sm sm:text-base mb-2">
+                <p className="text-muted-foreground text-sm sm:text-base mb-2 relative z-10">
                   E-mail comercial para assuntos não relacionados ao suporte:{" "}
                   <a
                     href="mailto:Wiize.app@gmail.com"
@@ -173,7 +178,7 @@ const HelpCenter = () => {
                     Wiize.app@gmail.com
                   </a>
                 </p>
-                <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed">
+                <p className="text-muted-foreground/70 text-xs sm:text-sm mt-3 leading-relaxed relative z-10">
                   E-mail exclusivo para tratativas comerciais, parcerias e semelhantes. Assuntos relacionados a suporte <strong>não</strong> serão respondidos.
                 </p>
               </div>
