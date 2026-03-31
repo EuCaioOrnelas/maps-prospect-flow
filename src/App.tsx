@@ -269,9 +269,9 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
-                <Route path="/shared-report/:reportId" element={<SharedReport />} />
-                <Route path="/obrigado" element={<ThankYou />} />
-                <Route path="/cancelamento" element={<CancellationFeedback />} />
+                <Route path="/shared-report/:reportId" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
+                <Route path="/obrigado" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
+                <Route path="/cancelamento" element={<LightThemeWrapper><CancellationFeedback /></LightThemeWrapper>} />
                 <Route 
                   path="/admin/tests" 
                   element={
