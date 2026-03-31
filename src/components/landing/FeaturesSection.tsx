@@ -104,7 +104,7 @@ export const FeaturesSection = () => {
             <Brain size={16} className="text-primary" />
             <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
             Tudo que você precisa para{" "}
             <span className="text-gradient">vender mais</span>
           </h2>
@@ -125,7 +125,7 @@ export const FeaturesSection = () => {
               <Zap size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-display text-lg sm:text-xl font-semibold mb-2">
+              <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
                 Menos leads, mais resultados
               </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
@@ -194,7 +194,7 @@ export const FeaturesSection = () => {
                     <activeFeature.icon size={28} className="text-white" />
                   </div>
 
-                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3">
+                  <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mb-3 text-foreground">
                     {activeFeature.title}
                   </h3>
 

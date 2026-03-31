@@ -159,7 +159,7 @@ export const TestimonialsSection = () => {
               +500 clientes satisfeitos
             </span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
             O que nossos{" "}
             <span className="text-gradient">clientes dizem</span>
           </h2>

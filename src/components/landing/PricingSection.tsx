@@ -144,7 +144,7 @@ export const PricingSection = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
               Planos que <span className="text-gradient">cabem no bolso</span>
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">

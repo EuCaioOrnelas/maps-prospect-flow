@@ -79,7 +79,7 @@ export const FAQSection = () => {
             <HelpCircle size={16} className="text-primary" />
             <span className="text-xs sm:text-sm text-muted-foreground">Dúvidas Frequentes</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
             Perguntas <span className="text-gradient">Frequentes</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">

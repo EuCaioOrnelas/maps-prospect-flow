@@ -63,7 +63,7 @@ export const AIAgentsSection = () => {
             <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-full uppercase tracking-wide">Beta</span>
           </div>
 
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight text-foreground">
             Seu melhor vendedor trabalha <br className="hidden sm:block" />
             <span className="text-gradient">24 horas por dia</span>
           </h2>
