@@ -63,6 +63,7 @@ const Index = () => {
         <div className="relative z-10">
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection onSignupClick={trackSignupClick} />
+          <TrustedBySection />
           <HowItWorksSection />
           <FeaturesSection />
           <OfficialAPISection />
