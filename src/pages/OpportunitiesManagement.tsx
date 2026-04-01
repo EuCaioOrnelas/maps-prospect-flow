@@ -858,13 +858,10 @@ export default function OpportunitiesManagement() {
                     <div className="flex gap-3 pt-2 border-t border-border">
                       <Button
                         variant="ghost"
-                        className="flex-1"
+                        className="w-full"
                         onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
                       >
                         Limpar tudo
-                      </Button>
-                      <Button className="flex-1" onClick={() => setShowFilters(false)}>
-                        Aplicar filtros
                       </Button>
                     </div>
                   </div>
