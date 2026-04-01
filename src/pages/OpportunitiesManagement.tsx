@@ -63,6 +63,10 @@ export default function OpportunitiesManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
+  const [minScore, setMinScore] = useState("");
+  const [minRating, setMinRating] = useState("");
+  const [maxRating, setMaxRating] = useState("");
+  const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
@@ -278,10 +282,30 @@ export default function OpportunitiesManagement() {
       );
     }
     if (filterLevel !== "all") {
-      result = result.filter(l => l.opportunity_level === filterLevel);
+      result = result.filter(l => {
+        const intention = l.ai_score != null && l.ai_score > 0 ? getIntentionFromScore(l.ai_score) : l.opportunity_level;
+        return intention === filterLevel;
+      });
+    }
+    if (minScore) {
+      const ms = parseInt(minScore);
+      if (!isNaN(ms)) result = result.filter(l => (l.ai_score ?? 0) >= ms);
+    }
+    if (minRating) {
+      const mr = parseFloat(minRating);
+      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) >= mr);
+    }
+    if (maxRating) {
+      const mr = parseFloat(maxRating);
+      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) <= mr);
+    }
+    if (sortOrder === "score_desc") {
+      result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
+    } else if (sortOrder === "score_asc") {
+      result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, maxRating, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
   const paginatedLeads = filteredLeads.slice(
@@ -661,27 +685,89 @@ export default function OpportunitiesManagement() {
               </div>
 
               {/* Filters */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome, telefone, categoria..."
-                    value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    className="pl-9"
-                  />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome, telefone, categoria..."
+                      value={searchTerm}
+                      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Intenção" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="Alta">Alta</SelectItem>
+                      <SelectItem value="Média">Média</SelectItem>
+                      <SelectItem value="Baixa">Baixa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={sortOrder} onValueChange={(v: any) => { setSortOrder(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Mais recentes</SelectItem>
+                      <SelectItem value="score_desc">Maior score</SelectItem>
+                      <SelectItem value="score_asc">Menor score</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Nível" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as intenções</SelectItem>
-                    <SelectItem value="Alta">Alta</SelectItem>
-                    <SelectItem value="Média">Média</SelectItem>
-                    <SelectItem value="Baixa">Baixa</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Score mín:</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="0"
+                      value={minScore}
+                      onChange={(e) => { setMinScore(e.target.value); setCurrentPage(1); }}
+                      className="w-20 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Avaliação mín:</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      placeholder="0"
+                      value={minRating}
+                      onChange={(e) => { setMinRating(e.target.value); setCurrentPage(1); }}
+                      className="w-20 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Avaliação máx:</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      placeholder="5"
+                      value={maxRating}
+                      onChange={(e) => { setMaxRating(e.target.value); setCurrentPage(1); }}
+                      className="w-20 h-8 text-sm"
+                    />
+                  </div>
+                  {(minScore || minRating || maxRating || filterLevel !== "all" || sortOrder !== "default") && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-8"
+                      onClick={() => { setMinScore(""); setMinRating(""); setMaxRating(""); setFilterLevel("all"); setSortOrder("default"); setCurrentPage(1); }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Table */}
