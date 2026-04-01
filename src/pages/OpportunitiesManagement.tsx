@@ -296,14 +296,24 @@ export default function OpportunitiesManagement() {
     return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">{score}/100</Badge>;
   };
 
-  const getLevelBadge = (level: string | null) => {
-    if (!level) return null;
+  // Derive correct level from score to fix inconsistency
+  const getIntentionFromScore = (score: number | null): string | null => {
+    if (score == null || score === 0) return null;
+    if (score >= 61) return "Alta";
+    if (score >= 31) return "Média";
+    return "Baixa";
+  };
+
+  const getLevelBadge = (level: string | null, score?: number | null) => {
+    // Use score-derived level to avoid AI inconsistency
+    const correctedLevel = score != null && score > 0 ? getIntentionFromScore(score) : level;
+    if (!correctedLevel) return null;
     const colors: Record<string, string> = {
       Alta: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
       Média: "bg-amber-500/20 text-amber-400 border-amber-500/30",
       Baixa: "bg-red-500/20 text-red-400 border-red-500/30",
     };
-    return <Badge className={`${colors[level] || ""} text-xs`}>{level}</Badge>;
+    return <Badge className={`${colors[correctedLevel] || ""} text-xs`}>{correctedLevel}</Badge>;
   };
 
   const stats = useMemo(() => {
@@ -339,10 +349,10 @@ export default function OpportunitiesManagement() {
     const justificativa = lead.enrichment_data?.justificativa_score || "";
 
     const dimensions = [
-      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, color: "bg-blue-500", icon: <Globe size={14} className="text-blue-400" /> },
-      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, color: "bg-amber-500", icon: <Star size={14} className="text-amber-400" /> },
-      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, color: "bg-emerald-500", icon: <Phone size={14} className="text-emerald-400" /> },
-      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, color: "bg-purple-500", icon: <Zap size={14} className="text-purple-400" /> },
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, icon: <Globe size={14} className="text-primary" /> },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, icon: <Star size={14} className="text-primary" /> },
+      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" /> },
+      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" /> },
     ];
 
     return (
@@ -355,7 +365,7 @@ export default function OpportunitiesManagement() {
             <div className="bg-primary rounded-full h-3 transition-all duration-500" style={{ width: `${lead.ai_score ?? 0}%` }} />
           </div>
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-muted-foreground">Nível: {lead.opportunity_level || "—"}</span>
+            <span className="text-xs text-muted-foreground">Intenção: {getIntentionFromScore(lead.ai_score) || lead.opportunity_level || "—"}</span>
             {lead.closing_probability && <Badge variant="outline" className="text-xs">{lead.closing_probability}</Badge>}
           </div>
         </div>
@@ -377,7 +387,7 @@ export default function OpportunitiesManagement() {
                   <span className="font-semibold">{dim.value}/{dim.max}</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-500 ${dim.color}`} style={{ width: `${(dim.value / dim.max) * 100}%` }} />
+                  <div className="h-full rounded-full transition-all duration-500 bg-primary" style={{ width: `${(dim.value / dim.max) * 100}%` }} />
                 </div>
               </div>
             ))}
@@ -399,27 +409,33 @@ export default function OpportunitiesManagement() {
         {(pontosFortes.length > 0 || pontosFracos.length > 0) && (
           <div className="grid grid-cols-2 gap-3">
             {pontosFortes.length > 0 && (
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
-                <h4 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mb-2">
-                  <CheckCircle2 size={12} />
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5 mb-3">
+                  <CheckCircle2 size={14} />
                   Pontos Fortes
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-2">
                   {pontosFortes.map((p: string, i: number) => (
-                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 size={12} className="text-primary mt-0.5 shrink-0" />
+                      {p}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
             {pontosFracos.length > 0 && (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4">
-                <h4 className="text-xs font-semibold text-red-400 flex items-center gap-1.5 mb-2">
-                  <AlertTriangle size={12} />
+              <div className="bg-muted/30 border border-border rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <AlertTriangle size={14} />
                   Pontos Fracos
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-2">
                   {pontosFracos.map((p: string, i: number) => (
-                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <AlertTriangle size={12} className="mt-0.5 shrink-0 opacity-60" />
+                      {p}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -660,8 +676,8 @@ export default function OpportunitiesManagement() {
                     <SelectValue placeholder="Nível" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os níveis</SelectItem>
-                    <SelectItem value="Alta">Alta Oportunidade</SelectItem>
+                    <SelectItem value="all">Todas as intenções</SelectItem>
+                    <SelectItem value="Alta">Alta</SelectItem>
                     <SelectItem value="Média">Média</SelectItem>
                     <SelectItem value="Baixa">Baixa</SelectItem>
                   </SelectContent>
@@ -678,7 +694,7 @@ export default function OpportunitiesManagement() {
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Star size={14} />Avaliação</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><BarChart3 size={14} />Score</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Nível</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
                     </TableRow>
@@ -730,7 +746,7 @@ export default function OpportunitiesManagement() {
                               getScoreBadge(lead.ai_score)
                             )}
                           </TableCell>
-                          <TableCell className="text-center">{getLevelBadge(lead.opportunity_level)}</TableCell>
+                          <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center">
                             {lead.ai_approach_message ? (
                               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
@@ -815,7 +831,7 @@ export default function OpportunitiesManagement() {
                   <DialogDescription className="flex items-center gap-2 flex-wrap mt-2">
                     {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
                     {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
-                    {getLevelBadge(selectedLead.opportunity_level)}
+                    {getLevelBadge(selectedLead.opportunity_level, selectedLead.ai_score)}
                     {selectedLead.ai_score != null && selectedLead.ai_score > 0 && getScoreBadge(selectedLead.ai_score)}
                   </DialogDescription>
                 </DialogHeader>
