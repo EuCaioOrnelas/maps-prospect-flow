@@ -35,10 +35,10 @@ const plans: {
     anchorPrice: "397",
     searches: "200",
     whatsappNumbers: 2,
-    description: "Ideal para começar a prospectar novos clientes",
+    description: "Ideal para começar a encontrar e converter novas oportunidades",
     features: [
-      "Mensagens personalizadas com IA",
-      "Automação de atendimento e follow-up com IA",
+      "Geração de mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up inteligente com IA",
       "Agentes de IA Integrados",
       "Até 2 Números WhatsApp",
       "CRM integrado",
