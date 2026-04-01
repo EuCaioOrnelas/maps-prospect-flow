@@ -88,9 +88,64 @@ export default function OpportunitiesManagement() {
   const [batchCurrentName, setBatchCurrentName] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Company profile & onboarding state
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Send message state
+  const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
+  const [sendCooldown, setSendCooldown] = useState(0);
+
+  // Check company profile on mount
   useEffect(() => {
-    if (user) fetchLeads();
+    if (user) {
+      fetchCompanyProfile();
+    }
   }, [user]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (sendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setSendCooldown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sendCooldown]);
+
+  const fetchCompanyProfile = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("company_profiles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        setCompanyProfile(data);
+        // Check last_message_sent_at for cooldown
+        if ((data as any).last_message_sent_at) {
+          const lastSent = new Date((data as any).last_message_sent_at).getTime();
+          const diff = 120 - Math.floor((Date.now() - lastSent) / 1000);
+          if (diff > 0) setSendCooldown(diff);
+        }
+      } else {
+        setShowOnboarding(true);
+      }
+    } catch (err) {
+      console.error("Error fetching company profile:", err);
+    } finally {
+      setProfileLoaded(true);
+    }
+  };
+
+  useEffect(() => {
+    if (user && profileLoaded && !showOnboarding) fetchLeads();
+  }, [user, profileLoaded, showOnboarding]);
 
   // Auto-score unscored leads when they appear
   useEffect(() => {
