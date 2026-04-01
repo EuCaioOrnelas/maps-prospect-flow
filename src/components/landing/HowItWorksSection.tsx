@@ -61,7 +61,7 @@ export const HowItWorksSection = () => {
             Simples e Eficiente
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            Como <span className="text-gradient">Funciona</span>
+            Como <span className="text-highlight-static">Funciona</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
             Em apenas 3 passos, transforme sua prospecção e alcance mais clientes
