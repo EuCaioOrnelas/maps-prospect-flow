@@ -33,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
+import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 
 interface OpportunityLead {
   id: string;
@@ -100,6 +102,10 @@ export default function OpportunitiesManagement() {
   // Send message state
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
   const [sendCooldown, setSendCooldown] = useState(0);
+
+  // WhatsApp numbers management
+  const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
+  const [showNumbersManager, setShowNumbersManager] = useState(false);
 
   // Check company profile on mount
   useEffect(() => {
@@ -745,7 +751,7 @@ export default function OpportunitiesManagement() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => navigate("/whatsapp")}
+                      onClick={() => setShowNumbersManager(true)}
                     >
                       <Wifi size={14} />
                       Gerenciar Números
@@ -994,7 +1000,7 @@ export default function OpportunitiesManagement() {
                       <TableHead><div className="flex items-center gap-1.5"><Tag size={14} />Categoria</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Star size={14} />Avaliação</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><BarChart3 size={14} />Score</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
@@ -1229,7 +1235,19 @@ export default function OpportunitiesManagement() {
             }
             setSendingLead(null);
           }}
-          onRequestConnect={() => navigate("/whatsapp")}
+          onRequestConnect={() => { setSendingLead(null); setShowNumbersManager(true); }}
+        />
+      )}
+
+      {/* Numbers Manager Dialog */}
+      {showNumbersManager && (
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={() => fetchNumbers()}
+          maxNumbers={maxNumbers}
+          onConnect={() => {}}
+          forceOpen={true}
+          onClose={() => setShowNumbersManager(false)}
         />
       )}
     </SidebarProvider>

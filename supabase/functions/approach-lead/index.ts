@@ -81,7 +81,7 @@ DADOS DA SUA EMPRESA (quem está prospectando):
     const brtHour = (now.getUTCHours() - 3 + 24) % 24;
     const greeting = brtHour < 12 ? "Bom dia" : brtHour < 18 ? "Boa tarde" : "Boa noite";
 
-    const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Analise os dados deste lead e crie uma MENSAGEM DE ABORDAGEM personalizada para enviar via WhatsApp.
+    const prompt = `Você é um especialista em vendas B2B e prospecção comercial atuando em TODOS os segmentos do mercado: agências de marketing, tráfego pago, ads, consultoria empresarial, venda de produtos físicos, representação comercial, SaaS, contabilidade, advocacia, arquitetura, saúde, alimentação, educação, tecnologia, logística, indústria, varejo, serviços profissionais — e QUALQUER outro nicho B2B. Adapte sua abordagem ao contexto do segmento. Analise os dados deste lead e crie uma MENSAGEM DE ABORDAGEM personalizada para enviar via WhatsApp.
 
 CONTEXTO IMPORTANTE: Esta é uma MENSAGEM FRIA — provavelmente o PRIMEIRO CONTATO com este lead. Ele NÃO te conhece.
 
