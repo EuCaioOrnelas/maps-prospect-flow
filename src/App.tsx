@@ -66,6 +66,7 @@ const AdminEmailFlowEditor = lazy(() => import("./pages/AdminEmailFlowEditor"));
 const AdminPixBilling = lazy(() => import("./pages/AdminPixBilling"));
 const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
 const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
+const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManagement"));
 
 // Revenue pages
 const RevenueLayout = lazy(() => import("./components/revenue/RevenueLayout").then(m => ({ default: m.RevenueLayout })));
