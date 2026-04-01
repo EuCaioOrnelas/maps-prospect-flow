@@ -2,6 +2,7 @@ import { SEO } from "@/components/SEO";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { ImpactNumbersSection } from "@/components/landing/ImpactNumbersSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { WarmingSection } from "@/components/landing/WarmingSection";
@@ -65,6 +66,7 @@ const Index = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
           <HowItWorksSection />
+          <ImpactNumbersSection />
           <FeaturesSection />
           <OfficialAPISection />
           <WarmingSection />
