@@ -877,7 +877,10 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: text-shimmer 3s ease-in-out infinite;
-  padding-bottom: 0.1em;
+  line-height: inherit;
+  display: inline;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* Static version - same look, no animation */
