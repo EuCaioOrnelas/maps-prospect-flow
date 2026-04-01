@@ -300,13 +300,19 @@ export default function OpportunitiesManagement() {
     if (onlyHighOpp) {
       result = result.filter(l => (l.ai_score ?? 0) >= 70);
     }
+    if (filterCategory !== "all") {
+      result = result.filter(l => l.category === filterCategory);
+    }
+    if (filterCity !== "all") {
+      result = result.filter(l => l.city === filterCity);
+    }
     if (sortOrder === "score_desc") {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
   const paginatedLeads = filteredLeads.slice(
