@@ -736,15 +736,26 @@ export default function OpportunitiesManagement() {
                   <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
                 </div>
                 {companyProfile && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setShowOnboarding(true)}
-                  >
-                    <Settings size={14} />
-                    Editar Perfil
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => navigate("/whatsapp")}
+                    >
+                      <Wifi size={14} />
+                      Gerenciar Números
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setShowOnboarding(true)}
+                    >
+                      <Settings size={14} />
+                      Editar Perfil
+                    </Button>
+                  </div>
                 )}
               </div>
 
