@@ -1235,7 +1235,19 @@ export default function OpportunitiesManagement() {
             }
             setSendingLead(null);
           }}
-          onRequestConnect={() => navigate("/whatsapp")}
+          onRequestConnect={() => { setSendingLead(null); setShowNumbersManager(true); }}
+        />
+      )}
+
+      {/* Numbers Manager Dialog */}
+      {showNumbersManager && (
+        <NumbersManager
+          numbers={numbers}
+          onNumbersChange={refreshNumbers}
+          maxNumbers={maxNumbers}
+          onConnect={() => {}}
+          forceOpen={true}
+          onClose={() => setShowNumbersManager(false)}
         />
       )}
     </SidebarProvider>

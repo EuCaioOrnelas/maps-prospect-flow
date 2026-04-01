@@ -82,7 +82,9 @@ IMPORTANTE: O diagnóstico, ação recomendada e sugestão de serviço devem ser
       ? `\nSITE: ${site_url}\nANALISE O SITE: Considere se ter um site indica maturidade digital. Um site mal feito ou desatualizado pode ser uma oportunidade. Sem SSL (http://) é um ponto fraco.`
       : "\nSITE: Não possui — indica lacuna na presença digital e oportunidade de venda.";
 
-    const prompt = `Você é um consultor especialista em vendas B2B e qualificação de leads. Analise DETALHADAMENTE este lead comercial e retorne uma avaliação REALISTA e DIFERENCIADA. NÃO use scores genéricos — analise cada dado individualmente.
+     const prompt = `Você é um consultor especialista em vendas B2B e qualificação de leads para TODOS os segmentos do mercado B2B: agências de marketing, tráfego pago, ads, consultoria, venda de produtos, representação comercial, SaaS, contabilidade, advocacia, arquitetura, construção civil, saúde, alimentação, educação, tecnologia, logística, indústria, varejo, serviços profissionais, e QUALQUER outro nicho B2B. Adapte sua análise ao contexto específico do segmento.
+
+Analise DETALHADAMENTE este lead comercial e retorne uma avaliação REALISTA e DIFERENCIADA. NÃO use scores genéricos — analise cada dado individualmente.
 
 ${companyContext}
 DADOS DO LEAD:
