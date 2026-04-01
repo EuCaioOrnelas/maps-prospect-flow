@@ -344,7 +344,7 @@ export default function OpportunitiesManagement() {
   const stats = useMemo(() => {
     const total = leads.length;
     const scored = leads.filter(l => l.ai_score != null && l.ai_score > 0).length;
-    const highOpp = leads.filter(l => l.opportunity_level === "Alta").length;
+    const highOpp = leads.filter(l => (l.ai_score ?? 0) >= 70).length;
     const avgScore = scored > 0 ? Math.round(leads.filter(l => l.ai_score != null && l.ai_score > 0).reduce((s, l) => s + (l.ai_score || 0), 0) / scored) : 0;
     return { total, scored, highOpp, avgScore };
   }, [leads]);
