@@ -100,7 +100,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/dashboard"
     },
     {
-      title: "Prospecção",
+      title: "Oportunidades",
       url: "/reports/prospeccao",
       icon: FileSearch,
       active: currentPath === "/reports/prospeccao"
