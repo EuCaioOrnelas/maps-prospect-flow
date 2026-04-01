@@ -991,10 +991,34 @@ export default function OpportunitiesManagement() {
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center">
                             {lead.ai_approach_message ? (
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-                                <CheckCircle2 size={10} />
-                                Abordado
-                              </Badge>
+                              <div className="flex items-center justify-center gap-1">
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
+                                  <CheckCircle2 size={10} />
+                                  Abordado
+                                </Badge>
+                                {!lead.first_message_sent && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
+                                    disabled={sendCooldown > 0}
+                                    onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
+                                  >
+                                    {sendCooldown > 0 ? (
+                                      <Clock size={12} className="text-muted-foreground" />
+                                    ) : (
+                                      <Send size={12} className="text-primary" />
+                                    )}
+                                  </Button>
+                                )}
+                                {lead.first_message_sent && (
+                                  <Badge variant="outline" className="text-[10px] gap-1 text-primary border-primary/30">
+                                    <Send size={8} />
+                                    Enviado
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
                                 <Clock size={10} />
