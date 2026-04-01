@@ -1223,7 +1223,7 @@ export const NumbersManager = ({
                         {!number.is_connected ? (
                           <Button 
                             size="sm" 
-                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                             onClick={() => openConnectDialog(number.id)}
                           >
                             <Wifi size={14} className="mr-1" />
