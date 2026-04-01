@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -24,7 +25,7 @@ import {
   Search, Star, Globe, Phone, MapPin, ExternalLink, Loader2, BarChart3,
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
-  CheckCircle2, Clock, Send,
+  CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,48 +56,6 @@ interface OpportunityLead {
 
 const ITEMS_PER_PAGE = 20;
 
-const deriveLeadScore = (lead: OpportunityLead) => {
-  const socialCount = Array.isArray(lead.social_media) ? lead.social_media.length : 0;
-  const hasSite = !!lead.website && lead.website !== "-";
-  const hasPhone = !!lead.phone && lead.phone !== "-";
-  const rating = lead.rating ?? 0;
-  const reviewCount = lead.review_count ?? 0;
-
-  let score = lead.ai_score ?? 0;
-
-  if (lead.ai_score == null) {
-    if (hasSite) score += 20;
-    if (socialCount >= 3) score += 15;
-    else if (socialCount >= 1) score += 8;
-
-    if (rating >= 4.5) score += 20;
-    else if (rating >= 4.0) score += 15;
-    else if (rating >= 3.0) score += 8;
-
-    if (reviewCount > 100) score += 10;
-    else if (reviewCount >= 30) score += 7;
-    else if (reviewCount >= 10) score += 4;
-
-    if (hasPhone) score += 20;
-    if (!hasSite) score += 10;
-    if (rating < 4.0) score += 5;
-
-    score = Math.min(score, 100);
-  }
-
-  const opportunityLevel = lead.opportunity_level ?? (score >= 61 ? "Alta" : score >= 31 ? "Média" : "Baixa");
-  const closingProbability = lead.closing_probability ?? (
-    score >= 81 ? "Muito Alta" : score >= 61 ? "Alta" : score >= 31 ? "Moderada" : "Baixa"
-  );
-
-  return {
-    ...lead,
-    ai_score: score,
-    opportunity_level: opportunityLevel,
-    closing_probability: closingProbability,
-  };
-};
-
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
@@ -106,16 +65,30 @@ export default function OpportunitiesManagement() {
   const [filterLevel, setFilterLevel] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
+  const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
   const [scoring, setScoring] = useState(false);
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
   const [approachingLeadId, setApproachingLeadId] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState(false);
   const [editedMessage, setEditedMessage] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Batch scoring state
+  const [batchScoring, setBatchScoring] = useState(false);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchTotal, setBatchTotal] = useState(0);
+  const [batchCurrentName, setBatchCurrentName] = useState("");
 
   useEffect(() => {
     if (user) fetchLeads();
   }, [user]);
+
+  // Auto-score unscored leads when they appear
+  useEffect(() => {
+    const unscored = leads.filter(l => l.ai_score == null || l.ai_score === 0);
+    if (unscored.length > 0 && !batchScoring && !loading) {
+      batchScoreLeads(unscored);
+    }
+  }, [leads.length, loading]);
 
   const fetchLeads = async () => {
     if (!user) return;
@@ -129,12 +102,65 @@ export default function OpportunitiesManagement() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setLeads(((data as OpportunityLead[]) || []).map(deriveLeadScore));
+      setLeads((data as OpportunityLead[]) || []);
     } catch (err) {
       console.error("Error fetching leads:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
+    setBatchScoring(true);
+    setBatchTotal(unscoredLeads.length);
+    setBatchProgress(0);
+
+    for (let i = 0; i < unscoredLeads.length; i++) {
+      const lead = unscoredLeads[i];
+      setBatchCurrentName(lead.company_name || "Lead");
+      setBatchProgress(i + 1);
+
+      try {
+        const { data, error } = await supabase.functions.invoke("score-opportunity", {
+          body: {
+            lead_id: lead.id,
+            nome_empresa: lead.company_name || "Desconhecido",
+            endereco: lead.address || "",
+            categoria: lead.category || "",
+            cidade: lead.city || "",
+            google_maps_link: lead.google_maps_link || "",
+            avaliacao_media: lead.rating || 0,
+            quantidade_avaliacoes: lead.review_count || 0,
+            possui_site: !!lead.website && lead.website !== "-",
+            site_url: lead.website || "",
+            possui_telefone: !!lead.phone && lead.phone !== "-",
+            redes_sociais: Array.isArray(lead.social_media) ? lead.social_media : [],
+          },
+        });
+        if (!error && data) {
+          setLeads(prev => prev.map(l => l.id === lead.id ? {
+            ...l,
+            ai_score: data.score,
+            opportunity_level: data.nivel_oportunidade,
+            closing_probability: data.probabilidade_fechamento,
+            ai_diagnosis: data.diagnostico,
+            ai_recommended_action: data.acao_recomendada,
+            enrichment_data: {
+              ...(l.enrichment_data || {}),
+              score_breakdown: data.score_breakdown,
+              pontos_fortes: data.pontos_fortes,
+              pontos_fracos: data.pontos_fracos,
+              justificativa_score: data.justificativa_score,
+            },
+          } : l));
+        }
+      } catch (err) {
+        console.error(`Score error for ${lead.company_name}:`, err);
+      }
+    }
+
+    setBatchScoring(false);
+    toast({ title: "Qualificação concluída!", description: `${unscoredLeads.length} lead(s) analisados com IA` });
   };
 
   const scoreLead = async (lead: OpportunityLead) => {
@@ -146,10 +172,13 @@ export default function OpportunitiesManagement() {
           lead_id: lead.id,
           nome_empresa: lead.company_name || "Desconhecido",
           endereco: lead.address || "",
+          categoria: lead.category || "",
+          cidade: lead.city || "",
           google_maps_link: lead.google_maps_link || "",
           avaliacao_media: lead.rating || 0,
           quantidade_avaliacoes: lead.review_count || 0,
           possui_site: !!lead.website && lead.website !== "-",
+          site_url: lead.website || "",
           possui_telefone: !!lead.phone && lead.phone !== "-",
           redes_sociais: Array.isArray(lead.social_media) ? lead.social_media : [],
         },
@@ -163,8 +192,15 @@ export default function OpportunitiesManagement() {
         closing_probability: data.probabilidade_fechamento,
         ai_diagnosis: data.diagnostico,
         ai_recommended_action: data.acao_recomendada,
+        enrichment_data: {
+          ...(lead.enrichment_data || {}),
+          score_breakdown: data.score_breakdown,
+          pontos_fortes: data.pontos_fortes,
+          pontos_fracos: data.pontos_fracos,
+          justificativa_score: data.justificativa_score,
+        },
       };
-      setLeads((prev) => prev.map((l) => l.id === lead.id ? updated : l));
+      setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
       if (selectedLead?.id === lead.id) setSelectedLead(updated);
     } catch (err: any) {
       console.error("Scoring error:", err);
@@ -196,7 +232,7 @@ export default function OpportunitiesManagement() {
           },
         },
       };
-      setLeads((prev) => prev.map((l) => l.id === lead.id ? updatedLead : l));
+      setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
       if (selectedLead?.id === lead.id) setSelectedLead(updatedLead);
     } catch (err: any) {
       console.error("Approach error:", err);
@@ -214,7 +250,7 @@ export default function OpportunitiesManagement() {
         .eq("id", lead.id);
       if (error) throw error;
       const updated = { ...lead, ai_approach_message: editedMessage };
-      setLeads((prev) => prev.map((l) => l.id === lead.id ? updated : l));
+      setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
       if (selectedLead?.id === lead.id) setSelectedLead(updated);
       setEditingMessage(false);
       toast({ title: "Mensagem atualizada!" });
@@ -234,16 +270,15 @@ export default function OpportunitiesManagement() {
     let result = leads;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (l) =>
-          l.company_name?.toLowerCase().includes(term) ||
-          l.phone?.includes(term) ||
-          l.category?.toLowerCase().includes(term) ||
-          l.city?.toLowerCase().includes(term)
+      result = result.filter(l =>
+        l.company_name?.toLowerCase().includes(term) ||
+        l.phone?.includes(term) ||
+        l.category?.toLowerCase().includes(term) ||
+        l.city?.toLowerCase().includes(term)
       );
     }
     if (filterLevel !== "all") {
-      result = result.filter((l) => l.opportunity_level === filterLevel);
+      result = result.filter(l => l.opportunity_level === filterLevel);
     }
     return result;
   }, [leads, searchTerm, filterLevel]);
@@ -273,26 +308,266 @@ export default function OpportunitiesManagement() {
 
   const stats = useMemo(() => {
     const total = leads.length;
-    const scored = leads.filter((l) => l.ai_score != null && l.ai_score > 0).length;
-    const highOpp = leads.filter((l) => l.opportunity_level === "Alta").length;
-    const avgScore = scored > 0 ? Math.round(leads.filter((l) => l.ai_score != null && l.ai_score > 0).reduce((s, l) => s + (l.ai_score || 0), 0) / scored) : 0;
+    const scored = leads.filter(l => l.ai_score != null && l.ai_score > 0).length;
+    const highOpp = leads.filter(l => l.opportunity_level === "Alta").length;
+    const avgScore = scored > 0 ? Math.round(leads.filter(l => l.ai_score != null && l.ai_score > 0).reduce((s, l) => s + (l.ai_score || 0), 0) / scored) : 0;
     return { total, scored, highOpp, avgScore };
   }, [leads]);
 
   const scoreInfoContent = (
     <div className="space-y-3 text-sm max-w-xs">
       <h4 className="font-semibold">Como funciona o Score</h4>
-      <p className="text-muted-foreground">Nosso modelo analisa 4 dimensões:</p>
+      <p className="text-muted-foreground">A IA analisa cada empresa individualmente em 4 dimensões:</p>
       <ul className="space-y-1.5 text-muted-foreground">
         <li><span className="font-medium text-foreground">Estrutura Digital (35pts)</span> — Site e redes sociais</li>
         <li><span className="font-medium text-foreground">Reputação (30pts)</span> — Avaliações e volume</li>
-        <li><span className="font-medium text-foreground">Acessibilidade (20pts)</span> — Telefone disponível</li>
-        <li><span className="font-medium text-foreground">Oportunidade Oculta (15pts)</span> — Falta de site ou baixa avaliação</li>
+        <li><span className="font-medium text-foreground">Acessibilidade (20pts)</span> — Telefone e endereço</li>
+        <li><span className="font-medium text-foreground">Potencial de Venda (15pts)</span> — Oportunidades ocultas</li>
       </ul>
       <div className="border-t border-border pt-2 space-y-1">
         <p className="text-xs"><span className="text-emerald-400 font-medium">61-100:</span> Alta Oportunidade</p>
         <p className="text-xs"><span className="text-amber-400 font-medium">31-60:</span> Média</p>
         <p className="text-xs"><span className="text-red-400 font-medium">0-30:</span> Baixa</p>
+      </div>
+    </div>
+  );
+
+  const renderScoreBreakdown = (lead: OpportunityLead) => {
+    const breakdown = lead.enrichment_data?.score_breakdown;
+    const pontosFortes = lead.enrichment_data?.pontos_fortes || [];
+    const pontosFracos = lead.enrichment_data?.pontos_fracos || [];
+    const justificativa = lead.enrichment_data?.justificativa_score || "";
+
+    const dimensions = [
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, color: "bg-blue-500", icon: <Globe size={14} className="text-blue-400" /> },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, color: "bg-amber-500", icon: <Star size={14} className="text-amber-400" /> },
+      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, color: "bg-emerald-500", icon: <Phone size={14} className="text-emerald-400" /> },
+      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, color: "bg-purple-500", icon: <Zap size={14} className="text-purple-400" /> },
+    ];
+
+    return (
+      <div className="space-y-4">
+        {/* Score Principal */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
+          <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
+          <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
+          <div className="w-full bg-muted rounded-full h-3 mt-4">
+            <div className="bg-primary rounded-full h-3 transition-all duration-500" style={{ width: `${lead.ai_score ?? 0}%` }} />
+          </div>
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-xs text-muted-foreground">Nível: {lead.opportunity_level || "—"}</span>
+            {lead.closing_probability && <Badge variant="outline" className="text-xs">{lead.closing_probability}</Badge>}
+          </div>
+        </div>
+
+        {/* Breakdown por dimensão */}
+        {breakdown && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <BarChart3 size={14} className="text-primary" />
+              Detalhamento do Score
+            </h4>
+            {dimensions.map(dim => (
+              <div key={dim.label} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    {dim.icon}
+                    {dim.label}
+                  </span>
+                  <span className="font-semibold">{dim.value}/{dim.max}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${dim.color}`} style={{ width: `${(dim.value / dim.max) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Justificativa */}
+        {justificativa && (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
+              <Info size={14} className="text-primary" />
+              Por que este score?
+            </h4>
+            <p className="text-sm text-muted-foreground">{justificativa}</p>
+          </div>
+        )}
+
+        {/* Pontos fortes e fracos */}
+        {(pontosFortes.length > 0 || pontosFracos.length > 0) && (
+          <div className="grid grid-cols-2 gap-3">
+            {pontosFortes.length > 0 && (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
+                <h4 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 size={12} />
+                  Pontos Fortes
+                </h4>
+                <ul className="space-y-1">
+                  {pontosFortes.map((p: string, i: number) => (
+                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {pontosFracos.length > 0 && (
+              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4">
+                <h4 className="text-xs font-semibold text-red-400 flex items-center gap-1.5 mb-2">
+                  <AlertTriangle size={12} />
+                  Pontos Fracos
+                </h4>
+                <ul className="space-y-1">
+                  {pontosFracos.map((p: string, i: number) => (
+                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Diagnóstico IA */}
+        {lead.ai_diagnosis && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles size={14} className="text-primary" />
+              Diagnóstico IA
+            </h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{lead.ai_diagnosis}</p>
+            {lead.ai_recommended_action && (
+              <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 mt-2">
+                <p className="text-xs font-medium text-primary mb-1">Ação Recomendada</p>
+                <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recalcular */}
+        <Button
+          onClick={() => selectedLead && scoreLead(selectedLead)}
+          disabled={scoring}
+          variant="outline"
+          className="w-full gap-2"
+        >
+          {scoring && scoringLeadId === selectedLead?.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+          Recalcular Score com IA
+        </Button>
+      </div>
+    );
+  };
+
+  const renderLeadData = (lead: OpportunityLead) => (
+    <div className="space-y-4">
+      {/* Company Info Card */}
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <h4 className="text-sm font-semibold flex items-center gap-2">
+          <Building2 size={14} className="text-primary" />
+          Informações da Empresa
+        </h4>
+        <div className="grid grid-cols-2 gap-3">
+          <DetailItem icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
+          <DetailItem icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
+          <DetailItem icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
+          <DetailItem icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
+          <DetailItem icon={<Tag size={13} />} label="Categoria" value={lead.category} />
+          <DetailItem icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
+        </div>
+        {lead.google_maps_link && lead.google_maps_link !== "-" && (
+          <a href={lead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 mt-2 transition-colors hover:bg-muted">
+            <Map size={14} />
+            Ver no Google Maps
+            <ExternalLink size={12} className="ml-auto opacity-50" />
+          </a>
+        )}
+      </div>
+
+      {/* Market Analysis Card */}
+      {lead.enrichment_data?.approach_analysis && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Target size={14} className="text-primary" />
+            Análise de Mercado
+          </h4>
+          <div className="space-y-2">
+            {lead.enrichment_data.approach_analysis.analise_nicho && (
+              <div className="bg-muted/40 rounded-lg p-3">
+                <p className="text-xs font-medium text-foreground mb-0.5">Nicho</p>
+                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.analise_nicho}</p>
+              </div>
+            )}
+            {lead.enrichment_data.approach_analysis.analise_cidade && (
+              <div className="bg-muted/40 rounded-lg p-3">
+                <p className="text-xs font-medium text-foreground mb-0.5">Cidade</p>
+                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.analise_cidade}</p>
+              </div>
+            )}
+            {lead.enrichment_data.approach_analysis.estrategia && (
+              <div className="bg-muted/40 rounded-lg p-3">
+                <p className="text-xs font-medium text-foreground mb-0.5">Estratégia</p>
+                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.estrategia}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Approach Message Card */}
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <h4 className="text-sm font-semibold flex items-center gap-2">
+          <MessageSquare size={14} className="text-primary" />
+          Mensagem de Abordagem
+        </h4>
+        {lead.ai_approach_message ? (
+          editingMessage ? (
+            <div className="space-y-2">
+              <Textarea
+                value={editedMessage}
+                onChange={(e) => setEditedMessage(e.target.value)}
+                rows={6}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => saveEditedMessage(lead)} className="gap-1">
+                  <Check size={14} /> Salvar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditingMessage(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                {lead.ai_approach_message}
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" variant="outline" onClick={() => copyMessage(lead.ai_approach_message!, lead.id)} className="gap-1.5 text-xs">
+                  {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedId === lead.id ? "Copiada" : "Copiar"}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
+                  <Pencil size={12} /> Editar
+                </Button>
+              </div>
+            </div>
+          )
+        ) : (
+          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Abordar com IA" para gerar.</p>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-2 pt-1">
+        <Button
+          onClick={() => approachLead(lead)}
+          disabled={approachingLeadId === lead.id}
+          className="flex-1 gap-2"
+        >
+          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          {lead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
+        </Button>
       </div>
     </div>
   );
@@ -311,6 +586,21 @@ export default function OpportunitiesManagement() {
                 <h1 className="font-display text-2xl sm:text-3xl font-bold">Gestão de Oportunidades</h1>
                 <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
               </div>
+
+              {/* Batch scoring progress */}
+              {batchScoring && (
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Loader2 size={16} className="animate-spin text-primary" />
+                      <span className="text-sm font-medium">Analisando leads com IA...</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{batchProgress}/{batchTotal}</span>
+                  </div>
+                  <Progress value={(batchProgress / batchTotal) * 100} className="h-2" />
+                  <p className="text-xs text-muted-foreground">Qualificando: {batchCurrentName}</p>
+                </div>
+              )}
 
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -411,20 +701,18 @@ export default function OpportunitiesManagement() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedLeads.map((lead) => (
+                      paginatedLeads.map(lead => (
                         <TableRow
                           key={lead.id}
                           className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => { setSelectedLead(lead); setEditingMessage(false); }}
+                          onClick={() => { setSelectedLead(lead); setPopupTab("dados"); setEditingMessage(false); }}
                         >
                           <TableCell className="font-medium max-w-[220px]">
-                            <span className="truncate block" title={lead.company_name || "Sem nome"}>
+                            <span className="truncate block whitespace-nowrap" title={lead.company_name || "Sem nome"}>
                               {lead.company_name || "Sem nome"}
                             </span>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
-                            {lead.category || "-"}
-                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{lead.category || "-"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{lead.city || "-"}</TableCell>
                           <TableCell className="text-center">
                             {lead.rating ? (
@@ -435,7 +723,13 @@ export default function OpportunitiesManagement() {
                               </div>
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-center">{getScoreBadge(lead.ai_score)}</TableCell>
+                          <TableCell className="text-center">
+                            {batchScoring && (lead.ai_score == null || lead.ai_score === 0) ? (
+                              <Loader2 size={14} className="animate-spin text-muted-foreground mx-auto" />
+                            ) : (
+                              getScoreBadge(lead.ai_score)
+                            )}
+                          </TableCell>
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level)}</TableCell>
                           <TableCell className="text-center">
                             {lead.ai_approach_message ? (
@@ -456,7 +750,7 @@ export default function OpportunitiesManagement() {
                                 href={lead.google_maps_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={e => e.stopPropagation()}
                                 className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
                                 title="Ver no Google Maps"
                               >
@@ -479,43 +773,22 @@ export default function OpportunitiesManagement() {
                   {filteredLeads.length} oportunidade(s) — Página {currentPage} de {totalPages}
                 </span>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((p) => p - 1)}
-                  >
+                  <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
                     <ChevronLeft size={16} />
                   </Button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let page: number;
-                    if (totalPages <= 5) {
-                      page = i + 1;
-                    } else if (currentPage <= 3) {
-                      page = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      page = totalPages - 4 + i;
-                    } else {
-                      page = currentPage - 2 + i;
-                    }
+                    if (totalPages <= 5) page = i + 1;
+                    else if (currentPage <= 3) page = i + 1;
+                    else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
+                    else page = currentPage - 2 + i;
                     return (
-                      <Button
-                        key={page}
-                        size="sm"
-                        variant={page === currentPage ? "default" : "outline"}
-                        onClick={() => setCurrentPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
+                      <Button key={page} size="sm" variant={page === currentPage ? "default" : "outline"} onClick={() => setCurrentPage(page)} className="w-8 h-8 p-0">
                         {page}
                       </Button>
                     );
                   })}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                  >
+                  <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
                     <ChevronRight size={16} />
                   </Button>
                 </div>
@@ -525,8 +798,8 @@ export default function OpportunitiesManagement() {
         </div>
       </div>
 
-      {/* Lead Detail Dialog */}
-      <Dialog open={!!selectedLead} onOpenChange={(open) => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
+      {/* Lead Detail Dialog with Tabs */}
+      <Dialog open={!!selectedLead} onOpenChange={open => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {selectedLead && (
             <div className="flex flex-col">
@@ -543,185 +816,31 @@ export default function OpportunitiesManagement() {
                     {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
                     {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
                     {getLevelBadge(selectedLead.opportunity_level)}
-                    {selectedLead.ai_approach_message ? (
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-                        <CheckCircle2 size={10} /> Abordado
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
-                        <Clock size={10} /> Pendente
-                      </Badge>
-                    )}
+                    {selectedLead.ai_score != null && selectedLead.ai_score > 0 && getScoreBadge(selectedLead.ai_score)}
                   </DialogDescription>
                 </DialogHeader>
+
+                {/* Tab Switcher */}
+                <div className="flex gap-1 mt-4 bg-muted/50 rounded-lg p-1">
+                  <button
+                    onClick={() => setPopupTab("dados")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "dados" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Eye size={14} />
+                    Dados do Lead
+                  </button>
+                  <button
+                    onClick={() => setPopupTab("score")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "score" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <BarChart3 size={14} />
+                    Score & Análise
+                  </button>
+                </div>
               </div>
 
-              <div className="p-5 space-y-4">
-                {/* Score Card */}
-                {selectedLead.ai_score != null && selectedLead.ai_score > 0 && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium flex items-center gap-1.5">
-                        <BarChart3 size={14} className="text-primary" />
-                        Score de Oportunidade
-                      </span>
-                      <span className="text-2xl font-bold text-primary">{selectedLead.ai_score}/100</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2.5 mb-3">
-                      <div className="bg-primary rounded-full h-2.5 transition-all" style={{ width: `${selectedLead.ai_score}%` }} />
-                    </div>
-                    {selectedLead.closing_probability && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Probabilidade de fechamento</span>
-                        <Badge variant="outline" className="text-xs">{selectedLead.closing_probability}</Badge>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Company Info Card */}
-                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                  <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                    <Building2 size={14} className="text-primary" />
-                    Informações da Empresa
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <DetailItem icon={<MapPin size={13} />} label="Endereço" value={selectedLead.address} />
-                    <DetailItem icon={<Phone size={13} />} label="Telefone" value={selectedLead.phone} />
-                    <DetailItem icon={<Globe size={13} />} label="Site" value={selectedLead.website} isLink />
-                    <DetailItem icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={selectedLead.rating ? `${selectedLead.rating}/5 (${selectedLead.review_count || 0})` : null} />
-                  </div>
-                  {selectedLead.google_maps_link && selectedLead.google_maps_link !== "-" && (
-                    <a href={selectedLead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 mt-2 transition-colors hover:bg-muted">
-                      <Map size={14} />
-                      Ver no Google Maps
-                      <ExternalLink size={12} className="ml-auto opacity-50" />
-                    </a>
-                  )}
-                </div>
-
-                {/* AI Diagnosis Card */}
-                {selectedLead.ai_diagnosis && (
-                  <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                    <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                      <Sparkles size={14} className="text-primary" />
-                      Diagnóstico IA
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedLead.ai_diagnosis}</p>
-                    {selectedLead.ai_recommended_action && (
-                      <div className="bg-primary/5 border border-primary/15 rounded-lg p-3">
-                        <p className="text-xs font-medium text-primary mb-1">Ação Recomendada</p>
-                        <p className="text-sm text-muted-foreground">{selectedLead.ai_recommended_action}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Market Analysis Card */}
-                {selectedLead.enrichment_data?.approach_analysis && (
-                  <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                    <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                      <Target size={14} className="text-primary" />
-                      Análise de Mercado
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedLead.enrichment_data.approach_analysis.analise_nicho && (
-                        <div className="bg-muted/40 rounded-lg p-3">
-                          <p className="text-xs font-medium text-foreground mb-0.5">Nicho</p>
-                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_nicho}</p>
-                        </div>
-                      )}
-                      {selectedLead.enrichment_data.approach_analysis.analise_cidade && (
-                        <div className="bg-muted/40 rounded-lg p-3">
-                          <p className="text-xs font-medium text-foreground mb-0.5">Cidade</p>
-                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_cidade}</p>
-                        </div>
-                      )}
-                      {selectedLead.enrichment_data.approach_analysis.estrategia && (
-                        <div className="bg-muted/40 rounded-lg p-3">
-                          <p className="text-xs font-medium text-foreground mb-0.5">Estratégia</p>
-                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.estrategia}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Approach Message Card */}
-                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                  <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                    <MessageSquare size={14} className="text-primary" />
-                    Mensagem de Abordagem
-                  </h4>
-                  {selectedLead.ai_approach_message ? (
-                    editingMessage ? (
-                      <div className="space-y-2">
-                        <Textarea
-                          value={editedMessage}
-                          onChange={(e) => setEditedMessage(e.target.value)}
-                          rows={6}
-                          className="text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => saveEditedMessage(selectedLead)} className="gap-1">
-                            <Check size={14} /> Salvar
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingMessage(false)}>
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                          {selectedLead.ai_approach_message}
-                        </p>
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => copyMessage(selectedLead.ai_approach_message!, selectedLead.id)}
-                            className="gap-1.5 text-xs"
-                          >
-                            {copiedId === selectedLead.id ? <Check size={12} /> : <Copy size={12} />}
-                            {copiedId === selectedLead.id ? "Copiada" : "Copiar"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => { setEditedMessage(selectedLead.ai_approach_message || ""); setEditingMessage(true); }}
-                            className="gap-1.5 text-xs"
-                          >
-                            <Pencil size={12} /> Editar
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Abordar com IA" para gerar.</p>
-                  )}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    onClick={() => approachLead(selectedLead)}
-                    disabled={approachingLeadId === selectedLead.id}
-                    className="flex-1 gap-2"
-                  >
-                    {approachingLeadId === selectedLead.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                    {selectedLead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
-                  </Button>
-                  <Button
-                    onClick={() => scoreLead(selectedLead)}
-                    disabled={scoring}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    {scoring && scoringLeadId === selectedLead.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                    Score
-                  </Button>
-                </div>
+              <div className="p-5">
+                {popupTab === "score" ? renderScoreBreakdown(selectedLead) : renderLeadData(selectedLead)}
               </div>
             </div>
           )}
