@@ -96,7 +96,7 @@ const Index = () => {
           <FeaturesSection />
           <ImpactNumbersSection />
           <OfficialAPISection />
-          <WarmingSection />
+          
           <CpuDividerSection />
           <AIAgentsSection />
           <TestimonialsSection />

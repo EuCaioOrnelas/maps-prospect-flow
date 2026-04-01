@@ -89,7 +89,7 @@ const LandingPage = () => {
           <FeaturesSection />
           <ImpactNumbersSection />
           <OfficialAPISection />
-          <WarmingSection />
+          
           <CpuDividerSection />
           <AIAgentsSection />
           <TestimonialsSection />
