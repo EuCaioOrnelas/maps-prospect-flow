@@ -49,6 +49,21 @@
     --gradient-hero: linear-gradient(180deg, hsl(220 20% 4%) 0%, hsl(220 18% 8%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 18% 9%) 0%, hsl(220 18% 6%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 38% / 0.15) 0%, transparent 70%);
+
+    --internal-glow-backdrop:
+      radial-gradient(circle at 14% 10%, hsl(var(--primary) / 0.08) 0%, transparent 26%),
+      radial-gradient(circle at 88% 16%, hsl(var(--info) / 0.07) 0%, transparent 24%),
+      radial-gradient(circle at 74% 74%, hsl(var(--primary) / 0.05) 0%, transparent 28%),
+      radial-gradient(circle at 24% 86%, hsl(var(--warning) / 0.04) 0%, transparent 18%);
+    --internal-glow-blur: 56px;
+    --internal-glow-opacity: 0.78;
+    --internal-glow-sheen: linear-gradient(120deg, transparent 18%, hsl(var(--primary) / 0.045) 42%, hsl(var(--info) / 0.03) 55%, transparent 72%);
+    --internal-glow-sheen-blur: 74px;
+    --internal-glow-sheen-opacity: 0.55;
+    --internal-glow-grid: radial-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    --internal-glow-grid-size: 24px 24px;
+    --internal-glow-grid-opacity: 0.12;
+    --internal-glow-mask: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.16));
     
     --shadow-glow: 0 0 60px hsl(158 72% 38% / 0.2);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
@@ -123,6 +138,20 @@
     --gradient-hero: linear-gradient(180deg, hsl(210 30% 99%) 0%, hsl(158 30% 97%) 40%, hsl(158 25% 95%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.06) 0%, transparent 70%);
+
+    --internal-glow-backdrop:
+      radial-gradient(circle at 12% 10%, hsl(var(--primary) / 0.16) 0%, transparent 22%),
+      radial-gradient(circle at 90% 16%, hsl(var(--info) / 0.12) 0%, transparent 20%),
+      radial-gradient(circle at 72% 72%, hsl(var(--primary) / 0.1) 0%, transparent 24%),
+      radial-gradient(circle at 26% 84%, hsl(var(--warning) / 0.08) 0%, transparent 16%);
+    --internal-glow-blur: 42px;
+    --internal-glow-opacity: 0.98;
+    --internal-glow-sheen: linear-gradient(120deg, transparent 22%, hsl(var(--primary) / 0.08) 42%, hsl(var(--info) / 0.05) 56%, transparent 76%);
+    --internal-glow-sheen-blur: 68px;
+    --internal-glow-sheen-opacity: 0.82;
+    --internal-glow-grid: radial-gradient(hsl(var(--primary) / 0.14) 1px, transparent 1px);
+    --internal-glow-grid-size: 28px 28px;
+    --internal-glow-grid-opacity: 0.22;
 
     --shadow-glow: 0 0 80px hsl(158 72% 40% / 0.12);
     --shadow-card: 0 1px 3px hsl(220 25% 14% / 0.04), 0 4px 16px hsl(220 25% 14% / 0.04);
