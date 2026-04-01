@@ -685,7 +685,7 @@ export default function OpportunitiesManagement() {
           className="flex-1 gap-2"
         >
           {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {lead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
+          {lead.ai_approach_message ? "Regenerar Abordagem" : "Gerar abordagem personalizada com IA"}
         </Button>
         {lead.ai_approach_message && !lead.first_message_sent && (
           <Button
