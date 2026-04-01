@@ -86,7 +86,7 @@ export const DailyLimitIndicator = ({
             <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
             <span>
               Você selecionou {selectedCount} leads, mas só pode enviar mais {remaining} hoje. 
-              Reduza a seleção ou continue amanhã.
+              Reduza a seleção ou continue amanhã às 08:00.
             </span>
           </p>
         </div>

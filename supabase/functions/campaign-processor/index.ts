@@ -685,10 +685,10 @@ async function processSingleMessage(
     const spNow = getSaoPauloTime();
     const spTomorrow = new Date(spNow);
     spTomorrow.setDate(spTomorrow.getDate() + 1);
-    spTomorrow.setHours(0, 0, 0, 0);
+    spTomorrow.setHours(8, 0, 0, 0);
     const tomorrowUTC = new Date(spTomorrow.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
 
-    campaignLog('🛑', `DAILY LIMIT REACHED - Pausing until tomorrow`, {
+    campaignLog('🛑', `DAILY LIMIT REACHED - Pausing until tomorrow 08:00`, {
       resumeAt: tomorrowUTC.toISOString()
     });
 
