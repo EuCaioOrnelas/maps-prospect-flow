@@ -48,8 +48,9 @@ serve(async (req) => {
     } = body;
 
     const socialCount = Array.isArray(redes_sociais) ? redes_sociais.length : 0;
+    const socialLinks = Array.isArray(redes_sociais) ? redes_sociais : [];
 
-    // Fetch the company profile for personalized scoring
+    // Fetch company profile
     const { data: companyProfile } = await supabase
       .from("company_profiles")
       .select("*")
@@ -68,7 +69,19 @@ DADOS DA SUA EMPRESA (quem está prospectando):
 IMPORTANTE: O diagnóstico, ação recomendada e sugestão de serviço devem ser baseados EXCLUSIVAMENTE nos produtos/serviços listados acima. NÃO sugira serviços que a empresa não oferece. Analise como os serviços "${companyProfile.company_products}" podem ajudar especificamente este lead.
 ` : "";
 
-    // Let AI do the REAL scoring analysis
+    // Build social media context
+    const socialContext = socialLinks.length > 0
+      ? `\nREDES SOCIAIS ENCONTRADAS:\n${socialLinks.map((s: any) => {
+          if (typeof s === 'string') return `- ${s}`;
+          return `- ${s.platform || 'Rede social'}: ${s.url || s}`;
+        }).join('\n')}\n\nANALISE AS REDES SOCIAIS: Verifique se os links indicam perfis ativos ou abandonados. Perfis sem posts recentes (>30 dias) indicam abandono digital. Perfis ativos indicam empresa engajada.`
+      : "\nREDES SOCIAIS: Nenhuma encontrada — indica ausência de presença social.";
+
+    // Build website context
+    const websiteContext = possui_site && site_url
+      ? `\nSITE: ${site_url}\nANALISE O SITE: Considere se ter um site indica maturidade digital. Um site mal feito ou desatualizado pode ser uma oportunidade. Sem SSL (http://) é um ponto fraco.`
+      : "\nSITE: Não possui — indica lacuna na presença digital e oportunidade de venda.";
+
     const prompt = `Você é um consultor especialista em vendas B2B e qualificação de leads. Analise DETALHADAMENTE este lead comercial e retorne uma avaliação REALISTA e DIFERENCIADA. NÃO use scores genéricos — analise cada dado individualmente.
 
 ${companyContext}
@@ -83,63 +96,79 @@ DADOS DO LEAD:
 - Possui site próprio: ${possui_site ? `Sim (${site_url || "URL não capturada"})` : "Não"}
 - Possui telefone para contato: ${possui_telefone ? "Sim" : "Não"}
 - Redes sociais encontradas: ${socialCount > 0 ? `${socialCount} rede(s)` : "Nenhuma"}
+${websiteContext}
+${socialContext}
 
-MODELO DE PONTUAÇÃO (0-100):
-Use estas 4 dimensões para calcular um score PRECISO:
+MODELO DE PONTUAÇÃO (0-100) — As 5 dimensões DEVEM somar exatamente 100:
 
-1. ESTRUTURA DIGITAL (0-35 pontos):
-   - Site profissional e completo: até 20pts (sem site = 0, mas é OPORTUNIDADE de venda)
-   - Presença em redes sociais: até 15pts (0 redes=0, 1=5, 2=10, 3+=15)
+1. ESTRUTURA DIGITAL (0-25 pontos):
+   - Site profissional: até 12pts (sem site=0, com site básico=6, site completo/profissional=12)
+   - Presença em redes sociais: até 8pts (0 redes=0, 1=3, 2=6, 3+=8)
+   - Qualidade das redes (perfis completos, ativos): até 5pts
 
-2. REPUTAÇÃO ONLINE (0-30 pontos):
-   - Nota de avaliação: até 15pts (sem nota=0, <3.0=3, 3.0-3.9=7, 4.0-4.4=11, 4.5+=15)
-   - Volume de avaliações: até 15pts (0=0, 1-9=3, 10-29=6, 30-99=10, 100+=15)
+2. REPUTAÇÃO ONLINE (0-25 pontos):
+   - Nota de avaliação: até 12pts (sem nota=0, <3.0=2, 3.0-3.9=5, 4.0-4.4=9, 4.5+=12)
+   - Volume de avaliações: até 8pts (0=0, 1-9=2, 10-29=4, 30-99=6, 100+=8)
+   - Respostas do dono às avaliações: até 5pts (empresa que responde avaliações=5, não responde=0, sem avaliações=0)
 
 3. ACESSIBILIDADE COMERCIAL (0-20 pontos):
-   - Telefone disponível: 12pts (sim=12, não=0)
-   - Endereço completo verificável: 8pts (sim=8, parcial=4, não=0)
+   - Telefone disponível: 10pts (sim=10, não=0)
+   - Endereço completo verificável: 6pts (sim=6, parcial=3, não=0)
+   - Facilidade de contato geral: 4pts
 
-4. POTENCIAL DE VENDA (0-15 pontos):
-   - Empresas SEM site são OPORTUNIDADE para agências digitais: até 10pts
-   - Avaliação baixa (<4.0) indica necessidade de gestão de reputação: até 5pts
-   - Poucas avaliações indica empresa nova/crescendo: até 5pts
-   - (máximo nesta categoria: 15pts)
+4. ENGAJAMENTO E ATIVIDADE (0-15 pontos) — NOVO:
+   - Redes sociais ativas (posts recentes): até 6pts (ativas=6, inativas/abandonadas=0)
+   - Site atualizado/funcional: até 5pts (atualizado=5, desatualizado=2, sem site=0)
+   - Responde avaliações recentes: até 4pts (responde=4, não responde=0)
+
+5. POTENCIAL DE VENDA (0-15 pontos):
+   - Empresas SEM site são OPORTUNIDADE: até 6pts
+   - Redes sociais ausentes/abandonadas = oportunidade de gestão: até 4pts
+   - Avaliação baixa (<4.0) indica necessidade de gestão de reputação: até 3pts
+   - Poucas avaliações = empresa nova/crescendo: até 2pts
 
 IMPORTANTE:
+- A SOMA das 5 dimensões DEVE ser igual ao score total (máximo 100)
 - Calcule cada dimensão separadamente
-- Empresas com MUITAS avaliações positivas + site = score ALTO (empresa bem estabelecida, fácil de abordar)
-- Empresas SEM site + SEM redes = score MÉDIO-ALTO (grande oportunidade de venda de serviços digitais)
+- Empresas com MUITAS avaliações positivas + site + redes ativas = score ALTO
+- Empresas SEM site + SEM redes = score MÉDIO-ALTO (grande oportunidade de venda)
 - Empresas com avaliações NEGATIVAS + sem presença = score BAIXO
 - O score DEVE variar significativamente entre empresas diferentes
 - NÃO dê scores genéricos como 60-70 para todos
 
 COMO GERAR O DIAGNÓSTICO (campo "diagnostico"):
 - Analise o cenário atual do lead considerando a REGIÃO (cidade), o NICHO (categoria) e a concorrência local
-- Identifique as DORES reais: falta de visibilidade, reputação fraca, ausência digital, etc.
-- Seja específico sobre o mercado local (ex: "Em [cidade], o segmento de [categoria] é competitivo e empresas sem presença digital perdem clientes para concorrentes que aparecem no Google")
+- Identifique as DORES reais: falta de visibilidade, reputação fraca, ausência digital, redes abandonadas, site desatualizado, etc.
+- Seja específico sobre o mercado local
+- Se tiver site, analise se parece profissional ou amador pela URL
+- Se tiver redes sociais, comente sobre a presença online
 
 COMO GERAR A AÇÃO RECOMENDADA (campo "acao_recomendada"):
 - NÃO seja genérico como "ofereça criação de site" ou "venda seus serviços"
 - ANALISE o cenário: região, nicho, concorrência local, pontos fracos
-- IDENTIFIQUE a DOR PRINCIPAL (ex: sem site = invisível online, poucas avaliações = pouca prova social)
+- IDENTIFIQUE a DOR PRINCIPAL
 - SUGIRA UMA ESTRATÉGIA CONCRETA E DETALHADA usando os serviços da empresa prospectora
-- EXPLIQUE COMO executar na prática (ex: "Criar perfil otimizado no Google Meu Negócio com fotos profissionais e descrição SEO para aparecer nas buscas locais de [cidade] quando alguém pesquisar [categoria]")
-- Sugira um PONTO FUTURO DE MONETIZAÇÃO quando possível (ex: "Após presença digital, implementar anúncios geolocalizados para captar clientes num raio de 5km")
+- EXPLIQUE COMO executar na prática
+- Sugira um PONTO FUTURO DE MONETIZAÇÃO quando possível
 - A ação deve ter 3-5 frases detalhadas
 
 Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
 {
   "score": <número inteiro 0-100>,
-  "estrutura_digital": <número 0-35>,
-  "reputacao": <número 0-30>,
+  "estrutura_digital": <número 0-25>,
+  "reputacao": <número 0-25>,
   "acessibilidade": <número 0-20>,
+  "engajamento_atividade": <número 0-15>,
   "potencial_venda": <número 0-15>,
   "nivel_oportunidade": "<Alta|Média|Baixa>",
   "probabilidade_fechamento": "<Muito Alta|Alta|Moderada|Baixa>",
-  "diagnostico": "<diagnóstico estratégico em 3-4 frases analisando cenário regional, mercado local e posição competitiva desta empresa>",
+  "diagnostico": "<diagnóstico estratégico em 3-4 frases analisando cenário regional, presença digital, redes sociais, site e posição competitiva>",
   "acao_recomendada": "<estratégia detalhada em 3-5 frases: dor identificada + solução concreta com serviços da empresa + como executar + monetização futura>",
   "pontos_fortes": ["<ponto 1>", "<ponto 2>"],
   "pontos_fracos": ["<ponto 1>", "<ponto 2>"],
+  "analise_site": "<análise breve do site se existir, ou 'Sem site' se não tiver>",
+  "analise_redes_sociais": "<análise breve das redes sociais, atividade, engajamento>",
+  "analise_reputacao_detalhada": "<análise das avaliações, se responde clientes, volume>",
   "justificativa_score": "<1 frase explicando POR QUE este score específico>"
 }`;
 
@@ -156,7 +185,7 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
           model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.4,
-          max_tokens: 1200,
+          max_tokens: 1500,
           response_format: { type: "json_object" },
         }),
       });
@@ -178,28 +207,30 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
     // Fallback if AI fails
     if (!result) {
       let score = 0;
-      if (possui_site) score += 20;
-      if (socialCount >= 3) score += 15; else if (socialCount >= 1) score += 8;
-      if (avaliacao_media >= 4.5) score += 15; else if (avaliacao_media >= 4.0) score += 11; else if (avaliacao_media >= 3.0) score += 7;
-      if (quantidade_avaliacoes > 100) score += 15; else if (quantidade_avaliacoes >= 30) score += 10; else if (quantidade_avaliacoes >= 10) score += 6;
-      if (possui_telefone) score += 12;
-      if (endereco && endereco !== "Não informado") score += 8;
-      if (!possui_site) score += 10;
-      if (avaliacao_media && avaliacao_media < 4.0) score += 5;
-      score = Math.min(score, 100);
+      const estrutura = (possui_site ? 12 : 0) + Math.min(socialCount * 3, 8);
+      const reputacao = (avaliacao_media >= 4.5 ? 12 : avaliacao_media >= 4.0 ? 9 : avaliacao_media >= 3.0 ? 5 : 0) +
+        (quantidade_avaliacoes > 100 ? 8 : quantidade_avaliacoes >= 30 ? 6 : quantidade_avaliacoes >= 10 ? 4 : 0);
+      const acessibilidade = (possui_telefone ? 10 : 0) + (endereco && endereco !== "Não informado" ? 6 : 0);
+      const engajamento = (socialCount > 0 ? 3 : 0) + (possui_site ? 3 : 0);
+      const potencial = (!possui_site ? 6 : 0) + (socialCount === 0 ? 4 : 0) + (avaliacao_media && avaliacao_media < 4.0 ? 3 : 0);
+      score = Math.min(estrutura + reputacao + acessibilidade + engajamento + potencial, 100);
 
       result = {
         score,
-        estrutura_digital: possui_site ? 20 + Math.min(socialCount * 5, 15) : Math.min(socialCount * 5, 15),
-        reputacao: Math.min(30, (avaliacao_media >= 4.0 ? 15 : avaliacao_media >= 3.0 ? 7 : 0) + (quantidade_avaliacoes > 100 ? 15 : quantidade_avaliacoes >= 30 ? 10 : quantidade_avaliacoes >= 10 ? 6 : 0)),
-        acessibilidade: (possui_telefone ? 12 : 0) + (endereco ? 8 : 0),
-        potencial_venda: (!possui_site ? 10 : 0) + (avaliacao_media && avaliacao_media < 4.0 ? 5 : 0),
+        estrutura_digital: estrutura,
+        reputacao,
+        acessibilidade,
+        engajamento_atividade: engajamento,
+        potencial_venda: potencial,
         nivel_oportunidade: score >= 61 ? "Alta" : score >= 31 ? "Média" : "Baixa",
         probabilidade_fechamento: score >= 81 ? "Muito Alta" : score >= 61 ? "Alta" : score >= 31 ? "Moderada" : "Baixa",
         diagnostico: `${nome_empresa} apresenta potencial comercial com score ${score}/100.`,
         acao_recomendada: !possui_site ? "Abordar oferecendo serviços de presença digital." : "Apresentar soluções de otimização e crescimento.",
         pontos_fortes: [],
         pontos_fracos: [],
+        analise_site: possui_site ? "Site encontrado" : "Sem site",
+        analise_redes_sociais: socialCount > 0 ? `${socialCount} rede(s) encontrada(s)` : "Nenhuma rede social",
+        analise_reputacao_detalhada: avaliacao_media ? `Avaliação ${avaliacao_media}/5 com ${quantidade_avaliacoes} avaliações` : "Sem avaliações",
         justificativa_score: "Score calculado por regras (IA indisponível).",
       };
     }
@@ -223,17 +254,23 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
               estrutura_digital: result.estrutura_digital,
               reputacao: result.reputacao,
               acessibilidade: result.acessibilidade,
+              engajamento_atividade: result.engajamento_atividade,
               potencial_venda: result.potencial_venda,
             },
             pontos_fortes: result.pontos_fortes || [],
             pontos_fracos: result.pontos_fracos || [],
+            analise_site: result.analise_site || "",
+            analise_redes_sociais: result.analise_redes_sociais || "",
+            analise_reputacao_detalhada: result.analise_reputacao_detalhada || "",
             justificativa_score: result.justificativa_score || "",
             scoring_inputs: {
               avaliacao_media,
               quantidade_avaliacoes,
               possui_site,
+              site_url,
               possui_telefone,
               redes_sociais_count: socialCount,
+              redes_sociais: socialLinks,
             },
           },
         })
@@ -255,10 +292,14 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
           estrutura_digital: result.estrutura_digital,
           reputacao: result.reputacao,
           acessibilidade: result.acessibilidade,
+          engajamento_atividade: result.engajamento_atividade,
           potencial_venda: result.potencial_venda,
         },
         pontos_fortes: result.pontos_fortes || [],
         pontos_fracos: result.pontos_fracos || [],
+        analise_site: result.analise_site || "",
+        analise_redes_sociais: result.analise_redes_sociais || "",
+        analise_reputacao_detalhada: result.analise_reputacao_detalhada || "",
         justificativa_score: result.justificativa_score || "",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
