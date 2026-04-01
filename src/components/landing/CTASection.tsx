@@ -27,8 +27,9 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <Zap size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground whitespace-nowrap">
-            Comece a prospectar <span className="text-shimmer-highlight">agora mesmo</span>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
+            Comece a prospectar<br />
+            <span className="text-shimmer-highlight">agora mesmo</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Não perca mais tempo buscando leads manualmente.
