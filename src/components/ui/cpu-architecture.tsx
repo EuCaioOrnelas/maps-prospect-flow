@@ -27,6 +27,9 @@ const CpuArchitecture = ({
   const textX = text.length <= 3 ? 92 : text.length <= 5 ? 88 : 86;
   const fontSize = text.length <= 3 ? 7 : text.length <= 5 ? 5.5 : 4.2;
 
+  const textLen = text.length;
+  const fontSize = textLen <= 3 ? 7 : textLen <= 5 ? 5.5 : 4.2;
+
   return (
     <svg
       className={cn("text-muted", className)}
