@@ -46,6 +46,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
+  const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
@@ -60,6 +61,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
+  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -141,11 +143,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleOpportunitiesClick = () => {
+    if (isExpanded) {
+      setIsOpportunitiesOpen(!isOpportunitiesOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsReportsOpen(false);
     setIsCampaignsOpen(false);
+    setIsOpportunitiesOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
@@ -245,14 +254,23 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <SidebarNavItem
                 title="Oportunidades"
                 icon={Search}
-                url="/oportunidades"
-                isActive={currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao"}
+                onClick={handleOpportunitiesClick}
+                isActive={isOnOpportunitiesPage}
                 isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isOpportunitiesOpen}
                 tooltip="Oportunidades"
               />
 
-              {isExpanded && (currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao") && (
-                <div className="overflow-hidden mt-1">
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isOpportunitiesOpen
+                      ? "max-h-28 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
                   <ul className="pl-4 space-y-0.5">
                     <li>
                       <Link
