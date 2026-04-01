@@ -72,13 +72,8 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   const doSend = async () => {
     try {
       // Get user's connected WhatsApp numbers
-      const numbersQuery: any = supabase
-        .from("whatsapp_numbers")
-        .select("id, instance_name, phone_number")
-        .eq("user_id", userId)
-        .eq("status", "connected")
-        .limit(1);
-      const { data: numbers } = await numbersQuery;
+      // @ts-ignore - deep type instantiation
+      const { data: numbers } = await supabase.from("whatsapp_numbers").select("id, instance_name, phone_number").eq("user_id", userId).eq("status", "connected").limit(1);
 
       const number = numbers?.[0];
       if (!number) {
