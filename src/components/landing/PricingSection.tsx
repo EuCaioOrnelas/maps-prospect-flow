@@ -299,9 +299,9 @@ export const PricingSection = () => {
                     Teste Gratuito por 30 dias
                   </div>
                   
-                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                    Experimente antes de assinar
-                  </h3>
+                   <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                     Experimente antes de <span className="text-gradient">assinar</span>
+                   </h3>
                   <p className="text-muted-foreground max-w-lg mx-auto">
                     Teste todas as funcionalidades da Wiize gratuitamente durante 30 dias. Sem compromisso.
                   </p>

@@ -226,7 +226,7 @@
       0 4px 16px hsl(220 25% 14% / 0.04);
   }
 
-  .landing-light .glass:hover {
+  .landing-light .glass:hover:not(nav) {
     box-shadow: 
       0 2px 4px hsl(220 25% 14% / 0.04),
       0 8px 24px hsl(220 25% 14% / 0.06);

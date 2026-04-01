@@ -125,9 +125,9 @@ export const FeaturesSection = () => {
               <Zap size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                Menos leads, mais resultados
-              </h3>
+               <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
+                 Menos leads, mais <span className="text-gradient">resultados</span>
+               </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 50 leads
                 estrategicamente selecionados por busca. Empresas com atividade recente,
