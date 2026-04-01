@@ -49,9 +49,29 @@ serve(async (req) => {
 
     const socialCount = Array.isArray(redes_sociais) ? redes_sociais.length : 0;
 
+    // Fetch the company profile for personalized scoring
+    const { data: companyProfile } = await supabase
+      .from("company_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    const companyContext = companyProfile ? `
+DADOS DA SUA EMPRESA (quem está prospectando):
+- Empresa: ${companyProfile.company_name}
+- Nicho: ${companyProfile.company_niche}
+- Produtos/Serviços que você vende: ${companyProfile.company_products}
+- Público-alvo: ${companyProfile.company_target_audience}
+- Diferencial: ${companyProfile.company_differential}
+- Objetivo: ${companyProfile.company_objective}
+
+IMPORTANTE: O diagnóstico, ação recomendada e sugestão de serviço devem ser baseados EXCLUSIVAMENTE nos produtos/serviços listados acima. NÃO sugira serviços que a empresa não oferece. Analise como os serviços "${companyProfile.company_products}" podem ajudar especificamente este lead.
+` : "";
+
     // Let AI do the REAL scoring analysis
     const prompt = `Você é um consultor especialista em vendas B2B e qualificação de leads. Analise DETALHADAMENTE este lead comercial e retorne uma avaliação REALISTA e DIFERENCIADA. NÃO use scores genéricos — analise cada dado individualmente.
 
+${companyContext}
 DADOS DO LEAD:
 - Nome da empresa: ${nome_empresa}
 - Categoria/Nicho: ${categoria || "Não informado"}
