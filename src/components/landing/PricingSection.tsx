@@ -37,8 +37,8 @@ const plans: {
     whatsappNumbers: 2,
     description: "Ideal para começar a prospectar novos clientes",
     features: [
-      "Até 10.000 disparos/mês",
-      "Aquecimento de até 2 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 2 Números WhatsApp",
       "CRM integrado",
