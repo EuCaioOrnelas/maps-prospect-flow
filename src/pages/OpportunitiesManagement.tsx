@@ -455,9 +455,10 @@ export default function OpportunitiesManagement() {
     const justificativa = lead.enrichment_data?.justificativa_score || "";
 
     const dimensions = [
-      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, icon: <Globe size={14} className="text-primary" /> },
-      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, icon: <Star size={14} className="text-primary" /> },
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 25, icon: <Globe size={14} className="text-primary" /> },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 25, icon: <Star size={14} className="text-primary" /> },
       { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" /> },
+      { label: "Engajamento", value: breakdown?.engajamento_atividade ?? 0, max: 15, icon: <Eye size={14} className="text-primary" /> },
       { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" /> },
     ];
 
