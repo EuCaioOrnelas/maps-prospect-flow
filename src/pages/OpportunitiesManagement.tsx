@@ -55,6 +55,8 @@ interface OpportunityLead {
   enrichment_data: any;
   created_at: string;
   origin: string | null;
+  first_message_sent: boolean | null;
+  whatsapp_number_id: string | null;
 }
 
 const ITEMS_PER_PAGE = 20;
