@@ -354,14 +354,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* RIGHT: Animated Demo - hidden on small screens */}
           <div 
-            className="animate-slide-up will-change-transform w-full hidden lg:flex lg:justify-start xl:justify-end"
+            className="animate-slide-up will-change-transform w-full hidden lg:flex lg:justify-start lg:-ml-8 xl:ml-0 xl:justify-end"
             style={{ 
               animationDelay: "0.5s",
               transform: `translateY(${-parallaxOffset * 0.05}px)`,
               opacity: imageOpacity
             }}
           >
-            <div className="relative w-full max-w-[25.75rem] xl:max-w-[27.5rem] 2xl:max-w-[29rem]">
+            <div className="relative w-full max-w-[24.25rem] xl:max-w-[26.75rem] 2xl:max-w-[29rem]">
               {/* Background glow */}
               <div 
                 className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
