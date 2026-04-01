@@ -296,14 +296,24 @@ export default function OpportunitiesManagement() {
     return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">{score}/100</Badge>;
   };
 
-  const getLevelBadge = (level: string | null) => {
-    if (!level) return null;
+  // Derive correct level from score to fix inconsistency
+  const getIntentionFromScore = (score: number | null): string | null => {
+    if (score == null || score === 0) return null;
+    if (score >= 61) return "Alta";
+    if (score >= 31) return "Média";
+    return "Baixa";
+  };
+
+  const getLevelBadge = (level: string | null, score?: number | null) => {
+    // Use score-derived level to avoid AI inconsistency
+    const correctedLevel = score != null && score > 0 ? getIntentionFromScore(score) : level;
+    if (!correctedLevel) return null;
     const colors: Record<string, string> = {
       Alta: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
       Média: "bg-amber-500/20 text-amber-400 border-amber-500/30",
       Baixa: "bg-red-500/20 text-red-400 border-red-500/30",
     };
-    return <Badge className={`${colors[level] || ""} text-xs`}>{level}</Badge>;
+    return <Badge className={`${colors[correctedLevel] || ""} text-xs`}>{correctedLevel}</Badge>;
   };
 
   const stats = useMemo(() => {
