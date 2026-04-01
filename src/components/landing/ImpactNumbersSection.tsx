@@ -129,13 +129,13 @@ export const ImpactNumbersSection = () => {
       <div className="container mx-auto px-4 relative z-10 max-w-5xl">
         {/* Headline */}
         <motion.h2
-          className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-center text-foreground leading-[1.15] mb-20"
+          className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-center text-foreground leading-[1.15] mb-20 md:whitespace-nowrap"
           initial={{ opacity: 0, y: 24 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
           Nosso negócio é fazer{" "}
-          <span className="text-shimmer-highlight">negócios crescerem</span>
+          <span className="text-shimmer-highlight inline">negócios crescerem</span>
         </motion.h2>
 
         {/* Stats row */}
