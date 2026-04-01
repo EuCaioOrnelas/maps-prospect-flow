@@ -57,8 +57,8 @@ const plans: {
     whatsappNumbers: 5,
     description: "Para profissionais que querem escalar resultados",
     features: [
-      "Até 30.000 disparos/mês",
-      "Aquecimento de até 5 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 5 Números WhatsApp",
       "CRM integrado",
