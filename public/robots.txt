@@ -1,8 +1,10 @@
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 2
 
 User-agent: Twitterbot
 Allow: /
@@ -13,5 +15,11 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://wiizeprospect.com.br/sitemap.xml
-Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /profile
+Disallow: /upgrade
+Disallow: /checkout-*
+Disallow: /reset-password
+
+Sitemap: https://wiize.com.br/sitemap.xml
