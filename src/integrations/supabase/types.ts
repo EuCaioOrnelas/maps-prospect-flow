@@ -1448,6 +1448,7 @@ export type Database = {
       leads: {
         Row: {
           address: string | null
+          ai_approach_message: string | null
           ai_diagnosis: string | null
           ai_recommended_action: string | null
           ai_score: number | null
@@ -1489,6 +1490,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ai_approach_message?: string | null
           ai_diagnosis?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
@@ -1530,6 +1532,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ai_approach_message?: string | null
           ai_diagnosis?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
