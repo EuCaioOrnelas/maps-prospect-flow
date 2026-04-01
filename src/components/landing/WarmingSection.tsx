@@ -67,7 +67,7 @@ export const WarmingSection = () => {
           </div>
           
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            Reduza o risco de <span className="text-highlight-static">números bloqueados</span>
+            Reduza o risco de números bloqueados
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             O Wiize prepara seus chips automaticamente para campanhas de prospecção em massa, 
