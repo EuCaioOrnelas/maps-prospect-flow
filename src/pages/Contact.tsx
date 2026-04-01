@@ -37,8 +37,10 @@ const Contact = () => {
   return (
     <>
       <SEO 
-        title="Contato"
-        description="Entre em contato com a equipe Wiize. Estamos aqui para ajudar com suas dúvidas sobre prospecção de leads."
+        title="Contato e Suporte"
+        description="Entre em contato com a equipe Wiize. Suporte 24h via chatbot, atendimento personalizado e ajuda com prospecção de leads, WhatsApp e automação."
+        url="https://wiize.com.br/contato"
+        keywords="contato Wiize, suporte Wiize, ajuda prospecção, atendimento"
         keywords="contato, suporte, ajuda, atendimento, wiize"
       />
       <div className="min-h-screen bg-background">

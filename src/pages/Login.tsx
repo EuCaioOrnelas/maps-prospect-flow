@@ -79,8 +79,10 @@ const Login = () => {
   return (
     <>
       <SEO 
-        title="Login"
-        description="Acesse sua conta Wiize e continue prospectando novos clientes com inteligência artificial."
+        title="Entrar na Plataforma"
+        description="Faça login na Wiize e acesse sua plataforma de prospecção inteligente. Gerencie leads, campanhas WhatsApp e agentes de IA."
+        url="https://wiize.com.br/login"
+        keywords="login Wiize, entrar Wiize, acessar plataforma prospecção"
         noIndex
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-x-hidden">

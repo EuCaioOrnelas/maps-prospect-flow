@@ -156,8 +156,10 @@ const Signup = () => {
   return (
     <>
       <SEO 
-        title="Criar Conta Grátis"
-        description="Crie sua conta grátis no Wiize e ganhe 10 buscas estratégicas. Comece a prospectar novos clientes com inteligência artificial."
+        title="Cadastre-se Grátis"
+        description="Crie sua conta grátis no Wiize e ganhe 10 buscas estratégicas. Prospecte leads com IA, faça disparos via WhatsApp e converta mais clientes. Sem cartão de crédito!"
+        url="https://wiize.com.br/signup"
+        keywords="cadastro Wiize, criar conta grátis, prospecção grátis, teste grátis prospecção"
         keywords="criar conta, cadastro, prospecção grátis, leads grátis, vendas B2B"
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-x-hidden">

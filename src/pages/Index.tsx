@@ -42,9 +42,31 @@ const Index = () => {
   return (
     <>
       <SEO 
-        title="Prospecção Inteligente e Disparos em Massa"
-        description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens e geração de leads qualificados."
-        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes"
+        title="Prospecção Inteligente e Disparos em Massa via WhatsApp"
+        description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens, CRM e agente de IA para converter mais clientes. Comece grátis!"
+        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes, CRM, agente de IA, aquecimento de chip, Google Maps leads"
+        url="https://wiize.com.br/"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'Wiize',
+          applicationCategory: 'BusinessApplication',
+          operatingSystem: 'Web',
+          description: 'Plataforma de prospecção inteligente com IA. Encontre leads no Google Maps, faça disparos em massa via WhatsApp e converta com agente de IA.',
+          offers: {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'BRL',
+            lowPrice: '97',
+            highPrice: '497',
+            offerCount: '3',
+          },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.9',
+            ratingCount: '500',
+            bestRating: '5',
+          },
+        }}
       />
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         {/* Aurora/mesh gradient background - gives life to the page */}
