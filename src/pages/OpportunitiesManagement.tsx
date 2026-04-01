@@ -728,15 +728,15 @@ export default function OpportunitiesManagement() {
                     </div>
                     <Button
                       variant="outline"
-                      className="gap-2 relative"
+                      className="gap-2 overflow-visible"
                       onClick={() => setShowFilters(true)}
                     >
                       <SlidersHorizontal size={16} />
                       Filtros
                       {activeFilterCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        <Badge className="ml-1 h-5 min-w-5 px-1.5 text-[10px] font-bold rounded-full bg-primary text-primary-foreground">
                           {activeFilterCount}
-                        </span>
+                        </Badge>
                       )}
                     </Button>
                   </div>
