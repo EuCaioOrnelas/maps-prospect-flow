@@ -69,7 +69,7 @@ const CheckoutFailed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="landing-light min-h-screen bg-background text-foreground">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-red-500/5 rounded-full blur-3xl animate-pulse" />
