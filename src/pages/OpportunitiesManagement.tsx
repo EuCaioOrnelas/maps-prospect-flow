@@ -55,6 +55,48 @@ interface OpportunityLead {
 
 const ITEMS_PER_PAGE = 20;
 
+const deriveLeadScore = (lead: OpportunityLead) => {
+  const socialCount = Array.isArray(lead.social_media) ? lead.social_media.length : 0;
+  const hasSite = !!lead.website && lead.website !== "-";
+  const hasPhone = !!lead.phone && lead.phone !== "-";
+  const rating = lead.rating ?? 0;
+  const reviewCount = lead.review_count ?? 0;
+
+  let score = lead.ai_score ?? 0;
+
+  if (lead.ai_score == null) {
+    if (hasSite) score += 20;
+    if (socialCount >= 3) score += 15;
+    else if (socialCount >= 1) score += 8;
+
+    if (rating >= 4.5) score += 20;
+    else if (rating >= 4.0) score += 15;
+    else if (rating >= 3.0) score += 8;
+
+    if (reviewCount > 100) score += 10;
+    else if (reviewCount >= 30) score += 7;
+    else if (reviewCount >= 10) score += 4;
+
+    if (hasPhone) score += 20;
+    if (!hasSite) score += 10;
+    if (rating < 4.0) score += 5;
+
+    score = Math.min(score, 100);
+  }
+
+  const opportunityLevel = lead.opportunity_level ?? (score >= 61 ? "Alta" : score >= 31 ? "Média" : "Baixa");
+  const closingProbability = lead.closing_probability ?? (
+    score >= 81 ? "Muito Alta" : score >= 61 ? "Alta" : score >= 31 ? "Moderada" : "Baixa"
+  );
+
+  return {
+    ...lead,
+    ai_score: score,
+    opportunity_level: opportunityLevel,
+    closing_probability: closingProbability,
+  };
+};
+
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
@@ -83,11 +125,11 @@ export default function OpportunitiesManagement() {
         .from("leads")
         .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin")
         .eq("user_id", user.id)
-        .eq("origin", "prospeccao")
+        .in("origin", ["oportunidades", "prospeccao"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setLeads((data as OpportunityLead[]) || []);
+      setLeads(((data as OpportunityLead[]) || []).map(deriveLeadScore));
     } catch (err) {
       console.error("Error fetching leads:", err);
     } finally {

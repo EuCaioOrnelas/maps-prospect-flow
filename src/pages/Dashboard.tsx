@@ -334,19 +334,20 @@ const Dashboard = () => {
         }
       }
       
-      // Show appropriate toast based on results count
+      // Show appropriate toast and redirect to opportunities management
       const resultsCount = data.leads?.length || 0;
-      if (data.foundLessThanExpected && data.message) {
-        toast({
-          title: `${resultsCount} leads encontrados`,
-          description: data.message,
-          duration: 8000,
-        });
-      } else {
-        toast({
-          title: "Busca concluída!",
-          description: `${resultsCount} leads encontrados para "${keyword}" em ${location}`,
-        });
+      const baseDescription = data.foundLessThanExpected && data.message
+        ? data.message
+        : `${resultsCount} oportunidades encontradas para "${keyword}" em ${location}`;
+
+      toast({
+        title: resultsCount > 0 ? "Busca concluída!" : "Nenhuma oportunidade encontrada",
+        description: resultsCount > 0 ? `${baseDescription} Abrindo a gestão de oportunidades...` : baseDescription,
+        duration: data.foundLessThanExpected ? 8000 : 5000,
+      });
+
+      if (resultsCount > 0) {
+        navigate("/oportunidades/gestao");
       }
       
     } catch (error: any) {
