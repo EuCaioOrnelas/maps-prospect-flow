@@ -65,7 +65,7 @@ export const AIAgentsSection = () => {
 
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight text-foreground">
             Seu melhor vendedor trabalha{" "}
-            <span className="text-shimmer-highlight inline-block">24 horas por dia</span>
+            <span className="text-shimmer-highlight">24 horas por dia</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Crie um agente de IA que responde, qualifica e organiza seus leads no CRM.
