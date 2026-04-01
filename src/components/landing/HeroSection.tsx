@@ -330,8 +330,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Encontre leads qualificados, gere mensagens personalizadas com IA e automatize
-              seu atendimento e follow-up no WhatsApp com inteligência artificial.
+              Encontre leads qualificados, gere mensagens personalizadas com IA, automatize seu atendimento e follow-up no WhatsApp com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
