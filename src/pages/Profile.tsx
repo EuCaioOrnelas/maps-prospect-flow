@@ -40,7 +40,15 @@ import {
   Bell,
   BellOff,
   LogOut,
+  Building2,
+  Target,
+  Sparkles,
+  ShoppingBag,
+  Users,
+  Rocket,
+  Pencil,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";

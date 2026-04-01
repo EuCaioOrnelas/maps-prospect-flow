@@ -123,7 +123,7 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
   "nivel_oportunidade": "<Alta|Média|Baixa>",
   "probabilidade_fechamento": "<Muito Alta|Alta|Moderada|Baixa>",
   "diagnostico": "<diagnóstico estratégico em 2-3 frases específicas sobre ESTA empresa>",
-  "acao_recomendada": "<ação concreta e específica em 1-2 frases>",
+  "acao_recomendada": "<ação concreta e específica em 1-2 frases, usando APENAS os serviços da empresa que está prospectando>",
   "pontos_fortes": ["<ponto 1>", "<ponto 2>"],
   "pontos_fracos": ["<ponto 1>", "<ponto 2>"],
   "justificativa_score": "<1 frase explicando POR QUE este score específico>"
