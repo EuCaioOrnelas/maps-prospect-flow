@@ -676,8 +676,8 @@ export default function OpportunitiesManagement() {
                     <SelectValue placeholder="Nível" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os níveis</SelectItem>
-                    <SelectItem value="Alta">Alta Oportunidade</SelectItem>
+                    <SelectItem value="all">Todas as intenções</SelectItem>
+                    <SelectItem value="Alta">Alta</SelectItem>
                     <SelectItem value="Média">Média</SelectItem>
                     <SelectItem value="Baixa">Baixa</SelectItem>
                   </SelectContent>
