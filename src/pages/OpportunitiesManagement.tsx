@@ -33,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
+import { NumbersManager } from "@/components/whatsapp/NumbersManager";
+import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 
 interface OpportunityLead {
   id: string;
