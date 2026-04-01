@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, Flame, Bot, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MapPin, Download, Zap, Shield, Brain, Target, TrendingUp, CheckCircle, MessageSquare, BarChart3, Bot, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { cn } from "@/lib/utils";
 
