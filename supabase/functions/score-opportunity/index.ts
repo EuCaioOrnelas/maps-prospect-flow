@@ -10,8 +10,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -44,16 +44,13 @@ serve(async (req) => {
       redes_sociais,
     } = body;
 
-    // --- Deterministic scoring ---
     let score = 0;
-
-    // 1. Estrutura Digital (até 35)
-    if (possui_site) score += 20;
     const socialCount = Array.isArray(redes_sociais) ? redes_sociais.length : 0;
+
+    if (possui_site) score += 20;
     if (socialCount >= 3) score += 15;
     else if (socialCount >= 1) score += 8;
 
-    // 2. Reputação (até 30)
     if (avaliacao_media >= 4.5) score += 20;
     else if (avaliacao_media >= 4.0) score += 15;
     else if (avaliacao_media >= 3.0) score += 8;
@@ -62,16 +59,13 @@ serve(async (req) => {
     else if (quantidade_avaliacoes >= 30) score += 7;
     else if (quantidade_avaliacoes >= 10) score += 4;
 
-    // 3. Acessibilidade Comercial (até 20)
     if (possui_telefone) score += 20;
 
-    // 4. Oportunidade Oculta (até 15)
     if (!possui_site) score += 10;
     if (avaliacao_media < 4.0) score += 5;
 
     score = Math.min(score, 100);
 
-    // Classifications
     let nivel_oportunidade: string;
     if (score >= 61) nivel_oportunidade = "Alta";
     else if (score >= 31) nivel_oportunidade = "Média";
@@ -83,7 +77,6 @@ serve(async (req) => {
     else if (score >= 31) probabilidade_fechamento = "Moderada";
     else probabilidade_fechamento = "Baixa";
 
-    // --- AI-powered diagnosis using Lovable AI ---
     let diagnostico = "";
     let acao_recomendada = "";
 
@@ -102,14 +95,14 @@ DADOS DO LEAD:
 
 Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
 
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
           max_tokens: 300,
@@ -117,8 +110,8 @@ Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
         }),
       });
 
-      if (aiRes.ok) {
-        const aiData = await aiRes.json();
+      if (openaiRes.ok) {
+        const aiData = await openaiRes.json();
         const content = aiData.choices?.[0]?.message?.content;
         if (content) {
           const parsed = JSON.parse(content);
@@ -126,10 +119,10 @@ Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
           acao_recomendada = parsed.acao_recomendada || "";
         }
       } else {
-        console.error("AI gateway error:", aiRes.status);
+        console.error("OpenAI error:", openaiRes.status);
       }
     } catch (aiErr) {
-      console.error("AI error (non-fatal):", aiErr);
+      console.error("OpenAI error (non-fatal):", aiErr);
       diagnostico = score >= 61
         ? `${nome_empresa} apresenta forte oportunidade comercial com score ${score}/100.`
         : `${nome_empresa} possui potencial moderado. Score: ${score}/100.`;
@@ -138,7 +131,6 @@ Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
         : "Apresentar soluções de otimização e crescimento.";
     }
 
-    // Update lead in database
     if (lead_id) {
       const { error: updateErr } = await supabase
         .from("leads")
