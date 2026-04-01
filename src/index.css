@@ -51,19 +51,20 @@
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 38% / 0.15) 0%, transparent 70%);
 
     --internal-glow-backdrop:
-      radial-gradient(circle at 14% 10%, hsl(var(--primary) / 0.08) 0%, transparent 26%),
-      radial-gradient(circle at 88% 16%, hsl(var(--info) / 0.07) 0%, transparent 24%),
-      radial-gradient(circle at 74% 74%, hsl(var(--primary) / 0.05) 0%, transparent 28%),
-      radial-gradient(circle at 24% 86%, hsl(var(--warning) / 0.04) 0%, transparent 18%);
-    --internal-glow-blur: 56px;
-    --internal-glow-opacity: 0.78;
-    --internal-glow-sheen: linear-gradient(120deg, transparent 18%, hsl(var(--primary) / 0.045) 42%, hsl(var(--info) / 0.03) 55%, transparent 72%);
-    --internal-glow-sheen-blur: 74px;
-    --internal-glow-sheen-opacity: 0.55;
-    --internal-glow-grid: radial-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+      radial-gradient(circle at 13% 12%, hsl(var(--primary) / 0.16) 0%, transparent 22%),
+      radial-gradient(circle at 87% 18%, hsl(var(--info) / 0.14) 0%, transparent 20%),
+      radial-gradient(circle at 76% 76%, hsl(var(--primary) / 0.11) 0%, transparent 24%),
+      radial-gradient(circle at 23% 84%, hsl(var(--warning) / 0.08) 0%, transparent 15%);
+    --internal-glow-blur: 46px;
+    --internal-glow-opacity: 0.92;
+    --internal-glow-sheen: linear-gradient(122deg, transparent 16%, hsl(var(--primary) / 0.08) 40%, hsl(var(--info) / 0.055) 55%, transparent 74%);
+    --internal-glow-sheen-blur: 60px;
+    --internal-glow-sheen-opacity: 0.72;
+    --internal-glow-grid: radial-gradient(hsl(var(--foreground) / 0.055) 1px, transparent 1px);
     --internal-glow-grid-size: 24px 24px;
-    --internal-glow-grid-opacity: 0.12;
+    --internal-glow-grid-opacity: 0.16;
     --internal-glow-mask: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.16));
+    --internal-glow-layer-opacity: 1;
     
     --shadow-glow: 0 0 60px hsl(158 72% 38% / 0.2);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
@@ -140,18 +141,19 @@
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.06) 0%, transparent 70%);
 
     --internal-glow-backdrop:
-      radial-gradient(circle at 12% 10%, hsl(var(--primary) / 0.16) 0%, transparent 22%),
-      radial-gradient(circle at 90% 16%, hsl(var(--info) / 0.12) 0%, transparent 20%),
-      radial-gradient(circle at 72% 72%, hsl(var(--primary) / 0.1) 0%, transparent 24%),
-      radial-gradient(circle at 26% 84%, hsl(var(--warning) / 0.08) 0%, transparent 16%);
-    --internal-glow-blur: 42px;
-    --internal-glow-opacity: 0.98;
-    --internal-glow-sheen: linear-gradient(120deg, transparent 22%, hsl(var(--primary) / 0.08) 42%, hsl(var(--info) / 0.05) 56%, transparent 76%);
-    --internal-glow-sheen-blur: 68px;
-    --internal-glow-sheen-opacity: 0.82;
-    --internal-glow-grid: radial-gradient(hsl(var(--primary) / 0.14) 1px, transparent 1px);
+      radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.3) 0%, transparent 18%),
+      radial-gradient(circle at 88% 18%, hsl(var(--info) / 0.22) 0%, transparent 16%),
+      radial-gradient(circle at 74% 74%, hsl(var(--primary) / 0.18) 0%, transparent 20%),
+      radial-gradient(circle at 24% 84%, hsl(var(--warning) / 0.14) 0%, transparent 14%);
+    --internal-glow-blur: 26px;
+    --internal-glow-opacity: 1;
+    --internal-glow-sheen: linear-gradient(120deg, transparent 18%, hsl(var(--primary) / 0.18) 42%, hsl(var(--info) / 0.11) 56%, transparent 78%);
+    --internal-glow-sheen-blur: 38px;
+    --internal-glow-sheen-opacity: 0.98;
+    --internal-glow-grid: radial-gradient(hsl(var(--primary) / 0.15) 1px, transparent 1px);
     --internal-glow-grid-size: 28px 28px;
     --internal-glow-grid-opacity: 0.22;
+    --internal-glow-layer-opacity: 1;
 
     --shadow-glow: 0 0 80px hsl(158 72% 40% / 0.12);
     --shadow-card: 0 1px 3px hsl(220 25% 14% / 0.04), 0 4px 16px hsl(220 25% 14% / 0.04);
@@ -409,11 +411,6 @@
   .landing-light [class*="bg-emerald-500/5"],
   .landing-light [class*="bg-blue-500/5"] {
     opacity: 0.4;
-  }
-
-  /* Reduce the BackgroundGlow component opacity in light theme */
-  .landing-light .fixed.inset-0[aria-hidden="true"] {
-    opacity: 0.25 !important;
   }
 
   /* Muted backgrounds */

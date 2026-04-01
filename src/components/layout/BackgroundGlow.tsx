@@ -1,8 +1,12 @@
 export function BackgroundGlow() {
   return (
     <div 
-      className="fixed inset-0 overflow-hidden pointer-events-none z-0"
+      className="internal-glow-layer fixed inset-0 overflow-hidden pointer-events-none z-0"
       aria-hidden="true"
+      style={{
+        opacity: "var(--internal-glow-layer-opacity, 1)",
+        transition: "opacity 240ms ease",
+      }}
     >
       <div
         className="absolute inset-0"
