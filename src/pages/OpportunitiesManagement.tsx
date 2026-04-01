@@ -703,108 +703,172 @@ export default function OpportunitiesManagement() {
               </div>
 
               {/* Filters */}
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por nome, telefone, categoria..."
-                      value={searchTerm}
-                      onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                      className="pl-9"
-                    />
-                  </div>
-                  <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder="Intenção" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="Alta">Alta</SelectItem>
-                      <SelectItem value="Média">Média</SelectItem>
-                      <SelectItem value="Baixa">Baixa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={sortOrder} onValueChange={(v: any) => { setSortOrder(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Ordenar por" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Mais recentes</SelectItem>
-                      <SelectItem value="score_desc">Maior score</SelectItem>
-                      <SelectItem value="score_asc">Menor score</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-wrap gap-3 items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">Score mín:</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      placeholder="0"
-                      value={minScore}
-                      onChange={(e) => { setMinScore(e.target.value); setCurrentPage(1); }}
-                      className="w-20 h-8 text-sm"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">Avaliação mín:</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={0.1}
-                      placeholder="0"
-                      value={minRating}
-                      onChange={(e) => { setMinRating(e.target.value); setCurrentPage(1); }}
-                      className="w-20 h-8 text-sm"
-                    />
-                  </div>
-                  <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-[160px] h-8 text-xs">
-                      <SelectValue placeholder="Categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas categorias</SelectItem>
-                      {uniqueCategories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-[160px] h-8 text-xs">
-                      <SelectValue placeholder="Cidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas cidades</SelectItem>
-                      {uniqueCities.map(city => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    variant={onlyHighOpp ? "default" : "outline"}
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => { setOnlyHighOpp(!onlyHighOpp); setCurrentPage(1); }}
-                  >
-                    <TrendingUp size={12} />
-                    Alta Oportunidade
-                  </Button>
-                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default" || filterCategory !== "all" || filterCity !== "all") && (
+              {(() => {
+                const activeFilterCount = [
+                  filterLevel !== "all",
+                  !!minScore,
+                  !!minRating,
+                  onlyHighOpp,
+                  sortOrder !== "default",
+                  filterCategory !== "all",
+                  filterCity !== "all",
+                ].filter(Boolean).length;
+
+                return (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por nome, telefone, categoria..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                        className="pl-9"
+                      />
+                    </div>
                     <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs h-8"
-                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
+                      variant="outline"
+                      className="gap-2 relative"
+                      onClick={() => setShowFilters(true)}
                     >
-                      Limpar filtros
+                      <SlidersHorizontal size={16} />
+                      Filtros
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {activeFilterCount}
+                        </span>
+                      )}
                     </Button>
-                  )}
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
+
+              {/* Filter Dialog */}
+              <Dialog open={showFilters} onOpenChange={setShowFilters}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <SlidersHorizontal size={18} />
+                      Filtros Avançados
+                    </DialogTitle>
+                    <DialogDescription>Configure os filtros para refinar suas oportunidades</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-5 pt-2">
+                    {/* Ordenação */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Ordenar por</label>
+                      <Select value={sortOrder} onValueChange={(v: any) => { setSortOrder(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Ordenar por" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Mais recentes</SelectItem>
+                          <SelectItem value="score_desc">Maior score</SelectItem>
+                          <SelectItem value="score_asc">Menor score</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Intenção */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Intenção</label>
+                      <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas</SelectItem>
+                          <SelectItem value="Alta">Alta</SelectItem>
+                          <SelectItem value="Média">Média</SelectItem>
+                          <SelectItem value="Baixa">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Categoria */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Categoria</label>
+                      <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todas categorias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas categorias</SelectItem>
+                          {uniqueCategories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Cidade */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Cidade</label>
+                      <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todas cidades" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas cidades</SelectItem>
+                          {uniqueCities.map(city => (
+                            <SelectItem key={city} value={city}>{city}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Score e Avaliação */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Score mínimo</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          placeholder="0"
+                          value={minScore}
+                          onChange={(e) => { setMinScore(e.target.value); setCurrentPage(1); }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Avaliação mínima</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={5}
+                          step={0.1}
+                          placeholder="0"
+                          value={minRating}
+                          onChange={(e) => { setMinRating(e.target.value); setCurrentPage(1); }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Alta Oportunidade toggle */}
+                    <Button
+                      variant={onlyHighOpp ? "default" : "outline"}
+                      className="w-full gap-2"
+                      onClick={() => { setOnlyHighOpp(!onlyHighOpp); setCurrentPage(1); }}
+                    >
+                      <TrendingUp size={16} />
+                      {onlyHighOpp ? "Alta Oportunidade ativado" : "Somente Alta Oportunidade (≥70)"}
+                    </Button>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2 border-t border-border">
+                      <Button
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
+                      >
+                        Limpar tudo
+                      </Button>
+                      <Button className="flex-1" onClick={() => setShowFilters(false)}>
+                        Aplicar filtros
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Table */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
