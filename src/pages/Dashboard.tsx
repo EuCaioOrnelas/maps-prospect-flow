@@ -522,13 +522,13 @@ const Dashboard = () => {
           <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Brain size={18} className="text-primary" />
-              <span className="text-sm font-medium text-primary">Prospecção Inteligente com IA</span>
+              <span className="text-sm font-medium text-primary">Oportunidades Inteligentes com IA</span>
             </div>
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-              Encontre seus próximos clientes
+              Encontre suas próximas oportunidades
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Nossa IA analisa e entrega até <span className="text-primary font-semibold">50 leads estratégicos</span> por busca
+              Nossa IA analisa e entrega até <span className="text-primary font-semibold">50 oportunidades estratégicas</span> por busca
             </p>
           </div>
 

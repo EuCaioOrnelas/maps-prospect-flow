@@ -156,6 +156,24 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
+                <Route
+                  path="/oportunidades" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route
+                  path="/oportunidades/gestao" 
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<PageLoader />}>
+                        <OpportunitiesManagement />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } 
+                />
                 <Route 
                   path="/admin" 
                   element={
