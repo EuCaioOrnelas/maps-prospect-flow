@@ -1,47 +1,34 @@
+import { useTheme } from "@/contexts/ThemeContext";
+
 export function BackgroundGlow() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+
   return (
     <div 
       className="fixed inset-0 overflow-hidden pointer-events-none z-0"
       aria-hidden="true"
     >
-      {/* Top-right emerald blob */}
-      <div 
-        className="absolute -top-[10%] -right-[5%] w-[50%] h-[40%] rounded-full"
+      <div
+        className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse, hsl(158 72% 65% / 0.18), transparent 70%)',
-        }}
-      />
-      
-      {/* Center-left cool blob */}
-      <div 
-        className="absolute top-[30%] -left-[8%] w-[40%] h-[40%] rounded-full"
-        style={{
-          background: 'radial-gradient(ellipse, hsl(200 80% 70% / 0.12), transparent 70%)',
-        }}
-      />
-      
-      {/* Bottom-right warm accent */}
-      <div 
-        className="absolute top-[60%] right-[0%] w-[35%] h-[35%] rounded-full"
-        style={{
-          background: 'radial-gradient(ellipse, hsl(170 65% 55% / 0.12), transparent 70%)',
+          background: isLight
+            ? "radial-gradient(circle at 18% 22%, hsl(158 58% 92% / 0.9) 0%, transparent 22%), radial-gradient(circle at 82% 16%, hsl(200 72% 92% / 0.75) 0%, transparent 24%), radial-gradient(circle at 78% 72%, hsl(160 62% 93% / 0.85) 0%, transparent 26%), radial-gradient(circle at 30% 82%, hsl(45 100% 95% / 0.65) 0%, transparent 18%)"
+            : "radial-gradient(circle at 18% 22%, hsl(158 72% 38% / 0.16) 0%, transparent 24%), radial-gradient(circle at 82% 16%, hsl(200 80% 55% / 0.14) 0%, transparent 26%), radial-gradient(circle at 78% 72%, hsl(170 65% 40% / 0.14) 0%, transparent 28%), radial-gradient(circle at 30% 82%, hsl(158 60% 42% / 0.1) 0%, transparent 20%)",
+          filter: isLight ? "blur(28px)" : "blur(48px)",
         }}
       />
 
-      {/* Bottom-left subtle glow */}
-      <div 
-        className="absolute bottom-[0%] -left-[5%] w-[30%] h-[25%] rounded-full"
+      <div
+        className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse, hsl(158 60% 60% / 0.1), transparent 70%)',
-        }}
-      />
-      
-      {/* Subtle dot grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'radial-gradient(hsl(220 25% 50%) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundImage: isLight
+            ? "radial-gradient(hsl(158 18% 78% / 0.45) 1px, transparent 1px)"
+            : "radial-gradient(hsl(210 40% 98% / 0.08) 1px, transparent 1px)",
+          backgroundSize: isLight ? "26px 26px" : "24px 24px",
+          maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.18))",
+          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.18))",
+          opacity: isLight ? 0.32 : 0.18,
         }}
       />
     </div>
