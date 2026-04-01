@@ -432,11 +432,12 @@ export default function OpportunitiesManagement() {
   const scoreInfoContent = (
     <div className="space-y-3 text-sm max-w-xs">
       <h4 className="font-semibold">Como funciona o Score</h4>
-      <p className="text-muted-foreground">A IA analisa cada empresa individualmente em 4 dimensões:</p>
+      <p className="text-muted-foreground">A IA analisa cada empresa individualmente em 5 dimensões:</p>
       <ul className="space-y-1.5 text-muted-foreground">
-        <li><span className="font-medium text-foreground">Estrutura Digital (35pts)</span> — Site e redes sociais</li>
-        <li><span className="font-medium text-foreground">Reputação (30pts)</span> — Avaliações e volume</li>
+        <li><span className="font-medium text-foreground">Estrutura Digital (25pts)</span> — Site e redes sociais</li>
+        <li><span className="font-medium text-foreground">Reputação (25pts)</span> — Avaliações e respostas</li>
         <li><span className="font-medium text-foreground">Acessibilidade (20pts)</span> — Telefone e endereço</li>
+        <li><span className="font-medium text-foreground">Engajamento (15pts)</span> — Atividade nas redes e site</li>
         <li><span className="font-medium text-foreground">Potencial de Venda (15pts)</span> — Oportunidades ocultas</li>
       </ul>
       <div className="border-t border-border pt-2 space-y-1">
