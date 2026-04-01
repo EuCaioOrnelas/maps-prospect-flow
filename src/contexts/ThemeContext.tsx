@@ -46,16 +46,26 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     try {
       localStorage.setItem("dashboard-theme", theme);
     } catch {}
-    const resolved = resolveTheme(theme);
-    setResolvedTheme(resolved);
-
-    // Apply landing-light to document.body so Radix portals (dialogs, popovers) inherit the theme
-    if (resolved === "light") {
-      document.body.classList.add("landing-light");
-    } else {
-      document.body.classList.remove("landing-light");
-    }
   }, [theme]);
+
+  useEffect(() => {
+    setResolvedTheme(resolveTheme(theme));
+  }, [theme]);
+
+  useEffect(() => {
+    const applyLightTheme = resolvedTheme === "light";
+    const themeTargets = [document.documentElement, document.body];
+
+    themeTargets.forEach((target) => {
+      target.classList.toggle("landing-light", applyLightTheme);
+    });
+
+    return () => {
+      themeTargets.forEach((target) => {
+        target.classList.remove("landing-light");
+      });
+    };
+  }, [resolvedTheme]);
 
   // Listen for system theme changes
   useEffect(() => {
