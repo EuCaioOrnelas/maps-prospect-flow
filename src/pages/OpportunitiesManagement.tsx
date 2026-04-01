@@ -103,6 +103,10 @@ export default function OpportunitiesManagement() {
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
   const [sendCooldown, setSendCooldown] = useState(0);
 
+  // WhatsApp numbers management
+  const { numbers, maxNumbers, refreshNumbers } = useWhatsAppNumbers();
+  const [showNumbersManager, setShowNumbersManager] = useState(false);
+
   // Check company profile on mount
   useEffect(() => {
     if (user) {
