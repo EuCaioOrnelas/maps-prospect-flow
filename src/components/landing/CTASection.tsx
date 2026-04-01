@@ -29,7 +29,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
             Comece a prospectar{" "}
-            <span className="text-shimmer-highlight inline-block">agora mesmo</span>
+            <span className="text-shimmer-highlight">agora mesmo</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Não perca mais tempo buscando leads manualmente.
