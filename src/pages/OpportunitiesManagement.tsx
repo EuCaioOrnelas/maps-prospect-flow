@@ -677,16 +677,42 @@ export default function OpportunitiesManagement() {
         )}
       </div>
 
-      {/* Action buttons */}
+          {/* Action buttons */}
       <div className="flex gap-2 pt-1">
         <Button
           onClick={() => approachLead(lead)}
           disabled={approachingLeadId === lead.id}
           className="flex-1 gap-2"
         >
-          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
           {lead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
         </Button>
+        {lead.ai_approach_message && !lead.first_message_sent && (
+          <Button
+            onClick={() => setSendingLead(lead)}
+            disabled={sendCooldown > 0}
+            variant="outline"
+            className="gap-2"
+          >
+            {sendCooldown > 0 ? (
+              <>
+                <Clock size={16} />
+                {sendCooldown}s
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                Enviar
+              </>
+            )}
+          </Button>
+        )}
+        {lead.first_message_sent && (
+          <Badge variant="outline" className="flex items-center gap-1 text-primary border-primary/30 px-3">
+            <Send size={12} />
+            Enviado
+          </Badge>
+        )}
       </div>
     </div>
   );
