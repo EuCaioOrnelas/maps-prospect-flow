@@ -169,7 +169,7 @@ export const FeaturesSection = () => {
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
           >
-            <div className="p-5 sm:p-8 lg:p-10 flex items-center gap-3 sm:gap-6 min-h-[340px] relative">
+            <div className="p-5 sm:p-8 lg:p-10 flex items-center gap-3 sm:gap-6 h-[380px] sm:h-[360px] relative">
               {/* Left arrow */}
               <button
                 onClick={() => { prev(); setIsAutoPlaying(false); setTimeout(() => setIsAutoPlaying(true), 10000); }}
