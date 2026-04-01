@@ -26,9 +26,12 @@ import {
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
   CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
+  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 
 interface OpportunityLead {
   id: string;
@@ -52,6 +55,8 @@ interface OpportunityLead {
   enrichment_data: any;
   created_at: string;
   origin: string | null;
+  first_message_sent: boolean | null;
+  whatsapp_number_id: string | null;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -85,9 +90,64 @@ export default function OpportunitiesManagement() {
   const [batchCurrentName, setBatchCurrentName] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Company profile & onboarding state
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Send message state
+  const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
+  const [sendCooldown, setSendCooldown] = useState(0);
+
+  // Check company profile on mount
   useEffect(() => {
-    if (user) fetchLeads();
+    if (user) {
+      fetchCompanyProfile();
+    }
   }, [user]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (sendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setSendCooldown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sendCooldown]);
+
+  const fetchCompanyProfile = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("company_profiles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        setCompanyProfile(data);
+        // Check last_message_sent_at for cooldown
+        if ((data as any).last_message_sent_at) {
+          const lastSent = new Date((data as any).last_message_sent_at).getTime();
+          const diff = 120 - Math.floor((Date.now() - lastSent) / 1000);
+          if (diff > 0) setSendCooldown(diff);
+        }
+      } else {
+        setShowOnboarding(true);
+      }
+    } catch (err) {
+      console.error("Error fetching company profile:", err);
+    } finally {
+      setProfileLoaded(true);
+    }
+  };
+
+  useEffect(() => {
+    if (user && profileLoaded && !showOnboarding) fetchLeads();
+  }, [user, profileLoaded, showOnboarding]);
 
   // Auto-score unscored leads when they appear
   useEffect(() => {
@@ -103,7 +163,7 @@ export default function OpportunitiesManagement() {
     try {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin")
+        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id")
         .eq("user_id", user.id)
         .in("origin", ["oportunidades", "prospeccao"])
         .order("created_at", { ascending: false });
@@ -617,16 +677,42 @@ export default function OpportunitiesManagement() {
         )}
       </div>
 
-      {/* Action buttons */}
+          {/* Action buttons */}
       <div className="flex gap-2 pt-1">
         <Button
           onClick={() => approachLead(lead)}
           disabled={approachingLeadId === lead.id}
           className="flex-1 gap-2"
         >
-          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
           {lead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
         </Button>
+        {lead.ai_approach_message && !lead.first_message_sent && (
+          <Button
+            onClick={() => setSendingLead(lead)}
+            disabled={sendCooldown > 0}
+            variant="outline"
+            className="gap-2"
+          >
+            {sendCooldown > 0 ? (
+              <>
+                <Clock size={16} />
+                {sendCooldown}s
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                Enviar
+              </>
+            )}
+          </Button>
+        )}
+        {lead.first_message_sent && (
+          <Badge variant="outline" className="flex items-center gap-1 text-primary border-primary/30 px-3">
+            <Send size={12} />
+            Enviado
+          </Badge>
+        )}
       </div>
     </div>
   );
@@ -641,9 +727,22 @@ export default function OpportunitiesManagement() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-6">
-              <div>
-                <h1 className="font-display text-2xl sm:text-3xl font-bold">Gestão de Oportunidades</h1>
-                <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold">Gestão de Oportunidades</h1>
+                  <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
+                </div>
+                {companyProfile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setShowOnboarding(true)}
+                  >
+                    <Settings size={14} />
+                    Editar Perfil
+                  </Button>
+                )}
               </div>
 
               {/* Batch scoring progress */}
@@ -933,10 +1032,34 @@ export default function OpportunitiesManagement() {
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center">
                             {lead.ai_approach_message ? (
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-                                <CheckCircle2 size={10} />
-                                Abordado
-                              </Badge>
+                              <div className="flex items-center justify-center gap-1">
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
+                                  <CheckCircle2 size={10} />
+                                  Abordado
+                                </Badge>
+                                {!lead.first_message_sent && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
+                                    disabled={sendCooldown > 0}
+                                    onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
+                                  >
+                                    {sendCooldown > 0 ? (
+                                      <Clock size={12} className="text-muted-foreground" />
+                                    ) : (
+                                      <Send size={12} className="text-primary" />
+                                    )}
+                                  </Button>
+                                )}
+                                {lead.first_message_sent && (
+                                  <Badge variant="outline" className="text-[10px] gap-1 text-primary border-primary/30">
+                                    <Send size={8} />
+                                    Enviado
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
                                 <Clock size={10} />
@@ -1046,6 +1169,41 @@ export default function OpportunitiesManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Company Profile Onboarding */}
+      {user && (
+        <CompanyProfileOnboarding
+          open={showOnboarding}
+          userId={user.id}
+          initialData={companyProfile}
+          onComplete={(profile) => {
+            setCompanyProfile(profile);
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
+      {/* Send Message Dialog */}
+      {sendingLead && user && (
+        <SendMessageDialog
+          open={!!sendingLead}
+          onOpenChange={(open) => { if (!open) setSendingLead(null); }}
+          leadId={sendingLead.id}
+          leadPhone={sendingLead.phone}
+          leadName={sendingLead.company_name || "Lead"}
+          message={sendingLead.ai_approach_message || ""}
+          userId={user.id}
+          whatsappNumberId={sendingLead.whatsapp_number_id}
+          onSent={() => {
+            setSendCooldown(120);
+            setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
+            if (selectedLead?.id === sendingLead.id) {
+              setSelectedLead({ ...selectedLead, first_message_sent: true });
+            }
+            setSendingLead(null);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 }
