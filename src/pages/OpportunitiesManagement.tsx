@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -26,7 +27,7 @@ import {
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
   CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
-  Settings,
+  Settings, Wifi,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,6 +65,7 @@ const ITEMS_PER_PAGE = 20;
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<OpportunityLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -430,11 +432,12 @@ export default function OpportunitiesManagement() {
   const scoreInfoContent = (
     <div className="space-y-3 text-sm max-w-xs">
       <h4 className="font-semibold">Como funciona o Score</h4>
-      <p className="text-muted-foreground">A IA analisa cada empresa individualmente em 4 dimensões:</p>
+      <p className="text-muted-foreground">A IA analisa cada empresa individualmente em 5 dimensões:</p>
       <ul className="space-y-1.5 text-muted-foreground">
-        <li><span className="font-medium text-foreground">Estrutura Digital (35pts)</span> — Site e redes sociais</li>
-        <li><span className="font-medium text-foreground">Reputação (30pts)</span> — Avaliações e volume</li>
+        <li><span className="font-medium text-foreground">Estrutura Digital (25pts)</span> — Site e redes sociais</li>
+        <li><span className="font-medium text-foreground">Reputação (25pts)</span> — Avaliações e respostas</li>
         <li><span className="font-medium text-foreground">Acessibilidade (20pts)</span> — Telefone e endereço</li>
+        <li><span className="font-medium text-foreground">Engajamento (15pts)</span> — Atividade nas redes e site</li>
         <li><span className="font-medium text-foreground">Potencial de Venda (15pts)</span> — Oportunidades ocultas</li>
       </ul>
       <div className="border-t border-border pt-2 space-y-1">
@@ -452,9 +455,10 @@ export default function OpportunitiesManagement() {
     const justificativa = lead.enrichment_data?.justificativa_score || "";
 
     const dimensions = [
-      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, icon: <Globe size={14} className="text-primary" /> },
-      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, icon: <Star size={14} className="text-primary" /> },
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 25, icon: <Globe size={14} className="text-primary" /> },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 25, icon: <Star size={14} className="text-primary" /> },
       { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" /> },
+      { label: "Engajamento", value: breakdown?.engajamento_atividade ?? 0, max: 15, icon: <Eye size={14} className="text-primary" /> },
       { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" /> },
     ];
 
@@ -673,7 +677,7 @@ export default function OpportunitiesManagement() {
             </div>
           )
         ) : (
-          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Abordar com IA" para gerar.</p>
+          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Gerar abordagem personalizada com IA" para gerar.</p>
         )}
       </div>
 
@@ -685,11 +689,14 @@ export default function OpportunitiesManagement() {
           className="flex-1 gap-2"
         >
           {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {lead.ai_approach_message ? "Regenerar Abordagem" : "Abordar com IA"}
+          {lead.ai_approach_message ? "Regenerar Abordagem" : "Gerar abordagem personalizada com IA"}
         </Button>
         {lead.ai_approach_message && !lead.first_message_sent && (
           <Button
-            onClick={() => setSendingLead(lead)}
+            onClick={() => {
+              setSelectedLead(null); // Close detail dialog first
+              setTimeout(() => setSendingLead(lead), 150);
+            }}
             disabled={sendCooldown > 0}
             variant="outline"
             className="gap-2"
@@ -733,15 +740,26 @@ export default function OpportunitiesManagement() {
                   <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
                 </div>
                 {companyProfile && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setShowOnboarding(true)}
-                  >
-                    <Settings size={14} />
-                    Editar Perfil
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => navigate("/whatsapp")}
+                    >
+                      <Wifi size={14} />
+                      Gerenciar Números
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setShowOnboarding(true)}
+                    >
+                      <Settings size={14} />
+                      Editar Perfil
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -1031,34 +1049,31 @@ export default function OpportunitiesManagement() {
                           </TableCell>
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center">
-                            {lead.ai_approach_message ? (
+                            {lead.first_message_sent ? (
+                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
+                                <Send size={10} />
+                                Enviado
+                              </Badge>
+                            ) : lead.ai_approach_message ? (
                               <div className="flex items-center justify-center gap-1">
-                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-                                  <CheckCircle2 size={10} />
-                                  Abordado
+                                <Badge variant="outline" className="text-xs gap-1 text-blue-400 border-blue-400/30">
+                                  <MessageSquare size={10} />
+                                  Msg Gerada
                                 </Badge>
-                                {!lead.first_message_sent && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 w-7 p-0"
-                                    title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
-                                    disabled={sendCooldown > 0}
-                                    onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
-                                  >
-                                    {sendCooldown > 0 ? (
-                                      <Clock size={12} className="text-muted-foreground" />
-                                    ) : (
-                                      <Send size={12} className="text-primary" />
-                                    )}
-                                  </Button>
-                                )}
-                                {lead.first_message_sent && (
-                                  <Badge variant="outline" className="text-[10px] gap-1 text-primary border-primary/30">
-                                    <Send size={8} />
-                                    Enviado
-                                  </Badge>
-                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
+                                  disabled={sendCooldown > 0}
+                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
+                                >
+                                  {sendCooldown > 0 ? (
+                                    <Clock size={12} className="text-muted-foreground" />
+                                  ) : (
+                                    <Send size={12} className="text-primary" />
+                                  )}
+                                </Button>
                               </div>
                             ) : (
                               <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
@@ -1192,9 +1207,20 @@ export default function OpportunitiesManagement() {
           leadId={sendingLead.id}
           leadPhone={sendingLead.phone}
           leadName={sendingLead.company_name || "Lead"}
+          leadData={{
+            company_name: sendingLead.company_name,
+            category: sendingLead.category,
+            city: sendingLead.city,
+            address: sendingLead.address,
+            website: sendingLead.website,
+            rating: sendingLead.rating,
+            review_count: sendingLead.review_count,
+            ai_score: sendingLead.ai_score,
+            social_media: sendingLead.social_media,
+            phone_numbers: sendingLead.phone_numbers,
+          }}
           message={sendingLead.ai_approach_message || ""}
           userId={user.id}
-          whatsappNumberId={sendingLead.whatsapp_number_id}
           onSent={() => {
             setSendCooldown(120);
             setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
@@ -1203,6 +1229,7 @@ export default function OpportunitiesManagement() {
             }
             setSendingLead(null);
           }}
+          onRequestConnect={() => navigate("/whatsapp")}
         />
       )}
     </SidebarProvider>

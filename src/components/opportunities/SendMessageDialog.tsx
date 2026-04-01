@@ -1,10 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Clock, CheckCircle2, MessageCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Send, Clock, CheckCircle2, MessageCircle, AlertTriangle, Wifi } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+interface WhatsAppNumberOption {
+  id: string;
+  instance_name: string | null;
+  phone_number: string | null;
+  name: string;
+  is_connected: boolean;
+}
 
 interface Props {
   open: boolean;
@@ -12,40 +21,89 @@ interface Props {
   leadId: string;
   leadPhone: string;
   leadName: string;
+  leadData?: {
+    company_name?: string | null;
+    category?: string | null;
+    city?: string | null;
+    address?: string | null;
+    website?: string | null;
+    rating?: number | null;
+    review_count?: number | null;
+    ai_score?: number | null;
+    social_media?: any;
+    phone_numbers?: any;
+  };
   message: string;
   userId: string;
-  whatsappNumberId?: string | null;
   onSent: () => void;
+  onRequestConnect?: () => void;
 }
 
-type SendState = "preview" | "typing" | "sent" | "error";
+type SendState = "select_number" | "preview" | "typing" | "sent" | "error" | "no_numbers";
 
-// Estimate typing time: average human types ~40 words/min in Portuguese
 function estimateTypingSeconds(text: string): number {
   const words = text.trim().split(/\s+/).length;
   const seconds = Math.round((words / 40) * 60);
-  return Math.max(5, Math.min(seconds, 45)); // clamp 5-45s
+  return Math.max(5, Math.min(seconds, 45));
 }
 
-export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadName, message, userId, whatsappNumberId, onSent }: Props) {
+export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadName, leadData, message, userId, onSent, onRequestConnect }: Props) {
   const { toast } = useToast();
-  const [state, setState] = useState<SendState>("preview");
+  const [state, setState] = useState<SendState>("select_number");
   const [progress, setProgress] = useState(0);
   const [typingSeconds, setTypingSeconds] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [numbers, setNumbers] = useState<WhatsAppNumberOption[]>([]);
+  const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
+  const [loadingNumbers, setLoadingNumbers] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (open) {
-      setState("preview");
       setProgress(0);
       setElapsed(0);
       setTypingSeconds(estimateTypingSeconds(message));
+      loadNumbers();
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [open, message]);
+
+  const loadNumbers = async () => {
+    setLoadingNumbers(true);
+    try {
+      // @ts-ignore - deep type instantiation
+      const { data } = await supabase
+        .from("whatsapp_numbers")
+        .select("id, instance_name, phone_number, name, is_connected")
+        .eq("user_id", userId)
+        .eq("status", "connected");
+
+      const connected = (data || []).filter(n => n.is_connected);
+      setNumbers(connected);
+
+      if (connected.length === 0) {
+        setState("no_numbers");
+      } else if (connected.length === 1) {
+        setSelectedNumberId(connected[0].id);
+        setState("preview");
+      } else {
+        setState("select_number");
+      }
+    } catch (err) {
+      console.error("Error loading numbers:", err);
+      setState("no_numbers");
+    } finally {
+      setLoadingNumbers(false);
+    }
+  };
+
+  const handleSelectNumber = () => {
+    if (selectedNumberId) {
+      setState("preview");
+    }
+  };
 
   const handleSend = async () => {
     setState("typing");
@@ -71,14 +129,10 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
   const doSend = async () => {
     try {
-      // Get user's connected WhatsApp numbers
-      // @ts-ignore - deep type instantiation
-      const { data: numbers } = await supabase.from("whatsapp_numbers").select("id, instance_name, phone_number").eq("user_id", userId).eq("status", "connected").limit(1);
-
-      const number = numbers?.[0];
+      const number = numbers.find(n => n.id === selectedNumberId);
       if (!number) {
         setState("error");
-        toast({ title: "Nenhum WhatsApp conectado", description: "Conecte um número para enviar mensagens", variant: "destructive" });
+        toast({ title: "Número não encontrado", variant: "destructive" });
         return;
       }
 
@@ -93,7 +147,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
       if (error) throw error;
 
-      // Update lead status
+      // Update lead status - mark as sent
       await supabase
         .from("leads")
         .update({
@@ -105,6 +159,9 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
           whatsapp_number_id: number.id,
         } as any)
         .eq("id", leadId);
+
+      // Create lead in CRM pipeline
+      await createCRMProfile(number.id);
 
       // Update last_message_sent_at on company_profiles for rate limiting
       await supabase
@@ -122,15 +179,69 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
     }
   };
 
+  const createCRMProfile = async (whatsappNumberId: string) => {
+    try {
+      // Get first pipeline stage for this user (mensagem enviada or first available)
+      const { data: stages } = await supabase
+        .from("pipeline_stages")
+        .select("id, name, position")
+        .eq("user_id", userId)
+        .order("position", { ascending: true });
+
+      // Find "mensagem enviada" stage or use the first one
+      const sentStage = stages?.find(s => 
+        s.name.toLowerCase().includes("mensagem enviada") || 
+        s.name.toLowerCase().includes("primeiro contato") ||
+        s.name.toLowerCase().includes("mensagem")
+      ) || stages?.[0];
+
+      if (!sentStage) {
+        console.warn("No pipeline stages found for CRM lead creation");
+        return;
+      }
+
+      // Check if lead already exists in CRM by phone (avoid duplicates)
+      const { data: existingLead } = await supabase
+        .from("leads")
+        .select("id, pipeline_stage_id")
+        .eq("user_id", userId)
+        .eq("id", leadId)
+        .single();
+
+      if (existingLead) {
+        // Update existing lead with CRM data
+        await supabase
+          .from("leads")
+          .update({
+            pipeline_stage_id: sentStage.id,
+            origin: "Oportunidades",
+          } as any)
+          .eq("id", leadId);
+      }
+
+      // Log activity
+      await supabase.from("lead_activities").insert({
+        lead_id: leadId,
+        user_id: userId,
+        activity_type: "message_sent",
+        description: `Mensagem de abordagem enviada via Oportunidades`,
+      });
+    } catch (err) {
+      console.error("Error creating CRM profile:", err);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (state !== "typing") onOpenChange(v); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle size={18} className="text-primary" />
-            {state === "sent" ? "Mensagem Enviada!" : "Enviar Mensagem"}
+            {state === "sent" ? "Mensagem Enviada!" : state === "no_numbers" ? "Nenhum Número Conectado" : "Enviar Mensagem"}
           </DialogTitle>
           <DialogDescription>
+            {state === "no_numbers" && "Você precisa conectar um número do WhatsApp para enviar mensagens"}
+            {state === "select_number" && "Selecione o número para enviar a mensagem"}
             {state === "preview" && `Confirme o envio para ${leadName}`}
             {state === "typing" && "Simulando digitação humana..."}
             {state === "sent" && "A mensagem foi entregue com sucesso"}
@@ -139,11 +250,105 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
-          {/* Message preview */}
-          <div className="bg-muted/40 rounded-xl p-4 border border-border">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Mensagem para {leadName}:</p>
-            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
-          </div>
+          {/* No numbers state */}
+          {state === "no_numbers" && !loadingNumbers && (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <AlertTriangle size={28} className="text-amber-400" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-sm font-medium">Nenhum número do WhatsApp conectado</p>
+                <p className="text-xs text-muted-foreground">
+                  Conecte um número em "Gerenciar Números" para poder enviar mensagens.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Fechar
+                </Button>
+                {onRequestConnect && (
+                  <Button onClick={() => { onOpenChange(false); onRequestConnect(); }} className="gap-2">
+                    <Wifi size={16} />
+                    Conectar Número
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Loading numbers */}
+          {loadingNumbers && (
+            <div className="flex items-center justify-center py-8 gap-2">
+              <Loader2 size={16} className="animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">Carregando números...</span>
+            </div>
+          )}
+
+          {/* Number selection */}
+          {state === "select_number" && !loadingNumbers && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Selecione o número de envio</label>
+                <Select value={selectedNumberId || ""} onValueChange={setSelectedNumberId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um número" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {numbers.map(n => (
+                      <SelectItem key={n.id} value={n.id}>
+                        {n.name} {n.phone_number ? `(${n.phone_number})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Message preview */}
+              <div className="bg-muted/40 rounded-xl p-4 border border-border">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Mensagem para {leadName}:</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button onClick={handleSelectNumber} disabled={!selectedNumberId} className="flex-1 gap-2">
+                  <Send size={16} />
+                  Continuar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Preview state */}
+          {state === "preview" && (
+            <>
+              <div className="bg-muted/40 rounded-xl p-4 border border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-muted-foreground">Mensagem para {leadName}:</p>
+                  {numbers.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Via: {numbers.find(n => n.id === selectedNumberId)?.phone_number || numbers.find(n => n.id === selectedNumberId)?.name}
+                    </p>
+                  )}
+                </div>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => {
+                  if (numbers.length > 1) setState("select_number");
+                  else onOpenChange(false);
+                }} className="flex-1">
+                  {numbers.length > 1 ? "Trocar Número" : "Cancelar"}
+                </Button>
+                <Button onClick={handleSend} className="flex-1 gap-2">
+                  <Send size={16} />
+                  Confirmar Envio
+                </Button>
+              </div>
+            </>
+          )}
 
           {/* Typing simulation */}
           {state === "typing" && (
@@ -165,51 +370,36 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
           {/* Success state */}
           {state === "sent" && (
-            <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
-              <CheckCircle2 size={20} className="text-emerald-400" />
-              <div>
-                <p className="text-sm font-medium text-emerald-400">Enviada com sucesso!</p>
-                <p className="text-xs text-muted-foreground">A mensagem foi entregue no WhatsApp do lead</p>
+            <>
+              <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                <CheckCircle2 size={20} className="text-emerald-400" />
+                <div>
+                  <p className="text-sm font-medium text-emerald-400">Enviada com sucesso!</p>
+                  <p className="text-xs text-muted-foreground">A mensagem foi entregue e o lead foi adicionado ao CRM</p>
+                </div>
               </div>
-            </div>
+              <Button onClick={() => onOpenChange(false)} className="w-full gap-2">
+                <CheckCircle2 size={16} />
+                Fechar
+              </Button>
+            </>
           )}
 
           {/* Error state */}
           {state === "error" && (
-            <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl p-4">
-              <span className="text-sm font-medium text-destructive">Falha no envio. Verifique seu WhatsApp conectado e tente novamente.</span>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2 mt-2">
-          {state === "preview" && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button onClick={handleSend} className="flex-1 gap-2">
-                <Send size={16} />
-                Confirmar Envio
-              </Button>
-            </>
-          )}
-          {state === "sent" && (
-            <Button onClick={() => onOpenChange(false)} className="w-full gap-2">
-              <CheckCircle2 size={16} />
-              Fechar
-            </Button>
-          )}
-          {state === "error" && (
-            <>
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-                Fechar
-              </Button>
-              <Button onClick={handleSend} className="flex-1 gap-2">
-                <Send size={16} />
-                Tentar Novamente
-              </Button>
+              <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl p-4">
+                <span className="text-sm font-medium text-destructive">Falha no envio. Verifique seu WhatsApp conectado e tente novamente.</span>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+                  Fechar
+                </Button>
+                <Button onClick={handleSend} className="flex-1 gap-2">
+                  <Send size={16} />
+                  Tentar Novamente
+                </Button>
+              </div>
             </>
           )}
         </div>
