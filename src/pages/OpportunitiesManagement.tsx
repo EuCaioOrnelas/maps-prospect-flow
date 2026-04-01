@@ -409,27 +409,33 @@ export default function OpportunitiesManagement() {
         {(pontosFortes.length > 0 || pontosFracos.length > 0) && (
           <div className="grid grid-cols-2 gap-3">
             {pontosFortes.length > 0 && (
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
-                <h4 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mb-2">
-                  <CheckCircle2 size={12} />
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5 mb-3">
+                  <CheckCircle2 size={14} />
                   Pontos Fortes
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-2">
                   {pontosFortes.map((p: string, i: number) => (
-                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 size={12} className="text-primary mt-0.5 shrink-0" />
+                      {p}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
             {pontosFracos.length > 0 && (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4">
-                <h4 className="text-xs font-semibold text-red-400 flex items-center gap-1.5 mb-2">
-                  <AlertTriangle size={12} />
+              <div className="bg-muted/30 border border-border rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <AlertTriangle size={14} />
                   Pontos Fracos
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-2">
                   {pontosFracos.map((p: string, i: number) => (
-                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <AlertTriangle size={12} className="mt-0.5 shrink-0 opacity-60" />
+                      {p}
+                    </li>
                   ))}
                 </ul>
               </div>
