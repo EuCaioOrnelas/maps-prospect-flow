@@ -485,45 +485,51 @@ export default function OpportunitiesManagement() {
 
       {/* Lead Detail Dialog */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {selectedLead && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 flex-wrap">
-                  <Building2 size={18} className="text-primary shrink-0" />
-                  <span className="break-words">{selectedLead.company_name || "Sem nome"}</span>
-                </DialogTitle>
-                <DialogDescription className="flex items-center gap-2 flex-wrap">
-                  {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
-                  {getLevelBadge(selectedLead.opportunity_level)}
-                  {selectedLead.ai_approach_message ? (
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-                      <CheckCircle2 size={10} /> Abordado
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
-                      <Clock size={10} /> Pendente
-                    </Badge>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
+            <div className="flex flex-col">
+              {/* Header */}
+              <div className="p-5 pb-4 border-b border-border">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2.5 text-lg">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Building2 size={18} className="text-primary" />
+                    </div>
+                    <span className="break-words leading-tight">{selectedLead.company_name || "Sem nome"}</span>
+                  </DialogTitle>
+                  <DialogDescription className="flex items-center gap-2 flex-wrap mt-2">
+                    {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
+                    {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
+                    {getLevelBadge(selectedLead.opportunity_level)}
+                    {selectedLead.ai_approach_message ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
+                        <CheckCircle2 size={10} /> Abordado
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                        <Clock size={10} /> Pendente
+                      </Badge>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
 
-              <div className="space-y-4 mt-2">
+              <div className="p-5 space-y-4">
                 {/* Score Card */}
                 {selectedLead.ai_score != null && selectedLead.ai_score > 0 && (
                   <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium flex items-center gap-1.5">
                         <BarChart3 size={14} className="text-primary" />
                         Score de Oportunidade
                       </span>
                       <span className="text-2xl font-bold text-primary">{selectedLead.ai_score}/100</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-primary rounded-full h-2 transition-all" style={{ width: `${selectedLead.ai_score}%` }} />
+                    <div className="w-full bg-muted rounded-full h-2.5 mb-3">
+                      <div className="bg-primary rounded-full h-2.5 transition-all" style={{ width: `${selectedLead.ai_score}%` }} />
                     </div>
                     {selectedLead.closing_probability && (
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">Probabilidade de fechamento</span>
                         <Badge variant="outline" className="text-xs">{selectedLead.closing_probability}</Badge>
                       </div>
@@ -531,72 +537,77 @@ export default function OpportunitiesManagement() {
                   </div>
                 )}
 
-                {/* Info grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <InfoItem icon={<MapPin size={14} />} label="Endereço" value={selectedLead.address} />
-                  <InfoItem icon={<Phone size={14} />} label="Telefone" value={selectedLead.phone} />
-                  <InfoItem icon={<Globe size={14} />} label="Site" value={selectedLead.website} isLink />
-                  <InfoItem icon={<Star size={14} className="text-amber-400" />} label="Avaliação" value={selectedLead.rating ? `${selectedLead.rating} ⭐ (${selectedLead.review_count || 0})` : null} />
+                {/* Company Info Card */}
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                    <Building2 size={14} className="text-primary" />
+                    Informações da Empresa
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <DetailItem icon={<MapPin size={13} />} label="Endereço" value={selectedLead.address} />
+                    <DetailItem icon={<Phone size={13} />} label="Telefone" value={selectedLead.phone} />
+                    <DetailItem icon={<Globe size={13} />} label="Site" value={selectedLead.website} isLink />
+                    <DetailItem icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={selectedLead.rating ? `${selectedLead.rating}/5 (${selectedLead.review_count || 0})` : null} />
+                  </div>
+                  {selectedLead.google_maps_link && selectedLead.google_maps_link !== "-" && (
+                    <a href={selectedLead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 mt-2 transition-colors hover:bg-muted">
+                      <Map size={14} />
+                      Ver no Google Maps
+                      <ExternalLink size={12} className="ml-auto opacity-50" />
+                    </a>
+                  )}
                 </div>
 
-                {/* Google Maps Link */}
-                {selectedLead.google_maps_link && selectedLead.google_maps_link !== "-" && (
-                  <a href={selectedLead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg p-2.5">
-                    <Map size={14} />
-                    Ver no Google Maps
-                    <ExternalLink size={12} className="ml-auto" />
-                  </a>
-                )}
-
-                {/* AI Diagnosis */}
+                {/* AI Diagnosis Card */}
                 {selectedLead.ai_diagnosis && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
+                  <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
                       <Sparkles size={14} className="text-primary" />
                       Diagnóstico IA
                     </h4>
-                    <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">{selectedLead.ai_diagnosis}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedLead.ai_diagnosis}</p>
                     {selectedLead.ai_recommended_action && (
-                      <p className="text-sm text-primary bg-primary/5 border border-primary/20 rounded-lg p-3">
-                        <strong>Ação recomendada:</strong> {selectedLead.ai_recommended_action}
-                      </p>
+                      <div className="bg-primary/5 border border-primary/15 rounded-lg p-3">
+                        <p className="text-xs font-medium text-primary mb-1">Ação Recomendada</p>
+                        <p className="text-sm text-muted-foreground">{selectedLead.ai_recommended_action}</p>
+                      </div>
                     )}
                   </div>
                 )}
 
-                {/* Approach Analysis */}
+                {/* Market Analysis Card */}
                 {selectedLead.enrichment_data?.approach_analysis && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
+                  <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
                       <Target size={14} className="text-primary" />
                       Análise de Mercado
                     </h4>
-                    <div className="grid grid-cols-1 gap-2 text-xs">
+                    <div className="space-y-2">
                       {selectedLead.enrichment_data.approach_analysis.analise_nicho && (
-                        <div className="bg-muted/50 rounded-lg p-2.5">
-                          <span className="font-medium text-foreground">Nicho:</span>{" "}
-                          <span className="text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_nicho}</span>
+                        <div className="bg-muted/40 rounded-lg p-3">
+                          <p className="text-xs font-medium text-foreground mb-0.5">Nicho</p>
+                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_nicho}</p>
                         </div>
                       )}
                       {selectedLead.enrichment_data.approach_analysis.analise_cidade && (
-                        <div className="bg-muted/50 rounded-lg p-2.5">
-                          <span className="font-medium text-foreground">Cidade:</span>{" "}
-                          <span className="text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_cidade}</span>
+                        <div className="bg-muted/40 rounded-lg p-3">
+                          <p className="text-xs font-medium text-foreground mb-0.5">Cidade</p>
+                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.analise_cidade}</p>
                         </div>
                       )}
                       {selectedLead.enrichment_data.approach_analysis.estrategia && (
-                        <div className="bg-muted/50 rounded-lg p-2.5">
-                          <span className="font-medium text-foreground">Estratégia:</span>{" "}
-                          <span className="text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.estrategia}</span>
+                        <div className="bg-muted/40 rounded-lg p-3">
+                          <p className="text-xs font-medium text-foreground mb-0.5">Estratégia</p>
+                          <p className="text-xs text-muted-foreground">{selectedLead.enrichment_data.approach_analysis.estrategia}</p>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* Approach Message */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
+                {/* Approach Message Card */}
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
                     <MessageSquare size={14} className="text-primary" />
                     Mensagem de Abordagem
                   </h4>
@@ -619,16 +630,16 @@ export default function OpportunitiesManagement() {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative">
-                        <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 whitespace-pre-wrap">
+                      <div>
+                        <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
                           {selectedLead.ai_approach_message}
                         </p>
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-2 mt-3">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => copyMessage(selectedLead.ai_approach_message!, selectedLead.id)}
-                            className="gap-1 text-xs"
+                            className="gap-1.5 text-xs"
                           >
                             {copiedId === selectedLead.id ? <Check size={12} /> : <Copy size={12} />}
                             {copiedId === selectedLead.id ? "Copiada" : "Copiar"}
@@ -637,7 +648,7 @@ export default function OpportunitiesManagement() {
                             size="sm"
                             variant="outline"
                             onClick={() => { setEditedMessage(selectedLead.ai_approach_message || ""); setEditingMessage(true); }}
-                            className="gap-1 text-xs"
+                            className="gap-1.5 text-xs"
                           >
                             <Pencil size={12} /> Editar
                           </Button>
@@ -645,12 +656,12 @@ export default function OpportunitiesManagement() {
                       </div>
                     )
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">Nenhuma mensagem gerada ainda</p>
+                    <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Abordar com IA" para gerar.</p>
                   )}
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-1">
                   <Button
                     onClick={() => approachLead(selectedLead)}
                     disabled={approachingLeadId === selectedLead.id}
@@ -670,7 +681,7 @@ export default function OpportunitiesManagement() {
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -678,7 +689,7 @@ export default function OpportunitiesManagement() {
   );
 }
 
-function InfoItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
+function DetailItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
   if (!value || value === "-") return null;
   return (
     <div className="space-y-1">
