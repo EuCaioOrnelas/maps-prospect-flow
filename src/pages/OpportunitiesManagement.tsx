@@ -67,6 +67,8 @@ export default function OpportunitiesManagement() {
   const [minRating, setMinRating] = useState("");
   const [onlyHighOpp, setOnlyHighOpp] = useState(false);
   const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterCity, setFilterCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
