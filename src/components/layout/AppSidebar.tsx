@@ -61,6 +61,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
+  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
