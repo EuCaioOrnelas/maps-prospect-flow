@@ -10,14 +10,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -84,7 +83,7 @@ serve(async (req) => {
     else if (score >= 31) probabilidade_fechamento = "Moderada";
     else probabilidade_fechamento = "Baixa";
 
-    // --- AI-powered diagnosis using OpenAI ---
+    // --- AI-powered diagnosis using Lovable AI ---
     let diagnostico = "";
     let acao_recomendada = "";
 
@@ -103,14 +102,14 @@ DADOS DO LEAD:
 
 Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
 
-      const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "google/gemini-2.5-flash",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
           max_tokens: 300,
@@ -118,18 +117,19 @@ Retorne APENAS JSON válido com as chaves "diagnostico" e "acao_recomendada".`;
         }),
       });
 
-      if (openaiRes.ok) {
-        const aiData = await openaiRes.json();
+      if (aiRes.ok) {
+        const aiData = await aiRes.json();
         const content = aiData.choices?.[0]?.message?.content;
         if (content) {
           const parsed = JSON.parse(content);
           diagnostico = parsed.diagnostico || "";
           acao_recomendada = parsed.acao_recomendada || "";
         }
+      } else {
+        console.error("AI gateway error:", aiRes.status);
       }
     } catch (aiErr) {
-      console.error("OpenAI error (non-fatal):", aiErr);
-      // Fallback diagnostics
+      console.error("AI error (non-fatal):", aiErr);
       diagnostico = score >= 61
         ? `${nome_empresa} apresenta forte oportunidade comercial com score ${score}/100.`
         : `${nome_empresa} possui potencial moderado. Score: ${score}/100.`;
