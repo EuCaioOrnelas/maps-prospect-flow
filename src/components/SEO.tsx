@@ -8,15 +8,59 @@ interface SEOProps {
   url?: string;
   type?: string;
   noIndex?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
+
+const SITE_URL = 'https://wiize.com.br';
+const SITE_NAME = 'Wiize';
 
 const defaultMeta = {
   title: 'Wiize - Prospecção Inteligente e Disparos em Massa via WhatsApp',
-  description: 'Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente, automação de mensagens e geração de leads B2B para aumentar suas vendas.',
-  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados',
+  description: 'Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente, automação de mensagens e geração de leads B2B para aumentar suas vendas. Comece grátis!',
+  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes, CRM, agente de IA, aquecimento de chip',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
-  url: 'https://wiize.com.br',
+  url: SITE_URL,
   type: 'website',
+};
+
+// Organization schema reused across pages
+const organizationSchema = {
+  '@type': 'Organization',
+  '@id': `${SITE_URL}/#organization`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.svg`,
+  description: defaultMeta.description,
+  foundingDate: '2024',
+  sameAs: [
+    'https://www.instagram.com/wiize.com.br/',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    availableLanguage: ['Portuguese'],
+    url: `${SITE_URL}/contato`,
+  },
+};
+
+// WebSite schema with sitelinks search box
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${SITE_URL}/#website`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: defaultMeta.description,
+  publisher: { '@id': `${SITE_URL}/#organization` },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+  inLanguage: 'pt-BR',
 };
 
 export const SEO = ({
@@ -27,8 +71,37 @@ export const SEO = ({
   url = defaultMeta.url,
   type = defaultMeta.type,
   noIndex = false,
+  jsonLd,
 }: SEOProps) => {
-  const fullTitle = title ? `${title} | Wiize` : defaultMeta.title;
+  const fullTitle = title ? `${title} | ${SITE_NAME}` : defaultMeta.title;
+
+  // Build JSON-LD array
+  const schemas: Record<string, unknown>[] = [
+    { '@context': 'https://schema.org', ...organizationSchema },
+    websiteSchema,
+  ];
+
+  // Add WebPage schema for every page
+  schemas.push({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${url}/#webpage`,
+    url,
+    name: fullTitle,
+    description,
+    isPartOf: { '@id': `${SITE_URL}/#website` },
+    about: { '@id': `${SITE_URL}/#organization` },
+    inLanguage: 'pt-BR',
+  });
+
+  // Add any page-specific schemas
+  if (jsonLd) {
+    if (Array.isArray(jsonLd)) {
+      schemas.push(...jsonLd);
+    } else {
+      schemas.push(jsonLd);
+    }
+  }
 
   return (
     <Helmet>
@@ -36,11 +109,16 @@ export const SEO = ({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
-      <meta name="author" content="Wiize" />
+      <meta name="author" content={SITE_NAME} />
       {noIndex && <meta name="robots" content="noindex, nofollow" />}
+      {!noIndex && <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />}
       
       {/* Canonical URL */}
       <link rel="canonical" href={url} />
+
+      {/* Language */}
+      <html lang="pt-BR" />
+      <meta httpEquiv="content-language" content="pt-BR" />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
@@ -48,7 +126,7 @@ export const SEO = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
-      <meta property="og:site_name" content="Wiize" />
+      <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="pt_BR" />
 
       {/* Twitter */}
@@ -61,7 +139,16 @@ export const SEO = ({
 
       {/* Additional SEO */}
       <meta name="theme-color" content="#22c55e" />
-      <meta name="application-name" content="Wiize" />
+      <meta name="application-name" content={SITE_NAME} />
+      <meta name="google" content="notranslate" />
+      <meta name="format-detection" content="telephone=no" />
+
+      {/* JSON-LD Structured Data */}
+      {schemas.map((schema, i) => (
+        <script key={i} type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      ))}
     </Helmet>
   );
 };
