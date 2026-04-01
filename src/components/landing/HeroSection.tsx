@@ -180,28 +180,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-4 lg:-left-16 xl:-left-20 2xl:-left-32 top-4 lg:top-2",
+    position: "-left-[6.75rem] top-4",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-4 lg:-right-10 xl:-right-16 2xl:-right-28 -top-4 lg:-top-8",
+    position: "-right-12 -top-5",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-4 lg:-left-20 xl:-left-24 2xl:-left-36 bottom-[100px] lg:bottom-[90px]",
+    position: "-left-[7.5rem] bottom-[5.5rem]",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-4 lg:-right-8 xl:-right-12 2xl:-right-24 bottom-2 lg:bottom-0",
+    position: "-right-10 -bottom-3",
     delay: "2s"
   },
 ];
@@ -302,10 +302,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
         {/* Two-column layout: text left, demo right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-2 lg:gap-4 items-center">
+        <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
           
           {/* LEFT: Text content */}
-          <div className="text-center lg:text-left">
+          <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
               <div className="flex -space-x-2">
@@ -329,13 +329,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </h1>
 
             {/* Subheading */}
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               Prospecção inteligente de leads qualificados e campanhas de mensagens em massa
               via API Oficial da Meta, tudo automatizado com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
                 <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
                   Começar agora
@@ -354,14 +354,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* RIGHT: Animated Demo - hidden on small screens */}
           <div 
-            className="animate-slide-up will-change-transform w-full hidden lg:flex lg:justify-start lg:-ml-8 xl:ml-0 xl:justify-end"
+            className="animate-slide-up will-change-transform w-full hidden xl:flex xl:justify-end"
             style={{ 
               animationDelay: "0.5s",
               transform: `translateY(${-parallaxOffset * 0.05}px)`,
               opacity: imageOpacity
             }}
           >
-            <div className="relative w-full max-w-[24.25rem] xl:max-w-[26.75rem] 2xl:max-w-[29rem]">
+            <div className="relative w-full max-w-[24rem] 2xl:max-w-[26rem]">
               {/* Background glow */}
               <div 
                 className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
