@@ -177,7 +177,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
           {/* Error state */}
           {state === "error" && (
             <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl p-4">
-              <span className="text-destructive text-sm font-medium">Falha no envio. Verifique seu WhatsApp conectado e tente novamente.</span>
+              <span className="text-sm font-medium text-destructive">Falha no envio. Verifique seu WhatsApp conectado e tente novamente.</span>
             </div>
           )}
         </div>
