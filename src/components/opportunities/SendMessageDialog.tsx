@@ -77,7 +77,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         .select("id, instance_name, phone_number")
         .eq("user_id", userId)
         .eq("status", "connected")
-        .limit(1);
+        .limit(1) as any;
 
       const number = numbers?.[0];
       if (!number) {
