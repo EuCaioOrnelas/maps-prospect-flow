@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { faqJsonLd } from "@/components/landing/FAQSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
