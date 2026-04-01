@@ -105,8 +105,7 @@ export const FeaturesSection = () => {
             <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
           </div>
            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
-             Tudo que você precisa para{" "}
-             <span className="text-highlight-static">vender mais</span>
+             Tudo que você precisa para vender mais
            </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
             Prospecção inteligente, automação de mensagens e IA que qualifica seus leads.
