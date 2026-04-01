@@ -180,28 +180,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-4 xl:-left-20 2xl:-left-32 top-4 lg:top-2",
+    position: "left-0 xl:-left-12 2xl:-left-20 top-4 lg:top-2",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "right-0 xl:-right-16 2xl:-right-28 -top-4 lg:-top-8",
+    position: "right-0 xl:-right-8 2xl:-right-16 -top-4 lg:-top-8",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-4 xl:-left-24 2xl:-left-36 bottom-[100px] lg:bottom-[90px]",
+    position: "left-0 xl:-left-16 2xl:-left-24 bottom-[100px] lg:bottom-[90px]",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "right-0 xl:-right-12 2xl:-right-24 bottom-2 lg:bottom-0",
+    position: "right-0 xl:-right-4 2xl:-right-12 bottom-2 lg:bottom-0",
     delay: "2s"
   },
 ];
