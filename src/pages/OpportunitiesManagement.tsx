@@ -387,7 +387,7 @@ export default function OpportunitiesManagement() {
                   <span className="font-semibold">{dim.value}/{dim.max}</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-500 ${dim.color}`} style={{ width: `${(dim.value / dim.max) * 100}%` }} />
+                  <div className="h-full rounded-full transition-all duration-500 bg-primary" style={{ width: `${(dim.value / dim.max) * 100}%` }} />
                 </div>
               </div>
             ))}
