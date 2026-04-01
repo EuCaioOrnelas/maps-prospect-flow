@@ -73,6 +73,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   const loadNumbers = async () => {
     setLoadingNumbers(true);
     try {
+      // @ts-ignore - deep type instantiation
       const { data } = await supabase
         .from("whatsapp_numbers")
         .select("id, instance_name, phone_number, name, is_connected")
