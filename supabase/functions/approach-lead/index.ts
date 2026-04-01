@@ -76,7 +76,14 @@ DADOS DA SUA EMPRESA (quem está prospectando):
 - Público-alvo: ${companyProfile.company_target_audience}
 ` : "";
 
+    // Determine greeting based on current time (BRT = UTC-3)
+    const now = new Date();
+    const brtHour = (now.getUTCHours() - 3 + 24) % 24;
+    const greeting = brtHour < 12 ? "Bom dia" : brtHour < 18 ? "Boa tarde" : "Boa noite";
+
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Analise os dados deste lead e crie uma MENSAGEM DE ABORDAGEM personalizada para enviar via WhatsApp.
+
+CONTEXTO IMPORTANTE: Esta é uma MENSAGEM FRIA — provavelmente o PRIMEIRO CONTATO com este lead. Ele NÃO te conhece.
 
 ${companyContext}
 
@@ -91,18 +98,21 @@ DADOS DO LEAD (empresa a ser prospectada):
 - Score de oportunidade: ${lead.ai_score || "Não calculado"}/100
 - Nível de oportunidade: ${lead.opportunity_level || "Não calculado"}
 
+ESTRUTURA OBRIGATÓRIA DA MENSAGEM (siga esta ordem):
+1. SAUDAÇÃO EDUCADA: Comece SEMPRE com "${greeting}!" — educação é fundamental em mensagem fria
+2. GANCHO DE ATENÇÃO: Logo após a saudação, uma frase curta e impactante que gere CURIOSIDADE sobre uma DOR ou OPORTUNIDADE específica do lead (baseada nos dados dele — ex: "Notei que a [empresa] ainda não aparece nas buscas do Google na região de [cidade]...")
+3. APRESENTAÇÃO BREVE: Se apresente de forma natural e rápida (nome + empresa + o que faz em 1 linha)
+4. PROPOSTA DE VALOR PERSONALIZADA: Explique como seu serviço resolve a dor específica deste lead (não seja genérico — cite dados reais do lead como falta de site, poucas avaliações, nicho, cidade)
+5. FECHAMENTO GENTIL: Termine com uma pergunta leve e sem pressão perguntando se o lead tem interesse em saber mais
+
 INSTRUÇÕES CRÍTICAS:
-1. ${companyProfile ? `Você está representando a empresa "${companyProfile.company_name}" e o atendente "${companyProfile.attendant_name}". A mensagem DEVE ser enviada em nome deles.` : "Crie uma mensagem genérica de prospecção."}
-2. ${companyProfile ? `Analise o que a empresa "${companyProfile.company_name}" vende (${companyProfile.company_products}) e identifique qual produto/serviço é MAIS RELEVANTE para este lead baseado no nicho dele.` : ""}
-3. ${companyProfile ? `Use o diferencial da empresa ("${companyProfile.company_differential}") como argumento de valor na mensagem.` : ""}
-4. A mensagem NÃO deve ser padrão ou genérica — deve ser criativa e FORA DO COMUM
-5. Comece com algo que gere CURIOSIDADE imediata (nunca "Olá, tudo bem?" ou aberturas genéricas)
-6. No corpo, gere DESEJO mostrando como o produto/serviço pode beneficiar especificamente este lead
-7. Termine com uma pergunta gentil se o lead gostaria de saber mais (sem pressão)
-8. Seja GENTIL e PROFISSIONAL, mas com personalidade
-9. A mensagem deve ser curta (máx 3 parágrafos), direta e personalizada
-10. Mencione algo específico sobre a empresa do lead para mostrar que pesquisou
-11. ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
+- ${companyProfile ? `Você representa "${companyProfile.attendant_name}" da "${companyProfile.company_name}".` : "Crie uma mensagem genérica de prospecção."}
+- ${companyProfile ? `Analise os serviços "${companyProfile.company_products}" e identifique qual é MAIS RELEVANTE para a dor deste lead.` : ""}
+- ${companyProfile ? `Use o diferencial "${companyProfile.company_differential}" como argumento.` : ""}
+- A mensagem deve ser curta (máx 3 parágrafos), direta e personalizada
+- NÃO use aberturas como "Tudo bem?" ou "Como vai?" — vá direto ao gancho após a saudação
+- Mencione algo específico sobre a empresa do lead para mostrar que pesquisou
+- ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
 Retorne APENAS um JSON válido com as chaves:
 - "mensagem": a mensagem de abordagem pronta para enviar
