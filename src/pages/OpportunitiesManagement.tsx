@@ -273,6 +273,14 @@ export default function OpportunitiesManagement() {
     toast({ title: "Mensagem copiada!" });
   };
 
+  // Derive correct level from score to fix inconsistency
+  const getIntentionFromScore = (score: number | null): string | null => {
+    if (score == null || score === 0) return null;
+    if (score >= 61) return "Alta";
+    if (score >= 31) return "Média";
+    return "Baixa";
+  };
+
   const filteredLeads = useMemo(() => {
     let result = leads;
     if (searchTerm) {
