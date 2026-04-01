@@ -167,7 +167,7 @@ export const OfficialAPISection = () => {
         {/* Disclaimer */}
         <p className="text-xs text-muted-foreground/60 text-center mt-8 max-w-2xl mx-auto">
           *A API oficial da Meta é utilizada para campanhas de relacionamento (inbound). 
-          Campanhas de prospecção ativa utilizam a Evolution API com estratégias de proteção como aquecimento e limites diários.
+          Campanhas de prospecção ativa utilizam a Evolution API com estratégias de proteção e limites diários inteligentes.
         </p>
       </div>
     </section>

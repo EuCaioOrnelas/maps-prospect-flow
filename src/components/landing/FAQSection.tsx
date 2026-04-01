@@ -39,8 +39,8 @@ const faqs = [
     answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
   },
   {
-    question: "O que é o Aquecimento de Chips e como funciona?",
-    answer: "O Aquecimento de Chips é um sistema inteligente que prepara números novos ou inativos para uso comercial em 20 dias. Funciona em 4 níveis progressivos: nos primeiros 5 dias envia mensagens simples (bom dia, oi), depois evolui para perguntas leves, interações mais naturais e finalmente mensagens pré-comerciais. O objetivo é simular o uso natural do WhatsApp, construindo reputação gradualmente para evitar bloqueios quando você começar os disparos em massa."
+    question: "Como funciona a geração de mensagens personalizadas com IA?",
+    answer: "O Wiize analisa cada lead encontrado — segmento, localização, perfil do negócio — e gera automaticamente uma mensagem única e personalizada usando inteligência artificial. Isso aumenta drasticamente a taxa de resposta e conversão, pois cada contato recebe uma abordagem relevante e humanizada, sem parecer spam."
   },
   {
     question: "Qual plano é ideal para mim?",
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
-    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de aquecimento para máxima segurança."
+    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de proteção inteligentes para máxima segurança."
   },
   {
     question: "Minhas mensagens são seguras com a API Oficial?",
