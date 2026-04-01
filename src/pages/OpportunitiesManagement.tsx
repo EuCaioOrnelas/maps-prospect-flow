@@ -163,7 +163,7 @@ export default function OpportunitiesManagement() {
     try {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin")
+        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id")
         .eq("user_id", user.id)
         .in("origin", ["oportunidades", "prospeccao"])
         .order("created_at", { ascending: false });
