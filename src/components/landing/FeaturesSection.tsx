@@ -17,6 +17,13 @@ const features = [
     highlight: "Busca por cidade, bairro ou região específica",
   },
   {
+    icon: Sparkles,
+    title: "Mensagens Personalizadas com IA",
+    description: "O Wiize analisa cada lead prospectado — nome da empresa, categoria, localização e contexto — e gera automaticamente uma mensagem única e personalizada com inteligência artificial. Cada abordagem é diferente, relevante e pensada para maximizar a taxa de resposta e conversão.",
+    badge: "Novo",
+    highlight: "IA gera mensagens únicas para cada lead",
+  },
+  {
     icon: Bot,
     title: "Agente de IA no WhatsApp",
     description: "Um vendedor virtual que trabalha 24 horas por dia, 7 dias por semana. Ele responde mensagens automaticamente, qualifica leads com perguntas inteligentes e organiza tudo no CRM. Sem prompts complexos — configure em poucos minutos e deixe a IA cuidar do operacional enquanto você foca em fechar negócios.",
@@ -30,25 +37,11 @@ const features = [
     highlight: "Export direto para Excel em um clique",
   },
   {
-    icon: MessageSquare,
-    title: "Disparos em Massa via WhatsApp",
-    description: "Envie mensagens personalizadas em escala para seus leads com limite seguro de 200 disparos por dia. O sistema usa janelas inteligentes com delays aleatórios, variações de texto e pausas automáticas para simular comportamento humano e proteger seu número de bloqueios.",
-    badge: "Novo",
-    highlight: "200 disparos/dia com intervalos inteligentes",
-  },
-  {
     icon: BarChart3,
     title: "Relatórios Inteligentes",
     description: "Acompanhe em tempo real as métricas das suas campanhas: taxa de entrega, respostas recebidas, performance por número e evolução diária. Dashboards visuais completos que mostram exatamente o que está funcionando e onde otimizar sua estratégia de prospecção.",
     badge: "Novo",
     highlight: "Dashboards visuais em tempo real",
-  },
-  {
-    icon: Flame,
-    title: "Aquecimento de Chips",
-    description: "Prepare números novos para uso comercial em apenas 20 dias. O sistema simula conversas naturais com IA, enviando e recebendo mensagens progressivamente para construir reputação no WhatsApp. Conecte até 10 chips simultâneos e deixe o processo 100% automatizado.",
-    badge: "Novo",
-    highlight: "20 dias para chip pronto para campanhas",
   },
   {
     icon: TrendingUp,
