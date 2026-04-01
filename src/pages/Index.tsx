@@ -71,6 +71,7 @@ const Index = () => {
           <ImpactNumbersSection />
           <OfficialAPISection />
           <WarmingSection />
+          <CpuDividerSection />
           <AIAgentsSection />
           <TestimonialsSection />
           <PricingSection />

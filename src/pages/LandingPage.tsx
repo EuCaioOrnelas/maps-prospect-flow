@@ -90,6 +90,7 @@ const LandingPage = () => {
           <ImpactNumbersSection />
           <OfficialAPISection />
           <WarmingSection />
+          <CpuDividerSection />
           <AIAgentsSection />
           <TestimonialsSection />
           <PricingSection />
