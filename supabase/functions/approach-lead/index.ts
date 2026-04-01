@@ -54,12 +54,33 @@ serve(async (req) => {
       });
     }
 
+    // Fetch the company profile for personalization
+    const { data: companyProfile } = await supabase
+      .from("company_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
     const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
+    // Build personalized prompt with company context
+    const companyContext = companyProfile ? `
+DADOS DA SUA EMPRESA (quem está prospectando):
+- Empresa: ${companyProfile.company_name}
+- Atendente: ${companyProfile.attendant_name}
+- Nicho: ${companyProfile.company_niche}
+- Diferencial: ${companyProfile.company_differential}
+- Objetivo: ${companyProfile.company_objective}
+- Produtos/Serviços: ${companyProfile.company_products}
+- Público-alvo: ${companyProfile.company_target_audience}
+` : "";
+
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Analise os dados deste lead e crie uma MENSAGEM DE ABORDAGEM personalizada para enviar via WhatsApp.
 
-DADOS DO LEAD:
+${companyContext}
+
+DADOS DO LEAD (empresa a ser prospectada):
 - Empresa: ${lead.company_name || "Não informado"}
 - Categoria/Nicho: ${lead.category || "Não informado"}
 - Cidade: ${lead.city || "Não informado"}
@@ -70,24 +91,26 @@ DADOS DO LEAD:
 - Score de oportunidade: ${lead.ai_score || "Não calculado"}/100
 - Nível de oportunidade: ${lead.opportunity_level || "Não calculado"}
 
-INSTRUÇÕES:
-1. Analise o nicho da empresa e entenda as dores comuns do segmento
-2. Considere a cidade e região para personalizar a abordagem
-3. Avalie a presença digital (site, redes sociais, avaliações) para identificar pontos fracos
-4. Considere a concorrência típica do nicho naquela cidade
-5. Crie uma mensagem natural, amigável e persuasiva
-6. A mensagem deve ser curta (máx 3 parágrafos), direta e personalizada
-7. Mencione algo específico sobre a empresa para mostrar que pesquisou
-8. Ofereça valor real baseado nas fraquezas identificadas
-9. NÃO use linguagem genérica ou de spam
-10. NÃO comece com "Olá, tudo bem?" - seja criativo na abertura
+INSTRUÇÕES CRÍTICAS:
+1. ${companyProfile ? `Você está representando a empresa "${companyProfile.company_name}" e o atendente "${companyProfile.attendant_name}". A mensagem DEVE ser enviada em nome deles.` : "Crie uma mensagem genérica de prospecção."}
+2. ${companyProfile ? `Analise o que a empresa "${companyProfile.company_name}" vende (${companyProfile.company_products}) e identifique qual produto/serviço é MAIS RELEVANTE para este lead baseado no nicho dele.` : ""}
+3. ${companyProfile ? `Use o diferencial da empresa ("${companyProfile.company_differential}") como argumento de valor na mensagem.` : ""}
+4. A mensagem NÃO deve ser padrão ou genérica — deve ser criativa e FORA DO COMUM
+5. Comece com algo que gere CURIOSIDADE imediata (nunca "Olá, tudo bem?" ou aberturas genéricas)
+6. No corpo, gere DESEJO mostrando como o produto/serviço pode beneficiar especificamente este lead
+7. Termine com uma pergunta gentil se o lead gostaria de saber mais (sem pressão)
+8. Seja GENTIL e PROFISSIONAL, mas com personalidade
+9. A mensagem deve ser curta (máx 3 parágrafos), direta e personalizada
+10. Mencione algo específico sobre a empresa do lead para mostrar que pesquisou
+11. ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
 Retorne APENAS um JSON válido com as chaves:
 - "mensagem": a mensagem de abordagem pronta para enviar
 - "analise_nicho": breve análise do nicho (1-2 frases)
 - "analise_cidade": análise do mercado na cidade (1-2 frases)
 - "pontos_fracos": lista de pontos fracos identificados
-- "estrategia": estratégia de abordagem usada (1 frase)`;
+- "estrategia": estratégia de abordagem usada (1 frase)
+- "produto_sugerido": qual produto/serviço da empresa foi sugerido para este lead (1 frase)`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -99,7 +122,7 @@ Retorne APENAS um JSON válido com as chaves:
         model: "google/gemini-3-flash-preview",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 1200,
         response_format: { type: "json_object" },
       }),
     });
@@ -137,6 +160,7 @@ Retorne APENAS um JSON válido com as chaves:
             analise_cidade: parsed.analise_cidade || "",
             pontos_fracos: parsed.pontos_fracos || [],
             estrategia: parsed.estrategia || "",
+            produto_sugerido: parsed.produto_sugerido || "",
             generated_at: new Date().toISOString(),
           },
         },
@@ -153,6 +177,7 @@ Retorne APENAS um JSON válido com as chaves:
         analise_cidade: parsed.analise_cidade || "",
         pontos_fracos: parsed.pontos_fracos || [],
         estrategia: parsed.estrategia || "",
+        produto_sugerido: parsed.produto_sugerido || "",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
