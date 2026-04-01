@@ -438,6 +438,30 @@
   .landing-light .bg-card {
     background-color: hsl(0 0% 100%) !important;
   }
+
+  /* Force Radix portals (dialogs, popovers, sheets) to inherit light theme */
+  .landing-light [data-radix-portal] {
+    --background: 0 0% 100%;
+    --foreground: 220 25% 14%;
+    --card: 210 20% 98%;
+    --card-foreground: 220 25% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 14%;
+    --primary: 158 72% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 25% 14%;
+    --muted: 210 15% 93%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 158 72% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 158 72% 32%;
+    color: hsl(220 25% 14%);
+  }
 }
 
 @layer base {
