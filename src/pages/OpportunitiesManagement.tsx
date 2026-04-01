@@ -65,6 +65,7 @@ const ITEMS_PER_PAGE = 20;
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<OpportunityLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
