@@ -67,6 +67,8 @@ export default function OpportunitiesManagement() {
   const [minRating, setMinRating] = useState("");
   const [onlyHighOpp, setOnlyHighOpp] = useState(false);
   const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterCity, setFilterCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
@@ -298,13 +300,19 @@ export default function OpportunitiesManagement() {
     if (onlyHighOpp) {
       result = result.filter(l => (l.ai_score ?? 0) >= 70);
     }
+    if (filterCategory !== "all") {
+      result = result.filter(l => l.category === filterCategory);
+    }
+    if (filterCity !== "all") {
+      result = result.filter(l => l.city === filterCity);
+    }
     if (sortOrder === "score_desc") {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
   const paginatedLeads = filteredLeads.slice(
@@ -342,9 +350,19 @@ export default function OpportunitiesManagement() {
   const stats = useMemo(() => {
     const total = leads.length;
     const scored = leads.filter(l => l.ai_score != null && l.ai_score > 0).length;
-    const highOpp = leads.filter(l => l.opportunity_level === "Alta").length;
+    const highOpp = leads.filter(l => (l.ai_score ?? 0) >= 70).length;
     const avgScore = scored > 0 ? Math.round(leads.filter(l => l.ai_score != null && l.ai_score > 0).reduce((s, l) => s + (l.ai_score || 0), 0) / scored) : 0;
     return { total, scored, highOpp, avgScore };
+  }, [leads]);
+
+  const uniqueCategories = useMemo(() => {
+    const cats = leads.map(l => l.category).filter(Boolean) as string[];
+    return [...new Set(cats)].sort();
+  }, [leads]);
+
+  const uniqueCities = useMemo(() => {
+    const cities = leads.map(l => l.city).filter(Boolean) as string[];
+    return [...new Set(cities)].sort();
   }, [leads]);
 
   const scoreInfoContent = (
@@ -717,7 +735,7 @@ export default function OpportunitiesManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 items-center">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">Score mín:</span>
                     <Input
@@ -743,6 +761,28 @@ export default function OpportunitiesManagement() {
                       className="w-20 h-8 text-sm"
                     />
                   </div>
+                  <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas categorias</SelectItem>
+                      {uniqueCategories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="Cidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas cidades</SelectItem>
+                      {uniqueCities.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     size="sm"
                     variant={onlyHighOpp ? "default" : "outline"}
@@ -752,12 +792,12 @@ export default function OpportunitiesManagement() {
                     <TrendingUp size={12} />
                     Alta Oportunidade
                   </Button>
-                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default") && (
+                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default" || filterCategory !== "all" || filterCity !== "all") && (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-xs h-8"
-                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setCurrentPage(1); }}
+                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
                     >
                       Limpar filtros
                     </Button>
