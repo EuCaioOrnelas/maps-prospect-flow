@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS ai_approach_message TEXT DEFAULT NULL;
