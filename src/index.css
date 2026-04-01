@@ -328,6 +328,10 @@
     color: white !important;
   }
 
+  .landing-light .text-primary-foreground {
+    color: hsl(0 0% 100%) !important;
+  }
+
   .landing-light .bg-destructive\/60 {
     background-color: hsl(0 72% 51% / 0.6);
   }
