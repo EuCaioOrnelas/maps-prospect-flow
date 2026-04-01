@@ -282,10 +282,30 @@ export default function OpportunitiesManagement() {
       );
     }
     if (filterLevel !== "all") {
-      result = result.filter(l => l.opportunity_level === filterLevel);
+      result = result.filter(l => {
+        const intention = l.ai_score != null && l.ai_score > 0 ? getIntentionFromScore(l.ai_score) : l.opportunity_level;
+        return intention === filterLevel;
+      });
+    }
+    if (minScore) {
+      const ms = parseInt(minScore);
+      if (!isNaN(ms)) result = result.filter(l => (l.ai_score ?? 0) >= ms);
+    }
+    if (minRating) {
+      const mr = parseFloat(minRating);
+      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) >= mr);
+    }
+    if (maxRating) {
+      const mr = parseFloat(maxRating);
+      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) <= mr);
+    }
+    if (sortOrder === "score_desc") {
+      result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
+    } else if (sortOrder === "score_asc") {
+      result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, maxRating, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
   const paginatedLeads = filteredLeads.slice(
