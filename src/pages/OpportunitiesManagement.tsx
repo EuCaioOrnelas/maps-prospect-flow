@@ -751,7 +751,7 @@ export default function OpportunitiesManagement() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => navigate("/whatsapp")}
+                      onClick={() => setShowNumbersManager(true)}
                     >
                       <Wifi size={14} />
                       Gerenciar Números
