@@ -735,7 +735,7 @@ export default function OpportunitiesManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 items-center">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">Score mín:</span>
                     <Input
@@ -761,6 +761,28 @@ export default function OpportunitiesManagement() {
                       className="w-20 h-8 text-sm"
                     />
                   </div>
+                  <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas categorias</SelectItem>
+                      {uniqueCategories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="Cidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas cidades</SelectItem>
+                      {uniqueCities.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     size="sm"
                     variant={onlyHighOpp ? "default" : "outline"}
@@ -770,12 +792,12 @@ export default function OpportunitiesManagement() {
                     <TrendingUp size={12} />
                     Alta Oportunidade
                   </Button>
-                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default") && (
+                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default" || filterCategory !== "all" || filterCity !== "all") && (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-xs h-8"
-                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setCurrentPage(1); }}
+                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
                     >
                       Limpar filtros
                     </Button>
