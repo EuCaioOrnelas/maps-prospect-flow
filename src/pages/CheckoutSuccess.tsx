@@ -114,7 +114,7 @@ const CheckoutSuccess = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="landing-light min-h-screen bg-background text-foreground overflow-hidden">
       <Confetti trigger={showConfetti} />
       
       {/* Background decorations */}

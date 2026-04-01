@@ -138,7 +138,7 @@ export function PaymentMethodModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg border-border/50 bg-card overflow-hidden p-0 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="landing-light max-w-[95vw] sm:max-w-lg border-border/50 bg-card text-foreground overflow-hidden p-0 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 pb-0">
           <DialogHeader className="space-y-2">

@@ -202,7 +202,7 @@ export default function CheckoutPix() {
   const originalCents = Math.round(parseFloat(cleanPrice) * 100);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="landing-light min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header className="border-b border-border/40 bg-card/90 backdrop-blur-md sticky top-0 z-20">
         <div className="container max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
