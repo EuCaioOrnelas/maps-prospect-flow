@@ -63,6 +63,10 @@ export default function OpportunitiesManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
+  const [minScore, setMinScore] = useState("");
+  const [minRating, setMinRating] = useState("");
+  const [maxRating, setMaxRating] = useState("");
+  const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
