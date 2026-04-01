@@ -74,6 +74,73 @@ const Profile = () => {
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
   const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+  
+  // Company profile state
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [isLoadingCompanyProfile, setIsLoadingCompanyProfile] = useState(true);
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
+  const [companyForm, setCompanyForm] = useState({
+    company_name: "",
+    attendant_name: "",
+    company_niche: "",
+    company_differential: "",
+    company_objective: "",
+    company_products: "",
+    company_target_audience: "",
+  });
+
+  // Load company profile
+  useEffect(() => {
+    const loadCompanyProfile = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("company_profiles" as any)
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data) {
+          setCompanyProfile(data);
+          setCompanyForm({
+            company_name: (data as any).company_name || "",
+            attendant_name: (data as any).attendant_name || "",
+            company_niche: (data as any).company_niche || "",
+            company_differential: (data as any).company_differential || "",
+            company_objective: (data as any).company_objective || "",
+            company_products: (data as any).company_products || "",
+            company_target_audience: (data as any).company_target_audience || "",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading company profile:", err);
+      } finally {
+        setIsLoadingCompanyProfile(false);
+      }
+    };
+    loadCompanyProfile();
+  }, [user]);
+
+  const handleSaveCompanyProfile = async () => {
+    if (!user) return;
+    setIsSavingCompany(true);
+    try {
+      const { error } = await supabase
+        .from("company_profiles" as any)
+        .upsert({
+          user_id: user.id,
+          ...companyForm,
+        } as any, { onConflict: "user_id" });
+      if (error) throw error;
+      setCompanyProfile({ ...companyForm, user_id: user.id });
+      setIsEditingCompany(false);
+      toast({ title: "Perfil da empresa salvo!", description: "Suas informações serão usadas para personalizar as mensagens de IA." });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSavingCompany(false);
+    }
+  };
 
   // Load email preferences
   useEffect(() => {
