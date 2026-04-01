@@ -104,7 +104,7 @@ export default function OpportunitiesManagement() {
   const [sendCooldown, setSendCooldown] = useState(0);
 
   // WhatsApp numbers management
-  const { numbers, maxNumbers, refreshNumbers } = useWhatsAppNumbers();
+  const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
   const [showNumbersManager, setShowNumbersManager] = useState(false);
 
   // Check company profile on mount
