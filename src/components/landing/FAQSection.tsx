@@ -111,12 +111,11 @@ export const FAQSection = () => {
           </Accordion>
 
           <div className="flex justify-center mt-8">
-            <a
-              href="/ajuda/faq"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors text-sm sm:text-base"
-            >
-              Ver todas as perguntas
-            </a>
+            <Link to="/ajuda/faq">
+              <Button variant="hero" size="lg">
+                Ver todas as perguntas
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
