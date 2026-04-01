@@ -66,8 +66,8 @@ const Index = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
           <HowItWorksSection />
-          <ImpactNumbersSection />
           <FeaturesSection />
+          <ImpactNumbersSection />
           <OfficialAPISection />
           <WarmingSection />
           <AIAgentsSection />
