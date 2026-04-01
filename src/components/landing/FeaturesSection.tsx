@@ -105,8 +105,7 @@ export const FeaturesSection = () => {
             <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
           </div>
            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
-             Tudo que você precisa para{" "}
-             <span className="text-highlight-static">vender mais</span>
+             Tudo que você precisa para vender mais
            </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
             Prospecção inteligente, automação de mensagens e IA que qualifica seus leads.
@@ -126,7 +125,7 @@ export const FeaturesSection = () => {
             </div>
             <div>
                <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                 Menos leads, mais <span className="text-highlight-static">resultados</span>
+                 Menos leads, mais resultados
                </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 50 leads

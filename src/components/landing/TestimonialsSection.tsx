@@ -160,8 +160,7 @@ export const TestimonialsSection = () => {
             </span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
-            O que nossos{" "}
-            <span className="text-highlight-static">clientes dizem</span>
+            O que nossos clientes dizem
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             Descubra como empresas estão transformando sua prospecção com o Wiize
