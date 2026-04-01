@@ -349,10 +349,10 @@ export default function OpportunitiesManagement() {
     const justificativa = lead.enrichment_data?.justificativa_score || "";
 
     const dimensions = [
-      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, color: "bg-blue-500", icon: <Globe size={14} className="text-blue-400" /> },
-      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, color: "bg-amber-500", icon: <Star size={14} className="text-amber-400" /> },
-      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, color: "bg-emerald-500", icon: <Phone size={14} className="text-emerald-400" /> },
-      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, color: "bg-purple-500", icon: <Zap size={14} className="text-purple-400" /> },
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 35, icon: <Globe size={14} className="text-primary" /> },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 30, icon: <Star size={14} className="text-primary" /> },
+      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" /> },
+      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" /> },
     ];
 
     return (
