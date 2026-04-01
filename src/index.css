@@ -504,7 +504,7 @@
   }
   .btn-shine:hover::before {
     background-position: -100% 0, 0 0;
-    transition: background-position 1s ease;
+    transition: background-position 1.8s ease;
   }
   .dark .btn-shine::before {
     background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.3) 50%, transparent 75%, transparent 100%);
