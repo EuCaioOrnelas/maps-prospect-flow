@@ -180,28 +180,28 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-4 lg:-left-14 xl:-left-20 2xl:-left-32 top-4 lg:top-2",
+    position: "-left-4 lg:-left-16 xl:-left-20 2xl:-left-32 top-4 lg:top-2",
     delay: "0.8s"
   },
   { 
     icon: Users, 
     value: "1.2M+", 
     label: "Leads prospectados", 
-    position: "-right-2 lg:-right-6 xl:-right-14 2xl:-right-28 -top-4 lg:-top-8",
+    position: "-right-4 lg:-right-10 xl:-right-16 2xl:-right-28 -top-4 lg:-top-8",
     delay: "1.2s"
   },
   { 
     icon: TrendingUp, 
     value: "63%", 
     label: "Taxa de resposta", 
-    position: "-left-4 lg:-left-18 xl:-left-24 2xl:-left-36 bottom-[100px] lg:bottom-[90px]",
+    position: "-left-4 lg:-left-20 xl:-left-24 2xl:-left-36 bottom-[100px] lg:bottom-[90px]",
     delay: "1.6s"
   },
   { 
     icon: Zap, 
     value: "+40%", 
     label: "Conversão vs tradicional", 
-    position: "-right-2 lg:-right-4 xl:-right-10 2xl:-right-24 bottom-2 lg:bottom-0",
+    position: "-right-4 lg:-right-8 xl:-right-12 2xl:-right-24 bottom-2 lg:bottom-0",
     delay: "2s"
   },
 ];
@@ -361,7 +361,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               opacity: imageOpacity
             }}
           >
-            <div className="relative w-full max-w-[25.5rem] lg:-translate-x-4 xl:translate-x-0 xl:max-w-[28.5rem] 2xl:max-w-[30rem]">
+            <div className="relative w-full max-w-[27rem] xl:max-w-[28.5rem] 2xl:max-w-[30rem]">
               {/* Background glow */}
               <div 
                 className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
@@ -392,8 +392,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               ))}
               
               {/* Demo badge */}
-              <div className="absolute -top-8 lg:-top-9 xl:-top-6 left-[58%] xl:left-1/2 -translate-x-1/2 z-20 hidden sm:block pointer-events-none">
-                <span className="inline-flex items-center whitespace-nowrap px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
+                <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
                   ✨ Demonstração em tempo real
                 </span>
               </div>
