@@ -174,7 +174,7 @@ export const AIAgentsSection = () => {
           >
             <div>
              <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">
-                Tudo que o agente faz <span className="text-highlight-static">por você</span>
+                Tudo que o agente faz por você
               </h3>
               <p className="text-muted-foreground leading-relaxed">
                 Configure uma vez e deixe a IA cuidar do operacional. Cada interação é uma oportunidade que não será perdida.
