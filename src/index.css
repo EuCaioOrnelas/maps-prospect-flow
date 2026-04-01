@@ -135,7 +135,7 @@
     --warning: 45 93% 47%;
     --info: 200 98% 39%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(158 72% 32%) 0%, hsl(170 65% 28%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(158 72% 38%) 0%, hsl(170 80% 30%) 50%, hsl(145 65% 36%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(210 30% 99%) 0%, hsl(158 30% 97%) 40%, hsl(158 25% 95%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.06) 0%, transparent 70%);
