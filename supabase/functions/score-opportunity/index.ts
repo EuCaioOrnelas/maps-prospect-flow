@@ -156,7 +156,7 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
           model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.4,
-          max_tokens: 800,
+          max_tokens: 1200,
           response_format: { type: "json_object" },
         }),
       });
