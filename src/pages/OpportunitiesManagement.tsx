@@ -673,7 +673,7 @@ export default function OpportunitiesManagement() {
             </div>
           )
         ) : (
-          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Abordar com IA" para gerar.</p>
+          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Gerar abordagem personalizada com IA" para gerar.</p>
         )}
       </div>
 
