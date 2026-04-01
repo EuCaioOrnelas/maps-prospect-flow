@@ -336,13 +336,6 @@ export default function OpportunitiesManagement() {
     return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">{score}/100</Badge>;
   };
 
-  // Derive correct level from score to fix inconsistency
-  const getIntentionFromScore = (score: number | null): string | null => {
-    if (score == null || score === 0) return null;
-    if (score >= 61) return "Alta";
-    if (score >= 31) return "Média";
-    return "Baixa";
-  };
 
   const getLevelBadge = (level: string | null, score?: number | null) => {
     // Use score-derived level to avoid AI inconsistency
