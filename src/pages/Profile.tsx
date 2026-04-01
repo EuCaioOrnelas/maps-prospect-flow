@@ -40,7 +40,15 @@ import {
   Bell,
   BellOff,
   LogOut,
+  Building2,
+  Target,
+  Sparkles,
+  ShoppingBag,
+  Users,
+  Rocket,
+  Pencil,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +74,73 @@ const Profile = () => {
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
   const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+  
+  // Company profile state
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [isLoadingCompanyProfile, setIsLoadingCompanyProfile] = useState(true);
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
+  const [companyForm, setCompanyForm] = useState({
+    company_name: "",
+    attendant_name: "",
+    company_niche: "",
+    company_differential: "",
+    company_objective: "",
+    company_products: "",
+    company_target_audience: "",
+  });
+
+  // Load company profile
+  useEffect(() => {
+    const loadCompanyProfile = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("company_profiles" as any)
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data) {
+          setCompanyProfile(data);
+          setCompanyForm({
+            company_name: (data as any).company_name || "",
+            attendant_name: (data as any).attendant_name || "",
+            company_niche: (data as any).company_niche || "",
+            company_differential: (data as any).company_differential || "",
+            company_objective: (data as any).company_objective || "",
+            company_products: (data as any).company_products || "",
+            company_target_audience: (data as any).company_target_audience || "",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading company profile:", err);
+      } finally {
+        setIsLoadingCompanyProfile(false);
+      }
+    };
+    loadCompanyProfile();
+  }, [user]);
+
+  const handleSaveCompanyProfile = async () => {
+    if (!user) return;
+    setIsSavingCompany(true);
+    try {
+      const { error } = await supabase
+        .from("company_profiles" as any)
+        .upsert({
+          user_id: user.id,
+          ...companyForm,
+        } as any, { onConflict: "user_id" });
+      if (error) throw error;
+      setCompanyProfile({ ...companyForm, user_id: user.id });
+      setIsEditingCompany(false);
+      toast({ title: "Perfil da empresa salvo!", description: "Suas informações serão usadas para personalizar as mensagens de IA." });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSavingCompany(false);
+    }
+  };
 
   // Load email preferences
   useEffect(() => {
@@ -703,6 +778,175 @@ const Profile = () => {
                     </div>
                   )}
                 </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Company Profile Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    Perfil da Empresa
+                  </CardTitle>
+                  <CardDescription>
+                    Informações usadas pela IA para personalizar mensagens de prospecção
+                  </CardDescription>
+                </div>
+                {companyProfile && !isEditingCompany && (
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCompanyProfile ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando...
+                </div>
+              ) : !companyProfile && !isEditingCompany ? (
+                <div className="text-center py-6 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Você ainda não configurou o perfil da sua empresa. Configure para que a IA gere mensagens personalizadas.
+                  </p>
+                  <Button onClick={() => setIsEditingCompany(true)} className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Configurar agora
+                  </Button>
+                </div>
+              ) : isEditingCompany ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" /> Nome da empresa
+                      </Label>
+                      <Input
+                        value={companyForm.company_name}
+                        onChange={(e) => setCompanyForm(f => ({ ...f, company_name: e.target.value }))}
+                        placeholder="Ex: Agência Digital XYZ"
+                        maxLength={200}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5" /> Nome do atendente
+                      </Label>
+                      <Input
+                        value={companyForm.attendant_name}
+                        onChange={(e) => setCompanyForm(f => ({ ...f, attendant_name: e.target.value }))}
+                        placeholder="Ex: João Silva"
+                        maxLength={200}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5" /> Nicho da empresa
+                    </Label>
+                    <Input
+                      value={companyForm.company_niche}
+                      onChange={(e) => setCompanyForm(f => ({ ...f, company_niche: e.target.value }))}
+                      placeholder="Ex: Marketing Digital, Consultoria"
+                      maxLength={200}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <ShoppingBag className="h-3.5 w-3.5" /> Produtos/Serviços
+                    </Label>
+                    <Textarea
+                      value={companyForm.company_products}
+                      onChange={(e) => setCompanyForm(f => ({ ...f, company_products: e.target.value }))}
+                      placeholder="Ex: Criação de Google Meu Negócio, gestão de redes sociais..."
+                      rows={2}
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5" /> Público-alvo
+                    </Label>
+                    <Textarea
+                      value={companyForm.company_target_audience}
+                      onChange={(e) => setCompanyForm(f => ({ ...f, company_target_audience: e.target.value }))}
+                      placeholder="Ex: Pequenas empresas, restaurantes..."
+                      rows={2}
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5" /> Diferencial
+                    </Label>
+                    <Textarea
+                      value={companyForm.company_differential}
+                      onChange={(e) => setCompanyForm(f => ({ ...f, company_differential: e.target.value }))}
+                      placeholder="Ex: Atendimento personalizado, 10 anos de experiência..."
+                      rows={2}
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Rocket className="h-3.5 w-3.5" /> Objetivo
+                    </Label>
+                    <Textarea
+                      value={companyForm.company_objective}
+                      onChange={(e) => setCompanyForm(f => ({ ...f, company_objective: e.target.value }))}
+                      placeholder="Ex: Aumentar carteira de clientes..."
+                      rows={2}
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    {companyProfile && (
+                      <Button variant="outline" onClick={() => {
+                        setIsEditingCompany(false);
+                        setCompanyForm({
+                          company_name: companyProfile.company_name || "",
+                          attendant_name: companyProfile.attendant_name || "",
+                          company_niche: companyProfile.company_niche || "",
+                          company_differential: companyProfile.company_differential || "",
+                          company_objective: companyProfile.company_objective || "",
+                          company_products: companyProfile.company_products || "",
+                          company_target_audience: companyProfile.company_target_audience || "",
+                        });
+                      }}>
+                        Cancelar
+                      </Button>
+                    )}
+                    <Button onClick={handleSaveCompanyProfile} disabled={isSavingCompany} className="gap-2">
+                      {isSavingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[
+                    { icon: Building2, label: "Empresa", value: companyProfile.company_name },
+                    { icon: User, label: "Atendente", value: companyProfile.attendant_name },
+                    { icon: Target, label: "Nicho", value: companyProfile.company_niche },
+                    { icon: ShoppingBag, label: "Produtos/Serviços", value: companyProfile.company_products },
+                    { icon: Users, label: "Público-alvo", value: companyProfile.company_target_audience },
+                    { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
+                    { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                      <item.icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">{item.label}</p>
+                        <p className="text-sm font-medium">{item.value || "—"}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
