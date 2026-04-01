@@ -55,10 +55,10 @@ const plans: {
     anchorPrice: "997",
     searches: "600",
     whatsappNumbers: 5,
-    description: "Para profissionais que querem escalar resultados",
+    description: "Para profissionais que querem aumentar conversão e produtividade",
     features: [
-      "Mensagens personalizadas com IA",
-      "Automação de atendimento e follow-up com IA",
+      "Geração de mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up inteligente com IA",
       "Agentes de IA Integrados",
       "Até 5 Números WhatsApp",
       "CRM integrado",
