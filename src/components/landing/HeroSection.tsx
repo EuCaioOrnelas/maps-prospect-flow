@@ -361,7 +361,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               opacity: imageOpacity
             }}
           >
-            <div className="relative w-full max-w-[27rem] xl:max-w-[28.5rem] 2xl:max-w-[30rem]">
+            <div className="relative w-full max-w-[25.75rem] xl:max-w-[27.5rem] 2xl:max-w-[29rem]">
               {/* Background glow */}
               <div 
                 className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
