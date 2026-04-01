@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
-    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de aquecimento para máxima segurança."
+    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de proteção inteligentes para máxima segurança."
   },
   {
     question: "Minhas mensagens são seguras com a API Oficial?",

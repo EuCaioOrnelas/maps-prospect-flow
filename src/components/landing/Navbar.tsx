@@ -11,7 +11,7 @@ const promoItems = [
   { icon: Zap, text: "Até 50% de desconto nos planos: promoção por tempo limitado" },
   { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
   { icon: Bot, text: "Agente de IA no WhatsApp: atendimento automático 24h" },
-  { icon: Flame, text: "Aquecimento de chips incluso: proteja seus números" },
+  { icon: Flame, text: "Mensagens personalizadas com IA para cada lead" },
 ];
 
 export const PromoBanner = () => {
