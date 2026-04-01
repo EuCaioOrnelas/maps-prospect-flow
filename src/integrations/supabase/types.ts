@@ -1447,13 +1447,18 @@ export type Database = {
       }
       leads: {
         Row: {
+          address: string | null
+          ai_diagnosis: string | null
+          ai_recommended_action: string | null
           ai_score: number | null
           category: string | null
           city: string | null
+          closing_probability: string | null
           company_name: string | null
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          enrichment_data: Json | null
           estimated_value: number | null
           first_message_sent: boolean | null
           first_message_sent_at: string | null
@@ -1464,12 +1469,17 @@ export type Database = {
           last_message_sent_at: string | null
           last_response: string | null
           last_response_at: string | null
+          opportunity_level: string | null
           origin: string | null
           phone: string
+          phone_numbers: Json | null
           pipeline_stage_id: string | null
           prospected_at: string | null
+          rating: number | null
           region: string | null
           responded_at: string | null
+          review_count: number | null
+          social_media: Json | null
           tags: string[] | null
           updated_at: string
           user_id: string
@@ -1478,13 +1488,18 @@ export type Database = {
           whatsapp_status: string | null
         }
         Insert: {
+          address?: string | null
+          ai_diagnosis?: string | null
+          ai_recommended_action?: string | null
           ai_score?: number | null
           category?: string | null
           city?: string | null
+          closing_probability?: string | null
           company_name?: string | null
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          enrichment_data?: Json | null
           estimated_value?: number | null
           first_message_sent?: boolean | null
           first_message_sent_at?: string | null
@@ -1495,12 +1510,17 @@ export type Database = {
           last_message_sent_at?: string | null
           last_response?: string | null
           last_response_at?: string | null
+          opportunity_level?: string | null
           origin?: string | null
           phone: string
+          phone_numbers?: Json | null
           pipeline_stage_id?: string | null
           prospected_at?: string | null
+          rating?: number | null
           region?: string | null
           responded_at?: string | null
+          review_count?: number | null
+          social_media?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id: string
@@ -1509,13 +1529,18 @@ export type Database = {
           whatsapp_status?: string | null
         }
         Update: {
+          address?: string | null
+          ai_diagnosis?: string | null
+          ai_recommended_action?: string | null
           ai_score?: number | null
           category?: string | null
           city?: string | null
+          closing_probability?: string | null
           company_name?: string | null
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          enrichment_data?: Json | null
           estimated_value?: number | null
           first_message_sent?: boolean | null
           first_message_sent_at?: string | null
@@ -1526,12 +1551,17 @@ export type Database = {
           last_message_sent_at?: string | null
           last_response?: string | null
           last_response_at?: string | null
+          opportunity_level?: string | null
           origin?: string | null
           phone?: string
+          phone_numbers?: Json | null
           pipeline_stage_id?: string | null
           prospected_at?: string | null
+          rating?: number | null
           region?: string | null
           responded_at?: string | null
+          review_count?: number | null
+          social_media?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string
