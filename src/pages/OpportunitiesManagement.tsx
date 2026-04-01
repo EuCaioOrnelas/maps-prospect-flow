@@ -746,25 +746,21 @@ export default function OpportunitiesManagement() {
                       className="w-20 h-8 text-sm"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">Avaliação máx:</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={0.1}
-                      placeholder="5"
-                      value={maxRating}
-                      onChange={(e) => { setMaxRating(e.target.value); setCurrentPage(1); }}
-                      className="w-20 h-8 text-sm"
-                    />
-                  </div>
-                  {(minScore || minRating || maxRating || filterLevel !== "all" || sortOrder !== "default") && (
+                  <Button
+                    size="sm"
+                    variant={onlyHighOpp ? "default" : "outline"}
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => { setOnlyHighOpp(!onlyHighOpp); setCurrentPage(1); }}
+                  >
+                    <TrendingUp size={12} />
+                    Alta Oportunidade
+                  </Button>
+                  {(minScore || minRating || onlyHighOpp || filterLevel !== "all" || sortOrder !== "default") && (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-xs h-8"
-                      onClick={() => { setMinScore(""); setMinRating(""); setMaxRating(""); setFilterLevel("all"); setSortOrder("default"); setCurrentPage(1); }}
+                      onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setCurrentPage(1); }}
                     >
                       Limpar filtros
                     </Button>
