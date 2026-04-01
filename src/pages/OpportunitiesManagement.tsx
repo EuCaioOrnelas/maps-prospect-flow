@@ -355,6 +355,16 @@ export default function OpportunitiesManagement() {
     return { total, scored, highOpp, avgScore };
   }, [leads]);
 
+  const uniqueCategories = useMemo(() => {
+    const cats = leads.map(l => l.category).filter(Boolean) as string[];
+    return [...new Set(cats)].sort();
+  }, [leads]);
+
+  const uniqueCities = useMemo(() => {
+    const cities = leads.map(l => l.city).filter(Boolean) as string[];
+    return [...new Set(cities)].sort();
+  }, [leads]);
+
   const scoreInfoContent = (
     <div className="space-y-3 text-sm max-w-xs">
       <h4 className="font-semibold">Como funciona o Score</h4>
