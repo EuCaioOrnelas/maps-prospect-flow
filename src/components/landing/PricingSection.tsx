@@ -145,7 +145,7 @@ export const PricingSection = () => {
             }`}
           >
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
-              Planos que <span className="text-gradient">cabem no bolso</span>
+              Planos que <span className="text-highlight-static">cabem no bolso</span>
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
               Um único cliente fechado já paga o plano inteiro.
@@ -300,7 +300,7 @@ export const PricingSection = () => {
                   </div>
                   
                    <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                     Experimente antes de <span className="text-gradient">assinar</span>
+                     Experimente antes de <span className="text-highlight-static">assinar</span>
                    </h3>
                   <p className="text-muted-foreground max-w-lg mx-auto">
                     Teste todas as funcionalidades da Wiize gratuitamente durante 30 dias. Sem compromisso.

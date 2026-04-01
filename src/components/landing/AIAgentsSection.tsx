@@ -65,7 +65,7 @@ export const AIAgentsSection = () => {
 
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight text-foreground">
             Seu melhor vendedor trabalha <br className="hidden sm:block" />
-            <span className="text-gradient">24 horas por dia</span>
+            <span className="text-highlight-static">24 horas por dia</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Crie um agente de IA que responde, qualifica e organiza seus leads no CRM.
@@ -173,8 +173,8 @@ export const AIAgentsSection = () => {
             className="space-y-6"
           >
             <div>
-              <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">
-                Tudo que o agente faz <span className="text-gradient">por você</span>
+             <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">
+                Tudo que o agente faz <span className="text-highlight-static">por você</span>
               </h3>
               <p className="text-muted-foreground leading-relaxed">
                 Configure uma vez e deixe a IA cuidar do operacional. Cada interação é uma oportunidade que não será perdida.
@@ -212,7 +212,7 @@ export const AIAgentsSection = () => {
           <div className="p-6 md:p-8 border-b border-border/30">
             <div className="flex items-center gap-3 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              <h3 className="font-display text-xl md:text-2xl font-semibold">Por que é <span className="text-gradient">diferente</span></h3>
+              <h3 className="font-display text-xl md:text-2xl font-semibold">Por que é <span className="text-highlight-static">diferente</span></h3>
             </div>
             <p className="text-sm text-muted-foreground">Chatbots tradicionais vs. Agente Wiize: sem comparação.</p>
           </div>
