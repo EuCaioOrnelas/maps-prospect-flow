@@ -7,6 +7,7 @@ import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { WarmingSection } from "@/components/landing/WarmingSection";
 import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
+import { CpuDividerSection } from "@/components/landing/CpuDividerSection";
 import { AIAgentsSection } from "@/components/landing/AIAgentsSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -70,6 +71,7 @@ const Index = () => {
           <ImpactNumbersSection />
           <OfficialAPISection />
           <WarmingSection />
+          <CpuDividerSection />
           <AIAgentsSection />
           <TestimonialsSection />
           <PricingSection />
