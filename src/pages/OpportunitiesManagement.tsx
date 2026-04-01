@@ -365,7 +365,7 @@ export default function OpportunitiesManagement() {
             <div className="bg-primary rounded-full h-3 transition-all duration-500" style={{ width: `${lead.ai_score ?? 0}%` }} />
           </div>
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-muted-foreground">Nível: {lead.opportunity_level || "—"}</span>
+            <span className="text-xs text-muted-foreground">Intenção: {getIntentionFromScore(lead.ai_score) || lead.opportunity_level || "—"}</span>
             {lead.closing_probability && <Badge variant="outline" className="text-xs">{lead.closing_probability}</Badge>}
           </div>
         </div>
