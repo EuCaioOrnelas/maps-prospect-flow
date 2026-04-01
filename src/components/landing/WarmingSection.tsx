@@ -150,7 +150,7 @@ export const WarmingSection = () => {
           className="glass rounded-2xl p-6 md:p-8"
         >
           <div className="text-center mb-8">
-            <h3 className="font-display text-2xl font-semibold mb-2">Como funciona o <span className="text-highlight-static">aquecimento</span></h3>
+            <h3 className="font-display text-2xl font-semibold mb-2">Como funciona o aquecimento</h3>
             <p className="text-muted-foreground">Processo 100% automático em 4 etapas</p>
           </div>
           

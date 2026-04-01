@@ -125,7 +125,7 @@ export const FeaturesSection = () => {
             </div>
             <div>
                <h3 className="font-display text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                 Menos leads, mais <span className="text-highlight-static">resultados</span>
+                 Menos leads, mais resultados
                </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 50 leads
