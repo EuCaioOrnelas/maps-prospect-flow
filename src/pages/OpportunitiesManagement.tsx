@@ -1203,9 +1203,20 @@ export default function OpportunitiesManagement() {
           leadId={sendingLead.id}
           leadPhone={sendingLead.phone}
           leadName={sendingLead.company_name || "Lead"}
+          leadData={{
+            company_name: sendingLead.company_name,
+            category: sendingLead.category,
+            city: sendingLead.city,
+            address: sendingLead.address,
+            website: sendingLead.website,
+            rating: sendingLead.rating,
+            review_count: sendingLead.review_count,
+            ai_score: sendingLead.ai_score,
+            social_media: sendingLead.social_media,
+            phone_numbers: sendingLead.phone_numbers,
+          }}
           message={sendingLead.ai_approach_message || ""}
           userId={user.id}
-          whatsappNumberId={sendingLead.whatsapp_number_id}
           onSent={() => {
             setSendCooldown(120);
             setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
@@ -1214,6 +1225,7 @@ export default function OpportunitiesManagement() {
             }
             setSendingLead(null);
           }}
+          onRequestConnect={() => navigate("/whatsapp")}
         />
       )}
     </SidebarProvider>
