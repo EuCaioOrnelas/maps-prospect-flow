@@ -139,15 +139,28 @@ export const ImpactNumbersSection = () => {
         </motion.h2>
 
         {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/60">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              className="flex flex-col items-center text-center py-8 md:py-0 md:px-6 lg:md:px-8 first:pt-0 last:pb-0 md:first:pl-0 md:last:pr-0"
+              className="relative flex flex-col items-center text-center py-8 md:py-0 md:px-6 lg:px-8"
               initial={{ opacity: 0, y: 20 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.25 + i * 0.15, ease: "easeOut" }}
             >
+              {/* Horizontal divider mobile – thick center, fading edges */}
+              {i > 0 && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[70%] h-[2px] md:hidden"
+                  style={{ background: 'radial-gradient(ellipse at center, hsl(var(--border)) 0%, transparent 100%)' }}
+                />
+              )}
+              {/* Vertical divider desktop – thick center, fading edges */}
+              {i > 0 && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[2px] hidden md:block"
+                  style={{ background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--border)) 30%, hsl(var(--border)) 70%, transparent 100%)' }}
+                />
+              )}
+
               <span className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-none mb-3 whitespace-nowrap">
                 <AnimatedCounter
                   end={stat.value}
