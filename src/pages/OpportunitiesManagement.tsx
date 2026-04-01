@@ -307,7 +307,7 @@ export default function OpportunitiesManagement() {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, maxRating, sortOrder]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
   const paginatedLeads = filteredLeads.slice(
