@@ -825,7 +825,7 @@ export default function OpportunitiesManagement() {
                   <DialogDescription className="flex items-center gap-2 flex-wrap mt-2">
                     {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
                     {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
-                    {getLevelBadge(selectedLead.opportunity_level)}
+                    {getLevelBadge(selectedLead.opportunity_level, selectedLead.ai_score)}
                     {selectedLead.ai_score != null && selectedLead.ai_score > 0 && getScoreBadge(selectedLead.ai_score)}
                   </DialogDescription>
                 </DialogHeader>
