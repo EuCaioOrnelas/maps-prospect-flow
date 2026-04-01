@@ -85,6 +85,7 @@ const LandingPage = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
           <HowItWorksSection />
+          <ImpactNumbersSection />
           <FeaturesSection />
           <OfficialAPISection />
           <WarmingSection />
