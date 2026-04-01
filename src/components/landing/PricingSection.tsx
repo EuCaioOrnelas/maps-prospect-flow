@@ -77,8 +77,8 @@ const plans: {
     whatsappNumbers: 10,
     description: "Para equipes e agências com alta demanda",
     features: [
-      "Mensagens personalizadas com IA",
-      "Automação de atendimento e follow-up com IA",
+      "Geração de mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up inteligente com IA",
       "Agentes de IA Integrados",
       "Até 10 Números WhatsApp",
       "CRM integrado",
