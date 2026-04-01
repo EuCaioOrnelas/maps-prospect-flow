@@ -113,6 +113,20 @@ IMPORTANTE:
 - O score DEVE variar significativamente entre empresas diferentes
 - NÃO dê scores genéricos como 60-70 para todos
 
+COMO GERAR O DIAGNÓSTICO (campo "diagnostico"):
+- Analise o cenário atual do lead considerando a REGIÃO (cidade), o NICHO (categoria) e a concorrência local
+- Identifique as DORES reais: falta de visibilidade, reputação fraca, ausência digital, etc.
+- Seja específico sobre o mercado local (ex: "Em [cidade], o segmento de [categoria] é competitivo e empresas sem presença digital perdem clientes para concorrentes que aparecem no Google")
+
+COMO GERAR A AÇÃO RECOMENDADA (campo "acao_recomendada"):
+- NÃO seja genérico como "ofereça criação de site" ou "venda seus serviços"
+- ANALISE o cenário: região, nicho, concorrência local, pontos fracos
+- IDENTIFIQUE a DOR PRINCIPAL (ex: sem site = invisível online, poucas avaliações = pouca prova social)
+- SUGIRA UMA ESTRATÉGIA CONCRETA E DETALHADA usando os serviços da empresa prospectora
+- EXPLIQUE COMO executar na prática (ex: "Criar perfil otimizado no Google Meu Negócio com fotos profissionais e descrição SEO para aparecer nas buscas locais de [cidade] quando alguém pesquisar [categoria]")
+- Sugira um PONTO FUTURO DE MONETIZAÇÃO quando possível (ex: "Após presença digital, implementar anúncios geolocalizados para captar clientes num raio de 5km")
+- A ação deve ter 3-5 frases detalhadas
+
 Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
 {
   "score": <número inteiro 0-100>,
@@ -122,8 +136,8 @@ Retorne APENAS um JSON válido com EXATAMENTE estas chaves:
   "potencial_venda": <número 0-15>,
   "nivel_oportunidade": "<Alta|Média|Baixa>",
   "probabilidade_fechamento": "<Muito Alta|Alta|Moderada|Baixa>",
-  "diagnostico": "<diagnóstico estratégico em 2-3 frases específicas sobre ESTA empresa>",
-  "acao_recomendada": "<ação concreta e específica em 1-2 frases, usando APENAS os serviços da empresa que está prospectando>",
+  "diagnostico": "<diagnóstico estratégico em 3-4 frases analisando cenário regional, mercado local e posição competitiva desta empresa>",
+  "acao_recomendada": "<estratégia detalhada em 3-5 frases: dor identificada + solução concreta com serviços da empresa + como executar + monetização futura>",
   "pontos_fortes": ["<ponto 1>", "<ponto 2>"],
   "pontos_fracos": ["<ponto 1>", "<ponto 2>"],
   "justificativa_score": "<1 frase explicando POR QUE este score específico>"
