@@ -135,7 +135,7 @@ export const ImpactNumbersSection = () => {
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
           Nosso negócio é fazer{" "}
-          <span className="text-gradient">negócios crescerem</span>
+          <span className="text-shimmer-highlight">negócios crescerem</span>
         </motion.h2>
 
         {/* Stats row */}
