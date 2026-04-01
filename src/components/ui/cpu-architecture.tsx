@@ -23,12 +23,7 @@ const CpuArchitecture = ({
   animateLines = true,
   animateMarkers = true,
 }: CpuArchitectureSvgProps) => {
-  // Calculate text x position based on text length
-  const textX = text.length <= 3 ? 92 : text.length <= 5 ? 88 : 86;
   const fontSize = text.length <= 3 ? 7 : text.length <= 5 ? 5.5 : 4.2;
-
-  const textLen = text.length;
-  const fontSize = textLen <= 3 ? 7 : textLen <= 5 ? 5.5 : 4.2;
 
   return (
     <svg
