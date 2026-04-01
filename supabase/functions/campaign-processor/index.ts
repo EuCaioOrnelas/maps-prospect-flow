@@ -123,20 +123,20 @@ function getSaoPauloTime(): Date {
   return new Date(utcTime + (SAO_PAULO_OFFSET_HOURS * 3600000));
 }
 
-// Get midnight in São Paulo timezone as UTC
-function getSaoPauloMidnightUTC(): Date {
+// Get 08:00 São Paulo time today as UTC (daily reset hour)
+function getSaoPauloResetTimeUTC(): Date {
   const spNow = getSaoPauloTime();
-  const spMidnight = new Date(spNow);
-  spMidnight.setHours(0, 0, 0, 0);
-  return new Date(spMidnight.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
+  const spReset = new Date(spNow);
+  spReset.setHours(8, 0, 0, 0);
+  return new Date(spReset.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
 }
 
-// Check if we should reset daily count
+// Check if we should reset daily count (resets at 08:00 São Paulo time)
 function shouldResetDailyCount(lastSentAt: string | null): boolean {
   if (!lastSentAt) return false;
   const lastSent = new Date(lastSentAt);
-  const spMidnightUTC = getSaoPauloMidnightUTC();
-  return lastSent < spMidnightUTC;
+  const spResetUTC = getSaoPauloResetTimeUTC();
+  return lastSent < spResetUTC;
 }
 
 // Check if enough time has passed since last message
