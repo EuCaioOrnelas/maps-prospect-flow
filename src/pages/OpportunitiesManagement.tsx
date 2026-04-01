@@ -25,7 +25,7 @@ import {
   Search, Star, Globe, Phone, MapPin, ExternalLink, Loader2, BarChart3,
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
-  CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap,
+  CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
