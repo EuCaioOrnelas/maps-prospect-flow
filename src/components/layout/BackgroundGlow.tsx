@@ -4,51 +4,44 @@ export function BackgroundGlow() {
       className="fixed inset-0 overflow-hidden pointer-events-none z-0"
       aria-hidden="true"
     >
-      {/* Main primary glow - top right */}
+      {/* Top-right emerald blob */}
       <div 
-        className="absolute -top-32 -right-32 w-[800px] h-[800px] animate-pulse-slow"
+        className="absolute -top-[15%] -right-[10%] w-[55%] h-[45%] rounded-full"
         style={{
-          background: 'radial-gradient(circle at center, hsl(158 72% 38% / 0.12) 0%, hsl(158 72% 38% / 0.06) 30%, transparent 70%)',
-          filter: 'blur(100px)',
+          background: 'radial-gradient(ellipse, hsl(158 72% 45% / 0.08), transparent 70%)',
         }}
       />
       
-      {/* Secondary glow - bottom left */}
+      {/* Center-left cool blob */}
       <div 
-        className="absolute -bottom-32 -left-32 w-[700px] h-[700px]"
+        className="absolute top-[25%] -left-[12%] w-[45%] h-[45%] rounded-full"
         style={{
-          background: 'radial-gradient(circle at center, hsl(158 72% 38% / 0.1) 0%, hsl(170 65% 32% / 0.05) 40%, transparent 70%)',
-          filter: 'blur(120px)',
+          background: 'radial-gradient(ellipse, hsl(200 80% 55% / 0.06), transparent 70%)',
         }}
       />
       
-      {/* Accent glow - center */}
+      {/* Bottom-right warm accent */}
       <div 
-        className="absolute top-1/3 left-1/4 w-[500px] h-[500px]"
+        className="absolute top-[55%] right-[5%] w-[40%] h-[35%] rounded-full"
         style={{
-          background: 'radial-gradient(circle at center, hsl(170 65% 32% / 0.06) 0%, transparent 70%)',
-          filter: 'blur(140px)',
+          background: 'radial-gradient(ellipse, hsl(170 65% 40% / 0.06), transparent 70%)',
+        }}
+      />
+
+      {/* Bottom-left subtle glow */}
+      <div 
+        className="absolute bottom-[5%] -left-[8%] w-[35%] h-[30%] rounded-full"
+        style={{
+          background: 'radial-gradient(ellipse, hsl(158 60% 42% / 0.05), transparent 70%)',
         }}
       />
       
-      {/* Small accent glow - top center */}
+      {/* Subtle dot grid pattern */}
       <div 
-        className="absolute top-0 left-1/2 w-[400px] h-[400px] -translate-x-1/2"
+        className="absolute inset-0 opacity-[0.02]"
         style={{
-          background: 'radial-gradient(circle at center, hsl(158 72% 38% / 0.08) 0%, transparent 60%)',
-          filter: 'blur(80px)',
-        }}
-      />
-      
-      {/* Grid pattern overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `
-            linear-gradient(hsl(210 40% 98% / 0.4) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(210 40% 98% / 0.4) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px',
+          backgroundImage: 'radial-gradient(hsl(220 25% 14%) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
         }}
       />
     </div>
