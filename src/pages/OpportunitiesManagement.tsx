@@ -740,7 +740,7 @@ export default function OpportunitiesManagement() {
                               getScoreBadge(lead.ai_score)
                             )}
                           </TableCell>
-                          <TableCell className="text-center">{getLevelBadge(lead.opportunity_level)}</TableCell>
+                          <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center">
                             {lead.ai_approach_message ? (
                               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
