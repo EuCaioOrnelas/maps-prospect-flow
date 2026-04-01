@@ -725,6 +725,51 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profiles: {
+        Row: {
+          attendant_name: string
+          company_differential: string
+          company_name: string
+          company_niche: string
+          company_objective: string
+          company_products: string
+          company_target_audience: string
+          created_at: string
+          id: string
+          last_message_sent_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attendant_name?: string
+          company_differential?: string
+          company_name?: string
+          company_niche?: string
+          company_objective?: string
+          company_products?: string
+          company_target_audience?: string
+          created_at?: string
+          id?: string
+          last_message_sent_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attendant_name?: string
+          company_differential?: string
+          company_name?: string
+          company_niche?: string
+          company_objective?: string
+          company_products?: string
+          company_target_audience?: string
+          created_at?: string
+          id?: string
+          last_message_sent_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupon_redemptions: {
         Row: {
           coupon_code: string
