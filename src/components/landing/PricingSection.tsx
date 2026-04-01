@@ -77,8 +77,8 @@ const plans: {
     whatsappNumbers: 10,
     description: "Para equipes e agências com alta demanda",
     features: [
-      "Até 60.000 disparos/mês",
-      "Aquecimento de até 10 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 10 Números WhatsApp",
       "CRM integrado",
