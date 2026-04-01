@@ -35,7 +35,7 @@ const HelpCenter = () => {
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate("/")}
                 className="gap-2 text-sm px-3"
               >
                 <ArrowLeft size={16} />
