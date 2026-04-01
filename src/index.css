@@ -514,7 +514,7 @@
   }
   .dark .btn-shine:hover::before {
     background-position: -100% 0, 0 0;
-    transition: background-position 1s ease;
+    transition: background-position 1.8s ease;
   }
   .text-gradient {
     @apply bg-clip-text text-transparent;
