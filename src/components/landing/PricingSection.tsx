@@ -37,8 +37,8 @@ const plans: {
     whatsappNumbers: 2,
     description: "Ideal para começar a prospectar novos clientes",
     features: [
-      "Até 10.000 disparos/mês",
-      "Aquecimento de até 2 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 2 Números WhatsApp",
       "CRM integrado",
@@ -57,8 +57,8 @@ const plans: {
     whatsappNumbers: 5,
     description: "Para profissionais que querem escalar resultados",
     features: [
-      "Até 30.000 disparos/mês",
-      "Aquecimento de até 5 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 5 Números WhatsApp",
       "CRM integrado",
@@ -77,8 +77,8 @@ const plans: {
     whatsappNumbers: 10,
     description: "Para equipes e agências com alta demanda",
     features: [
-      "Até 60.000 disparos/mês",
-      "Aquecimento de até 10 chips",
+      "Mensagens personalizadas com IA",
+      "Automação de atendimento e follow-up com IA",
       "Agentes de IA Integrados",
       "Até 10 Números WhatsApp",
       "CRM integrado",
@@ -208,7 +208,7 @@ export const PricingSection = () => {
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-primary mt-2 text-xs sm:text-sm">
-                    Até {plan.searches} buscas estratégicas para encontrar novos clientes
+                    Até {plan.searches} buscas estratégicas para encontrar novas oportunidades
                   </p>
                 </div>
 
