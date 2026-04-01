@@ -1243,7 +1243,7 @@ export default function OpportunitiesManagement() {
       {showNumbersManager && (
         <NumbersManager
           numbers={numbers}
-          onNumbersChange={refreshNumbers}
+          onNumbersChange={() => fetchNumbers()}
           maxNumbers={maxNumbers}
           onConnect={() => {}}
           forceOpen={true}
