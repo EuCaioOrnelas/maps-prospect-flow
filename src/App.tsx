@@ -112,7 +112,7 @@ const App = () => (
           <AuthProvider>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
                 <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
                 <Route path="/forgot-password" element={<LightThemeWrapper><ForgotPassword /></LightThemeWrapper>} />
