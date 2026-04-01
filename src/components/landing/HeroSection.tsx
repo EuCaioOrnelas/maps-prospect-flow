@@ -180,7 +180,7 @@ const floatingCards = [
     icon: Send, 
     value: "900K+", 
     label: "Mensagens enviadas", 
-    position: "-left-[6.75rem] top-4",
+    position: "-left-[8.5rem] top-4",
     delay: "0.8s"
   },
   { 
