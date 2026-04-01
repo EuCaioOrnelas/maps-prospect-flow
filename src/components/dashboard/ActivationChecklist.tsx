@@ -37,7 +37,7 @@ const STEPS = [
     title: "Prospectar seus primeiros clientes",
     description: "Busque e adicione seus primeiros leads",
     icon: Search,
-    action: "/prospeccao",
+    action: "/oportunidades",
     actionLabel: "Prospectar",
   },
   {

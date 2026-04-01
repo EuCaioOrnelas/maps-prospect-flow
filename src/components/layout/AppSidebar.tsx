@@ -100,7 +100,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/dashboard"
     },
     {
-      title: "Prospecção",
+      title: "Oportunidades",
       url: "/reports/prospeccao",
       icon: FileSearch,
       active: currentPath === "/reports/prospeccao"
@@ -240,16 +240,51 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
-            {/* Prospecção */}
+            {/* Oportunidades with submenu */}
             <li>
               <SidebarNavItem
-                title="Prospecção"
+                title="Oportunidades"
                 icon={Search}
-                url="/prospeccao"
-                isActive={currentPath === "/prospeccao"}
+                url="/oportunidades"
+                isActive={currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao"}
                 isExpanded={isExpanded}
-                tooltip="Prospecção"
+                tooltip="Oportunidades"
               />
+
+              {isExpanded && (currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao") && (
+                <div className="overflow-hidden mt-1">
+                  <ul className="pl-4 space-y-0.5">
+                    <li>
+                      <Link
+                        to="/oportunidades"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/oportunidades"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Search size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Buscar</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/oportunidades/gestao"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/oportunidades/gestao"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <BarChart3 size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Gestão</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </li>
 
             {/* Campanhas with submenu */}

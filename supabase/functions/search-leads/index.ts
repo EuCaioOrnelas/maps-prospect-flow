@@ -590,6 +590,38 @@ serve(async (req) => {
       console.error('Error updating search count:', updateError);
     }
 
+    // Save leads to the leads table with enriched data
+    const leadsToInsert = leads.map(lead => ({
+      user_id: user.id,
+      company_name: lead.name !== '-' ? lead.name : null,
+      phone: lead.phone,
+      category: lead.category !== '-' ? lead.category : null,
+      city: lead.city !== '-' ? lead.city : null,
+      website: lead.website !== '-' ? lead.website : null,
+      google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
+      address: lead.address !== '-' ? lead.address : null,
+      rating: lead.rating || null,
+      review_count: lead.reviewCount || null,
+      origin: 'oportunidades',
+      prospected_at: new Date().toISOString(),
+    }));
+
+    // Use upsert to avoid duplicate phone errors
+    if (leadsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('leads')
+        .upsert(leadsToInsert, { 
+          onConflict: 'user_id,phone',
+          ignoreDuplicates: true 
+        });
+      
+      if (insertError) {
+        console.error('Error saving leads to table:', insertError);
+      } else {
+        console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+      }
+    }
+
     // Save search to history with leads data
     const { error: historyError } = await supabase
       .from('search_history')
