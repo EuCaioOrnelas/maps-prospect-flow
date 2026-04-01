@@ -689,7 +689,10 @@ export default function OpportunitiesManagement() {
         </Button>
         {lead.ai_approach_message && !lead.first_message_sent && (
           <Button
-            onClick={() => setSendingLead(lead)}
+            onClick={() => {
+              setSelectedLead(null); // Close detail dialog first
+              setTimeout(() => setSendingLead(lead), 150);
+            }}
             disabled={sendCooldown > 0}
             variant="outline"
             className="gap-2"
