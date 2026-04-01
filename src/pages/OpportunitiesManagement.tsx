@@ -83,6 +83,7 @@ export default function OpportunitiesManagement() {
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchTotal, setBatchTotal] = useState(0);
   const [batchCurrentName, setBatchCurrentName] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (user) fetchLeads();
