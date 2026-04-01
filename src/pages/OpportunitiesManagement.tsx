@@ -727,9 +727,22 @@ export default function OpportunitiesManagement() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-6">
-              <div>
-                <h1 className="font-display text-2xl sm:text-3xl font-bold">Gestão de Oportunidades</h1>
-                <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold">Gestão de Oportunidades</h1>
+                  <p className="text-muted-foreground mt-1">Qualifique e aborde suas oportunidades com IA</p>
+                </div>
+                {companyProfile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setShowOnboarding(true)}
+                  >
+                    <Settings size={14} />
+                    Editar Perfil
+                  </Button>
+                )}
               </div>
 
               {/* Batch scoring progress */}
