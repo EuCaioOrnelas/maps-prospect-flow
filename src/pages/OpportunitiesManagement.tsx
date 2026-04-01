@@ -689,7 +689,7 @@ export default function OpportunitiesManagement() {
   );
 }
 
-function InfoItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
+function DetailItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
   if (!value || value === "-") return null;
   return (
     <div className="space-y-1">
