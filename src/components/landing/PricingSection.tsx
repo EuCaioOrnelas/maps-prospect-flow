@@ -208,7 +208,7 @@ export const PricingSection = () => {
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-primary mt-2 text-xs sm:text-sm">
-                    Até {plan.searches} buscas estratégicas para encontrar novos clientes
+                    Até {plan.searches} buscas estratégicas para encontrar novas oportunidades
                   </p>
                 </div>
 
