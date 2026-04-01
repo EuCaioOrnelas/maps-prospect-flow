@@ -39,15 +39,15 @@ const AnimatedCounter = ({ end, prefix = "", suffix = "", duration = 2000, isVis
     return count.toString();
   };
 
-  return <span className="tabular-nums">{prefix}{display()}{suffix}</span>;
+  return <span className="tabular-nums whitespace-nowrap">{prefix}{display()}{suffix}</span>;
 };
 
-/* ── Floating SVG paths (Stripe-inspired) ── */
+/* ── Floating SVG paths – infinite loop, softer ── */
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 28 }, (_, i) => ({
     id: i,
     d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.4 + i * 0.02,
+    width: 0.3 + i * 0.015,
   }));
 
   return (
@@ -60,13 +60,15 @@ function FloatingPaths({ position }: { position: number }) {
             d={path.d}
             stroke="hsl(158 72% 38%)"
             strokeWidth={path.width}
-            strokeOpacity={0.06 + path.id * 0.008}
-            initial={{ pathLength: 0.3, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
+            strokeOpacity={0.03 + path.id * 0.004}
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: [0, 1, 0] }}
             transition={{
-              duration: 2 + Math.random() * 2,
-              delay: path.id * 0.06,
+              duration: 8 + path.id * 0.3,
+              delay: path.id * 0.12,
               ease: "easeInOut",
+              repeat: Infinity,
+              repeatType: "mirror",
             }}
           />
         ))}
@@ -105,18 +107,14 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-28 sm:py-36"
     >
-      {/* Animated paths background */}
-      {isVisible && (
-        <>
-          <FloatingPaths position={1} />
-          <FloatingPaths position={-1} />
-        </>
-      )}
+      {/* Animated paths background – always rendered, infinite */}
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
 
       {/* Subtle gradient wash */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[70%] opacity-[0.07]"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[70%] opacity-[0.04]"
           style={{
             background:
               "radial-gradient(ellipse at 50% 100%, hsl(158 72% 45%), transparent 70%)",
@@ -140,17 +138,17 @@ export const ImpactNumbersSection = () => {
           <span className="text-gradient">negócios crescerem</span>
         </motion.h2>
 
-        {/* Stats row – Stripe-like clean layout */}
+        {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/60">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              className="flex flex-col items-center text-center py-8 md:py-0 md:px-8 first:pt-0 last:pb-0 md:first:pl-0 md:last:pr-0"
+              className="flex flex-col items-center text-center py-8 md:py-0 md:px-6 lg:md:px-8 first:pt-0 last:pb-0 md:first:pl-0 md:last:pr-0"
               initial={{ opacity: 0, y: 20 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.25 + i * 0.15, ease: "easeOut" }}
             >
-              <span className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-none mb-3">
+              <span className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-none mb-3 whitespace-nowrap">
                 <AnimatedCounter
                   end={stat.value}
                   prefix={stat.prefix}
