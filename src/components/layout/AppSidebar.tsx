@@ -254,14 +254,23 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <SidebarNavItem
                 title="Oportunidades"
                 icon={Search}
-                url="/oportunidades"
-                isActive={currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao"}
+                onClick={handleOpportunitiesClick}
+                isActive={isOnOpportunitiesPage}
                 isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isOpportunitiesOpen}
                 tooltip="Oportunidades"
               />
 
-              {isExpanded && (currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao") && (
-                <div className="overflow-hidden mt-1">
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isOpportunitiesOpen
+                      ? "max-h-28 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
                   <ul className="pl-4 space-y-0.5">
                     <li>
                       <Link
