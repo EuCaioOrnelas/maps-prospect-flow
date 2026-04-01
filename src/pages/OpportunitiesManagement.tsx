@@ -1156,6 +1156,41 @@ export default function OpportunitiesManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Company Profile Onboarding */}
+      {user && (
+        <CompanyProfileOnboarding
+          open={showOnboarding}
+          userId={user.id}
+          initialData={companyProfile}
+          onComplete={(profile) => {
+            setCompanyProfile(profile);
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
+      {/* Send Message Dialog */}
+      {sendingLead && user && (
+        <SendMessageDialog
+          open={!!sendingLead}
+          onOpenChange={(open) => { if (!open) setSendingLead(null); }}
+          leadId={sendingLead.id}
+          leadPhone={sendingLead.phone}
+          leadName={sendingLead.company_name || "Lead"}
+          message={sendingLead.ai_approach_message || ""}
+          userId={user.id}
+          whatsappNumberId={sendingLead.whatsapp_number_id}
+          onSent={() => {
+            setSendCooldown(120);
+            setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
+            if (selectedLead?.id === sendingLead.id) {
+              setSelectedLead({ ...selectedLead, first_message_sent: true });
+            }
+            setSendingLead(null);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 }
