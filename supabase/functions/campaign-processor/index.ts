@@ -656,7 +656,7 @@ async function processSingleMessage(
       const spNowFree = getSaoPauloTime();
       const spTomorrowFree = new Date(spNowFree);
       spTomorrowFree.setDate(spTomorrowFree.getDate() + 1);
-      spTomorrowFree.setHours(0, 0, 0, 0);
+      spTomorrowFree.setHours(8, 0, 0, 0);
       const tomorrowUTCFree = new Date(spTomorrowFree.getTime() - (SAO_PAULO_OFFSET_HOURS * 3600000));
 
       campaignLog('🛑', `FREE DAILY LIMIT REACHED (20/day) - Pausing until tomorrow`, {
