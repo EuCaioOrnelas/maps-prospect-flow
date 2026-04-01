@@ -392,8 +392,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               ))}
               
               {/* Demo badge */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
-                <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
+              <div className="absolute -top-8 lg:-top-9 xl:-top-6 left-[58%] xl:left-1/2 -translate-x-1/2 z-20 hidden sm:block pointer-events-none">
+                <span className="inline-flex items-center whitespace-nowrap px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
                   ✨ Demonstração em tempo real
                 </span>
               </div>
