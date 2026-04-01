@@ -321,17 +321,17 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
             {/* Main heading - always 3 lines */}
             <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
-              Prospecção
+              Transforme
               <br />
-              Inteligente de
+              Leads B2B em
               <br />
-              <span className="text-shimmer-highlight">Leads B2B com IA</span>
+              <span className="text-shimmer-highlight">Clientes com IA</span>
             </h1>
 
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Prospecção inteligente de leads qualificados e campanhas de mensagens em massa
-              via API Oficial da Meta, tudo automatizado com inteligência artificial.
+              Encontre leads qualificados, gere mensagens personalizadas com IA e automatize
+              seu atendimento e follow-up no WhatsApp com inteligência artificial.
             </p>
 
             {/* CTA Buttons */}
