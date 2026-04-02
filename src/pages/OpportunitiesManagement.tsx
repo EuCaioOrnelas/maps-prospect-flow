@@ -618,6 +618,90 @@ export default function OpportunitiesManagement() {
             <ExternalLink size={12} className="ml-auto opacity-50" />
           </a>
         )}
+
+        {/* Social Media Links */}
+        {(() => {
+          const socialLinks: { url: string; platform: string }[] = [];
+          
+          // Extract from enrichment_data.scoring_inputs.redes_sociais (most reliable)
+          const enrichSocials = lead.enrichment_data?.scoring_inputs?.redes_sociais;
+          if (Array.isArray(enrichSocials)) {
+            enrichSocials.forEach((s: any) => {
+              if (s?.url && s?.platform) socialLinks.push({ url: s.url, platform: s.platform });
+            });
+          }
+          
+          // Fallback: extract from social_media field
+          if (socialLinks.length === 0 && lead.social_media) {
+            const sm = lead.social_media;
+            if (Array.isArray(sm)) {
+              sm.forEach((item: any) => {
+                const url = typeof item === 'string' ? item : item?.url || item?.link;
+                if (url) {
+                  const host = (() => { try { return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.toLowerCase(); } catch { return ''; } })();
+                  const platform = host.includes('instagram') ? 'Instagram' : host.includes('facebook') ? 'Facebook' : host.includes('linkedin') ? 'LinkedIn' : host.includes('youtube') ? 'YouTube' : host.includes('tiktok') ? 'TikTok' : 'Rede Social';
+                  socialLinks.push({ url: url.startsWith('http') ? url : `https://${url}`, platform });
+                }
+              });
+            } else if (typeof sm === 'object') {
+              Object.values(sm).forEach((val: any) => {
+                const url = typeof val === 'string' ? val : val?.url;
+                if (url) {
+                  const host = (() => { try { return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.toLowerCase(); } catch { return ''; } })();
+                  const platform = host.includes('instagram') ? 'Instagram' : host.includes('facebook') ? 'Facebook' : host.includes('linkedin') ? 'LinkedIn' : host.includes('youtube') ? 'YouTube' : host.includes('tiktok') ? 'TikTok' : 'Rede Social';
+                  socialLinks.push({ url: url.startsWith('http') ? url : `https://${url}`, platform });
+                }
+              });
+            }
+          }
+
+          // Also check if website is actually a social link
+          if (socialLinks.length === 0 && lead.website && lead.website !== '-') {
+            const host = (() => { try { return new URL(lead.website.startsWith('http') ? lead.website : `https://${lead.website}`).hostname.toLowerCase(); } catch { return ''; } })();
+            if (host.includes('instagram') || host.includes('facebook')) {
+              const platform = host.includes('instagram') ? 'Instagram' : 'Facebook';
+              socialLinks.push({ url: lead.website.startsWith('http') ? lead.website : `https://${lead.website}`, platform });
+            }
+          }
+
+          if (socialLinks.length === 0) return null;
+
+          const getPlatformIcon = (platform: string) => {
+            switch (platform) {
+              case 'Instagram': return '📸';
+              case 'Facebook': return '📘';
+              case 'LinkedIn': return '💼';
+              case 'YouTube': return '▶️';
+              case 'TikTok': return '🎵';
+              default: return '🌐';
+            }
+          };
+
+          return (
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Globe size={14} className="text-primary" />
+                Redes Sociais
+              </h4>
+              <div className="space-y-2">
+                {socialLinks.map((link, idx) => (
+                  <a 
+                    key={idx} 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
+                  >
+                    <span>{getPlatformIcon(link.platform)}</span>
+                    {link.platform}
+                    <ExternalLink size={12} className="ml-auto opacity-50" />
+                  </a>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Clique para analisar o perfil diretamente</p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Análise de Redes Sociais */}

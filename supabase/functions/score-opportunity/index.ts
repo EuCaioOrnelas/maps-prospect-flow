@@ -292,150 +292,13 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
-// ── SerpAPI social media activity search ──
+// Social media insights type (kept for type compatibility, no longer uses SerpAPI)
 type SocialMediaInsight = {
   platform: string;
   lastPostInfo: string;
   activityLevel: string;
   details: string;
   rawSnippets: string[];
-};
-
-const SERP_KEY_NAMES = ["SERP_API_KEY", "SERP_API_KEY_2", "SERP_API_KEY_3", "SERP_API_KEY_4", "SERP_API_KEY_5", "SERP_API_KEY_6"];
-
-const getAvailableSerpKey = (): string | null => {
-  for (const keyName of SERP_KEY_NAMES) {
-    const key = Deno.env.get(keyName);
-    if (key) return key;
-  }
-  return null;
-};
-
-const searchSocialMediaActivity = async (businessName: string, city: string, socialLinks: SocialLink[]): Promise<SocialMediaInsight[]> => {
-  const serpKey = getAvailableSerpKey();
-  if (!serpKey) {
-    console.log("No SerpAPI key available for social media search");
-    return [];
-  }
-
-  const insights: SocialMediaInsight[] = [];
-
-  // Build targeted searches for each social platform found
-  const searchQueries: { query: string; platform: string }[] = [];
-
-  for (const link of socialLinks) {
-    try {
-      const urlObj = new URL(link.url);
-      const pathParts = urlObj.pathname.split("/").filter(Boolean);
-      const handle = pathParts[0] || "";
-      
-      if (link.platform === "Instagram" && handle) {
-        searchQueries.push({
-          query: `site:instagram.com "${handle}" posts`,
-          platform: "Instagram",
-        });
-      } else if (link.platform === "Facebook" && handle) {
-        searchQueries.push({
-          query: `site:facebook.com "${handle}" posts publicações`,
-          platform: "Facebook",
-        });
-      } else if (link.platform === "LinkedIn" && handle) {
-        searchQueries.push({
-          query: `site:linkedin.com "${handle}" posts`,
-          platform: "LinkedIn",
-        });
-      }
-    } catch { /* skip invalid URLs */ }
-  }
-
-  // If no specific social links, search generically for the business
-  if (searchQueries.length === 0 && businessName) {
-    const cleanName = businessName.replace(/[^\w\s]/g, "").trim();
-    if (cleanName) {
-      searchQueries.push({
-        query: `"${cleanName}" ${city || ""} instagram OR facebook última publicação posts`,
-        platform: "Geral",
-      });
-    }
-  }
-
-  // Execute searches (max 2 to save API quota)
-  for (const sq of searchQueries.slice(0, 2)) {
-    try {
-      const params = new URLSearchParams({
-        api_key: serpKey,
-        q: sq.query,
-        hl: "pt-br",
-        gl: "br",
-        num: "5",
-      });
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-
-      const response = await fetch(`https://serpapi.com/search.json?${params}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        console.error(`SerpAPI error for ${sq.platform}:`, response.status);
-        continue;
-      }
-
-      const data = await response.json();
-      const results = data.organic_results || [];
-      const snippets: string[] = [];
-      let lastPostInfo = "Não foi possível determinar";
-      let activityLevel = "Indeterminado";
-
-      for (const result of results.slice(0, 5)) {
-        const snippet = `${result.title || ""} ${result.snippet || ""}`.toLowerCase();
-        snippets.push(`${result.title || ""}: ${result.snippet || ""}`);
-
-        // Detect time indicators in snippets
-        const timePatterns = [
-          { pattern: /(\d+)\s*(hora|hour|hr|h)\s*(atrás|ago)/i, level: "Muito ativo", info: "Publicação nas últimas horas" },
-          { pattern: /(\d+)\s*(dia|day|d)\s*(atrás|ago)/i, level: "Ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} dia(s)` },
-          { pattern: /(\d+)\s*(semana|week|sem)\s*(atrás|ago)/i, level: "Moderado", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} semana(s)` },
-          { pattern: /(\d+)\s*(m[eê]s|month|mes)\s*(atrás|ago)/i, level: "Pouco ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} mês(es)` },
-          { pattern: /(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez|january|february|march|april|may|june|july|august|september|october|november|december)\w*\s*\d{1,2}?,?\s*(2026|2025|2024)/i, level: "Verificar", info: (m: RegExpMatchArray) => `Última atividade detectada: ${m[0]}` },
-          { pattern: /\b(2026)\b/, level: "Ativo", info: "Sinais de atividade em 2026" },
-          { pattern: /\b(2025)\b/, level: "Pode estar desatualizado", info: "Última atividade detectada em 2025" },
-          { pattern: /\b(2024)\b/, level: "Inativo", info: "Última atividade detectada em 2024 - provável inatividade" },
-        ];
-
-        for (const tp of timePatterns) {
-          const match = snippet.match(tp.pattern);
-          if (match) {
-            activityLevel = tp.level;
-            lastPostInfo = typeof tp.info === "function" ? tp.info(match) : tp.info;
-            break;
-          }
-        }
-
-        // Detect follower counts
-        const followerMatch = snippet.match(/(\d[\d.,]*[km]?)\s*(seguidores|followers|curtidas|likes)/i);
-        if (followerMatch) {
-          snippets.push(`Seguidores/Curtidas detectados: ${followerMatch[1]} ${followerMatch[2]}`);
-        }
-      }
-
-      if (snippets.length > 0) {
-        insights.push({
-          platform: sq.platform,
-          lastPostInfo,
-          activityLevel,
-          details: snippets.slice(0, 3).join(" | "),
-          rawSnippets: snippets.slice(0, 5),
-        });
-      }
-    } catch (error) {
-      console.error(`Social search error for ${sq.platform}:`, error);
-    }
-  }
-
-  return insights;
 };
 
 const inferNicheContext = (companyProfile: any): NicheContext => {
@@ -486,14 +349,14 @@ const inferNicheContext = (companyProfile: any): NicheContext => {
     return {
       id: "social_media_management",
       name: "Gestão de redes sociais",
-      analysisFocus: `Foco PRINCIPAL: acessar as redes sociais do lead e verificar a ÚLTIMA DATA DE PUBLICAÇÃO. Verificar frequência de posts, qualidade visual, identidade visual, uso de stories/reels, bio otimizada, link na bio, resposta a comentários.`,
+      analysisFocus: `Foco PRINCIPAL: analisar a presença nas redes sociais do lead. Verificar se tem perfil ativo, bio otimizada, link na bio, identidade visual, qualidade dos conteúdos visíveis, resposta a comentários. Inferir nível de atividade com base nos sinais disponíveis (título do perfil, descrição, sinais de freshness no HTML).`,
       keyQuestions: [
-        "Quando foi a última publicação nas redes sociais? (ESSENCIAL)",
-        "Qual a frequência de publicação (diária, semanal, irregular, parada)?",
-        "A qualidade visual dos posts é profissional ou amadora?",
+        "O perfil nas redes sociais tem bio otimizada com CTA e link?",
+        "A identidade visual é consistente e profissional?",
+        "Há sinais de atividade recente (menções a datas, promoções, conteúdo atualizado)?",
         "Tem identidade visual consistente?",
-        "A bio está otimizada com CTA e link?",
-        "Usa formatos modernos (reels, stories, carrosséis)?",
+        "Usa formatos modernos (reels, stories, carrosséis) com base nos sinais detectados?",
+        "Responde a comentários e interage com seguidores?",
       ],
       strengthsHint: "Fale sobre base de seguidores, engajamento atual, presença que já gera visibilidade.",
       weaknessesHint: "Fale sobre posts irregulares ou parados, qualidade visual amadora, falta de estratégia, bio não otimizada.",
@@ -1257,9 +1120,10 @@ ${socialPages.length > 0
    - Analise os dados de crawling direto das redes sociais acima.
    - Se o perfil foi acessível e tem conteúdo, é sinal de atividade.
    - Se há sinais de "freshness" (datas recentes, menções a anos), reporte.
-   - Avalie qualidade visual, identidade, bio, links na bio com base nos sinais detectados.
+   - Avalie bio (otimizada? CTA? link?), identidade visual, qualidade dos conteúdos visíveis.
    - Se há avaliações recentes no Google Maps, isso indica que a empresa está ativa.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
+   - NÃO tente informar data da última publicação — essa informação não está disponível via crawling.
 
 2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
    - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
@@ -1285,7 +1149,7 @@ ${socialPages.length > 0
 ═══ REGRAS CRÍTICAS ═══
 1. Pontos fortes e fracos DEVEM ser 100% contextualizados ao que a empresa prospectora vende ("${companyProfile?.company_products || "serviço B2B"}"). NUNCA use pontos genéricos como "boa reputação" ou "tem site" sem explicar como isso se conecta ao serviço vendido. Exemplos:
    - Se vende app de barbearia → "Não possui sistema de agendamento online, depende de WhatsApp manual"
-   - Se vende gestão de redes → "Última publicação há mais de 3 semanas, feed irregular"
+   - Se vende gestão de redes → "Bio não otimizada, sem link de conversão, identidade visual inconsistente"
    - Se vende manutenção → "Sem portfólio de trabalhos realizados visível online"
    - Se vende consultoria → "Sinais de crescimento desordenado sem processos definidos"
    - Se vende produtos físicos → "Vende apenas presencialmente, sem e-commerce"
@@ -1294,9 +1158,9 @@ ${socialPages.length > 0
 2. NÃO use frases como "boa reputação no Google" como ponto forte A MENOS QUE explique como isso beneficia a venda do serviço específico.
 3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
 4. Cada dimensão: 25, 25, 20, 15 e 15. Score = soma exata.
-5. Use SOMENTE dados presentes ou inferências razoáveis. Não invente números exatos de seguidores ou tráfego.
+5. Use SOMENTE dados presentes ou inferências razoáveis. Não invente números exatos de seguidores, tráfego ou datas de publicação.
 6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
-7. A análise de redes sociais DEVE mencionar frequência/recência de publicações (mesmo que inferida).
+7. A análise de redes sociais DEVE focar em presença, bio, identidade visual e sinais de atividade detectáveis — NÃO mencione "última publicação" pois essa informação não está disponível.
 8. A ação recomendada DEVE citar especificamente qual produto/serviço da empresa prospectora usar e como conectar à dor principal do lead.
 
 Retorne APENAS um JSON válido:
@@ -1314,7 +1178,7 @@ Retorne APENAS um JSON válido:
   "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
   "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
   "analise_site": "análise profunda adaptada ao nicho da prospectora",
-  "analise_redes_sociais": "análise com frequência de publicações, última atividade detectada, qualidade",
+  "analise_redes_sociais": "análise de presença, bio, identidade visual e sinais de atividade detectáveis via crawling",
   "analise_reputacao_detalhada": "...",
   "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
