@@ -306,49 +306,15 @@ export const PricingSection = () => {
                   </p>
                 </div>
                 
-                {/* Trust Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+                {/* Trust Grid - Row 1: 4 cards */}
+                <div className="hidden md:grid md:grid-cols-4 gap-4">
                   {[
-                    {
-                      icon: Shield,
-                      title: "100% Seguro",
-                      description: "Pagamento via Stripe",
-                    },
-                    {
-                      icon: Clock,
-                      title: "Cancele quando quiser",
-                      description: "Sem fidelidade",
-                    },
-                    {
-                      icon: CreditCard,
-                      title: "Garantia 7 dias",
-                      description: "Devolução sem burocracia",
-                    },
-                    {
-                      icon: Shield,
-                      title: "Dados Protegidos",
-                      description: "Criptografia ponta a ponta",
-                    },
-                    {
-                      icon: CreditCard,
-                      title: "Pagamento Seguro",
-                      description: "Processamento via Stripe",
-                    },
-                    {
-                      icon: Clock,
-                      title: "Uptime 99.9%",
-                      description: "Disponibilidade contínua",
-                    },
-                    {
-                      icon: Check,
-                      title: "LGPD Compliant",
-                      description: "Proteção de dados",
-                    },
+                    { icon: Shield, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
+                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento via Stripe" },
+                    { icon: Clock, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
+                    { icon: Check, title: "LGPD Compliant", description: "Proteção de dados" },
                   ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center"
-                    >
+                    <div key={i} className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
                       <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-all duration-300">
                         <item.icon className="h-6 w-6 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                       </div>
@@ -356,6 +322,47 @@ export const PricingSection = () => {
                       <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Trust Grid - Row 2: 3 cards */}
+                <div className="hidden md:grid md:grid-cols-3 gap-4 mt-4">
+                  {[
+                    { icon: Shield, title: "100% Seguro", description: "Pagamento via Stripe" },
+                    { icon: Clock, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                    { icon: CreditCard, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                  ].map((item, i) => (
+                    <div key={i} className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
+                      <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-all duration-300">
+                        <item.icon className="h-6 w-6 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                      </div>
+                      <p className="font-semibold text-foreground mb-1.5 text-sm">{item.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile: topic list with icons */}
+                <div className="md:hidden space-y-3">
+                  {[
+                    { icon: Shield, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
+                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento via Stripe" },
+                    { icon: Clock, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
+                    { icon: Check, title: "LGPD Compliant", description: "Proteção de dados" },
+                    { icon: Shield, title: "100% Seguro", description: "Pagamento via Stripe" },
+                    { icon: Clock, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                    { icon: CreditCard, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-border/50">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                        <item.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 </div>
               </div>
             </div>
