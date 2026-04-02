@@ -18,7 +18,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[] };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string };
 
 const plans: {
   name: string;
@@ -82,6 +82,7 @@ const plans: {
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
       { text: "Tudo do Growth" },
+      { text: "", sectionHeader: "🚀 DIFERENCIAL EXCLUSIVO" },
       { text: "Agente estratégico de IA", highlight: true, subItems: [
         "Mostra quais leads priorizar",
         "Sugere a melhor abordagem para cada um",
