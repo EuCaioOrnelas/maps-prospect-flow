@@ -1227,6 +1227,7 @@ export default function OpportunitiesManagement() {
           }}
           message={sendingLead.ai_approach_message || ""}
           userId={user.id}
+          availableNumbers={numbers}
           onSent={() => {
             setSendCooldown(120);
             setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
