@@ -344,13 +344,13 @@ export const PricingSection = () => {
                 {/* Mobile: topic list with icons */}
                 <div className="md:hidden space-y-3">
                   {[
-                    { icon: Shield, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
+                    { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
                     { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento via Stripe" },
-                    { icon: Clock, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
-                    { icon: Check, title: "LGPD Compliant", description: "Proteção de dados" },
-                    { icon: Shield, title: "100% Seguro", description: "Pagamento via Stripe" },
-                    { icon: Clock, title: "Cancele quando quiser", description: "Sem fidelidade" },
-                    { icon: CreditCard, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                    { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
+                    { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
+                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento via Stripe" },
+                    { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                    { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-border/50">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
