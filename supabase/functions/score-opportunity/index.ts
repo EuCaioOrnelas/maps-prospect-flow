@@ -1178,7 +1178,7 @@ Retorne APENAS um JSON válido:
   "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
   "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
   "analise_site": "análise profunda adaptada ao nicho da prospectora",
-  "analise_redes_sociais": "análise com frequência de publicações, última atividade detectada, qualidade",
+  "analise_redes_sociais": "análise de presença, bio, identidade visual e sinais de atividade detectáveis via crawling",
   "analise_reputacao_detalhada": "...",
   "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
