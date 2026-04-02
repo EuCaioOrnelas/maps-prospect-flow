@@ -1244,9 +1244,9 @@ export default function OpportunitiesManagement() {
       {showNumbersManager && (
         <NumbersManager
           numbers={numbers}
-          onNumbersChange={() => fetchNumbers()}
+          onNumbersChange={() => { void fetchNumbers(); }}
           maxNumbers={maxNumbers}
-          onConnect={() => {}}
+          onConnect={() => { void fetchNumbers(); }}
           forceOpen={true}
           onClose={() => setShowNumbersManager(false)}
         />
