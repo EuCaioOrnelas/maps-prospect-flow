@@ -1149,11 +1149,12 @@ serve(async (req) => {
       ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
-    // Run page fetches AND SerpAPI social search in parallel
-    const [pageSummaries, socialInsights] = await Promise.all([
-      Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))),
-      searchSocialMediaActivity(nome_empresa, cidade, socialLinks),
-    ]);
+    // Run page fetches only (no SerpAPI cost - direct HTTP crawling is free)
+    const pageSummaries = await Promise.all(
+      pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))
+    );
+    // Social insights derived from page crawling data only (zero SerpAPI usage)
+    const socialInsights: SocialMediaInsight[] = [];
 
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
@@ -1179,9 +1180,7 @@ serve(async (req) => {
       ? socialPages.map((page) => `${page.platform || "Rede social"}: ${page.ok ? `${page.title || "perfil detectado"}${page.contentLength >= 120 ? " com sinais de atividade" : " com poucos sinais de atividade"}` : "não foi possível ler o perfil"}`).join(" | ")
       : "";
 
-    const socialSummary = serpSocialDetails
-      ? `[DADOS REAIS VIA BUSCA] ${serpSocialDetails}${pageSocialDetails ? ` | [DADOS DO PERFIL] ${pageSocialDetails}` : ""}`
-      : pageSocialDetails
+    const socialSummary = pageSocialDetails
         ? pageSocialDetails
         : "Nenhuma rede social válida identificada para análise.";
 
@@ -1234,14 +1233,15 @@ ${nicheQuestions}
 ═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES - CRAWLING DIRETO) ═══
 ${evidenceContext}
 
-═══ DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS (VIA BUSCA GOOGLE) ═══
-${socialInsights.length > 0
-  ? socialInsights.map((si) => `🔍 ${si.platform}:
-   - Nível de atividade: ${si.activityLevel}
-   - Última publicação: ${si.lastPostInfo}
-   - Detalhes encontrados: ${si.details}
-   - Trechos das buscas: ${si.rawSnippets.slice(0, 3).join(" | ")}`).join("\n\n")
-  : "⚠️ Não foi possível obter dados de atividade via busca. Analise com base nos dados de crawling acima."}
+═══ ANÁLISE DE ATIVIDADE NAS REDES SOCIAIS (VIA CRAWLING DIRETO) ═══
+${socialPages.length > 0
+  ? socialPages.map((page) => `🔍 ${page.platform || "Rede Social"}:
+   - Status: ${page.ok ? "Acessível" : "Inacessível"}
+   - Título: ${page.title || "Não detectado"}
+   - Descrição: ${page.description || "Não detectada"}
+   - Sinais de atividade: ${page.activitySignals.join(", ") || "Nenhum"}
+   - Conteúdo: ${page.contentLength >= 120 ? "Perfil com conteúdo" : "Pouco conteúdo visível"}`).join("\n\n")
+  : "⚠️ Nenhuma rede social pôde ser analisada. Infira atividade com base nos dados do Google Maps (avaliações recentes = sinal de atividade)."}
 
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
@@ -1253,16 +1253,13 @@ ${socialInsights.length > 0
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
-1. ANÁLISE DE REDES SOCIAIS (DETALHADA - USE OS DADOS REAIS ACIMA):
-   - USE PRIORITARIAMENTE os dados da seção "DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS" acima.
-   - Esses dados vêm de buscas no Google e mostram a atividade REAL do perfil (datas, posts, engajamento).
-   - REPORTE a data/período da última publicação encontrada.
-   - REPORTE o nível de atividade (muito ativo, ativo, moderado, pouco ativo, inativo).
-   - Se os dados indicam inatividade, diga claramente: "A última publicação detectada foi em [data/período], indicando [X] de inatividade."
-   - Avalie qualidade visual, identidade, bio, links na bio com base nos dados de crawling.
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
+   - Analise os dados de crawling direto das redes sociais acima.
+   - Se o perfil foi acessível e tem conteúdo, é sinal de atividade.
+   - Se há sinais de "freshness" (datas recentes, menções a anos), reporte.
+   - Avalie qualidade visual, identidade, bio, links na bio com base nos sinais detectados.
+   - Se há avaliações recentes no Google Maps, isso indica que a empresa está ativa.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
-   - Avalie qualidade visual, identidade, bio, links na bio.
-   - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
 
 2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
    - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
