@@ -470,35 +470,22 @@ const Upgrade = () => {
                         </li>
                       );
                     }
+                    if (feature.subDetail) {
+                      return (
+                        <li key={i} className="flex items-start gap-3 text-sm pl-6">
+                          <span className="text-primary flex-shrink-0 mt-0.5">›</span>
+                          <span className="text-muted-foreground">{feature.text}</span>
+                        </li>
+                      );
+                    }
                     return (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : feature.highlight ? (
-                        <Flame size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
-                      {feature.subItems && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button className="ml-auto shrink-0 text-primary hover:text-primary/80 transition-colors">
-                              <Info size={15} />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="left" className="max-w-[220px] p-3">
-                            <ul className="space-y-1.5">
-                              {feature.subItems.map((sub, j) => (
-                                <li key={j} className="flex items-center gap-2 text-xs">
-                                  <Flame size={10} className="text-orange-500 shrink-0" />
-                                  {sub}
-                                </li>
-                              ))}
-                            </ul>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                      <span className="text-muted-foreground">{feature.text}</span>
                     </li>
                     );
                   })}
