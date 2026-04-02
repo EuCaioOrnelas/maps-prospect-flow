@@ -206,7 +206,7 @@ export const PricingSection = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                      -{Math.round((1 - parseInt(plan.price) / parseInt(plan.anchorPrice.replace('.', ''))) * 100)}%
+                      -{Math.round((1 - parseInt(plan.price.replace('.', '')) / parseInt(plan.anchorPrice.replace('.', ''))) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
