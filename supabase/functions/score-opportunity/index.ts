@@ -1231,8 +1231,17 @@ ${nicheQuestions}
 - Possui telefone: ${possui_telefone ? "Sim" : "Não"}
 - Redes sociais brutas: ${JSON.stringify(redes_sociais || [])}
 
-═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES) ═══
+═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES - CRAWLING DIRETO) ═══
 ${evidenceContext}
+
+═══ DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS (VIA BUSCA GOOGLE) ═══
+${socialInsights.length > 0
+  ? socialInsights.map((si) => `🔍 ${si.platform}:
+   - Nível de atividade: ${si.activityLevel}
+   - Última publicação: ${si.lastPostInfo}
+   - Detalhes encontrados: ${si.details}
+   - Trechos das buscas: ${si.rawSnippets.slice(0, 3).join(" | ")}`).join("\n\n")
+  : "⚠️ Não foi possível obter dados de atividade via busca. Analise com base nos dados de crawling acima."}
 
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
@@ -1244,10 +1253,14 @@ ${evidenceContext}
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
-1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
-   - Procure nos trechos extraídos QUALQUER indicação de data de última publicação, frequência de posts, quantidade de seguidores.
-   - Se encontrar sinais de atividade recente (menções a datas, "postado há X dias", conteúdo recente), REPORTE.
-   - Se NÃO encontrar sinais de atividade recente, indique que a empresa aparenta estar INATIVA ou com posts irregulares nas redes.
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA - USE OS DADOS REAIS ACIMA):
+   - USE PRIORITARIAMENTE os dados da seção "DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS" acima.
+   - Esses dados vêm de buscas no Google e mostram a atividade REAL do perfil (datas, posts, engajamento).
+   - REPORTE a data/período da última publicação encontrada.
+   - REPORTE o nível de atividade (muito ativo, ativo, moderado, pouco ativo, inativo).
+   - Se os dados indicam inatividade, diga claramente: "A última publicação detectada foi em [data/período], indicando [X] de inatividade."
+   - Avalie qualidade visual, identidade, bio, links na bio com base nos dados de crawling.
+   - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
    - Avalie qualidade visual, identidade, bio, links na bio.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
 
