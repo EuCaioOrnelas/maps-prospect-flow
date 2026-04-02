@@ -243,42 +243,6 @@ export const PricingSection = () => {
             ))}
           </div>
 
-          {/* Guarantee Section */}
-          <div 
-            className={`grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 transition-all duration-700 delay-500 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div className="flex items-center gap-4 p-4 rounded-xl glass">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">100% Seguro</p>
-                <p className="text-sm text-muted-foreground">Pagamento via Stripe</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 rounded-xl glass">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Cancele quando quiser</p>
-                <p className="text-sm text-muted-foreground">Sem fidelidade</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 rounded-xl glass">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                <CreditCard className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Garantia 7 dias</p>
-                <p className="text-sm text-muted-foreground">Devolução sem burocracia</p>
-              </div>
-            </div>
-          </div>
 
           {/* Trust & Security Section */}
           <div 
