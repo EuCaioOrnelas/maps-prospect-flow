@@ -277,6 +277,10 @@ export default function OpportunitiesManagement() {
           pontos_fortes: data.pontos_fortes,
           pontos_fracos: data.pontos_fracos,
           justificativa_score: data.justificativa_score,
+          analise_site: data.analise_site,
+          analise_redes_sociais: data.analise_redes_sociais,
+          analise_concorrencia_regional: data.analise_concorrencia_regional,
+          analise_demanda_regional: data.analise_demanda_regional,
         },
       };
       setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
