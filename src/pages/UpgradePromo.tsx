@@ -103,7 +103,6 @@ const plans: Plan[] = [
     icon: Building2,
   },
 ];
-
 /** Animated number that counts from `from` to `to` */
 const AnimatedPrice = ({ from, to, prefix = "R$ " }: { from: number; to: number; prefix?: string }) => {
   const [value, setValue] = useState(from);

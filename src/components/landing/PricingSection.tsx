@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Loader2, Shield, Clock, CreditCard, ArrowRight, Rocket, TrendingUp, Building2, Lock, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Flame } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Shield, Clock, CreditCard, ArrowRight, Rocket, TrendingUp, Building2, Lock, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Flame, Info } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
 
 const PRICE_IDS = {
@@ -16,7 +17,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[] };
 
 const plans: {
   name: string;
@@ -39,7 +40,7 @@ const plans: {
     description: "Para validar e começar a gerar oportunidades",
     features: [
       { text: "Geração de mensagens com IA" },
-      { text: "IA faz diagnóstico individual por lead" },
+      { text: "IA analisa seus leads e orienta a melhor estratégia para converter cada oportunidade" },
       { text: "CRM integrado" },
       { text: "Disparos via Meta API oficial" },
       { text: "Até 2 números WhatsApp" },
@@ -60,12 +61,12 @@ const plans: {
     features: [
       { text: "Geração de mensagens com IA" },
       { text: "Diagnóstico individual por lead" },
-      { text: "Automação de atendimento" },
-      { text: "Follow-up inteligente" },
-      { text: "Agente de IA operacional" },
       { text: "CRM integrado" },
       { text: "Disparos via Meta API oficial" },
       { text: "Até 5 números WhatsApp" },
+      { text: "Automação de atendimento" },
+      { text: "Follow-up inteligente" },
+      { text: "Agente de IA operacional" },
       { text: "Suporte prioritário" },
     ],
     popular: true,
@@ -81,11 +82,12 @@ const plans: {
     description: "Para escalar com inteligência e tomada de decisão",
     features: [
       { text: "Tudo do Growth" },
-      { text: "Agente de IA estratégico (exclusivo)", highlight: true },
-      { text: "Prioriza leads automaticamente", highlight: true },
-      { text: "Sugere abordagem ideal", highlight: true },
-      { text: "Ajuda na decisão de conversão", highlight: true },
-      { text: "Aumenta taxa de conversão", highlight: true },
+      { text: "Agente de IA estratégico (exclusivo)", highlight: true, subItems: [
+        "Prioriza leads automaticamente",
+        "Sugere abordagem ideal",
+        "Ajuda na decisão de conversão",
+        "Aumenta taxa de conversão",
+      ]},
       { text: "Prioridade de processamento" },
       { text: "Até 10 números WhatsApp" },
       { text: "Suporte VIP" },
@@ -95,7 +97,6 @@ const plans: {
     badge: "🔥",
   },
 ];
-
 export const PricingSection = () => {
   const { ref, isVisible } = useScrollAnimation();
   const { user } = useAuth();
@@ -193,8 +194,8 @@ export const PricingSection = () => {
 
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary" />
+                    <div className="group/icon flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover/icon:scale-125 group-hover/icon:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
                   </div>
@@ -218,6 +219,7 @@ export const PricingSection = () => {
                   </p>
                 </div>
 
+                <TooltipProvider delayDuration={200}>
                 <ul className="space-y-3 mb-8 text-sm flex-grow">
                   {plan.features.map((feature, i) => (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
@@ -228,10 +230,32 @@ export const PricingSection = () => {
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
+                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>
+                        {feature.text}
+                      </span>
+                      {feature.subItems && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="ml-auto shrink-0 text-primary hover:text-primary/80 transition-colors">
+                              <Info size={15} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[220px] p-3">
+                            <ul className="space-y-1.5">
+                              {feature.subItems.map((sub, j) => (
+                                <li key={j} className="flex items-center gap-2 text-xs">
+                                  <Flame size={10} className="text-orange-500 shrink-0" />
+                                  {sub}
+                                </li>
+                              ))}
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </li>
                   ))}
                 </ul>
+                </TooltipProvider>
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
