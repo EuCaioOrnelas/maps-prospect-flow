@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2 } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Flame } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,16 +17,16 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean };
+
 const plans: {
   name: string;
   key: string;
   price: string;
   anchorPrice: string;
-  searches: string;
-  whatsappNumbers: number;
-  monthlyMessages: string;
+  opportunities: string;
   description: string;
-  features: string[];
+  features: PlanFeature[];
   popular: boolean;
   icon: LucideIcon;
 }[] = [
@@ -35,18 +35,17 @@ const plans: {
     key: "start",
     price: "197",
     anchorPrice: "397",
-    searches: "100",
-    whatsappNumbers: 2,
-    monthlyMessages: "10.000",
-    description: "Ideal para começar a prospectar novos clientes",
+    opportunities: "1.000",
+    description: "Para validar e começar a gerar oportunidades",
     features: [
-      "Até 10.000 disparos/mês",
-      "Aquecimento de até 2 chips",
-      "Agentes de IA Integrados",
-      "Até 2 Números WhatsApp",
-      "CRM integrado",
-      "Até 50 leads por busca",
-      "Suporte por email",
+      { text: "Geração de mensagens com IA" },
+      { text: "IA faz diagnóstico individual por lead" },
+      { text: "CRM integrado" },
+      { text: "Disparos via Meta API oficial" },
+      { text: "Até 2 números WhatsApp" },
+      { text: "Sem automação", disabled: true },
+      { text: "Sem follow-up", disabled: true },
+      { text: "Sem agente", disabled: true },
     ],
     popular: false,
     icon: Rocket,
@@ -56,18 +55,18 @@ const plans: {
     key: "growth",
     price: "497",
     anchorPrice: "997",
-    searches: "500",
-    whatsappNumbers: 5,
-    monthlyMessages: "30.000",
-    description: "Para profissionais que querem escalar resultados",
+    opportunities: "3.000",
+    description: "Para escalar e converter com IA",
     features: [
-      "Até 30.000 disparos/mês",
-      "Aquecimento de até 5 chips",
-      "Agentes de IA Integrados",
-      "Até 5 Números WhatsApp",
-      "CRM integrado",
-      "Até 50 leads por busca",
-      "Suporte prioritário",
+      { text: "Geração de mensagens com IA" },
+      { text: "Diagnóstico individual por lead" },
+      { text: "Automação de atendimento" },
+      { text: "Follow-up inteligente" },
+      { text: "Agente de IA operacional" },
+      { text: "CRM integrado" },
+      { text: "Disparos via Meta API oficial" },
+      { text: "Até 5 números WhatsApp" },
+      { text: "Suporte prioritário" },
     ],
     popular: true,
     icon: TrendingUp,
@@ -75,20 +74,20 @@ const plans: {
   {
     name: "Scale",
     key: "scale",
-    price: "897",
-    anchorPrice: "1.797",
-    searches: "1.200",
-    whatsappNumbers: 10,
-    monthlyMessages: "60.000",
-    description: "Para equipes e agências com alta demanda",
+    price: "1.297",
+    anchorPrice: "2.597",
+    opportunities: "10.000",
+    description: "Para escalar com inteligência e tomada de decisão",
     features: [
-      "Até 60.000 disparos/mês",
-      "Aquecimento de até 10 chips",
-      "Agentes de IA Integrados",
-      "Até 10 Números WhatsApp",
-      "CRM integrado",
-      "Até 50 leads por busca",
-      "Suporte VIP",
+      { text: "Tudo do Growth" },
+      { text: "Agente de IA estratégico (exclusivo)", highlight: true },
+      { text: "Prioriza leads automaticamente", highlight: true },
+      { text: "Sugere abordagem ideal", highlight: true },
+      { text: "Ajuda na decisão de conversão", highlight: true },
+      { text: "Aumenta taxa de conversão", highlight: true },
+      { text: "Prioridade de processamento" },
+      { text: "Até 10 números WhatsApp" },
+      { text: "Suporte VIP" },
     ],
     popular: false,
     icon: Building2,
@@ -454,16 +453,22 @@ const Upgrade = () => {
                     <span className="font-display text-4xl sm:text-5xl font-bold">{plan.price}</span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className="text-sm text-primary mt-2">
-                    Até {plan.searches} buscas estratégicas
+                  <p className="text-sm text-primary mt-2 font-medium">
+                    Até {plan.opportunities} oportunidades/mês
                   </p>
                 </div>
 
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm">
-                      <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{feature}</span>
+                    <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
+                      {feature.disabled ? (
+                        <X size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                      ) : feature.highlight ? (
+                        <Flame size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                      )}
+                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
