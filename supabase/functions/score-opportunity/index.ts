@@ -1149,11 +1149,12 @@ serve(async (req) => {
       ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
-    // Run page fetches AND SerpAPI social search in parallel
-    const [pageSummaries, socialInsights] = await Promise.all([
-      Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))),
-      searchSocialMediaActivity(nome_empresa, cidade, socialLinks),
-    ]);
+    // Run page fetches only (no SerpAPI cost - direct HTTP crawling is free)
+    const pageSummaries = await Promise.all(
+      pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))
+    );
+    // Social insights derived from page crawling data only (zero SerpAPI usage)
+    const socialInsights: SocialMediaInsight[] = [];
 
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
