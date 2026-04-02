@@ -1400,6 +1400,7 @@ Retorne APENAS um JSON válido:
               redes_sociais: socialLinks,
               website_page: websitePage,
               social_pages: socialPages,
+              social_media_insights: socialInsights,
             },
           },
         })
