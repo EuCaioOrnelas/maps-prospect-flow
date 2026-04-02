@@ -307,60 +307,55 @@ export const PricingSection = () => {
                 </div>
                 
                 {/* Trust Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                   {[
                     {
                       icon: Shield,
+                      title: "100% Seguro",
+                      description: "Pagamento via Stripe",
+                    },
+                    {
+                      icon: Clock,
+                      title: "Cancele quando quiser",
+                      description: "Sem fidelidade",
+                    },
+                    {
+                      icon: CreditCard,
+                      title: "Garantia 7 dias",
+                      description: "Devolução sem burocracia",
+                    },
+                    {
+                      icon: Shield,
                       title: "Dados Protegidos",
-                      description: "Criptografia ponta a ponta e armazenamento seguro com padrões internacionais",
+                      description: "Criptografia ponta a ponta",
                     },
                     {
                       icon: CreditCard,
                       title: "Pagamento Seguro",
-                      description: "Processamento via Stripe, líder mundial em pagamentos online",
+                      description: "Processamento via Stripe",
                     },
                     {
                       icon: Clock,
                       title: "Uptime 99.9%",
-                      description: "Infraestrutura robusta garantindo disponibilidade contínua da plataforma",
+                      description: "Disponibilidade contínua",
                     },
                     {
                       icon: Check,
                       title: "LGPD Compliant",
-                      description: "Totalmente adequado à Lei Geral de Proteção de Dados brasileira",
+                      description: "Proteção de dados",
                     },
                   ].map((item, i) => (
                     <div
                       key={i}
                       className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center"
                     >
-                      <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-colors">
-                        <item.icon className="h-6 w-6 text-primary" />
+                      <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-all duration-300">
+                        <item.icon className="h-6 w-6 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                       </div>
                       <p className="font-semibold text-foreground mb-1.5 text-sm">{item.title}</p>
                       <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
                   ))}
-                </div>
-
-                {/* Bottom trust bar */}
-                <div className="mt-8 pt-6 border-t border-border/50 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                    Garantia de 7 dias
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                    Cancele quando quiser
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                    Sem fidelidade
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                    Suporte humanizado
-                  </span>
                 </div>
               </div>
             </div>
