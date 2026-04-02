@@ -18,7 +18,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
 
 const plans: {
   name: string;
@@ -35,7 +35,7 @@ const plans: {
     name: "Start",
     key: "start",
     price: "197",
-    anchorPrice: "533",
+    anchorPrice: "532",
     opportunities: "1.000",
     description: "Para validar e começar a gerar oportunidades",
     features: [
@@ -56,7 +56,7 @@ const plans: {
     name: "Growth",
     key: "growth",
     price: "497",
-    anchorPrice: "1.243",
+    anchorPrice: "1.341",
     opportunities: "3.000",
     description: "Para escalar e converter com IA",
     features: [
@@ -82,8 +82,7 @@ const plans: {
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
       { text: "Tudo do Growth" },
-      { text: "", sectionHeader: "🚀 Diferencial Exclusivo" },
-      { text: "Agente estratégico de IA" },
+      { text: "Agente estratégico de IA", isNew: true },
       { text: "Mostra quais leads priorizar", subDetail: true },
       { text: "Sugere a melhor abordagem para cada um", subDetail: true },
       { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
@@ -473,7 +472,7 @@ const Upgrade = () => {
                     if (feature.subDetail) {
                       return (
                         <li key={i} className="flex items-start gap-3 text-sm pl-6">
-                          <span className="text-primary flex-shrink-0 mt-0.5">›</span>
+                          <span className="text-primary flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
                           <span className="text-muted-foreground">{feature.text}</span>
                         </li>
                       );
@@ -486,6 +485,9 @@ const Upgrade = () => {
                         <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
                       <span className="text-muted-foreground">{feature.text}</span>
+                      {feature.isNew && (
+                        <span className="ml-auto shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">NOVO</span>
+                      )}
                     </li>
                     );
                   })}
