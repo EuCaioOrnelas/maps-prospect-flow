@@ -1120,9 +1120,10 @@ ${socialPages.length > 0
    - Analise os dados de crawling direto das redes sociais acima.
    - Se o perfil foi acessível e tem conteúdo, é sinal de atividade.
    - Se há sinais de "freshness" (datas recentes, menções a anos), reporte.
-   - Avalie qualidade visual, identidade, bio, links na bio com base nos sinais detectados.
+   - Avalie bio (otimizada? CTA? link?), identidade visual, qualidade dos conteúdos visíveis.
    - Se há avaliações recentes no Google Maps, isso indica que a empresa está ativa.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
+   - NÃO tente informar data da última publicação — essa informação não está disponível via crawling.
 
 2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
    - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
