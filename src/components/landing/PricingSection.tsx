@@ -194,8 +194,8 @@ export const PricingSection = () => {
 
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary" />
+                    <div className="group/icon flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover/icon:scale-125 group-hover/icon:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
                   </div>
@@ -219,6 +219,7 @@ export const PricingSection = () => {
                   </p>
                 </div>
 
+                <TooltipProvider delayDuration={200}>
                 <ul className="space-y-3 mb-8 text-sm flex-grow">
                   {plan.features.map((feature, i) => (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
@@ -229,10 +230,32 @@ export const PricingSection = () => {
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
+                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>
+                        {feature.text}
+                      </span>
+                      {feature.subItems && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="ml-auto shrink-0 text-primary hover:text-primary/80 transition-colors">
+                              <Info size={15} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[220px] p-3">
+                            <ul className="space-y-1.5">
+                              {feature.subItems.map((sub, j) => (
+                                <li key={j} className="flex items-center gap-2 text-xs">
+                                  <Flame size={10} className="text-orange-500 shrink-0" />
+                                  {sub}
+                                </li>
+                              ))}
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </li>
                   ))}
                 </ul>
+                </TooltipProvider>
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
