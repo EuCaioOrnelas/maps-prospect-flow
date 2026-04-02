@@ -770,11 +770,12 @@ serve(async (req) => {
       : {};
 
     const lens = inferOfferingLens(companyProfile);
+    const nicheCtx = inferNicheContext(companyProfile);
     const { websiteUrl, socialLinks } = extractSocialLinks(site_url, redes_sociais);
 
     const pageTargets = [
       ...(websiteUrl ? [{ url: websiteUrl, label: "site" }] : []),
-      ...socialLinks.slice(0, 2).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
+      ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
     const pageSummaries = await Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform)));
@@ -815,22 +816,30 @@ DADOS DA EMPRESA PROSPECTORA:
 - Público-alvo: ${companyProfile.company_target_audience}
 - Diferencial: ${companyProfile.company_differential}
 - Objetivo: ${companyProfile.company_objective}
-- Lente principal de análise: ${lens.name}
+- Tipo de análise adaptada: ${nicheCtx.name}
 ` : "";
 
       const evidenceContext = pageSummaries.length > 0
-        ? pageSummaries.map((page) => `- ${page.label === "site" ? "SITE" : `REDE (${page.platform || "Social"})`}: status=${page.status || 0}; título="${page.title || "sem título"}"; descrição="${page.description || "sem descrição"}"; sinais=${page.activitySignals.join(", ") || "nenhum"}; trecho="${page.textSnippet.slice(0, 450)}"`).join("\n")
+        ? pageSummaries.map((page) => `- ${page.label === "site" ? "SITE" : `REDE (${page.platform || "Social"})`}: status=${page.status || 0}; título="${page.title || "sem título"}"; descrição="${page.description || "sem descrição"}"; sinais=${page.activitySignals.join(", ") || "nenhum"}; trecho="${page.textSnippet.slice(0, 600)}"`).join("\n")
         : "- Nenhum ativo digital adicional pôde ser lido.";
 
-      const prompt = `Você é um analista sênior de qualificação B2B. Analise o lead abaixo e adapte a leitura ao segmento da empresa prospectora.
+      const nicheQuestions = nicheCtx.keyQuestions.map((q, i) => `  ${i + 1}. ${q}`).join("\n");
+
+      const prompt = `Você é um analista sênior de qualificação B2B altamente especializado. Sua análise deve ser TOTALMENTE ADAPTADA ao nicho e serviço da empresa prospectora.
 
 ${companyContext}
 
-LEAD ANALISADO:
+═══ FOCO ADAPTATIVO DA ANÁLISE ═══
+${nicheCtx.analysisFocus}
+
+PERGUNTAS-CHAVE QUE VOCÊ DEVE RESPONDER NA ANÁLISE:
+${nicheQuestions}
+
+═══ LEAD ANALISADO ═══
 - Empresa: ${nome_empresa}
-- Categoria/Nicho: ${categoria || "Não informado"}
-- Cidade: ${cidade || "Não informado"}
-- Endereço: ${endereco || "Não informado"}
+- Categoria/Nicho do lead: ${categoria || "Não informado"}
+- Cidade/Região: ${cidade || "Não informado"}
+- Endereço completo: ${endereco || "Não informado"}
 - Google Maps: ${google_maps_link || "Não disponível"}
 - Avaliação média: ${avaliacao_media > 0 ? `${avaliacao_media}/5` : "Sem avaliação"}
 - Quantidade de avaliações: ${quantidade_avaliacoes}
@@ -838,10 +847,10 @@ LEAD ANALISADO:
 - Possui telefone: ${possui_telefone ? "Sim" : "Não"}
 - Redes sociais brutas: ${JSON.stringify(redes_sociais || [])}
 
-EVIDÊNCIAS EXTRAÍDAS DO SITE/REDES:
+═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES) ═══
 ${evidenceContext}
 
-HEURÍSTICA BASE (use como piso de consistência, não ignore):
+═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
 - Reputação: ${heuristic.reputacao}/25
 - Acessibilidade: ${heuristic.acessibilidade}/20
@@ -849,19 +858,46 @@ HEURÍSTICA BASE (use como piso de consistência, não ignore):
 - Potencial de Venda: ${heuristic.potencial_venda}/15
 - Score base: ${heuristic.score}/100
 
-REGRAS CRÍTICAS:
-1. Pontos fortes e pontos fracos DEVEM ser relativos ao que a empresa prospectora realmente vende.
-2. NÃO use pontos genéricos. Explique por que aquele sinal é positivo/negativo para os serviços reais da empresa prospectora.
-3. Se a prospectora vende anúncios/tráfego pago, fale de prontidão para campanhas, prova social, página de destino, remarketing e conversão.
-4. Se vende Google Meu Negócio/visibilidade local, fale de Maps, avaliações, autoridade regional e descoberta local.
-5. Se vende site/SEO, fale de estrutura digital, autoridade, profundidade de conteúdo e conversão.
-6. Se vende CRM/automação/WhatsApp, fale de acessibilidade, consistência de canais e prontidão operacional.
-7. Use SOMENTE dados presentes ou inferências razoáveis a partir dos resumos extraídos. Não invente seguidores, tráfego, faturamento ou datas exatas.
-8. O campo engajamento_atividade NÃO deve ser zero se houver sinais reais de atividade no site ou nas redes acima.
-9. Cada dimensão deve respeitar seus limites máximos: 25, 25, 20, 15 e 15.
-10. O score final deve ser a soma exata das dimensões.
+═══ ANÁLISES OBRIGATÓRIAS ═══
 
-Retorne APENAS um JSON válido com estas chaves:
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
+   - Procure nos trechos extraídos QUALQUER indicação de data de última publicação, frequência de posts, quantidade de seguidores.
+   - Se encontrar sinais de atividade recente (menções a datas, "postado há X dias", conteúdo recente), REPORTE.
+   - Se NÃO encontrar sinais de atividade recente, indique que a empresa aparenta estar INATIVA ou com posts irregulares nas redes.
+   - Avalie qualidade visual, identidade, bio, links na bio.
+   - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
+
+2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
+   - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
+   - ${nicheCtx.competitorContext}
+   - Considere: é uma região com alta densidade de negócios similares? O lead está em área comercial movimentada ou residencial?
+   - Se o endereço indica zona comercial/centro, há mais concorrência mas também mais demanda.
+   - Estime se num raio de 5km existiriam muitos ou poucos concorrentes do mesmo segmento.
+   - Traga isso como insight no diagnóstico.
+
+3. ANÁLISE DE DEMANDA REGIONAL:
+   - Com base na cidade "${cidade || ""}" e categoria "${categoria || ""}", avalie o potencial de demanda da região.
+   - Considere: é uma cidade grande, média ou pequena? Alta ou baixa densidade demográfica?
+   - Cidades maiores = mais demanda mas mais concorrência. Cidades menores = menos concorrência mas mercado limitado.
+   - Se for capital ou região metropolitana, há alta demanda. Se for interior, avalie o porte.
+   - Inclua essa análise no diagnóstico.
+
+4. ANÁLISE DO SITE (PROFUNDA E ADAPTADA AO NICHO):
+   - Se a prospectora vende apps/software: o site tem agendamento online? Sistema de reservas? Integração com pagamento?
+   - Se a prospectora vende gestão de redes: o site reflete a marca? Tem link para redes sociais?
+   - Se a prospectora vende tráfego: o site serve como landing page? Tem CTA claro? Formulário?
+   - Analise o conteúdo extraído do site com base no que a prospectora realmente precisa identificar.
+
+═══ REGRAS CRÍTICAS ═══
+1. Pontos fortes e fracos DEVEM ser 100% relativos ao que a empresa prospectora vende. Se vende app de barbearia, fale sobre agendamento, gestão, sistema digital. Se vende gestão de redes, fale sobre última publicação, frequência, qualidade visual.
+2. NÃO use pontos genéricos como "boa reputação" sem conectar ao serviço vendido.
+3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
+4. Cada dimensão: 25, 25, 20, 15 e 15. Score = soma exata.
+5. Use SOMENTE dados presentes ou inferências razoáveis. Não invente números exatos de seguidores ou tráfego.
+6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
+7. A análise de redes sociais DEVE mencionar frequência/recência de publicações (mesmo que inferida).
+
+Retorne APENAS um JSON válido:
 {
   "score": <0-100>,
   "estrutura_digital": <0-25>,
@@ -871,14 +907,16 @@ Retorne APENAS um JSON válido com estas chaves:
   "potencial_venda": <0-15>,
   "nivel_oportunidade": "Alta|Média|Baixa",
   "probabilidade_fechamento": "Muito Alta|Alta|Moderada|Baixa",
-  "diagnostico": "3-4 frases objetivas e estratégicas",
+  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda",
   "acao_recomendada": "3-5 frases conectando dor principal aos serviços da empresa prospectora",
-  "pontos_fortes": ["...", "..."],
-  "pontos_fracos": ["...", "..."],
-  "analise_site": "...",
-  "analise_redes_sociais": "...",
+  "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
+  "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
+  "analise_site": "análise profunda adaptada ao nicho da prospectora",
+  "analise_redes_sociais": "análise com frequência de publicações, última atividade detectada, qualidade",
   "analise_reputacao_detalhada": "...",
-  "justificativa_score": "1 frase objetiva"
+  "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
+  "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
+  "justificativa_score": "1-2 frases objetivas"
 }`;
 
       try {
@@ -891,8 +929,8 @@ Retorne APENAS um JSON válido com estas chaves:
           body: JSON.stringify({
             model: AI_MODEL,
             messages: [{ role: "user", content: prompt }],
-            temperature: 0.25,
-            max_tokens: 1600,
+            temperature: 0.3,
+            max_tokens: 2500,
             response_format: { type: "json_object" },
           }),
         });
