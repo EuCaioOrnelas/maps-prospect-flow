@@ -363,7 +363,6 @@ export const PricingSection = () => {
                     </div>
                   ))}
                 </div>
-                </div>
               </div>
             </div>
           </div>
