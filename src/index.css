@@ -42,7 +42,7 @@
     --input: 220 14% 16%;
     --ring: 158 72% 38%;
 
-    --radius: 1.25rem;
+    --radius: 1.25rem; /* base radius */
     --radius-input: 0.875rem; /* 14px - inputs */
     --radius-card: 1.25rem; /* 20px - cards */
 
