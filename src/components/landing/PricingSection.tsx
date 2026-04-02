@@ -17,7 +17,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean };
 
 const plans: {
   name: string;
@@ -35,7 +35,7 @@ const plans: {
     name: "Start",
     key: "start",
     price: "197",
-    anchorPrice: "397",
+    anchorPrice: "533",
     opportunities: "1.000",
     description: "Para validar e começar a gerar oportunidades",
     features: [
@@ -83,13 +83,12 @@ const plans: {
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
       { text: "Tudo do Growth" },
-      { text: "", sectionHeader: "🚀 DIFERENCIAL EXCLUSIVO" },
-      { text: "Agente estratégico de IA", highlight: true, subItems: [
-        "Mostra quais leads priorizar",
-        "Sugere a melhor abordagem para cada um",
-        "Ajuda você a tomar decisões mais rápidas",
-        "Aumenta sua taxa de conversão",
-      ]},
+      { text: "", sectionHeader: "🚀 Diferencial Exclusivo" },
+      { text: "Agente estratégico de IA" },
+      { text: "Mostra quais leads priorizar", subDetail: true },
+      { text: "Sugere a melhor abordagem para cada um", subDetail: true },
+      { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
+      { text: "Aumenta sua taxa de conversão", subDetail: true },
       { text: "Prioridade máxima de processamento" },
       { text: "Até 10 números WhatsApp" },
       { text: "Suporte VIP" },
