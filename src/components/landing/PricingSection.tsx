@@ -17,7 +17,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[] };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string };
 
 const plans: {
   name: string;
@@ -83,6 +83,7 @@ const plans: {
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
       { text: "Tudo do Growth" },
+      { text: "", sectionHeader: "🚀 DIFERENCIAL EXCLUSIVO" },
       { text: "Agente estratégico de IA", highlight: true, subItems: [
         "Mostra quais leads priorizar",
         "Sugere a melhor abordagem para cada um",
@@ -222,7 +223,15 @@ export const PricingSection = () => {
 
                 <TooltipProvider delayDuration={200}>
                 <ul className="space-y-3 mb-8 text-sm flex-grow">
-                  {plan.features.map((feature, i) => (
+                  {plan.features.map((feature, i) => {
+                    if (feature.sectionHeader) {
+                      return (
+                        <li key={i} className="pt-2 pb-1">
+                          <span className="text-xs font-bold tracking-wide text-primary uppercase">{feature.sectionHeader}</span>
+                        </li>
+                      );
+                    }
+                    return (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -254,7 +263,8 @@ export const PricingSection = () => {
                         </Tooltip>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
                 </TooltipProvider>
 
