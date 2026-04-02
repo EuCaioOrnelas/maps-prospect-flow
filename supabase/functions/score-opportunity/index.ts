@@ -8,6 +8,16 @@ const corsHeaders = {
 
 const AI_MODEL = "google/gemini-2.5-flash";
 
+type NicheContext = {
+  id: string;
+  name: string;
+  analysisFocus: string;
+  keyQuestions: string[];
+  strengthsHint: string;
+  weaknessesHint: string;
+  competitorContext: string;
+};
+
 type SocialLink = {
   url: string;
   platform: string;
