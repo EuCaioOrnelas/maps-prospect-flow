@@ -1235,14 +1235,15 @@ ${nicheQuestions}
 ═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES - CRAWLING DIRETO) ═══
 ${evidenceContext}
 
-═══ DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS (VIA BUSCA GOOGLE) ═══
-${socialInsights.length > 0
-  ? socialInsights.map((si) => `🔍 ${si.platform}:
-   - Nível de atividade: ${si.activityLevel}
-   - Última publicação: ${si.lastPostInfo}
-   - Detalhes encontrados: ${si.details}
-   - Trechos das buscas: ${si.rawSnippets.slice(0, 3).join(" | ")}`).join("\n\n")
-  : "⚠️ Não foi possível obter dados de atividade via busca. Analise com base nos dados de crawling acima."}
+═══ ANÁLISE DE ATIVIDADE NAS REDES SOCIAIS (VIA CRAWLING DIRETO) ═══
+${socialPages.length > 0
+  ? socialPages.map((page) => `🔍 ${page.platform || "Rede Social"}:
+   - Status: ${page.ok ? "Acessível" : "Inacessível"}
+   - Título: ${page.title || "Não detectado"}
+   - Descrição: ${page.description || "Não detectada"}
+   - Sinais de atividade: ${page.activitySignals.join(", ") || "Nenhum"}
+   - Conteúdo: ${page.contentLength >= 120 ? "Perfil com conteúdo" : "Pouco conteúdo visível"}`).join("\n\n")
+  : "⚠️ Nenhuma rede social pôde ser analisada. Infira atividade com base nos dados do Google Maps (avaliações recentes = sinal de atividade)."}
 
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
