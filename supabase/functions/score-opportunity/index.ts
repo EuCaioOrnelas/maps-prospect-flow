@@ -292,6 +292,152 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
+// ── SerpAPI social media activity search ──
+type SocialMediaInsight = {
+  platform: string;
+  lastPostInfo: string;
+  activityLevel: string;
+  details: string;
+  rawSnippets: string[];
+};
+
+const SERP_KEY_NAMES = ["SERP_API_KEY", "SERP_API_KEY_2", "SERP_API_KEY_3", "SERP_API_KEY_4", "SERP_API_KEY_5", "SERP_API_KEY_6"];
+
+const getAvailableSerpKey = (): string | null => {
+  for (const keyName of SERP_KEY_NAMES) {
+    const key = Deno.env.get(keyName);
+    if (key) return key;
+  }
+  return null;
+};
+
+const searchSocialMediaActivity = async (businessName: string, city: string, socialLinks: SocialLink[]): Promise<SocialMediaInsight[]> => {
+  const serpKey = getAvailableSerpKey();
+  if (!serpKey) {
+    console.log("No SerpAPI key available for social media search");
+    return [];
+  }
+
+  const insights: SocialMediaInsight[] = [];
+
+  // Build targeted searches for each social platform found
+  const searchQueries: { query: string; platform: string }[] = [];
+
+  for (const link of socialLinks) {
+    try {
+      const urlObj = new URL(link.url);
+      const pathParts = urlObj.pathname.split("/").filter(Boolean);
+      const handle = pathParts[0] || "";
+      
+      if (link.platform === "Instagram" && handle) {
+        searchQueries.push({
+          query: `site:instagram.com "${handle}" posts`,
+          platform: "Instagram",
+        });
+      } else if (link.platform === "Facebook" && handle) {
+        searchQueries.push({
+          query: `site:facebook.com "${handle}" posts publicações`,
+          platform: "Facebook",
+        });
+      } else if (link.platform === "LinkedIn" && handle) {
+        searchQueries.push({
+          query: `site:linkedin.com "${handle}" posts`,
+          platform: "LinkedIn",
+        });
+      }
+    } catch { /* skip invalid URLs */ }
+  }
+
+  // If no specific social links, search generically for the business
+  if (searchQueries.length === 0 && businessName) {
+    const cleanName = businessName.replace(/[^\w\s]/g, "").trim();
+    if (cleanName) {
+      searchQueries.push({
+        query: `"${cleanName}" ${city || ""} instagram OR facebook última publicação posts`,
+        platform: "Geral",
+      });
+    }
+  }
+
+  // Execute searches (max 2 to save API quota)
+  for (const sq of searchQueries.slice(0, 2)) {
+    try {
+      const params = new URLSearchParams({
+        api_key: serpKey,
+        q: sq.query,
+        hl: "pt-br",
+        gl: "br",
+        num: "5",
+      });
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(`https://serpapi.com/search.json?${params}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`SerpAPI error for ${sq.platform}:`, response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      const results = data.organic_results || [];
+      const snippets: string[] = [];
+      let lastPostInfo = "Não foi possível determinar";
+      let activityLevel = "Indeterminado";
+
+      for (const result of results.slice(0, 5)) {
+        const snippet = `${result.title || ""} ${result.snippet || ""}`.toLowerCase();
+        snippets.push(`${result.title || ""}: ${result.snippet || ""}`);
+
+        // Detect time indicators in snippets
+        const timePatterns = [
+          { pattern: /(\d+)\s*(hora|hour|hr|h)\s*(atrás|ago)/i, level: "Muito ativo", info: "Publicação nas últimas horas" },
+          { pattern: /(\d+)\s*(dia|day|d)\s*(atrás|ago)/i, level: "Ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} dia(s)` },
+          { pattern: /(\d+)\s*(semana|week|sem)\s*(atrás|ago)/i, level: "Moderado", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} semana(s)` },
+          { pattern: /(\d+)\s*(m[eê]s|month|mes)\s*(atrás|ago)/i, level: "Pouco ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} mês(es)` },
+          { pattern: /(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez|january|february|march|april|may|june|july|august|september|october|november|december)\w*\s*\d{1,2}?,?\s*(2026|2025|2024)/i, level: "Verificar", info: (m: RegExpMatchArray) => `Última atividade detectada: ${m[0]}` },
+          { pattern: /\b(2026)\b/, level: "Ativo", info: "Sinais de atividade em 2026" },
+          { pattern: /\b(2025)\b/, level: "Pode estar desatualizado", info: "Última atividade detectada em 2025" },
+          { pattern: /\b(2024)\b/, level: "Inativo", info: "Última atividade detectada em 2024 - provável inatividade" },
+        ];
+
+        for (const tp of timePatterns) {
+          const match = snippet.match(tp.pattern);
+          if (match) {
+            activityLevel = tp.level;
+            lastPostInfo = typeof tp.info === "function" ? tp.info(match) : tp.info;
+            break;
+          }
+        }
+
+        // Detect follower counts
+        const followerMatch = snippet.match(/(\d[\d.,]*[km]?)\s*(seguidores|followers|curtidas|likes)/i);
+        if (followerMatch) {
+          snippets.push(`Seguidores/Curtidas detectados: ${followerMatch[1]} ${followerMatch[2]}`);
+        }
+      }
+
+      if (snippets.length > 0) {
+        insights.push({
+          platform: sq.platform,
+          lastPostInfo,
+          activityLevel,
+          details: snippets.slice(0, 3).join(" | "),
+          rawSnippets: snippets.slice(0, 5),
+        });
+      }
+    } catch (error) {
+      console.error(`Social search error for ${sq.platform}:`, error);
+    }
+  }
+
+  return insights;
+};
+
 const inferNicheContext = (companyProfile: any): NicheContext => {
   if (!companyProfile) {
     return {
@@ -1003,18 +1149,20 @@ serve(async (req) => {
       ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
-    const pageSummaries = await Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform)));
+    // Run page fetches AND SerpAPI social search in parallel
+    const [pageSummaries, socialInsights] = await Promise.all([
+      Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))),
+      searchSocialMediaActivity(nome_empresa, cidade, socialLinks),
+    ]);
+
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
 
-    const heuristic = computeHeuristicScore({
-      rating: avaliacao_media,
-      reviewCount: quantidade_avaliacoes,
-      hasPhone: possui_telefone,
-      hasAddress: !!endereco && endereco.toLowerCase() !== "não informado",
-      websitePage,
-      socialPages,
-    });
+    // Enrich social pages with SerpAPI insights for heuristic scoring
+    // If SerpAPI found active signals, boost activity detection
+    const hasActiveSignalsFromSerp = socialInsights.some(
+      (si) => si.activityLevel === "Muito ativo" || si.activityLevel === "Ativo"
+    );
 
     const siteSummary = websitePage
       ? websitePage.ok
@@ -1022,9 +1170,20 @@ serve(async (req) => {
         : `Site identificado, mas não foi possível ler o conteúdo com consistência (status ${websitePage.status || "erro"}).`
       : "Sem site próprio detectado.";
 
-    const socialSummary = socialPages.length > 0
+    // Build rich social summary combining page fetch + SerpAPI results
+    const serpSocialDetails = socialInsights.length > 0
+      ? socialInsights.map((si) => `${si.platform}: Atividade=${si.activityLevel}; ${si.lastPostInfo}; ${si.details}`).join(" | ")
+      : "";
+
+    const pageSocialDetails = socialPages.length > 0
       ? socialPages.map((page) => `${page.platform || "Rede social"}: ${page.ok ? `${page.title || "perfil detectado"}${page.contentLength >= 120 ? " com sinais de atividade" : " com poucos sinais de atividade"}` : "não foi possível ler o perfil"}`).join(" | ")
-      : "Nenhuma rede social válida identificada para análise.";
+      : "";
+
+    const socialSummary = serpSocialDetails
+      ? `[DADOS REAIS VIA BUSCA] ${serpSocialDetails}${pageSocialDetails ? ` | [DADOS DO PERFIL] ${pageSocialDetails}` : ""}`
+      : pageSocialDetails
+        ? pageSocialDetails
+        : "Nenhuma rede social válida identificada para análise.";
 
     const fallbackPoints = buildFallbackPoints(lens, heuristic);
     const fallbackDiagnosis = buildFallbackDiagnosis({ nomeEmpresa: nome_empresa, cidade, categoria, heuristic, lens });
@@ -1072,8 +1231,17 @@ ${nicheQuestions}
 - Possui telefone: ${possui_telefone ? "Sim" : "Não"}
 - Redes sociais brutas: ${JSON.stringify(redes_sociais || [])}
 
-═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES) ═══
+═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES - CRAWLING DIRETO) ═══
 ${evidenceContext}
+
+═══ DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS (VIA BUSCA GOOGLE) ═══
+${socialInsights.length > 0
+  ? socialInsights.map((si) => `🔍 ${si.platform}:
+   - Nível de atividade: ${si.activityLevel}
+   - Última publicação: ${si.lastPostInfo}
+   - Detalhes encontrados: ${si.details}
+   - Trechos das buscas: ${si.rawSnippets.slice(0, 3).join(" | ")}`).join("\n\n")
+  : "⚠️ Não foi possível obter dados de atividade via busca. Analise com base nos dados de crawling acima."}
 
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
@@ -1085,10 +1253,14 @@ ${evidenceContext}
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
-1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
-   - Procure nos trechos extraídos QUALQUER indicação de data de última publicação, frequência de posts, quantidade de seguidores.
-   - Se encontrar sinais de atividade recente (menções a datas, "postado há X dias", conteúdo recente), REPORTE.
-   - Se NÃO encontrar sinais de atividade recente, indique que a empresa aparenta estar INATIVA ou com posts irregulares nas redes.
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA - USE OS DADOS REAIS ACIMA):
+   - USE PRIORITARIAMENTE os dados da seção "DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS" acima.
+   - Esses dados vêm de buscas no Google e mostram a atividade REAL do perfil (datas, posts, engajamento).
+   - REPORTE a data/período da última publicação encontrada.
+   - REPORTE o nível de atividade (muito ativo, ativo, moderado, pouco ativo, inativo).
+   - Se os dados indicam inatividade, diga claramente: "A última publicação detectada foi em [data/período], indicando [X] de inatividade."
+   - Avalie qualidade visual, identidade, bio, links na bio com base nos dados de crawling.
+   - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
    - Avalie qualidade visual, identidade, bio, links na bio.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
 
@@ -1228,6 +1400,7 @@ Retorne APENAS um JSON válido:
               redes_sociais: socialLinks,
               website_page: websitePage,
               social_pages: socialPages,
+              social_media_insights: socialInsights,
             },
           },
         })
