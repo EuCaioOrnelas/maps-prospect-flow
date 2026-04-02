@@ -407,7 +407,7 @@ const Upgrade = () => {
             return (
               <div
                 key={index}
-                className={`relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in flex flex-col h-full ${
+                className={`group relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-2 animate-fade-in flex flex-col h-full ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow"
                     : "glass"
@@ -434,8 +434,8 @@ const Upgrade = () => {
 
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="group/icon flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover/icon:scale-125 group-hover/icon:rotate-12" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
                     <h3 className="font-display text-xl sm:text-2xl font-bold">{plan.name}</h3>
                   </div>
@@ -484,10 +484,10 @@ const Upgrade = () => {
                       ) : (
                         <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
+                      <span className="text-muted-foreground">{feature.text}</span>
                       {feature.isNew && (
                         <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
                       )}
-                      <span className="text-muted-foreground">{feature.text}</span>
                     </li>
                     );
                   })}
