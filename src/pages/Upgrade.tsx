@@ -463,7 +463,15 @@ const Upgrade = () => {
 
                 <TooltipProvider delayDuration={200}>
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
+                  {plan.features.map((feature, i) => {
+                    if (feature.sectionHeader) {
+                      return (
+                        <li key={i} className="pt-2 pb-1">
+                          <span className="text-xs font-bold tracking-wide text-primary uppercase">{feature.sectionHeader}</span>
+                        </li>
+                      );
+                    }
+                    return (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -493,7 +501,8 @@ const Upgrade = () => {
                         </Tooltip>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
                 </TooltipProvider>
 
