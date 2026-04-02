@@ -327,9 +327,9 @@ export const PricingSection = () => {
                 {/* Trust Grid - Row 2: 3 cards */}
                 <div className="hidden md:grid md:grid-cols-3 gap-4 mt-4">
                   {[
-                    { icon: Shield, title: "100% Seguro", description: "Pagamento via Stripe" },
-                    { icon: Clock, title: "Cancele quando quiser", description: "Sem fidelidade" },
-                    { icon: CreditCard, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento via Stripe" },
+                    { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                    { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
                   ].map((item, i) => (
                     <div key={i} className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
                       <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-all duration-300">
