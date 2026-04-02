@@ -1255,16 +1255,13 @@ ${socialPages.length > 0
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
-1. ANÁLISE DE REDES SOCIAIS (DETALHADA - USE OS DADOS REAIS ACIMA):
-   - USE PRIORITARIAMENTE os dados da seção "DADOS REAIS DE ATIVIDADE NAS REDES SOCIAIS" acima.
-   - Esses dados vêm de buscas no Google e mostram a atividade REAL do perfil (datas, posts, engajamento).
-   - REPORTE a data/período da última publicação encontrada.
-   - REPORTE o nível de atividade (muito ativo, ativo, moderado, pouco ativo, inativo).
-   - Se os dados indicam inatividade, diga claramente: "A última publicação detectada foi em [data/período], indicando [X] de inatividade."
-   - Avalie qualidade visual, identidade, bio, links na bio com base nos dados de crawling.
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
+   - Analise os dados de crawling direto das redes sociais acima.
+   - Se o perfil foi acessível e tem conteúdo, é sinal de atividade.
+   - Se há sinais de "freshness" (datas recentes, menções a anos), reporte.
+   - Avalie qualidade visual, identidade, bio, links na bio com base nos sinais detectados.
+   - Se há avaliações recentes no Google Maps, isso indica que a empresa está ativa.
    - NUNCA diga "engajamento zero" se houver perfis ativos detectados.
-   - Avalie qualidade visual, identidade, bio, links na bio.
-   - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
 
 2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
    - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
