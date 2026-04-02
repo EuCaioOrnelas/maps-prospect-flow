@@ -35,7 +35,7 @@ const plans: {
     name: "Start",
     key: "start",
     price: "197",
-    anchorPrice: "532",
+    anchorPrice: "497",
     opportunities: "1.000",
     description: "Para validar e começar a gerar oportunidades",
     features: [
@@ -56,7 +56,7 @@ const plans: {
     name: "Growth",
     key: "growth",
     price: "497",
-    anchorPrice: "1.341",
+    anchorPrice: "1.397",
     opportunities: "3.000",
     description: "Para escalar e converter com IA",
     features: [
@@ -78,7 +78,7 @@ const plans: {
     name: "Scale",
     key: "scale",
     price: "1.297",
-    anchorPrice: "3.505",
+    anchorPrice: "2.897",
     opportunities: "10.000",
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
@@ -244,12 +244,12 @@ export const PricingSection = () => {
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
+                      {feature.isNew && (
+                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
+                      )}
                       <span className="text-muted-foreground">
                         {feature.text}
                       </span>
-                      {feature.isNew && (
-                        <span className="ml-auto shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">NOVO</span>
-                      )}
                     </li>
                     );
                   })}
