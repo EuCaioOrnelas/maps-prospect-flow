@@ -35,12 +35,12 @@ const plans: {
     name: "Start",
     key: "start",
     price: "197",
-    anchorPrice: "497",
+    anchorPrice: "394",
     opportunities: "1.000",
     description: "Para validar e começar a gerar oportunidades",
     features: [
       { text: "Geração de mensagens com IA" },
-      { text: "Diagnóstico individual por lead" },
+      { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
       { text: "CRM integrado" },
       { text: "Campanhas de mensagem via Meta API oficial" },
       { text: "Até 2 números WhatsApp" },
@@ -56,12 +56,12 @@ const plans: {
     name: "Growth",
     key: "growth",
     price: "497",
-    anchorPrice: "1.397",
+    anchorPrice: "1.243",
     opportunities: "3.000",
-    description: "Para escalar e converter com IA",
+    description: "Para escalar e converter oportunidades com IA",
     features: [
       { text: "Geração de mensagens com IA" },
-      { text: "Diagnóstico individual por lead" },
+      { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
       { text: "CRM integrado" },
       { text: "Campanhas de mensagem via Meta API oficial" },
       { text: "Até 5 números WhatsApp" },
@@ -78,7 +78,7 @@ const plans: {
     name: "Scale",
     key: "scale",
     price: "1.297",
-    anchorPrice: "2.897",
+    anchorPrice: "3.505",
     opportunities: "10.000",
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
@@ -268,6 +268,10 @@ export const PricingSection = () => {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processando...
                     </>
+                  ) : plan.key === "start" ? (
+                    "Começar Agora"
+                  ) : plan.key === "scale" ? (
+                    "Escalar Agora"
                   ) : plan.popular ? (
                     "Começar Agora"
                   ) : (
