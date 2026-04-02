@@ -177,7 +177,7 @@ export const PricingSection = () => {
                   scale: plan.popular ? 1.02 : 1.03,
                   transition: { duration: 0.3 }
                 }}
-                className={`relative rounded-2xl flex flex-col ${
+                className={`group relative rounded-2xl flex flex-col ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-6 md:z-10"
                     : "glass p-5 md:p-6"
@@ -194,8 +194,8 @@ export const PricingSection = () => {
 
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="group/icon flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover/icon:scale-125 group-hover/icon:rotate-12" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
                   </div>
@@ -244,12 +244,12 @@ export const PricingSection = () => {
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      {feature.isNew && (
-                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
-                      )}
                       <span className="text-muted-foreground">
                         {feature.text}
                       </span>
+                      {feature.isNew && (
+                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
+                      )}
                     </li>
                     );
                   })}
