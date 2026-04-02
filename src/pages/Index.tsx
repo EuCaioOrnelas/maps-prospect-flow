@@ -23,17 +23,24 @@ const Index = () => {
   const [isReady, setIsReady] = useState(false);
   const { trackSignupClick } = useLandingPageTracking('index');
 
-  // Wait for fonts and critical assets to load
   useEffect(() => {
-    // Check if document fonts are ready
+    // Timeout fallback to prevent infinite loading
+    const timeout = setTimeout(() => setIsReady(true), 1500);
+    
     if (document.fonts) {
       document.fonts.ready.then(() => {
+        clearTimeout(timeout);
+        setIsReady(true);
+      }).catch(() => {
+        clearTimeout(timeout);
         setIsReady(true);
       });
     } else {
-      // Fallback for browsers without Font Loading API
+      clearTimeout(timeout);
       setIsReady(true);
     }
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   if (!isReady) {
