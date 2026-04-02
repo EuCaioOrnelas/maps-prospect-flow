@@ -971,6 +971,7 @@ Retorne APENAS um JSON válido:
           enrichment_data: {
             ...currentEnrichment,
             scored_at: new Date().toISOString(),
+            niche_analysis_type: nicheCtx.name,
             score_breakdown: {
               estrutura_digital: result.estrutura_digital,
               reputacao: result.reputacao,
@@ -983,6 +984,8 @@ Retorne APENAS um JSON válido:
             analise_site: result.analise_site,
             analise_redes_sociais: result.analise_redes_sociais,
             analise_reputacao_detalhada: result.analise_reputacao_detalhada,
+            analise_concorrencia_regional: result.analise_concorrencia_regional,
+            analise_demanda_regional: result.analise_demanda_regional,
             justificativa_score: result.justificativa_score,
             scoring_inputs: {
               avaliacao_media,
@@ -1022,6 +1025,8 @@ Retorne APENAS um JSON válido:
       analise_site: result.analise_site,
       analise_redes_sociais: result.analise_redes_sociais,
       analise_reputacao_detalhada: result.analise_reputacao_detalhada,
+      analise_concorrencia_regional: result.analise_concorrencia_regional,
+      analise_demanda_regional: result.analise_demanda_regional,
       justificativa_score: result.justificativa_score,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
