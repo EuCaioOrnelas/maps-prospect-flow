@@ -40,10 +40,11 @@ const plans: {
     description: "Para validar e começar a gerar oportunidades",
     features: [
       { text: "Geração de mensagens com IA" },
-      { text: "IA analisa seus leads e orienta a melhor estratégia para converter cada oportunidade" },
+      { text: "Diagnóstico individual por lead" },
       { text: "CRM integrado" },
       { text: "Disparos via Meta API oficial" },
       { text: "Até 2 números WhatsApp" },
+      { text: "Suporte via email" },
       { text: "Sem automação", disabled: true },
       { text: "Sem follow-up", disabled: true },
       { text: "Sem agente", disabled: true },
