@@ -18,7 +18,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean };
 
 const plans: {
   name: string;
@@ -35,7 +35,7 @@ const plans: {
     name: "Start",
     key: "start",
     price: "197",
-    anchorPrice: "397",
+    anchorPrice: "533",
     opportunities: "1.000",
     description: "Para validar e começar a gerar oportunidades",
     features: [
@@ -82,13 +82,12 @@ const plans: {
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
       { text: "Tudo do Growth" },
-      { text: "", sectionHeader: "🚀 DIFERENCIAL EXCLUSIVO" },
-      { text: "Agente estratégico de IA", highlight: true, subItems: [
-        "Mostra quais leads priorizar",
-        "Sugere a melhor abordagem para cada um",
-        "Ajuda você a tomar decisões mais rápidas",
-        "Aumenta sua taxa de conversão",
-      ]},
+      { text: "", sectionHeader: "🚀 Diferencial Exclusivo" },
+      { text: "Agente estratégico de IA" },
+      { text: "Mostra quais leads priorizar", subDetail: true },
+      { text: "Sugere a melhor abordagem para cada um", subDetail: true },
+      { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
+      { text: "Aumenta sua taxa de conversão", subDetail: true },
       { text: "Prioridade máxima de processamento" },
       { text: "Até 10 números WhatsApp" },
       { text: "Suporte VIP" },
@@ -471,35 +470,22 @@ const Upgrade = () => {
                         </li>
                       );
                     }
+                    if (feature.subDetail) {
+                      return (
+                        <li key={i} className="flex items-start gap-3 text-sm pl-6">
+                          <span className="text-primary flex-shrink-0 mt-0.5">›</span>
+                          <span className="text-muted-foreground">{feature.text}</span>
+                        </li>
+                      );
+                    }
                     return (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : feature.highlight ? (
-                        <Flame size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={18} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
-                      {feature.subItems && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button className="ml-auto shrink-0 text-primary hover:text-primary/80 transition-colors">
-                              <Info size={15} />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="left" className="max-w-[220px] p-3">
-                            <ul className="space-y-1.5">
-                              {feature.subItems.map((sub, j) => (
-                                <li key={j} className="flex items-center gap-2 text-xs">
-                                  <Flame size={10} className="text-orange-500 shrink-0" />
-                                  {sub}
-                                </li>
-                              ))}
-                            </ul>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                      <span className="text-muted-foreground">{feature.text}</span>
                     </li>
                     );
                   })}
