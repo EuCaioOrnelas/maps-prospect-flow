@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Flame } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Flame, Info } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
@@ -17,7 +18,7 @@ const PRICE_IDS = {
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[] };
 
 const plans: {
   name: string;
@@ -39,7 +40,7 @@ const plans: {
     description: "Para validar e começar a gerar oportunidades",
     features: [
       { text: "Geração de mensagens com IA" },
-      { text: "IA faz diagnóstico individual por lead" },
+      { text: "IA analisa seus leads e orienta a melhor estratégia para converter cada oportunidade" },
       { text: "CRM integrado" },
       { text: "Disparos via Meta API oficial" },
       { text: "Até 2 números WhatsApp" },
@@ -60,12 +61,12 @@ const plans: {
     features: [
       { text: "Geração de mensagens com IA" },
       { text: "Diagnóstico individual por lead" },
-      { text: "Automação de atendimento" },
-      { text: "Follow-up inteligente" },
-      { text: "Agente de IA operacional" },
       { text: "CRM integrado" },
       { text: "Disparos via Meta API oficial" },
       { text: "Até 5 números WhatsApp" },
+      { text: "Automação de atendimento" },
+      { text: "Follow-up inteligente" },
+      { text: "Agente de IA operacional" },
       { text: "Suporte prioritário" },
     ],
     popular: true,
@@ -80,11 +81,12 @@ const plans: {
     description: "Para escalar com inteligência e tomada de decisão",
     features: [
       { text: "Tudo do Growth" },
-      { text: "Agente de IA estratégico (exclusivo)", highlight: true },
-      { text: "Prioriza leads automaticamente", highlight: true },
-      { text: "Sugere abordagem ideal", highlight: true },
-      { text: "Ajuda na decisão de conversão", highlight: true },
-      { text: "Aumenta taxa de conversão", highlight: true },
+      { text: "Agente de IA estratégico (exclusivo)", highlight: true, subItems: [
+        "Prioriza leads automaticamente",
+        "Sugere abordagem ideal",
+        "Ajuda na decisão de conversão",
+        "Aumenta taxa de conversão",
+      ]},
       { text: "Prioridade de processamento" },
       { text: "Até 10 números WhatsApp" },
       { text: "Suporte VIP" },
@@ -93,7 +95,6 @@ const plans: {
     icon: Building2,
   },
 ];
-
 const Upgrade = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
