@@ -706,6 +706,8 @@ const normalizeAiResult = ({
     analise_site: compact(toSafeString(raw?.analise_site)) || siteSummary,
     analise_redes_sociais: compact(toSafeString(raw?.analise_redes_sociais)) || socialSummary,
     analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`,
+    analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
+    analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
   };
 };
