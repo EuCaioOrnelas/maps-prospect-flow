@@ -1149,18 +1149,20 @@ serve(async (req) => {
       ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
-    const pageSummaries = await Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform)));
+    // Run page fetches AND SerpAPI social search in parallel
+    const [pageSummaries, socialInsights] = await Promise.all([
+      Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))),
+      searchSocialMediaActivity(nome_empresa, cidade, socialLinks),
+    ]);
+
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
 
-    const heuristic = computeHeuristicScore({
-      rating: avaliacao_media,
-      reviewCount: quantidade_avaliacoes,
-      hasPhone: possui_telefone,
-      hasAddress: !!endereco && endereco.toLowerCase() !== "não informado",
-      websitePage,
-      socialPages,
-    });
+    // Enrich social pages with SerpAPI insights for heuristic scoring
+    // If SerpAPI found active signals, boost activity detection
+    const hasActiveSignalsFromSerp = socialInsights.some(
+      (si) => si.activityLevel === "Muito ativo" || si.activityLevel === "Ativo"
+    );
 
     const siteSummary = websitePage
       ? websitePage.ok
@@ -1168,9 +1170,20 @@ serve(async (req) => {
         : `Site identificado, mas não foi possível ler o conteúdo com consistência (status ${websitePage.status || "erro"}).`
       : "Sem site próprio detectado.";
 
-    const socialSummary = socialPages.length > 0
+    // Build rich social summary combining page fetch + SerpAPI results
+    const serpSocialDetails = socialInsights.length > 0
+      ? socialInsights.map((si) => `${si.platform}: Atividade=${si.activityLevel}; ${si.lastPostInfo}; ${si.details}`).join(" | ")
+      : "";
+
+    const pageSocialDetails = socialPages.length > 0
       ? socialPages.map((page) => `${page.platform || "Rede social"}: ${page.ok ? `${page.title || "perfil detectado"}${page.contentLength >= 120 ? " com sinais de atividade" : " com poucos sinais de atividade"}` : "não foi possível ler o perfil"}`).join(" | ")
-      : "Nenhuma rede social válida identificada para análise.";
+      : "";
+
+    const socialSummary = serpSocialDetails
+      ? `[DADOS REAIS VIA BUSCA] ${serpSocialDetails}${pageSocialDetails ? ` | [DADOS DO PERFIL] ${pageSocialDetails}` : ""}`
+      : pageSocialDetails
+        ? pageSocialDetails
+        : "Nenhuma rede social válida identificada para análise.";
 
     const fallbackPoints = buildFallbackPoints(lens, heuristic);
     const fallbackDiagnosis = buildFallbackDiagnosis({ nomeEmpresa: nome_empresa, cidade, categoria, heuristic, lens });
