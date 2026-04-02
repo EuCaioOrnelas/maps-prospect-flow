@@ -292,6 +292,152 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
+// ── SerpAPI social media activity search ──
+type SocialMediaInsight = {
+  platform: string;
+  lastPostInfo: string;
+  activityLevel: string;
+  details: string;
+  rawSnippets: string[];
+};
+
+const SERP_KEY_NAMES = ["SERP_API_KEY", "SERP_API_KEY_2", "SERP_API_KEY_3", "SERP_API_KEY_4", "SERP_API_KEY_5", "SERP_API_KEY_6"];
+
+const getAvailableSerpKey = (): string | null => {
+  for (const keyName of SERP_KEY_NAMES) {
+    const key = Deno.env.get(keyName);
+    if (key) return key;
+  }
+  return null;
+};
+
+const searchSocialMediaActivity = async (businessName: string, city: string, socialLinks: SocialLink[]): Promise<SocialMediaInsight[]> => {
+  const serpKey = getAvailableSerpKey();
+  if (!serpKey) {
+    console.log("No SerpAPI key available for social media search");
+    return [];
+  }
+
+  const insights: SocialMediaInsight[] = [];
+
+  // Build targeted searches for each social platform found
+  const searchQueries: { query: string; platform: string }[] = [];
+
+  for (const link of socialLinks) {
+    try {
+      const urlObj = new URL(link.url);
+      const pathParts = urlObj.pathname.split("/").filter(Boolean);
+      const handle = pathParts[0] || "";
+      
+      if (link.platform === "Instagram" && handle) {
+        searchQueries.push({
+          query: `site:instagram.com "${handle}" posts`,
+          platform: "Instagram",
+        });
+      } else if (link.platform === "Facebook" && handle) {
+        searchQueries.push({
+          query: `site:facebook.com "${handle}" posts publicações`,
+          platform: "Facebook",
+        });
+      } else if (link.platform === "LinkedIn" && handle) {
+        searchQueries.push({
+          query: `site:linkedin.com "${handle}" posts`,
+          platform: "LinkedIn",
+        });
+      }
+    } catch { /* skip invalid URLs */ }
+  }
+
+  // If no specific social links, search generically for the business
+  if (searchQueries.length === 0 && businessName) {
+    const cleanName = businessName.replace(/[^\w\s]/g, "").trim();
+    if (cleanName) {
+      searchQueries.push({
+        query: `"${cleanName}" ${city || ""} instagram OR facebook última publicação posts`,
+        platform: "Geral",
+      });
+    }
+  }
+
+  // Execute searches (max 2 to save API quota)
+  for (const sq of searchQueries.slice(0, 2)) {
+    try {
+      const params = new URLSearchParams({
+        api_key: serpKey,
+        q: sq.query,
+        hl: "pt-br",
+        gl: "br",
+        num: "5",
+      });
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(`https://serpapi.com/search.json?${params}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`SerpAPI error for ${sq.platform}:`, response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      const results = data.organic_results || [];
+      const snippets: string[] = [];
+      let lastPostInfo = "Não foi possível determinar";
+      let activityLevel = "Indeterminado";
+
+      for (const result of results.slice(0, 5)) {
+        const snippet = `${result.title || ""} ${result.snippet || ""}`.toLowerCase();
+        snippets.push(`${result.title || ""}: ${result.snippet || ""}`);
+
+        // Detect time indicators in snippets
+        const timePatterns = [
+          { pattern: /(\d+)\s*(hora|hour|hr|h)\s*(atrás|ago)/i, level: "Muito ativo", info: "Publicação nas últimas horas" },
+          { pattern: /(\d+)\s*(dia|day|d)\s*(atrás|ago)/i, level: "Ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} dia(s)` },
+          { pattern: /(\d+)\s*(semana|week|sem)\s*(atrás|ago)/i, level: "Moderado", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} semana(s)` },
+          { pattern: /(\d+)\s*(m[eê]s|month|mes)\s*(atrás|ago)/i, level: "Pouco ativo", info: (m: RegExpMatchArray) => `Última publicação há ${m[1]} mês(es)` },
+          { pattern: /(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez|january|february|march|april|may|june|july|august|september|october|november|december)\w*\s*\d{1,2}?,?\s*(2026|2025|2024)/i, level: "Verificar", info: (m: RegExpMatchArray) => `Última atividade detectada: ${m[0]}` },
+          { pattern: /\b(2026)\b/, level: "Ativo", info: "Sinais de atividade em 2026" },
+          { pattern: /\b(2025)\b/, level: "Pode estar desatualizado", info: "Última atividade detectada em 2025" },
+          { pattern: /\b(2024)\b/, level: "Inativo", info: "Última atividade detectada em 2024 - provável inatividade" },
+        ];
+
+        for (const tp of timePatterns) {
+          const match = snippet.match(tp.pattern);
+          if (match) {
+            activityLevel = tp.level;
+            lastPostInfo = typeof tp.info === "function" ? tp.info(match) : tp.info;
+            break;
+          }
+        }
+
+        // Detect follower counts
+        const followerMatch = snippet.match(/(\d[\d.,]*[km]?)\s*(seguidores|followers|curtidas|likes)/i);
+        if (followerMatch) {
+          snippets.push(`Seguidores/Curtidas detectados: ${followerMatch[1]} ${followerMatch[2]}`);
+        }
+      }
+
+      if (snippets.length > 0) {
+        insights.push({
+          platform: sq.platform,
+          lastPostInfo,
+          activityLevel,
+          details: snippets.slice(0, 3).join(" | "),
+          rawSnippets: snippets.slice(0, 5),
+        });
+      }
+    } catch (error) {
+      console.error(`Social search error for ${sq.platform}:`, error);
+    }
+  }
+
+  return insights;
+};
+
 const inferNicheContext = (companyProfile: any): NicheContext => {
   if (!companyProfile) {
     return {
