@@ -356,6 +356,7 @@ export const PricingSection = () => {
                       <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
                   ))}
+                </div>
               </div>
             </div>
           </div>
